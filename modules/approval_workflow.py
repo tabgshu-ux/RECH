@@ -1,120 +1,164 @@
-import streamlit as st
 import pandas as pd
-from datetime import datetime
-from modules.security_utils import scan_file_for_viruses, sanitize_user_input
+import streamlit as st
 
-def render_approval_center(lang):
-    st.title("📑 企業 AI 簽核與表單審核中心")
-    st.caption("跨部門表單簽核關卡、待辦清單與歷史簽核履歷管理")
+# 🌐 多語系字典 (i18n)
+APPROVAL_I18N = {
+    "繁體中文": {
+        "page_title": "📄 企業 AI 簽核與表單審核中心",
+        "sub_title": "跨部門表單簽核關卡、待辦清單與歷史簽核履歷管理",
+        "metric_pending": "⏳ 我的待簽核單據",
+        "metric_approved": "🟢 本月已核准單據",
+        "metric_rejected": "🔴 已駁回/退回單據",
+        "unit_count": "筆",
+        "action_needed": "⚡ 需處理",
+        "section_pending": "📥 待審核單據列表",
+        "lbl_apply_date": "申請日期",
+        "lbl_applicant": "申請人",
+        "lbl_module": "來源模組",
+        "lbl_detail": "申請詳情",
+        "lbl_amount": "金額",
+        "btn_approve": "✅ 核准通過",
+        "btn_reject": "❌ 退回駁回",
+        "msg_approved": "已順利核准單據！",
+        "msg_rejected": "已駁回單據。",
+        "empty_pending": "🎉 目前沒有等待您簽核的單據。",
+    },
+    "Tiếng Việt": {
+        "page_title": "📄 Trung tâm Phê duyệt & Ký duyệt Điện tử AI",
+        "sub_title": "Quản lý quy trình ký duyệt liên phòng ban, danh sách chờ duyệt và lịch sử ký duyệt.",
+        "metric_pending": "⏳ Đơn hàng chờ tôi duyệt",
+        "metric_approved": "🟢 Đơn đã duyệt trong tháng",
+        "metric_rejected": "🔴 Đơn đã từ chối / Trả về",
+        "unit_count": "đơn",
+        "action_needed": "⚡ Cần xử lý",
+        "section_pending": "📥 Danh sách Đơn hàng Chờ Phê duyệt",
+        "lbl_apply_date": "Ngày yêu cầu",
+        "lbl_applicant": "Người yêu cầu",
+        "lbl_module": "Phòng ban / Nguồn",
+        "lbl_detail": "Chi tiết yêu cầu",
+        "lbl_amount": "Số tiền",
+        "btn_approve": "✅ Phê duyệt (Duyệt)",
+        "btn_reject": "❌ Từ chối (Trả về)",
+        "msg_approved": "Đã phê duyệt đơn thành công!",
+        "msg_rejected": "Đã từ chối đơn thành công!",
+        "empty_pending": "🎉 Hiện tại không có đơn hàng nào chờ bạn phê duyệt.",
+    },
+    "English": {
+        "page_title": "📄 Enterprise AI E-Approval Center",
+        "sub_title": "Cross-department approval workflows, pending list, and history audit trail.",
+        "metric_pending": "⏳ Pending My Approval",
+        "metric_approved": "🟢 Approved This Month",
+        "metric_rejected": "🔴 Rejected / Returned",
+        "unit_count": "items",
+        "action_needed": "⚡ Action Required",
+        "section_pending": "📥 Pending Documents for Approval",
+        "lbl_apply_date": "Request Date",
+        "lbl_applicant": "Applicant",
+        "lbl_module": "Source Module",
+        "lbl_detail": "Details",
+        "lbl_amount": "Amount",
+        "btn_approve": "✅ Approve",
+        "btn_reject": "❌ Reject",
+        "msg_approved": "Document approved successfully!",
+        "msg_rejected": "Document rejected successfully!",
+        "empty_pending": "🎉 No pending documents waiting for your approval.",
+    },
+}
 
-    # 初始化簽核資料庫 (若尚未存在)
-    if "approval_queue" not in st.session_state:
-        st.session_state.approval_queue = [
+
+def render_approval_center(*args, **kwargs):
+    # 自動讀取全局語系設定
+    lang = (
+        kwargs.get("lang")
+        or kwargs.get("curr_lang")
+        or st.session_state.get("current_lang", "繁體中文")
+    )
+    L = APPROVAL_I18N.get(lang, APPROVAL_I18N["繁體中文"])
+
+    st.title(L["page_title"])
+    st.caption(L["sub_title"])
+
+    if "approval_tasks" not in st.session_state:
+        st.session_state.approval_tasks = [
             {
-                "簽核單號": "APV-20260926-01",
-                "來源模組": "🏢 總務部 - 零用金",
-                "申請人": "李大同",
-                "申請項目": "拜訪客戶計程車費 ($45.0 USD)",
-                "申請日期": "2026-09-25",
-                "當前關卡": "關卡 1：部門主管審核",
-                "簽核層級需求": ["部門主管", "財務主管"],
-                "狀態": "🟡 待簽核",
-                "簽核歷程": []
+                "id": "APV-20260926-01",
+                "module": "總務部 - 零用金",
+                "applicant": "李大同",
+                "date": "2026-09-25",
+                "desc": "拜訪客戶計程車費 ($45.0 USD)",
+                "status": "待審核",
             },
             {
-                "簽核單號": "APV-20260926-02",
-                "來源模組": "🏢 總務部 - 固定資產",
-                "申請人": "張小美",
-                "申請項目": "報廢行政部舊印表機 (FA-2022-005)",
-                "申請日期": "2026-09-26",
-                "當前關卡": "關卡 2：總務主管複核",
-                "簽核層級需求": ["總務主管", "總經理"],
-                "狀態": "🟡 待簽核",
-                "簽核歷程": [
-                    {"簽核人": "張主管", "動作": "🟢 同意", "時間": "2026-09-26 10:00", "意見": "符合報廢年限"}
-                ]
-            }
+                "id": "APV-20260926-02",
+                "module": "採購部 - 廠商發票",
+                "applicant": "陳美麗",
+                "date": "2026-09-26",
+                "desc": "西寧廠塗裝粉體原料採購請款 ($12,500 USD)",
+                "status": "待審核",
+            },
         ]
 
-    # KPI 統計卡片
-    queue = st.session_state.approval_queue
-    pending_cnt = sum(1 for item in queue if "待簽核" in item["狀態"])
-    approved_cnt = sum(1 for item in queue if "已核准" in item["狀態"])
-    rejected_cnt = sum(1 for item in queue if "已駁回" in item["狀態"])
+    pending_items = [
+        item
+        for item in st.session_state.approval_tasks
+        if item["status"] == "待審核"
+    ]
+    approved_items = [
+        item
+        for item in st.session_state.approval_tasks
+        if item["status"] == "已核准"
+    ]
+    rejected_items = [
+        item
+        for item in st.session_state.approval_tasks
+        if item["status"] == "已駁回"
+    ]
 
-    c1, c2, c3 = st.columns(3)
-    c1.metric("⌛ 我的待簽核單據", f"{pending_cnt} 筆", delta="需處理" if pending_cnt > 0 else "無待辦")
-    c2.metric("🟢 本月已核准單據", f"{approved_cnt} 筆")
-    c3.metric("🔴 已駁回/退回單據", f"{rejected_cnt} 筆")
+    m1, m2, m3 = st.columns(3)
+    m1.metric(
+        L["metric_pending"],
+        f"{len(pending_items)} {L['unit_count']}",
+        L["action_needed"] if len(pending_items) > 0 else "0",
+    )
+    m2.metric(L["metric_approved"], f"{len(approved_items)} {L['unit_count']}")
+    m3.metric(L["metric_rejected"], f"{len(rejected_items)} {L['unit_count']}")
 
     st.markdown("---")
+    st.markdown(f"### {L['section_pending']}")
 
-    # 📥 待辦簽核面板
-    st.markdown("### 📥 待審核單據列表")
-    pending_items = [item for item in queue if "待簽核" in item["狀態"]]
-
-    if pending_items:
-        for idx, item in enumerate(pending_items):
-            with st.expander(f"📄 [{item['簽核單號']}] {item['來源模組']} — {item['申請項目']} (申請人: {item['申請人']})", expanded=(idx==0)):
-                col_info1, col_info2 = st.columns(2)
-                with col_info1:
-                    st.write(f"**申請日期：** {item['申請日期']}")
-                    st.write(f"**來源模組：** {item['來源模組']}")
-                    st.write(f"**當前審核關卡：** `{item['當前關卡']}`")
-                with col_info2:
-                    st.write(f"**申請人：** {item['申請人']}")
-                    st.write(f"**申請詳情：** {item['申請項目']}")
-
-                # 簽核歷程展示
-                if item["簽核歷程"]:
-                    st.markdown("**📜 歷史簽核紀錄：**")
-                    for log in item["簽核歷程"]:
-                        st.caption(f"• {log['時間']} | {log['簽核人']} : {log['動作']} — 意見: {log['意見']}")
-
-                # ✍️ 簽核操作表單
-                st.markdown("---")
-                with st.form(f"form_approval_{item['簽核單號']}"):
-                    user_role = st.session_state.user_info["role"]
-                    user_name = st.session_state.user_info["name"]
-                    
-                    st.write(f"**當前簽核執行人：** {user_name} ({user_role})")
-                    comment = st.text_input("審核意見 / 備註", placeholder="請輸入同意或駁回之原因...")
-                    
-                    btn_c1, btn_c2, btn_c3 = st.columns([1, 1, 2])
-                    with btn_c1:
-                        btn_approve = st.form_submit_button("🟢 同意 (Approve)", type="primary")
-                    with btn_c2:
-                        btn_reject = st.form_submit_button("🔴 駁回 (Reject)")
-
-                    if btn_approve:
-                        now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
-                        item["簽核歷程"].append({
-                            "簽核人": f"{user_name} ({user_role})",
-                            "動作": "🟢 同意",
-                            "時間": now_str,
-                            "意見": comment if comment else "同意辦理"
-                        })
-                        item["狀態"] = "🟢 已核准"
-                        st.success(f"✅ 單號 {item['簽核單號']} 已順利核准！")
-                        st.rerun()
-
-                    if btn_reject:
-                        now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
-                        item["簽核歷程"].append({
-                            "簽核人": f"{user_name} ({user_role})",
-                            "動作": "🔴 駁回",
-                            "時間": now_str,
-                            "意見": comment if comment else "退回重審"
-                        })
-                        item["狀態"] = "🔴 已駁回"
-                        st.error(f"❌ 單號 {item['簽核單號']} 已駁回！")
-                        st.rerun()
+    if not pending_items:
+        st.info(L["empty_pending"])
     else:
-        st.success("🎉 目前沒有任何待您審核的表單單據！")
+        for item in pending_items:
+            with st.expander(
+                f"📄 [{item['id']}] {item['module']} - {item['desc']}",
+                expanded=True,
+            ):
+                c1, c2 = st.columns(2)
+                c1.write(f"**{L['lbl_apply_date']}**: {item['date']}")
+                c1.write(f"**{L['lbl_applicant']}**: {item['applicant']}")
+                c2.write(f"**{L['lbl_module']}**: {item['module']}")
+                c2.write(f"**{L['lbl_detail']}**: {item['desc']}")
 
-    st.markdown("---")
+                btn_col1, btn_col2, _ = st.columns([1, 1, 3])
+                if btn_col1.button(
+                    L["btn_approve"], key=f"app_{item['id']}", type="primary"
+                ):
+                    item["status"] = "已核准"
+                    st.success(f"{item['id']} {L['msg_approved']}")
+                    st.rerun()
 
-    # 📜 歷史簽核清單
-    st.markdown("### 📜 歷史簽核紀錄與歸檔")
-    df_queue = pd.DataFrame(queue)
-    st.dataframe(df_queue, use_container_width=True)
+                if btn_col2.button(
+                    L["btn_reject"], key=f"rej_{item['id']}"
+                ):
+                    item["status"] = "已駁回"
+                    st.error(f"{item['id']} {L['msg_rejected']}")
+                    st.rerun()
+
+
+def show(*args, **kwargs):
+    render_approval_center(*args, **kwargs)
+
+
+def main(*args, **kwargs):
+    render_approval_center(*args, **kwargs)
