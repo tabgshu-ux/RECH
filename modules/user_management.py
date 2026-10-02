@@ -11,8 +11,9 @@ IT_I18N = {
         "sub_title": "管理集團部門結構、全球廠區據點擴建，以及跨國 ERP 模組授權 (RBAC) 與全系統操作軌跡稽核",
         "tab_sites": "🏢 跨國廠區與子公司管理",
         "tab_users": "👥 人員帳號與網頁授權",
-        "tab_rbac": "🔒 模組權限矩陣設定",
+        "tab_rbac": "🔒 模組權限矩陣設定 (ACL)",
         "tab_audit": "📜 全系統操作軌跡與稽核 (Audit Trail)",
+        # 廠區管理
         "site_sub_header": "🌐 全球廠區與海外子公司據點維護",
         "site_caption": "支援跨國企業動態擴張，隨時新增、修改或刪除海外新設廠房、研發中心或子公司",
         "sec_add_site": "➕ 新增海外廠房/分公司據點",
@@ -44,14 +45,24 @@ IT_I18N = {
         "btn_save_user_auth": "🔑 儲存並開通/更新帳號權限",
         "table_users_title": "📋 目前全集團開通帳號與權限清單",
         "msg_user_auth_success": "✅ 已成功為人員設定系統登入權限與網頁授權！",
+        # 矩陣專區
+        "matrix_title": "🔒 全企業角色與跨模組 Access Control List (ACL) 存取控制矩陣",
+        "matrix_caption": "可依照企業內部各部門職務角色設定細粒度模組存取權限，支援動態擴充角色欄位。",
+        "sec_add_role": "➕ 新增自訂職務角色",
+        "lbl_new_role_name": "新角色名稱 (例如: Quality Control 品保主管)",
+        "btn_add_role": "➕ 新增角色至矩陣",
+        "btn_save_acl": "💾 儲存權限矩陣設定",
+        "msg_acl_saved": "✅ 已成功更新並生效全系統 ACL 模組權限矩陣！",
+        "msg_role_added": "✅ 已成功新增系統角色欄位！",
     },
     "Tiếng Việt": {
         "page_title": "💻 Phòng IT - Quản lý Phân quyền & Hệ thống ERP",
         "sub_title": "Quản lý cơ cấu phòng ban, mở rộng nhà máy toàn cầu, phân quyền ERP (RBAC) và nhật ký thao tác.",
         "tab_sites": "🏢 Quản lý Nhà máy & Chi nhánh Quốc tế",
         "tab_users": "👥 Tài khoản & Phân quyền Trang Web",
-        "tab_rbac": "🔒 Cấu hình Ma trận Phân quyền (RBAC)",
+        "tab_rbac": "🔒 Cấu hình Ma trận Phân quyền (ACL)",
         "tab_audit": "📜 Nhật ký Thao tác & Kiểm toán (Audit Trail)",
+        # 廠區管理
         "site_sub_header": "🌐 Quản lý Chi nhánh & Nhà máy Toàn cầu",
         "site_caption": "Hỗ trợ mở rộng doanh nghiệp đa quốc gia, bạn có thể Thêm, Sửa hoặc Xóa nhà máy/chi nhánh mới bất kỳ lúc nào.",
         "sec_add_site": "➕ Thêm Nhà máy / Chi nhánh Mới",
@@ -64,7 +75,7 @@ IT_I18N = {
         "lbl_status": "Trạng thái hoạt động",
         "btn_add_site": "💾 Lưu và Tạo Chi nhánh Mới",
         "btn_update_site": "💾 Lưu Thay đổi",
-        "btn_delete_site": "🗑️️ Xác nhận Xóa Nhà máy này",
+        "btn_delete_site": "🗑 Xác nhận Xóa Nhà máy này",
         "exist_sites": "🌍 Danh sách Nhà máy Toàn cầu (Có thể nhấp đúp vào bảng để sửa trực tiếp)",
         "btn_save_table": "💾 Lưu Kết quả Sửa Bảng",
         "lbl_select_edit_site": "Chọn nhà máy cần chỉnh sửa:",
@@ -83,14 +94,24 @@ IT_I18N = {
         "btn_save_user_auth": "🔑 Lưu & Cấp quyền Phân quyền",
         "table_users_title": "📋 Danh sách Tài khoản & Phân quyền Hiện tại",
         "msg_user_auth_success": "✅ Đã cấp quyền đăng nhập thành công cho nhân viên!",
+        # 矩陣專區
+        "matrix_title": "🔒 Ma trận Phân quyền Truy cập (ACL) Theo Vai trò toàn Doanh nghiệp",
+        "matrix_caption": "Cấu hình quyền truy cập module chi tiết theo vai trò phòng ban, hỗ trợ thêm vai trò mới động.",
+        "sec_add_role": "➕ Thêm Vai trò / Chức danh Mới",
+        "lbl_new_role_name": "Tên vai trò mới (Ví dụ: QC Manager - Quản lý Quản chất)",
+        "btn_add_role": "➕ Thêm Vai trò vào Ma trận",
+        "btn_save_acl": "💾 Lưu Cấu hình Ma trận Phân quyền",
+        "msg_acl_saved": "✅ Đã cập nhật ma trận phân quyền ACL thành công!",
+        "msg_role_added": "✅ Đã thêm vai trò mới thành công!",
     },
     "English": {
         "page_title": "💻 IT Dept - Permissions & System Management Center",
         "sub_title": "Manage organization structure, global plant sites, RBAC access matrix, and system audit trail logs.",
         "tab_sites": "🏢 Global Sites & Subsidiaries",
         "tab_users": "👥 Users & Web Authorization",
-        "tab_rbac": "🔒 RBAC Permissions Matrix",
+        "tab_rbac": "🔒 Access Control Matrix (ACL)",
         "tab_audit": "📜 System Audit Trail Logs",
+        # 廠區管理
         "site_sub_header": "🌐 Global Sites & Overseas Subsidiaries Management",
         "site_caption": "Supports multinational expansion with full Add, Edit, and Delete capabilities for sites.",
         "sec_add_site": "➕ Add Overseas Plant / Subsidiary",
@@ -122,6 +143,15 @@ IT_I18N = {
         "btn_save_user_auth": "🔑 Save & Grant Permissions",
         "table_users_title": "📋 Authorized System Users & Access List",
         "msg_user_auth_success": "✅ User permissions saved and granted successfully!",
+        # 矩陣專區
+        "matrix_title": "🔒 Enterprise Access Control List (ACL) Permissions Matrix",
+        "matrix_caption": "Configure fine-grained module permissions per department role with dynamic role creation.",
+        "sec_add_role": "➕ Add Custom Role",
+        "lbl_new_role_name": "New Role Title (e.g. Quality Control Supervisor)",
+        "btn_add_role": "➕ Add Role to Matrix",
+        "btn_save_acl": "💾 Save Access Matrix Settings",
+        "msg_acl_saved": "✅ ACL Permissions matrix saved and applied successfully!",
+        "msg_role_added": "✅ New role added to matrix successfully!",
     },
 }
 
@@ -149,7 +179,7 @@ def render_user_management_page(*args, **kwargs):
     st.caption(L["sub_title"])
 
     # ----------------------------------------------------
-    # 🗄️ 1. 初始化 Session State (全域操作稽核日誌)
+    # 🗄️️ 1. 初始化 Session State
     # ----------------------------------------------------
     if "system_audit_logs" not in st.session_state:
         st.session_state.system_audit_logs = [
@@ -165,57 +195,135 @@ def render_user_management_page(*args, **kwargs):
                 "target": "ga_user (李總務)",
                 "detail": "開通 [🏢 總務與倉儲] 模組編輯權限",
                 "status": "🟢 正常",
-            },
-            {
-                "log_id": "AUD-20260927-002",
-                "timestamp": "2026-09-27 11:15:00",
-                "year": "2026",
-                "month": "09",
-                "day": "27",
-                "operator": "ga_user (李總務)",
-                "dept_module": "📦 倉儲管理",
-                "action_type": "📤 領料出庫",
-                "target": "RM-PP-001",
-                "detail": "領料出庫 500.0 kg，條碼比對通過 (4710123456012)",
-                "status": "🟢 正常",
-            },
-            {
-                "log_id": "AUD-20260926-005",
-                "timestamp": "2026-09-26 16:45:22",
-                "year": "2026",
-                "month": "09",
-                "day": "26",
-                "operator": "hr_manager (張主管)",
-                "dept_module": "👥 人事/行政",
-                "action_type": "➕ 新增員工",
-                "target": "VN-004 (Nguyễn Văn B)",
-                "detail": "建立越南廠新員工檔案，綁定起薪 9,000,000 VND",
-                "status": "🟢 正常",
-            },
+            }
         ]
 
-    # 初始化系統帳號權限清單
     if "system_users_db" not in st.session_state:
         st.session_state.system_users_db = [
             {
                 "id": "EMP-001",
-                "username": "admin@global.com",
+                "username": "admin@reetech.com",
                 "name": "張董事長",
                 "dept": "經營高層 / 董事會",
                 "title": "董事長 (Chairman)",
-                "role": "Admin",
+                "role": "Executive",
                 "auth_modules": "全系統 (All Modules)",
             },
             {
                 "id": "EMP-002",
-                "username": "nguyen.a@global.com",
+                "username": "nguyen.a@reetech.com",
                 "name": "Nguyễn Văn A",
                 "dept": "工程部",
                 "title": "Kỹ sư Tủ điện",
-                "role": "User",
+                "role": "Engineer",
                 "auth_modules": "研發/技術, 倉儲管理",
             },
         ]
+
+    # 初始化專業級 ACL 矩陣資料表
+    if "acl_matrix_db" not in st.session_state:
+        st.session_state.acl_matrix_db = pd.DataFrame({
+            "系統模組與功能頁面": [
+                "📈 營運戰情室 (Executive Dashboard)",
+                "💼 業務/報價/AR (Sales & Billing)",
+                "🛠️ 研發/工程估價 (R&D & BOM)",
+                "🛒 採購/外協/AP (Procurement)",
+                "📦 倉儲/領料/盤點 (Warehouse)",
+                "🧾 財務/會計/成本 (Finance & Tax)",
+                "👥 人事/假勤/薪酬 (HR & Payroll)",
+                "💻 資訊/IT/權限 (IT Administration)",
+            ],
+            "Admin (系統管理)": [
+                True,
+                True,
+                True,
+                True,
+                True,
+                True,
+                True,
+                True,
+            ],
+            "Executive (高層/董事會)": [
+                True,
+                True,
+                True,
+                True,
+                True,
+                True,
+                True,
+                False,
+            ],
+            "Sales (業務/行銷)": [
+                False,
+                True,
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+            ],
+            "Engineer (研發/工程)": [
+                False,
+                False,
+                True,
+                False,
+                True,
+                False,
+                False,
+                False,
+            ],
+            "Buyer (採購/外協)": [
+                False,
+                False,
+                False,
+                True,
+                True,
+                False,
+                False,
+                False,
+            ],
+            "Warehouse (倉儲/物流)": [
+                False,
+                False,
+                False,
+                False,
+                True,
+                False,
+                False,
+                False,
+            ],
+            "Accountant (財務/會計)": [
+                False,
+                True,
+                False,
+                True,
+                False,
+                True,
+                False,
+                False,
+            ],
+            "HR (人事/行政)": [
+                False,
+                False,
+                False,
+                False,
+                False,
+                False,
+                True,
+                False,
+            ],
+            "Operator (現場作業員)": [
+                False,
+                False,
+                False,
+                False,
+                True,
+                False,
+                False,
+                False,
+            ],
+        })
 
     tabs = st.tabs(
         [L["tab_sites"], L["tab_users"], L["tab_rbac"], L["tab_audit"]]
@@ -316,7 +424,6 @@ def render_user_management_page(*args, **kwargs):
         st.subheader(L["user_auth_title"])
         col_form, col_list = st.columns([1.1, 1])
 
-        # 讀取 Session State 中由 HR 建立的員工檔案
         hr_employees = st.session_state.get("employees_db", [])
         emp_options_map = {}
         if hr_employees:
@@ -333,7 +440,6 @@ def render_user_management_page(*args, **kwargs):
 
         with col_form:
             st.markdown(f"#### ➕ 開通/維護帳號與網頁權限")
-
             selected_emp_label = st.selectbox(
                 L["lbl_select_emp"], list(emp_options_map.keys())
             )
@@ -361,10 +467,13 @@ def render_user_management_page(*args, **kwargs):
                     L["lbl_password"], value="123456", type="password"
                 )
 
-                u_role = st.selectbox(
-                    L["lbl_role"],
-                    ["Admin (系統管理員)", "Manager (高層主管)", "User (一般員工)"],
-                )
+                # 讀取動態角色欄位
+                role_columns = [
+                    col
+                    for col in st.session_state.acl_matrix_db.columns
+                    if col != "系統模組與功能頁面"
+                ]
+                u_role = st.selectbox(L["lbl_role"], role_columns)
 
                 st.markdown(f"**{L['lbl_auth_modules']}**")
                 c_m1, c_m2 = st.columns(2)
@@ -383,7 +492,6 @@ def render_user_management_page(*args, **kwargs):
 
                 submit_user = st.form_submit_button(L["btn_save_user_auth"])
                 if submit_user:
-                    # 組合已勾選的授權模組
                     selected_mods = []
                     if auth_exec:
                         selected_mods.append("營運戰情")
@@ -398,20 +506,18 @@ def render_user_management_page(*args, **kwargs):
                     if auth_it:
                         selected_mods.append("IT")
 
-                    # 更新或新增至系統帳號清單
                     user_entry = {
                         "id": selected_emp_data.get("id", "EMP-000"),
                         "username": u_account,
                         "name": selected_emp_data.get("name", ""),
                         "dept": selected_emp_data.get("dept", ""),
                         "title": selected_emp_data.get("title", ""),
-                        "role": u_role.split(" ")[0],
+                        "role": u_role,
                         "auth_modules": ", ".join(selected_mods)
                         if selected_mods
                         else "無權限",
                     }
 
-                    # 覆蓋或追加
                     st.session_state.system_users_db = [
                         u
                         for u in st.session_state.system_users_db
@@ -419,7 +525,6 @@ def render_user_management_page(*args, **kwargs):
                     ]
                     st.session_state.system_users_db.append(user_entry)
 
-                    # 寫入 Audit Log
                     now_dt = datetime.datetime.now()
                     st.session_state.system_audit_logs.append({
                         "log_id": "AUD-" + now_dt.strftime("%Y%m%d-%H%M%S"),
@@ -446,24 +551,56 @@ def render_user_management_page(*args, **kwargs):
             )
 
     # ----------------------------------------------------
-    # TAB 3: 模組權限矩陣設定 (ACL)
+    # TAB 3: 模組權限矩陣設定 (ACL 升級版 - 製造業完整角色 + 動態新增)
     # ----------------------------------------------------
     with tabs[2]:
-        st.subheader("🔒 角色與模組 Access Control List (ACL) 矩陣")
-        acl_df = pd.DataFrame({
-            "模組頁面名稱": [
-                "📈 營運戰情室",
-                "💼 業務/行銷",
-                "🛠️ 研發/技術",
-                "🧾 財務",
-                "👥 人事/行政",
-                "💻 資訊/IT",
-            ],
-            "Admin (管理員)": [True, True, True, True, True, True],
-            "Manager (高層/主管)": [True, True, True, True, True, False],
-            "Sales (業務同仁)": [False, True, False, False, False, False],
-        })
-        st.data_editor(acl_df, use_container_width=True)
+        st.subheader(L["matrix_title"])
+        st.caption(L["matrix_caption"])
+
+        # 1. 動態新增新角色欄位區塊
+        with st.expander(L["sec_add_role"], expanded=False):
+            c_r1, c_r2 = st.columns([3, 1])
+            new_role_title = c_r1.text_input(
+                L["lbl_new_role_name"], key="add_role_title"
+            )
+            if c_r2.button(L["btn_add_role"], type="primary"):
+                if (
+                    new_role_title
+                    and new_role_title not in st.session_state.acl_matrix_db.columns
+                ):
+                    st.session_state.acl_matrix_db[new_role_title] = False
+                    st.success(L["msg_role_added"])
+                    st.rerun()
+                elif new_role_title in st.session_state.acl_matrix_db.columns:
+                    st.warning("⚠️️ 該角色已存在於權限矩陣中！")
+
+        st.divider()
+
+        # 2. 可互動勾選編輯之完整權限矩陣表格
+        edited_acl = st.data_editor(
+            st.session_state.acl_matrix_db,
+            use_container_width=True,
+            key="acl_editor_table",
+        )
+
+        if st.button(L["btn_save_acl"], type="primary"):
+            st.session_state.acl_matrix_db = edited_acl
+            now_dt = datetime.datetime.now()
+            st.session_state.system_audit_logs.append({
+                "log_id": "AUD-" + now_dt.strftime("%Y%m%d-%H%M%S"),
+                "timestamp": now_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                "year": str(now_dt.year),
+                "month": str(now_dt.month).zfill(2),
+                "day": str(now_dt.day).zfill(2),
+                "operator": "IT Admin",
+                "dept_module": "💻 資訊/IT",
+                "action_type": "🔒 ACL 權限矩陣更新",
+                "target": "全系統 Access Control Matrix",
+                "detail": "系統管理員修改並更新了角色與模組存取矩陣設定",
+                "status": "🟢 正常",
+            })
+            st.success(L["msg_acl_saved"])
+            st.rerun()
 
     # ----------------------------------------------------
     # TAB 4: 📜 全系統操作軌跡與稽核中心
