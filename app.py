@@ -19,7 +19,7 @@ import streamlit as st
 
 # 📱 100% 移動優先：設定頁面並預設手機側邊欄展開
 st.set_page_config(
-    page_title="裕豐電機工業 REETECH INDUSTRIAL - AI ERP",
+    page_title="裕豐電機工業 REETECH INDUSTRIAL AI ERP",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -32,14 +32,12 @@ MOBILE_CSS = """
 <style>
 /* 📱 針對手機小螢幕 (< 768px) 自動調整字體與邊距 */
 @media only screen and (max-width: 768px) {
-    /* 主標題大幅縮小，防止斷行變成 5-6 行 */
     h1 {
         font-size: 1.35rem !important;
         font-weight: 700 !important;
         line-height: 1.3 !important;
         margin-bottom: 0.3rem !important;
     }
-    /* 次級標題縮小 */
     h2 {
         font-size: 1.15rem !important;
         line-height: 1.3 !important;
@@ -48,22 +46,18 @@ MOBILE_CSS = """
         font-size: 1.05rem !important;
         line-height: 1.3 !important;
     }
-    /* 內文與說明文字自動微縮 */
     p, div, span, label {
         font-size: 0.9rem !important;
     }
-    /* 縮小內邊距，減少上下滑動距離 */
     .block-container {
         padding-top: 1rem !important;
         padding-bottom: 1rem !important;
         padding-left: 0.5rem !important;
         padding-right: 0.5rem !important;
     }
-    /* 側邊欄文字縮小 */
     [data-testid="stSidebar"] {
         font-size: 0.85rem !important;
     }
-    /* Metric 數據卡片數字與字體調整 */
     [data-testid="stMetricValue"] {
         font-size: 1.1rem !important;
     }
@@ -76,11 +70,25 @@ MOBILE_CSS = """
 st.markdown(MOBILE_CSS, unsafe_allow_html=True)
 
 # ----------------------------------------------------
+# 🏢 RECH 企業標準品牌 Logo 橫幅 HTML 元件
+# ----------------------------------------------------
+RECH_LOGO_HTML = """
+<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; padding: 6px 8px; background-color: #ffffff; border-radius: 6px; box-shadow: 0px 1px 3px rgba(0,0,0,0.1);">
+    <div style="font-size: 28px; font-weight: 900; color: #000066; letter-spacing: -1px; line-height: 1; font-family: Arial, sans-serif;">RECH</div>
+    <div style="border-left: 2px solid #000066; padding-left: 8px; line-height: 1.15; font-family: Arial, sans-serif;">
+        <div style="font-size: 13px; font-weight: 800; color: #000066; letter-spacing: 0.5px;">裕豐電機工業有限公司</div>
+        <div style="font-size: 8.5px; font-weight: 700; color: #000066; letter-spacing: 0.2px;">REETECH INDUSTRIAL CO., LTD</div>
+        <div style="font-size: 8px; font-weight: 700; color: #000066; letter-spacing: 0.1px;">CÔNG TY TNHH CN DŨ PHONG</div>
+    </div>
+</div>
+"""
+
+# ----------------------------------------------------
 # 2. 符合需求之階層多國語言字典 (i18n)
 # ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
-        "company_name": "⚡ 裕豐電機工業",
+        "company_name": "裕豐電機工業有限公司",
         "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
         "login_title": "⚡ 裕豐電機工業 REETECH INDUSTRIAL - 系統登入",
         "username": "帳號",
@@ -137,8 +145,8 @@ NAV_STRUCTURE = {
         },
     },
     "Tiếng Việt": {
-        "company_name": "⚡ REETECH INDUSTRIAL",
-        "company_sub": "Công ty TNHH REETECH INDUSTRIAL",
+        "company_name": "CÔNG TY TNHH CN DŨ PHONG",
+        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
         "login_title": "⚡ REETECH INDUSTRIAL - Đăng nhập hệ thống",
         "username": "Tài khoản",
         "password": "Mật khẩu",
@@ -204,7 +212,7 @@ NAV_STRUCTURE = {
         },
     },
     "English": {
-        "company_name": "⚡ REETECH INDUSTRIAL",
+        "company_name": "REETECH INDUSTRIAL CO., LTD",
         "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
         "login_title": "⚡ REETECH INDUSTRIAL - System Login",
         "username": "Username",
@@ -329,7 +337,7 @@ def safe_call_module(func, *args, **kwargs):
 
 
 # ----------------------------------------------------
-# 4. 登入系統
+# 4. 登入系統 (附帶企業標準 Logo)
 # ----------------------------------------------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -341,6 +349,8 @@ lang_dict = NAV_STRUCTURE.get(
 )
 
 if not st.session_state.logged_in:
+    # 呈現 RECH 企業標準 Logo 橫幅
+    st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
     st.title(lang_dict["login_title"])
     st.caption(lang_dict["company_sub"])
     st.markdown("---")
@@ -368,10 +378,9 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ----------------------------------------------------
-# 5. 側邊欄一般公司標準部門選單
+# 5. 側邊欄：RECH 企業標準 Logo 橫幅 + 語言選單
 # ----------------------------------------------------
-st.sidebar.title(lang_dict["company_name"])
-st.sidebar.caption(lang_dict["company_sub"])
+st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
 lang_list = ["繁體中文", "Tiếng Việt", "English"]
 selected_lang = st.sidebar.selectbox(
