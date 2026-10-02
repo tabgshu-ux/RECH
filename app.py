@@ -70,15 +70,15 @@ MOBILE_CSS = """
 st.markdown(MOBILE_CSS, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# 🏢 RECH 企業標準品牌 Logo 橫幅 HTML 元件
+# 🏢 RECH 企業品牌 Logo 橫幅 (自然融入網頁底色版)
 # ----------------------------------------------------
 RECH_LOGO_HTML = """
-<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; padding: 6px 8px; background-color: #ffffff; border-radius: 6px; box-shadow: 0px 1px 3px rgba(0,0,0,0.1);">
-    <div style="font-size: 28px; font-weight: 900; color: #000066; letter-spacing: -1px; line-height: 1; font-family: Arial, sans-serif;">RECH</div>
-    <div style="border-left: 2px solid #000066; padding-left: 8px; line-height: 1.15; font-family: Arial, sans-serif;">
-        <div style="font-size: 13px; font-weight: 800; color: #000066; letter-spacing: 0.5px;">裕豐電機工業有限公司</div>
-        <div style="font-size: 8.5px; font-weight: 700; color: #000066; letter-spacing: 0.2px;">REETECH INDUSTRIAL CO., LTD</div>
-        <div style="font-size: 8px; font-weight: 700; color: #000066; letter-spacing: 0.1px;">CÔNG TY TNHH CN DŨ PHONG</div>
+<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; padding: 6px 8px; background: transparent; border-bottom: 2px solid rgba(15, 23, 42, 0.15);">
+    <div style="font-size: 28px; font-weight: 900; color: #000055; letter-spacing: -1px; line-height: 1; font-family: 'Segoe UI', Arial, sans-serif;">RECH</div>
+    <div style="border-left: 2px solid #000055; padding-left: 8px; line-height: 1.15; font-family: 'Segoe UI', Arial, sans-serif;">
+        <div style="font-size: 13px; font-weight: 800; color: #000055; letter-spacing: 0.5px;">裕豐電機工業有限公司</div>
+        <div style="font-size: 8.5px; font-weight: 700; color: #1E293B; letter-spacing: 0.2px;">REETECH INDUSTRIAL CO., LTD</div>
+        <div style="font-size: 8px; font-weight: 700; color: #334155; letter-spacing: 0.1px;">CÔNG TY TNHH CN DŨ PHONG</div>
     </div>
 </div>
 """
@@ -337,7 +337,7 @@ def safe_call_module(func, *args, **kwargs):
 
 
 # ----------------------------------------------------
-# 4. 登入系統 (附帶企業標準 Logo)
+# 4. 登入系統 (附帶企業自然融入 Logo)
 # ----------------------------------------------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -349,7 +349,6 @@ lang_dict = NAV_STRUCTURE.get(
 )
 
 if not st.session_state.logged_in:
-    # 呈現 RECH 企業標準 Logo 橫幅
     st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
     st.title(lang_dict["login_title"])
     st.caption(lang_dict["company_sub"])
@@ -378,7 +377,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ----------------------------------------------------
-# 5. 側邊欄：RECH 企業標準 Logo 橫幅 + 語言選單
+# 5. 側邊欄：RECH 企業標誌 + 語言選單
 # ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
