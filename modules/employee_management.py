@@ -8,7 +8,7 @@ EMP_I18N = {
         "tab_profiles": "👤 跨國員工檔案管理",
         "tab_leave": "🌴 請假系統",
         "tab_permissions": "🔑 權限系統後台",
-        "tab_dept_setting": "🏢 自訂部門清單管理",
+        "tab_dept_setting": "🏢 部門組織維護 (新增/編輯/刪除)",
         "expander_add_emp": "➕ 新增跨國員工個人檔案",
         "step_1": "📍 步驟 1：選擇員工國籍/廠區 (選擇後即時切換下方欄位)",
         "lbl_site": "員工所屬國籍/廠區",
@@ -23,21 +23,31 @@ EMP_I18N = {
         "btn_save_emp": "💾 儲存員工個人檔案",
         "msg_emp_added": "✅ 已成功新增員工檔案！",
         "table_title": "📋 公司現有員工名冊",
-        "dept_mgr_title": "⚙️ 組織部門維護與動態新增",
-        "dept_mgr_caption": "您可以自由在此新增公司的新部門，新增後會自動同步於全系統的選擇下拉選單中。",
-        "lbl_new_dept_zh": "新部門名稱 (中文)",
-        "lbl_new_dept_vn": "新部門名稱 (越南文 Tiếng Việt)",
-        "lbl_new_dept_en": "新部門名稱 (英文 English)",
-        "btn_add_dept": "➕ 新增此部門至系統",
+        "dept_mgr_title": "⚙️ 企業部門組織動態管理 (全自由編修)",
+        "dept_mgr_caption": "您在此新增、修改或刪除的部門，將會即時同步至全系統的下拉選單中。",
+        "section_add": "➕ 新增新部門",
+        "section_edit": "✏️ 修改現有部門名稱",
+        "section_delete": "🗑️ 刪除廢止部門",
+        "lbl_select_edit_dept": "請選擇欲修改的部門：",
+        "lbl_select_del_dept": "請選擇欲刪除的部門：",
+        "lbl_new_dept_zh": "部門名稱 (中文)",
+        "lbl_new_dept_vn": "部門名稱 (越南文 Tiếng Việt)",
+        "lbl_new_dept_en": "部門名稱 (英文 English)",
+        "btn_add_dept": "➕ 確定新增部門",
+        "btn_update_dept": "💾 儲存修改內容",
+        "btn_delete_dept": "🗑️ 確定刪除此部門",
         "msg_dept_added": "✅ 已成功新增部門！",
-        "exist_depts": "📌 目前系統已有部門清單",
+        "msg_dept_updated": "✅ 已順利更新部門名稱！",
+        "msg_dept_deleted": "🗑️ 已成功刪除該部門！",
+        "exist_depts": "📌 目前系統完整部門清單 (可直接在表格內雙擊修改)",
+        "btn_save_table": "💾 儲存表格修改結果",
     },
     "Tiếng Việt": {
         "page_title": "👥 Quản lý Hồ sơ Nhân sự & Nhân viên Đa quốc gia",
         "tab_profiles": "👤 Hồ sơ Nhân viên Đa quốc gia",
         "tab_leave": "🌴 Hệ thống Nghỉ phép",
         "tab_permissions": "🔑 Phân quyền Hệ thống",
-        "tab_dept_setting": "🏢 Cấu hình Danh mục Phòng ban",
+        "tab_dept_setting": "🏢 Quản lý Cấu hình Phòng ban (Thêm/Sửa/Xóa)",
         "expander_add_emp": "➕ Thêm Hồ sơ Nhân viên Đa quốc gia Mới",
         "step_1": "📍 Bước 1: Chọn Quốc tịch / Nhà máy của Nhân viên",
         "lbl_site": "Quốc tịch / Nhà máy trực thuộc",
@@ -52,21 +62,31 @@ EMP_I18N = {
         "btn_save_emp": "💾 Lưu Hồ sơ Nhân viên",
         "msg_emp_added": "✅ Đã thêm hồ sơ nhân viên thành công!",
         "table_title": "📋 Danh sách Nhân viên Hiện tại",
-        "dept_mgr_title": "⚙️ Quản lý & Thêm mới Phòng ban Tổ chức",
-        "dept_mgr_caption": "Bạn có thể tự do thêm các phòng ban mới. Sau khi thêm, hệ thống sẽ tự động cập nhật vào danh sách chọn.",
+        "dept_mgr_title": "⚙️ Quản lý Động Cơ cấu Tổ chức Phòng ban",
+        "dept_mgr_caption": "Các thay đổi (Thêm/Sửa/Xóa) phòng ban tại đây sẽ tự động đồng bộ vào tất cả các menu chọn trong hệ thống.",
+        "section_add": "➕ Thêm Phòng ban Mới",
+        "section_edit": "✏️ Chỉnh sửa Tên Phòng ban Hiện có",
+        "section_delete": "🗑️ Xóa Phòng ban",
+        "lbl_select_edit_dept": "Chọn phòng ban cần chỉnh sửa:",
+        "lbl_select_del_dept": "Chọn phòng ban cần xóa:",
         "lbl_new_dept_zh": "Tên phòng ban (Tiếng Trung)",
         "lbl_new_dept_vn": "Tên phòng ban (Tiếng Việt)",
         "lbl_new_dept_en": "Tên phòng ban (Tiếng Anh)",
-        "btn_add_dept": "➕ Thêm Phòng ban Mới",
+        "btn_add_dept": "➕ Xạc nhận Thêm Phòng ban",
+        "btn_update_dept": "💾 Lưu Thay đổi",
+        "btn_delete_dept": "🗑️ Xóa Phòng ban này",
         "msg_dept_added": "✅ Đã thêm phòng ban mới thành công!",
-        "exist_depts": "📌 Danh sách Phòng ban Hiện có trong Hệ thống",
+        "msg_dept_updated": "✅ Đã cập nhật tên phòng ban thành công!",
+        "msg_dept_deleted": "🗑️ Đã xóa phòng ban thành công!",
+        "exist_depts": "📌 Danh sách Phòng ban Hiện có (Có thể nhấp đúp trực tiếp vào bảng để sửa)",
+        "btn_save_table": "💾 Lưu Kết quả Sửa Bảng",
     },
     "English": {
         "page_title": "👥 Global Employee Profiles & HR Management",
         "tab_profiles": "👤 Employee Profiles",
         "tab_leave": "🌴 Leave System",
         "tab_permissions": "🔑 Permissions Management",
-        "tab_dept_setting": "🏢 Custom Department Settings",
+        "tab_dept_setting": "🏢 Department Organization (Add/Edit/Delete)",
         "expander_add_emp": "➕ Add New International Employee Profile",
         "step_1": "📍 Step 1: Select Employee Nationality / Site Location",
         "lbl_site": "Nationality / Site Location",
@@ -81,20 +101,30 @@ EMP_I18N = {
         "btn_save_emp": "💾 Save Employee Profile",
         "msg_emp_added": "✅ Employee profile added successfully!",
         "table_title": "📋 Existing Employee List",
-        "dept_mgr_title": "⚙️ Dynamic Department Management",
-        "dept_mgr_caption": "You can add new custom departments here. They will automatically appear in all system dropdowns.",
+        "dept_mgr_title": "⚙️ Dynamic Department Management (Full CRUD)",
+        "dept_mgr_caption": "Any additions, edits, or deletions here will immediately update all system dropdowns.",
+        "section_add": "➕ Add New Department",
+        "section_edit": "✏️ Edit Existing Department",
+        "section_delete": "🗑️ Delete Department",
+        "lbl_select_edit_dept": "Select department to edit:",
+        "lbl_select_del_dept": "Select department to delete:",
         "lbl_new_dept_zh": "Department Name (Chinese)",
         "lbl_new_dept_vn": "Department Name (Vietnamese)",
         "lbl_new_dept_en": "Department Name (English)",
-        "btn_add_dept": "➕ Add New Department",
+        "btn_add_dept": "➕ Confirm Add Department",
+        "btn_update_dept": "💾 Save Changes",
+        "btn_delete_dept": "🗑️ Confirm Delete",
         "msg_dept_added": "✅ New department added successfully!",
-        "exist_depts": "📌 Current Department List",
+        "msg_dept_updated": "✅ Department updated successfully!",
+        "msg_dept_deleted": "🗑️ Department deleted successfully!",
+        "exist_depts": "📌 Current Department List (Double click cells to edit directly)",
+        "btn_save_table": "💾 Save Table Edits",
     },
 }
 
 
 def render_employee_management(*args, **kwargs):
-    # 自動偵測語系
+    # 自動偵測全域語系
     lang = (
         kwargs.get("lang")
         or kwargs.get("curr_lang")
@@ -104,7 +134,7 @@ def render_employee_management(*args, **kwargs):
 
     st.title(L["page_title"])
 
-    # 預設自訂部門資料庫（保存在 Session State 中可隨時擴充）
+    # 初始化預設自訂部門資料庫（保存在 Session State 中）
     if "custom_departments" not in st.session_state:
         st.session_state.custom_departments = [
             {
@@ -145,7 +175,7 @@ def render_employee_management(*args, **kwargs):
             },
         ]
 
-    # 依當前語系呈現下拉選單的部門名稱
+    # 依當前語言動態組裝下拉選單內容
     if lang == "Tiếng Việt":
         dept_options = [d["vn"] for d in st.session_state.custom_departments]
     elif lang == "English":
@@ -153,7 +183,7 @@ def render_employee_management(*args, **kwargs):
     else:
         dept_options = [d["zh"] for d in st.session_state.custom_departments]
 
-    # 預設員工資料
+    # 初始化預設員工清單
     if "employees_db" not in st.session_state:
         st.session_state.employees_db = [
             {
@@ -174,12 +204,13 @@ def render_employee_management(*args, **kwargs):
             },
         ]
 
-    # 4 大頁籤 (新增：自訂部門清單管理)
     tab1, tab2, tab3, tab4 = st.tabs(
         [L["tab_profiles"], L["tab_leave"], L["tab_permissions"], L["tab_dept_setting"]]
     )
 
-    # 頁籤 1：員工檔案管理
+    # ----------------------------------------------------
+    # 頁籤 1：跨國員工檔案管理
+    # ----------------------------------------------------
     with tab1:
         with st.expander(L["expander_add_emp"], expanded=True):
             st.markdown(f"#### {L['step_1']}")
@@ -220,36 +251,86 @@ def render_employee_management(*args, **kwargs):
         st.markdown(f"### {L['table_title']}")
         st.dataframe(pd.DataFrame(st.session_state.employees_db), use_container_width=True)
 
-    # 頁籤 2 & 3：請假與權限佔位
     with tab2:
         st.info("🌴 請假審核與假勤管理模組運作中。")
 
     with tab3:
         st.info("🔑 RBAC 權限矩陣控制台運作中。")
 
-    # 頁籤 4：自訂部門清單管理 (讓使用者自由動態新增部門)
+    # ----------------------------------------------------
+    # 頁籤 4：部門組織動態維護 (新增 / 編輯 / 刪除 CRUD)
+    # ----------------------------------------------------
     with tab4:
         st.markdown(f"### {L['dept_mgr_title']}")
         st.caption(L["dept_mgr_caption"])
 
-        col_d1, col_d2, col_d3 = st.columns(3)
-        new_zh = col_d1.text_input(L["lbl_new_dept_zh"], value="")
-        new_vn = col_d2.text_input(L["lbl_new_dept_vn"], value="")
-        new_en = col_d3.text_input(L["lbl_new_dept_en"], value="")
-
-        if st.button(L["btn_add_dept"], type="primary"):
-            if new_zh and new_vn:
-                st.session_state.custom_departments.append(
-                    {"zh": new_zh, "vn": new_vn, "en": new_en or new_zh}
-                )
-                st.success(L["msg_dept_added"])
-                st.rerun()
-            else:
-                st.warning("⚠️ 請至少輸入中文與越南文部門名稱！")
-
-        st.markdown("---")
+        # 1. 互動式可直接修改的表格 (st.data_editor)
         st.markdown(f"#### {L['exist_depts']}")
-        st.dataframe(pd.DataFrame(st.session_state.custom_departments), use_container_width=True)
+        df_depts = pd.DataFrame(st.session_state.custom_departments)
+        edited_df = st.data_editor(
+            df_depts,
+            use_container_width=True,
+            num_rows="dynamic",
+            key="dept_editor",
+        )
+
+        if st.button(L["btn_save_table"], type="primary"):
+            st.session_state.custom_departments = edited_df.to_dict("records")
+            st.success(L["msg_dept_updated"])
+            st.rerun()
+
+        st.divider()
+
+        # 2. 精準控制選單：新增、編輯與刪除專區
+        col_act1, col_act2 = st.columns(2)
+
+        # (A) 編輯現有部門區塊
+        with col_act1:
+            st.markdown(f"#### {L['section_edit']}")
+            all_zh_names = [d["zh"] for d in st.session_state.custom_departments]
+            if all_zh_names:
+                selected_edit_zh = st.selectbox(
+                    L["lbl_select_edit_dept"], all_zh_names
+                )
+                # 找出選取的部門物件
+                target_dept = next(
+                    d
+                    for d in st.session_state.custom_departments
+                    if d["zh"] == selected_edit_zh
+                )
+
+                edit_zh = st.text_input(
+                    L["lbl_new_dept_zh"], value=target_dept["zh"], key="edit_zh"
+                )
+                edit_vn = st.text_input(
+                    L["lbl_new_dept_vn"], value=target_dept["vn"], key="edit_vn"
+                )
+                edit_en = st.text_input(
+                    L["lbl_new_dept_en"], value=target_dept["en"], key="edit_en"
+                )
+
+                if st.button(L["btn_update_dept"]):
+                    target_dept["zh"] = edit_zh
+                    target_dept["vn"] = edit_vn
+                    target_dept["en"] = edit_en
+                    st.success(L["msg_dept_updated"])
+                    st.rerun()
+
+        # (B) 刪除舊部門區塊
+        with col_act2:
+            st.markdown(f"#### {L['section_delete']}")
+            if all_zh_names:
+                selected_del_zh = st.selectbox(
+                    L["lbl_select_del_dept"], all_zh_names
+                )
+                if st.button(L["btn_delete_dept"], type="secondary"):
+                    st.session_state.custom_departments = [
+                        d
+                        for d in st.session_state.custom_departments
+                        if d["zh"] != selected_del_zh
+                    ]
+                    st.success(L["msg_dept_deleted"])
+                    st.rerun()
 
 
 def show(*args, **kwargs):
