@@ -38,13 +38,13 @@ INSURANCE_RATES = {
 
 
 def render_payroll_management_page(engine=None, lang="繁體中文"):
-    st.title("💰 財務部 - 員工薪資與保險扣款結算中心")
-    st.caption("📱 專為裕豐電機跨國廠區設計 — 提供完整底薪、津貼、保險明細與員工正式薪資單列印")
+    st.title("💰 財務部 - 員工薪資與保險扣款試算中心")
+    st.caption("提供各廠區員工底薪、津貼、保險、借款扣款明細與薪資單列印")
 
     tab_calc, tab_attendance, tab_history = st.tabs([
-        "🧮 員工詳細薪資單與保險試算",
-        "📱 考勤與出勤記錄同步",
-        "📜 歷史薪資發放清冊與列印"
+        "🧮 員工薪資單與保險試算",
+        "📱 出勤與考勤記錄同步",
+        "📜 歷史發薪紀錄與清冊"
     ])
 
     # 讀取動態 HR 人員名冊
@@ -60,7 +60,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
     # 🧮 頁籤一：詳細薪資單與保險試算
     # ----------------------------------------------------
     with tab_calc:
-        st.markdown("### 📋 員工本月薪資結構、保險扣款與實發淨額詳細試算")
+        st.markdown("### 📋 員工本月薪資結構、保險、借款扣款與實發淨額明細")
         
         col_m1, col_m2 = st.columns(2)
         with col_m1:
@@ -89,11 +89,14 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
                 with c3:
                     full_attendance_bonus = st.number_input(f"全勤獎金 / 加班津貼", value=1000000.0 if curr == "VND" else 2000.0, step=500.0, key=f"bonus_{emp['id']}")
 
-                # 考勤請假或扣款調整
-                c4, c5 = st.columns(2)
+                # 扣款與借款調整欄位
+                c4, c5, c6 = st.columns(3)
                 with c4:
                     leave_deduction = st.number_input(f"請假/缺勤扣款金額", value=0.0, step=100.0, key=f"leave_{emp['id']}")
                 with c5:
+                    # 💡 新增：員工借款/預支扣款金額
+                    loan_deduction = st.number_input(f"本月借款/預支扣款", value=0.0, step=500.0, key=f"loan_{emp['id']}")
+                with c6:
                     other_allowance = st.number_input(f"其他加項/補發金額", value=0.0, step=100.0, key=f"other_{emp['id']}")
 
                 # 自動計算保險扣款
@@ -113,16 +116,16 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
                     unemploy_ins = base_salary * ins_info["housing_fund"]
                     total_ins = social_ins + health_ins + unemploy_ins
 
-                # 總應發與實發計算
+                # 總應發與實發計算（加入借款扣款）
                 gross_salary = base_salary + allowance + full_attendance_bonus + other_allowance
-                total_deduction = total_ins + leave_deduction
+                total_deduction = total_ins + leave_deduction + loan_deduction
                 net_payable = gross_salary - total_deduction
 
-                # 📊 正式且清晰的薪資單明細呈現
+                # 📊 薪資單明細呈現
                 st.markdown(
                     f"""
                     <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; font-family: sans-serif; color: #1e293b;">
-                        <h4 style="margin-top:0; color:#0f172a;">📄 裕豐電機工業 - 正式薪資結算明細單 ({pay_month.strftime('%Y年%m月')})</h4>
+                        <h4 style="margin-top:0; color:#0f172a;">📄 裕豐電機工業 - 薪資結算明細單 ({pay_month.strftime('%Y年%m月')})</h4>
                         <hr style="margin: 5px 0 10px 0; border:0; border-top:1px solid #cbd5e1;">
                         <b>1. 應發項目 (Earnings)：</b><br>
                         &nbsp;&nbsp;• 基本底薪: <b>{base_salary:,.2f} {curr}</b><br>
@@ -131,8 +134,9 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
                         &nbsp;&nbsp;• 其他補發項目: <b>{other_allowance:,.2f} {curr}</b><br>
                         &nbsp;&nbsp;👉 <b>總應發金額 (Gross): {gross_salary:,.2f} {curr}</b><br><br>
                         <b>2. 扣款項目 (Deductions)：</b><br>
-                        &nbsp;&nbsp;• 🛡️ 當地法定保險 ({ins_info['rate_label']}): <b>- {total_ins:,.2f} {curr}</b> (含社保/勞健保)<br>
+                        &nbsp;&nbsp;• 🛡️ 當地法定保險 ({ins_info['rate_label']}): <b>- {total_ins:,.2f} {curr}</b><br>
                         &nbsp;&nbsp;• ⏰ 請假/缺勤扣款: <b>- {leave_deduction:,.2f} {curr}</b><br>
+                        &nbsp;&nbsp;• 💳 員工借款/預支扣款: <b>- {loan_deduction:,.2f} {curr}</b><br>
                         &nbsp;&nbsp;👉 <b>總扣款金額: {total_deduction:,.2f} {curr}</b><br>
                         <hr style="margin: 10px 0; border:0; border-top:1px solid #cbd5e1;">
                         <h3 style="color: #047857; margin:0;">💰 本月實發淨額 (Net Payable): {net_payable:,.2f} {curr}</h3>
@@ -143,20 +147,20 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
 
                 col_btn1, col_btn2 = st.columns(2)
                 with col_btn1:
-                    if st.button(f"🖨️ 列印/匯出員工薪資單 [{emp['name']}]", key=f"print_{emp['id']}"):
-                        st.success(f"✅ 已成功產生 {emp['name']} 的正式薪資單檔案，可連接印表機列印！")
+                    if st.button(f"🖨️ 列印/匯出薪資單 [{emp['name']}]", key=f"print_{emp['id']}"):
+                        st.success(f"✅ 已成功產生 {emp['name']} 的薪資單，可連接印表機列印。")
                 with col_btn2:
-                    if st.button(f"💾 正式核准並入帳 [{emp['name']}]", type="primary", key=f"approve_{emp['id']}"):
-                        st.success(f"🎉 已成功核准 {emp['name']} 本月薪資 ({net_payable:,.2f} {curr}) 並寫入會計傳票！")
+                    if st.button(f"💾 確認核准並入帳 [{emp['name']}]", type="primary", key=f"approve_{emp['id']}"):
+                        st.success(f"🎉 已成功核准 {emp['name']} 本月薪資 ({net_payable:,.2f} {curr})！")
 
                 st.divider()
 
     # ----------------------------------------------------
-    # 📱 頁籤二：考勤記錄
+    # 📱 頁籤二：出勤記錄
     # ----------------------------------------------------
     with tab_attendance:
-        st.markdown("### 📱 考勤與出勤打卡時數總結")
-        st.info("整合廠區指紋機與出勤系統，供薪資計算時作為請假與全勤獎金發放依據。")
+        st.markdown("### 📱 出勤與考勤時數總結")
+        st.info("提供請假與全勤獎金發放依據。")
         
         mock_att = [
             {"員工編號": "EMP-001", "姓名": "張董事長", "應出勤天數": 22, "實際出勤": 22, "請假時數": 0, "全勤狀態": "🌟 全勤"},
@@ -165,11 +169,11 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         st.dataframe(pd.DataFrame(mock_att), use_container_width=True)
 
     # ----------------------------------------------------
-    # 📜 頁籤三：歷史薪資報表
+    # 📜 頁籤三：歷史發薪紀錄
     # ----------------------------------------------------
     with tab_history:
-        st.markdown("### 📜 歷年發薪紀錄與會計總表")
-        st.caption("提供財務部與會計師查閱各月份全球員工薪資發放總表。")
+        st.markdown("### 📜 歷史發薪紀錄與清冊")
+        st.caption("供財務與會計部查閱各月份薪資發放總表。")
 
 
 def show(engine=None, lang="繁體中文"):
