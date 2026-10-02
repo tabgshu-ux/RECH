@@ -4,9 +4,7 @@ import pandas as pd
 import psycopg2
 import streamlit as st
 
-# ----------------------------------------------------
 # 🌐 多語系字典 (i18n)
-# ----------------------------------------------------
 IT_I18N = {
     "繁體中文": {
         "page_title": "💻 資訊/IT 部門 — 權限與系統管理中心",
@@ -35,6 +33,17 @@ IT_I18N = {
         "msg_site_added": "🎉 新廠區據點已成功建立！集團戰情室與 KPI 面板已同步更新連動。",
         "msg_site_updated": "✅ 已成功更新廠區據點資料！",
         "msg_site_deleted": "🗑️ 已成功刪除該廠區據點！",
+        # 人員授權專區
+        "user_auth_title": "👤 選擇人事建立之員工並開通系統授權",
+        "lbl_select_emp": "選擇人事 (HR) 檔案建立之人員：",
+        "lbl_username": "登入帳號 (Email 或 工號)*",
+        "lbl_password": "登入密碼*",
+        "lbl_dept": "歸屬部門 (由 HR 自動帶入)",
+        "lbl_role": "系統權限角色 (Role)",
+        "lbl_auth_modules": "🔓 可開啟之網頁/模組授權",
+        "btn_save_user_auth": "🔑 儲存並開通/更新帳號權限",
+        "table_users_title": "📋 目前全集團開通帳號與權限清單",
+        "msg_user_auth_success": "✅ 已成功為人員設定系統登入權限與網頁授權！",
     },
     "Tiếng Việt": {
         "page_title": "💻 Phòng IT - Quản lý Phân quyền & Hệ thống ERP",
@@ -55,7 +64,7 @@ IT_I18N = {
         "lbl_status": "Trạng thái hoạt động",
         "btn_add_site": "💾 Lưu và Tạo Chi nhánh Mới",
         "btn_update_site": "💾 Lưu Thay đổi",
-        "btn_delete_site": "🗑️ Xác nhận Xóa Nhà máy này",
+        "btn_delete_site": "🗑️️ Xác nhận Xóa Nhà máy này",
         "exist_sites": "🌍 Danh sách Nhà máy Toàn cầu (Có thể nhấp đúp vào bảng để sửa trực tiếp)",
         "btn_save_table": "💾 Lưu Kết quả Sửa Bảng",
         "lbl_select_edit_site": "Chọn nhà máy cần chỉnh sửa:",
@@ -63,6 +72,17 @@ IT_I18N = {
         "msg_site_added": "🎉 Đã thêm chi nhánh nhà máy mới thành công!",
         "msg_site_updated": "✅ Đã cập nhật thông tin nhà máy thành công!",
         "msg_site_deleted": "🗑️ Đã xóa chi nhánh nhà máy thành công!",
+        # 人員授權專區
+        "user_auth_title": "👤 Chọn Nhân viên từ Nhân sự (HR) để Cấp quyền",
+        "lbl_select_emp": "Chọn nhân viên do HR đã tạo hồ sơ:",
+        "lbl_username": "Tài khoản đăng nhập (Email/Mã NV)*",
+        "lbl_password": "Mật khẩu đăng nhập*",
+        "lbl_dept": "Phòng ban (Tự động tải từ HR)",
+        "lbl_role": "Vai trò hệ thống (Role)",
+        "lbl_auth_modules": "🔓 Các trang web / Module được phép truy cập",
+        "btn_save_user_auth": "🔑 Lưu & Cấp quyền Phân quyền",
+        "table_users_title": "📋 Danh sách Tài khoản & Phân quyền Hiện tại",
+        "msg_user_auth_success": "✅ Đã cấp quyền đăng nhập thành công cho nhân viên!",
     },
     "English": {
         "page_title": "💻 IT Dept - Permissions & System Management Center",
@@ -91,6 +111,17 @@ IT_I18N = {
         "msg_site_added": "🎉 New site created successfully!",
         "msg_site_updated": "✅ Site details updated successfully!",
         "msg_site_deleted": "🗑️ Site deleted successfully!",
+        # 人員授權專區
+        "user_auth_title": "👤 Select Employee Created by HR & Grant Access",
+        "lbl_select_emp": "Select employee profile from HR records:",
+        "lbl_username": "Login Account (Email / Staff ID)*",
+        "lbl_password": "Login Password*",
+        "lbl_dept": "Department (Auto-filled from HR)",
+        "lbl_role": "System Permission Role",
+        "lbl_auth_modules": "🔓 Authorized Pages / Modules",
+        "btn_save_user_auth": "🔑 Save & Grant Permissions",
+        "table_users_title": "📋 Authorized System Users & Access List",
+        "msg_user_auth_success": "✅ User permissions saved and granted successfully!",
     },
 }
 
@@ -161,78 +192,37 @@ def render_user_management_page(*args, **kwargs):
                 "detail": "建立越南廠新員工檔案，綁定起薪 9,000,000 VND",
                 "status": "🟢 正常",
             },
-            {
-                "log_id": "AUD-20260815-003",
-                "timestamp": "2026-08-15 09:10:05",
-                "year": "2026",
-                "month": "08",
-                "day": "15",
-                "operator": "accountant (王會計)",
-                "dept_module": "🧾 財務管理",
-                "action_type": "📄 應付帳款核銷",
-                "target": "AP-202608-012",
-                "detail": "核銷越南廠原料採購單據 42,000,000 VND",
-                "status": "🟢 正常",
-            },
-            {
-                "log_id": "AUD-20260110-001",
-                "timestamp": "2026-01-10 08:00:12",
-                "year": "2026",
-                "month": "01",
-                "day": "10",
-                "operator": "system_job",
-                "dept_module": "💻 資訊/IT",
-                "action_type": "⚙️ 系統備份",
-                "target": "System Database",
-                "detail": "完成年度系統資料庫例行自動備份",
-                "status": "🟢 正常",
-            },
         ]
 
-    # 同步倉儲異動紀錄至全域稽核日誌
-    if "inventory_logs" in st.session_state and st.session_state.inventory_logs:
-        existing_log_ids = {
-            log["log_id"] for log in st.session_state.system_audit_logs
-        }
-        for inv in st.session_state.inventory_logs:
-            if inv.get("log_id") and inv["log_id"] not in existing_log_ids:
-                dt_str = inv.get("date", str(datetime.date.today()))
-                parts = dt_str.split("-")
-                yr = parts[0] if len(parts) > 0 else "2026"
-                mo = parts[1] if len(parts) > 1 else "09"
-                dy = parts[2] if len(parts) > 2 else "27"
-
-                st.session_state.system_audit_logs.append({
-                    "log_id": inv["log_id"],
-                    "timestamp": dt_str + " 10:00:00",
-                    "year": yr,
-                    "month": mo,
-                    "day": dy,
-                    "operator": inv.get("operator", "System User"),
-                    "dept_module": "📦 倉儲管理",
-                    "action_type": inv.get("type", "庫存變更"),
-                    "target": str(inv.get("item_code", "-"))
-                    + " ("
-                    + str(inv.get("item_name", ""))
-                    + ")",
-                    "detail": str(inv.get("remark", ""))
-                    + " [數量: "
-                    + str(inv.get("change_qty", 0))
-                    + " "
-                    + str(inv.get("unit", ""))
-                    + "]",
-                    "status": "🚨 異常"
-                    if "異常" in inv.get("type", "")
-                    or "盤虧" in inv.get("type", "")
-                    else "🟢 正常",
-                })
+    # 初始化系統帳號權限清單
+    if "system_users_db" not in st.session_state:
+        st.session_state.system_users_db = [
+            {
+                "id": "EMP-001",
+                "username": "admin@global.com",
+                "name": "張董事長",
+                "dept": "經營高層 / 董事會",
+                "title": "董事長 (Chairman)",
+                "role": "Admin",
+                "auth_modules": "全系統 (All Modules)",
+            },
+            {
+                "id": "EMP-002",
+                "username": "nguyen.a@global.com",
+                "name": "Nguyễn Văn A",
+                "dept": "工程部",
+                "title": "Kỹ sư Tủ điện",
+                "role": "User",
+                "auth_modules": "研發/技術, 倉儲管理",
+            },
+        ]
 
     tabs = st.tabs(
         [L["tab_sites"], L["tab_users"], L["tab_rbac"], L["tab_audit"]]
     )
 
     # ----------------------------------------------------
-    # TAB 1: 跨國廠區與子公司動態管理 (完整 CRUD: 新增/編輯/刪除)
+    # TAB 1: 跨國廠區與子公司動態管理
     # ----------------------------------------------------
     with tabs[0]:
         st.subheader(L["site_sub_header"])
@@ -266,7 +256,6 @@ def render_user_management_page(*args, **kwargs):
                 },
             ]
 
-        # 1. 獨立新增廠區區塊
         with st.expander(L["sec_add_site"], expanded=True):
             with st.form("add_factory_form", clear_on_submit=True):
                 col_a1, col_a2 = st.columns(2)
@@ -302,29 +291,10 @@ def render_user_management_page(*args, **kwargs):
                             "revenue": "$0.00",
                             "status": f_status,
                         })
-
-                        now_dt = datetime.datetime.now()
-                        st.session_state.system_audit_logs.append({
-                            "log_id": "AUD-"
-                            + now_dt.strftime("%Y%m%d-%H%M%S"),
-                            "timestamp": now_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                            "year": str(now_dt.year),
-                            "month": str(now_dt.month).zfill(2),
-                            "day": str(now_dt.day).zfill(2),
-                            "operator": "IT Admin",
-                            "dept_module": "💻 資訊/IT",
-                            "action_type": "🏭 新增廠區據點",
-                            "target": f_name,
-                            "detail": f"新增廠區代碼 [{f_id}]，幣別: {f_currency}，狀態: {f_status}",
-                            "status": "🟢 正常",
-                        })
-
                         st.success(L["msg_site_added"])
                         st.rerun()
 
         st.divider()
-
-        # 2. 數據編輯器 (可以直接在表格點雙擊修改文字)
         st.markdown(f"#### {L['exist_sites']}")
         df_factories = pd.DataFrame(st.session_state.factory_list)
         edited_factories = st.data_editor(
@@ -339,166 +309,144 @@ def render_user_management_page(*args, **kwargs):
             st.success(L["msg_site_updated"])
             st.rerun()
 
-        st.divider()
-
-        # 3. 選單式編輯與刪除區塊 (雙保險)
-        col_s1, col_s2 = st.columns(2)
-
-        with col_s1:
-            st.markdown(f"#### {L['sec_edit_site']}")
-            all_factory_names = [
-                f["name"] for f in st.session_state.factory_list
-            ]
-            if all_factory_names:
-                selected_edit_f = st.selectbox(
-                    L["lbl_select_edit_site"], all_factory_names, key="edit_f_sel"
-                )
-                target_f = next(
-                    f
-                    for f in st.session_state.factory_list
-                    if f["name"] == selected_edit_f
-                )
-
-                e_id = st.text_input(
-                    L["lbl_site_id"], value=target_f["id"], key="e_f_id"
-                )
-                e_name = st.text_input(
-                    L["lbl_site_name"], value=target_f["name"], key="e_f_name"
-                )
-                e_country = st.text_input(
-                    L["lbl_country"],
-                    value=target_f["country"],
-                    key="e_f_country",
-                )
-                e_curr = st.selectbox(
-                    L["lbl_currency"],
-                    ["USD", "VND", "TWD", "RMB", "IDR", "MXN", "EUR"],
-                    index=["USD", "VND", "TWD", "RMB", "IDR", "MXN", "EUR"].index(
-                        target_f["currency"]
-                    )
-                    if target_f["currency"]
-                    in ["USD", "VND", "TWD", "RMB", "IDR", "MXN", "EUR"]
-                    else 0,
-                    key="e_f_curr",
-                )
-
-                if st.button(L["btn_update_site"]):
-                    target_f["id"] = e_id
-                    target_f["name"] = e_name
-                    target_f["country"] = e_country
-                    target_f["currency"] = e_curr
-                    st.success(L["msg_site_updated"])
-                    st.rerun()
-
-        with col_s2:
-            st.markdown(f"#### {L['sec_delete_site']}")
-            if all_factory_names:
-                selected_del_f = st.selectbox(
-                    L["lbl_select_del_site"], all_factory_names, key="del_f_sel"
-                )
-                if st.button(L["btn_delete_site"], type="secondary"):
-                    st.session_state.factory_list = [
-                        f
-                        for f in st.session_state.factory_list
-                        if f["name"] != selected_del_f
-                    ]
-                    st.success(L["msg_site_deleted"])
-                    st.rerun()
-
     # ----------------------------------------------------
-    # TAB 2: 人員帳號與網頁授權
+    # TAB 2: 人員帳號與網頁授權（連動 HR 人事資料）
     # ----------------------------------------------------
     with tabs[1]:
-        st.subheader("新增人員與選單授權設定")
-        col_form, col_list = st.columns([1, 1])
+        st.subheader(L["user_auth_title"])
+        col_form, col_list = st.columns([1.1, 1])
+
+        # 讀取 Session State 中由 HR 建立的員工檔案
+        hr_employees = st.session_state.get("employees_db", [])
+        emp_options_map = {}
+        if hr_employees:
+            for emp in hr_employees:
+                label = f"{emp.get('id', '')} - {emp.get('name', '')} ({emp.get('dept', '')} / {emp.get('title', '')})"
+                emp_options_map[label] = emp
+        else:
+            emp_options_map["EMP-001 - 張董事長 (經營高層 / 董事長)"] = {
+                "id": "EMP-001",
+                "name": "張董事長",
+                "dept": "經營高層",
+                "title": "董事長",
+            }
 
         with col_form:
-            st.markdown("#### ➕ 新增/編輯系統帳號與權限")
-            with st.form("add_user_form", clear_on_submit=True):
-                username = st.text_input(
-                    "登入帳號 (Email/工號)*", placeholder="alex.chen@global.com"
+            st.markdown(f"#### ➕ 開通/維護帳號與網頁權限")
+
+            selected_emp_label = st.selectbox(
+                L["lbl_select_emp"], list(emp_options_map.keys())
+            )
+            selected_emp_data = emp_options_map[selected_emp_label]
+
+            with st.form("auth_user_form", clear_on_submit=False):
+                col_u1, col_u2 = st.columns(2)
+                u_name = col_u1.text_input(
+                    "員工姓名 (HR 帶入)",
+                    value=selected_emp_data.get("name", ""),
+                    disabled=True,
                 )
-                full_name = st.text_input("使用者姓名*", placeholder="陳大明")
-                password = st.text_input("初始密碼*", type="password")
-                dept = st.selectbox(
-                    "歸屬部門",
-                    [
-                        "IT 資訊部",
-                        "董事長室/總經理室",
-                        "業務部",
-                        "研發部",
-                        "財務部",
-                        "人事行政部",
-                    ],
-                )
-                role = st.selectbox(
-                    "系統角色",
-                    [
-                        "Admin (系統管理員)",
-                        "Manager (主管/董事長)",
-                        "User (一般員工)",
-                    ],
+                u_dept = col_u2.text_input(
+                    L["lbl_dept"],
+                    value=selected_emp_data.get("dept", ""),
+                    disabled=True,
                 )
 
-                st.markdown("**🔓 可開啟之網頁/模組授權**")
-                auth_exec = st.checkbox(
-                    "📈 營運戰情室 (Executive)", value=True
+                col_u3, col_u4 = st.columns(2)
+                u_account = col_u3.text_input(
+                    L["lbl_username"],
+                    value=f"{selected_emp_data.get('id', '').lower()}@reetech.com",
                 )
-                auth_sales = st.checkbox(
-                    "💼 業務/行銷 (Sales & Marketing)", value=True
-                )
-                auth_rd = st.checkbox(
-                    "🛠️ 研發/技術 (R&D & Engineering)", value=True
-                )
-                auth_finance = st.checkbox(
-                    "🧾 財務 (Finance)", value=False
-                )
-                auth_hr = st.checkbox(
-                    "👥 人事/行政 (HR & Admin)", value=False
+                u_password = col_u4.text_input(
+                    L["lbl_password"], value="123456", type="password"
                 )
 
-                submit_user = st.form_submit_button(
-                    "💾 儲存並啟用帳號與授權"
+                u_role = st.selectbox(
+                    L["lbl_role"],
+                    ["Admin (系統管理員)", "Manager (高層主管)", "User (一般員工)"],
                 )
+
+                st.markdown(f"**{L['lbl_auth_modules']}**")
+                c_m1, c_m2 = st.columns(2)
+                auth_exec = c_m1.checkbox("📈 營運戰情室 (Executive)", value=True)
+                auth_sales = c_m1.checkbox(
+                    "💼 業務/應收帳款 (Sales & AR)", value=True
+                )
+                auth_eng = c_m1.checkbox(
+                    "🛠️ 研發/工程估價 (R&D & Engineering)", value=True
+                )
+                auth_proc = c_m2.checkbox(
+                    "🛒 採購與應付帳款 (Procurement & AP)", value=False
+                )
+                auth_hr = c_m2.checkbox("👥 人力資源 (HR & Admin)", value=False)
+                auth_it = c_m2.checkbox("💻 資訊/IT 管理 (IT Admin)", value=False)
+
+                submit_user = st.form_submit_button(L["btn_save_user_auth"])
                 if submit_user:
-                    if not username or not full_name:
-                        st.warning("請填寫帳號與姓名！")
-                    else:
-                        now_dt = datetime.datetime.now()
-                        st.session_state.system_audit_logs.append({
-                            "log_id": "AUD-"
-                            + now_dt.strftime("%Y%m%d-%H%M%S"),
-                            "timestamp": now_dt.strftime("%Y-%m-%d %H:%M:%S"),
-                            "year": str(now_dt.year),
-                            "month": str(now_dt.month).zfill(2),
-                            "day": str(now_dt.day).zfill(2),
-                            "operator": "IT Admin",
-                            "dept_module": "💻 資訊/IT",
-                            "action_type": "👤 新增/修改帳號",
-                            "target": f"{full_name} ({username})",
-                            "detail": f"角色: {role} | 部門: {dept}",
-                            "status": "🟢 正常",
-                        })
-                        st.success(
-                            f"✅ 使用者 [{full_name}] 授權設定成功！已同步紀錄於 IT 全域日誌。"
-                        )
+                    # 組合已勾選的授權模組
+                    selected_mods = []
+                    if auth_exec:
+                        selected_mods.append("營運戰情")
+                    if auth_sales:
+                        selected_mods.append("銷售/AR")
+                    if auth_eng:
+                        selected_mods.append("工程估價")
+                    if auth_proc:
+                        selected_mods.append("採購/AP")
+                    if auth_hr:
+                        selected_mods.append("人事")
+                    if auth_it:
+                        selected_mods.append("IT")
+
+                    # 更新或新增至系統帳號清單
+                    user_entry = {
+                        "id": selected_emp_data.get("id", "EMP-000"),
+                        "username": u_account,
+                        "name": selected_emp_data.get("name", ""),
+                        "dept": selected_emp_data.get("dept", ""),
+                        "title": selected_emp_data.get("title", ""),
+                        "role": u_role.split(" ")[0],
+                        "auth_modules": ", ".join(selected_mods)
+                        if selected_mods
+                        else "無權限",
+                    }
+
+                    # 覆蓋或追加
+                    st.session_state.system_users_db = [
+                        u
+                        for u in st.session_state.system_users_db
+                        if u["id"] != user_entry["id"]
+                    ]
+                    st.session_state.system_users_db.append(user_entry)
+
+                    # 寫入 Audit Log
+                    now_dt = datetime.datetime.now()
+                    st.session_state.system_audit_logs.append({
+                        "log_id": "AUD-" + now_dt.strftime("%Y%m%d-%H%M%S"),
+                        "timestamp": now_dt.strftime("%Y-%m-%d %H:%M:%S"),
+                        "year": str(now_dt.year),
+                        "month": str(now_dt.month).zfill(2),
+                        "day": str(now_dt.day).zfill(2),
+                        "operator": "IT Admin",
+                        "dept_module": "💻 資訊/IT",
+                        "action_type": "🔑 帳號授權開通",
+                        "target": f"{user_entry['name']} ({u_account})",
+                        "detail": f"部門: {user_entry['dept']} | 角色: {user_entry['role']} | 開通模組: {user_entry['auth_modules']}",
+                        "status": "🟢 正常",
+                    })
+
+                    st.success(L["msg_user_auth_success"])
+                    st.rerun()
 
         with col_list:
-            st.markdown("#### 📋 目前全集團帳號清單")
-            mock_users = pd.DataFrame({
-                "帳號": [
-                    "admin@global.com",
-                    "ceo@global.com",
-                    "sales01@global.com",
-                ],
-                "姓名": ["IT 管理員", "董事長", "Alex Chen"],
-                "部門": ["資訊部", "董事長室", "業務部"],
-                "角色": ["Admin", "Manager", "User"],
-            })
-            st.dataframe(mock_users, use_container_width=True)
+            st.markdown(f"#### {L['table_users_title']}")
+            st.dataframe(
+                pd.DataFrame(st.session_state.system_users_db),
+                use_container_width=True,
+            )
 
     # ----------------------------------------------------
-    # TAB 3: 模組權限矩陣設定
+    # TAB 3: 模組權限矩陣設定 (ACL)
     # ----------------------------------------------------
     with tabs[2]:
         st.subheader("🔒 角色與模組 Access Control List (ACL) 矩陣")
@@ -518,7 +466,7 @@ def render_user_management_page(*args, **kwargs):
         st.data_editor(acl_df, use_container_width=True)
 
     # ----------------------------------------------------
-    # TAB 4: 📜 全系統操作軌跡與稽核中心 (原汁原味 100% 保留)
+    # TAB 4: 📜 全系統操作軌跡與稽核中心
     # ----------------------------------------------------
     with tabs[3]:
         st.subheader("📜 系統操作與異動歷史紀錄 (System Audit Logs)")
