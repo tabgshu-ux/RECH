@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine, text
 import streamlit as st
 
-# 使用 Supabase 連線池 (使用 5432 埠配合嚴格的池控管)
+# 使用 Supabase 5432 埠，並設定嚴格的池控管與逾時自動回收
 DB_URL = "postgresql+psycopg2://postgres.wvsqbefyeykmueffcbwd:Reetech2026@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require"
 
 @st.cache_resource
@@ -24,7 +24,7 @@ def get_db_engine():
 
 @contextmanager
 def get_db_connection():
-    """安全取得資料庫連線的 Context Manager，用完立刻自動釋放連線"""
+    """安全取得資料庫連線的 Context Manager，用完立刻自動釋放"""
     engine = get_db_engine()
     if not engine:
         yield None
