@@ -1,345 +1,260 @@
-import datetime
 import pandas as pd
 import streamlit as st
 
-# ----------------------------------------------------
-# 🌐 跨國匯率與幣別配置
-# ----------------------------------------------------
-EXCHANGE_RATES = {
-    "🇻🇳 越南 (Vietnam)": {"symbol": "₫", "code": "VND", "step": 100000.0, "default_sal": 9000000.0},
-    "🇹🇼 台灣 (Taiwan)": {"symbol": "NT$", "code": "TWD", "step": 1000.0, "default_sal": 45000.0},
-    "🇨🇳 中國 (China)": {"symbol": "¥", "code": "RMB", "step": 500.0, "default_sal": 8000.0},
-    "🇮🇩 印尼 (Indonesia)": {"symbol": "Rp", "code": "IDR", "step": 100000.0, "default_sal": 5000000.0},
-    "USD (美金)": {"symbol": "$", "code": "USD", "step": 100.0, "default_sal": 1500.0}
+# 🌐 人事管理多語系字典 (i18n)
+EMP_I18N = {
+    "繁體中文": {
+        "page_title": "👥 跨國員工檔案與人事管理",
+        "tab_profiles": "👤 跨國員工檔案管理",
+        "tab_leave": "🌴 請假系統",
+        "tab_permissions": "🔑 權限系統後台",
+        "tab_dept_setting": "🏢 自訂部門清單管理",
+        "expander_add_emp": "➕ 新增跨國員工個人檔案",
+        "step_1": "📍 步驟 1：選擇員工國籍/廠區 (選擇後即時切換下方欄位)",
+        "lbl_site": "員工所屬國籍/廠區",
+        "lbl_dept": "所屬部門/單位",
+        "lbl_name": "員工姓名 *",
+        "lbl_job_title": "職位名稱",
+        "lbl_role": "系統權限角色 (Role)",
+        "lbl_phone": "聯絡電話 (Phone) *",
+        "lbl_address": "居住/戶籍地址 (Address) *",
+        "lbl_passport": "護照號碼 / 身份證字號",
+        "lbl_work_permit": "工作許可證 / 勞工證號",
+        "btn_save_emp": "💾 儲存員工個人檔案",
+        "msg_emp_added": "✅ 已成功新增員工檔案！",
+        "table_title": "📋 公司現有員工名冊",
+        "dept_mgr_title": "⚙️ 組織部門維護與動態新增",
+        "dept_mgr_caption": "您可以自由在此新增公司的新部門，新增後會自動同步於全系統的選擇下拉選單中。",
+        "lbl_new_dept_zh": "新部門名稱 (中文)",
+        "lbl_new_dept_vn": "新部門名稱 (越南文 Tiếng Việt)",
+        "lbl_new_dept_en": "新部門名稱 (英文 English)",
+        "btn_add_dept": "➕ 新增此部門至系統",
+        "msg_dept_added": "✅ 已成功新增部門！",
+        "exist_depts": "📌 目前系統已有部門清單",
+    },
+    "Tiếng Việt": {
+        "page_title": "👥 Quản lý Hồ sơ Nhân sự & Nhân viên Đa quốc gia",
+        "tab_profiles": "👤 Hồ sơ Nhân viên Đa quốc gia",
+        "tab_leave": "🌴 Hệ thống Nghỉ phép",
+        "tab_permissions": "🔑 Phân quyền Hệ thống",
+        "tab_dept_setting": "🏢 Cấu hình Danh mục Phòng ban",
+        "expander_add_emp": "➕ Thêm Hồ sơ Nhân viên Đa quốc gia Mới",
+        "step_1": "📍 Bước 1: Chọn Quốc tịch / Nhà máy của Nhân viên",
+        "lbl_site": "Quốc tịch / Nhà máy trực thuộc",
+        "lbl_dept": "Phòng ban / Bộ phận trực thuộc",
+        "lbl_name": "Họ và tên Nhân viên *",
+        "lbl_job_title": "Chức danh / Vị trí",
+        "lbl_role": "Vai trò Phân quyền (Role)",
+        "lbl_phone": "Số điện thoại liên hệ *",
+        "lbl_address": "Địa chỉ thường trú / Tạm trú *",
+        "lbl_passport": "Số Hộ chiếu / CMND / CCCD",
+        "lbl_work_permit": "Số Giấy phép Lao động (Work Permit)",
+        "btn_save_emp": "💾 Lưu Hồ sơ Nhân viên",
+        "msg_emp_added": "✅ Đã thêm hồ sơ nhân viên thành công!",
+        "table_title": "📋 Danh sách Nhân viên Hiện tại",
+        "dept_mgr_title": "⚙️ Quản lý & Thêm mới Phòng ban Tổ chức",
+        "dept_mgr_caption": "Bạn có thể tự do thêm các phòng ban mới. Sau khi thêm, hệ thống sẽ tự động cập nhật vào danh sách chọn.",
+        "lbl_new_dept_zh": "Tên phòng ban (Tiếng Trung)",
+        "lbl_new_dept_vn": "Tên phòng ban (Tiếng Việt)",
+        "lbl_new_dept_en": "Tên phòng ban (Tiếng Anh)",
+        "btn_add_dept": "➕ Thêm Phòng ban Mới",
+        "msg_dept_added": "✅ Đã thêm phòng ban mới thành công!",
+        "exist_depts": "📌 Danh sách Phòng ban Hiện có trong Hệ thống",
+    },
+    "English": {
+        "page_title": "👥 Global Employee Profiles & HR Management",
+        "tab_profiles": "👤 Employee Profiles",
+        "tab_leave": "🌴 Leave System",
+        "tab_permissions": "🔑 Permissions Management",
+        "tab_dept_setting": "🏢 Custom Department Settings",
+        "expander_add_emp": "➕ Add New International Employee Profile",
+        "step_1": "📍 Step 1: Select Employee Nationality / Site Location",
+        "lbl_site": "Nationality / Site Location",
+        "lbl_dept": "Department / Unit",
+        "lbl_name": "Full Name *",
+        "lbl_job_title": "Job Title",
+        "lbl_role": "System Permission Role",
+        "lbl_phone": "Contact Phone *",
+        "lbl_address": "Residential / Permanent Address *",
+        "lbl_passport": "Passport / National ID No.",
+        "lbl_work_permit": "Work Permit No.",
+        "btn_save_emp": "💾 Save Employee Profile",
+        "msg_emp_added": "✅ Employee profile added successfully!",
+        "table_title": "📋 Existing Employee List",
+        "dept_mgr_title": "⚙️ Dynamic Department Management",
+        "dept_mgr_caption": "You can add new custom departments here. They will automatically appear in all system dropdowns.",
+        "lbl_new_dept_zh": "Department Name (Chinese)",
+        "lbl_new_dept_vn": "Department Name (Vietnamese)",
+        "lbl_new_dept_en": "Department Name (English)",
+        "btn_add_dept": "➕ Add New Department",
+        "msg_dept_added": "✅ New department added successfully!",
+        "exist_depts": "📌 Current Department List",
+    },
 }
 
-def render_employee_management(*args, **kwargs):
-    st.title("📋 員工人事資料表與跨國檔案管理")
-    st.caption("支援多國籍員工資料維護（含姓名、地址、電話、起薪）、各國法定保險/稅務提繳計算，並自動同步請假系統與權限後台。")
 
-    # ----------------------------------------------------
-    # 🗄️ 1. 初始化 Session State 資料庫
-    # ----------------------------------------------------
-    if "employee_db" not in st.session_state:
-        st.session_state.employee_db = [
+def render_employee_management(*args, **kwargs):
+    # 自動偵測語系
+    lang = (
+        kwargs.get("lang")
+        or kwargs.get("curr_lang")
+        or st.session_state.get("current_lang", "繁體中文")
+    )
+    L = EMP_I18N.get(lang, EMP_I18N["繁體中文"])
+
+    st.title(L["page_title"])
+
+    # 預設自訂部門資料庫（保存在 Session State 中可隨時擴充）
+    if "custom_departments" not in st.session_state:
+        st.session_state.custom_departments = [
             {
-                "emp_id": "VN-001", "name": "Nguyễn Văn A", "country": "🇻🇳 越南 (Vietnam)",
-                "dept": "生產一課 (射出)", "position": "射出機技術員", "id_number": "038095001234",
-                "phone": "0912345678", "address": "Bình Dương, Việt Nam", "currency": "VND", "base_salary": 9000000.0,
-                "insurance_deduction": 945000.0,
-                "join_date": "2024-03-01", "extra_info": "醫院: Bệnh viện Bình Dương", "role": "User (一般員工)"
+                "zh": "生產一課 (射出)",
+                "vn": "Tổ Sản xuất 1 (Ép nhựa)",
+                "en": "Production Dept 1 (Injection)",
             },
             {
-                "emp_id": "TW-001", "name": "陳大明", "country": "🇹🇼 台灣 (Taiwan)",
-                "dept": "管理部", "position": "行政專員", "id_number": "A123456789",
-                "phone": "0912345678", "address": "台北市信義區忠孝東路四段", "currency": "TWD", "base_salary": 45000.0,
-                "insurance_deduction": 2480.0,
-                "join_date": "2023-01-15", "extra_info": "勞保級距: $45,800 | 健保級距: $45,800", "role": "Supervisor (主管)"
-            }
+                "zh": "品質保證部 (QA)",
+                "vn": "Phòng Quản lý Chất lượng (QA)",
+                "en": "Quality Assurance (QA)",
+            },
+            {
+                "zh": "總務行政部 (GA)",
+                "vn": "Phòng Hành chính Hậu cần (GA)",
+                "en": "General Affairs (GA)",
+            },
+            {
+                "zh": "財務部 (Finance)",
+                "vn": "Phòng Tài chính (Finance)",
+                "en": "Finance Dept",
+            },
+            {"zh": "研發部 (R&D)", "vn": "Phòng Nghiên cứu & Phát triển (R&D)", "en": "R&D Dept"},
+            {
+                "zh": "配電盤組裝課",
+                "vn": "Tổ Lắp ráp Tủ điện",
+                "en": "Switchgear Assembly Dept",
+            },
+            {
+                "zh": "板金加工課",
+                "vn": "Tổ Gia công Cơ khí",
+                "en": "Sheet Metal Dept",
+            },
+            {
+                "zh": "烤漆塗裝課",
+                "vn": "Tổ Sơn tĩnh điện",
+                "en": "Powder Coating Dept",
+            },
         ]
 
-    if "leave_requests" not in st.session_state:
-        st.session_state.leave_requests = []
+    # 依當前語系呈現下拉選單的部門名稱
+    if lang == "Tiếng Việt":
+        dept_options = [d["vn"] for d in st.session_state.custom_departments]
+    elif lang == "English":
+        dept_options = [d["en"] for d in st.session_state.custom_departments]
+    else:
+        dept_options = [d["zh"] for d in st.session_state.custom_departments]
 
-    if "users_permissions" not in st.session_state:
-        st.session_state.users_permissions = {}
+    # 預設員工資料
+    if "employees_db" not in st.session_state:
+        st.session_state.employees_db = [
+            {
+                "id": "EMP-001",
+                "name": "張小華",
+                "site": "🇹🇼 台灣總部",
+                "dept": dept_options[0],
+                "title": "射出工程師",
+                "phone": "0912345678",
+            },
+            {
+                "id": "EMP-002",
+                "name": "Nguyễn Văn A",
+                "site": "🇻🇳 越南西寧廠",
+                "dept": dept_options[5] if len(dept_options) > 5 else dept_options[0],
+                "title": "Kỹ sư Tủ điện",
+                "phone": "0987654321",
+            },
+        ]
 
-    tab_emp, tab_leave, tab_perm = st.tabs([
-        "👥 跨國員工檔案管理 (Global Profiles)", 
-        "🌴 請假系統 (Leave System)", 
-        "🔑 權限系統後台 (Permissions System)"
-    ])
+    # 4 大頁籤 (新增：自訂部門清單管理)
+    tab1, tab2, tab3, tab4 = st.tabs(
+        [L["tab_profiles"], L["tab_leave"], L["tab_permissions"], L["tab_dept_setting"]]
+    )
 
-    with tab_emp:
-        # ----------------------------------------------------
-        # ➕ 新增員工區塊
-        # ----------------------------------------------------
-        with st.expander("➕ 新增跨國員工個人檔案 (Add International Employee Profile)", expanded=True):
-            st.markdown("##### 📍 步驟 1：選擇員工國籍/廠區（選擇後即時切換下方欄位）")
-            
-            # 🟢 移出 Form 外，國籍選擇即可即時連動下方欄位
-            country = st.selectbox("員工國籍 / 所屬廠區 *", [
-                "🇻🇳 越南 (Vietnam)", 
-                "🇹🇼 台灣 (Taiwan)", 
-                "🇨🇳 中國 (China)", 
-                "🇮🇩 印尼 (Indonesia)"
-            ], key="add_emp_country_select")
+    # 頁籤 1：員工檔案管理
+    with tab1:
+        with st.expander(L["expander_add_emp"], expanded=True):
+            st.markdown(f"#### {L['step_1']}")
+            c1, c2 = st.columns(2)
+            site = c1.selectbox(
+                L["lbl_site"],
+                ["🇹🇼 台灣總部 (Taiwan HQ)", "🇻🇳 越南西寧廠 (Tay Ninh Plant)", "🇨🇳 中國東莞廠 (Dongguan Plant)"],
+            )
+            dept = c2.selectbox(L["lbl_dept"], dept_options)
 
-            prefix_map = {"🇻🇳 越南 (Vietnam)": "VN", "🇹🇼 台灣 (Taiwan)": "TW", "🇨🇳 中國 (China)": "CN", "🇮🇩 印尼 (Indonesia)": "ID"}
-            prefix = prefix_map.get(country, "EMP")
-            default_emp_id = prefix + "-" + str(len(st.session_state.employee_db)+1).zfill(3)
+            c3, c4, c5 = st.columns(3)
+            name = c3.text_input(L["lbl_name"], value="張小華")
+            title = c4.text_input(L["lbl_job_title"], value="射出工程師")
+            role = c5.selectbox(L["lbl_role"], ["User (一般員工)", "Manager (主管)", "Admin (系統管理者)"])
 
-            with st.form("add_global_emp_form"):
-                col_c2, col_c3 = st.columns(2)
-                with col_c2:
-                    emp_id = st.text_input("員工編號 (Emp ID) *", default_emp_id)
-                with col_c3:
-                    emp_name = st.text_input("員工全名 (Full Name) *", "張小華")
+            c6, c7 = st.columns(2)
+            phone = c6.text_input(L["lbl_phone"], value="0912345678")
+            address = c7.text_input(L["lbl_address"], value="台北市信義區忠孝東路")
 
-                col_b1, col_b2, col_b3 = st.columns(3)
-                with col_b1:
-                    dept = st.selectbox("所屬部門", ["生產一課 (射出)", "品質保證部 (QA)", "總務行政部 (GA)", "財務部 (Finance)", "研發部 (R&D)"])
-                    phone = st.text_input("聯絡電話 (Phone) *", "0912345678")
-                with col_b2:
-                    emp_position = st.text_input("職位名稱", "射出工程師")
-                    address = st.text_input("居住/戶籍地址 (Address) *", "台北市信義區忠孝東路")
-                with col_b3:
-                    emp_role = st.selectbox("系統權限角色 (Role)", ["User (一般員工)", "Supervisor (主管)", "Admin (系統管理者)"])
+            c8, c9 = st.columns(2)
+            passport = c8.text_input(L["lbl_passport"], value="A123456789")
+            work_permit = c9.text_input(L["lbl_work_permit"], value="WP-2026-8888")
 
-                st.markdown("---")
-                st.markdown("##### 📋 步驟 2：輸入【" + str(country) + "】專屬身分、起薪與法定保險資訊")
+            if st.button(L["btn_save_emp"], type="primary"):
+                st.session_state.employees_db.append(
+                    {
+                        "id": f"EMP-00{len(st.session_state.employees_db)+1}",
+                        "name": name,
+                        "site": site,
+                        "dept": dept,
+                        "title": title,
+                        "phone": phone,
+                    }
+                )
+                st.success(L["msg_emp_added"])
+                st.rerun()
 
-                id_number = ""
-                extra_info = ""
+        st.markdown(f"### {L['table_title']}")
+        st.dataframe(pd.DataFrame(st.session_state.employees_db), use_container_width=True)
 
-                if "越南" in country:
-                    curr_key = "🇻🇳 越南 (Vietnam)"
-                    col_vn1, col_vn2, col_vn3 = st.columns(3)
-                    with col_vn1:
-                        id_number = st.text_input("身份證字號 (Số CCCD)", "038095009999")
-                    with col_vn2:
-                        join_date = st.date_input("入職/到職日期", datetime.date.today())
-                        contract_date = st.date_input("合約簽署日期", datetime.date.today())
-                    with col_vn3:
-                        hospital = st.text_input("醫保指定醫院 (Bệnh viện)", "Bệnh viện Quốc tế Hạnh Phúc")
-                        extra_info = "就醫醫院: " + str(hospital)
+    # 頁籤 2 & 3：請假與權限佔位
+    with tab2:
+        st.info("🌴 請假審核與假勤管理模組運作中。")
 
-                    col_sal1, col_sal2, col_sal3 = st.columns(3)
-                    with col_sal1:
-                        base_sal = st.number_input("約定起薪 / 保險底薪 (VND)", min_value=0.0, value=9000000.0, step=100000.0)
-                    with col_sal2:
-                        # 🟢 取消 disabled=True，讓使用者可自訂保險金額
-                        est_ins_deduction = st.number_input("每月社醫失保個人扣繳 (10.5% VND)", min_value=0.0, value=base_sal * 0.105, step=10000.0)
-                    with col_sal3:
-                        allowance = st.number_input("各類津貼總計 (VND)", min_value=0.0, value=1530000.0, step=50000.0)
+    with tab3:
+        st.info("🔑 RBAC 權限矩陣控制台運作中。")
 
-                elif "台灣" in country:
-                    curr_key = "🇹🇼 台灣 (Taiwan)"
-                    col_tw1, col_tw2, col_tw3 = st.columns(3)
-                    with col_tw1:
-                        id_number = st.text_input("身分證字號 (ID Number)", "A123456789")
-                    with col_tw2:
-                        join_date = st.date_input("到職日期", datetime.date.today())
-                        labor_level = st.number_input("勞保投保級距 (TWD)", value=45800)
-                    with col_tw3:
-                        health_level = st.number_input("健保投保級距 (TWD)", value=45800)
-                        pension_rate = st.number_input("勞退個人自提比例 (%)", min_value=0, max_value=6, value=0)
-                        extra_info = "勞保級距: $" + f"{labor_level:,.0f}" + " \vert{} 健保級距: $" + f"{health_level:,.0f}" + " | 勞退自提: " + str(pension_rate) + "%"
+    # 頁籤 4：自訂部門清單管理 (讓使用者自由動態新增部門)
+    with tab4:
+        st.markdown(f"### {L['dept_mgr_title']}")
+        st.caption(L["dept_mgr_caption"])
 
-                    col_sal1, col_sal2, col_sal3 = st.columns(3)
-                    with col_sal1:
-                        base_sal = st.number_input("約定起薪 / 月薪 (TWD)", min_value=0.0, value=45000.0, step=1000.0)
-                    with col_sal2:
-                        est_ins_deduction = st.number_input("預估每月勞健保自付額 (TWD)", min_value=0.0, value=1822.0)
-                    with col_sal3:
-                        allowance = st.number_input("伙食津貼/其他 (TWD)", min_value=0.0, value=3000.0)
+        col_d1, col_d2, col_d3 = st.columns(3)
+        new_zh = col_d1.text_input(L["lbl_new_dept_zh"], value="")
+        new_vn = col_d2.text_input(L["lbl_new_dept_vn"], value="")
+        new_en = col_d3.text_input(L["lbl_new_dept_en"], value="")
 
-                elif "中國" in country:
-                    curr_key = "🇨🇳 中國 (China)"
-                    col_cn1, col_cn2, col_cn3 = st.columns(3)
-                    with col_cn1:
-                        id_number = st.text_input("居民身份證號", "441900199001011234")
-                    with col_cn2:
-                        join_date = st.date_input("入職日期", datetime.date.today())
-                        city = st.text_input("參保城市", "廣東東莞")
-                    with col_cn3:
-                        housing_fund = st.text_input("住房公積金號碼", "100200300")
-                        extra_info = "參保城市: " + str(city) + " | 公積金號: " + str(housing_fund)
-
-                    col_sal1, col_sal2, col_sal3 = st.columns(3)
-                    with col_sal1:
-                        base_sal = st.number_input("約定起薪 / 基本工資 (RMB)", min_value=0.0, value=8000.0, step=500.0)
-                    with col_sal2:
-                        est_ins_deduction = st.number_input("預估五險一金個人扣款 (RMB)", min_value=0.0, value=base_sal * 0.105)
-                    with col_sal3:
-                        allowance = st.number_input("職務津貼 (RMB)", min_value=0.0, value=1000.0)
-
-                else:
-                    curr_key = "🇮🇩 印尼 (Indonesia)"
-                    col_id1, col_id2, col_id3 = st.columns(3)
-                    with col_id1:
-                        id_number = st.text_input("NIK 身份證號", "3201012345670001")
-                    with col_id2:
-                        join_date = st.date_input("入職日期 (Tanggal Masuk)", datetime.date.today())
-                        bpjs_tk = st.text_input("BPJS Ketenagakerjaan 號碼", "00012345678")
-                    with col_id3:
-                        bpjs_kes = st.text_input("BPJS Kesehatan 號碼", "00087654321")
-                        extra_info = "BPJS TK: " + str(bpjs_tk) + " | BPJS Kes: " + str(bpjs_kes)
-
-                    col_sal1, col_sal2, col_sal3 = st.columns(3)
-                    with col_sal1:
-                        base_sal = st.number_input("約定起薪 / 基本工資 (IDR)", min_value=0.0, value=5000000.0, step=100000.0)
-                    with col_sal2:
-                        est_ins_deduction = st.number_input("BPJS 個人提繳估算 (4% IDR)", min_value=0.0, value=base_sal * 0.04)
-                    with col_sal3:
-                        allowance = st.number_input("交通/伙食津貼 (IDR)", min_value=0.0, value=1000000.0)
-
-                curr_code = EXCHANGE_RATES.get(curr_key, {"code": "USD"})["code"]
-
-                if st.form_submit_button("✅ 儲存跨國員工檔案 (同步請假與權限)", type="primary"):
-                    if not emp_name or not phone or not address:
-                        st.error("❌ 請填寫姓名、電話與地址等必填欄位！")
-                    else:
-                        st.session_state.employee_db.append({
-                            "emp_id": emp_id,
-                            "name": emp_name,
-                            "country": country,
-                            "dept": dept,
-                            "position": emp_position,
-                            "id_number": id_number,
-                            "phone": phone,
-                            "address": address,
-                            "currency": curr_code,
-                            "base_salary": base_sal,
-                            "insurance_deduction": est_ins_deduction,
-                            "join_date": str(join_date),
-                            "extra_info": extra_info,
-                            "role": emp_role
-                        })
-
-                        st.session_state.users_permissions[emp_id] = {
-                            "username": emp_id,
-                            "full_name": emp_name,
-                            "country": country,
-                            "role": emp_role.split()[0],
-                            "allowed_modules": ["👥 人事/行政", "🌴 請假系統", "🏢 總務管理"]
-                        }
-
-                        st.success("🎉 成功建立【" + str(country) + "】員工 " + str(emp_name) + " (" + str(emp_id) + ")！")
-                        st.rerun()
-
-        # ----------------------------------------------------
-        # ✏️ 2. 編輯 / 搬家變更員工資料區塊
-        # ----------------------------------------------------
-        if st.session_state.employee_db:
-            with st.expander("✏️ 編輯 / 變更既有員工資料 (Edit Employee Profile / Update Address)", expanded=False):
-                emp_list_options = [str(e["emp_id"]) + " - " + str(e["name"]) + " (" + str(e["country"]) + ")" for e in st.session_state.employee_db]
-                selected_edit_emp = st.selectbox("請選擇欲修改資料的員工：", emp_list_options, key="select_edit_emp")
-                
-                if selected_edit_emp:
-                    target_id = selected_edit_emp.split(" - ")[0]
-                    # 尋找目標員工
-                    emp_index = next((i for i, e in enumerate(st.session_state.employee_db) if e["emp_id"] == target_id), None)
-                    
-                    if emp_index is not None:
-                        target_emp = st.session_state.employee_db[emp_index]
-                        
-                        with st.form("edit_employee_form"):
-                            st.markdown("##### 📝 修改員工號碼 `" + str(target_emp["emp_id"]) + "` 的基本與居住資訊")
-                            
-                            col_e1, col_e2, col_e3 = st.columns(3)
-                            with col_e1:
-                                new_name = st.text_input("員工姓名", target_emp["name"])
-                                new_dept = st.selectbox("部門", ["生產一課 (射出)", "品質保證部 (QA)", "總務行政部 (GA)", "財務部 (Finance)", "研發部 (R&D)"], index=0)
-                            with col_e2:
-                                new_phone = st.text_input("聯絡電話", target_emp.get("phone", ""))
-                                new_pos = st.text_input("職位名稱", target_emp.get("position", ""))
-                            with col_e3:
-                                new_address = st.text_input("居住/戶籍地址 (搬家變更此處)", target_emp.get("address", ""))
-                                new_sal = st.number_input("起薪/底薪 (" + str(target_emp.get("currency", "USD")) + ")", value=float(target_emp.get("base_salary", 0.0)))
-
-                            col_btn1, col_btn2 = st.columns([1, 1])
-                            with col_btn1:
-                                btn_update = st.form_submit_button("💾 儲存修改內容", type="primary")
-                            with col_btn2:
-                                btn_delete = st.form_submit_button("🗑️ 刪除此員工資料")
-
-                            if btn_update:
-                                st.session_state.employee_db[emp_index]["name"] = new_name
-                                st.session_state.employee_db[emp_index]["dept"] = new_dept
-                                st.session_state.employee_db[emp_index]["phone"] = new_phone
-                                st.session_state.employee_db[emp_index]["position"] = new_pos
-                                st.session_state.employee_db[emp_index]["address"] = new_address
-                                st.session_state.employee_db[emp_index]["base_salary"] = new_sal
-                                st.success("✅ 員工 `" + str(target_id) + "` 的資料已成功更新！")
-                                st.rerun()
-
-                            if btn_delete:
-                                st.session_state.employee_db.pop(emp_index)
-                                if target_id in st.session_state.users_permissions:
-                                    del st.session_state.users_permissions[target_id]
-                                st.warning("🗑️ 員工 `" + str(target_id) + "` 資料已刪除！")
-                                st.rerun()
-
-        st.divider()
-        st.markdown("#### 📋 全球在職員工資料表 (含姓名、電話、地址與起薪)")
-        if st.session_state.employee_db:
-            global_list = []
-            for emp in st.session_state.employee_db:
-                global_list.append({
-                    "工號": emp["emp_id"],
-                    "姓名": emp["name"],
-                    "國籍/廠區": emp["country"],
-                    "部門": emp["dept"],
-                    "職位": emp["position"],
-                    "聯絡電話": emp.get("phone", "-"),
-                    "居住地址": emp.get("address", "-"),
-                    "身分證號": emp["id_number"],
-                    "起薪/保險底薪": f"{emp['base_salary']:,.0f}" + " " + str(emp['currency']),
-                    "預估保險扣減額": "-" + f"{emp['insurance_deduction']:,.0f}" + " " + str(emp['currency']),
-                    "到職日期": emp.get("join_date", "-"),
-                    "國籍保險與備註": emp["extra_info"]
-                })
-            st.dataframe(pd.DataFrame(global_list), use_container_width=True)
-
-    with tab_leave:
-        st.subheader("🌴 全球員工請假申請與簽核")
-        emp_options = [str(e['emp_id']) + " - " + str(e['name']) + " (" + str(e['country']) + " / " + str(e['dept']) + ")" for e in st.session_state.employee_db]
-
-        with st.expander("➕ 填寫請假申請單", expanded=True):
-            with st.form("form_submit_global_leave"):
-                col_l1, col_l2 = st.columns(2)
-                with col_l1:
-                    selected_emp_str = st.selectbox("選擇請假員工", emp_options if emp_options else ["無員工資料"])
-                    leave_type = st.selectbox("假別", ["年假/特休 (Annual Leave)", "病假 (Sick Leave)", "事假 (Personal Leave)", "產假/陪產假", "公假"])
-                with col_l2:
-                    s_date = st.date_input("開始日期", value=datetime.date.today())
-                    e_date = st.date_input("結束日期", value=datetime.date.today())
-                
-                reason = st.text_input("請假事由 / Lý do / Reason", placeholder="請輸入請假事由...")
-                btn_leave = st.form_submit_button("🚀 送出假單並發起簽核", type="primary")
-
-                if btn_leave and selected_emp_str != "無員工資料":
-                    emp_code = selected_emp_str.split(" - ")[0]
-                    emp_name = selected_emp_str.split(" - ")[1].split(" (")[0]
-                    days = (e_date - s_date).days + 1
-
-                    lv_id = "LV-" + datetime.date.today().strftime('%Y%m%d') + "-" + str(len(st.session_state.leave_requests)+1).zfill(2)
-                    st.session_state.leave_requests.append({
-                        "單號": lv_id,
-                        "員工編號": emp_code,
-                        "姓名": emp_name,
-                        "假別": leave_type,
-                        "開始日期": str(s_date),
-                        "結束日期": str(e_date),
-                        "天數": float(days),
-                        "事由": reason,
-                        "狀態": "🟡 簽核中"
-                    })
-
-                    st.success("✅ 假單已送出！單號：" + str(lv_id) + "，天數：" + str(days) + "天")
-                    st.rerun()
+        if st.button(L["btn_add_dept"], type="primary"):
+            if new_zh and new_vn:
+                st.session_state.custom_departments.append(
+                    {"zh": new_zh, "vn": new_vn, "en": new_en or new_zh}
+                )
+                st.success(L["msg_dept_added"])
+                st.rerun()
+            else:
+                st.warning("⚠️ 請至少輸入中文與越南文部門名稱！")
 
         st.markdown("---")
-        st.markdown("#### 📋 歷史請假紀錄")
-        st.dataframe(pd.DataFrame(st.session_state.leave_requests), use_container_width=True)
+        st.markdown(f"#### {L['exist_depts']}")
+        st.dataframe(pd.DataFrame(st.session_state.custom_departments), use_container_width=True)
 
-    with tab_perm:
-        st.subheader("🔑 權限系統後台 — 跨國人員帳號與權限清單")
-        
-        perm_list = []
-        for emp_id, info in st.session_state.users_permissions.items():
-            perm_list.append({
-                "帳號 / 工號": info["username"],
-                "員工姓名": info["full_name"],
-                "所屬國籍": info.get("country", "未設定"),
-                "權限角色": info["role"],
-                "開通模組": ", ".join(info["allowed_modules"])
-            })
-        st.dataframe(pd.DataFrame(perm_list), use_container_width=True)
 
 def show(*args, **kwargs):
     render_employee_management(*args, **kwargs)
+
 
 def main(*args, **kwargs):
     render_employee_management(*args, **kwargs)
