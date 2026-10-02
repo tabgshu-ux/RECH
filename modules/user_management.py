@@ -47,7 +47,7 @@ IT_I18N = {
         "msg_user_auth_success": "✅ 已成功為人員設定系統登入權限與網頁授權！",
         # 矩陣專區
         "matrix_title": "🔒 全企業角色與跨模組 Access Control List (ACL) 存取控制矩陣",
-        "matrix_caption": "可依照企業內部各部門職務角色設定細粒度模組存取權限，支援動態擴充角色欄位。",
+        "matrix_caption": "最左側模組頁面名稱已設定為「凍結固定」，向右滑動時依然清晰可見。",
         "sec_add_role": "➕ 新增自訂職務角色",
         "lbl_new_role_name": "新角色名稱 (例如: Quality Control 品保主管)",
         "btn_add_role": "➕ 新增角色至矩陣",
@@ -96,7 +96,7 @@ IT_I18N = {
         "msg_user_auth_success": "✅ Đã cấp quyền đăng nhập thành công cho nhân viên!",
         # 矩陣專區
         "matrix_title": "🔒 Ma trận Phân quyền Truy cập (ACL) Theo Vai trò toàn Doanh nghiệp",
-        "matrix_caption": "Cấu hình quyền truy cập module chi tiết theo vai trò phòng ban, hỗ trợ thêm vai trò mới động.",
+        "matrix_caption": "Cột tên Module bên trái đã được ghim cố định khi cuộn sang phải.",
         "sec_add_role": "➕ Thêm Vai trò / Chức danh Mới",
         "lbl_new_role_name": "Tên vai trò mới (Ví dụ: QC Manager - Quản lý Quản chất)",
         "btn_add_role": "➕ Thêm Vai trò vào Ma trận",
@@ -145,7 +145,7 @@ IT_I18N = {
         "msg_user_auth_success": "✅ User permissions saved and granted successfully!",
         # 矩陣專區
         "matrix_title": "🔒 Enterprise Access Control List (ACL) Permissions Matrix",
-        "matrix_caption": "Configure fine-grained module permissions per department role with dynamic role creation.",
+        "matrix_caption": "The module column on the left is pinned and frozen when scrolling right.",
         "sec_add_role": "➕ Add Custom Role",
         "lbl_new_role_name": "New Role Title (e.g. Quality Control Supervisor)",
         "btn_add_role": "➕ Add Role to Matrix",
@@ -179,7 +179,7 @@ def render_user_management_page(*args, **kwargs):
     st.caption(L["sub_title"])
 
     # ----------------------------------------------------
-    # 🗄️️ 1. 初始化 Session State
+    # 🗄 1. 初始化 Session State
     # ----------------------------------------------------
     if "system_audit_logs" not in st.session_state:
         st.session_state.system_audit_logs = [
@@ -220,7 +220,6 @@ def render_user_management_page(*args, **kwargs):
             },
         ]
 
-    # 初始化專業級 ACL 矩陣資料表
     if "acl_matrix_db" not in st.session_state:
         st.session_state.acl_matrix_db = pd.DataFrame({
             "系統模組與功能頁面": [
@@ -418,7 +417,7 @@ def render_user_management_page(*args, **kwargs):
             st.rerun()
 
     # ----------------------------------------------------
-    # TAB 2: 人員帳號與網頁授權（連動 HR 人事資料）
+    # TAB 2: 人員帳號與網頁授權
     # ----------------------------------------------------
     with tabs[1]:
         st.subheader(L["user_auth_title"])
@@ -467,7 +466,6 @@ def render_user_management_page(*args, **kwargs):
                     L["lbl_password"], value="123456", type="password"
                 )
 
-                # 讀取動態角色欄位
                 role_columns = [
                     col
                     for col in st.session_state.acl_matrix_db.columns
@@ -551,7 +549,7 @@ def render_user_management_page(*args, **kwargs):
             )
 
     # ----------------------------------------------------
-    # TAB 3: 模組權限矩陣設定 (ACL 升級版 - 製造業完整角色 + 動態新增)
+    # TAB 3: 模組權限矩陣設定 (ACL) — 左側模組名稱欄位設定「凍結固定」
     # ----------------------------------------------------
     with tabs[2]:
         st.subheader(L["matrix_title"])
@@ -572,15 +570,22 @@ def render_user_management_page(*args, **kwargs):
                     st.success(L["msg_role_added"])
                     st.rerun()
                 elif new_role_title in st.session_state.acl_matrix_db.columns:
-                    st.warning("⚠️️ 該角色已存在於權限矩陣中！")
+                    st.warning("⚠ 該角色已存在於權限矩陣中！")
 
         st.divider()
 
-        # 2. 可互動勾選編輯之完整權限矩陣表格
+        # 2. 表格凍結/固定最左側「系統模組與功能頁面」欄位
         edited_acl = st.data_editor(
             st.session_state.acl_matrix_db,
             use_container_width=True,
             key="acl_editor_table",
+            column_config={
+                "系統模組與功能頁面": st.column_config.TextColumn(
+                    "系統模組與功能頁面",
+                    pinned=True,  # ❄️ 凍結固定最左側欄位，滾動時不移動！
+                    disabled=True,  # 保持模組名稱文字不可誤修
+                )
+            },
         )
 
         if st.button(L["btn_save_acl"], type="primary"):
@@ -720,7 +725,7 @@ def render_user_management_page(*args, **kwargs):
                 and match_exact_date
             ):
                 filtered_logs.append({
-                    "紀錄編號": log["log_id"],
+                    "纪录編號": log["log_id"],
                     "時間 (YYYY-MM-DD HH:MM:SS)": log["timestamp"],
                     "年份": log["year"],
                     "月份": log["month"] + "月",
