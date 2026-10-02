@@ -23,8 +23,12 @@ EMP_I18N = {
         "btn_save_emp": "💾 儲存個人檔案",
         "msg_emp_added": "✅ 已成功新增人員檔案！",
         "table_title": "📋 公司現有員工與高管名冊",
-        "dept_mgr_title": "⚙️ 企業部門組織動態管理 (自由新增/修改/刪除)",
-        "dept_mgr_caption": "您在此新增、修改或刪除的部門，將會即時同步至全系統的下拉選單中。",
+        "dept_mgr_title": (
+            "⚙️ 企業部門組織動態管理 (自由新增/修改/刪除)"
+        ),
+        "dept_mgr_caption": (
+            "您在此新增、修改或刪除的部門，將會即時同步至全系統的下拉選單中。"
+        ),
         "section_add": "➕ 新增新部門",
         "section_edit": "✏️ 修改現有部門名稱",
         "section_delete": "🗑️ 刪除廢止部門",
@@ -39,7 +43,10 @@ EMP_I18N = {
         "msg_dept_added": "✅ 已成功新增部門！",
         "msg_dept_updated": "✅ 已順利更新部門名稱！",
         "msg_dept_deleted": "🗑️ 已成功刪除該部門！",
-        "exist_depts": "📌 目前系統完整部門清單 (可直接在表格內雙擊修改，或最下方新增列)",
+        "exist_depts": (
+            "📌 目前系統完整部門清單"
+            " (可直接在表格內雙擊修改，或最下方新增列)"
+        ),
         "btn_save_table": "💾 儲存表格修改結果",
     },
     "Tiếng Việt": {
@@ -47,9 +54,13 @@ EMP_I18N = {
         "tab_profiles": "👤 Hồ sơ Nhân viên & Lãnh đạo",
         "tab_leave": "🌴 Hệ thống Nghỉ phép",
         "tab_permissions": "🔑 Phân quyền Hệ thống",
-        "tab_dept_setting": "🏢 Quản lý Cấu hình Phòng ban (Thêm/Sửa/Xóa)",
+        "tab_dept_setting": (
+            "🏢 Quản lý Cấu hình Phòng ban (Thêm/Sửa/Xóa)"
+        ),
         "expander_add_emp": "➕ Thêm Hồ sơ Nhân viên / Quản lý Mới",
-        "step_1": "📍 Bước 1: Chọn Quốc tịch / Nhà máy, Phòng ban & Chức danh",
+        "step_1": (
+            "📍 Bước 1: Chọn Quốc tịch / Nhà máy, Phòng ban & Chức danh"
+        ),
         "lbl_site": "Quốc tịch / Nhà máy trực thuộc",
         "lbl_dept": "Phòng ban / Bộ phận trực thuộc",
         "lbl_name": "Họ và tên *",
@@ -63,7 +74,10 @@ EMP_I18N = {
         "msg_emp_added": "✅ Đã thêm hồ sơ thành công!",
         "table_title": "📋 Danh sách Nhân viên & Ban Quản lý",
         "dept_mgr_title": "⚙️ Quản lý Động Cơ cấu Tổ chức Phòng ban",
-        "dept_mgr_caption": "Các thay đổi (Thêm/Sửa/Xóa) phòng ban tại đây sẽ tự động đồng bộ vào tất cả các menu chọn trong hệ thống.",
+        "dept_mgr_caption": (
+            "Các thay đổi (Thêm/Sửa/Xóa) phòng ban tại đây sẽ tự động đồng"
+            " bộ vào tất cả các menu chọn trong hệ thống."
+        ),
         "section_add": "➕ Thêm Phòng ban Mới",
         "section_edit": "✏️ Chỉnh sửa Tên Phòng ban Hiện có",
         "section_delete": "🗑️ Xóa Phòng ban",
@@ -78,7 +92,10 @@ EMP_I18N = {
         "msg_dept_added": "✅ Đã thêm phòng ban mới thành công!",
         "msg_dept_updated": "✅ Đã cập nhật tên phòng ban thành công!",
         "msg_dept_deleted": "🗑️ Đã xóa phòng ban thành công!",
-        "exist_depts": "📌 Danh sách Phòng ban Hiện có (Có thể nhấp đúp trực tiếp vào bảng để sửa)",
+        "exist_depts": (
+            "📌 Danh sách Phòng ban Hiện có (Có thể nhấp đúp trực tiếp vào"
+            " bảng để sửa)"
+        ),
         "btn_save_table": "💾 Lưu Kết quả Sửa Bảng",
     },
     "English": {
@@ -102,10 +119,13 @@ EMP_I18N = {
         "msg_emp_added": "✅ Profile added successfully!",
         "table_title": "📋 Existing Employee & Management List",
         "dept_mgr_title": "⚙️ Dynamic Department Management (Full CRUD)",
-        "dept_mgr_caption": "Any additions, edits, or deletions here will immediately update all system dropdowns.",
+        "dept_mgr_caption": (
+            "Any additions, edits, or deletions here will immediately update"
+            " all system dropdowns."
+        ),
         "section_add": "➕ Add New Department",
         "section_edit": "✏️ Edit Existing Department",
-        "section_delete": "🗑️️ Delete Department",
+        "section_delete": "🗑 Delete Department",
         "lbl_select_edit_dept": "Select department to edit:",
         "lbl_select_del_dept": "Select department to delete:",
         "lbl_new_dept_zh": "Department Name (Chinese)",
@@ -117,7 +137,9 @@ EMP_I18N = {
         "msg_dept_added": "✅ New department added successfully!",
         "msg_dept_updated": "✅ Department updated successfully!",
         "msg_dept_deleted": "🗑️ Department deleted successfully!",
-        "exist_depts": "📌 Current Department List (Double click cells to edit directly)",
+        "exist_depts": (
+            "📌 Current Department List (Double click cells to edit directly)"
+        ),
         "btn_save_table": "💾 Save Table Edits",
     },
 }
@@ -175,6 +197,25 @@ JOB_TITLES_DICT = {
 }
 
 
+def get_dynamic_site_options():
+    """🔗 動態取得與資訊管理部 (IT) 連動的廠區選項"""
+    if "factory_list" in st.session_state and st.session_state.factory_list:
+        sites = []
+        for fact in st.session_state.factory_list:
+            if isinstance(fact, dict):
+                f_name = fact.get("name", str(fact))
+            else:
+                f_name = str(fact)
+            sites.append(f_name)
+        return sites
+    else:
+        return [
+            "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
+            "🇻🇳 越南海防廠 (Hai Phong Plant)",
+            "🇹🇼 台灣總部 (Taiwan HQ)",
+        ]
+
+
 def render_employee_management(*args, **kwargs):
     # 自動偵測全域語系
     lang = (
@@ -215,7 +256,11 @@ def render_employee_management(*args, **kwargs):
                 "vn": "Phòng Tài chính (Finance)",
                 "en": "Finance Dept",
             },
-            {"zh": "研發部 (R&D)", "vn": "Phòng Nghiên cứu & Phát triển (R&D)", "en": "R&D Dept"},
+            {
+                "zh": "研發部 (R&D)",
+                "vn": "Phòng Nghiên cứu & Phát triển (R&D)",
+                "en": "R&D Dept",
+            },
             {
                 "zh": "配電盤組裝課",
                 "vn": "Tổ Lắp ráp Tủ điện",
@@ -241,13 +286,16 @@ def render_employee_management(*args, **kwargs):
     else:
         dept_options = [d["zh"] for d in st.session_state.custom_departments]
 
+    # 🔗 核心修復：從 IT 設定動態獲取廠區選項
+    site_options = get_dynamic_site_options()
+
     # 初始化預設高管與員工名冊
     if "employees_db" not in st.session_state:
         st.session_state.employees_db = [
             {
                 "id": "EMP-001",
                 "name": "張董事長",
-                "site": "🇹🇼 台灣總部",
+                "site": site_options[0] if site_options else "🇹🇼 台灣總部",
                 "dept": dept_options[0],
                 "title": "董事長 (Chairman)",
                 "phone": "0912345678",
@@ -255,16 +303,27 @@ def render_employee_management(*args, **kwargs):
             {
                 "id": "EMP-002",
                 "name": "Nguyễn Văn A",
-                "site": "🇻🇳 越南西寧廠",
-                "dept": dept_options[2] if len(dept_options) > 2 else dept_options[0],
+                "site": (
+                    site_options[1]
+                    if len(site_options) > 1
+                    else site_options[0]
+                ),
+                "dept": (
+                    dept_options[2]
+                    if len(dept_options) > 2
+                    else dept_options[0]
+                ),
                 "title": "Kỹ sư Tủ điện",
                 "phone": "0987654321",
             },
         ]
 
-    tab1, tab2, tab3, tab4 = st.tabs(
-        [L["tab_profiles"], L["tab_leave"], L["tab_permissions"], L["tab_dept_setting"]]
-    )
+    tab1, tab2, tab3, tab4 = st.tabs([
+        L["tab_profiles"],
+        L["tab_leave"],
+        L["tab_permissions"],
+        L["tab_dept_setting"],
+    ])
 
     # ----------------------------------------------------
     # 頁籤 1：跨國員工與高管檔案管理
@@ -273,10 +332,9 @@ def render_employee_management(*args, **kwargs):
         with st.expander(L["expander_add_emp"], expanded=True):
             st.markdown(f"#### {L['step_1']}")
             c1, c2 = st.columns(2)
-            site = c1.selectbox(
-                L["lbl_site"],
-                ["🇹🇼 台灣總部 (Taiwan HQ)", "🇻🇳 越南西寧廠 (Tay Ninh Plant)", "🇨🇳 中國東莞廠 (Dongguan Plant)"],
-            )
+
+            # 🔗 核心修復：使用動態讀取的 site_options 代替舊有硬編碼列表
+            site = c1.selectbox(L["lbl_site"], site_options)
             dept = c2.selectbox(L["lbl_dept"], dept_options)
 
             c3, c4, c5 = st.columns(3)
@@ -289,7 +347,14 @@ def render_employee_management(*args, **kwargs):
             else:
                 final_job_title = selected_title_opt
 
-            role = c5.selectbox(L["lbl_role"], ["Admin (系統管理者)", "Manager (主管)", "User (一般員工)"])
+            role = c5.selectbox(
+                L["lbl_role"],
+                [
+                    "Admin (系統管理者)",
+                    "Manager (主管)",
+                    "User (一般員工)",
+                ],
+            )
 
             c6, c7 = st.columns(2)
             phone = c6.text_input(L["lbl_phone"], value="")
@@ -301,23 +366,27 @@ def render_employee_management(*args, **kwargs):
 
             if st.button(L["btn_save_emp"], type="primary"):
                 if name and final_job_title:
-                    st.session_state.employees_db.append(
-                        {
-                            "id": f"EMP-00{len(st.session_state.employees_db)+1}",
-                            "name": name,
-                            "site": site,
-                            "dept": dept,
-                            "title": final_job_title,
-                            "phone": phone,
-                        }
-                    )
+                    st.session_state.employees_db.append({
+                        "id": (
+                            f"EMP-00{len(st.session_state.employees_db)+1}"
+                        ),
+                        "name": name,
+                        "site": site,
+                        "dept": dept,
+                        "title": final_job_title,
+                        "phone": phone,
+                        "passport": passport,
+                        "permit": work_permit,
+                    })
                     st.success(L["msg_emp_added"])
                     st.rerun()
                 else:
                     st.warning("⚠️ 請輸入全名與職位名稱！")
 
         st.markdown(f"### {L['table_title']}")
-        st.dataframe(pd.DataFrame(st.session_state.employees_db), use_container_width=True)
+        st.dataframe(
+            pd.DataFrame(st.session_state.employees_db), use_container_width=True
+        )
 
     with tab2:
         st.info("🌴 請假審核與假勤管理模組運作中。")
@@ -335,15 +404,23 @@ def render_employee_management(*args, **kwargs):
         # 1. 明確的獨立「新增新部門」區塊
         with st.expander(L["section_add"], expanded=True):
             col_add1, col_add2, col_add3 = st.columns(3)
-            add_zh = col_add1.text_input(L["lbl_new_dept_zh"], key="add_dept_zh")
-            add_vn = col_add2.text_input(L["lbl_new_dept_vn"], key="add_dept_vn")
-            add_en = col_add3.text_input(L["lbl_new_dept_en"], key="add_dept_en")
+            add_zh = col_add1.text_input(
+                L["lbl_new_dept_zh"], key="add_dept_zh"
+            )
+            add_vn = col_add2.text_input(
+                L["lbl_new_dept_vn"], key="add_dept_vn"
+            )
+            add_en = col_add3.text_input(
+                L["lbl_new_dept_en"], key="add_dept_en"
+            )
 
             if st.button(L["btn_add_dept"], type="primary"):
                 if add_zh and add_vn:
-                    st.session_state.custom_departments.append(
-                        {"zh": add_zh, "vn": add_vn, "en": add_en or add_zh}
-                    )
+                    st.session_state.custom_departments.append({
+                        "zh": add_zh,
+                        "vn": add_vn,
+                        "en": add_en or add_zh,
+                    })
                     st.success(L["msg_dept_added"])
                     st.rerun()
                 else:
@@ -373,7 +450,9 @@ def render_employee_management(*args, **kwargs):
 
         with col_act1:
             st.markdown(f"#### {L['section_edit']}")
-            all_zh_names = [d["zh"] for d in st.session_state.custom_departments]
+            all_zh_names = [
+                d["zh"] for d in st.session_state.custom_departments
+            ]
             if all_zh_names:
                 selected_edit_zh = st.selectbox(
                     L["lbl_select_edit_dept"], all_zh_names
@@ -385,13 +464,19 @@ def render_employee_management(*args, **kwargs):
                 )
 
                 edit_zh = st.text_input(
-                    L["lbl_new_dept_zh"], value=target_dept["zh"], key="edit_zh"
+                    L["lbl_new_dept_zh"],
+                    value=target_dept["zh"],
+                    key="edit_zh",
                 )
                 edit_vn = st.text_input(
-                    L["lbl_new_dept_vn"], value=target_dept["vn"], key="edit_vn"
+                    L["lbl_new_dept_vn"],
+                    value=target_dept["vn"],
+                    key="edit_vn",
                 )
                 edit_en = st.text_input(
-                    L["lbl_new_dept_en"], value=target_dept["en"], key="edit_en"
+                    L["lbl_new_dept_en"],
+                    value=target_dept["en"],
+                    key="edit_en",
                 )
 
                 if st.button(L["btn_update_dept"]):
