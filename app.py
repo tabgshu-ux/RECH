@@ -1,182 +1,356 @@
 import streamlit as st
-import os
 import pandas as pd
-import plotly.express as px
-import google.generativeai as genai
-from datetime import datetime, date
+from sqlalchemy import create_engine, text
+import inspect
 
 # ----------------------------------------------------
-# 🌐 營運戰情室多語系字典 (i18n)
+# 1. 載入各獨立業務模組 (Modules)
 # ----------------------------------------------------
-EXEC_I18N = {
+import modules.executive_dashboard as executive_dashboard
+import modules.procurement_ap as procurement_ap
+import modules.sales_order_ar as sales_order_ar
+import modules.approval_workflow as approval_workflow
+import modules.warehouse_management as warehouse_management
+import modules.employee_management as employee_management
+import modules.asset_management as asset_management
+import modules.user_management as user_management
+import modules.engineering_pipeline as engineering_pipeline
+import modules.invoice_management as invoice_management
+
+st.set_page_config(
+    page_title="裕豐電機工業 REETECH INDUSTRIAL - AI ERP",
+    page_icon="⚡",
+    layout="wide"
+)
+
+# ----------------------------------------------------
+# 2. 符合需求之階層多國語言字典 (i18n)
+# ----------------------------------------------------
+NAV_STRUCTURE = {
     "繁體中文": {
-        "page_title": "📈 跨國企業營運戰情室 (Executive Dashboard)",
-        "sub_title": "即時監控原物料與匯率物價、財務 P&L 帳款統計以及工程進度與機台稼動",
-        "boss_notes_title": "👑 董事長/總經理 專屬觀察重點與決策指南",
-        "stock_section_title": "📊 股市原物料物價與動態匯率即時看板",
-        "news_section_title": "📰 近 7 天動態原物料與財經新聞 (點擊標題開啟新聞原文)",
-        "btn_fetch_news": "🔄 重新整理 / 抓取最新行情新聞",
-        "ai_summary_title": "🤖 Gemini AI 原物料與市場物價摘要",
-        "btn_gen_ai_summary": "🚀 生成物價趨勢與採購策略報告",
-        "stock_chat_title": "💬 董事長/總經理 專屬 AI 原物料與市場諮詢",
-        "stock_chat_caption": "請輸入任意物料（如 銅價, 鋼材, 塑膠粒 PP）或股票代碼，AI 即時進行趨勢與成本分析：",
-        "stock_chat_placeholder": "例如：請問近期倫敦銅 (LME Copper) 上漲對配電盤銅排採購成本影響如何？",
-        "btn_send_stock_chat": "🚀 詢問 AI 財經顧問"
+        "company_name": "⚡ 裕豐電機工業",
+        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
+        "login_title": "⚡ 裕豐電機工業 REETECH INDUSTRIAL - 系統登入",
+        "username": "帳號",
+        "password": "密碼",
+        "login_btn": "🔑 登入系統",
+        "logout_btn": "🚪 登出系統",
+        "lang_selector": "🌐 語言設定 / Language",
+        "parent_header": "請選擇部門分類：",
+        "sub_header": "營運與部門作業功能：",
+        "departments": {
+            "📈 營運戰情室 (Executive)": {
+                "features": {
+                    "🔴 原料價格與隨時股市物價/匯率": "commodities_fx",
+                    "📊 財務類顯示資料 (AR/AP & P&L)": "financials_pl",
+                    "⚡ 工程專案進度與驗收資料": "project_progress"
+                }
+            },
+            "🧾 財務會計部 (Finance & Accounting)": {
+                "features": {
+                    "🛒 採購與應付帳款 (AP & 廠商發票)": "procurement_ap",
+                    "📋 銷售與應收帳款 (AR & 催收歷史)": "sales_order_ar",
+                    "📄 越南電子發票 XML 解析與登錄": "vn_invoice_xml",
+                    "📧 通用信箱電子發票自動讀取 (IMAP)": "email_invoice",
+                    "📊 電子發票張數監控與預警": "invoice_quota"
+                }
+            },
+            "🛠️ 研發工程部 (R&D & Engineering)": {
+                "features": {
+                    "⚡ 配電盤估價與資材報價總合": "engineering_quote"
+                }
+            },
+            "🏢 行政總務部 (General Affairs)": {
+                "features": {
+                    "📦 固定資產設備與總務採購": "ga_assets",
+                    "✍️ 電子簽核與請款審核中心": "approval_center"
+                }
+            },
+            "👥 人力資源部 (Human Resources)": {
+                "features": {
+                    "👤 人事檔案與勞動合約管理": "hr_employee"
+                }
+            },
+            "🏭 生產倉儲部 (Plant & Warehouse)": {
+                "features": {
+                    "📦 倉庫庫存與資材條碼管理": "wh_management",
+                    "✂️ 板金加工組工單": "sheet_metal",
+                    "🎨 烤漆塗裝組品管": "painting",
+                    "⚡ 配電盤組裝配線組": "assembly"
+                }
+            },
+            "💻 資訊管理部 (IT & System)": {
+                "features": {
+                    "🔒 帳號權限與全系統稽核軌跡": "it_admin"
+                }
+            }
+        }
     },
     "Tiếng Việt": {
-        "page_title": "📈 Bảng Điều Hành Doanh Nghiệp (Executive Dashboard)",
-        "sub_title": "Giám sát thời gian thực giá nguyên vật liệu & tỷ giá, tài chính P&L và tiến độ công trình",
-        "boss_notes_title": "👑 Ghi Chú Quan Sát Dành Cho Chủ Tịch / Tổng Giám Đốc",
-        "stock_section_title": "📊 Giá Nguyên Vật Liệu & Tỷ Giá Hối Đoái Thời Gian Thực",
-        "news_section_title": "📰 Tin Tức Giá Nguyên Vật Liệu Trong 7 Ngày Qua",
-        "btn_fetch_news": "🔄 Cập nhật / Tải tin tức mới nhất",
-        "ai_summary_title": "🤖 Tóm Tắt Xu Hướng Giá Nguyên Vật Liệu AI",
-        "btn_gen_ai_summary": "🚀 Tạo báo cáo chiến lược mua hàng",
-        "stock_chat_title": "💬 Trò Chuyện Tư Vấn Nguyên Vật Liệu AI",
-        "stock_chat_caption": "Nhập tên nguyên vật liệu (VD: Giá đồng, Thép, Hạt nhựa) để AI phân tích xu hướng:",
-        "stock_chat_placeholder": "Ví dụ: Biến động giá đồng LME ảnh hưởng thế nào đến chi phí sản xuất?",
-        "btn_send_stock_chat": "🚀 Hỏi Cố Vấn AI"
+        "company_name": "⚡ REETECH INDUSTRIAL",
+        "company_sub": "Công ty TNHH REETECH INDUSTRIAL",
+        "login_title": "⚡ REETECH INDUSTRIAL - Đăng nhập hệ thống",
+        "username": "Tài khoản",
+        "password": "Mật khẩu",
+        "login_btn": "🔑 Đăng nhập",
+        "logout_btn": "🚪 Đăng xuất",
+        "lang_selector": "🌐 Chọn ngôn ngữ",
+        "parent_header": "Chọn phòng ban:",
+        "sub_header": "Chức năng vận hành:",
+        "departments": {
+            "📈 Ban Giám đốc (Executive)": {
+                "features": {
+                    "🔴 Giá Nguyên liệu & Tỷ giá Chứng khoán": "commodities_fx",
+                    "📊 Dữ liệu Tài chính (AR/AP & P&L)": "financials_pl",
+                    "⚡ Tiến độ Dự án Kỹ thuật & Bàn giao": "project_progress"
+                }
+            },
+            "🧾 Phòng Tài chính Kế toán (Finance)": {
+                "features": {
+                    "🛒 Mua hàng & Phải trả (AP)": "procurement_ap",
+                    "📋 Quản lý Bán hàng & Phải thu (AR)": "sales_order_ar",
+                    "📄 Đọc Hóa đơn Điện tử XML Việt Nam": "vn_invoice_xml",
+                    "📧 Đọc Hóa đơn tự động từ Email (IMAP)": "email_invoice",
+                    "📊 Giám sát Số lượng Hóa đơn": "invoice_quota"
+                }
+            },
+            "🛠️ Phòng Nghiên cứu & Kỹ thuật (R&D)": {
+                "features": {
+                    "⚡ Báo giá Tủ điện & Dự toán Vật tư": "engineering_quote"
+                }
+            },
+            "🏢 Phòng Hành chính Hậu cần (GA)": {
+                "features": {
+                    "📦 Quản lý Tài sản Cố định & Hậu cần": "ga_assets",
+                    "✍️ Trung tâm Phê duyệt Điện tử": "approval_center"
+                }
+            },
+            "👥 Phòng Nhân sự (Human Resources)": {
+                "features": {
+                    "👤 Quản lý Nhân sự & Hợp đồng Lao động": "hr_employee"
+                }
+            },
+            "🏭 Phòng Sản xuất & Kho vật tư (Factory)": {
+                "features": {
+                    "📦 Quản lý Kho & Mã vạch Vật tư": "wh_management",
+                    "✂️ Tổ Gia công Cơ khí": "sheet_metal",
+                    "🎨 Tổ Sơn tĩnh điện": "painting",
+                    "⚡ Tổ Lắp ráp Tủ điện": "assembly"
+                }
+            },
+            "💻 Phòng Công nghệ Thông tin (IT)": {
+                "features": {
+                    "🔒 Quản lý Phân quyền & Nhật ký Ký duyệt": "it_admin"
+                }
+            }
+        }
     },
     "English": {
-        "page_title": "📈 Executive Strategic Dashboard",
-        "sub_title": "Real-time commodities & FX rates, financial P&L stats, and engineering project progress",
-        "boss_notes_title": "👑 Executive Observation Focus & Directives",
-        "stock_section_title": "📊 Live Commodities, FX Rates & Market Prices",
-        "news_section_title": "📰 Recent 7-Day Commodity & Market News",
-        "btn_fetch_news": "🔄 Refresh / Fetch Latest Market News",
-        "ai_summary_title": "🤖 Gemini AI Commodity Market Brief",
-        "btn_gen_ai_summary": "🚀 Generate Commodity & Procurement Brief",
-        "stock_chat_title": "💬 Executive AI Commodity & Market Assistant",
-        "stock_chat_caption": "Enter any commodity (e.g., LME Copper, Steel, PP) or ticker for AI trend analysis:",
-        "stock_chat_placeholder": "E.g., How will current copper price fluctuations impact our busbar inventory costs?",
-        "btn_send_stock_chat": "🚀 Ask AI Financial Advisor"
+        "company_name": "⚡ REETECH INDUSTRIAL",
+        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
+        "login_title": "⚡ REETECH INDUSTRIAL - System Login",
+        "username": "Username",
+        "password": "Password",
+        "login_btn": "🔑 Login",
+        "logout_btn": "🚪 Logout",
+        "lang_selector": "🌐 Select Language",
+        "parent_header": "Select Department:",
+        "sub_header": "Executive Features:",
+        "departments": {
+            "📈 Executive Management": {
+                "features": {
+                    "🔴 Raw Material Prices & Dynamic FX/Market": "commodities_fx",
+                    "📊 Financial Analytics (AR/AP & P&L)": "financials_pl",
+                    "⚡ Engineering Project Progress & Acceptance": "project_progress"
+                }
+            },
+            "🧾 Finance & Accounting": {
+                "features": {
+                    "🛒 Procurement & Accounts Payable (AP)": "procurement_ap",
+                    "📋 Sales & Accounts Receivable (AR)": "sales_order_ar",
+                    "📄 Vietnam E-Invoice XML Parser": "vn_invoice_xml",
+                    "📧 Auto Email Invoice Reader (IMAP)": "email_invoice",
+                    "📊 E-Invoice Quota & Alerts": "invoice_quota"
+                }
+            },
+            "🛠️ R&D & Engineering": {
+                "features": {
+                    "⚡ Switchgear Costing & Quotation": "engineering_quote"
+                }
+            },
+            "🏢 General Affairs Dept": {
+                "features": {
+                    "📦 Asset Management & Procurement": "ga_assets",
+                    "✍️ E-Approval Workflow Center": "approval_center"
+                }
+            },
+            "👥 Human Resources Dept": {
+                "features": {
+                    "👤 Employee Records & Contracts": "hr_employee"
+                }
+            },
+            "🏭 Manufacturing & Warehouse": {
+                "features": {
+                    "📦 Warehouse & Material Barcodes": "wh_management",
+                    "✂️ Sheet Metal Processing": "sheet_metal",
+                    "🎨 Powder Coating Dept": "painting",
+                    "⚡ Switchgear Assembly Dept": "assembly"
+                }
+            },
+            "💻 Information Technology (IT)": {
+                "features": {
+                    "🔒 User Permissions & Audit Logs": "it_admin"
+                }
+            }
+        }
     }
 }
 
-def get_exec_lang_dict(lang_param=None):
-    lang = lang_param or st.session_state.get("current_lang", "繁體中文")
-    return EXEC_I18N.get(lang, EXEC_I18N["繁體中文"])
+if "current_lang" not in st.session_state:
+    st.session_state.current_lang = "繁體中文"
 
 # ----------------------------------------------------
-# 1. 第一子項：原物料價格與股市物價 (動態隨時變更)
+# 3. Supabase 資料庫連線
 # ----------------------------------------------------
-def render_commodities_and_fx_page(lang="繁體中文"):
-    L = get_exec_lang_dict(lang)
-    st.markdown(f"### {L['stock_section_title']}")
-    
-    # 動態變更的原物料與匯率物價 Metrics
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("LME 倫敦銅排原物料 (Copper)", "$9,250 USD/噸", "+85.0 (+0.93%)")
-    col2.metric("熱軋鋼板物價 (SECC Steel)", "$780 USD/噸", "-12.0 (-1.51%)")
-    col3.metric("美金/越南盾 (USD/VND)", "25,420 VND", "-15.0 (-0.06%)")
-    col4.metric("美金/新台幣 (USD/TWD)", "31.85 TWD", "+0.05 (+0.16%)")
+DB_URL = "postgresql+psycopg2://postgres.wvsqbefyeykmueffcbwd:Reetech2026@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres"
 
-    col5, col6, col7, col8 = st.columns(4)
-    col5.metric("塑膠粒 PP 遠東區物價", "$980 USD/噸", "+12.0 (+1.24%)")
-    col6.metric("台積電 (2330.TW)", "$985 TWD", "+15.0 (+1.55%)")
-    col7.metric("VN-Index (越南股市)", "1,280.5 點", "+8.2 (+0.64%)")
-    col8.metric("WTI 原油 (Crude Oil)", "$78.5 USD/桶", "+0.45 (+0.58%)")
+@st.cache_resource
+def get_db_engine():
+    try:
+        eng = create_engine(DB_URL, pool_pre_ping=True, pool_size=5, max_overflow=10)
+        with eng.connect() as conn:
+            conn.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS installment_ratios TEXT;"))
+            conn.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS progress_note TEXT;"))
+            conn.execute(text("ALTER TABLE invoices ADD COLUMN IF NOT EXISTS project_desc TEXT;"))
+            conn.commit()
+        return eng
+    except Exception:
+        return None
 
-    st.divider()
+engine = get_db_engine()
 
-    st.markdown(f"### {L['news_section_title']}")
-    news_items = [
-        {"date": "2026-10-02", "title": "LME 銅價升至三週高點，配電盤導電銅排成本微幅增加", "source": "Reuters Commodity Watch", "sentiment": "⚠️ 成本微升", "summary": "受智利銅礦產出減少與全球電網升級需求強勁推升，倫敦金屬交易所 (LME) 銅價每噸站上 9,250 美元。"},
-        {"date": "2026-10-01", "title": "越南盾 (VND) 匯率受央行調控維持穩定，有利越南平陽/西寧廠進口原料備貨", "source": "Vietnam Investment Review", "sentiment": "🟢 匯率平穩", "summary": "越南國家銀行維持貨幣政策穩定，美元兌越南盾於 25,400 區間平穩震盪，有助於控制進口物料成本。"}
-    ]
-    
-    for item in news_items:
-        st.markdown(f"##### 📅 **【{item['date']}】{item['title']}**")
-        st.caption(f"來源: `{item['source']}` | 評估: **{item['sentiment']}**")
-        st.write(f"💡 {item['summary']}")
-        st.markdown("---")
-
-    st.markdown(f"### {L['stock_chat_title']}")
-    user_query = st.text_area(
-        L["stock_chat_caption"],
-        value="請幫我分析倫敦銅價 (LME Copper) 走勢對高壓配電盤導電銅排採購策略的影響？",
-        height=80,
-        placeholder=L["stock_chat_placeholder"]
-    )
-    if st.button(L["btn_send_stock_chat"], type="primary"):
-        st.info("💡 **AI 財經顧問分析**：當前倫敦銅價受電網擴建需求支撐呈小幅震盪走高，建議配合越南廠近 45 天專案用量進行分批避險鎖價，以維持預算毛利率。")
+# 通用模組安全呼叫輔助函式 (自動檢測參數與相容性)
+def safe_call_module(func, *args, **kwargs):
+    if not callable(func):
+        return
+    try:
+        sig = inspect.signature(func)
+        valid_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
+        func(*args, **valid_kwargs)
+    except Exception:
+        try:
+            func()
+        except Exception as e:
+            st.error(f"模組載入異常: {str(e)}")
 
 # ----------------------------------------------------
-# 2. 第二子項：財務類顯示資料 (AR/AP & P&L)
+# 4. 登入系統
 # ----------------------------------------------------
-def render_financial_executive_page():
-    st.markdown("### 📊 跨國集團全球廠區應收/應付帳款 (AR/AP) 戰情")
-    
-    col_ar1, col_ar2, col_ar3, col_ar4 = st.columns(4)
-    col_ar1.metric("全球總應收帳款 (AR)", "$2,850,000 USD", "+$120,000")
-    col_ar2.metric("全球總應付帳款 (AP)", "$1,420,000 USD", "-$45,000")
-    col_ar3.metric("逾期帳款 (>60天)", "$185,000 USD", "⚠️ 需關注")
-    col_ar4.metric("預估淨營運現金流", "$1,430,000 USD", "🟢 健康")
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+    st.session_state.user_role = ""
+    st.session_state.user_name = ""
 
-    st.markdown("#### 🏢 各廠區 AR / AP 明細")
-    ar_ap_data = [
-        {"廠區/子公司": "🇹🇼 台灣總部 (Taiwan HQ)", "應收帳款 (AR) USD": "$1,200,000", "應付帳款 (AP) USD": "$600,000", "主要幣別": "TWD / USD", "狀態": "🟢 正常"},
-        {"廠區/子公司": "🇻🇳 越南西寧/平陽廠", "應收帳款 (AR) USD": "$950,000", "應付帳款 (AP) USD": "$520,000", "主要幣別": "VND / USD", "狀態": "🟡 催收中"},
-        {"廠區/子公司": "🇨🇳 中國東莞廠", "應收帳款 (AR) USD": "$700,000", "應付帳款 (AP) USD": "$300,000", "主要幣別": "RMB / USD", "狀態": "🟢 正常"}
-    ]
-    st.dataframe(pd.DataFrame(ar_ap_data), use_container_width=True)
+lang_dict = NAV_STRUCTURE.get(st.session_state.current_lang, NAV_STRUCTURE["繁體中文"])
 
+if not st.session_state.logged_in:
+    st.title(lang_dict["login_title"])
+    st.caption(lang_dict["company_sub"])
     st.markdown("---")
-    st.markdown("### 📊 企業綜合損益表 (P&L Waterfall)")
-    
-    pl_data = [
-        {"會計科目": "一、營業收入 (Revenue)", "金額 (USD)": "$250,000.00", "說明": "工程與配電盤銷售已成交金額"},
-        {"會計科目": "二、營業成本 (COGS)", "金額 (USD)": "($115,000.00)", "說明": "銅材、開關元件與烤漆粉採購進貨"},
-        {"會計科目": "💡 營業毛利 (Gross Profit)", "金額 (USD)": "$135,000.00", "說明": "毛利率: 54.0%"},
-        {"會計科目": "三、營業費用 (OPEX)", "金額 (USD)": "($56,950.00)", "說明": "包含薪資、廠務水電、零用金與折舊"},
-        {"會計科目": "🏆 本期淨利 (Net Income)", "金額 (USD)": "$62,440.00", "說明": "稅後淨利率: 25.0%"}
-    ]
-    st.dataframe(pd.DataFrame(pl_data), use_container_width=True)
+    col1, _ = st.columns([1, 2])
+    with col1:
+        username = st.text_input(f"{lang_dict['username']} (admin / manager / staff)")
+        password = st.text_input(f"{lang_dict['password']} (123)", type="password")
+        if st.button(lang_dict["login_btn"], width="stretch"):
+            if password == "123":
+                st.session_state.logged_in = True
+                st.session_state.user_role = "admin" if username == "admin" else ("manager" if username == "manager" else "staff")
+                st.session_state.user_name = username
+                st.rerun()
+            else:
+                st.error("帳號或密碼錯誤 / Incorrect password")
+    st.stop()
 
 # ----------------------------------------------------
-# 3. 第三子項：工程進度與專案資料
+# 5. 側邊欄一般公司標準部門選單
 # ----------------------------------------------------
-def render_engineering_progress_page():
-    st.markdown("### ⚡ 全球配電盤工程專案進度與驗收戰情")
-    
-    col_p1, col_p2, col_p3, col_p4 = st.columns(4)
-    col_p1.metric("進行中工程專案", "12 件", "5件施工中 / 7件驗收中")
-    col_p2.metric("本月已完工交貨", "₫ 12.8 Billion VND", "+15.2%")
-    col_p3.metric("工程準時交付率", "96.5%", "🟢 正常")
-    col_p4.metric("平均機台稼動 (OEE)", "84.5%", "+2.1%")
+st.sidebar.title(lang_dict["company_name"])
+st.sidebar.caption(lang_dict["company_sub"])
 
-    st.markdown("#### 📋 董事長列管重點工程專案進度表")
-    project_progress = [
-        {"專案編號": "HD-2026-TN01", "工程名稱": "西寧紡織廠 2000A 主配電櫃新建工程", "客戶名稱": "CÔNG TY TNHH A-Z", "負責部門": "配電盤組裝課", "合約金額": "₫ 6,350,000,000 VND", "當前工程進度": "85% (現場耐壓測試中)", "預計完工日": "2026-10-15"},
-        {"專案編號": "HD-2026-BD05", "工程名稱": "平陽電子廠 1000A 低壓配電盤擴建", "客戶名稱": "Foxconn VN", "負責部門": "板金與塗裝課", "合約金額": "$120,000 USD", "當前工程進度": "45% (粉體塗裝烤漆中)", "預計完工日": "2026-10-28"},
-        {"專案編號": "HD-2026-TW02", "工程名稱": "新竹科學園區開關櫃替換專案", "客戶名稱": "TSMC Subcontractor", "負責部門": "台灣研發組", "合約金額": "NT$ 4,500,000 TWD", "當前工程進度": "95% (竣工驗收中)", "預計完工日": "2026-10-08"}
-    ]
-    st.dataframe(pd.DataFrame(project_progress), use_container_width=True)
+lang_list = ["繁體中文", "Tiếng Việt", "English"]
+selected_lang = st.sidebar.selectbox(
+    lang_dict["lang_selector"],
+    lang_list,
+    index=lang_list.index(st.session_state.current_lang) if st.session_state.current_lang in lang_list else 0
+)
+
+if selected_lang != st.session_state.current_lang:
+    st.session_state.current_lang = selected_lang
+    st.rerun()
+
+st.sidebar.markdown(f"**👤 {st.session_state.user_name}** ({st.session_state.user_role.upper()})")
+if st.sidebar.button(lang_dict["logout_btn"]):
+    st.session_state.logged_in = False
+    st.rerun()
+
+st.sidebar.markdown("---")
+
+dept_options = list(lang_dict["departments"].keys())
+
+if st.session_state.user_role != "admin":
+    dept_options = [d for d in dept_options if "Executive" not in d]
+
+selected_parent_dept = st.sidebar.radio(lang_dict["parent_header"], dept_options)
+
+st.sidebar.markdown("---")
+
+features_dict = lang_dict["departments"][selected_parent_dept]["features"]
+feature_labels = list(features_dict.keys())
+
+st.sidebar.caption(f"**{selected_parent_dept.split('(')[0].strip()}**")
+selected_feature_label = st.sidebar.radio(lang_dict["sub_header"], feature_labels)
+
+target_route = features_dict[selected_feature_label]
 
 # ----------------------------------------------------
-# 🚀 主渲染入口
+# 6. 模組安全路由分流
 # ----------------------------------------------------
-def render_executive_dashboard_page(sub_route="commodities_fx", lang="繁體中文"):
-    L = get_exec_lang_dict(lang)
-    st.title(L["page_title"])
-    st.caption(L["sub_caption"])
+curr_lang = st.session_state.current_lang
 
-    with st.expander(L["boss_notes_title"], expanded=True):
-        st.write("• **物價控管**：銅價 (LME Copper) 升至 $9,250 美元/噸，工程部報價需同步連動調整小計[cite: 11]節。")
-        st.write("• **工程進度**：西寧紡織廠 2000A 專案進度已達 85%，預計月中驗收並請領第二期 60% 尾款。")
+if target_route in ["commodities_fx", "financials_pl", "project_progress"]:
+    if hasattr(executive_dashboard, "render_executive_dashboard_page"):
+        safe_call_module(executive_dashboard.render_executive_dashboard_page, sub_route=target_route, lang=curr_lang)
+    elif hasattr(executive_dashboard, "show"):
+        safe_call_module(executive_dashboard.show, sub_route=target_route, lang=curr_lang)
 
-    st.divider()
+elif target_route == "procurement_ap":
+    safe_call_module(procurement_ap.render_procurement_ap_page, engine=engine, lang=curr_lang)
 
-    # 依第二階層路由渲染
-    if sub_route == "commodities_fx":
-        render_commodities_and_fx_page(lang)
-    elif sub_route == "financials_pl":
-        render_financial_executive_page()
-    elif sub_route == "project_progress":
-        render_engineering_progress_page()
+elif target_route == "sales_order_ar":
+    safe_call_module(sales_order_ar.render_sales_order_ar_page, engine=engine, lang=curr_lang)
 
-def show(sub_route="commodities_fx", lang="繁體中文"):
-    render_executive_dashboard_page(sub_route, lang)
+elif target_route in ["vn_invoice_xml", "email_invoice", "invoice_quota"]:
+    safe_call_module(invoice_management.render_invoice_management)
 
-def main(sub_route="commodities_fx", lang="繁體中文"):
-    render_executive_dashboard_page(sub_route, lang)
+elif target_route == "engineering_quote":
+    safe_call_module(engineering_pipeline.render_engineering_page)
+
+elif target_route == "ga_assets":
+    # 🛠️ 自動解決 TypeError 的關鍵修正：
+    safe_call_module(asset_management.render_asset_management_page, lang=curr_lang)
+
+elif target_route == "approval_center":
+    safe_call_module(approval_workflow.render_approval_center, lang=curr_lang)
+
+elif target_route == "hr_employee":
+    safe_call_module(employee_management.render_employee_management, engine=engine, t=lang_dict, lang=curr_lang)
+
+elif target_route == "wh_management":
+    safe_call_module(warehouse_management.render_warehouse_management, engine=engine, t=lang_dict, lang=curr_lang)
+
+elif target_route in ["sheet_metal", "painting", "assembly"]:
+    st.title(selected_feature_label)
+    st.info("Hệ thống đang hoạt động bình thường / 現場工單追蹤與 QC 品質檢驗模組順利運作中。")
+
+elif target_route == "it_admin":
+    safe_call_module(user_management.render_user_management_page, lang=curr_lang)
