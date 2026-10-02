@@ -9,9 +9,10 @@ import modules.engineering_pipeline as engineering_pipeline
 # ----------------------------------------------------
 import modules.executive_dashboard as executive_dashboard
 import modules.invoice_management as invoice_management
+import modules.payroll_management as payroll_management  # 💰 載入財務薪資與扣款模組
 import modules.procurement_ap as procurement_ap
 import modules.sales_order_ar as sales_order_ar
-import modules.system_licensing as system_licensing  # 🎛️ 載入商業授權控制模組
+import modules.system_licensing as system_licensing
 import modules.user_management as user_management
 import modules.warehouse_management as warehouse_management
 import pandas as pd
@@ -31,7 +32,6 @@ st.set_page_config(
 # ----------------------------------------------------
 MOBILE_CSS = """
 <style>
-/* 📱 針對手機小螢幕 (< 768px) 自動調整字體與邊距 */
 @media only screen and (max-width: 768px) {
     h1 {
         font-size: 1.35rem !important;
@@ -111,12 +111,13 @@ NAV_STRUCTURE = {
                 "features": {
                     "🛒 採購與應付帳款 (AP & 廠商發票)": "procurement_ap",
                     "📋 銷售與應收帳款 (AR & 催收歷史)": "sales_order_ar",
+                    "💰 全球員工薪資試算與考勤扣款": "payroll_calc",  # 💰 新增功能
                     "📄 越南電子發票 XML 解析與登錄": "vn_invoice_xml",
                     "📧 通用信箱電子發票自動讀取 (IMAP)": "email_invoice",
                     "📊 電子發票張數監控與預警": "invoice_quota",
                 }
             },
-            "🛠️️ 研發工程部 (R&D & Engineering)": {
+            "🛠️ 研發工程部 (R&D & Engineering)": {
                 "features": {
                     "⚡ 配電盤估價與資材報價總合": "engineering_quote"
                 }
@@ -124,7 +125,7 @@ NAV_STRUCTURE = {
             "🏢 行政總務部 (General Affairs)": {
                 "features": {
                     "📦 固定資產設備與總務採購": "ga_assets",
-                    "✍️ 電子簽核與請款審核中心": "approval_center",
+                    "✍️️ 電子簽核與請款審核中心": "approval_center",
                 }
             },
             "👥 人力資源部 (Human Resources)": {
@@ -171,6 +172,9 @@ NAV_STRUCTURE = {
                 "features": {
                     "🛒 Mua hàng & Phải trả (AP)": "procurement_ap",
                     "📋 Quản lý Bán hàng & Phải thu (AR)": "sales_order_ar",
+                    "💰 Tính Lương Nhân viên & Khấu trừ Bảo hiểm": (
+                        "payroll_calc"
+                    ),
                     "📄 Đọc Hóa đơn Điện tử XML Việt Nam": (
                         "vn_invoice_xml"
                     ),
@@ -180,7 +184,7 @@ NAV_STRUCTURE = {
                     "📊 Giám sát Số lượng Hóa đơn": "invoice_quota",
                 }
             },
-            "🛠️ Phòng Nghiên cứu & Kỹ thuật (R&D)": {
+            "🛠️️ Phòng Nghiên cứu & Kỹ thuật (R&D)": {
                 "features": {
                     "⚡ Báo giá Tủ điện & Dự toán Vật tư": (
                         "engineering_quote"
@@ -243,6 +247,9 @@ NAV_STRUCTURE = {
                         "procurement_ap"
                     ),
                     "📋 Sales & Accounts Receivable (AR)": "sales_order_ar",
+                    "💰 Employee Payroll & Insurance Deductions": (
+                        "payroll_calc"
+                    ),
                     "📄 Vietnam E-Invoice XML Parser": "vn_invoice_xml",
                     "📧 Auto Email Invoice Reader (IMAP)": "email_invoice",
                     "📊 E-Invoice Quota & Alerts": "invoice_quota",
@@ -430,7 +437,6 @@ st.sidebar.markdown("---")
 
 features_dict = lang_dict["departments"][selected_parent_dept]["features"]
 
-# 🎛️ 核心授權過濾：如果設有勾選開關，過濾掉沒打勾的功能 (IT 管理項永遠保留)
 enabled_feats = st.session_state.get("enabled_modules", None)
 if enabled_feats is not None:
     feature_labels = [
@@ -477,6 +483,14 @@ elif target_route == "procurement_ap":
 elif target_route == "sales_order_ar":
     safe_call_module(
         sales_order_ar.render_sales_order_ar_page,
+        engine=engine,
+        lang=curr_lang,
+    )
+
+elif target_route == "payroll_calc":
+    # 💰 安全調用薪資試算與考勤扣款模組
+    safe_call_module(
+        payroll_management.render_payroll_management_page,
         engine=engine,
         lang=curr_lang,
     )
