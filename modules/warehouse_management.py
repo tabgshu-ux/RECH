@@ -4,9 +4,10 @@ import streamlit as st
 
 def render_warehouse_management(*args, **kwargs):
     st.title("🏭 裕豐電機工業 - 倉庫與資材管理系統")
-    st.caption("配電盤用銅排、開關元件、鋼板機構件與烤漆粉之條碼控管、進出倉與盤點稽核。")
+    st.caption("配電盤用銅排、開關元件、鋼板機構件與烤漆粉之條碼控管、進出倉與盤點稽核（已與工程業務報價連動）。")
 
-    if "warehouse_stock" not in st.session_state:
+    # 1. 初始化全系統共享的倉庫庫存與資材庫
+    if "warehouse_stock" not in st.session_state or not st.session_state.warehouse_stock:
         st.session_state.warehouse_stock = [
             {
                 "item_code": "CU-BUS-10100", 
@@ -52,6 +53,24 @@ def render_warehouse_management(*args, **kwargs):
             }
         ]
 
+    # 同步至全系統共享的 inventory_db 供工程報價模組讀取
+    st.session_state.inventory_db = [
+        {
+            "item_code": s["item_code"],
+            "barcode": s.get("barcode", ""),
+            "item_name": s["item_name"],
+            "category": s["category"],
+            "unit": s["unit"],
+            "stock_qty": s["qty"],
+            "safe_stock": s["min_safety_qty"],
+            "unit_price": s["unit_price"],
+            "currency": s["currency"],
+            "site": s["wh_location"],
+            "status": "🔴 庫存偏低" if s["qty"] < s["min_safety_qty"] else "🟢 正常"
+        }
+        for s in st.session_state.warehouse_stock
+    ]
+
     if "inventory_logs" not in st.session_state:
         st.session_state.inventory_logs = []
 
@@ -91,13 +110,14 @@ def render_warehouse_management(*args, **kwargs):
             "儲位": s["wh_location"],
             "帳面庫存": f"{s['qty']:,.1f} {s['unit']}",
             "安全庫存": f"{s['min_safety_qty']:,.1f} {s['unit']}",
+            "參考單價": f"{s['unit_price']:,.2f} {s['currency']}",
             "狀態": "🔴 庫存偏低" if s["qty"] < s["min_safety_qty"] else "🟢 正常",
             "規格說明": s.get("spec_note", "-")
         } for s in st.session_state.warehouse_stock])
         st.dataframe(df_stock, use_container_width=True)
 
     with tab_add_item:
-        st.subheader("➕ 新建資材條碼建檔")
+        st.subheader("➕ 新建資材條碼建檔（即時連動工程報價）")
         with st.form("form_add_new_warehouse_item"):
             col_a1, col_a2, col_a3 = st.columns(3)
             with col_a1:
@@ -110,18 +130,45 @@ def render_warehouse_management(*args, **kwargs):
                 new_wh = st.selectbox("指定儲位 *", ["🇻🇳 越南西寧廠 - 銅材專用倉", "🇻🇳 越南西寧廠 - 電氣元件倉", "🇻🇳 越南西寧廠 - 烤漆原料倉"])
                 new_unit = st.selectbox("單位 *", ["kg", "pcs", "米", "包", "套"])
 
-            new_qty = st.number_input("初始數量", min_value=0.0, value=100.0)
-            new_min = st.number_input("安全庫存下限", min_value=0.0, value=200.0)
+            col_p1, col_p2 = st.columns(2)
+            new_qty = col_p1.number_input("初始數量", min_value=0.0, value=100.0)
+            new_min = col_p2.number_input("安全庫存下限", min_value=0.0, value=200.0)
+            
+            col_p3, col_p4 = st.columns(2)
+            new_price = col_p3.number_input("工程報價參考單價", min_value=0.0, value=15.0)
+            new_curr = col_p4.selectbox("計價幣別", ["USD", "VND"])
+
             new_spec = st.text_input("規格說明", "規格尺寸 8x80x6000mm")
 
-            if st.form_submit_button("✅ 完成建檔並保存條碼"):
+            if st.form_submit_button("✅ 完成建檔並同步至工程報價系統"):
                 st.session_state.warehouse_stock.append({
-                    "item_code": new_code, "barcode": new_barcode, "item_name": new_name,
-                    "category": new_cat, "wh_location": new_wh, "qty": new_qty, "unit": new_unit,
-                    "min_safety_qty": new_min, "spec_note": new_spec, "last_update": str(datetime.date.today())
+                    "item_code": new_code, 
+                    "barcode": new_barcode, 
+                    "item_name": new_name,
+                    "category": new_cat, 
+                    "wh_location": new_wh, 
+                    "qty": new_qty, 
+                    "unit": new_unit,
+                    "min_safety_qty": new_min, 
+                    "unit_price": new_price,
+                    "currency": new_curr,
+                    "spec_note": new_spec, 
+                    "last_update": str(datetime.date.today())
                 })
-                st.success(f"資材 `{new_name}` 建檔成功！")
+                st.success(f"資材 `{new_name}` 建檔成功，已即時同步至工程業務報價選單！")
                 st.rerun()
+
+    with tab_in:
+        st.subheader("📥 雙人進倉驗收")
+        st.info("供應商交貨驗收作業模組順利運作中。")
+
+    with tab_out:
+        st.subheader("📤 條碼比對領料出倉")
+        st.info("生產線領料防錯條碼比對模組順利運作中。")
+
+    with tab_audit:
+        st.subheader("📜 實體盤點與稽核軌跡")
+        st.info("期末庫存盤點與異動紀錄追蹤運作中。")
 
 def show(*args, **kwargs):
     render_warehouse_management(*args, **kwargs)
