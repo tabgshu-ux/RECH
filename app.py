@@ -1,12 +1,9 @@
 import inspect
 import modules.approval_workflow as approval_workflow
 import modules.asset_management as asset_management
+import modules.db_connection as db_conn  # 引入共用安全連線模組
 import modules.employee_management as employee_management
 import modules.engineering_pipeline as engineering_pipeline
-
-# ----------------------------------------------------
-# 1. 載入各獨立業務模組 (Modules)
-# ----------------------------------------------------
 import modules.executive_dashboard as executive_dashboard
 import modules.invoice_management as invoice_management
 import modules.payroll_management as payroll_management
@@ -16,7 +13,7 @@ import modules.system_licensing as system_licensing
 import modules.user_management as user_management
 import modules.warehouse_management as warehouse_management
 import pandas as pd
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 import streamlit as st
 
 # 📱 100% 移動優先：設定頁面並預設手機側邊欄展開
@@ -58,7 +55,7 @@ RECH_LOGO_HTML = """
 """
 
 # ----------------------------------------------------
-# 2. 階層式選單字典
+# 2. 階層式選單字典（管理部統籌中心歸納財務、人事、總務）
 # ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
@@ -143,14 +140,12 @@ NAV_STRUCTURE = {
                     "📊 [Tài chính] Giám sát Hóa đơn": "invoice_quota",
                     "👤 [Nhân sự] Quản lý Hồ sơ Nhân sự": "hr_employee",
                     "📦 [Hành chính] Quản lý Tài sản Cố định": "ga_assets",
-                    "✍️ [Hành chính] Trung tâm Phê duyệt": "approval_center",
+                    "✍️️ [Hành chính] Trung tâm Phê duyệt": "approval_center",
                 }
             },
             "🛠️ Phòng Nghiên cứu & Kỹ thuật (R&D)": {
                 "features": {
-                    "⚡ Báo giá Tủ điện & Dự toán Vật tư": (
-                        "engineering_quote"
-                    )
+                    "⚡ Báo giá Tủ điện & Dự toán Vật tư": "engineering_quote"
                 }
             },
             "🏭 Phòng Sản xuất & Kho vật tư (Factory)": {
@@ -228,27 +223,9 @@ if "current_lang" not in st.session_state:
     st.session_state.current_lang = "繁體中文"
 
 # ----------------------------------------------------
-# 3. 嚴格安全控管的 Supabase 連線池
+# 3. 取得共用安全的資料庫連線 Engine
 # ----------------------------------------------------
-DB_URL = "postgresql+psycopg2://postgres.wvsqbefyeykmueffcbwd:Reetech2026@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require"
-
-
-@st.cache_resource
-def get_db_engine():
-    try:
-        eng = create_engine(
-            DB_URL,
-            pool_pre_ping=True,
-            pool_size=2,  # 嚴格限制為 2，確保絕對不超過 Supabase 上限
-            max_overflow=3,
-            pool_recycle=60,  # 每 60 秒自動回收閒置連線
-        )
-        return eng
-    except Exception:
-        return None
-
-
-engine = get_db_engine()
+engine = db_conn.get_db_engine()
 
 
 def safe_call_module(func, *args, **kwargs):
@@ -257,7 +234,6 @@ def safe_call_module(func, *args, **kwargs):
     try:
         sig = inspect.signature(func)
         valid_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
-        # 傳遞共用的 engine 與 lang
         if "engine" in sig.parameters and "engine" not in valid_kwargs:
             valid_kwargs["engine"] = engine
         func(*args, **valid_kwargs)
@@ -309,7 +285,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ----------------------------------------------------
-# 5. 側邊欄選單
+# 5. 側邊欄選單（管理部主管統籌中心）
 # ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
