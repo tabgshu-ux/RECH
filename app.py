@@ -58,7 +58,7 @@ RECH_LOGO_HTML = """
 """
 
 # ----------------------------------------------------
-# 2. 階層式選單字典 (將財務、人事、總務歸納於「管理部統籌中心」下)
+# 2. 階層式選單字典
 # ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
@@ -93,7 +93,7 @@ NAV_STRUCTURE = {
                     "✍️ [總務] 電子簽核與請款審核中心": "approval_center",
                 }
             },
-            "🛠️ 研發工程部 (R&D & Engineering)": {
+            "🛠️️ 研發工程部 (R&D & Engineering)": {
                 "features": {
                     "⚡ 配電盤估價與資材報價總合": "engineering_quote"
                 }
@@ -206,7 +206,7 @@ NAV_STRUCTURE = {
                     "⚡ Switchgear Costing & Quotation": "engineering_quote"
                 }
             },
-            "🏭 Manufacturing & Warehouse": {
+            "Manufacturing & Warehouse": {
                 "features": {
                     "📦 Warehouse & Material Barcodes": "wh_management",
                     "✂️ Sheet Metal Processing": "sheet_metal",
@@ -228,7 +228,7 @@ if "current_lang" not in st.session_state:
     st.session_state.current_lang = "繁體中文"
 
 # ----------------------------------------------------
-# 3. Supabase 資料庫連線
+# 3. Supabase 最佳化連線池 (嚴格限制 pool_size 避免爆連線)
 # ----------------------------------------------------
 DB_URL = "postgresql+psycopg2://postgres.wvsqbefyeykmueffcbwd:Reetech2026@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres"
 
@@ -237,7 +237,11 @@ DB_URL = "postgresql+psycopg2://postgres.wvsqbefyeykmueffcbwd:Reetech2026@aws-0-
 def get_db_engine():
     try:
         eng = create_engine(
-            DB_URL, pool_pre_ping=True, pool_size=5, max_overflow=10
+            DB_URL,
+            pool_pre_ping=True,
+            pool_size=3,  # 嚴格限制連線池大小，避免超過 Supabase 限制
+            max_overflow=5,
+            pool_recycle=300,
         )
         return eng
     except Exception:
