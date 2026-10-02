@@ -38,7 +38,7 @@ INSURANCE_RATES = {
 
 
 def render_payroll_management_page(engine=None, lang="繁體中文"):
-    st.title("💰 財務部 - 企業級全球員工薪資與保險扣款結算中心")
+    st.title("💰 財務部 - 員工薪資與保險扣款結算中心")
     st.caption("📱 專為裕豐電機跨國廠區設計 — 提供完整底薪、津貼、保險明細與員工正式薪資單列印")
 
     tab_calc, tab_attendance, tab_history = st.tabs([
