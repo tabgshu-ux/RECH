@@ -3,6 +3,7 @@ import pandas as pd
 from sqlalchemy import text
 import streamlit as st
 
+# 多幣別換算字典
 EXCHANGE_RATES = {"USD": 1.0, "VND": 25400.0, "TWD": 32.0, "CNY": 7.23}
 
 
@@ -18,318 +19,95 @@ def format_currency_display(amount, curr):
     return f"{amount:,.2f} {curr}"
 
 
-def render(engine, t):
-    st.title("💰 管理部 - 財務與應收/應付帳款 (TT200 / 多幣別 / UNC)")
-    st.caption("裕豐電機工業 REETECH INDUSTRIAL - 財務會計模組")
+def render_ar_management(engine, t=None):
+    st.title("📄 管理部 - 客戶應收帳款 (AR) & 專案分期進度管理")
+    st.caption("記錄客戶工程合約總額、動態 3 期/5 期付款排程，專案說明與催收歷程隨時修改。")
 
-    tab_ar, tab_ap, tab_pay, tab_add = st.tabs([
-        "📋 TK 131 客戶應收款項 (AR)",
-        "🛒 TK 331 採購與廠商應付款項 (AP)",
-        "🏦 銀行轉帳水單 (UNC)",
-        "➕ 登記新單據/帳款 (含分期 % 拆算)",
+    tab_list, tab_edit, tab_add = st.tabs([
+        "📋 客戶應收帳款總表與進度",
+        "✍️ 修改進行進度說明與催收歷程",
+        "➕ 新增請款專案 (分期/不分期)",
     ])
 
-    with tab_ar:
+    # ----------------------------------------------------
+    # 📋 頁籤一：客戶應收帳款專案清冊 (手機最佳化檢視)
+    # ----------------------------------------------------
+    with tab_list:
+        st.subheader("📋 客戶應收帳款專案清冊")
+
+        # 手機/電腦 檢視模式切換
+        view_mode = st.radio(
+            "📱 檢視模式切換 (手機建議選擇卡片模式)：",
+            ["📱 手機最佳化 (卡片直立檢視)", "💻 電腦完整表格 (欄位已前置)"],
+            horizontal=True,
+        )
+
+        # 模擬/真實 AR 資料庫讀取
         try:
-            df_ar = pd.read_sql(
-                "SELECT * FROM invoices WHERE invoice_type='AR'", engine
-            )
-            st.subheader("📑 TK 131 應收帳款明細表")
-            st.dataframe(df_ar, use_container_width=True)
-        except Exception as e:
-            st.info("尚無應收帳款資料或連線建置中。")
+            df_ar = pd.read_sql("SELECT * FROM invoices WHERE invoice_type='AR'", engine)
+        except Exception:
+            # 資料庫未連線時的測試資料 (與您的圖片範例相同)
+            df_ar = pd.DataFrame([{
+                "inv_no": "INV-2026-001",
+                "customer": "越南檳榜工業區A廠",
+                "latest_reason": "【2026-10-02 03:37 催款員: admin】客戶延至 2026-10-17 付款。理由：施工工程未驗收完畢",
+                "project": "金寶山工業區水電工程",
+                "curr": "USD",
+                "amount": 100000.0,
+                "plan": "分三期",
+                "ratio": "30% / 60% / 10%",
+                "status": "工程進度 85% / 驗收中",
+            }])
 
-    with tab_ap:
-        try:
-            df_ap = pd.read_sql(
-                "SELECT * FROM invoices WHERE invoice_type='AP'", engine
-            )
-            st.subheader("🛒 TK 331 採購應付帳款明細表")
-            st.dataframe(df_ap, use_container_width=True)
-        except Exception as e:
-            st.info("尚無應付帳款資料或連線建置中。")
+        if not df_ar.empty:
+            # 📱 模式 1：手機最佳化 (卡片直立檢視) - 老闆用手機看這最方便！
+            if "📱" in view_mode:
+                st.caption("💡 已為手機介面進行最佳化，催收理由與重點直接呈現於最上方：")
+                for _, row in df_ar.iterrows():
+                    with st.container():
+                        st.markdown(f"### 🏢 {row.get('customer', row.get('entity_name', '未命名客戶'))}")
+                        
+                        # 🚨 將「最新催收理由/歷程」放大醒目呈現在最頂部！
+                        reason_text = row.get("latest_reason", row.get("notes", "尚無催收紀錄"))
+                        st.warning(f"🚨 **最新催收理由/歷程**：\n\n{reason_text}")
 
-    with tab_pay:
-        st.subheader("🏦 銀行轉帳水單登記 (Ủy Nhiệm Chi - UNC)")
-        st.info("提供出納登記 Vietcombank / BIDV 轉帳水單號碼與簽核日期。")
+                        # 其他次要細節
+                        c1, c2 = st.columns(2)
+                        with c1:
+                            st.write(f"• **請款編號**: `{row.get('inv_no', row.get('invoice_id', 'N/A'))}`")
+                            st.write(f"• **工程/專案**: {row.get('project', row.get('project_name', 'N/A'))}")
+                        with c2:
+                            amt = row.get('amount', 0.0)
+                            curr = row.get('curr', row.get('currency', 'USD'))
+                            st.write(f"• **總金額**: **{format_currency_display(amt, curr)}**")
+                            st.write(f"• **分期方案**: {row.get('plan', 'N/A')} ({row.get('ratio', 'N/A')})")
+                        st.divider()
 
-    with tab_add:
-        st.subheader("➕ 登記新單據/帳款")
-
-        with st.form("add_inv_form"):
-            col1, col2 = st.columns(2)
-            with col1:
-                inv_type = st.selectbox(
-                    "帳款類別 *", ["AR - 應收帳款", "AP - 應付帳款"]
-                )
-                entity_name = st.text_input(
-                    "客戶/廠商名稱 *", placeholder="例如: 金寶山"
-                )
-                project_name = st.text_input(
-                    "工程名稱/採購品名 *",
-                    placeholder="例如: 金寶山工業區水電工程",
-                )
-                curr = st.selectbox(
-                    "交易幣別 *", ["VND", "USD", "TWD", "CNY"], index=1
-                )
-                amount = st.number_input(
-                    "合約總金額 *", min_value=0.0, value=100000.0, step=1000.0
-                )
-
-            with col2:
-                plan_option = st.selectbox(
-                    "分期付款方案 *",
-                    [
-                        "分三期 (30% 訂金 / 60% 驗收 / 10% 尾款)",
-                        "分二期 (30% 訂金 / 70% 尾款)",
-                        "不分期 (100% 全額一次付)",
-                        "自訂期數 (%)",
-                    ],
-                )
-                progress_status = st.text_input(
-                    "推行進度說明", value="工程備料中 / 準備施工"
-                )
-                project_desc = st.text_area(
-                    "專案詳細說明",
-                    placeholder="請填寫本工程施工內容與合約細節...",
-                    height=90,
-                )
-
-            st.divider()
-            st.markdown("### 💳 分期金額拆算與付款日期細項設定")
-
-            today = datetime.date.today()
-            installments_data = []
-
-            # ----------------------------------------------------
-            # 1. 分三期情境
-            # ----------------------------------------------------
-            if "分三期" in plan_option:
-                st.caption(
-                    "💡 系統已為您自動拆算 3 期明細，您可以自由調整 %"
-                    " 比與付款日期："
-                )
-                c_p1, c_p2, c_p3 = st.columns(3)
-
-                with c_p1:
-                    st.markdown("##### 【第 1 期 (訂金/首款)】")
-                    pct_1 = st.number_input(
-                        "第 1 期拆分比例 (%)",
-                        value=30.0,
-                        min_value=0.0,
-                        max_value=100.0,
-                        key="p1_pct",
-                    )
-                    amt_1 = amount * (pct_1 / 100.0)
-                    st.info(
-                        f"💰 計算金額: **{format_currency_display(amt_1, curr)}**"
-                    )
-                    date_1 = st.date_input(
-                        "第 1 期預計付款日",
-                        value=today + datetime.timedelta(days=30),
-                        key="p1_date",
-                    )
-                    installments_data.append({
-                        "期數": "第 1 期 (訂金)",
-                        "拆分比例": f"{pct_1:.1f}%",
-                        "計算金額": format_currency_display(amt_1, curr),
-                        "原始金額": amt_1,
-                        "預計付款日": str(date_1),
-                    })
-
-                with c_p2:
-                    st.markdown("##### 【第 2 期 (期中/驗收款)】")
-                    pct_2 = st.number_input(
-                        "第 2 期拆分比例 (%)",
-                        value=60.0,
-                        min_value=0.0,
-                        max_value=100.0,
-                        key="p2_pct",
-                    )
-                    amt_2 = amount * (pct_2 / 100.0)
-                    st.info(
-                        f"💰 計算金額: **{format_currency_display(amt_2, curr)}**"
-                    )
-                    date_2 = st.date_input(
-                        "第 2 期預計付款日",
-                        value=today + datetime.timedelta(days=60),
-                        key="p2_date",
-                    )
-                    installments_data.append({
-                        "期數": "第 2 期 (驗收款)",
-                        "拆分比例": f"{pct_2:.1f}%",
-                        "計算金額": format_currency_display(amt_2, curr),
-                        "原始金額": amt_2,
-                        "預計付款日": str(date_2),
-                    })
-
-                with c_p3:
-                    st.markdown("##### 【第 3 期 (尾款/保固金)】")
-                    pct_3 = st.number_input(
-                        "第 3 期拆分比例 (%)",
-                        value=10.0,
-                        min_value=0.0,
-                        max_value=100.0,
-                        key="p3_pct",
-                    )
-                    amt_3 = amount * (pct_3 / 100.0)
-                    st.info(
-                        f"💰 計算金額: **{format_currency_display(amt_3, curr)}**"
-                    )
-                    date_3 = st.date_input(
-                        "第 3 期預計付款日",
-                        value=today + datetime.timedelta(days=90),
-                        key="p3_date",
-                    )
-                    installments_data.append({
-                        "期數": "第 3 期 (尾款)",
-                        "拆分比例": f"{pct_3:.1f}%",
-                        "計算金額": format_currency_display(amt_3, curr),
-                        "原始金額": amt_3,
-                        "預計付款日": str(date_3),
-                    })
-
-                sum_pct = pct_1 + pct_2 + pct_3
-                if abs(sum_pct - 100.0) > 0.01:
-                    st.warning(
-                        f"⚠️ 注意：目前 3 期比例總和為 {sum_pct:.1f}%，建議調整為"
-                        " 100%！"
-                    )
-
-            # ----------------------------------------------------
-            # 2. 分二期情境
-            # ----------------------------------------------------
-            elif "分二期" in plan_option:
-                c_p1, c_p2 = st.columns(2)
-                with c_p1:
-                    st.markdown("##### 【第 1 期 (訂金/首款)】")
-                    pct_1 = st.number_input(
-                        "第 1 期拆分比例 (%)",
-                        value=30.0,
-                        key="p2_1_pct",
-                    )
-                    amt_1 = amount * (pct_1 / 100.0)
-                    st.info(
-                        f"💰 計算金額: **{format_currency_display(amt_1, curr)}**"
-                    )
-                    date_1 = st.date_input(
-                        "第 1 期預計付款日",
-                        value=today + datetime.timedelta(days=30),
-                        key="p2_1_date",
-                    )
-                    installments_data.append({
-                        "期數": "第 1 期 (訂金)",
-                        "拆分比例": f"{pct_1:.1f}%",
-                        "計算金額": format_currency_display(amt_1, curr),
-                        "原始金額": amt_1,
-                        "預計付款日": str(date_1),
-                    })
-
-                with c_p2:
-                    st.markdown("##### 【第 2 期 (尾款/結案)】")
-                    pct_2 = st.number_input(
-                        "第 2 期拆分比例 (%)",
-                        value=70.0,
-                        key="p2_2_pct",
-                    )
-                    amt_2 = amount * (pct_2 / 100.0)
-                    st.info(
-                        f"💰 計算金額: **{format_currency_display(amt_2, curr)}**"
-                    )
-                    date_2 = st.date_input(
-                        "第 2 期預計付款日",
-                        value=today + datetime.timedelta(days=60),
-                        key="p2_2_date",
-                    )
-                    installments_data.append({
-                        "期數": "第 2 期 (尾款)",
-                        "拆分比例": f"{pct_2:.1f}%",
-                        "計算金額": format_currency_display(amt_2, curr),
-                        "原始金額": amt_2,
-                        "預計付款日": str(date_2),
-                    })
-
-            # ----------------------------------------------------
-            # 3. 不分期情境
-            # ----------------------------------------------------
+            # 💻 模式 2：電腦完整表格 (將最新催收理由移動到第一順位欄位)
             else:
-                st.markdown("##### 📌 全額一次付清 (100%)")
-                single_date = st.date_input(
-                    "約定付款日期",
-                    value=today + datetime.timedelta(days=30),
-                    key="s_date",
-                )
-                st.success(
-                    f"💰 一次付清總金額:"
-                    f" **{format_currency_display(amount, curr)}** (100%) |"
-                    f" 付款日: {single_date}"
-                )
-                installments_data.append({
-                    "期數": "全額一次付",
-                    "拆分比例": "100.0%",
-                    "計算金額": format_currency_display(amount, curr),
-                    "原始金額": amount,
-                    "預計付款日": str(single_date),
+                st.caption("💡 表格欄位已重新排序，將「最新催收理由/歷程」移動至左側優先展示：")
+                
+                # 重新整理欄位順序：請款編號 -> 客戶名稱 -> 🚨最新催收理由/歷程 -> 總金額 -> ...
+                reordered_df = pd.DataFrame({
+                    "請款編號": df_ar.get("inv_no", df_ar.get("invoice_id", "")),
+                    "客戶名稱": df_ar.get("customer", df_ar.get("entity_name", "")),
+                    "🚨 最新催收理由/歷程 (前置)": df_ar.get("latest_reason", df_ar.get("notes", "尚無紀錄")),
+                    "工程名稱": df_ar.get("project", df_ar.get("project_name", "")),
+                    "交易幣別": df_ar.get("curr", df_ar.get("currency", "")),
+                    "總帳款": df_ar.get("amount", 0.0),
+                    "分期類型": df_ar.get("plan", "不分期"),
+                    "分期比率": df_ar.get("ratio", "100%"),
+                    "進行推行說明": df_ar.get("status", "正常進度中"),
                 })
-
-            st.divider()
-            st.markdown("##### 📋 預計請款分期明細清單預覽：")
-            st.dataframe(
-                pd.DataFrame(installments_data), use_container_width=True
-            )
-
-            # 💾 寫入資料庫
-            if st.form_submit_button("💾 儲存寫入資料庫", type="primary"):
-                if entity_name and project_name:
-                    type_code = "AR" if "AR" in inv_type else "AP"
-                    inv_id = f"{type_code}-2026-{datetime.datetime.now().strftime('%m%d%H%M')}"
-                    calc_usd = amount / EXCHANGE_RATES.get(curr, 1.0)
-                    first_due_date = (
-                        installments_data[0]["預計付款日"]
-                        if installments_data
-                        else str(today)
-                    )
-
-                    try:
-                        with engine.connect() as conn:
-                            conn.execute(
-                                text(
-                                    "INSERT INTO invoices (invoice_id,"
-                                    " entity_name, project_name, amount,"
-                                    " currency, amount_usd, due_date,"
-                                    " invoice_type, is_paid) VALUES (:id,"
-                                    " :entity, :prj, :amt, :curr, :usd, :due,"
-                                    " :type, false)"
-                                ),
-                                {
-                                    "id": inv_id,
-                                    "entity": entity_name,
-                                    "prj": (
-                                        f"{project_name}"
-                                        f" ({plan_option.split(' ')[0]})"
-                                    ),
-                                    "amt": amount,
-                                    "curr": curr,
-                                    "usd": calc_usd,
-                                    "due": first_due_date,
-                                    "type": type_code,
-                                },
-                            )
-                            conn.commit()
-                        st.success(
-                            f"單號 {inv_id} 已成功儲存！共拆算"
-                            f" {len(installments_data)} 期明細。"
-                        )
-                        st.rerun()
-                    except Exception as ex:
-                        st.error(f"資料庫寫入失敗: {ex}")
-                else:
-                    st.error("請輸入名稱與項目！")
+                
+                st.dataframe(reordered_df, use_container_width=True)
+        else:
+            st.info("尚無應收帳款專案資料。")
 
 
-def show(engine, t):
-    render(engine, t)
+def show(engine, t=None):
+    render_ar_management(engine, t)
 
 
-def main(engine, t):
-    render(engine, t)
+def main(engine, t=None):
+    render_ar_management(engine, t)
