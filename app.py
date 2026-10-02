@@ -11,6 +11,7 @@ import modules.executive_dashboard as executive_dashboard
 import modules.invoice_management as invoice_management
 import modules.procurement_ap as procurement_ap
 import modules.sales_order_ar as sales_order_ar
+import modules.system_licensing as system_licensing  # 🎛️ 載入商業授權控制模組
 import modules.user_management as user_management
 import modules.warehouse_management as warehouse_management
 import pandas as pd
@@ -115,7 +116,7 @@ NAV_STRUCTURE = {
                     "📊 電子發票張數監控與預警": "invoice_quota",
                 }
             },
-            "🛠️ 研發工程部 (R&D & Engineering)": {
+            "🛠️️ 研發工程部 (R&D & Engineering)": {
                 "features": {
                     "⚡ 配電盤估價與資材報價總合": "engineering_quote"
                 }
@@ -139,7 +140,8 @@ NAV_STRUCTURE = {
             },
             "💻 資訊管理部 (IT & System)": {
                 "features": {
-                    "🔒 帳號權限與全系統稽核軌跡": "it_admin"
+                    "🔒 帳號權限與全系統稽核軌跡": "it_admin",
+                    "🎛️ 客戶 ERP 模組授權與功能開關": "it_licensing",
                 }
             },
         },
@@ -206,7 +208,8 @@ NAV_STRUCTURE = {
             },
             "💻 Phòng Công nghệ Thông tin (IT)": {
                 "features": {
-                    "🔒 Quản lý Phân quyền & Nhật ký Ký duyệt": "it_admin"
+                    "🔒 Quản lý Phân quyền & Nhật ký Ký duyệt": "it_admin",
+                    "🎛️ Phân quyền Mô-đun Bản quyền ERP": "it_licensing",
                 }
             },
         },
@@ -271,7 +274,8 @@ NAV_STRUCTURE = {
             },
             "💻 Information Technology (IT)": {
                 "features": {
-                    "🔒 User Permissions & Audit Logs": "it_admin"
+                    "🔒 User Permissions & Audit Logs": "it_admin",
+                    "🎛️ Client ERP Module Licensing": "it_licensing",
                 }
             },
         },
@@ -337,7 +341,7 @@ def safe_call_module(func, *args, **kwargs):
 
 
 # ----------------------------------------------------
-# 4. 登入系統 (附帶企業自然融入 Logo)
+# 4. 登入系統
 # ----------------------------------------------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -377,7 +381,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ----------------------------------------------------
-# 5. 側邊欄：RECH 企業標誌 + 語言選單
+# 5. 側邊欄：RECH 企業標誌 + 勾選開關過濾選單
 # ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
@@ -425,7 +429,19 @@ selected_parent_dept = st.sidebar.radio(
 st.sidebar.markdown("---")
 
 features_dict = lang_dict["departments"][selected_parent_dept]["features"]
-feature_labels = list(features_dict.keys())
+
+# 🎛️ 核心授權過濾：如果設有勾選開關，過濾掉沒打勾的功能 (IT 管理項永遠保留)
+enabled_feats = st.session_state.get("enabled_modules", None)
+if enabled_feats is not None:
+    feature_labels = [
+        label
+        for label in features_dict.keys()
+        if (label in enabled_feats or "it_" in features_dict[label])
+    ]
+    if not feature_labels:
+        feature_labels = list(features_dict.keys())
+else:
+    feature_labels = list(features_dict.keys())
 
 st.sidebar.caption(f"**{selected_parent_dept.split('(')[0].strip()}**")
 selected_feature_label = st.sidebar.radio(
@@ -505,4 +521,9 @@ elif target_route in ["sheet_metal", "painting", "assembly"]:
 elif target_route == "it_admin":
     safe_call_module(
         user_management.render_user_management_page, lang=curr_lang
+    )
+
+elif target_route == "it_licensing":
+    safe_call_module(
+        system_licensing.render_licensing_control_page, lang=curr_lang
     )
