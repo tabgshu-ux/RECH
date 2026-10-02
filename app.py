@@ -93,7 +93,7 @@ NAV_STRUCTURE = {
                     "✍️ [總務] 電子簽核與請款審核中心": "approval_center",
                 }
             },
-            "🛠️️ 研發工程部 (R&D & Engineering)": {
+            "🛠 研發工程部 (R&D & Engineering)": {
                 "features": {
                     "⚡ 配電盤估價與資材報價總合": "engineering_quote"
                 }
@@ -206,7 +206,7 @@ NAV_STRUCTURE = {
                     "⚡ Switchgear Costing & Quotation": "engineering_quote"
                 }
             },
-            "Manufacturing & Warehouse": {
+            "🏭 Manufacturing & Warehouse": {
                 "features": {
                     "📦 Warehouse & Material Barcodes": "wh_management",
                     "✂️ Sheet Metal Processing": "sheet_metal",
@@ -228,9 +228,9 @@ if "current_lang" not in st.session_state:
     st.session_state.current_lang = "繁體中文"
 
 # ----------------------------------------------------
-# 3. Supabase 最佳化連線池 (嚴格限制 pool_size 避免爆連線)
+# 3. 嚴格安全控管的 Supabase 連線池
 # ----------------------------------------------------
-DB_URL = "postgresql+psycopg2://postgres.wvsqbefyeykmueffcbwd:Reetech2026@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres"
+DB_URL = "postgresql+psycopg2://postgres.wvsqbefyeykmueffcbwd:Reetech2026@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require"
 
 
 @st.cache_resource
@@ -239,9 +239,9 @@ def get_db_engine():
         eng = create_engine(
             DB_URL,
             pool_pre_ping=True,
-            pool_size=3,  # 嚴格限制連線池大小，避免超過 Supabase 限制
-            max_overflow=5,
-            pool_recycle=300,
+            pool_size=2,  # 嚴格限制為 2，確保絕對不超過 Supabase 上限
+            max_overflow=3,
+            pool_recycle=60,  # 每 60 秒自動回收閒置連線
         )
         return eng
     except Exception:
@@ -257,6 +257,9 @@ def safe_call_module(func, *args, **kwargs):
     try:
         sig = inspect.signature(func)
         valid_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
+        # 傳遞共用的 engine 與 lang
+        if "engine" in sig.parameters and "engine" not in valid_kwargs:
+            valid_kwargs["engine"] = engine
         func(*args, **valid_kwargs)
     except Exception:
         try:
