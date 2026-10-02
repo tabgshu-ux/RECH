@@ -9,7 +9,7 @@ import modules.engineering_pipeline as engineering_pipeline
 # ----------------------------------------------------
 import modules.executive_dashboard as executive_dashboard
 import modules.invoice_management as invoice_management
-import modules.payroll_management as payroll_management  # 💰 載入財務薪資與扣款模組
+import modules.payroll_management as payroll_management
 import modules.procurement_ap as procurement_ap
 import modules.sales_order_ar as sales_order_ar
 import modules.system_licensing as system_licensing
@@ -28,50 +28,23 @@ st.set_page_config(
 )
 
 # ----------------------------------------------------
-# 📱 注入手機優先 RWD CSS (自動縮小手機字體與間距)
+# 📱 注入手機優先 RWD CSS
 # ----------------------------------------------------
 MOBILE_CSS = """
 <style>
 @media only screen and (max-width: 768px) {
-    h1 {
-        font-size: 1.35rem !important;
-        font-weight: 700 !important;
-        line-height: 1.3 !important;
-        margin-bottom: 0.3rem !important;
-    }
-    h2 {
-        font-size: 1.15rem !important;
-        line-height: 1.3 !important;
-    }
-    h3, .stSubheader {
-        font-size: 1.05rem !important;
-        line-height: 1.3 !important;
-    }
-    p, div, span, label {
-        font-size: 0.9rem !important;
-    }
-    .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
-    }
-    [data-testid="stSidebar"] {
-        font-size: 0.85rem !important;
-    }
-    [data-testid="stMetricValue"] {
-        font-size: 1.1rem !important;
-    }
-    [data-testid="stMetricLabel"] {
-        font-size: 0.8rem !important;
-    }
+    h1 { font-size: 1.35rem !important; font-weight: 700 !important; }
+    h2 { font-size: 1.15rem !important; }
+    h3, .stSubheader { font-size: 1.05rem !important; }
+    p, div, span, label { font-size: 0.9rem !important; }
+    .block-container { padding: 1rem 0.5rem !important; }
 }
 </style>
 """
 st.markdown(MOBILE_CSS, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# 🏢 RECH 企業品牌 Logo 橫幅 (自然融入網頁底色版)
+# 🏢 RECH 企業品牌 Logo 橫幅
 # ----------------------------------------------------
 RECH_LOGO_HTML = """
 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; padding: 6px 8px; background: transparent; border-bottom: 2px solid rgba(15, 23, 42, 0.15);">
@@ -85,7 +58,7 @@ RECH_LOGO_HTML = """
 """
 
 # ----------------------------------------------------
-# 2. 符合需求之階層多國語言字典 (i18n)
+# 2. 階層式選單字典 (將財務、人事、總務歸納於「管理部統籌中心」下)
 # ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
@@ -98,7 +71,7 @@ NAV_STRUCTURE = {
         "logout_btn": "🚪 登出系統",
         "lang_selector": "🌐 語言設定 / Language",
         "parent_header": "請選擇部門分類：",
-        "sub_header": "營運與部門作業功能：",
+        "sub_header": "部門作業功能：",
         "departments": {
             "📈 營運戰情室 (Executive)": {
                 "features": {
@@ -107,29 +80,23 @@ NAV_STRUCTURE = {
                     "⚡ 工程專案進度與驗收資料": "project_progress",
                 }
             },
-            "🧾 財務會計部 (Finance & Accounting)": {
+            "👔 管理部統籌中心 (Management Dept)": {
                 "features": {
-                    "🛒 採購與應付帳款 (AP & 廠商發票)": "procurement_ap",
-                    "📋 銷售與應收帳款 (AR & 催收歷史)": "sales_order_ar",
-                    "💰 全球員工薪資試算與考勤扣款": "payroll_calc",  # 💰 新增功能
-                    "📄 越南電子發票 XML 解析與登錄": "vn_invoice_xml",
-                    "📧 通用信箱電子發票自動讀取 (IMAP)": "email_invoice",
-                    "📊 電子發票張數監控與預警": "invoice_quota",
+                    "🧾 [財務] 採購與應付帳款 (AP & 發票)": "procurement_ap",
+                    "📋 [財務] 銷售與應收帳款 (AR)": "sales_order_ar",
+                    "💰 [財務] 全球員工薪資試算與扣款": "payroll_calc",
+                    "📄 [財務] 越南電子發票 XML 解析": "vn_invoice_xml",
+                    "📧 [財務] 通用信箱發票自動讀取": "email_invoice",
+                    "📊 [財務] 電子發票張數監控": "invoice_quota",
+                    "👤 [人事] 跨國員工檔案與勞動合約": "hr_employee",
+                    "📦 [總務] 固定資產設備與總務採購": "ga_assets",
+                    "✍️ [總務] 電子簽核與請款審核中心": "approval_center",
                 }
             },
             "🛠️ 研發工程部 (R&D & Engineering)": {
                 "features": {
                     "⚡ 配電盤估價與資材報價總合": "engineering_quote"
                 }
-            },
-            "🏢 行政總務部 (General Affairs)": {
-                "features": {
-                    "📦 固定資產設備與總務採購": "ga_assets",
-                    "✍️️ 電子簽核與請款審核中心": "approval_center",
-                }
-            },
-            "👥 人力資源部 (Human Resources)": {
-                "features": {"👤 人事檔案與勞動合約管理": "hr_employee"}
             },
             "🏭 生產倉儲部 (Plant & Warehouse)": {
                 "features": {
@@ -161,45 +128,29 @@ NAV_STRUCTURE = {
         "departments": {
             "📈 Ban Giám đốc (Executive)": {
                 "features": {
-                    "🔴 Giá Nguyên liệu & Tỷ giá Chứng khoán": (
-                        "commodities_fx"
-                    ),
+                    "🔴 Giá Nguyên liệu & Tỷ giá": "commodities_fx",
                     "📊 Dữ liệu Tài chính (AR/AP & P&L)": "financials_pl",
-                    "⚡ Tiến độ Dự án Kỹ thuật & Bàn giao": "project_progress",
+                    "⚡ Tiến độ Dự án Kỹ thuật": "project_progress",
                 }
             },
-            "🧾 Phòng Tài chính Kế toán (Finance)": {
+            "👔 Ban Quản lý Tổng hợp (Management Dept)": {
                 "features": {
-                    "🛒 Mua hàng & Phải trả (AP)": "procurement_ap",
-                    "📋 Quản lý Bán hàng & Phải thu (AR)": "sales_order_ar",
-                    "💰 Tính Lương Nhân viên & Khấu trừ Bảo hiểm": (
-                        "payroll_calc"
-                    ),
-                    "📄 Đọc Hóa đơn Điện tử XML Việt Nam": (
-                        "vn_invoice_xml"
-                    ),
-                    "📧 Đọc Hóa đơn tự động từ Email (IMAP)": (
-                        "email_invoice"
-                    ),
-                    "📊 Giám sát Số lượng Hóa đơn": "invoice_quota",
+                    "🛒 [Tài chính] Mua hàng & Phải trả (AP)": "procurement_ap",
+                    "📋 [Tài chính] Quản lý Bán hàng (AR)": "sales_order_ar",
+                    "💰 [Tài chính] Tính Lương & Khấu trừ": "payroll_calc",
+                    "📄 [Tài chính] Đọc Hóa đơn Điện tử XML": "vn_invoice_xml",
+                    "📧 [Tài chính] Đọc Hóa đơn qua Email": "email_invoice",
+                    "📊 [Tài chính] Giám sát Hóa đơn": "invoice_quota",
+                    "👤 [Nhân sự] Quản lý Hồ sơ Nhân sự": "hr_employee",
+                    "📦 [Hành chính] Quản lý Tài sản Cố định": "ga_assets",
+                    "✍️ [Hành chính] Trung tâm Phê duyệt": "approval_center",
                 }
             },
-            "🛠️️ Phòng Nghiên cứu & Kỹ thuật (R&D)": {
+            "🛠️ Phòng Nghiên cứu & Kỹ thuật (R&D)": {
                 "features": {
                     "⚡ Báo giá Tủ điện & Dự toán Vật tư": (
                         "engineering_quote"
                     )
-                }
-            },
-            "🏢 Phòng Hành chính Hậu cần (GA)": {
-                "features": {
-                    "📦 Quản lý Tài sản Cố định & Hậu cần": "ga_assets",
-                    "✍️ Trung tâm Phê duyệt Điện tử": "approval_center",
-                }
-            },
-            "👥 Phòng Nhân sự (Human Resources)": {
-                "features": {
-                    "👤 Quản lý Nhân sự & Hợp đồng Lao động": "hr_employee"
                 }
             },
             "🏭 Phòng Sản xuất & Kho vật tư (Factory)": {
@@ -212,8 +163,8 @@ NAV_STRUCTURE = {
             },
             "💻 Phòng Công nghệ Thông tin (IT)": {
                 "features": {
-                    "🔒 Quản lý Phân quyền & Nhật ký Ký duyệt": "it_admin",
-                    "🎛️ Phân quyền Mô-đun Bản quyền ERP": "it_licensing",
+                    "🔒 Quản lý Phân quyền": "it_admin",
+                    "🎛️ Phân quyền Bản quyền ERP": "it_licensing",
                 }
             },
         },
@@ -232,43 +183,27 @@ NAV_STRUCTURE = {
         "departments": {
             "📈 Executive Management": {
                 "features": {
-                    "🔴 Raw Material Prices & Dynamic FX/Market": (
-                        "commodities_fx"
-                    ),
-                    "📊 Financial Analytics (AR/AP & P&L)": "financials_pl",
-                    "⚡ Engineering Project Progress & Acceptance": (
-                        "project_progress"
-                    ),
+                    "🔴 Raw Material Prices & FX": "commodities_fx",
+                    "📊 Financial Analytics": "financials_pl",
+                    "⚡ Engineering Project Progress": "project_progress",
                 }
             },
-            "🧾 Finance & Accounting": {
+            "👔 Management Dept (General Affairs & Finance)": {
                 "features": {
-                    "🛒 Procurement & Accounts Payable (AP)": (
-                        "procurement_ap"
-                    ),
-                    "📋 Sales & Accounts Receivable (AR)": "sales_order_ar",
-                    "💰 Employee Payroll & Insurance Deductions": (
-                        "payroll_calc"
-                    ),
-                    "📄 Vietnam E-Invoice XML Parser": "vn_invoice_xml",
-                    "📧 Auto Email Invoice Reader (IMAP)": "email_invoice",
-                    "📊 E-Invoice Quota & Alerts": "invoice_quota",
+                    "🛒 [Finance] Procurement & AP": "procurement_ap",
+                    "📋 [Finance] Sales & AR": "sales_order_ar",
+                    "💰 [Finance] Payroll & Insurance": "payroll_calc",
+                    "📄 [Finance] E-Invoice XML Parser": "vn_invoice_xml",
+                    "📧 [Finance] Auto Email Invoice": "email_invoice",
+                    "📊 [Finance] E-Invoice Quota": "invoice_quota",
+                    "👤 [HR] Employee Records & Contracts": "hr_employee",
+                    "📦 [GA] Asset Management": "ga_assets",
+                    "✍️ [GA] E-Approval Workflow Center": "approval_center",
                 }
             },
             "🛠️ R&D & Engineering": {
                 "features": {
                     "⚡ Switchgear Costing & Quotation": "engineering_quote"
-                }
-            },
-            "🏢 General Affairs Dept": {
-                "features": {
-                    "📦 Asset Management & Procurement": "ga_assets",
-                    "✍️ E-Approval Workflow Center": "approval_center",
-                }
-            },
-            "👥 Human Resources Dept": {
-                "features": {
-                    "👤 Employee Records & Contracts": "hr_employee"
                 }
             },
             "🏭 Manufacturing & Warehouse": {
@@ -304,26 +239,6 @@ def get_db_engine():
         eng = create_engine(
             DB_URL, pool_pre_ping=True, pool_size=5, max_overflow=10
         )
-        with eng.connect() as conn:
-            conn.execute(
-                text(
-                    "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS"
-                    " installment_ratios TEXT;"
-                )
-            )
-            conn.execute(
-                text(
-                    "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS"
-                    " progress_note TEXT;"
-                )
-            )
-            conn.execute(
-                text(
-                    "ALTER TABLE invoices ADD COLUMN IF NOT EXISTS project_desc"
-                    " TEXT;"
-                )
-            )
-            conn.commit()
         return eng
     except Exception:
         return None
@@ -332,7 +247,6 @@ def get_db_engine():
 engine = get_db_engine()
 
 
-# 通用模組安全呼叫輔助函式
 def safe_call_module(func, *args, **kwargs):
     if not callable(func):
         return
@@ -388,7 +302,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ----------------------------------------------------
-# 5. 側邊欄：RECH 企業標誌 + 勾選開關過濾選單
+# 5. 側邊欄選單
 # ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
@@ -488,7 +402,6 @@ elif target_route == "sales_order_ar":
     )
 
 elif target_route == "payroll_calc":
-    # 💰 安全調用薪資試算與考勤扣款模組
     safe_call_module(
         payroll_management.render_payroll_management_page,
         engine=engine,
