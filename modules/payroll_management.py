@@ -31,8 +31,8 @@ INSURANCE_RATES = {
 
 
 def render_payroll_management_page(engine=None, lang="繁體中文"):
-    st.title("💰 財務部 - 全球員工薪資試算與考勤扣款中心")
-    st.caption("📱 專為手機瀏覽最佳化 — 整合多國社保代扣、預估考勤打卡扣款與實發薪資審核")
+    st.title("💰 財務部 - 全球員工薪資試算與考勤計算中心")
+    st.caption("📱 專為手機瀏覽最佳化 — 整合多國社保代扣、中性考勤時數計算與實發薪資審核")
 
     tab_calc, tab_attendance, tab_history = st.tabs([
         "🧮 員工月薪試算與發放",
@@ -61,7 +61,8 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         with col_m1:
             pay_month = st.date_input("選擇結算月份", value=datetime.date.today(), key="payroll_month")
         with col_m2:
-            late_penalty_rate = st.number_input("遲到扣款標準 (每分鐘 USD/VND)", value=2.0, step=0.5)
+            # 💡 改為中性的考勤時數單價（可正可負，依出勤狀況或全勤獎金調整）
+            attendance_unit_rate = st.number_input("考勤時數異動標準 (每分鐘金額 USD/VND)", value=0.0, step=0.5)
 
         st.divider()
 
@@ -75,7 +76,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
                 st.markdown(f"### 👤 {emp['name']} (`{emp['id']}`) — {emp['dept']} / {emp['title']}")
                 st.caption(f"📍 所屬廠區: {emp_site}")
 
-                c_base, c_allowance, c_late = st.columns(3)
+                c_base, c_allowance, c_att = st.columns(3)
                 
                 with c_base:
                     # 財務填寫底薪
@@ -86,11 +87,11 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
                     # 津貼與加給
                     allowance = st.number_input(f"職務/加班津貼 ({curr})", value=2000000.0 if curr == "VND" else 5000.0, key=f"allow_{emp['id']}")
 
-                with c_late:
-                    # 指紋考勤遲到次數/分鐘數 (預留自動連動)
-                    late_minutes = st.number_input(f"本月遲到/早退 (分鐘)", value=15 if emp['id']=="EMP-002" else 0, key=f"late_{emp['id']}")
+                with c_att:
+                    # 💡 改為中性的考勤時數調整（正數代表加給/全勤，負數或考勤異動代表微調）
+                    attendance_minutes = st.number_input(f"考勤時數調整 (分鐘/可正可負)", value=0, key=f"att_{emp['id']}")
 
-                # 🧮 計算保險與扣款金額
+                # 🧮 計算保險與考勤調整金額
                 if "越南" in emp_site:
                     ins_deduction = base_salary * (ins_info["bhxh_social"] + ins_info["bhyt_health"] + ins_info["bhtn_unemploy"])
                 elif "台灣" in emp_site:
@@ -98,15 +99,15 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
                 else:
                     ins_deduction = base_salary * (ins_info["pension"] + ins_info["medical"] + ins_info["housing_fund"])
 
-                attendance_deduction = late_minutes * late_penalty_rate
-                net_salary = (base_salary + allowance) - ins_deduction - attendance_deduction
+                attendance_adjustment = attendance_minutes * attendance_unit_rate
+                net_salary = (base_salary + allowance) - ins_deduction - attendance_adjustment
 
-                # 🚨 手機醒目扣款與淨發明細卡片 (Mobile Card)
+                # 🚨 手機醒目明細卡片 (Mobile Card - 展現中性考勤計算)
                 st.info(
                     f"📊 **薪資拆算總明細**：\n\n"
                     f"• **應發金額**: Base {base_salary:,.0f} + 津貼 {allowance:,.0f} = **{(base_salary+allowance):,.0f} {curr}**\n"
                     f"• 🛡️ **{ins_info['rate_label']}**: `- {ins_deduction:,.0f} {curr}`\n"
-                    f"• ⏰ **考勤扣款 (遲到 {late_minutes} 分鐘)**: `- {attendance_deduction:,.0f} {curr}`\n"
+                    f"• ⏰ **考勤計算 (時數調整 {attendance_minutes} 分鐘)**: `{attendance_adjustment:+,.0f} {curr}`\n"
                     f"• 💰 **實發淨薪 (Net Payable)**: **{net_salary:,.0f} {curr}**"
                 )
 
@@ -119,16 +120,16 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
     # 📱 頁籤二：指紋考勤打卡連動 (Fingerprint Log Sync)
     # ----------------------------------------------------
     with tab_attendance:
-        st.markdown("### 📱 指紋考勤機數據對接與上傳 (Attendance Log Sync)")
-        st.info("💡 提供連動 Vietcombank/廠區中控指紋機文字檔 (.csv/.txt) 上傳，系統將自動累計員工遲到與早退分鐘數。")
+        st.markdown("### 📱 指紋考勤機數據對接與統計 (Attendance Log Sync)")
+        st.info("💡 提供連動廠區中控指紋機打卡記錄上傳，系統將自動統計員工出勤與考勤時數。")
 
         uploaded_log = st.file_uploader("上傳指紋考勤打卡記錄檔 (.csv / .txt)", type=["csv", "txt"])
         if uploaded_log is not None:
             st.success("✅ 指紋考勤資料已成功讀取與比對！")
             mock_attendance = [
-                {"員工編號": "EMP-001", "姓名": "張董事長", "應出勤天數": 22, "實際打卡": 22, "遲到分鐘": 0, "狀態": "🟢 正常"},
-                {"員工編號": "EMP-002", "姓名": "Nguyễn Văn A", "應出勤天數": 22, "實際打卡": 21, "遲到分鐘": 15, "狀態": "⚠️ 遲到 15 分鐘"},
-                {"員工編號": "EMP-003", "姓名": "王廠長", "應出勤天數": 22, "實際打卡": 22, "遲到分鐘": 0, "狀態": "🟢 正常"}
+                {"員工編號": "EMP-001", "姓名": "張董事長", "應出勤天數": 22, "實際打卡": 22, "考勤時數異常": 0, "狀態": "🟢 正常出勤"},
+                {"員工編號": "EMP-002", "姓名": "Nguyễn Văn A", "應出勤天數": 22, "實際打卡": 21, "考勤時數異常": 15, "狀態": "🔵 考勤時數調整 15 分鐘"},
+                {"員工編號": "EMP-003", "姓名": "王廠長", "應出勤天數": 22, "實際打卡": 22, "考勤時數異常": 0, "狀態": "🟢 正常出勤"}
             ]
             st.dataframe(pd.DataFrame(mock_attendance), use_container_width=True)
 
@@ -136,7 +137,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
     # 📜 頁籤三：歷史發薪紀錄
     # ----------------------------------------------------
     with tab_history:
-        st.markdown("### 📜 歷史薪資發放與扣款審核紀錄")
+        st.markdown("### 📜 歷史薪資發放與出勤審核紀錄")
         st.caption("提供審計人員與董事長隨時查閱歷史發薪總額。")
 
 
