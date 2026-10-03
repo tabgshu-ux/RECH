@@ -15,7 +15,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "nationality": "🇹🇼 台灣 (Taiwan)",
                 "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
                 "dept": "管理部 (Management)",
-                "title": "廠長 / 專案經理",
+                "title": "廠長 / 經理",
                 "role": "Manager",
                 "phone": "+84 90 123 4567",
                 "address": "Tây Ninh, Vietnam",
@@ -66,7 +66,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
     ])
 
     # ----------------------------------------------------
-    # 📑 頁籤一：現有在職員工名冊（支援勾選移至離職名單）
+    # 📑 頁籤一：現有在職員工名冊
     # ----------------------------------------------------
     with tab_manage:
         st.markdown("### 📋 公司現有在職員工名冊")
@@ -93,7 +93,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                         emp_id = row["id"]
                         matched = next((e for e in st.session_state.employees_db if e.get("id") == emp_id), None)
                         if matched:
-                            # 加上離職歸檔標記
                             matched["resigned_date"] = pd.Timestamp.now().strftime("%Y-%m-%d")
                             matched["reason"] = "正常離職辦理歸檔"
                             st.session_state.resigned_employees_db.append(matched)
@@ -112,7 +111,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     st.warning("⚠️ 請先在表格左側勾選要辦理離職的員工。")
 
     # ----------------------------------------------------
-    # ➕ 頁籤二：新增員工個人檔案
+    # ➕ 頁籤二：新增員工個人檔案（職位改為自由輸入）
     # ----------------------------------------------------
     with tab_add:
         st.markdown("### ➕ 登錄新員工個人檔案")
@@ -142,10 +141,8 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                         "生產部 - 配盤組 (Assembly)",
                     ]
                 )
-                job_title = st.selectbox(
-                    "職位 / 職銜 (Job Title)",
-                    ["工程師 / 技術員", "組長 / 主管", "行政 / 財務專員", "品管檢驗員", "作業員"]
-                )
+                # 💡 改為自由輸入框，可直接輸入「經理」、「廠長」、「工程師」等任意職稱
+                job_title = st.text_input("職位 / 職銜 (Job Title) *", value="經理 / Manager")
 
             c4, c5 = st.columns(2)
             with c4:
