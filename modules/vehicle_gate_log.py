@@ -51,6 +51,8 @@ VEHICLE_I18N = {
         "dispatch_caption": "員工因公外出需申請公務車，經單位主管簽核通過後，保全大門系統將自動顯示放行授權。",
         "apply_tab": "✍️ 填寫新派車申請單",
         "audit_tab": "🛡️ 主管簽核與保全大門放行檢視",
+        "security_list_title": "🛡️ 保全大門管制專用：已核准放行之公務派車清單",
+        "security_list_caption": "💡 保全人員在門口放行因公外出車輛時，請核對下方「主管已簽核」之派車單與車牌號碼。",
         "dispatcher_name": "申請人姓名 *",
         "dispatch_plate": "指派公務車牌 *",
         "dispatch_dest": "外出目的地 / 客戶/ 案場 *",
@@ -112,6 +114,8 @@ VEHICLE_I18N = {
         "dispatch_caption": "Nhân viên đi công tác cần đăng ký xe, sau khi Quản lý phê duyệt, hệ thống Bảo vệ cổng sẽ tự động cấp phép.",
         "apply_tab": "✍️ Tạo đơn xin sử dụng xe",
         "audit_tab": "🛡️ Quản lý duyệt đơn & Bảo vệ kiểm tra cổng",
+        "security_list_title": "🛡️ Danh sách xe công vụ đã được phê duyệt",
+        "security_list_caption": "💡 Khi bảo vệ cho phép xe công vụ ra cổng, vui lòng đối chiếu đơn xe và biển số xe đã được Quản lý phê duyệt bên dưới.",
         "dispatcher_name": "Tên nhân viên xin dùng xe *",
         "dispatch_plate": "Biển số xe công vụ *",
         "dispatch_dest": "Điểm đến / Khách hàng / Công trình *",
@@ -173,6 +177,8 @@ VEHICLE_I18N = {
         "dispatch_caption": "Submit dispatch orders for official business trips. Security gate will display approved permits for exit.",
         "apply_tab": "✍️ Apply for Vehicle Dispatch",
         "audit_tab": "🛡️ Manager Approval & Security Gate Inspection",
+        "security_list_title": "🛡️ Security Gate Control: Approved Official Vehicle Dispatch List",
+        "security_list_caption": "💡 Please verify the approved dispatch order and license plate before releasing vehicles.",
         "dispatcher_name": "Applicant Name *",
         "dispatch_plate": "Company Vehicle Plate *",
         "dispatch_dest": "Destination / Client / Site *",
@@ -284,7 +290,7 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
         c1, c2, c3 = st.columns(3)
         c1.metric("🚗 車次 / Chuyến xe", f"{total_today}")
         c2.metric("🅿️ 廠內 / Trong kho", f"{inside_count}")
-        c3.metric("⏱️️ 狀態 / Trạng thái", "🟢 24/7")
+        c3.metric("⏱ 狀態 / Trạng thái", "🟢 24/7")
 
         st.divider()
         df_logs = pd.DataFrame(st.session_state.vehicle_logs_db)
@@ -356,11 +362,10 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
         st.markdown(f"### {L['dispatch_title']}")
         st.caption(L["dispatch_caption"])
 
-        # 🛡️ 關鍵權限控制：若為保全帳號，直接強制顯示「保全檢視清單」，不顯示申請表單！
+        # 🛡️ 關鍵權限控制：若為保全帳號，直接強制顯示「保全檢視清單」，不顯示任何申請提示與表單！
         if is_security_guard:
-            st.info("🛡️ **保全身份登入提示**：您目前僅具備大門門禁檢視與放行確認權限，無法填寫派車申請單。")
-            st.markdown("---")
-            st.markdown("#### 🛡️ 保全大門管制專用：已核准放行之公務派車清單")
+            st.markdown(f"#### {L['security_list_title']}")
+            st.info(L["security_list_caption"])
             
             for idx, item in enumerate(st.session_state.vehicle_dispatch_db):
                 with st.expander(f"🚗 派車單號: `{item['dispatch_id']}` | 申請人: {item['applicant']} | 車牌: {item['plate_no']} ({item['approval_status']})"):
