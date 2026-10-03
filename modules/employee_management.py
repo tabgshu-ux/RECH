@@ -51,16 +51,48 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
     if "resigned_employees_db" not in st.session_state:
         st.session_state.resigned_employees_db = []
 
-    tab_manage, tab_add, tab_resigned = st.tabs([
+    # 3. 初始化頁籤切換狀態 (預設為 0: 現有在職員工名冊)
+    if "emp_active_tab" not in st.session_state:
+        st.session_state.emp_active_tab = 0
+
+    # 💡 接收跨頁面的成功通知訊息
+    if "emp_success_msg" not in st.session_state:
+        st.session_state.emp_success_msg = ""
+
+    # 使用 radio 或 radio 配合 selectbox 實作穩定分頁，或透過參數控制
+    tab_titles = [
         "📑 現有在職員工名冊",
         "➕ 新增員工個人檔案",
         "📦 離職人員檔案與歷史查詢"
-    ])
+    ]
+    
+    # 為了完美解決重新整理後訊息消失的問題，我們用 radio 來自主控制分頁切換
+    selected_tab_name = st.radio(
+        "選擇操作模式", 
+        tab_titles, 
+        index=st.session_state.emp_active_tab, 
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+    
+    if selected_tab_name == tab_titles[0]:
+        st.session_state.emp_active_tab = 0
+    elif selected_tab_name == tab_titles[1]:
+        st.session_state.emp_active_tab = 1
+    else:
+        st.session_state.emp_active_tab = 2
+
+    st.markdown("---")
+
+    # 如果有暫存的成功通知，在此顯示
+    if st.session_state.emp_success_msg:
+        st.success(st.session_state.emp_success_msg)
+        st.session_state.emp_success_msg = ""  # 顯示一次後清空
 
     # ----------------------------------------------------
     # 📑 頁籤一：現有在職員工名冊
     # ----------------------------------------------------
-    with tab_manage:
+    if st.session_state.emp_active_tab == 0:
         st.markdown("### 📋 公司現有在職員工名冊（含 AI 人臉辨識串接欄位）")
         st.info("💡 請在表格左側勾選目標員工，然後點擊下方對應的處理按鈕進行刪除或離職歸檔。")
 
@@ -125,7 +157,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
     # ----------------------------------------------------
     # ➕ 頁籤二：新增員工個人檔案
     # ----------------------------------------------------
-    with tab_add:
+    elif st.session_state.emp_active_tab == 1:
         st.markdown("### ➕ 登錄新員工個人檔案")
 
         with st.form("form_add_employee"):
@@ -169,7 +201,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
             submitted = st.form_submit_button("💾 儲存並新增個人檔案", type="primary", use_container_width=True)
             if submitted:
                 if emp_name and emp_id:
-                    # 💡 確保完整欄位寫入 session_state
                     new_employee = {
                         "id": emp_id,
                         "name": emp_name,
@@ -183,15 +214,18 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                         "face_token": face_token if face_token else "FACE-PENDING",
                     }
                     st.session_state.employees_db.append(new_employee)
-                    st.success(f"🎉 【新增完成】已成功登錄員工 [{emp_name}] (`{emp_id}`)！請點擊上方左側的「現有在職員工名冊」頁籤即可檢視完整名單。")
-                    st.rerun()  # 💡 強制重新整理頁面以立即渲染進表格
+                    
+                    # 💡 設定成功通知並自動跳轉到「現有在職員工名冊」頁籤
+                    st.session_state.emp_success_msg = f"🎉 【新增完成】已成功登錄員工 [{emp_name}] (`{emp_id}`)！"
+                    st.session_state.emp_active_tab = 0
+                    st.rerun()
                 else:
                     st.error("❌ 請完整填寫員工編號與姓名！")
 
     # ----------------------------------------------------
     # 📦 頁籤三：離職人員檔案與歷史查詢
     # ----------------------------------------------------
-    with tab_resigned:
+    elif st.session_state.emp_active_tab == 2:
         st.markdown("### 📦 離職人員歷史檔案庫 (Resigned Employees Archive)")
         st.caption("所有離職或結案的員工資料均完整保留於此，方便日後隨時搜尋與查閱。")
 
