@@ -5,7 +5,7 @@ import modules.db_connection as db_conn
 import modules.employee_management as employee_management
 import modules.engineering_pipeline as engineering_pipeline
 import modules.executive_dashboard as executive_dashboard
-import modules.field_attendance as field_attendance  # 👈 新增：外勤工程人員 GPS 與拍照打卡模組
+import modules.field_attendance as field_attendance  # 外勤工程人員 GPS 與拍照打卡模組
 import modules.invoice_management as invoice_management
 import modules.payroll_management as payroll_management
 import modules.procurement_ap as procurement_ap
@@ -85,7 +85,7 @@ NAV_STRUCTURE = {
                     "✍️ [行政] 電子簽核與請款審核中心": "approval_center",
                     "👤 [行政] 員工個人檔案與人事管理 (人事)": "hr_employee",
                     "🚗 [行政] 廠區車輛進出與門禁時間紀錄": "vehicle_gate",
-                    "📍 [外勤] 工程人員 GPS 拍照打卡": "field_attendance",  # 👈 新增外勤打卡選項
+                    "📍 [外勤] 工程人員 GPS 拍照打卡": "field_attendance",  # 外勤打卡選項
                     "🧾 [財務] 採購與應付帳款 (AP)": "procurement_ap",
                     "📋 [財務] 銷售與應收帳款 (AR)": "sales_order_ar",
                     "💰 [財務] 全球員工薪資與保險扣款試算": "payroll_calc",
