@@ -129,7 +129,7 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
 
         c1, c2, c3 = st.columns(3)
         c1.metric("🚗 今日累計進出車次", f"{total_today} 車次")
-        c2.metric("🅿️️ 目前滯留廠區內車輛", f"{inside_count} 台")
+        c2.metric("🅿 目前滯留廠區內車輛", f"{inside_count} 台")
         c3.metric("⏱️ 門禁系統狀態", "🟢 聯網運作中 (24/7)")
 
         st.divider()
@@ -195,25 +195,25 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
         st.dataframe(df_all, use_container_width=True)
 
     # ----------------------------------------------------
-    # 🔧 頁籤四：公司公務車保養與維護履歷管理（自動對應語系表頭）
+    # 🔧 頁籤四：公司公務車保養與維護履歷管理（強制對應語系表頭）
     # ----------------------------------------------------
     with tab_car_maint:
         st.markdown(f"### {L['maint_title']}")
         st.caption(L["maint_caption"])
 
-        # 整理顯示資料：將英文資料庫欄位名稱轉換為當前選擇的語系名稱
+        # 💡 強制將資料庫內所有欄位對應轉換為當前選擇的語系名稱，絕不直接顯示英文 key
         display_maint_data = []
         for item in st.session_state.company_car_maintenance_db:
             display_maint_data.append({
-                L["col_car_id"]: item["car_id"],
-                L["col_plate"]: item["plate_no"],
-                L["col_brand"]: item["brand_model"],
-                L["col_purchase"]: item["purchase_date"],
-                L["col_maint_date"]: item["maint_date"],
-                L["col_mileage"]: item["mileage"],
-                L["col_content"]: item["maint_content"],
-                L["col_cost"]: item["display_cost"],
-                L["col_handler"]: item["handler"],
+                L["col_car_id"]: item.get("car_id", "CAR-01"),
+                L["col_plate"]: item.get("plate_no", ""),
+                L["col_brand"]: item.get("brand_model", ""),
+                L["col_purchase"]: item.get("purchase_date", ""),
+                L["col_maint_date"]: item.get("maint_date", ""),
+                L["col_mileage"]: item.get("mileage", ""),
+                L["col_content"]: item.get("maint_content", ""),
+                L["col_cost"]: item.get("display_cost", ""),
+                L["col_handler"]: item.get("handler", ""),
             })
 
         df_maint = pd.DataFrame(display_maint_data)
@@ -274,7 +274,7 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
                     else:
                         final_usd = raw_amount
                         final_vnd = raw_amount / current_rate if current_rate > 0 else 0
-                        display_str = f"${final_usd:.2f} USD (₫{final_vnd:,.0f} VND)"
+                        display_str = f"${final_usd:,.2f} USD (₫{final_vnd:,.0f} VND)"
 
                     st.session_state.company_car_maintenance_db.append({
                         "car_id": f"CAR-{len(st.session_state.company_car_maintenance_db)+1:02d}",
