@@ -55,14 +55,13 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
     ])
 
     # ----------------------------------------------------
-    # 📑 頁籤一：現有在職員工名冊（區分「單純刪除」與「離職歸檔」）
+    # 📑 頁籤一：現有在職員工名冊（統一樣式與按鈕文字）
     # ----------------------------------------------------
     with tab_manage:
         st.markdown("### 📋 公司現有在職員工名冊")
         st.info("💡 若為建檔錯誤或重複資料，請勾選「刪除」；若為員工正式離職，請勾選「離職」。")
 
         df_emp = pd.DataFrame(st.session_state.employees_db)
-        # 確保有刪除與離職兩個獨立勾選欄
         if "刪除" not in df_emp.columns:
             df_emp.insert(0, "刪除", False)
         if "離職" not in df_emp.columns:
@@ -77,7 +76,8 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
 
         col_b1, col_b2, _ = st.columns([1.5, 1.5, 2])
         with col_b1:
-            if st.button("🗑️ 永久刪除勾選的錯誤資料", type="primary"):
+            # 統一使用次要/標準按鈕或相同視覺
+            if st.button("🗑️ 執行人員刪除", use_container_width=True):
                 remaining_emp = []
                 del_count = 0
                 for idx, row in edited_emp_df.iterrows():
@@ -85,7 +85,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                         del_count += 1
                     else:
                         emp_id = row["id"]
-                        # 保留未被刪除的資料
                         matched = next((e for e in st.session_state.employees_db if e.get("id") == emp_id and e.get("name") == row["name"]), None)
                         if matched:
                             remaining_emp.append(matched)
@@ -98,7 +97,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     st.warning("⚠️ 請先在表格左側勾選要「刪除」的項目。")
 
         with col_b2:
-            if st.button("📁 將勾選的員工移至離職名單"):
+            if st.button("📁 執行人員離職", use_container_width=True):
                 remaining_emp = []
                 moved_count = 0
                 for idx, row in edited_emp_df.iterrows():
@@ -118,13 +117,13 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 
                 st.session_state.employees_db = remaining_emp
                 if moved_count > 0:
-                    st.success(f"✅ 已成功將 {moved_count} 位員工移至離職人員名單！")
+                    st.success(f"✅ 已成功將 {moved_count} 位員工移至離職名單！")
                     st.rerun()
                 else:
                     st.warning("⚠️ 請先在表格中勾選要辦理「離職」的員工。")
 
     # ----------------------------------------------------
-    # ➕ 頁籤二：新增員工個人檔案（加上明確成功提示）
+    # ➕ 頁籤二：新增員工個人檔案（加上醒目成功提醒）
     # ----------------------------------------------------
     with tab_add:
         st.markdown("### ➕ 登錄新員工個人檔案")
@@ -166,7 +165,8 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
 
             role = st.selectbox("系統權限角色 (Role)", ["Staff (一般員工)", "Manager (部門主管)", "Admin (系統管理者)"])
 
-            if st.form_submit_button("💾 儲存並新增個人檔案", type="primary", use_container_width=True):
+            submitted = st.form_submit_button("💾 儲存並新增個人檔案", type="primary", use_container_width=True)
+            if submitted:
                 if emp_name and emp_id:
                     st.session_state.employees_db.append({
                         "id": emp_id,
@@ -179,9 +179,10 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                         "phone": phone if phone else "-",
                         "address": address if address else "-",
                     })
-                    st.success(f"🎉 【新增成功】已成功登錄員工 [{emp_name}] (`{emp_id}`) 的個人檔案！請切換至「現有在職員工名冊」查看。")
+                    # 💡 醒目提示新增完成與下一步操作
+                    st.success(f"🎉 【新增完成】已成功登錄員工 [{emp_name}] (`{emp_id}`)！請點擊上方左側的「現有在職員工名冊」頁籤即可檢視完整名單。")
                 else:
-                    st.error("請填寫員工編號與姓名！")
+                    st.error("❌ 請完整填寫員工編號與姓名！")
 
     # ----------------------------------------------------
     # 📦 頁籤三：離職人員檔案與歷史查詢
