@@ -1,11 +1,11 @@
 import pandas as pd
 import streamlit as st
 
-# 🌐 多語系字典 (i18n)
+# 🌐 多語系字典 (i18n) - 嚴格對齊裕豐電機工業（僅設西寧廠與海防廠）
 ASSET_I18N = {
     "繁體中文": {
         "page_title": "📦 裕豐電機工業 - 生產設備與固定資產管理",
-        "sub_title": "管理西寧廠/平陽廠生產機械設備、辦公個人電腦、攜帶式筆電與公務/使用車輛。",
+        "sub_title": "管理西寧廠/海防廠生產機械設備、辦公個人電腦、攜帶式筆電與公務/使用車輛。",
         "tab_overview": "📑 設備與資產總覽",
         "tab_register": "➕ 新增設備與資產登記",
         "lbl_code": "資產/設備編號",
@@ -22,10 +22,8 @@ ASSET_I18N = {
         "status_in_use": "🟢 在用",
         "status_maint": "🔧 維修中",
         "status_backup": "📦 庫存備用",
-        "site_tn": "🇻🇳 越南西寧廠 - 管理/生產部",
-        "site_paint": "🇻🇳 越南西寧廠 - 烤漆塗裝組",
-        "site_assy": "🇻🇳 越南西寧廠 - 配電盤組裝組",
-        "site_tw": "🇹🇼 台灣總部 - 辦公室",
+        "site_tn": "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
+        "site_hp": "🇻🇳 越南海防廠 (Hai Phong Plant)",
         "cat_busbar": "銅排加工設備",
         "cat_sheet": "板金加工設備",
         "cat_paint": "塗裝設備",
@@ -36,7 +34,7 @@ ASSET_I18N = {
     },
     "Tiếng Việt": {
         "page_title": "📦 REETECH INDUSTRIAL - Quản lý Thiết bị & Tài sản Cố định",
-        "sub_title": "Quản lý máy móc sản xuất, máy tính để bàn, máy tính xách tay và phương tiện đi lại.",
+        "sub_title": "Quản lý máy móc sản xuất, máy tính, laptop và xe công ty tại Tây Ninh và Hải Phòng.",
         "tab_overview": "📑 Tổng quan Thiết bị & Tài sản",
         "tab_register": "➕ Đăng ký Thiết bị / Tài sản Mới",
         "lbl_code": "Mã tài sản",
@@ -53,10 +51,8 @@ ASSET_I18N = {
         "status_in_use": "🟢 Đang sử dụng",
         "status_maint": "🔧 Đang bảo trì",
         "status_backup": "📦 Dự phòng",
-        "site_tn": "Nhà máy Tây Ninh - Quản lý/Sản xuất",
-        "site_paint": "Nhà máy Tây Ninh - Tổ Sơn",
-        "site_assy": "Nhà máy Tây Ninh - Tổ Lắp ráp",
-        "site_tw": "Văn phòng Đài Loan",
+        "site_tn": "Nhà máy Tây Ninh",
+        "site_hp": "Nhà máy Hải Phòng",
         "cat_busbar": "Thiết bị gia công thanh cái",
         "cat_sheet": "Thiết bị gia công cơ khí",
         "cat_paint": "Thiết bị sơn tĩnh điện",
@@ -67,7 +63,7 @@ ASSET_I18N = {
     },
     "English": {
         "page_title": "📦 REETECH INDUSTRIAL - Equipment & Fixed Asset Management",
-        "sub_title": "Manage production machinery, desktop PCs, laptops, and company vehicles.",
+        "sub_title": "Manage production machinery, PCs, laptops, and vehicles in Tay Ninh and Hai Phong plants.",
         "tab_overview": "📑 Asset Overview",
         "tab_register": "➕ Register New Asset",
         "lbl_code": "Asset Code",
@@ -84,10 +80,8 @@ ASSET_I18N = {
         "status_in_use": "🟢 In Use",
         "status_maint": "🔧 Maintenance",
         "status_backup": "📦 Backup Stock",
-        "site_tn": "Tay Ninh Plant - General/Production",
-        "site_paint": "Tay Ninh Plant - Painting",
-        "site_assy": "Tay Ninh Plant - Assembly",
-        "site_tw": "Taiwan HQ - Office",
+        "site_tn": "Tay Ninh Plant",
+        "site_hp": "Hai Phong Plant",
         "cat_busbar": "Busbar Fabrication Machine",
         "cat_sheet": "Sheet Metal Equipment",
         "cat_paint": "Powder Coating Equipment",
@@ -112,7 +106,7 @@ def render_asset_management_page(*args, **kwargs):
 
     tab1, tab2 = st.tabs([L["tab_overview"], L["tab_register"]])
 
-    # 初始化資產資料庫 (若 session 中有舊資料，自動補齊缺少欄位)
+    # 初始化資產資料庫 (僅限越南西寧廠與海防廠)
     if "assets_db" not in st.session_state or not st.session_state.assets_db:
         st.session_state.assets_db = [
             {
@@ -127,7 +121,7 @@ def render_asset_management_page(*args, **kwargs):
             },
             {
                 "id": "AST-PC-001",
-                "name": "財務部會計主管辦公電腦",
+                "name": "西寧廠財務主管辦公電腦",
                 "category": L["cat_pc"],
                 "site": L["site_tn"],
                 "brand_model": "Dell - OptiPlex 7090 i7",
@@ -136,8 +130,18 @@ def render_asset_management_page(*args, **kwargs):
                 "cost": 1200,
             },
             {
+                "id": "AST-LAP-001",
+                "name": "海防廠工程部攜帶式筆電",
+                "category": L["cat_laptop"],
+                "site": L["site_hp"],
+                "brand_model": "Apple - MacBook Pro 16 M3",
+                "plate_no": "-",
+                "status": L["status_in_use"],
+                "cost": 2200,
+            },
+            {
                 "id": "AST-CAR-001",
-                "name": "越南西寧廠商務公務車",
+                "name": "西寧廠廠長商務公務車",
                 "category": L["cat_vehicle"],
                 "site": L["site_tn"],
                 "brand_model": "Toyota - Fortuner 2.8L",
@@ -147,7 +151,6 @@ def render_asset_management_page(*args, **kwargs):
             },
         ]
     else:
-        # 強制檢核舊資料，避免 KeyError
         for item in st.session_state.assets_db:
             if "brand_model" not in item:
                 item["brand_model"] = "-"
@@ -155,7 +158,7 @@ def render_asset_management_page(*args, **kwargs):
                 item["plate_no"] = "-"
 
     # ----------------------------------------------------
-    # 📑 頁籤一：設備與資產總覽
+    # 📑 頁籤一：設備與資產總覽 (含勾選刪除功能)
     # ----------------------------------------------------
     with tab1:
         total_assets = len(st.session_state.assets_db)
@@ -164,17 +167,18 @@ def render_asset_management_page(*args, **kwargs):
         col_m1, col_m2, col_m3 = st.columns(3)
         col_m1.metric("📦 總登錄資產數", f"{total_assets} 項")
         col_m2.metric("💰 總取得成本", f"${total_val:,.0f} USD")
-        col_m3.metric("🚗 涵蓋範圍", "生產設備、電腦與車輛")
+        col_m3.metric("🏭 涵蓋廠區", "越南西寧廠、越南海防廠")
 
         st.divider()
 
         display_data = []
         for item in st.session_state.assets_db:
             display_data.append({
+                "刪除": False,
                 "編號": item.get("id", ""),
                 "名稱": item.get("name", ""),
                 "類別": item.get("category", ""),
-                "存放廠區/部門": item.get("site", ""),
+                "存放廠區": item.get("site", ""),
                 "品牌與型號": item.get("brand_model", "-"),
                 "車牌號碼": item.get("plate_no", "-"),
                 "目前狀態": item.get("status", ""),
@@ -182,7 +186,29 @@ def render_asset_management_page(*args, **kwargs):
             })
 
         df_assets = pd.DataFrame(display_data)
-        st.dataframe(df_assets, use_container_width=True)
+        
+        edited_df = st.data_editor(
+            df_assets,
+            use_container_width=True,
+            num_rows="dynamic",
+            key="asset_editor"
+        )
+
+        c_del1, c_del2 = st.columns(2)
+        with c_del1:
+            if st.button("🗑️ 刪除勾選的資產/設備", type="primary"):
+                remaining_assets = []
+                for idx, row in edited_df.iterrows():
+                    if not row.get("刪除", False):
+                        # 還原原始資料結構
+                        orig_id = row["編號"]
+                        # 從原本 session 找回對應成本與細節
+                        matched = next((a for a in st.session_state.assets_db if a.get("id") == orig_id), None)
+                        if matched:
+                            remaining_assets.append(matched)
+                st.session_state.assets_db = remaining_assets
+                st.success("✅ 已成功刪除選定的資產項目！")
+                st.rerun()
 
     # ----------------------------------------------------
     # ➕ 頁籤二：新增設備與資產登記
@@ -205,9 +231,10 @@ def render_asset_management_page(*args, **kwargs):
                 L["cat_vehicle"],
             ],
         )
+        # 嚴格對齊兩間廠區：西寧廠與海防廠
         site = c4.selectbox(
             L["lbl_site"],
-            [L["site_tn"], L["site_paint"], L["site_assy"], L["site_tw"]],
+            [L["site_tn"], L["site_hp"]],
         )
 
         c5, c6 = st.columns(2)
@@ -269,7 +296,6 @@ def render_asset_management_page(*args, **kwargs):
             st.rerun()
 
 
-# 統一對外介面（防止重複渲染）
 def show(*args, **kwargs):
     render_asset_management_page(*args, **kwargs)
 
