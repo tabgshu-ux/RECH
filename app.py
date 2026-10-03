@@ -5,6 +5,7 @@ import modules.db_connection as db_conn
 import modules.employee_management as employee_management
 import modules.engineering_pipeline as engineering_pipeline
 import modules.executive_dashboard as executive_dashboard
+import modules.field_attendance as field_attendance  # 👈 新增：外勤工程人員 GPS 與拍照打卡模組
 import modules.invoice_management as invoice_management
 import modules.payroll_management as payroll_management
 import modules.procurement_ap as procurement_ap
@@ -56,7 +57,7 @@ RECH_LOGO_HTML = """
 """
 
 # ----------------------------------------------------
-# 三階組織架構選單字典（已將發票選單三合一合併）
+# 三階組織架構選單字典（已包含外勤打卡與三合一發票管理）
 # ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
@@ -84,10 +85,11 @@ NAV_STRUCTURE = {
                     "✍️ [行政] 電子簽核與請款審核中心": "approval_center",
                     "👤 [行政] 員工個人檔案與人事管理 (人事)": "hr_employee",
                     "🚗 [行政] 廠區車輛進出與門禁時間紀錄": "vehicle_gate",
+                    "📍 [外勤] 工程人員 GPS 拍照打卡": "field_attendance",  # 👈 新增外勤打卡選項
                     "🧾 [財務] 採購與應付帳款 (AP)": "procurement_ap",
                     "📋 [財務] 銷售與應收帳款 (AR)": "sales_order_ar",
                     "💰 [財務] 全球員工薪資與保險扣款試算": "payroll_calc",
-                    "📄 [財務] 越南電子發票綜合管理中心": "invoice_management",  # 👈 已合併為單一選項
+                    "📄 [財務] 越南電子發票綜合管理中心": "invoice_management",
                 }
             },
             "🛠️ 工務部 (Engineering Dept)": {
@@ -138,10 +140,11 @@ NAV_STRUCTURE = {
                     "✍️ [Hành chính] Trung tâm Phê duyệt": "approval_center",
                     "👤 [Nhân sự] Hồ sơ Nhân sự & Hợp đồng": "hr_employee",
                     "🚗 [Bảo vệ] Quản lý xe ra vào nhà máy": "vehicle_gate",
+                    "📍 [Hiện trường] Chấm công GPS kỹ sư": "field_attendance",  # 👈 新增外勤打卡選項
                     "🛒 [Tài chính] Mua hàng & Phải trả (AP)": "procurement_ap",
                     "📋 [Tài chính] Quản lý Bán hàng (AR)": "sales_order_ar",
                     "💰 [Tài chính] Tính Lương & Khấu trừ": "payroll_calc",
-                    "📄 [Tài chính] Quản lý Hóa đơn điện tử tổng hợp": "invoice_management",  # 👈 已合併為單一選項
+                    "📄 [Tài chính] Quản lý Hóa đơn điện tử tổng hợp": "invoice_management",
                 }
             },
             "🛠️ Phòng Kỹ thuật (Engineering Dept)": {
@@ -192,10 +195,11 @@ NAV_STRUCTURE = {
                     "✍️ [GA] E-Approval Center": "approval_center",
                     "👤 [HR] Employee Records": "hr_employee",
                     "🚗 [Security] Vehicle Gate Log": "vehicle_gate",
+                    "📍 [Field] Engineer GPS Attendance": "field_attendance",  # 👈 新增外勤打卡選項
                     "🛒 [Finance] Procurement & AP": "procurement_ap",
                     "📋 [Finance] Sales & AR": "sales_order_ar",
                     "💰 [Finance] Payroll & Insurance": "payroll_calc",
-                    "📄 [Finance] E-Invoice Comprehensive Center": "invoice_management",  # 👈 已合併為單一選項
+                    "📄 [Finance] E-Invoice Comprehensive Center": "invoice_management",
                 }
             },
             "🛠️ Engineering Dept": {
@@ -278,7 +282,7 @@ if not st.session_state.logged_in:
                 st.session_state.logged_in = True
                 u_clean = username.strip().lower()
                 
-                # 判斷帳號角色 (支援 security 保安角色)
+                # 判斷帳號角色
                 if u_clean in ["admin", "executive", "boss"]:
                     st.session_state.user_role = "admin"
                 elif u_clean in ["manager", "supervisor"]:
@@ -401,9 +405,16 @@ elif target_route == "payroll_calc":
     )
 
 elif target_route == "invoice_management":
-    # 👈 已合併為單一模組呼叫
     safe_call_module(
         invoice_management.render_invoice_management,
+        engine=engine,
+        lang=curr_lang,
+    )
+
+elif target_route == "field_attendance":
+    # 👈 新增：外勤工程人員打卡路由分派
+    safe_call_module(
+        field_attendance.render_field_attendance_page,
         engine=engine,
         lang=curr_lang,
     )
