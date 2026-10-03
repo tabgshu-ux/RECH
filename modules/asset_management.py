@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
 
-# 🌐 多語系字典 (i18n) - 保留並擴充個人電腦、筆電與車輛項目
+# 🌐 多語系字典 (i18n)
 ASSET_I18N = {
     "繁體中文": {
         "page_title": "📦 裕豐電機工業 - 生產設備與固定資產管理",
@@ -100,7 +100,6 @@ ASSET_I18N = {
 
 
 def render_asset_management_page(*args, **kwargs):
-    # 自動讀取全局語系設定
     lang = (
         kwargs.get("lang")
         or kwargs.get("curr_lang")
@@ -113,7 +112,7 @@ def render_asset_management_page(*args, **kwargs):
 
     tab1, tab2 = st.tabs([L["tab_overview"], L["tab_register"]])
 
-    # 初始化資產資料庫 (包含生產設備、電腦與車輛範例)
+    # 初始化資產資料庫 (若 session 中有舊資料，自動補齊缺少欄位)
     if "assets_db" not in st.session_state or not st.session_state.assets_db:
         st.session_state.assets_db = [
             {
@@ -127,16 +126,6 @@ def render_asset_management_page(*args, **kwargs):
                 "cost": 45000,
             },
             {
-                "id": "EQ-TN-002",
-                "name": "AMADA 數控液壓折床 150T",
-                "category": L["cat_sheet"],
-                "site": L["site_tn"],
-                "brand_model": "AMADA - Press Brake HFE",
-                "plate_no": "-",
-                "status": L["status_in_use"],
-                "cost": 78000,
-            },
-            {
                 "id": "AST-PC-001",
                 "name": "財務部會計主管辦公電腦",
                 "category": L["cat_pc"],
@@ -145,16 +134,6 @@ def render_asset_management_page(*args, **kwargs):
                 "plate_no": "-",
                 "status": L["status_in_use"],
                 "cost": 1200,
-            },
-            {
-                "id": "AST-LAP-001",
-                "name": "總經理攜帶式筆記型電腦",
-                "category": L["cat_laptop"],
-                "site": L["site_tw"],
-                "brand_model": "Apple - MacBook Pro 16 M3",
-                "plate_no": "-",
-                "status": L["status_in_use"],
-                "cost": 2200,
             },
             {
                 "id": "AST-CAR-001",
@@ -167,13 +146,20 @@ def render_asset_management_page(*args, **kwargs):
                 "cost": 28000,
             },
         ]
+    else:
+        # 強制檢核舊資料，避免 KeyError
+        for item in st.session_state.assets_db:
+            if "brand_model" not in item:
+                item["brand_model"] = "-"
+            if "plate_no" not in item:
+                item["plate_no"] = "-"
 
     # ----------------------------------------------------
     # 📑 頁籤一：設備與資產總覽
     # ----------------------------------------------------
     with tab1:
         total_assets = len(st.session_state.assets_db)
-        total_val = sum(item["cost"] for item in st.session_state.assets_db)
+        total_val = sum(item.get("cost", 0) for item in st.session_state.assets_db)
 
         col_m1, col_m2, col_m3 = st.columns(3)
         col_m1.metric("📦 總登錄資產數", f"{total_assets} 項")
@@ -182,25 +168,24 @@ def render_asset_management_page(*args, **kwargs):
 
         st.divider()
 
-        # 轉換 DataFrame 呈現
         display_data = []
         for item in st.session_state.assets_db:
             display_data.append({
-                "編號": item["id"],
-                "名稱": item["name"],
-                "類別": item["category"],
-                "存放廠區/部門": item["site"],
-                "品牌與型號": item["brand_model"],
+                "編號": item.get("id", ""),
+                "名稱": item.get("name", ""),
+                "類別": item.get("category", ""),
+                "存放廠區/部門": item.get("site", ""),
+                "品牌與型號": item.get("brand_model", "-"),
                 "車牌號碼": item.get("plate_no", "-"),
-                "目前狀態": item["status"],
-                "取得成本": f"${item['cost']:,.0f} USD",
+                "目前狀態": item.get("status", ""),
+                "取得成本": f"${item.get('cost', 0):,.0f} USD",
             })
 
         df_assets = pd.DataFrame(display_data)
         st.dataframe(df_assets, use_container_width=True)
 
     # ----------------------------------------------------
-    # ➕ 頁籤二：新增設備與資產登記 (支援電腦與車輛細節)
+    # ➕ 頁籤二：新增設備與資產登記
     # ----------------------------------------------------
     with tab2:
         c1, c2 = st.columns(2)
@@ -284,6 +269,7 @@ def render_asset_management_page(*args, **kwargs):
             st.rerun()
 
 
+# 統一對外介面（防止重複渲染）
 def show(*args, **kwargs):
     render_asset_management_page(*args, **kwargs)
 
