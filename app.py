@@ -1,7 +1,7 @@
 import inspect
 import modules.approval_workflow as approval_workflow
 import modules.asset_management as asset_management
-import modules.db_connection as db_conn  # 引入共用安全連線模組
+import modules.db_connection as db_conn
 import modules.employee_management as employee_management
 import modules.engineering_pipeline as engineering_pipeline
 import modules.executive_dashboard as executive_dashboard
@@ -55,7 +55,7 @@ RECH_LOGO_HTML = """
 """
 
 # ----------------------------------------------------
-# 2. 階層式選單字典（管理部統籌中心歸納財務、人事、總務）
+# 2. 全新三階組織架構選單字典
 # ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
@@ -67,8 +67,8 @@ NAV_STRUCTURE = {
         "login_btn": "🔑 登入系統",
         "logout_btn": "🚪 登出系統",
         "lang_selector": "🌐 語言設定 / Language",
-        "parent_header": "請選擇部門分類：",
-        "sub_header": "部門作業功能：",
+        "parent_header": "請選擇一級部門：",
+        "sub_header": "選擇子部門與功能：",
         "departments": {
             "📈 營運戰情室 (Executive)": {
                 "features": {
@@ -77,30 +77,32 @@ NAV_STRUCTURE = {
                     "⚡ 工程專案進度與驗收資料": "project_progress",
                 }
             },
-            "👔 管理部統籌中心 (Management Dept)": {
+            "👔 管理部 (Management Dept)": {
                 "features": {
+                    "🏢 [行政] 固定資產設備與總務採購": "ga_assets",
+                    "✍️ [行政] 電子簽核與請款審核中心": "approval_center",
+                    "👤 [行政] 跨國員工檔案與勞動合約 (人事)": "hr_employee",
                     "🧾 [財務] 採購與應付帳款 (AP & 發票)": "procurement_ap",
                     "📋 [財務] 銷售與應收帳款 (AR)": "sales_order_ar",
-                    "💰 [財務] 全球員工薪資試算與扣款": "payroll_calc",
+                    "💰 [財務] 全球員工薪資與保險扣款試算": "payroll_calc",
                     "📄 [財務] 越南電子發票 XML 解析": "vn_invoice_xml",
                     "📧 [財務] 通用信箱發票自動讀取": "email_invoice",
                     "📊 [財務] 電子發票張數監控": "invoice_quota",
-                    "👤 [人事] 跨國員工檔案與勞動合約": "hr_employee",
-                    "📦 [總務] 固定資產設備與總務採購": "ga_assets",
-                    "✍️ [總務] 電子簽核與請款審核中心": "approval_center",
                 }
             },
-            "🛠 研發工程部 (R&D & Engineering)": {
+            "🛠️ 工務部 (Engineering Dept)": {
                 "features": {
-                    "⚡ 配電盤估價與資材報價總合": "engineering_quote"
+                    "📐 [設計] 配電盤電氣與機構設計圖庫": "engineering_quote",
+                    "⚡ [工程] 配電盤估價與資材報價總合": "engineering_quote",
+                    "🔍 [品管] 工程驗收與品質檢驗紀錄": "project_progress",
                 }
             },
-            "🏭 生產倉儲部 (Plant & Warehouse)": {
+            "🏭 生產部 (Production Dept)": {
                 "features": {
-                    "📦 倉庫庫存與資材條碼管理": "wh_management",
-                    "✂️ 板金加工組工單": "sheet_metal",
-                    "🎨 烤漆塗裝組品管": "painting",
-                    "⚡ 配電盤組裝配線組": "assembly",
+                    "📦 [倉儲] 倉庫庫存與資材條碼管理": "wh_management",
+                    "✂️ [板金] 板金加工組工單與條碼": "sheet_metal",
+                    "🎨 [塗料] 粉體塗裝烤漆組品管": "painting",
+                    "⚡ [配盤] 配電盤組裝配線組": "assembly",
                 }
             },
             "💻 資訊管理部 (IT & System)": {
@@ -120,43 +122,43 @@ NAV_STRUCTURE = {
         "login_btn": "🔑 Đăng nhập",
         "logout_btn": "🚪 Đăng xuất",
         "lang_selector": "🌐 Chọn ngôn ngữ",
-        "parent_header": "Chọn phòng ban:",
-        "sub_header": "Chức năng vận hành:",
+        "parent_header": "Chọn phòng ban chính:",
+        "sub_header": "Chọn bộ phận trực thuộc:",
         "departments": {
             "📈 Ban Giám đốc (Executive)": {
                 "features": {
                     "🔴 Giá Nguyên liệu & Tỷ giá": "commodities_fx",
-                    "📊 Dữ liệu Tài chính (AR/AP & P&L)": "financials_pl",
+                    "📊 Dữ liệu Tài chính": "financials_pl",
                     "⚡ Tiến độ Dự án Kỹ thuật": "project_progress",
                 }
             },
-            "👔 Ban Quản lý Tổng hợp (Management Dept)": {
+            "👔 Phòng Quản lý (Management Dept)": {
                 "features": {
+                    "🏢 [Hành chính] Quản lý Tài sản Cố định": "ga_assets",
+                    "✍️ [Hành chính] Trung tâm Phê duyệt": "approval_center",
+                    "👤 [Nhân sự] Hồ sơ Nhân sự & Hợp đồng": "hr_employee",
                     "🛒 [Tài chính] Mua hàng & Phải trả (AP)": "procurement_ap",
                     "📋 [Tài chính] Quản lý Bán hàng (AR)": "sales_order_ar",
                     "💰 [Tài chính] Tính Lương & Khấu trừ": "payroll_calc",
-                    "📄 [Tài chính] Đọc Hóa đơn Điện tử XML": "vn_invoice_xml",
-                    "📧 [Tài chính] Đọc Hóa đơn qua Email": "email_invoice",
-                    "📊 [Tài chính] Giám sát Hóa đơn": "invoice_quota",
-                    "👤 [Nhân sự] Quản lý Hồ sơ Nhân sự": "hr_employee",
-                    "📦 [Hành chính] Quản lý Tài sản Cố định": "ga_assets",
-                    "✍️️ [Hành chính] Trung tâm Phê duyệt": "approval_center",
+                    "📄 [Tài chính] Đọc Hóa đơn XML": "vn_invoice_xml",
                 }
             },
-            "🛠️ Phòng Nghiên cứu & Kỹ thuật (R&D)": {
+            "🛠️ Phòng Kỹ thuật (Engineering Dept)": {
                 "features": {
-                    "⚡ Báo giá Tủ điện & Dự toán Vật tư": "engineering_quote"
+                    "📐 [Thiết kế] Bản vẽ Tủ điện": "engineering_quote",
+                    "⚡ [Kỹ thuật] Báo giá Tủ điện & Dự toán": "engineering_quote",
+                    "🔍 [QC] Kiểm tra Chất lượng": "project_progress",
                 }
             },
-            "🏭 Phòng Sản xuất & Kho vật tư (Factory)": {
+            "🏭 Phòng Sản xuất (Production Dept)": {
                 "features": {
-                    "📦 Quản lý Kho & Mã vạch Vật tư": "wh_management",
-                    "✂️ Tổ Gia công Cơ khí": "sheet_metal",
-                    "🎨 Tổ Sơn tĩnh điện": "painting",
-                    "⚡ Tổ Lắp ráp Tủ điện": "assembly",
+                    "📦 [Kho] Quản lý Kho & Mã vạch": "wh_management",
+                    "✂️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
+                    "🎨 [Sơn] Tổ Sơn tĩnh điện": "painting",
+                    "⚡ [Lắp ráp] Tổ Lắp ráp Tủ điện": "assembly",
                 }
             },
-            "💻 Phòng Công nghệ Thông tin (IT)": {
+            "💻 Phòng IT (IT & System)": {
                 "features": {
                     "🔒 Quản lý Phân quyền": "it_admin",
                     "🎛️ Phân quyền Bản quyền ERP": "it_licensing",
@@ -174,7 +176,7 @@ NAV_STRUCTURE = {
         "logout_btn": "🚪 Logout",
         "lang_selector": "🌐 Select Language",
         "parent_header": "Select Department:",
-        "sub_header": "Executive Features:",
+        "sub_header": "Select Unit & Features:",
         "departments": {
             "📈 Executive Management": {
                 "features": {
@@ -183,36 +185,36 @@ NAV_STRUCTURE = {
                     "⚡ Engineering Project Progress": "project_progress",
                 }
             },
-            "👔 Management Dept (General Affairs & Finance)": {
+            "👔 Management Dept (GA & Finance)": {
                 "features": {
+                    "🏢 [GA] Asset Management": "ga_assets",
+                    "✍️ [GA] E-Approval Center": "approval_center",
+                    "👤 [HR] Employee Records": "hr_employee",
                     "🛒 [Finance] Procurement & AP": "procurement_ap",
                     "📋 [Finance] Sales & AR": "sales_order_ar",
                     "💰 [Finance] Payroll & Insurance": "payroll_calc",
                     "📄 [Finance] E-Invoice XML Parser": "vn_invoice_xml",
-                    "📧 [Finance] Auto Email Invoice": "email_invoice",
-                    "📊 [Finance] E-Invoice Quota": "invoice_quota",
-                    "👤 [HR] Employee Records & Contracts": "hr_employee",
-                    "📦 [GA] Asset Management": "ga_assets",
-                    "✍️ [GA] E-Approval Workflow Center": "approval_center",
                 }
             },
-            "🛠️ R&D & Engineering": {
+            "🛠️ Engineering Dept": {
                 "features": {
-                    "⚡ Switchgear Costing & Quotation": "engineering_quote"
+                    "📐 [Design] Switchgear Drawings": "engineering_quote",
+                    "⚡ [Engineering] Costing & Quotation": "engineering_quote",
+                    "🔍 [QC] Quality Inspection": "project_progress",
                 }
             },
-            "🏭 Manufacturing & Warehouse": {
+            "🏭 Production Dept": {
                 "features": {
-                    "📦 Warehouse & Material Barcodes": "wh_management",
-                    "✂️ Sheet Metal Processing": "sheet_metal",
-                    "🎨 Powder Coating Dept": "painting",
-                    "⚡ Switchgear Assembly Dept": "assembly",
+                    "📦 [Warehouse] Material Barcodes": "wh_management",
+                    "✂️ [Sheet Metal] Processing Dept": "sheet_metal",
+                    "🎨 [Coating] Powder Coating Dept": "painting",
+                    "⚡ [Assembly] Switchgear Assembly": "assembly",
                 }
             },
             "💻 Information Technology (IT)": {
                 "features": {
-                    "🔒 User Permissions & Audit Logs": "it_admin",
-                    "🎛️ Client ERP Module Licensing": "it_licensing",
+                    "🔒 User Permissions": "it_admin",
+                    "🎛️ Client ERP Licensing": "it_licensing",
                 }
             },
         },
@@ -223,7 +225,7 @@ if "current_lang" not in st.session_state:
     st.session_state.current_lang = "繁體中文"
 
 # ----------------------------------------------------
-# 3. 取得共用安全的資料庫連線 Engine
+# 3. 取得資料庫引擎
 # ----------------------------------------------------
 engine = db_conn.get_db_engine()
 
@@ -285,7 +287,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ----------------------------------------------------
-# 5. 側邊欄選單（管理部主管統籌中心）
+# 5. 側邊欄選單（管理部、工務部、生產部）
 # ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
