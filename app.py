@@ -56,7 +56,7 @@ RECH_LOGO_HTML = """
 """
 
 # ----------------------------------------------------
-# 三階組織架構選單字典
+# 三階組織架構選單字典（已將發票選單三合一合併）
 # ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
@@ -84,12 +84,10 @@ NAV_STRUCTURE = {
                     "✍️ [行政] 電子簽核與請款審核中心": "approval_center",
                     "👤 [行政] 員工個人檔案與人事管理 (人事)": "hr_employee",
                     "🚗 [行政] 廠區車輛進出與門禁時間紀錄": "vehicle_gate",
-                    "🧾 [財務] 採購與應付帳款 (AP & 發票)": "procurement_ap",
+                    "🧾 [財務] 採購與應付帳款 (AP)": "procurement_ap",
                     "📋 [財務] 銷售與應收帳款 (AR)": "sales_order_ar",
                     "💰 [財務] 全球員工薪資與保險扣款試算": "payroll_calc",
-                    "📄 [財務] 越南電子發票 XML 解析": "vn_invoice_xml",
-                    "📧 [財務] 通用信箱發票自動讀取": "email_invoice",
-                    "📊 [財務] 電子發票張數監控": "invoice_quota",
+                    "📄 [財務] 越南電子發票綜合管理中心": "invoice_management",  # 👈 已合併為單一選項
                 }
             },
             "🛠️ 工務部 (Engineering Dept)": {
@@ -143,7 +141,7 @@ NAV_STRUCTURE = {
                     "🛒 [Tài chính] Mua hàng & Phải trả (AP)": "procurement_ap",
                     "📋 [Tài chính] Quản lý Bán hàng (AR)": "sales_order_ar",
                     "💰 [Tài chính] Tính Lương & Khấu trừ": "payroll_calc",
-                    "📄 [Tài chính] Đọc Hóa đơn XML": "vn_invoice_xml",
+                    "📄 [Tài chính] Quản lý Hóa đơn điện tử tổng hợp": "invoice_management",  # 👈 已合併為單一選項
                 }
             },
             "🛠️ Phòng Kỹ thuật (Engineering Dept)": {
@@ -156,7 +154,7 @@ NAV_STRUCTURE = {
             "🏭 Phòng Sản xuất (Production Dept)": {
                 "features": {
                     "📦 [Kho] Quản lý Kho & Mã vạch": "wh_management",
-                    "✂️️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
+                    "✂️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
                     "🎨 [Sơn] Tổ Sơn tĩnh điện": "painting",
                     "⚡ [Lắp ráp] Tổ Lắp ráp Tủ điện": "assembly",
                 }
@@ -197,7 +195,7 @@ NAV_STRUCTURE = {
                     "🛒 [Finance] Procurement & AP": "procurement_ap",
                     "📋 [Finance] Sales & AR": "sales_order_ar",
                     "💰 [Finance] Payroll & Insurance": "payroll_calc",
-                    "📄 [Finance] E-Invoice XML Parser": "vn_invoice_xml",
+                    "📄 [Finance] E-Invoice Comprehensive Center": "invoice_management",  # 👈 已合併為單一選項
                 }
             },
             "🛠️ Engineering Dept": {
@@ -280,7 +278,7 @@ if not st.session_state.logged_in:
                 st.session_state.logged_in = True
                 u_clean = username.strip().lower()
                 
-                # 判斷帳號角色 (新增 security 保安角色)
+                # 判斷帳號角色 (支援 security 保安角色)
                 if u_clean in ["admin", "executive", "boss"]:
                     st.session_state.user_role = "admin"
                 elif u_clean in ["manager", "supervisor"]:
@@ -402,8 +400,13 @@ elif target_route == "payroll_calc":
         lang=curr_lang,
     )
 
-elif target_route in ["vn_invoice_xml", "email_invoice", "invoice_quota"]:
-    safe_call_module(invoice_management.render_invoice_management)
+elif target_route == "invoice_management":
+    # 👈 已合併為單一模組呼叫
+    safe_call_module(
+        invoice_management.render_invoice_management,
+        engine=engine,
+        lang=curr_lang,
+    )
 
 elif target_route == "engineering_quote":
     safe_call_module(engineering_pipeline.render_engineering_page)
