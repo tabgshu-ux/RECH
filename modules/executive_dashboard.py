@@ -16,7 +16,7 @@ EXEC_I18N = {
         ),
         "boss_notes_title": "👑 董事長/總經理 專屬觀察重點與決策指南",
         "sec_commodities": (
-            "🔴 1. 原料價格與動態股市物價 / 匯率即時看板"
+            "🔴 1. 原料價格與動態股市物價 / 匯率即時看板 (支援自選股新增與刪除)"
         ),
         "sec_finance": (
             "📊 2. 全球廠區財務類顯示資料 (AR/AP & P&L 損益)"
@@ -84,31 +84,82 @@ def get_exec_lang_dict(lang_param=None):
 
 
 # ----------------------------------------------------
-# 1. 區塊一：原料價格與股市物價/匯率 (📱 手機卡片優化)
+# 1. 區塊一：原料價格與股市物價/匯率 (支援動態自選增刪)
 # ----------------------------------------------------
 def render_commodities_section(L):
     st.markdown(f"### {L['sec_commodities']}")
 
-    # 手機上以 2 欄垂直顯示物價與指標
-    c1, c2 = st.columns(2)
-    c1.metric(
-        "LME 倫敦銅排 (Copper)", "$9,250 USD/噸", "+85.0 (+0.93%)"
-    )
-    c2.metric(
-        "熱軋鋼板物價 (SECC)", "$780 USD/噸", "-12.0 (-1.51%)"
-    )
+    # 初始化全球自選觀察清單 (Watchlist)，完美保留原版指標並支援增刪
+    if "custom_watchlist" not in st.session_state or not st.session_state.custom_watchlist:
+        st.session_state.custom_watchlist = [
+            {"code": "LME-CU", "name": "LME 倫敦銅排 (Copper)", "price": 9250.0, "unit": "USD/噸", "change": "+85.0 (+0.93%)", "market": "全球原物料"},
+            {"code": "SECC", "name": "熱軋鋼板物價 (SECC)", "price": 780.0, "unit": "USD/噸", "change": "-12.0 (-1.51%)", "market": "全球原物料"},
+            {"code": "USD-VND", "name": "美金/越南盾 (USD/VND)", "price": 25420.0, "unit": "VND", "change": "-15.0", "market": "外匯匯率"},
+            {"code": "USD-TWD", "name": "美金/新台幣 (USD/TWD)", "price": 31.85, "unit": "TWD", "change": "+0.05", "market": "外匯匯率"},
+            {"code": "PP", "name": "塑膠粒 PP 物價", "price": 980.0, "unit": "USD/噸", "change": "+12.0", "market": "全球原物料"},
+            {"code": "2330.TW", "name": "台積電 (2330.TW)", "price": 985.0, "unit": "TWD", "change": "+15.0", "market": "台灣股市"},
+            {"code": "VN-Index", "name": "VN-Index (越南股市)", "price": 1280.5, "unit": "點", "change": "+8.2", "market": "越南股市"},
+            {"code": "CRUDE", "name": "WTI 原油 (Crude)", "price": 78.5, "unit": "USD/桶", "change": "+0.45", "market": "全球原物料"},
+        ]
 
-    c3, c4 = st.columns(2)
-    c3.metric("美金/越南盾 (USD/VND)", "25,420 VND", "-15.0")
-    c4.metric("美金/新台幣 (USD/TWD)", "31.85 TWD", "+0.05")
+    # 📱 互動看板呈現
+    cols = st.columns(2)
+    for i, item in enumerate(st.session_state.custom_watchlist):
+        with cols[i % 2]:
+            st.metric(item['name'], f"{item['price']:,.2f} {item['unit']}", item['change'])
 
-    c5, c6 = st.columns(2)
-    c5.metric("塑膠粒 PP 物價", "$980 USD/噸", "+12.0")
-    c6.metric("台積電 (2330.TW)", "$985 TWD", "+15.0")
+    st.markdown("---")
+    
+    # ⚙️ 內嵌管理專區：讓董事長/主管隨時新增或刪除想看的股票與原物料
+    with st.expander("⚙️ 管理自選股票與原物料清單（新增或勾選刪除）", expanded=False):
+        df_watch = pd.DataFrame(st.session_state.custom_watchlist)
+        if "刪除" not in df_watch.columns:
+            df_watch.insert(0, "刪除", False)
 
-    c7, c8 = st.columns(2)
-    c7.metric("VN-Index (越南股市)", "1,280.5 點", "+8.2")
-    c8.metric("WTI 原油 (Crude)", "$78.5 USD/桶", "+0.45")
+        edited_watchlist = st.data_editor(
+            df_watch,
+            use_container_width=True,
+            num_rows="dynamic",
+            key="watchlist_editor"
+        )
+
+        c_del1, c_del2 = st.columns(2)
+        with c_del1:
+            if st.button("🗑️ 刪除勾選的自選項目", type="primary"):
+                remaining = []
+                for idx, row in edited_watchlist.iterrows():
+                    if not row.get("刪除", False):
+                        code_val = row["code"]
+                        matched = next((w for w in st.session_state.custom_watchlist if w.get("code") == code_val), None)
+                        if matched:
+                            remaining.append(matched)
+                st.session_state.custom_watchlist = remaining
+                st.success("✅ 已成功刪除選定的自選項目！")
+                st.rerun()
+
+        st.markdown("##### ➕ 新增想追蹤的全球股票或原物料")
+        with st.form("form_add_watchlist_exec"):
+            ac1, ac2 = st.columns(2)
+            new_code = ac1.text_input("代碼 *", value="AAPL / 600519.SH")
+            new_name = ac2.text_input("名稱 *", value="蘋果公司 / 貴州茅台")
+
+            ac3, ac4, ac5 = st.columns(3)
+            new_price = ac3.number_input("當前參考價格", value=180.0, step=1.0)
+            new_unit = ac4.text_input("單位", value="USD / 股")
+            new_market = ac5.selectbox("市場分類", ["台灣股市", "越南股市", "中國股市", "美國股市", "全球原物料", "外匯匯率"])
+
+            if st.form_submit_button("💾 加入戰情看板", type="primary"):
+                if new_code and new_name:
+                    st.session_state.custom_watchlist.append({
+                        "code": new_code,
+                        "name": new_name,
+                        "price": new_price,
+                        "unit": new_unit,
+                        "change": "+0.00 (0.0%)",
+                        "market": new_market
+                    })
+                    st.success(f"🎉 已成功加入 [{new_name}]！")
+                    st.rerun()
 
     st.markdown(f"#### {L['news_title']}")
     news_items = [
@@ -128,7 +179,7 @@ def render_commodities_section(L):
             "date": "2026-10-01",
             "title": (
                 "越南盾 (VND)"
-                " 匯率受央行調控維持穩定，有利越南平陽/西寧廠進口原料備貨"
+                " 匯率受央行調控維持穩定，有利越南西寧廠/海防廠進口原料備貨"
             ),
             "source": "VIR",
             "sentiment": "🟢 匯率平穩",
@@ -171,7 +222,7 @@ def render_finance_section(L):
 
     col_ar1, col_ar2 = st.columns(2)
     col_ar1.metric("全球總應收 (AR)", "$2.85M USD", "+$120K")
-    col_ar2.metric("全球總應付 (AP)", "$1,42M USD", "-$45K")
+    col_ar2.metric("全球總應付 (AP)", "$1.42M USD", "-$45K")
 
     col_ar3, col_ar4 = st.columns(2)
     col_ar3.metric("逾期帳款 (>60天)", "$185K USD", "⚠️ 關注", delta_color="inverse")
@@ -180,14 +231,12 @@ def render_finance_section(L):
     st.markdown("---")
     st.markdown("##### 🏢 各廠區 AR / AP 明細 (📱 手機卡片直立檢視)")
 
-    # 🔗 動態連動：讀取 st.session_state.factory_list
     if "factory_list" in st.session_state and st.session_state.factory_list:
         dynamic_factories = st.session_state.factory_list
     else:
         dynamic_factories = [
-            {"name": "🇹🇼 台灣總部研發中心", "status": "🟢 正常"},
-            {"name": "🇻🇳 越南平陽/西寧廠", "status": "🟡 催收中"},
-            {"name": "🇨🇳 東莞一廠", "status": "🟢 正常"},
+            {"name": "🇻🇳 越南西寧廠", "status": "🟢 正常"},
+            {"name": "🇻🇳 越南海防廠", "status": "🟢 正常"},
         ]
 
     view_mode_fin = st.radio(
@@ -200,26 +249,13 @@ def render_finance_section(L):
     if "📱" in view_mode_fin:
         for idx, fact in enumerate(dynamic_factories):
             f_name = fact.get("name", f"廠區-{idx+1}")
-            ar_val = (
-                "$1,200,000"
-                if idx == 0
-                else ("$950,000" if idx == 1 else "$700,000")
-            )
-            ap_val = (
-                "$600,000"
-                if idx == 0
-                else ("$520,000" if idx == 1 else "$300,000")
-            )
-            status_val = (
-                "🟢 正常" if idx != 1 else fact.get("status", "🟡 催收中")
-            )
+            ar_val = "$1,200,000" if idx == 0 else "$950,000"
+            ap_val = "$600,000" if idx == 0 else "$520,000"
+            status_val = fact.get("status", "🟢 正常")
 
             with st.container():
                 st.markdown(f"#### 🏭 {f_name}")
-                if "催收" in status_val or "⚠️" in status_val:
-                    st.warning(f"🚨 **營運狀態**: {status_val}")
-                else:
-                    st.success(f"🟢 **營運狀態**: {status_val}")
+                st.success(f"🟢 **營運狀態**: {status_val}")
 
                 c_a, c_b = st.columns(2)
                 c_a.write(f"• **應收帳款 (AR)**:\n  `{ar_val}`")
@@ -229,19 +265,9 @@ def render_finance_section(L):
         ar_ap_rows = []
         for idx, fact in enumerate(dynamic_factories):
             f_name = fact.get("name", f"廠區-{idx+1}")
-            ar_val = (
-                "$1,200,000"
-                if idx == 0
-                else ("$950,000" if idx == 1 else "$700,000")
-            )
-            ap_val = (
-                "$600,000"
-                if idx == 0
-                else ("$520,000" if idx == 1 else "$300,000")
-            )
-            status_val = (
-                "🟢 正常" if idx != 1 else fact.get("status", "🟡 催收中")
-            )
+            ar_val = "$1,200,000" if idx == 0 else "$950,000"
+            ap_val = "$600,000" if idx == 0 else "$520,000"
+            status_val = fact.get("status", "🟢 正常")
             ar_ap_rows.append({
                 "廠區": f_name,
                 "AR (USD)": ar_val,
@@ -300,28 +326,18 @@ def render_engineering_section(L):
                 "預計完工": "2026-10-15",
             },
             {
-                "專案編號": "HD-2026-BD05",
-                "工程名稱": "平陽電子廠 1000A 低壓配電盤擴建",
+                "專案編號": "HD-2026-HP05",
+                "工程名稱": "海防電子廠 1000A 低壓配電盤擴建",
                 "客戶": "Foxconn VN",
                 "合約金額": "$120,000 USD",
                 "工程進度": "45% (粉體塗裝烤漆中)",
                 "預計完工": "2026-10-28",
-            },
-            {
-                "專案編號": "HD-2026-TW02",
-                "工程名稱": "新竹科學園區開關櫃替換專案",
-                "客戶": "TSMC Subcontractor",
-                "合約金額": "NT$ 4,500,000 TWD",
-                "工程進度": "95% (竣工驗收中)",
-                "預計完工": "2026-10-08",
             },
         ]
 
     for prj in projects_list:
         with st.container():
             st.markdown(f"#### ⚡ {prj.get('工程名稱', '工程專案')}")
-            
-            # 🚨 將工程進度與施工狀態置頂放大顯示
             progress_str = prj.get("工程進度", "進度推進中")
             st.info(f"📊 **目前工程進度與狀態**：\n\n**{progress_str}**")
 
