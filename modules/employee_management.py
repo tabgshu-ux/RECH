@@ -4,9 +4,9 @@ import streamlit as st
 
 def render_employee_management(engine=None, t=None, lang="繁體中文"):
     st.title("👤 管理部 - 員工與人事管理中心")
-    st.caption("維護全廠區員工個人檔案、合約記錄、工作廠區與部門職位分配。")
+    st.caption("維護全廠區員工個人檔案、合約記錄、工作廠區與離職人員歸檔查詢。")
 
-    # 初始化員工資料庫 (如無資料)
+    # 1. 初始化在職員工資料庫
     if "employees_db" not in st.session_state or not st.session_state.employees_db:
         st.session_state.employees_db = [
             {
@@ -18,7 +18,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "title": "廠長 / 專案經理",
                 "role": "Manager",
                 "phone": "+84 90 123 4567",
-                "address": " Tây Ninh, Vietnam",
+                "address": "Tây Ninh, Vietnam",
             },
             {
                 "id": "EMP-002",
@@ -29,7 +29,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "title": "CNC 操作技術員",
                 "role": "Staff",
                 "phone": "+84 98 765 4321",
-                "address": " Bến Cầu, Tây Ninh",
+                "address": "Bến Cầu, Tây Ninh",
             },
             {
                 "id": "EMP-003",
@@ -40,21 +40,41 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "title": "品管檢驗員",
                 "role": "Staff",
                 "phone": "+84 91 234 5678",
-                "address": " Hải Phòng, Vietnam",
+                "address": "Hải Phòng, Vietnam",
             },
         ]
 
-    tab_manage, tab_add = st.tabs(["📑 現有員工名冊與刪除管理", "➕ 新增員工個人檔案"])
+    # 2. 初始化離職員工歸檔資料庫
+    if "resigned_employees_db" not in st.session_state:
+        st.session_state.resigned_employees_db = [
+            {
+                "id": "EMP-999",
+                "name": "陳舊員工",
+                "nationality": "🇻🇳 越南 (Vietnamese)",
+                "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
+                "dept": "生產部 - 塗料組 (Painting)",
+                "title": "噴漆技術員",
+                "resigned_date": "2026-06-30",
+                "reason": "個人生涯規劃離職",
+            }
+        ]
+
+    tab_manage, tab_add, tab_resigned = st.tabs([
+        "📑 現有在職員工名冊",
+        "➕ 新增員工個人檔案",
+        "📦 離職人員檔案與歷史查詢"
+    ])
 
     # ----------------------------------------------------
-    # 📑 頁籤一：現有員工名冊與刪除管理
+    # 📑 頁籤一：現有在職員工名冊（支援勾選移至離職名單）
     # ----------------------------------------------------
     with tab_manage:
-        st.markdown("### 📋 公司現有員工名冊（可依廠區與部門檢視或勾選刪除）")
+        st.markdown("### 📋 公司現有在職員工名冊")
+        st.info("💡 勾選欲離職的員工後，點擊下方按鈕即可將其完整資料移至「離職人員檔案與歷史查詢」中永久保存。")
 
         df_emp = pd.DataFrame(st.session_state.employees_db)
-        if "刪除" not in df_emp.columns:
-            df_emp.insert(0, "刪除", False)
+        if "離職辦理" not in df_emp.columns:
+            df_emp.insert(0, "離職辦理", False)
 
         edited_emp_df = st.data_editor(
             df_emp,
@@ -63,22 +83,36 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
             key="employee_editor"
         )
 
-        c_del1, _ = st.columns(2)
-        with c_del1:
-            if st.button("🗑️ 刪除勾選的員工資料", type="primary"):
+        c_btn1, _ = st.columns(2)
+        with c_btn1:
+            if st.button("📁 將勾選的員工移至離職名單", type="primary"):
                 remaining_emp = []
+                moved_count = 0
                 for idx, row in edited_emp_df.iterrows():
-                    if not row.get("刪除", False):
+                    if row.get("離職辦理", False):
+                        emp_id = row["id"]
+                        matched = next((e for e in st.session_state.employees_db if e.get("id") == emp_id), None)
+                        if matched:
+                            # 加上離職歸檔標記
+                            matched["resigned_date"] = pd.Timestamp.now().strftime("%Y-%m-%d")
+                            matched["reason"] = "正常離職辦理歸檔"
+                            st.session_state.resigned_employees_db.append(matched)
+                            moved_count += 1
+                    else:
                         emp_id = row["id"]
                         matched = next((e for e in st.session_state.employees_db if e.get("id") == emp_id), None)
                         if matched:
                             remaining_emp.append(matched)
+                
                 st.session_state.employees_db = remaining_emp
-                st.success("✅ 已成功刪除選定的員工資料！")
-                st.rerun()
+                if moved_count > 0:
+                    st.success(f"✅ 已成功將 {moved_count} 位員工移至離職人員名單並完成歸檔！")
+                    st.rerun()
+                else:
+                    st.warning("⚠️ 請先在表格左側勾選要辦理離職的員工。")
 
     # ----------------------------------------------------
-    # ➕ 頁籤二：新增員工個人檔案（去除了跨國與高管誤導字眼）
+    # ➕ 頁籤二：新增員工個人檔案
     # ----------------------------------------------------
     with tab_add:
         st.markdown("### ➕ 登錄新員工個人檔案")
@@ -140,6 +174,19 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     st.rerun()
                 else:
                     st.error("請填寫員工編號與姓名！")
+
+    # ----------------------------------------------------
+    # 📦 頁籤三：離職人員檔案與歷史查詢
+    # ----------------------------------------------------
+    with tab_resigned:
+        st.markdown("### 📦 離職人員歷史檔案庫 (Resigned Employees Archive)")
+        st.caption("所有離職或結案的員工資料均完整保留於此，方便日後隨時搜尋與查閱。")
+
+        if st.session_state.resigned_employees_db:
+            df_resigned = pd.DataFrame(st.session_state.resigned_employees_db)
+            st.dataframe(df_resigned, use_container_width=True)
+        else:
+            st.info("目前尚無離職歸檔人員紀錄。")
 
 
 def show(engine=None, t=None, lang="繁體中文"):
