@@ -6,7 +6,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
     st.title("👤 管理部 - 員工與人事管理中心")
     st.caption("維護全廠區員工個人檔案、合約記錄、工作廠區、離職歸檔與 AI 人臉辨識打卡串接預留。")
 
-    # 1. 初始化在職員工資料庫（含 AI 人臉辨識特徵欄位預留）
+    # 1. 初始化在職員工資料庫
     if "employees_db" not in st.session_state or not st.session_state.employees_db:
         st.session_state.employees_db = [
             {
@@ -19,7 +19,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "role": "Admin",
                 "phone": "0912345678",
                 "address": "-",
-                "face_token": "FACE-BIO-888899", # 預留 AI 人臉辨識特徵串接碼
+                "face_token": "FACE-BIO-888899",
             },
             {
                 "id": "EMP-002",
@@ -123,7 +123,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     st.warning("⚠️ 請先在表格左側勾選要辦理離職的對象。")
 
     # ----------------------------------------------------
-    # ➕ 頁籤二：新增員工個人檔案（預留臉部辨識欄位）
+    # ➕ 頁籤二：新增員工個人檔案
     # ----------------------------------------------------
     with tab_add:
         st.markdown("### ➕ 登錄新員工個人檔案")
@@ -135,7 +135,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     "員工國籍",
                     ["🇻🇳 越南 (Vietnamese)", "🇹🇼 台灣 (Taiwanese)", "🇨🇳 中國 (Chinese)", "其他國家"]
                 )
-                emp_id = st.text_input("員工編號 *", value="EMP-004")
+                emp_id = st.text_input("員工編號 *", value="EMP-300")
             with c2:
                 work_plant = st.selectbox(
                     "駐點工作廠區 *",
@@ -153,7 +153,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                         "生產部 - 配盤組 (Assembly)",
                     ]
                 )
-                job_title = st.text_input("職位 / 職銜 (Job Title) *", value="專員 / Engineer")
+                job_title = st.text_input("職位 / 職銜 (Job Title) *", value="經理")
 
             c4, c5 = st.columns(2)
             with c4:
@@ -163,15 +163,14 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 address = st.text_input("居住 / 戶籍地址 (Address)", value="")
                 work_permit = st.text_input("工作許可證 / 勞工證號", value="-")
 
-            # 💡 預留 AI 人臉辨識打卡系統串接欄位
-            face_token = st.text_input("🤖 AI 臉部辨識特徵代碼 (未來打卡系統串接預留)", value="FACE-PENDING-REGISTRATION", placeholder="例如: FACE-BIO-XXXXXX")
-
+            face_token = st.text_input("🤖 AI 臉部辨識特徵代碼 (未來打卡系統串接預留)", value="FACE-PENDING-REGISTRATION")
             role = st.selectbox("系統權限角色 (Role)", ["Staff (一般員工)", "Manager (部門主管)", "Admin (系統管理者)"])
 
             submitted = st.form_submit_button("💾 儲存並新增個人檔案", type="primary", use_container_width=True)
             if submitted:
                 if emp_name and emp_id:
-                    st.session_state.employees_db.append({
+                    # 💡 確保完整欄位寫入 session_state
+                    new_employee = {
                         "id": emp_id,
                         "name": emp_name,
                         "nationality": nationality,
@@ -182,8 +181,10 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                         "phone": phone if phone else "-",
                         "address": address if address else "-",
                         "face_token": face_token if face_token else "FACE-PENDING",
-                    })
+                    }
+                    st.session_state.employees_db.append(new_employee)
                     st.success(f"🎉 【新增完成】已成功登錄員工 [{emp_name}] (`{emp_id}`)！請點擊上方左側的「現有在職員工名冊」頁籤即可檢視完整名單。")
+                    st.rerun()  # 💡 強制重新整理頁面以立即渲染進表格
                 else:
                     st.error("❌ 請完整填寫員工編號與姓名！")
 
