@@ -1,124 +1,100 @@
+import pandas as pd
 import streamlit as st
 
-# ----------------------------------------------------
-# 🏢 全系統可供販售/勾選之功能模組目錄 (SaaS Catalog)
-# ----------------------------------------------------
-ALL_ERP_MODULES = {
-    "📈 營運戰情室 (Executive)": [
-        "🔴 原料價格與隨時股市物價/匯率",
-        "📊 財務類顯示資料 (AR/AP & P&L)",
-        "⚡ 工程專案進度與驗收資料",
-    ],
-    "🧾 財務會計部 (Finance & Accounting)": [
-        "🛒 採購與應付帳款 (AP & 廠商發票)",
-        "📋 銷售與應收帳款 (AR & 催收歷史)",
-        "📄 越南電子發票 XML 解析與登錄",
-        "📧 通用信箱電子發票自動讀取 (IMAP)",
-        "📊 電子發票張數監控與預警",
-    ],
-    "🛠️ 研發工程部 (R&D & Engineering)": [
-        "⚡ 配電盤估價與資材報價總合"
-    ],
-    "🏢 行政總務部 (General Affairs)": [
-        "📦 固定資產設備與總務採購",
-        "✍️ 電子簽核與請款審核中心",
-    ],
-    "👥 人力資源部 (Human Resources)": [
-        "👤 人事檔案與勞動合約管理"
-    ],
-    "🏭 生產倉儲部 (Plant & Warehouse)": [
-        "📦 倉庫庫存與資材條碼管理",
-        "✂️ 板金加工組工單",
-        "🎨 烤漆塗裝組品管",
-        "⚡ 配電盤組裝配線組",
-    ],
-}
+
+def render_licensing_control_page(engine=None, lang="繁體中文"):
+    st.title("🎛️ 資訊管理部 - 客戶 ERP 模組授權與廠區設定")
+    st.caption("管理全集團全球廠區據點、模組授權開關與資料刪除維護。")
+
+    # 初始化廠區與授權資料庫
+    if "global_plants_db" not in st.session_state or not st.session_state.global_plants_db:
+        st.session_state.global_plants_db = [
+            {"id": "FACT-VN-01", "name": "西寧廠", "country": "越南", "currency": "VND", "revenue": "NT$ 12.5M", "status": "🟢 營運中"},
+            {"id": "FACT-VN-02", "name": "CN 東莞一廠 (線材/塑膠)", "country": "中國", "currency": "RMB", "revenue": "¥ 3.4M", "status": "🟢 營運中"},
+            {"id": "FACT-BH-01", "name": "VN 越南平陽/西寧廠 (配電盤/板金)", "country": "越南", "currency": "VND", "revenue": "₫ 12.8B", "status": "🟢 營運中"},
+        ]
+
+    tab_manage, tab_add = st.tabs(["📑 現有廠區據點與刪除管理", "➕ 新增海外廠區/分公司據點"])
+
+    # ----------------------------------------------------
+    # 📑 頁籤一：現有據點與刪除功能
+    # ----------------------------------------------------
+    with tab_manage:
+        st.markdown("### 📋 全球廠區據點一覽（可勾選欲刪除的項目）")
+        
+        # 使用 Data Editor 讓使用者可以直接勾選刪除，或透過下方按鈕整筆移除
+        df_plants = pd.DataFrame(st.session_state.global_plants_db)
+        
+        # 加上選取刪除欄位
+        if "刪除" not in df_plants.columns:
+            df_plants.insert(0, "刪除", False)
+
+        edited_df = st.data_editor(
+            df_plants,
+            use_container_width=True,
+            num_rows="dynamic",
+            key="plant_editor"
+        )
+
+        col_act1, col_act2 = st.columns(2)
+        with col_act1:
+            if st.button("🗑️ 刪除勾選的廠區據點", type="primary"):
+                # 過濾掉被勾選刪除的列
+                remaining_rows = []
+                for idx, row in edited_df.iterrows():
+                    if not row.get("刪除", False):
+                        # 移除輔助的「刪除」欄位再存回
+                        clean_row = {k: v for k, v in row.items() if k != "刪除"}
+                        remaining_rows.append(clean_row)
+                
+                st.session_state.global_plants_db = remaining_rows
+                st.success("✅ 已成功刪除選定的廠區據點資料！")
+                st.rerun()
+
+        with col_act2:
+            if st.button("💾 儲存表格修改結果"):
+                updated_rows = []
+                for idx, row in edited_df.iterrows():
+                    clean_row = {k: v for k, v in row.items() if k != "刪除"}
+                    updated_rows.append(clean_row)
+                st.session_state.global_plants_db = updated_rows
+                st.success("✅ 廠區資料修改已成功儲存！")
+                st.rerun()
+
+    # ----------------------------------------------------
+    # ➕ 頁籤二：新增據點
+    # ----------------------------------------------------
+    with tab_add:
+        st.markdown("### ➕ 新增全球廠區據點")
+        with st.form("form_add_plant"):
+            c1, c2 = st.columns(2)
+            plant_id = c1.text_input("廠區代碼 *", value="FACT-ID-01 (印尼廠)")
+            plant_name = c2.text_input("廠區/子公司名稱 *", value="印尼雅加達新廠")
+
+            c3, c4, c5 = st.columns(3)
+            country = c3.text_input("所在國家/區域", value="印尼 (Indonesia)")
+            currency = c4.selectbox("當地記帳本位幣", ["USD", "VND", "RMB", "TWD", "IDR"])
+            status = c5.selectbox("廠區營運狀態", ["🟢 營運中", "🔧 籌備中", "⏸️ 暫停營運"])
+
+            if st.form_submit_button("💾 儲存並將新廠區加入集團戰情室", type="primary"):
+                if plant_id and plant_name:
+                    st.session_state.global_plants_db.append({
+                        "id": plant_id,
+                        "name": plant_name,
+                        "country": country,
+                        "currency": currency,
+                        "revenue": "0.0",
+                        "status": status
+                    })
+                    st.success(f"🎉 已成功新增廠區 [{plant_name}]！")
+                    st.rerun()
+                else:
+                    st.error("請填寫廠區代碼與名稱！")
 
 
-def render_licensing_control_page(lang="繁體中文"):
-    st.title("🎛️ 客戶 ERP 模組授權與功能開關中心 (SaaS Control)")
-    st.caption(
-        "專為商業化販售設計：在此勾選客戶購買的功能，未勾選的功能將自動從主選單隱藏。"
-    )
-
-    # 1. 初始化全域已開通模組 (預設全選開放)
-    if "enabled_modules" not in st.session_state:
-        all_feats = []
-        for dept, feats in ALL_ERP_MODULES.items():
-            all_feats.extend(feats)
-        st.session_state.enabled_modules = set(all_feats)
-
-    # 2. 快速預設套裝方案按鈕 (Preset Packages)
-    st.markdown("### ⚡ 快速一鍵載入客戶訂閱方案")
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        if st.button("📦 載入「製造與倉儲專業版」", use_container_width=True):
-            st.session_state.enabled_modules = set(
-                ALL_ERP_MODULES["🏭 生產倉儲部 (Plant & Warehouse)"]
-                + ALL_ERP_MODULES["👥 人力資源部 (Human Resources)"]
-            )
-            st.success("已自動載入「製造與倉儲版」勾選設定！")
-            st.rerun()
-
-    with col2:
-        if st.button("💰 載入「財務與進銷存版」", use_container_width=True):
-            st.session_state.enabled_modules = set(
-                ALL_ERP_MODULES["🧾 財務會計部 (Finance & Accounting)"]
-                + ALL_ERP_MODULES["🏢 行政總務部 (General Affairs)"]
-            )
-            st.success("已自動載入「財務與進銷存版」勾選設定！")
-            st.rerun()
-
-    with col3:
-        if st.button("👑 載入「旗艦企業全功能版」", use_container_width=True):
-            all_feats = []
-            for dept, feats in ALL_ERP_MODULES.items():
-                all_feats.extend(feats)
-            st.session_state.enabled_modules = set(all_feats)
-            st.success("已自動開通全部功能模組！")
-            st.rerun()
-
-    st.divider()
-
-    # 3. 逐項勾選 UI (Checkboxes)
-    st.markdown("### 🎯 客製化功能勾選清單 (勾選即開啟)")
-
-    updated_enabled = set()
-
-    for dept_name, feature_list in ALL_ERP_MODULES.items():
-        with st.expander(f"📌 {dept_name}", expanded=True):
-            cols = st.columns(2)
-            for idx, feat in enumerate(feature_list):
-                col_idx = idx % 2
-                is_checked = feat in st.session_state.enabled_modules
-                with cols[col_idx]:
-                    checked = st.checkbox(
-                        f"開通：{feat}",
-                        value=is_checked,
-                        key=f"chk_{dept_name}_{idx}",
-                    )
-                    if checked:
-                        updated_enabled.add(feat)
-
-    st.divider()
-
-    # 4. 儲存設定按鈕
-    if st.button(
-        "💾 儲存並更新客戶模組授權", type="primary", use_container_width=True
-    ):
-        st.session_state.enabled_modules = updated_enabled
-        st.success("🎉 客戶模組授權設定已成功儲存！系統主選單已連動更新。")
-        st.rerun()
+def show(engine=None, lang="繁體中文"):
+    render_licensing_control_page(engine, lang)
 
 
-def render(*args, **kwargs):
-    render_licensing_control_page()
-
-
-def show(*args, **kwargs):
-    render_licensing_control_page()
-
-
-def main(*args, **kwargs):
-    render_licensing_control_page()
+def main(engine=None, lang="繁體中文"):
+    render_licensing_control_page(engine, lang)
