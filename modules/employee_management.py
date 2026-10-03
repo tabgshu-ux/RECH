@@ -11,53 +11,42 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
         st.session_state.employees_db = [
             {
                 "id": "EMP-001",
-                "name": "張偉豪",
+                "name": "張董事長",
                 "nationality": "🇹🇼 台灣 (Taiwan)",
-                "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
-                "dept": "管理部 (Management)",
-                "title": "廠長 / 經理",
-                "role": "Manager",
-                "phone": "+84 90 123 4567",
-                "address": "Tây Ninh, Vietnam",
+                "site": "西寧廠",
+                "dept": "經營高層 / 董事會 (Executive)",
+                "title": "董事長 (Chairman)",
+                "role": "Admin",
+                "phone": "0912345678",
+                "address": "-",
             },
             {
                 "id": "EMP-002",
                 "name": "Nguyễn Văn An",
                 "nationality": "🇻🇳 越南 (Vietnamese)",
-                "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
-                "dept": "生產部 - 板金組 (Sheet Metal)",
-                "title": "CNC 操作技術員",
+                "site": "西寧廠",
+                "dept": "工程部",
+                "title": "kỹ sư Tủ điện",
                 "role": "Staff",
-                "phone": "+84 98 765 4321",
-                "address": "Bến Cầu, Tây Ninh",
+                "phone": "0987654321",
+                "address": "-",
             },
             {
                 "id": "EMP-003",
-                "name": "Trần Thị Mai",
-                "nationality": "🇻🇳 越南 (Vietnamese)",
-                "site": "🇻🇳 越南海防廠 (Hai Phong Plant)",
-                "dept": "工務部 - 品管組 (QC)",
-                "title": "品管檢驗員",
+                "name": "李元隆",
+                "nationality": "🇹🇼 台灣 (Taiwanese)",
+                "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
+                "dept": "管理部 (Management - 行政/財務/採購)",
+                "title": "副總",
                 "role": "Staff",
-                "phone": "+84 91 234 5678",
-                "address": "Hải Phòng, Vietnam",
+                "phone": "-",
+                "address": "-",
             },
         ]
 
     # 2. 初始化離職員工歸檔資料庫
     if "resigned_employees_db" not in st.session_state:
-        st.session_state.resigned_employees_db = [
-            {
-                "id": "EMP-999",
-                "name": "陳舊員工",
-                "nationality": "🇻🇳 越南 (Vietnamese)",
-                "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
-                "dept": "生產部 - 塗料組 (Painting)",
-                "title": "噴漆技術員",
-                "resigned_date": "2026-06-30",
-                "reason": "個人生涯規劃離職",
-            }
-        ]
+        st.session_state.resigned_employees_db = []
 
     tab_manage, tab_add, tab_resigned = st.tabs([
         "📑 現有在職員工名冊",
@@ -66,15 +55,18 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
     ])
 
     # ----------------------------------------------------
-    # 📑 頁籤一：現有在職員工名冊
+    # 📑 頁籤一：現有在職員工名冊（區分「單純刪除」與「離職歸檔」）
     # ----------------------------------------------------
     with tab_manage:
         st.markdown("### 📋 公司現有在職員工名冊")
-        st.info("💡 勾選欲離職的員工後，點擊下方按鈕即可將其完整資料移至「離職人員檔案與歷史查詢」中永久保存。")
+        st.info("💡 若為建檔錯誤或重複資料，請勾選「刪除」；若為員工正式離職，請勾選「離職」。")
 
         df_emp = pd.DataFrame(st.session_state.employees_db)
-        if "離職辦理" not in df_emp.columns:
-            df_emp.insert(0, "離職辦理", False)
+        # 確保有刪除與離職兩個獨立勾選欄
+        if "刪除" not in df_emp.columns:
+            df_emp.insert(0, "刪除", False)
+        if "離職" not in df_emp.columns:
+            df_emp.insert(1, "離職", False)
 
         edited_emp_df = st.data_editor(
             df_emp,
@@ -83,15 +75,36 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
             key="employee_editor"
         )
 
-        c_btn1, _ = st.columns(2)
-        with c_btn1:
-            if st.button("📁 將勾選的員工移至離職名單", type="primary"):
+        col_b1, col_b2, _ = st.columns([1.5, 1.5, 2])
+        with col_b1:
+            if st.button("🗑️ 永久刪除勾選的錯誤資料", type="primary"):
+                remaining_emp = []
+                del_count = 0
+                for idx, row in edited_emp_df.iterrows():
+                    if row.get("刪除", False):
+                        del_count += 1
+                    else:
+                        emp_id = row["id"]
+                        # 保留未被刪除的資料
+                        matched = next((e for e in st.session_state.employees_db if e.get("id") == emp_id and e.get("name") == row["name"]), None)
+                        if matched:
+                            remaining_emp.append(matched)
+                
+                st.session_state.employees_db = remaining_emp
+                if del_count > 0:
+                    st.success(f"✅ 已成功刪除 {del_count} 筆重複或錯誤資料！")
+                    st.rerun()
+                else:
+                    st.warning("⚠️ 請先在表格左側勾選要「刪除」的項目。")
+
+        with col_b2:
+            if st.button("📁 將勾選的員工移至離職名單"):
                 remaining_emp = []
                 moved_count = 0
                 for idx, row in edited_emp_df.iterrows():
-                    if row.get("離職辦理", False):
+                    if row.get("離職", False):
                         emp_id = row["id"]
-                        matched = next((e for e in st.session_state.employees_db if e.get("id") == emp_id), None)
+                        matched = next((e for e in st.session_state.employees_db if e.get("id") == emp_id and e.get("name") == row["name"]), None)
                         if matched:
                             matched["resigned_date"] = pd.Timestamp.now().strftime("%Y-%m-%d")
                             matched["reason"] = "正常離職辦理歸檔"
@@ -99,19 +112,19 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                             moved_count += 1
                     else:
                         emp_id = row["id"]
-                        matched = next((e for e in st.session_state.employees_db if e.get("id") == emp_id), None)
+                        matched = next((e for e in st.session_state.employees_db if e.get("id") == emp_id and e.get("name") == row["name"]), None)
                         if matched:
                             remaining_emp.append(matched)
                 
                 st.session_state.employees_db = remaining_emp
                 if moved_count > 0:
-                    st.success(f"✅ 已成功將 {moved_count} 位員工移至離職人員名單並完成歸檔！")
+                    st.success(f"✅ 已成功將 {moved_count} 位員工移至離職人員名單！")
                     st.rerun()
                 else:
-                    st.warning("⚠️ 請先在表格左側勾選要辦理離職的員工。")
+                    st.warning("⚠️ 請先在表格中勾選要辦理「離職」的員工。")
 
     # ----------------------------------------------------
-    # ➕ 頁籤二：新增員工個人檔案（職位改為自由輸入）
+    # ➕ 頁籤二：新增員工個人檔案（加上明確成功提示）
     # ----------------------------------------------------
     with tab_add:
         st.markdown("### ➕ 登錄新員工個人檔案")
@@ -141,8 +154,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                         "生產部 - 配盤組 (Assembly)",
                     ]
                 )
-                # 💡 改為自由輸入框，可直接輸入「經理」、「廠長」、「工程師」等任意職稱
-                job_title = st.text_input("職位 / 職銜 (Job Title) *", value="經理 / Manager")
+                job_title = st.text_input("職位 / 職銜 (Job Title) *", value="專員 / Engineer")
 
             c4, c5 = st.columns(2)
             with c4:
@@ -154,7 +166,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
 
             role = st.selectbox("系統權限角色 (Role)", ["Staff (一般員工)", "Manager (部門主管)", "Admin (系統管理者)"])
 
-            if st.form_submit_button("💾 儲存個人檔案", type="primary", use_container_width=True):
+            if st.form_submit_button("💾 儲存並新增個人檔案", type="primary", use_container_width=True):
                 if emp_name and emp_id:
                     st.session_state.employees_db.append({
                         "id": emp_id,
@@ -167,8 +179,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                         "phone": phone if phone else "-",
                         "address": address if address else "-",
                     })
-                    st.success(f"🎉 已成功登錄員工 [{emp_name}] 的個人檔案！")
-                    st.rerun()
+                    st.success(f"🎉 【新增成功】已成功登錄員工 [{emp_name}] (`{emp_id}`) 的個人檔案！請切換至「現有在職員工名冊」查看。")
                 else:
                     st.error("請填寫員工編號與姓名！")
 
