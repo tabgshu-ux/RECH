@@ -11,7 +11,7 @@ import modules.procurement_ap as procurement_ap
 import modules.sales_order_ar as sales_order_ar
 import modules.system_licensing as system_licensing
 import modules.user_management as user_management
-import modules.vehicle_gate_log as vehicle_gate_log  # 👈 新增：車輛進出與門禁時間紀錄模組
+import modules.vehicle_gate_log as vehicle_gate_log  # 車輛進出與門禁時間紀錄模組
 import modules.warehouse_management as warehouse_management
 import pandas as pd
 from sqlalchemy import text
@@ -56,7 +56,7 @@ RECH_LOGO_HTML = """
 """
 
 # ----------------------------------------------------
-# 2. 三階組織架構選單字典（已加入車輛門禁功能選項）
+# 三階組織架構選單字典
 # ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
@@ -139,7 +139,7 @@ NAV_STRUCTURE = {
                     "🏢 [Hành chính] Quản lý Tài sản Cố định": "ga_assets",
                     "✍️ [Hành chính] Trung tâm Phê duyệt": "approval_center",
                     "👤 [Nhân sự] Hồ sơ Nhân sự & Hợp đồng": "hr_employee",
-                    "🚗 [Hành chính] Quản lý xe ra vào nhà máy": "vehicle_gate",
+                    "🚗 [Bảo vệ] Quản lý xe ra vào nhà máy": "vehicle_gate",
                     "🛒 [Tài chính] Mua hàng & Phải trả (AP)": "procurement_ap",
                     "📋 [Tài chính] Quản lý Bán hàng (AR)": "sales_order_ar",
                     "💰 [Tài chính] Tính Lương & Khấu trừ": "payroll_calc",
@@ -156,7 +156,7 @@ NAV_STRUCTURE = {
             "🏭 Phòng Sản xuất (Production Dept)": {
                 "features": {
                     "📦 [Kho] Quản lý Kho & Mã vạch": "wh_management",
-                    "✂️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
+                    "✂️️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
                     "🎨 [Sơn] Tổ Sơn tĩnh điện": "painting",
                     "⚡ [Lắp ráp] Tổ Lắp ráp Tủ điện": "assembly",
                 }
@@ -191,9 +191,9 @@ NAV_STRUCTURE = {
             "👔 Management Dept (GA & Finance)": {
                 "features": {
                     "🏢 [GA] Asset Management": "ga_assets",
-                    "✍️️ [GA] E-Approval Center": "approval_center",
+                    "✍️ [GA] E-Approval Center": "approval_center",
                     "👤 [HR] Employee Records": "hr_employee",
-                    "🚗 [GA] Vehicle Gate Log": "vehicle_gate",
+                    "🚗 [Security] Vehicle Gate Log": "vehicle_gate",
                     "🛒 [Finance] Procurement & AP": "procurement_ap",
                     "📋 [Finance] Sales & AR": "sales_order_ar",
                     "💰 [Finance] Payroll & Insurance": "payroll_calc",
@@ -229,7 +229,7 @@ if "current_lang" not in st.session_state:
     st.session_state.current_lang = "繁體中文"
 
 # ----------------------------------------------------
-# 3. 取得資料庫引擎
+# 取得資料庫引擎
 # ----------------------------------------------------
 engine = db_conn.get_db_engine()
 
@@ -251,7 +251,7 @@ def safe_call_module(func, *args, **kwargs):
 
 
 # ----------------------------------------------------
-# 4. 登入系統
+# 登入系統
 # ----------------------------------------------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -270,7 +270,7 @@ if not st.session_state.logged_in:
     col1, _ = st.columns([1, 2])
     with col1:
         username = st.text_input(
-            f"{lang_dict['username']} (admin / manager / staff)"
+            f"{lang_dict['username']} (admin / manager / security / staff)"
         )
         password = st.text_input(
             f"{lang_dict['password']} (123)", type="password"
@@ -279,11 +279,17 @@ if not st.session_state.logged_in:
             if password == "123":
                 st.session_state.logged_in = True
                 u_clean = username.strip().lower()
-                st.session_state.user_role = (
-                    "admin"
-                    if u_clean in ["admin", "executive", "boss"]
-                    else ("manager" if u_clean == "manager" else "staff")
-                )
+                
+                # 判斷帳號角色 (新增 security 保安角色)
+                if u_clean in ["admin", "executive", "boss"]:
+                    st.session_state.user_role = "admin"
+                elif u_clean in ["manager", "supervisor"]:
+                    st.session_state.user_role = "manager"
+                elif u_clean in ["security", "guard", "門禁保全"]:
+                    st.session_state.user_role = "security"
+                else:
+                    st.session_state.user_role = "staff"
+
                 st.session_state.user_name = username
                 st.rerun()
             else:
@@ -291,7 +297,7 @@ if not st.session_state.logged_in:
     st.stop()
 
 # ----------------------------------------------------
-# 5. 側邊欄選單（管理部、工務部、生產部）
+# 側邊欄選單
 # ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
@@ -320,47 +326,46 @@ if st.sidebar.button(lang_dict["logout_btn"], use_container_width=True):
 st.sidebar.markdown("---")
 
 dept_options = list(lang_dict["departments"].keys())
-
 current_user_clean = str(st.session_state.user_name).strip().lower()
 current_role_clean = str(st.session_state.user_role).strip().lower()
 
-is_executive_access = (
-    current_user_clean in ["admin", "executive", "boss", "ceo", "gm"]
-    or current_role_clean in ["admin", "executive", "manager"]
-)
-
-if not is_executive_access:
-    dept_options = [d for d in dept_options if "Executive" not in d]
-
-selected_parent_dept = st.sidebar.radio(
-    lang_dict["parent_header"], dept_options, index=0
-)
-
-st.sidebar.markdown("---")
-
-features_dict = lang_dict["departments"][selected_parent_dept]["features"]
-
-enabled_feats = st.session_state.get("enabled_modules", None)
-if enabled_feats is not None:
-    feature_labels = [
-        label
-        for label in features_dict.keys()
-        if (label in enabled_feats or "it_" in features_dict[label])
-    ]
-    if not feature_labels:
-        feature_labels = list(features_dict.keys())
+# 💡 保全權限：限制只能看到管理部，且只能操作車輛門禁
+if current_role_clean == "security":
+    dept_options = ["👔 管理部 (Management Dept)"]
+    selected_parent_dept = dept_options[0]
+    st.sidebar.markdown(f"**{lang_dict['parent_header']}**")
+    st.sidebar.info("🛡️ 保全權限登入：已自動鎖定至廠區門禁與車輛進出管制頁面。")
+    feature_labels = ["🚗 [行政] 廠區車輛進出與門禁時間紀錄"] if st.session_state.current_lang == "繁體中文" else (
+        ["🚗 [Bảo vệ] Quản lý xe ra vào nhà máy"] if st.session_state.current_lang == "Tiếng Việt" else ["🚗 [Security] Vehicle Gate Log"]
+    )
+    selected_feature_label = feature_labels[0]
+    target_route = "vehicle_gate"
 else:
+    # 一般權限邏輯
+    is_executive_access = (
+        current_user_clean in ["admin", "executive", "boss", "ceo", "gm"]
+        or current_role_clean in ["admin", "executive", "manager"]
+    )
+
+    if not is_executive_access:
+        dept_options = [d for d in dept_options if "Executive" not in d]
+
+    selected_parent_dept = st.sidebar.radio(
+        lang_dict["parent_header"], dept_options, index=0
+    )
+
+    st.sidebar.markdown("---")
+    features_dict = lang_dict["departments"][selected_parent_dept]["features"]
     feature_labels = list(features_dict.keys())
 
-st.sidebar.caption(f"**{selected_parent_dept.split('(')[0].strip()}**")
-selected_feature_label = st.sidebar.radio(
-    lang_dict["sub_header"], feature_labels
-)
-
-target_route = features_dict[selected_feature_label]
+    st.sidebar.caption(f"**{selected_parent_dept.split('(')[0].strip()}**")
+    selected_feature_label = st.sidebar.radio(
+        lang_dict["sub_header"], feature_labels
+    )
+    target_route = features_dict[selected_feature_label]
 
 # ----------------------------------------------------
-# 6. 模組安全路由分流
+# 模組安全路由分流
 # ----------------------------------------------------
 curr_lang = st.session_state.current_lang
 
@@ -420,7 +425,6 @@ elif target_route == "hr_employee":
     )
 
 elif target_route == "vehicle_gate":
-    # 👈 新增：車輛進出與門禁時間紀錄路由分派
     safe_call_module(
         vehicle_gate_log.render_vehicle_gate_log_page,
         engine=engine,
