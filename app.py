@@ -11,6 +11,7 @@ import modules.procurement_ap as procurement_ap
 import modules.sales_order_ar as sales_order_ar
 import modules.system_licensing as system_licensing
 import modules.user_management as user_management
+import modules.vehicle_gate_log as vehicle_gate_log  # 👈 新增：車輛進出與門禁時間紀錄模組
 import modules.warehouse_management as warehouse_management
 import pandas as pd
 from sqlalchemy import text
@@ -55,7 +56,7 @@ RECH_LOGO_HTML = """
 """
 
 # ----------------------------------------------------
-# 2. 全新三階組織架構選單字典
+# 2. 三階組織架構選單字典（已加入車輛門禁功能選項）
 # ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
@@ -81,7 +82,8 @@ NAV_STRUCTURE = {
                 "features": {
                     "🏢 [行政] 固定資產設備與總務採購": "ga_assets",
                     "✍️ [行政] 電子簽核與請款審核中心": "approval_center",
-                    "👤 [行政] 跨國員工檔案與勞動合約 (人事)": "hr_employee",
+                    "👤 [行政] 員工個人檔案與人事管理 (人事)": "hr_employee",
+                    "🚗 [行政] 廠區車輛進出與門禁時間紀錄": "vehicle_gate",
                     "🧾 [財務] 採購與應付帳款 (AP & 發票)": "procurement_ap",
                     "📋 [財務] 銷售與應收帳款 (AR)": "sales_order_ar",
                     "💰 [財務] 全球員工薪資與保險扣款試算": "payroll_calc",
@@ -137,6 +139,7 @@ NAV_STRUCTURE = {
                     "🏢 [Hành chính] Quản lý Tài sản Cố định": "ga_assets",
                     "✍️ [Hành chính] Trung tâm Phê duyệt": "approval_center",
                     "👤 [Nhân sự] Hồ sơ Nhân sự & Hợp đồng": "hr_employee",
+                    "🚗 [Hành chính] Quản lý xe ra vào nhà máy": "vehicle_gate",
                     "🛒 [Tài chính] Mua hàng & Phải trả (AP)": "procurement_ap",
                     "📋 [Tài chính] Quản lý Bán hàng (AR)": "sales_order_ar",
                     "💰 [Tài chính] Tính Lương & Khấu trừ": "payroll_calc",
@@ -188,8 +191,9 @@ NAV_STRUCTURE = {
             "👔 Management Dept (GA & Finance)": {
                 "features": {
                     "🏢 [GA] Asset Management": "ga_assets",
-                    "✍️ [GA] E-Approval Center": "approval_center",
+                    "✍️️ [GA] E-Approval Center": "approval_center",
                     "👤 [HR] Employee Records": "hr_employee",
+                    "🚗 [GA] Vehicle Gate Log": "vehicle_gate",
                     "🛒 [Finance] Procurement & AP": "procurement_ap",
                     "📋 [Finance] Sales & AR": "sales_order_ar",
                     "💰 [Finance] Payroll & Insurance": "payroll_calc",
@@ -412,6 +416,14 @@ elif target_route == "hr_employee":
         employee_management.render_employee_management,
         engine=engine,
         t=lang_dict,
+        lang=curr_lang,
+    )
+
+elif target_route == "vehicle_gate":
+    # 👈 新增：車輛進出與門禁時間紀錄路由分派
+    safe_call_module(
+        vehicle_gate_log.render_vehicle_gate_log_page,
+        engine=engine,
         lang=curr_lang,
     )
 
