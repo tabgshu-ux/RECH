@@ -5,7 +5,7 @@ import streamlit as st
 SYSTEM_EXCHANGE_RATE_VND_TO_USD = 0.00003934
 
 # ----------------------------------------------------
-# 🌐 多語系字典 (i18n) - 包含派車單與簽核機制
+# 🌐 多語系字典 (i18n)
 # ----------------------------------------------------
 VEHICLE_I18N = {
     "繁體中文": {
@@ -205,6 +205,10 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
     st.title(L["title"])
     st.caption(L["caption"])
 
+    # 取得目前登入者的角色
+    user_role = str(st.session_state.get("user_role", "")).strip().lower()
+    is_security_guard = (user_role == "security")
+
     # 初始化大門車輛進出紀錄
     if "vehicle_logs_db" not in st.session_state or not st.session_state.vehicle_logs_db:
         st.session_state.vehicle_logs_db = [
@@ -221,7 +225,7 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
             },
         ]
 
-    # 初始化公務派車單資料庫 (包含簽核狀態)
+    # 初始化公務派車單資料庫
     if "vehicle_dispatch_db" not in st.session_state:
         st.session_state.vehicle_dispatch_db = [
             {
@@ -252,13 +256,22 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
             }
         ]
 
-    tab_gate_overview, tab_gate_in, tab_gate_out, tab_dispatch, tab_car_maint = st.tabs([
-        L["tab1"],
-        L["tab2"],
-        L["tab3"],
-        L["tab4"],
-        L["tab5"],
-    ])
+    # 💡 權限過濾：若為保全角色，則不顯示車輛維修保養履歷頁籤
+    if is_security_guard:
+        tab_gate_overview, tab_gate_in, tab_gate_out, tab_dispatch = st.tabs([
+            L["tab1"],
+            L["tab2"],
+            L["tab3"],
+            L["tab4"],
+        ])
+    else:
+        tab_gate_overview, tab_gate_in, tab_gate_out, tab_dispatch, tab_car_maint = st.tabs([
+            L["tab1"],
+            L["tab2"],
+            L["tab3"],
+            L["tab4"],
+            L["tab5"],
+        ])
 
     # ----------------------------------------------------
     # 📑 頁籤一：大門車輛動態看板
@@ -337,7 +350,7 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
         st.dataframe(df_all, use_container_width=True)
 
     # ----------------------------------------------------
-    # 📝 頁籤四：公務派車單申請與主管簽核（與保全顯示串接）
+    # 📝 頁籤四：公務派車單申請與主管簽核（保全專用檢視）
     # ----------------------------------------------------
     with tab_dispatch:
         st.markdown(f"### {L['dispatch_title']}")
@@ -345,7 +358,6 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
 
         sub_tab_apply, sub_tab_audit = st.tabs([L["apply_tab"], L["audit_tab"]])
 
-        # 子頁籤 1：填寫派車申請單
         with sub_tab_apply:
             with st.form("form_dispatch_apply"):
                 c1, c2 = st.columns(2)
@@ -376,7 +388,6 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
                     else:
                         st.error("❌ 請完整填寫申請人姓名與用車事由！")
 
-        # 子頁籤 2：主管簽核與保全大門放行顯示
         with sub_tab_audit:
             st.markdown("#### 🛡️ 保全大門管制專用：已核准放行之公務派車清單")
             st.info("💡 保全人員在門口放行因公外出車輛時，請核對下方「主管已簽核」之派車單與車牌號碼。")
@@ -388,7 +399,6 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
                     st.write(f"- **主管簽核狀態**: {item['approval_status']}")
                     st.write(f"- **保全放行狀態**: {item['security_status']}")
 
-                    # 主管簽核動作按鈕
                     col_act1, col_act2, col_act3 = st.columns(3)
                     with col_act1:
                         if st.button("✅ 主管核准簽核", key=f"approve_{idx}"):
@@ -412,80 +422,81 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
                                 st.error("❌ 尚未取得主管簽核，保全無法放行！")
 
     # ----------------------------------------------------
-    # 🔧 頁籤五：公司公務車保養與維護履歷管理
+    # 🔧 頁籤五：公司公務車保養與維護履歷管理 (僅限非保全角色顯示)
     # ----------------------------------------------------
-    with tab_car_maint:
-        st.markdown(f"### {L['maint_title']}")
-        st.caption(L["maint_caption"])
+    if not is_security_guard:
+        with tab_car_maint:
+            st.markdown(f"### {L['maint_title']}")
+            st.caption(L["maint_caption"])
 
-        display_maint_data = []
-        for item in st.session_state.company_car_maintenance_db:
-            display_maint_data.append({
-                L["col_car_id"]: item.get("car_id", "CAR-01"),
-                L["col_plate"]: item.get("plate_no", ""),
-                L["col_brand"]: item.get("brand_model", ""),
-                L["col_purchase"]: item.get("purchase_date", ""),
-                L["col_maint_date"]: item.get("maint_date", ""),
-                L["col_mileage"]: item.get("mileage", ""),
-                L["col_content"]: item.get("maint_content", ""),
-                L["col_cost"]: item.get("display_cost", ""),
-                L["col_handler"]: item.get("handler", ""),
-            })
+            display_maint_data = []
+            for item in st.session_state.company_car_maintenance_db:
+                display_maint_data.append({
+                    L["col_car_id"]: item.get("car_id", "CAR-01"),
+                    L["col_plate"]: item.get("plate_no", ""),
+                    L["col_brand"]: item.get("brand_model", ""),
+                    L["col_purchase"]: item.get("purchase_date", ""),
+                    L["col_maint_date"]: item.get("maint_date", ""),
+                    L["col_mileage"]: item.get("mileage", ""),
+                    L["col_content"]: item.get("maint_content", ""),
+                    L["col_cost"]: item.get("display_cost", ""),
+                    L["col_handler"]: item.get("handler", ""),
+                })
 
-        df_maint = pd.DataFrame(display_maint_data)
-        st.dataframe(df_maint, use_container_width=True)
+            df_maint = pd.DataFrame(display_maint_data)
+            st.dataframe(df_maint, use_container_width=True)
 
-        st.markdown("---")
-        st.markdown(f"#### {L['add_maint']}")
+            st.markdown("---")
+            st.markdown(f"#### {L['add_maint']}")
 
-        with st.form("form_add_car_maintenance_clean"):
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                plate_no = st.text_input(L["col_plate"] + " *", value="61A-888.66")
-                brand_model = st.text_input(L["col_brand"] + " *", value="Toyota Fortuner 2.8L")
-            with c2:
-                purchase_date = st.date_input(L["col_purchase"], value=datetime.date(2023, 5, 15))
-                maint_date = st.date_input(L["col_maint_date"], value=datetime.date.today())
-            with c3:
-                mileage = st.text_input(L["col_mileage"] + " *", value="70,000 km")
-                input_currency = st.selectbox(L["cur_label"], ["🇻🇳 越南盾 (VND)", "💵 美金 (USD)"])
+            with st.form("form_add_car_maintenance_clean"):
+                c1, c2, c3 = st.columns(3)
+                with c1:
+                    plate_no = st.text_input(L["col_plate"] + " *", value="61A-888.66")
+                    brand_model = st.text_input(L["col_brand"] + " *", value="Toyota Fortuner 2.8L")
+                with c2:
+                    purchase_date = st.date_input(L["col_purchase"], value=datetime.date(2023, 5, 15))
+                    maint_date = st.date_input(L["col_maint_date"], value=datetime.date.today())
+                with c3:
+                    mileage = st.text_input(L["col_mileage"] + " *", value="70,000 km")
+                    input_currency = st.selectbox(L["cur_label"], ["🇻🇳 越南盾 (VND)", "💵 美金 (USD)"])
 
-            raw_amount = st.number_input(
-                L["amount_label"], 
-                min_value=0.0, 
-                value=1000000.0 if "越南盾" in input_currency else 40.0, 
-                step=10.0
-            )
+                raw_amount = st.number_input(
+                    L["amount_label"], 
+                    min_value=0.0, 
+                    value=1000000.0 if "越南盾" in input_currency else 40.0, 
+                    step=10.0
+                )
 
-            maint_content = st.text_area(L["content_label"], value="定期保養：更換機油、機油濾清器、煞車系統檢查。")
-            handler = st.text_input(L["handler_label"], value="張偉豪")
+                maint_content = st.text_area(L["content_label"], value="定期保養：更換機油、機油濾清器、煞車系統檢查。")
+                handler = st.text_input(L["handler_label"], value="張偉豪")
 
-            if st.form_submit_button(L["save_maint"], type="primary", use_container_width=True):
-                if plate_no and brand_model and maint_content:
-                    if "越南盾" in input_currency:
-                        final_vnd = raw_amount
-                        final_usd = raw_amount * SYSTEM_EXCHANGE_RATE_VND_TO_USD
-                        display_str = f"₫{final_vnd:,.0f} VND (${final_usd:,.2f} USD)"
+                if st.form_submit_button(L["save_maint"], type="primary", use_container_width=True):
+                    if plate_no and brand_model and maint_content:
+                        if "越南盾" in input_currency:
+                            final_vnd = raw_amount
+                            final_usd = raw_amount * SYSTEM_EXCHANGE_RATE_VND_TO_USD
+                            display_str = f"₫{final_vnd:,.0f} VND ($ {final_usd:,.2f} USD)"
+                        else:
+                            final_usd = raw_amount
+                            final_vnd = raw_amount / SYSTEM_EXCHANGE_RATE_VND_TO_USD
+                            display_str = f"${final_usd:,.2f} USD (₫{final_vnd:,.0f} VND)"
+
+                        st.session_state.company_car_maintenance_db.append({
+                            "car_id": f"CAR-{len(st.session_state.company_car_maintenance_db)+1:02d}",
+                            "plate_no": plate_no.upper(),
+                            "brand_model": brand_model,
+                            "purchase_date": str(purchase_date),
+                            "maint_date": str(maint_date),
+                            "mileage": mileage,
+                            "maint_content": maint_content,
+                            "display_cost": display_str,
+                            "handler": handler,
+                        })
+                        st.success(L["success_maint"])
+                        st.rerun()
                     else:
-                        final_usd = raw_amount
-                        final_vnd = raw_amount / SYSTEM_EXCHANGE_RATE_VND_TO_USD
-                        display_str = f"${final_usd:,.2f} USD (₫{final_vnd:,.0f} VND)"
-
-                    st.session_state.company_car_maintenance_db.append({
-                        "car_id": f"CAR-{len(st.session_state.company_car_maintenance_db)+1:02d}",
-                        "plate_no": plate_no.upper(),
-                        "brand_model": brand_model,
-                        "purchase_date": str(purchase_date),
-                        "maint_date": str(maint_date),
-                        "mileage": mileage,
-                        "maint_content": maint_content,
-                        "display_cost": display_str,
-                        "handler": handler,
-                    })
-                    st.success(L["success_maint"])
-                    st.rerun()
-                else:
-                    st.error("❌ 請完整填寫必填欄位！")
+                        st.error("❌ 請完整填寫必填欄位！")
 
 
 def show(engine=None, lang="繁體中文"):
