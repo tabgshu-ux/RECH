@@ -14,7 +14,7 @@ VEHICLE_I18N = {
         "tab1": "📑 廠區大門車輛進出動態",
         "tab2": "➕ 登記車輛進廠 (Check-In)",
         "tab3": "⏱️ 車輛離廠登記 (Check-Out)",
-        "tab4": "📝 公務派車單申請與主管簽核",
+        "tab4": "📝 公務派車單與放行管制",
         "tab5": "🔧 公司公務車保養與維護履歷",
         "col_car_id": "車輛編號",
         "col_plate": "車牌號碼",
@@ -47,10 +47,10 @@ VEHICLE_I18N = {
         "handler_label": "經辦人 / 申請人",
         "save_maint": "💾 儲存公務車保養紀錄",
         "success_maint": "🎉 【新增完成】保養紀錄已儲存，後台已自動完成財務換算！",
-        "dispatch_title": "📝 公務派車單申請與部門主管線上簽核",
+        "dispatch_title": "📝 公務派車單申請與保全放行管制中心",
         "dispatch_caption": "員工因公外出需申請公務車，經單位主管簽核通過後，保全大門系統將自動顯示放行授權。",
         "apply_tab": "✍️ 填寫新派車申請單",
-        "audit_tab": "✍️ 主管審核與保全放行檢視",
+        "audit_tab": "🛡️ 主管簽核與保全大門放行檢視",
         "dispatcher_name": "申請人姓名 *",
         "dispatch_plate": "指派公務車牌 *",
         "dispatch_dest": "外出目的地 / 客戶/ 案場 *",
@@ -75,7 +75,7 @@ VEHICLE_I18N = {
         "tab1": "📑 Theo dõi xe ra vào cổng",
         "tab2": "➕ Đăng ký xe vào cổng (Check-In)",
         "tab3": "⏱️ Đăng ký xe ra cổng (Check-Out)",
-        "tab4": "📝 Đăng ký & Phê duyệt Lệnh điều xe",
+        "tab4": "📝 Quản lý Lệnh điều xe & Kiểm tra",
         "tab5": "🔧 Lịch sử bảo dưỡng xe công ty",
         "col_car_id": "Mã xe",
         "col_plate": "Biển số",
@@ -108,10 +108,10 @@ VEHICLE_I18N = {
         "handler_label": "Người phụ trách",
         "save_maint": "💾 Lưu bản ghi bảo dưỡng",
         "success_maint": "🎉 Đã lưu thành công và hệ thống đã tự động quy đổi tài chính!",
-        "dispatch_title": "📝 Đăng ký Lệnh điều xe công vụ & Phê duyệt của Quản lý",
+        "dispatch_title": "📝 Quản lý Lệnh điều xe công vụ & Kiểm tra cổng bảo vệ",
         "dispatch_caption": "Nhân viên đi công tác cần đăng ký xe, sau khi Quản lý phê duyệt, hệ thống Bảo vệ cổng sẽ tự động cấp phép.",
         "apply_tab": "✍️ Tạo đơn xin sử dụng xe",
-        "audit_tab": "✍️ Quản lý duyệt đơn & Bảo vệ kiểm tra",
+        "audit_tab": "🛡️ Quản lý duyệt đơn & Bảo vệ kiểm tra cổng",
         "dispatcher_name": "Tên nhân viên xin dùng xe *",
         "dispatch_plate": "Biển số xe công vụ *",
         "dispatch_dest": "Điểm đến / Khách hàng / Công trình *",
@@ -136,7 +136,7 @@ VEHICLE_I18N = {
         "tab1": "📑 Gate Traffic Overview",
         "tab2": "➕ Vehicle Check-In",
         "tab3": "⏱️ Vehicle Check-Out",
-        "tab4": "📝 Vehicle Dispatch & Manager Approval",
+        "tab4": "📝 Dispatch & Gate Control",
         "tab5": "🔧 Company Car Maintenance History",
         "col_car_id": "Car ID",
         "col_plate": "Plate No.",
@@ -169,10 +169,10 @@ VEHICLE_I18N = {
         "handler_label": "Handler",
         "save_maint": "💾 Save Maintenance Record",
         "success_maint": "🎉 Maintenance record saved and automatically converted for finance!",
-        "dispatch_title": "📝 Official Vehicle Dispatch & Manager Approval",
+        "dispatch_title": "📝 Official Vehicle Dispatch & Security Gate Control",
         "dispatch_caption": "Submit dispatch orders for official business trips. Security gate will display approved permits for exit.",
         "apply_tab": "✍️ Apply for Vehicle Dispatch",
-        "audit_tab": "✍️ Manager Approval & Security Gate View",
+        "audit_tab": "🛡️ Manager Approval & Security Gate Inspection",
         "dispatcher_name": "Applicant Name *",
         "dispatch_plate": "Company Vehicle Plate *",
         "dispatch_dest": "Destination / Client / Site *",
@@ -284,7 +284,7 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
         c1, c2, c3 = st.columns(3)
         c1.metric("🚗 車次 / Chuyến xe", f"{total_today}")
         c2.metric("🅿️ 廠內 / Trong kho", f"{inside_count}")
-        c3.metric("⏱️ 狀態 / Trạng thái", "🟢 24/7")
+        c3.metric("⏱️️ 狀態 / Trạng thái", "🟢 24/7")
 
         st.divider()
         df_logs = pd.DataFrame(st.session_state.vehicle_logs_db)
@@ -350,48 +350,18 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
         st.dataframe(df_all, use_container_width=True)
 
     # ----------------------------------------------------
-    # 📝 頁籤四：公務派車單申請與主管簽核（保全專用檢視）
+    # 📝 頁籤四：公務派車單申請與保全放行管制
     # ----------------------------------------------------
     with tab_dispatch:
         st.markdown(f"### {L['dispatch_title']}")
         st.caption(L["dispatch_caption"])
 
-        sub_tab_apply, sub_tab_audit = st.tabs([L["apply_tab"], L["audit_tab"]])
-
-        with sub_tab_apply:
-            with st.form("form_dispatch_apply"):
-                c1, c2 = st.columns(2)
-                with c1:
-                    dispatcher_name = st.text_input(L["dispatcher_name"], value=st.session_state.get("user_name", ""))
-                    dispatch_plate = st.text_input(L["dispatch_plate"], value="61A-888.66 (Toyota Fortuner)")
-                with c2:
-                    dispatch_dest = st.text_input(L["dispatch_dest"], value="胡志明市工業區客戶廠房")
-                    apply_time = st.text_input("申請時間 (自動記錄)", value=datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
-
-                dispatch_reason = st.text_area(L["dispatch_reason"], value="因公外出拜訪客戶進行配電盤維護與技術支援。")
-
-                if st.form_submit_button(L["submit_dispatch"], type="primary", use_container_width=True):
-                    if dispatcher_name and dispatch_reason:
-                        new_dispatch = {
-                            "dispatch_id": f"DISP-2026-{len(st.session_state.vehicle_dispatch_db)+1:03d}",
-                            "applicant": dispatcher_name,
-                            "plate_no": dispatch_plate,
-                            "destination": dispatch_dest,
-                            "reason": dispatch_reason,
-                            "apply_time": apply_time,
-                            "approval_status": "⏳ 待主管簽核 (Pending)",
-                            "security_status": "🔒 等待主管放行授權",
-                        }
-                        st.session_state.vehicle_dispatch_db.insert(0, new_dispatch)
-                        st.success(L["success_dispatch"])
-                        st.rerun()
-                    else:
-                        st.error("❌ 請完整填寫申請人姓名與用車事由！")
-
-        with sub_tab_audit:
+        # 🛡️ 關鍵權限控制：若為保全帳號，直接強制顯示「保全檢視清單」，不顯示申請表單！
+        if is_security_guard:
+            st.info("🛡️ **保全身份登入提示**：您目前僅具備大門門禁檢視與放行確認權限，無法填寫派車申請單。")
+            st.markdown("---")
             st.markdown("#### 🛡️ 保全大門管制專用：已核准放行之公務派車清單")
-            st.info("💡 保全人員在門口放行因公外出車輛時，請核對下方「主管已簽核」之派車單與車牌號碼。")
-
+            
             for idx, item in enumerate(st.session_state.vehicle_dispatch_db):
                 with st.expander(f"🚗 派車單號: `{item['dispatch_id']}` | 申請人: {item['applicant']} | 車牌: {item['plate_no']} ({item['approval_status']})"):
                     st.write(f"- **目的地**: {item['destination']}")
@@ -399,27 +369,81 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
                     st.write(f"- **主管簽核狀態**: {item['approval_status']}")
                     st.write(f"- **保全放行狀態**: {item['security_status']}")
 
-                    col_act1, col_act2, col_act3 = st.columns(3)
-                    with col_act1:
-                        if st.button("✅ 主管核准簽核", key=f"approve_{idx}"):
-                            item["approval_status"] = "🟢 主管已簽核 (Approved)"
-                            item["security_status"] = "🟢 授權放行 (Ready to Exit)"
-                            st.success("✅ 已完成主管簽核，保全系統已同步顯示放行授權！")
-                            st.rerun()
-                    with col_act2:
-                        if st.button("❌ 主管駁回申請", key=f"reject_{idx}"):
-                            item["approval_status"] = "🔴 主管已駁回 (Rejected)"
-                            item["security_status"] = "⛔ 禁止通行"
-                            st.warning("⚠️ 已駁回該筆派車申請。")
-                            st.rerun()
-                    with col_act3:
-                        if st.button("🏁 保全確認車輛離廠", key=f"sec_out_{idx}"):
+                    col_sec_btn = st.columns(1)
+                    with col_sec_btn[0]:
+                        if st.button("🏁 保全確認車輛離廠放行", key=f"sec_out_guard_{idx}", use_container_width=True):
                             if "已簽核" in item["approval_status"]:
                                 item["security_status"] = "🚗 保全已放行離廠 (Dispatched)"
                                 st.success("✅ 保全已完成車輛離廠放行登記！")
                                 st.rerun()
                             else:
                                 st.error("❌ 尚未取得主管簽核，保全無法放行！")
+        else:
+            # 非保全人員（一般員工/主管/Admin）可以看到完整子頁籤：申請表單 + 審核檢視
+            sub_tab_apply, sub_tab_audit = st.tabs([L["apply_tab"], L["audit_tab"]])
+
+            with sub_tab_apply:
+                with st.form("form_dispatch_apply"):
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        dispatcher_name = st.text_input(L["dispatcher_name"], value=st.session_state.get("user_name", ""))
+                        dispatch_plate = st.text_input(L["dispatch_plate"], value="61A-888.66 (Toyota Fortuner)")
+                    with c2:
+                        dispatch_dest = st.text_input(L["dispatch_dest"], value="胡志明市工業區客戶廠房")
+                        apply_time = st.text_input("申請時間 (自動記錄)", value=datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
+
+                    dispatch_reason = st.text_area(L["dispatch_reason"], value="因公外出拜訪客戶進行配電盤維護與技術支援。")
+
+                    if st.form_submit_button(L["submit_dispatch"], type="primary", use_container_width=True):
+                        if dispatcher_name and dispatch_reason:
+                            new_dispatch = {
+                                "dispatch_id": f"DISP-2026-{len(st.session_state.vehicle_dispatch_db)+1:03d}",
+                                "applicant": dispatcher_name,
+                                "plate_no": dispatch_plate,
+                                "destination": dispatch_dest,
+                                "reason": dispatch_reason,
+                                "apply_time": apply_time,
+                                "approval_status": "⏳ 待主管簽核 (Pending)",
+                                "security_status": "🔒 等待主管放行授權",
+                            }
+                            st.session_state.vehicle_dispatch_db.insert(0, new_dispatch)
+                            st.success(L["success_dispatch"])
+                            st.rerun()
+                        else:
+                            st.error("❌ 請完整填寫申請人姓名與用車事由！")
+
+            with sub_tab_audit:
+                st.markdown("#### 🛡️ 主管簽核與保全大門放行管理")
+                st.info("💡 主管可進行線上簽核，保全人員可於此核對已核准之派車單與車牌號碼。")
+
+                for idx, item in enumerate(st.session_state.vehicle_dispatch_db):
+                    with st.expander(f"🚗 派車單號: `{item['dispatch_id']}` | 申請人: {item['applicant']} | 車牌: {item['plate_no']} ({item['approval_status']})"):
+                        st.write(f"- **目的地**: {item['destination']}")
+                        st.write(f"- **用車事由**: {item['reason']}")
+                        st.write(f"- **主管簽核狀態**: {item['approval_status']}")
+                        st.write(f"- **保全放行狀態**: {item['security_status']}")
+
+                        col_act1, col_act2, col_act3 = st.columns(3)
+                        with col_act1:
+                            if st.button("✅ 主管核准簽核", key=f"approve_{idx}"):
+                                item["approval_status"] = "🟢 主管已簽核 (Approved)"
+                                item["security_status"] = "🟢 授權放行 (Ready to Exit)"
+                                st.success("✅ 已完成主管簽核，保全系統已同步顯示放行授權！")
+                                st.rerun()
+                        with col_act2:
+                            if st.button("❌ 主管駁回申請", key=f"reject_{idx}"):
+                                item["approval_status"] = "🔴 主管已駁回 (Rejected)"
+                                item["security_status"] = "⛔ 禁止通行"
+                                st.warning("⚠️ 已駁回該筆派車申請。")
+                                st.rerun()
+                        with col_act3:
+                            if st.button("🏁 保全確認車輛離廠", key=f"sec_out_{idx}"):
+                                if "已簽核" in item["approval_status"]:
+                                    item["security_status"] = "🚗 保全已放行離廠 (Dispatched)"
+                                    st.success("✅ 保全已完成車輛離廠放行登記！")
+                                    st.rerun()
+                                else:
+                                    st.error("❌ 尚未取得主管簽核，保全無法放行！")
 
     # ----------------------------------------------------
     # 🔧 頁籤五：公司公務車保養與維護履歷管理 (僅限非保全角色顯示)
