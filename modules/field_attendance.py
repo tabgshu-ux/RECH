@@ -9,11 +9,13 @@ ATTENDANCE_I18N = {
     "繁體中文": {
         "title": "📍 裕豐電機工業 - 外勤工程人員 GPS 與拍照打卡中心",
         "caption": "📱 支援外勤上下班打卡、GPS 異常判定（早退或跨場支援）與副總高管稽核。",
-        "tab_checkin": "📸 外勤上班打卡 (Check-In)",
-        "tab_checkout": "🏁 外勤下班打卡 (Check-Out)",
-        "tab_records": "📋 我的打卡紀錄與軌跡",
-        "tab_admin": "🏢 副總 / 主管後台：全廠外勤稽核",
-        "info_msg": "💡 請在施工現場填寫下方資料，系統將自動綁定您手機的 GPS 座標並上傳現場工作照片，即時同步至副總及總廠管理後台。",
+        "tab_checkin": "📸 外勤上班打卡",
+        "tab_checkout": "🏁 外勤下班打卡",
+        "tab_records": "📋 我的打卡紀錄",
+        "tab_admin": "🏢 副總 / 主管後台稽核",
+        "sec_title_in": "外勤上班打卡 (Check-In)",
+        "sec_title_out": "外勤下班打卡 (Check-Out)",
+        "info_msg": "💡 請在施工現場填寫下方資料，系統將自動綁定 GPS 座標並上傳工作照片，即時同步至副總及總廠管理後台。",
         "emp_name": "工程人員姓名 *",
         "project_code": "工程專案 / 施工案場 *",
         "work_desc": "工作內容說明 *",
@@ -40,12 +42,14 @@ ATTENDANCE_I18N = {
     },
     "Tiếng Việt": {
         "title": "📍 REETECH INDUSTRIAL - Chấm công GPS & Chụp ảnh Hiện trường",
-        "caption": "📱 Chấm công di động, kiểm tra khoảng cách GPS (về sớm hoặc hỗ trợ công trình khác) & giám sát.",
+        "caption": "📱 Chấm công di động, kiểm tra khoảng cách GPS & giám sát của Ban Giám đốc.",
         "tab_checkin": "📸 Check-In Vào ca",
         "tab_checkout": "🏁 Check-Out Tan ca",
         "tab_records": "📋 Lịch sử chấm công",
-        "tab_admin": "🏢 Quản lý: Kiểm tra định vị",
-        "info_msg": "💡 Vui lòng điền thông tin tại công trường, hệ thống sẽ tự động ghi nhận tọa độ GPS và ảnh chụp hiện trường để đồng bộ về Ban Giám đốc.",
+        "tab_admin": "🏢 Quản lý & Giám sát",
+        "sec_title_in": "Đăng ký vào ca hiện trường (Check-In)",
+        "sec_title_out": "Đăng ký tan ca hiện trường (Check-Out)",
+        "info_msg": "💡 Vui lòng điền thông tin tại công trường, hệ thống sẽ tự động ghi nhận GPS và ảnh chụp hiện trường để đồng bộ về Ban Giám đốc.",
         "emp_name": "Tên nhân viên kỹ thuật *",
         "project_code": "Mã dự án / Công trình *",
         "work_desc": "Mô tả công việc *",
@@ -59,7 +63,7 @@ ATTENDANCE_I18N = {
         "success_in": "🎉 Chấm công vào ca thành công!",
         "success_out": "🎉 Chấm công tan ca thành công!",
         "error_msg": "❌ Vui lòng điền đầy đủ thông tin!",
-        "alert_distance": "⚠️️ 【Cảnh báo vị trí】Tọa độ GPS khi tan ca cách xa điểm vào ca! Vui lòng chọn lý do:",
+        "alert_distance": "⚠️ 【Cảnh báo vị trí】Tọa độ GPS khi tan ca cách xa điểm vào ca! Vui lòng chọn lý do:",
         "reason_1": "🏃‍♂️ Về sớm / Rời công trình trước giờ",
         "reason_2": "🔄 Được điều động hỗ trợ công trình khác",
         "reason_note": "Ghi chú bổ sung (nếu có)",
@@ -72,11 +76,13 @@ ATTENDANCE_I18N = {
     },
     "English": {
         "title": "📍 REETECH INDUSTRIAL - Field Engineering GPS & Photo Attendance",
-        "caption": "📱 Field attendance with GPS distance verification & VP oversight.",
+        "caption": "📱 Field attendance with GPS verification & VP oversight.",
         "tab_checkin": "📸 Field Check-In",
         "tab_checkout": "🏁 Field Check-Out",
         "tab_records": "📋 My Attendance Records",
-        "tab_admin": "🏢 VP & Supervisor Audit Dashboard",
+        "tab_admin": "🏢 VP & Supervisor Audit",
+        "sec_title_in": "Field Check-In",
+        "sec_title_out": "Field Check-Out",
         "info_msg": "💡 Please fill out details on-site. The system will auto-capture GPS coordinates and upload photo proof to management.",
         "emp_name": "Engineer Name *",
         "project_code": "Project / Site Code *",
@@ -138,21 +144,21 @@ def render_field_attendance_page(engine=None, lang="繁體中文"):
     # 📸 頁籤一：外勤上班打卡 (Check-In)
     # ----------------------------------------------------
     with tab_checkin:
-        st.markdown(f"### {L['tab_checkin']}")
+        st.markdown(f"### 📍 {L['sec_title_in']}")
         st.info(L["info_msg"])
 
-        with st.form("form_field_checkin_new"):
+        with st.form("form_field_checkin_unique_key_99"):
             c1, c2 = st.columns(2)
             with c1:
                 emp_name = st.text_input(L["emp_name"], value=st.session_state.get("user_name", ""))
-                project_code = st.selectbox(L["project_code"], L["projects"], key="in_project")
+                project_code = st.selectbox(L["project_code"], L["projects"], key="in_proj_unique_key")
             with c2:
                 current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 st.text_input(L["time_in_label"], value=current_time, disabled=True)
-                gps_in = st.text_input(L["gps_label"] + " (上班)", value="10.8231° N, 106.6297° E")
+                gps_in = st.text_input(L["gps_label"] + " (上班)", value="10.8231° N, 106.6297° E", key="gps_in_unique")
 
-            work_desc = st.text_area(L["work_desc"], value=L["default_desc"])
-            uploaded_photo = st.file_uploader(L["photo_label"], type=["jpg", "png", "jpeg"], key="photo_in")
+            work_desc = st.text_area(L["work_desc"], value=L["default_desc"], key="desc_in_unique")
+            uploaded_photo = st.file_uploader(L["photo_label"], type=["jpg", "png", "jpeg"], key="photo_in_unique")
 
             if st.form_submit_button(L["btn_submit_in"], type="primary", use_container_width=True):
                 if emp_name and work_desc:
@@ -177,19 +183,19 @@ def render_field_attendance_page(engine=None, lang="繁體中文"):
     # 🏁 頁籤二：外勤下班打卡 (Check-Out)
     # ----------------------------------------------------
     with tab_checkout:
-        st.markdown(f"### {L['tab_checkout']}")
+        st.markdown(f"### 🏁 {L['sec_title_out']}")
         active_records = [r for r in st.session_state.field_attendance_db if r["out_time"] == "-"]
 
         if active_records:
             for idx, rec in enumerate(active_records):
                 st.markdown(f"**👤 員工 / Nhân viên: {rec['name']}** | 案場: `{rec['project']}` | 上班時間: {rec['in_time']}")
                 
-                with st.form(f"form_checkout_{idx}"):
+                with st.form(f"form_checkout_unique_{idx}"):
                     out_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     gps_out = st.text_input(
                         L["gps_label"] + " (下班)", 
                         value="10.9512° N, 106.7234° E",
-                        key=f"gps_out_{idx}"
+                        key=f"gps_out_unique_{idx}"
                     )
 
                     is_distance_too_far = True
@@ -201,9 +207,9 @@ def render_field_attendance_page(engine=None, lang="繁體中文"):
                         selected_reason = st.radio(
                             "請選擇 / Vui lòng chọn:",
                             [L["reason_1"], L["reason_2"]],
-                            key=f"reason_{idx}"
+                            key=f"reason_unique_{idx}"
                         )
-                        detail_note = st.text_input(L["reason_note"], value="", key=f"note_{idx}")
+                        detail_note = st.text_input(L["reason_note"], value="", key=f"note_unique_{idx}")
 
                     if st.form_submit_button(L["btn_submit_out"], type="primary", use_container_width=True):
                         rec["out_time"] = out_time
@@ -219,13 +225,13 @@ def render_field_attendance_page(engine=None, lang="繁體中文"):
                         st.rerun()
                 st.divider()
         else:
-            st.info("🎉 目前沒有進行中的外勤打卡任務。")
+            st.info("🎉 目前沒有進行中的外勤打卡任務 / Hiện tại không có ca làm việc nào đang mở.")
 
     # ----------------------------------------------------
     # 📋 頁籤三：個人打卡紀錄
     # ----------------------------------------------------
     with tab_records:
-        st.markdown(f"### {L['tab_records']}")
+        st.markdown(f"### 📋 {L['tab_records']}")
         df_my = pd.DataFrame(st.session_state.field_attendance_db)
         st.dataframe(df_my, use_container_width=True)
 
@@ -233,7 +239,7 @@ def render_field_attendance_page(engine=None, lang="繁體中文"):
     # 🏢 頁籤四：副總 / 主管後台稽核
     # ----------------------------------------------------
     with tab_admin:
-        st.markdown(f"### {L['tab_admin']}")
+        st.markdown(f"### 🏢 {L['tab_admin']}")
         st.success("👑 **高管與副總監控視角 / Ban Giám đốc & Phó Tổng giám đốc**")
         
         total_logs = len(st.session_state.field_attendance_db)
