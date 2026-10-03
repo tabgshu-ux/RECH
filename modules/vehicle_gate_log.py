@@ -3,12 +3,12 @@ import pandas as pd
 import streamlit as st
 
 # ----------------------------------------------------
-# 🌐 多語系字典 (i18n)
+# 🌐 裕豐電機工業 - 車輛門禁與保養模組多語系字典 (i18n)
 # ----------------------------------------------------
 VEHICLE_I18N = {
     "繁體中文": {
         "title": "🚗 裕豐電機工業 - 廠區車輛門禁與公務車保養管理系統",
-        "caption": "管理廠區車輛進出與公務車保養履歷（支援動態即時匯率換算與多語系切換）。",
+        "caption": "📱 管理廠區車輛進出與公務車保養履歷（支援動態即時匯率換算與多語系切換）。",
         "tab1": "📑 廠區大門車輛進出動態",
         "tab2": "➕ 登記車輛進廠 (Check-In)",
         "tab3": "⏱️ 車輛離廠登記 (Check-Out)",
@@ -25,10 +25,30 @@ VEHICLE_I18N = {
         "maint_title": "🔧 公司公務車 / 廠長用車保養維護履歷管理",
         "maint_caption": "完整記錄公務車保養履歷，並自動依當下匯率計算越南盾與美金。",
         "add_maint": "➕ 新增公務車保養與維護紀錄",
+        "plant_label": "進出廠區 *",
+        "plate_label": "車牌號碼 *",
+        "type_label": "車輛類型 *",
+        "driver_label": "駕駛員 / 司機姓名 *",
+        "purpose_label": "進廠事由 / 載運內容 *",
+        "time_label": "進廠時間 (自動記錄)",
+        "submit_in": "💾 記錄車輛進廠",
+        "success_in": "🎉 【進廠登記成功】已完成時間紀錄！",
+        "error_in": "❌ 請填寫車牌號碼與駕駛員姓名！",
+        "checkout_btn": "🏁 登記離廠",
+        "success_out": "✅ 已完成離廠時間記錄！",
+        "no_active": "🎉 目前廠區內所有登記車輛均已離廠！",
+        "history_title": "📜 所有進出紀錄總表",
+        "cur_label": "原始幣別 / Tiền tệ",
+        "rate_label": "當下匯率 (1 VND = ? USD)",
+        "amount_label": "保養維護原始金額 *",
+        "content_label": "保養維護內容與細節說明 *",
+        "handler_label": "經辦人 / 申請人",
+        "save_maint": "💾 儲存公務車保養紀錄",
+        "success_maint": "🎉 【新增完成】已依照當下匯率精算並儲存！",
     },
     "Tiếng Việt": {
         "title": "🚗 REETECH INDUSTRIAL - Quản lý Cổng xe & Bảo dưỡng Xe công ty",
-        "caption": "Quản lý xe ra vào nhà máy và lịch sử bảo dưỡng xe công ty (Hỗ trợ tỷ giá động & đa ngôn ngữ).",
+        "caption": "📱 Quản lý xe ra vào nhà máy và lịch sử bảo dưỡng (Hỗ trợ tỷ giá động & đa ngôn ngữ).",
         "tab1": "📑 Theo dõi xe ra vào cổng",
         "tab2": "➕ Đăng ký xe vào cổng (Check-In)",
         "tab3": "⏱️ Đăng ký xe ra cổng (Check-Out)",
@@ -43,12 +63,32 @@ VEHICLE_I18N = {
         "col_cost": "Chi phí (VND / USD)",
         "col_handler": "Người phụ trách",
         "maint_title": "🔧 Quản lý Lịch sử Bảo dưỡng Xe Công ty",
-        "maint_caption": "Ghi lại chi tiết bảo dưỡng và tự động quy đổi tỷ giá VND/USD.",
+        "maint_caption": "Ghi lại chi tiết bảo dưỡng xe và tự động quy đổi tỷ giá VND/USD.",
         "add_maint": "➕ Thêm mới bản ghi bảo dưỡng",
+        "plant_label": "Khu vực nhà máy *",
+        "plate_label": "Biển số xe *",
+        "type_label": "Loại xe *",
+        "driver_label": "Tên tài xế *",
+        "purpose_label": "Lý do vào cổng / Hàng hóa *",
+        "time_label": "Thời gian vào (Tự động)",
+        "submit_in": "💾 Ghi nhận xe vào cổng",
+        "success_in": "🎉 Đăng ký xe vào thành công!",
+        "error_in": "❌ Vui lòng nhập biển số và tên tài xế!",
+        "checkout_btn": "🏁 Đăng ký ra cổng",
+        "success_out": "✅ Đã ghi nhận thời gian xe ra!",
+        "no_active": "🎉 Hiện tại không có xe nào trong nhà máy!",
+        "history_title": "📜 Tổng hợp lịch sử ra vào",
+        "cur_label": "Tiền tệ gốc",
+        "rate_label": "Tỷ giá hiện tại (1 VND = ? USD)",
+        "amount_label": "Số tiền bảo dưỡng *",
+        "content_label": "Nội dung chi tiết bảo dưỡng *",
+        "handler_label": "Người phụ trách",
+        "save_maint": "💾 Lưu bản ghi bảo dưỡng",
+        "success_maint": "🎉 Đã lưu thành công theo tỷ giá hiện tại!",
     },
     "English": {
         "title": "🚗 REETECH INDUSTRIAL - Vehicle Gate & Company Car Maintenance",
-        "caption": "Manage plant gate logs and company vehicle maintenance history with dynamic exchange rates.",
+        "caption": "📱 Manage plant gate logs and company vehicle maintenance with multi-language support.",
         "tab1": "📑 Gate Traffic Overview",
         "tab2": "➕ Vehicle Check-In",
         "tab3": "⏱️ Vehicle Check-Out",
@@ -65,6 +105,26 @@ VEHICLE_I18N = {
         "maint_title": "🔧 Company Vehicle Maintenance History",
         "maint_caption": "Complete records of vehicle maintenance with automatic VND/USD calculation.",
         "add_maint": "➕ Add Maintenance Record",
+        "plant_label": "Plant *",
+        "plate_label": "Plate No. *",
+        "type_label": "Vehicle Type *",
+        "driver_label": "Driver Name *",
+        "purpose_label": "Purpose / Cargo *",
+        "time_label": "Entry Time (Auto)",
+        "submit_in": "💾 Check-In Vehicle",
+        "success_in": "🎉 Vehicle checked in successfully!",
+        "error_in": "❌ Please enter plate number and driver name!",
+        "checkout_btn": "🏁 Check-Out",
+        "success_out": "✅ Vehicle checked out successfully!",
+        "no_active": "🎉 All registered vehicles have left the plant!",
+        "history_title": "📜 All Gate Logs Overview",
+        "cur_label": "Original Currency",
+        "rate_label": "Current Rate (1 VND = ? USD)",
+        "amount_label": "Maintenance Cost *",
+        "content_label": "Maintenance Details *",
+        "handler_label": "Handler",
+        "save_maint": "💾 Save Maintenance Record",
+        "success_maint": "🎉 Maintenance record saved successfully!",
     },
 }
 
@@ -74,7 +134,9 @@ def get_lang_dict(lang_param):
 
 
 def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
-    L = get_lang_dict(lang)
+    # 確保傳入正確的語系
+    current_lang = lang or st.session_state.get("current_lang", "繁體中文")
+    L = get_lang_dict(current_lang)
 
     st.title(L["title"])
     st.caption(L["caption"])
@@ -128,9 +190,9 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
         total_today = len(st.session_state.vehicle_logs_db)
 
         c1, c2, c3 = st.columns(3)
-        c1.metric("🚗 今日累計進出車次", f"{total_today} 車次")
-        c2.metric("🅿 目前滯留廠區內車輛", f"{inside_count} 台")
-        c3.metric("⏱️ 門禁系統狀態", "🟢 聯網運作中 (24/7)")
+        c1.metric("🚗 車次 / Chuyến xe", f"{total_today}")
+        c2.metric("🅿️ 廠內 / Trong kho", f"{inside_count}")
+        c3.metric("⏱️ 狀態 / Trạng thái", "🟢 24/7")
 
         st.divider()
         df_logs = pd.DataFrame(st.session_state.vehicle_logs_db)
@@ -144,15 +206,15 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
         with st.form("form_vehicle_entry"):
             c1, c2 = st.columns(2)
             with c1:
-                plant = st.selectbox("進出廠區 *", ["🇻🇳 越南西寧廠 (Tay Ninh Plant)", "🇻🇳 越南海防廠 (Hai Phong Plant)"])
-                plate_no = st.text_input("車牌號碼 *", value="", placeholder="例如: 61A-123.45")
-                vehicle_type = st.selectbox("車輛類型 *", ["🚛 運料大貨車 (原材料)", "🚚 成品出貨貨車", "🚐 廠長/公務用車", "🚗 訪客外賓車輛", "🏍️ 員工機車"])
+                plant = st.selectbox(L["plant_label"], ["🇻🇳 越南西寧廠 (Tay Ninh Plant)", "🇻🇳 越南海防廠 (Hai Phong Plant)"])
+                plate_no = st.text_input(L["plate_label"], value="", placeholder="例如: 61A-123.45")
+                vehicle_type = st.selectbox(L["type_label"], ["🚛 運料大貨車 (原材料)", "🚚 成品出貨貨車", "🚐 廠長/公務用車", "🚗 訪客外賓車輛", "🏍️ 員工機車"])
             with c2:
-                driver_name = st.text_input("駕駛員 / 司機姓名 *", value="")
-                purpose = st.text_input("進廠事由 / 載運內容 *", value="載運配電盤零組件")
-                entry_time = st.text_input("進廠時間 (自動記錄)", value=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                driver_name = st.text_input(L["driver_label"], value="")
+                purpose = st.text_input(L["purpose_label"], value="載運配電盤零組件")
+                entry_time = st.text_input(L["time_label"], value=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-            if st.form_submit_button("💾 記錄車輛進廠", type="primary", use_container_width=True):
+            if st.form_submit_button(L["submit_in"], type="primary", use_container_width=True):
                 if plate_no and driver_name:
                     new_id = f"LOG-2026-{len(st.session_state.vehicle_logs_db)+1:03d}"
                     st.session_state.vehicle_logs_db.append({
@@ -166,10 +228,10 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
                         "exit_time": "-",
                         "status": "🟡 廠區內執行任務",
                     })
-                    st.success("🎉 【進廠登記成功】已完成時間紀錄！")
+                    st.success(L["success_in"])
                     st.rerun()
                 else:
-                    st.error("❌ 請填寫車牌號碼與駕駛員姓名！")
+                    st.error(L["error_in"])
 
     # ----------------------------------------------------
     # ⏱️ 頁籤三：車輛離廠登記
@@ -182,26 +244,26 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
             for veh in active_vehicles:
                 with st.container():
                     st.markdown(f"**🚗 車牌: `{veh['plate_no']}`** | 廠區: {veh['plant']} | 司機: {veh['driver_name']}")
-                    if st.button(f"🏁 登記離廠 ({veh['plate_no']})", key=f"checkout_{veh['log_id']}_v"):
+                    if st.button(f"{L['checkout_btn']} ({veh['plate_no']})", key=f"checkout_{veh['log_id']}_v"):
                         veh["exit_time"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         veh["status"] = "🟢 已離廠 (Completed)"
-                        st.success("✅ 已完成離廠時間記錄！")
+                        st.success(L["success_out"])
                         st.rerun()
                 st.divider()
         else:
-            st.success("🎉 目前廠區內所有登記車輛均已離廠！")
+            st.success(L["no_active"])
 
+        st.markdown(f"#### {L['history_title']}")
         df_all = pd.DataFrame(st.session_state.vehicle_logs_db)
         st.dataframe(df_all, use_container_width=True)
 
     # ----------------------------------------------------
-    # 🔧 頁籤四：公司公務車保養與維護履歷管理（強制對應語系表頭）
+    # 🔧 頁籤四：公司公務車保養與維護履歷管理（完整多語系表頭）
     # ----------------------------------------------------
     with tab_car_maint:
         st.markdown(f"### {L['maint_title']}")
         st.caption(L["maint_caption"])
 
-        # 💡 強制將資料庫內所有欄位對應轉換為當前選擇的語系名稱，絕不直接顯示英文 key
         display_maint_data = []
         for item in st.session_state.company_car_maintenance_db:
             display_maint_data.append({
@@ -225,27 +287,27 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
         with st.form("form_add_car_maintenance_dynamic"):
             c1, c2, c3 = st.columns(3)
             with c1:
-                plate_no = st.text_input("車牌號碼 / Biển số *", value="61A-888.66")
-                brand_model = st.text_input("車輛品牌型號 / Hãng *", value="Toyota Fortuner 2.8L")
+                plate_no = st.text_input(L["col_plate"] + " *", value="61A-888.66")
+                brand_model = st.text_input(L["col_brand"] + " *", value="Toyota Fortuner 2.8L")
             with c2:
-                purchase_date = st.date_input("購買時間 / Ngày mua", value=datetime.date(2023, 5, 15))
-                maint_date = st.date_input("保養時間 / Ngày bảo dưỡng", value=datetime.date.today())
+                purchase_date = st.date_input(L["col_purchase"], value=datetime.date(2023, 5, 15))
+                maint_date = st.date_input(L["col_maint_date"], value=datetime.date.today())
             with c3:
-                mileage = st.text_input("行駛公里數 / Số km *", value="70,000 km")
-                input_currency = st.selectbox("原始幣別 / Tiền tệ", ["🇻🇳 越南盾 (VND)", "💵 美金 (USD)"])
+                mileage = st.text_input(L["col_mileage"] + " *", value="70,000 km")
+                input_currency = st.selectbox(L["cur_label"], ["🇻🇳 越南盾 (VND)", "💵 美金 (USD)"])
 
-            st.markdown("##### 💱 當下匯率設定 / Tỷ giá hiện tại")
+            st.markdown(f"##### 💱 {L['rate_label']}")
             rc1, rc2 = st.columns(2)
             with rc1:
                 current_rate = st.number_input(
-                    "當下匯率 (1 VND = ? USD)", 
+                    L["rate_label"], 
                     min_value=0.000001, 
                     value=0.000038, 
                     format="%.7f"
                 )
             with rc2:
                 raw_amount = st.number_input(
-                    "保養維護原始金額 / Số tiền *", 
+                    L["amount_label"], 
                     min_value=0.0, 
                     value=1000000.0 if "越南盾" in input_currency else 38.48, 
                     step=10.0
@@ -262,10 +324,10 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
 
             st.info(f"📊 **匯率換算預覽 / Xem trước quy đổi**：{preview_str}")
 
-            maint_content = st.text_area("保養維護內容與細節說明 / Nội dung bảo dưỡng *", value="定期保養：更換機油、機油濾清器、煞車系統檢查。")
-            handler = st.text_input("經辦人 / Người phụ trách", value="張偉豪")
+            maint_content = st.text_area(L["content_label"], value="定期保養：更換機油、機油濾清器、煞車系統檢查。")
+            handler = st.text_input(L["handler_label"], value="張偉豪")
 
-            if st.form_submit_button("💾 儲存公務車保養紀錄 / Lưu", type="primary", use_container_width=True):
+            if st.form_submit_button(L["save_maint"], type="primary", use_container_width=True):
                 if plate_no and brand_model and maint_content:
                     if "越南盾" in input_currency:
                         final_vnd = raw_amount
@@ -288,7 +350,7 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
                         "display_cost": display_str,
                         "handler": handler,
                     })
-                    st.success("🎉 【新增完成】已依照當下匯率精算並儲存！")
+                    st.success(L["success_maint"])
                     st.rerun()
                 else:
                     st.error("❌ 請完整填寫必填欄位！")
