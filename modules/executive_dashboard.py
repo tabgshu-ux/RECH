@@ -50,7 +50,7 @@ def get_exec_lang_dict(lang_param=None):
 
 
 # ----------------------------------------------------
-# 1. 區塊一：原料價格與股市物價/匯率 (大字體、高對比管理區塊)
+# 1. 區塊一：原料價格與股市物價/匯率 (大字體、簡便的自選股管理)
 # ----------------------------------------------------
 def render_commodities_section(L):
     st.markdown(f"### {L['sec_commodities']}")
@@ -68,7 +68,7 @@ def render_commodities_section(L):
             {"code": "CRUDE", "name": "WTI 原油 (Crude)", "price": 78.5, "unit": "USD/桶", "change": "+0.45", "market": "全球原物料"},
         ]
 
-    # 📱 頂級大字體 HTML 卡片
+    # 📱 頂級清晰大字體 HTML 卡片
     cols = st.columns(2)
     for i, item in enumerate(st.session_state.custom_watchlist):
         with cols[i % 2]:
@@ -91,16 +91,30 @@ def render_commodities_section(L):
 
     st.markdown("---")
     
-    # ⚙️ 專門替老闆設計的大字體、高對比「管理自選股」區塊
-    st.markdown(
-        """
-        <div style="background-color: #f1f5f9; padding: 18px; border-radius: 10px; border: 2px solid #000055; margin-bottom: 20px;">
-            <h3 style="color: #000055; margin-top: 0; font-size: 20px; font-weight: 900;">⚙️ 管理自選股票與原物料清單（新增或勾選刪除）</h3>
-            <p style="color: #1e293b; font-size: 15px; font-weight: 700; margin-bottom: 0;">您可以直接在下方表格中勾選不需要的項目進行刪除，或是新增您想即時監控的全球股票與原物料代碼。</p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # ⚙️ 模仿第二張圖片：簡潔好用的「管理自訂觀察關注標的」與快速新增選單
+    st.markdown("<h3 style='color: #000055; font-weight: 900;'>🎛️ 管理自訂觀察關注標的</h3>", unsafe_allow_html=True)
+
+    with st.expander("➕ 新增觀察個股/指數", expanded=False):
+        market_region = st.selectbox("選擇股票市場區域", ["🇹🇼 台灣 (Taiwan)", "🇻🇳 越南 (Vietnam)", "🇨🇳 中國 (China)", "🇺🇸 美國 (USA)", "🌐 全球原物料 / 外匯"])
+        ticker_code = st.text_input("股票代碼 (如 2330.TW / NVDA / VNM.VN)", value="")
+        
+        if st.button("💾 確認加入觀察清單", type="primary"):
+            if ticker_code:
+                st.session_state.custom_watchlist.append({
+                    "code": ticker_code,
+                    "name": f"自選標的 ({ticker_code})",
+                    "price": 100.0,
+                    "unit": "USD / 點",
+                    "change": "+0.00 (0.0%)",
+                    "market": market_region
+                })
+                st.success(f"🎉 已成功新增 [{ticker_code}]！")
+                st.rerun()
+            else:
+                st.error("請輸入股票代碼！")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color: #000055; font-weight: 800;'>📋 目前觀察清單管理（勾選即可刪除）</h4>", unsafe_allow_html=True)
 
     df_watch = pd.DataFrame(st.session_state.custom_watchlist)
     if "刪除" not in df_watch.columns:
@@ -115,7 +129,7 @@ def render_commodities_section(L):
 
     c_del1, _ = st.columns(2)
     with c_del1:
-        if st.button("🗑️ 立即刪除勾選的自選項目", type="primary"):
+        if st.button("🗑️ 刪除勾選的項目", type="primary"):
             remaining = []
             for idx, row in edited_watchlist.iterrows():
                 if not row.get("刪除", False):
@@ -124,36 +138,8 @@ def render_commodities_section(L):
                     if matched:
                         remaining.append(matched)
             st.session_state.custom_watchlist = remaining
-            st.success("✅ 已成功刪除選定的自選項目！")
+            st.success("✅ 已成功刪除選定的項目！")
             st.rerun()
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<h4 style='color: #000055; font-weight: 800;'>➕ 新增想追蹤的全球股票或原物料</h4>", unsafe_allow_html=True)
-    
-    with st.form("form_add_watchlist_exec"):
-        ac1, ac2 = st.columns(2)
-        new_code = ac1.text_input("代碼 * (例如: AAPL / 600519.SH)")
-        new_name = ac2.text_input("名稱 * (例如: 蘋果公司 / 貴州茅台)")
-
-        ac3, ac4, ac5 = st.columns(3)
-        new_price = ac3.number_input("當前參考價格", value=180.0, step=1.0)
-        new_unit = ac4.text_input("單位", value="USD / 股")
-        new_market = ac5.selectbox("市場分類", ["台灣股市", "越南股市", "中國股市", "美國股市", "全球原物料", "外匯匯率"])
-
-        if st.form_submit_button("💾 確認加入戰情看板", type="primary"):
-            if new_code and new_name:
-                st.session_state.custom_watchlist.append({
-                    "code": new_code,
-                    "name": new_name,
-                    "price": new_price,
-                    "unit": new_unit,
-                    "change": "+0.00 (0.0%)",
-                    "market": new_market
-                })
-                st.success(f"🎉 已成功將 [{new_name}] 加入即時戰情室！")
-                st.rerun()
-            else:
-                st.error("請完整填寫代碼與名稱！")
 
     st.markdown("---")
     st.markdown(f"#### {L['news_title']}")
@@ -301,7 +287,7 @@ def render_executive_dashboard_page(*args, **kwargs):
 
     with st.expander(L["boss_notes_title"], expanded=True):
         st.write("• **物價控管**：倫敦銅價 (LME Copper) 升至 $9,250 美元/噸，工程部報價已同步連動資材小計成本。")
-        st.write("• **工程驗收**：西寧紡織廠 2000A 專案進度達 85%，預計月中驗收並請領第二期 60% 尾款。")
+        st.write("• **工程驗收**：西寧紡織廠 2000A 專案進度達 85%, 預計月中驗收並請領第二期 60% 尾款。")
 
     st.divider()
 
