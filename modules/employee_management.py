@@ -4,9 +4,9 @@ import streamlit as st
 
 def render_employee_management(engine=None, t=None, lang="繁體中文"):
     st.title("👤 管理部 - 員工與人事管理中心")
-    st.caption("維護全廠區員工個人檔案、合約記錄、工作廠區與離職人員歸檔查詢。")
+    st.caption("維護全廠區員工個人檔案、合約記錄、工作廠區、離職歸檔與 AI 人臉辨識打卡串接預留。")
 
-    # 1. 初始化在職員工資料庫
+    # 1. 初始化在職員工資料庫（含 AI 人臉辨識特徵欄位預留）
     if "employees_db" not in st.session_state or not st.session_state.employees_db:
         st.session_state.employees_db = [
             {
@@ -19,6 +19,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "role": "Admin",
                 "phone": "0912345678",
                 "address": "-",
+                "face_token": "FACE-BIO-888899", # 預留 AI 人臉辨識特徵串接碼
             },
             {
                 "id": "EMP-002",
@@ -30,6 +31,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "role": "Staff",
                 "phone": "0987654321",
                 "address": "-",
+                "face_token": "FACE-BIO-100234",
             },
             {
                 "id": "EMP-003",
@@ -41,6 +43,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "role": "Staff",
                 "phone": "-",
                 "address": "-",
+                "face_token": "FACE-BIO-300451",
             },
         ]
 
@@ -55,14 +58,13 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
     ])
 
     # ----------------------------------------------------
-    # 📑 頁籤一：現有在職員工名冊（單一勾選欄位 + 雙功能按鈕）
+    # 📑 頁籤一：現有在職員工名冊
     # ----------------------------------------------------
     with tab_manage:
-        st.markdown("### 📋 公司現有在職員工名冊")
-        st.info("💡 請在表格左側勾選目標員工，然後點擊下方對應的處理按鈕（刪除重複資料或辦理離職歸檔）。")
+        st.markdown("### 📋 公司現有在職員工名冊（含 AI 人臉辨識串接欄位）")
+        st.info("💡 請在表格左側勾選目標員工，然後點擊下方對應的處理按鈕進行刪除或離職歸檔。")
 
         df_emp = pd.DataFrame(st.session_state.employees_db)
-        # 僅保留一個單一勾選欄位
         if "選取" not in df_emp.columns:
             df_emp.insert(0, "選取", False)
 
@@ -121,7 +123,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     st.warning("⚠️ 請先在表格左側勾選要辦理離職的對象。")
 
     # ----------------------------------------------------
-    # ➕ 頁籤二：新增員工個人檔案
+    # ➕ 頁籤二：新增員工個人檔案（預留臉部辨識欄位）
     # ----------------------------------------------------
     with tab_add:
         st.markdown("### ➕ 登錄新員工個人檔案")
@@ -161,6 +163,9 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 address = st.text_input("居住 / 戶籍地址 (Address)", value="")
                 work_permit = st.text_input("工作許可證 / 勞工證號", value="-")
 
+            # 💡 預留 AI 人臉辨識打卡系統串接欄位
+            face_token = st.text_input("🤖 AI 臉部辨識特徵代碼 (未來打卡系統串接預留)", value="FACE-PENDING-REGISTRATION", placeholder="例如: FACE-BIO-XXXXXX")
+
             role = st.selectbox("系統權限角色 (Role)", ["Staff (一般員工)", "Manager (部門主管)", "Admin (系統管理者)"])
 
             submitted = st.form_submit_button("💾 儲存並新增個人檔案", type="primary", use_container_width=True)
@@ -176,6 +181,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                         "role": role.split(" ")[0],
                         "phone": phone if phone else "-",
                         "address": address if address else "-",
+                        "face_token": face_token if face_token else "FACE-PENDING",
                     })
                     st.success(f"🎉 【新增完成】已成功登錄員工 [{emp_name}] (`{emp_id}`)！請點擊上方左側的「現有在職員工名冊」頁籤即可檢視完整名單。")
                 else:
