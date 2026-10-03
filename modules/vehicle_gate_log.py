@@ -2,13 +2,16 @@ import datetime
 import pandas as pd
 import streamlit as st
 
+# 後台預設匯率基準（使用者不需看到）
+SYSTEM_EXCHANGE_RATE_VND_TO_USD = 0.00003934  # 約 1 USD = 25,420 VND
+
 # ----------------------------------------------------
-# 🌐 裕豐電機工業 - 車輛門禁與保養模組多語系字典 (i18n)
+# 🌐 多語系字典 (i18n)
 # ----------------------------------------------------
 VEHICLE_I18N = {
     "繁體中文": {
         "title": "🚗 裕豐電機工業 - 廠區車輛門禁與公務車保養管理系統",
-        "caption": "📱 管理廠區車輛進出與公務車保養履歷（支援動態即時匯率換算與多語系切換）。",
+        "caption": "📱 管理廠區車輛進出與公務車保養履歷（後台自動幣別換算與多語系切換）。",
         "tab1": "📑 廠區大門車輛進出動態",
         "tab2": "➕ 登記車輛進廠 (Check-In)",
         "tab3": "⏱️ 車輛離廠登記 (Check-Out)",
@@ -20,10 +23,10 @@ VEHICLE_I18N = {
         "col_maint_date": "保養時間",
         "col_mileage": "行駛里程",
         "col_content": "保養維護內容",
-        "col_cost": "保養金額 (雙軌顯示)",
+        "col_cost": "保養金額 (財務雙軌換算)",
         "col_handler": "經辦人",
         "maint_title": "🔧 公司公務車 / 廠長用車保養維護履歷管理",
-        "maint_caption": "完整記錄公務車保養履歷，並自動依當下匯率計算越南盾與美金。",
+        "maint_caption": "完整記錄公務車保養履歷，輸入金額後由後台自動為財務換算雙幣別。",
         "add_maint": "➕ 新增公務車保養與維護紀錄",
         "plant_label": "進出廠區 *",
         "plate_label": "車牌號碼 *",
@@ -38,17 +41,16 @@ VEHICLE_I18N = {
         "success_out": "✅ 已完成離廠時間記錄！",
         "no_active": "🎉 目前廠區內所有登記車輛均已離廠！",
         "history_title": "📜 所有進出紀錄總表",
-        "cur_label": "原始幣別 / Tiền tệ",
-        "rate_label": "當下匯率 (1 VND = ? USD)",
-        "amount_label": "保養維護原始金額 *",
+        "cur_label": "選擇支付幣別 / Tiền tệ",
+        "amount_label": "本次維修支付金額 *",
         "content_label": "保養維護內容與細節說明 *",
         "handler_label": "經辦人 / 申請人",
         "save_maint": "💾 儲存公務車保養紀錄",
-        "success_maint": "🎉 【新增完成】已依照當下匯率精算並儲存！",
+        "success_maint": "🎉 【新增完成】保養紀錄已儲存，後台已自動完成財務換算！",
     },
     "Tiếng Việt": {
         "title": "🚗 REETECH INDUSTRIAL - Quản lý Cổng xe & Bảo dưỡng Xe công ty",
-        "caption": "📱 Quản lý xe ra vào nhà máy và lịch sử bảo dưỡng (Hỗ trợ tỷ giá động & đa ngôn ngữ).",
+        "caption": "📱 Quản lý xe ra vào nhà máy và lịch sử bảo dưỡng (Hệ thống tự động quy đổi ngoại tệ).",
         "tab1": "📑 Theo dõi xe ra vào cổng",
         "tab2": "➕ Đăng ký xe vào cổng (Check-In)",
         "tab3": "⏱️ Đăng ký xe ra cổng (Check-Out)",
@@ -60,10 +62,10 @@ VEHICLE_I18N = {
         "col_maint_date": "Ngày bảo dưỡng",
         "col_mileage": "Số km",
         "col_content": "Nội dung bảo dưỡng",
-        "col_cost": "Chi phí (VND / USD)",
+        "col_cost": "Chi phí (Quy đổi tự động)",
         "col_handler": "Người phụ trách",
         "maint_title": "🔧 Quản lý Lịch sử Bảo dưỡng Xe Công ty",
-        "maint_caption": "Ghi lại chi tiết bảo dưỡng xe và tự động quy đổi tỷ giá VND/USD.",
+        "maint_caption": "Ghi lại chi tiết bảo dưỡng, hệ thống tự động quy đổi VND/USD cho bộ phận tài chính.",
         "add_maint": "➕ Thêm mới bản ghi bảo dưỡng",
         "plant_label": "Khu vực nhà máy *",
         "plate_label": "Biển số xe *",
@@ -78,17 +80,16 @@ VEHICLE_I18N = {
         "success_out": "✅ Đã ghi nhận thời gian xe ra!",
         "no_active": "🎉 Hiện tại không có xe nào trong nhà máy!",
         "history_title": "📜 Tổng hợp lịch sử ra vào",
-        "cur_label": "Tiền tệ gốc",
-        "rate_label": "Tỷ giá hiện tại (1 VND = ? USD)",
-        "amount_label": "Số tiền bảo dưỡng *",
+        "cur_label": "Tiền tệ thanh toán",
+        "amount_label": "Số tiền bảo dưỡng thực tế *",
         "content_label": "Nội dung chi tiết bảo dưỡng *",
         "handler_label": "Người phụ trách",
         "save_maint": "💾 Lưu bản ghi bảo dưỡng",
-        "success_maint": "🎉 Đã lưu thành công theo tỷ giá hiện tại!",
+        "success_maint": "🎉 Đã lưu thành công và hệ thống đã tự động quy đổi tài chính!",
     },
     "English": {
         "title": "🚗 REETECH INDUSTRIAL - Vehicle Gate & Company Car Maintenance",
-        "caption": "📱 Manage plant gate logs and company vehicle maintenance with multi-language support.",
+        "caption": "📱 Manage plant gate logs and company vehicle maintenance with automatic backend conversion.",
         "tab1": "📑 Gate Traffic Overview",
         "tab2": "➕ Vehicle Check-In",
         "tab3": "⏱️ Vehicle Check-Out",
@@ -100,10 +101,10 @@ VEHICLE_I18N = {
         "col_maint_date": "Maintenance Date",
         "col_mileage": "Mileage",
         "col_content": "Maintenance Content",
-        "col_cost": "Cost (Dual Currency)",
+        "col_cost": "Cost (Backend Converted)",
         "col_handler": "Handler",
         "maint_title": "🔧 Company Vehicle Maintenance History",
-        "maint_caption": "Complete records of vehicle maintenance with automatic VND/USD calculation.",
+        "maint_caption": "Complete records with automatic currency conversion for financial reporting.",
         "add_maint": "➕ Add Maintenance Record",
         "plant_label": "Plant *",
         "plate_label": "Plate No. *",
@@ -118,13 +119,12 @@ VEHICLE_I18N = {
         "success_out": "✅ Vehicle checked out successfully!",
         "no_active": "🎉 All registered vehicles have left the plant!",
         "history_title": "📜 All Gate Logs Overview",
-        "cur_label": "Original Currency",
-        "rate_label": "Current Rate (1 VND = ? USD)",
-        "amount_label": "Maintenance Cost *",
+        "cur_label": "Payment Currency",
+        "amount_label": "Actual Maintenance Amount *",
         "content_label": "Maintenance Details *",
         "handler_label": "Handler",
         "save_maint": "💾 Save Maintenance Record",
-        "success_maint": "🎉 Maintenance record saved successfully!",
+        "success_maint": "🎉 Maintenance record saved and automatically converted for finance!",
     },
 }
 
@@ -134,7 +134,6 @@ def get_lang_dict(lang_param):
 
 
 def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
-    # 確保傳入正確的語系
     current_lang = lang or st.session_state.get("current_lang", "繁體中文")
     L = get_lang_dict(current_lang)
 
@@ -168,7 +167,6 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
                 "maint_date": "2026-09-10",
                 "mileage": "65,400 km",
                 "maint_content": "更換機油、煞車皮檢查",
-                "exchange_rate_used": 0.0000385,
                 "display_cost": "₫11,439,000 VND ($440.40 USD)",
                 "handler": "張偉豪",
             }
@@ -258,7 +256,7 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
         st.dataframe(df_all, use_container_width=True)
 
     # ----------------------------------------------------
-    # 🔧 頁籤四：公司公務車保養與維護履歷管理（完整多語系表頭）
+    # 🔧 頁籤四：公司公務車保養與維護履歷管理（隱藏匯率，後台自動換算）
     # ----------------------------------------------------
     with tab_car_maint:
         st.markdown(f"### {L['maint_title']}")
@@ -284,7 +282,7 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
         st.markdown("---")
         st.markdown(f"#### {L['add_maint']}")
 
-        with st.form("form_add_car_maintenance_dynamic"):
+        with st.form("form_add_car_maintenance_clean"):
             c1, c2, c3 = st.columns(3)
             with c1:
                 plate_no = st.text_input(L["col_plate"] + " *", value="61A-888.66")
@@ -296,46 +294,27 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
                 mileage = st.text_input(L["col_mileage"] + " *", value="70,000 km")
                 input_currency = st.selectbox(L["cur_label"], ["🇻🇳 越南盾 (VND)", "💵 美金 (USD)"])
 
-            st.markdown(f"##### 💱 {L['rate_label']}")
-            rc1, rc2 = st.columns(2)
-            with rc1:
-                current_rate = st.number_input(
-                    L["rate_label"], 
-                    min_value=0.000001, 
-                    value=0.000038, 
-                    format="%.7f"
-                )
-            with rc2:
-                raw_amount = st.number_input(
-                    L["amount_label"], 
-                    min_value=0.0, 
-                    value=1000000.0 if "越南盾" in input_currency else 38.48, 
-                    step=10.0
-                )
-
-            if "越南盾" in input_currency:
-                calc_vnd = raw_amount
-                calc_usd = raw_amount * current_rate
-                preview_str = f"₫{calc_vnd:,.0f} VND ➔ ${calc_usd:.2f} USD"
-            else:
-                calc_usd = raw_amount
-                calc_vnd = raw_amount / current_rate if current_rate > 0 else 0
-                preview_str = f"${calc_usd:,.2f} USD ➔ ₫{calc_vnd:,.0f} VND"
-
-            st.info(f"📊 **匯率換算預覽 / Xem trước quy đổi**：{preview_str}")
+            # 💡 移除了前端複雜的匯率設定欄位，只讓使用者直覺輸入金額
+            raw_amount = st.number_input(
+                L["amount_label"], 
+                min_value=0.0, 
+                value=1000000.0 if "越南盾" in input_currency else 40.0, 
+                step=10.0
+            )
 
             maint_content = st.text_area(L["content_label"], value="定期保養：更換機油、機油濾清器、煞車系統檢查。")
             handler = st.text_input(L["handler_label"], value="張偉豪")
 
             if st.form_submit_button(L["save_maint"], type="primary", use_container_width=True):
                 if plate_no and brand_model and maint_content:
+                    # 💡 後台自動進行匯率換算供財務與老闆雙軌檢視
                     if "越南盾" in input_currency:
                         final_vnd = raw_amount
-                        final_usd = raw_amount * current_rate
-                        display_str = f"₫{final_vnd:,.0f} VND (${final_usd:.2f} USD)"
+                        final_usd = raw_amount * SYSTEM_EXCHANGE_RATE_VND_TO_USD
+                        display_str = f"₫{final_vnd:,.0f} VND (${final_usd:,.2f} USD)"
                     else:
                         final_usd = raw_amount
-                        final_vnd = raw_amount / current_rate if current_rate > 0 else 0
+                        final_vnd = raw_amount / SYSTEM_EXCHANGE_RATE_VND_TO_USD
                         display_str = f"${final_usd:,.2f} USD (₫{final_vnd:,.0f} VND)"
 
                     st.session_state.company_car_maintenance_db.append({
@@ -346,7 +325,6 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
                         "maint_date": str(maint_date),
                         "mileage": mileage,
                         "maint_content": maint_content,
-                        "exchange_rate_used": current_rate,
                         "display_cost": display_str,
                         "handler": handler,
                     })
