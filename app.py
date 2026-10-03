@@ -336,7 +336,6 @@ if current_role_clean == "security":
     dept_options = ["👔 管理部 (Management Dept)"]
     selected_parent_dept = dept_options[0]
     st.sidebar.markdown(f"**{lang_dict['parent_header']}**")
-    st.sidebar.info("🛡️ 保全權限登入：已自動鎖定至廠區門禁與車輛進出管制頁面。")
     feature_labels = ["🚗 [行政] 廠區車輛進出與門禁時間紀錄"] if st.session_state.current_lang == "繁體中文" else (
         ["🚗 [Bảo vệ] Quản lý xe ra vào nhà máy"] if st.session_state.current_lang == "Tiếng Việt" else ["🚗 [Security] Vehicle Gate Log"]
     )
