@@ -2,11 +2,11 @@ import datetime
 import pandas as pd
 import streamlit as st
 
-# 後台預設匯率基準（使用者不需看到）
-SYSTEM_EXCHANGE_RATE_VND_TO_USD = 0.00003934  # 約 1 USD = 25,420 VND
+# 後台預設匯率基準（換算給財務與老闆參考）
+SYSTEM_EXCHANGE_RATE_VND_TO_USD = 0.00003934
 
 # ----------------------------------------------------
-# 🌐 多語系字典 (i18n)
+# 🌐 多語系字典 (i18n) - 包含介面文字與下拉選單
 # ----------------------------------------------------
 VEHICLE_I18N = {
     "繁體中文": {
@@ -47,6 +47,17 @@ VEHICLE_I18N = {
         "handler_label": "經辦人 / 申請人",
         "save_maint": "💾 儲存公務車保養紀錄",
         "success_maint": "🎉 【新增完成】保養紀錄已儲存，後台已自動完成財務換算！",
+        "vehicle_types": [
+            "🚛 運料大貨車 (原材料)", 
+            "🚚 成品出貨貨車", 
+            "🚐 廠長/公務用車", 
+            "🚗 訪客外賓車輛", 
+            "🏍️ 員工機車"
+        ],
+        "plants": [
+            "🇻🇳 越南西寧廠 (Tay Ninh Plant)", 
+            "🇻🇳 越南海防廠 (Hai Phong Plant)"
+        ]
     },
     "Tiếng Việt": {
         "title": "🚗 REETECH INDUSTRIAL - Quản lý Cổng xe & Bảo dưỡng Xe công ty",
@@ -86,6 +97,17 @@ VEHICLE_I18N = {
         "handler_label": "Người phụ trách",
         "save_maint": "💾 Lưu bản ghi bảo dưỡng",
         "success_maint": "🎉 Đã lưu thành công và hệ thống đã tự động quy đổi tài chính!",
+        "vehicle_types": [
+            "🚛 Xe tải chở nguyên liệu (Vật liệu thô)", 
+            "🚚 Xe tải xuất hàng thành phẩm", 
+            "🚐 Xe công vụ / Xe giám đốc", 
+            "🚗 Xe khách / Khách vãng lai", 
+            "🏍️ Xe máy nhân viên"
+        ],
+        "plants": [
+            "🇻🇳 Nhà máy Tây Ninh (Tay Ninh Plant)", 
+            "🇻🇳 Nhà máy Hải Phòng (Hai Phong Plant)"
+        ]
     },
     "English": {
         "title": "🚗 REETECH INDUSTRIAL - Vehicle Gate & Company Car Maintenance",
@@ -125,6 +147,17 @@ VEHICLE_I18N = {
         "handler_label": "Handler",
         "save_maint": "💾 Save Maintenance Record",
         "success_maint": "🎉 Maintenance record saved and automatically converted for finance!",
+        "vehicle_types": [
+            "🚛 Raw Material Truck", 
+            "🚚 Finished Goods Truck", 
+            "🚐 Company / Director Car", 
+            "🚗 Visitor Vehicle", 
+            "🏍️ Employee Motorcycle"
+        ],
+        "plants": [
+            "🇻🇳 Tay Ninh Plant", 
+            "🇻🇳 Hai Phong Plant"
+        ]
     },
 }
 
@@ -145,9 +178,9 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
         st.session_state.vehicle_logs_db = [
             {
                 "log_id": "LOG-2026-001",
-                "plant": "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
+                "plant": L["plants"][0],
                 "plate_no": "61A-888.66",
-                "vehicle_type": "🚛 運料大貨車 (原材料進廠)",
+                "vehicle_type": L["vehicle_types"][0],
                 "driver_name": "Nguyễn Văn Hùng",
                 "purpose": "載運 500kg 銅排原料進廠",
                 "entry_time": "2026-10-03 08:15:20",
@@ -197,16 +230,16 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
         st.dataframe(df_logs, use_container_width=True)
 
     # ----------------------------------------------------
-    # ➕ 頁籤二：登記車輛進廠
+    # ➕ 頁籤二：登記車輛進廠 (使用在地化下拉選項)
     # ----------------------------------------------------
     with tab_gate_in:
         st.markdown(f"### {L['tab2']}")
         with st.form("form_vehicle_entry"):
             c1, c2 = st.columns(2)
             with c1:
-                plant = st.selectbox(L["plant_label"], ["🇻🇳 越南西寧廠 (Tay Ninh Plant)", "🇻🇳 越南海防廠 (Hai Phong Plant)"])
+                plant = st.selectbox(L["plant_label"], L["plants"])
                 plate_no = st.text_input(L["plate_label"], value="", placeholder="例如: 61A-123.45")
-                vehicle_type = st.selectbox(L["type_label"], ["🚛 運料大貨車 (原材料)", "🚚 成品出貨貨車", "🚐 廠長/公務用車", "🚗 訪客外賓車輛", "🏍️ 員工機車"])
+                vehicle_type = st.selectbox(L["type_label"], L["vehicle_types"])
             with c2:
                 driver_name = st.text_input(L["driver_label"], value="")
                 purpose = st.text_input(L["purpose_label"], value="載運配電盤零組件")
@@ -256,7 +289,7 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
         st.dataframe(df_all, use_container_width=True)
 
     # ----------------------------------------------------
-    # 🔧 頁籤四：公司公務車保養與維護履歷管理（隱藏匯率，後台自動換算）
+    # 🔧 頁籤四：公司公務車保養與維護履歷管理
     # ----------------------------------------------------
     with tab_car_maint:
         st.markdown(f"### {L['maint_title']}")
@@ -294,7 +327,6 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
                 mileage = st.text_input(L["col_mileage"] + " *", value="70,000 km")
                 input_currency = st.selectbox(L["cur_label"], ["🇻🇳 越南盾 (VND)", "💵 美金 (USD)"])
 
-            # 💡 移除了前端複雜的匯率設定欄位，只讓使用者直覺輸入金額
             raw_amount = st.number_input(
                 L["amount_label"], 
                 min_value=0.0, 
@@ -307,7 +339,6 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文"):
 
             if st.form_submit_button(L["save_maint"], type="primary", use_container_width=True):
                 if plate_no and brand_model and maint_content:
-                    # 💡 後台自動進行匯率換算供財務與老闆雙軌檢視
                     if "越南盾" in input_currency:
                         final_vnd = raw_amount
                         final_usd = raw_amount * SYSTEM_EXCHANGE_RATE_VND_TO_USD
