@@ -27,9 +27,9 @@ st.set_page_config(
 )
 
 # ----------------------------------------------------
-# 📱 注入手機優先 RWD CSS
+# 📱 注入手機優先 RWD CSS 與 側邊欄滑動/點擊手勢優化 JS
 # ----------------------------------------------------
-MOBILE_CSS = """
+MOBILE_CSS_AND_JS = """
 <style>
 @media only screen and (max-width: 768px) {
     h1 { font-size: 1.35rem !important; font-weight: 700 !important; }
@@ -39,8 +39,40 @@ MOBILE_CSS = """
     .block-container { padding: 1rem 0.5rem !important; }
 }
 </style>
+
+<script>
+// 📱 手機板側邊欄手勢優化：支援在側邊欄內向左滑動直接收回目錄，免回頂部
+document.addEventListener('DOMContentLoaded', () => {
+    let touchstartX = 0;
+    let touchendX = 0;
+
+    function handleGesure() {
+        // 向左滑動超過 50px 且側邊欄為展開狀態時，自動模擬點擊收合按鈕
+        if (touchendX < touchstartX - 50) {
+            const collapseBtn = document.querySelector('[data-testid="stSidebarNav"] button, button[kind="header"], [data-testid="collapsedControl"]');
+            const sidebar = document.querySelector('[data-testid="stSidebar"]');
+            // 如果側邊欄目前是展開的，向左滑動就收起它
+            if (sidebar && window.innerWidth <= 768) {
+                const closeBtn = document.querySelector('[data-testid="stSidebar"] button[kind="tertiary"], [data-testid="stSidebar"] button');
+                if (closeBtn) {
+                    closeBtn.click();
+                }
+            }
+        }
+    }
+
+    document.addEventListener('touchstart', e => {
+        touchstartX = e.changedTouches[0].screenX;
+    }, false);
+
+    document.addEventListener('touchend', e => {
+        touchendX = e.changedTouches[0].screenX;
+        handleGesure();
+    }, false);
+});
+</script>
 """
-st.markdown(MOBILE_CSS, unsafe_allow_html=True)
+st.markdown(MOBILE_CSS_AND_JS, unsafe_allow_html=True)
 
 # ----------------------------------------------------
 # 🏢 RECH 企業品牌 Logo 橫幅
@@ -331,7 +363,7 @@ dept_options = list(lang_dict["departments"].keys())
 current_user_clean = str(st.session_state.user_name).strip().lower()
 current_role_clean = str(st.session_state.user_role).strip().lower()
 
-# 💡 保全權限：限制只能看到管理部，且只能操作車輛門禁
+# 💡 保全權限：限制只能看到管理部，且只能操作車輛門禁（已完全移除左側藍色提示框）
 if current_role_clean == "security":
     dept_options = ["👔 管理部 (Management Dept)"]
     selected_parent_dept = dept_options[0]
