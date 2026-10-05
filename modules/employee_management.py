@@ -73,7 +73,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
         st.session_state.emp_success_msg = ""
 
     tab_titles = [
-        "📑 現有在職員工名冊",
+        "📑 現有在職員工名冊與修改",
         "➕ 新增員工個人檔案",
         "📤 Excel 批次匯入員工",
         "📦 離職人員檔案與歷史查詢",
@@ -97,8 +97,10 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
         st.session_state.emp_active_tab = 2
     elif selected_tab_name == tab_titles[3]:
         st.session_state.emp_active_tab = 3
-    else:
+    elif selected_tab_name == tab_titles[4]:
         st.session_state.emp_active_tab = 4
+    else:
+        st.session_state.emp_active_tab = 5
 
     st.markdown("---")
 
@@ -107,11 +109,11 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
         st.session_state.emp_success_msg = ""
 
     # ----------------------------------------------------
-    # 📑 頁籤一：現有在職員工名冊（支援直接點擊修改與儲存）
+    # 📑 頁籤一：現有在職員工名冊與詳細資料修改
     # ----------------------------------------------------
     if st.session_state.emp_active_tab == 0:
-        st.markdown("### 📋 公司現有在職員工名冊（含 AI 人臉辨識與指紋 ID 串接欄位）")
-        st.info("💡 您可以直接在下方表格中點擊任何儲存格來修改或補齊未填完的資料（如地址、電話等），修改後請點擊下方的儲存按鈕。")
+        st.markdown("### 📋 公司現有在職員工名冊")
+        st.info("💡 您可以檢視所有員工清單。若需修改某位員工的詳細資料（如電話、地址、人臉代碼等），請在下方選擇該員工並開啟詳細資料編輯表。")
 
         df_emp = pd.DataFrame(st.session_state.employees_db)
         if "選取" not in df_emp.columns:
@@ -120,34 +122,13 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
         edited_emp_df = st.data_editor(
             df_emp,
             use_container_width=True,
-            num_rows="dynamic",
+            num_rows="fixed",
             key="employee_editor"
         )
 
-        col_b1, col_b2, col_b3 = st.columns([1.5, 1.5, 2])
+        col_b1, col_b2 = st.columns([2, 2])
         with col_b1:
-            if st.button("💾 儲存表格中的修改變更", use_container_width=True, type="primary"):
-                # 將編輯後的 DataFrame 寫回 employees_db
-                updated_list = []
-                for _, row in edited_emp_df.iterrows():
-                    updated_list.append({
-                        "id": str(row["id"]),
-                        "name": str(row["name"]),
-                        "nationality": str(row["nationality"]),
-                        "site": str(row["site"]),
-                        "dept": str(row["dept"]),
-                        "title": str(row["title"]),
-                        "role": str(row["role"]),
-                        "phone": str(row["phone"]),
-                        "address": str(row["address"]),
-                        "face_token": str(row["face_token"]),
-                    })
-                st.session_state.employees_db = updated_list
-                st.success("✅ 員工資料修改已成功儲存更新！")
-                st.rerun()
-
-        with col_b2:
-            if st.button("🗑️ 刪除選定項目", use_container_width=True):
+            if st.button("🗑️ 刪除勾選項目", use_container_width=True):
                 remaining_emp = []
                 del_count = 0
                 for idx, row in edited_emp_df.iterrows():
@@ -166,7 +147,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 else:
                     st.warning("⚠️ 請先在表格左側勾選要刪除的對象。")
 
-        with col_b3:
+        with col_b2:
             if st.button("📁 辦理離職歸檔", use_container_width=True):
                 remaining_emp = []
                 moved_count = 0
@@ -191,6 +172,65 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     st.rerun()
                 else:
                     st.warning("⚠️ 請先在表格左側勾選要辦理離職的對象。")
+
+        st.markdown("---")
+        st.markdown("#### ✏️ 選擇員工並開啟詳細資料修改表（薪資/個人檔案輸入介面）")
+        
+        emp_options = [f"{e['id']} - {e['name']} ({e['title']})" for e in st.session_state.employees_db]
+        if emp_options:
+            selected_emp_str = st.selectbox("請選擇要編輯修改的員工", emp_options)
+            selected_emp_id = selected_emp_str.split(" - ")[0]
+            
+            # 尋找該員工目前資料
+            current_emp_data = next((e for e in st.session_state.employees_db if e["id"] == selected_emp_id), None)
+            
+            if current_emp_data:
+                with st.form("form_edit_employee_detail"):
+                    st.markdown(f"**正在修改員工：`{current_emp_data['id']}` - `{current_emp_data['name']}`**")
+                    
+                    ec1, ec2, ec3 = st.columns(3)
+                    with ec1:
+                        edit_name = st.text_input("員工姓名 *", value=current_emp_data["name"])
+                        edit_nat = st.selectbox("員工國籍", ["🇻🇳 越南 (Vietnamese)", "🇹🇼 台灣 (Taiwanese)", "🇨🇳 中國 (Chinese)", "其他國家"], index=0 if "越南" in current_emp_data["nationality"] else 1)
+                    with ec2:
+                        edit_site = st.selectbox("駐點工作廠區 *", ["🇻🇳 越南西寧廠 (Tay Ninh Plant)", "🇻🇳 越南海防廠 (Hai Phong Plant)", "台灣總公司"], index=0)
+                        edit_dept = st.selectbox("所屬部門 / 單位 *", [
+                            "👑 經營高層 / 董事會與總經理室 (Executive Board)",
+                            "👔 經營主管 / 營運管理中心 (Management & Operations)",
+                            "管理部 (Management - 行政/財務/採購)",
+                            "工務部 (Engineering - 設計/工程/品管)",
+                            "生產部 - 板金組 (Sheet Metal)",
+                            "生產部 - 塗料組 (Painting)",
+                            "生產部 - 配盤組 (Assembly)",
+                        ])
+                    with ec3:
+                        edit_title = st.text_input("職位 / 職銜 *", value=current_emp_data["title"])
+                        edit_role = st.selectbox("系統權限角色", ["Chairman", "GeneralManager", "ViceManager", "Director", "Manager", "Supervisor", "Staff", "Admin"])
+
+                    ec4, ec5 = st.columns(2)
+                    with ec4:
+                        edit_phone = st.text_input("聯絡電話 (Phone)", value=current_emp_data["phone"])
+                    with ec5:
+                        edit_address = st.text_input("居住 / 戶籍地址 (Address)", value=current_emp_data["address"])
+
+                    edit_face = st.text_input("🤖 AI 臉部辨識 / 指紋機特徵代碼", value=current_emp_data["face_token"])
+
+                    if st.form_submit_button("💾 確認儲存此員工的修改變更", type="primary"):
+                        # 更新資料庫中的該筆資料
+                        for e in st.session_state.employees_db:
+                            if e["id"] == selected_emp_id:
+                                e["name"] = edit_name
+                                e["nationality"] = edit_nat
+                                e["site"] = edit_site
+                                e["dept"] = edit_dept
+                                e["title"] = edit_title
+                                e["role"] = edit_role
+                                e["phone"] = edit_phone
+                                e["address"] = edit_address
+                                e["face_token"] = edit_face
+                        
+                        st.session_state.emp_success_msg = f"🎉 【修改成功】員工 [{edit_name}] (`{selected_emp_id}`) 的詳細資料已更新儲存！"
+                        st.rerun()
 
     # ----------------------------------------------------
     # ➕ 頁籤二：新增員工個人檔案
