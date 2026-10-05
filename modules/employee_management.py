@@ -15,7 +15,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "name": "張董事長",
                 "nationality": "🇹🇼 台灣 (Taiwan)",
                 "site": "西寧廠",
-                "dept": "經營高層 / 董事會 (Executive)",
+                "dept": "👑 經營高層 / 董事會與總經理室 (Executive)",
                 "title": "董事長 (Chairman)",
                 "role": "Admin",
                 "phone": "0912345678",
@@ -39,7 +39,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "name": "李元隆",
                 "nationality": "🇹🇼 台灣 (Taiwanese)",
                 "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
-                "dept": "管理部 (Management - 行政/財務/採購)",
+                "dept": "👑 經營高層 / 董事會與總經理室 (Executive)",
                 "title": "副總",
                 "role": "Staff",
                 "phone": "-",
@@ -172,7 +172,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     st.warning("⚠️ 請先在表格左側勾選要辦理離職的對象。")
 
     # ----------------------------------------------------
-    # ➕ 頁籤二：新增員工個人檔案
+    # ➕ 頁籤二：新增員工個人檔案（已加入高階經營管理層級）
     # ----------------------------------------------------
     elif st.session_state.emp_active_tab == 1:
         st.markdown("### ➕ 登錄新員工個人檔案")
@@ -188,21 +188,22 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
             with c2:
                 work_plant = st.selectbox(
                     "駐點工作廠區 *",
-                    ["🇻🇳 越南西寧廠 (Tay Ninh Plant)", "🇻🇳 越南海防廠 (Hai Phong Plant)"]
+                    ["🇻🇳 越南西寧廠 (Tay Ninh Plant)", "🇻🇳 越南海防廠 (Hai Phong Plant)", "台灣總公司"]
                 )
                 emp_name = st.text_input("員工全名 *", value="")
             with c3:
                 dept = st.selectbox(
                     "所屬部門 / 單位 *",
                     [
+                        "👑 經營高層 / 董事會與總經理室 (Executive)",
                         "管理部 (Management - 行政/財務/採購)",
-                        "工程部 (Engineering - 設計/工程/品管)",
+                        "工務部 (Engineering - 設計/工程/品管)",
                         "生產部 - 板金組 (Sheet Metal)",
                         "生產部 - 塗料組 (Painting)",
                         "生產部 - 配盤組 (Assembly)",
                     ]
                 )
-                job_title = st.text_input("職位 / 職銜 (Job Title) *", value="經理")
+                job_title = st.text_input("職位 / 職銜 (Job Title) *", value="總經理 (General Manager)")
 
             c4, c5 = st.columns(2)
             with c4:
@@ -232,7 +233,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     }
                     st.session_state.employees_db.append(new_employee)
                     
-                    st.session_state.emp_success_msg = f"🎉 【新增完成】已成功登錄員工 [{emp_name}] (`{emp_id}`)！"
+                    st.session_state.emp_success_msg = f"🎉 【新增完成】已成功登錄 [{job_title}] [{emp_name}] (`{emp_id}`)！"
                     st.session_state.emp_active_tab = 0
                     st.rerun()
                 else:
@@ -252,7 +253,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
             st.info("目前尚無離職歸檔人員紀錄。")
 
     # ----------------------------------------------------
-    # ⏰ 頁籤四：廠區人臉/指紋打卡資料彙集中心 (新增)
+    # ⏰ 頁籤四：廠區人臉/指紋打卡資料彙集中心
     # ----------------------------------------------------
     elif st.session_state.emp_active_tab == 3:
         st.markdown("### ⏰ 廠區人臉辨識系統與指紋打卡機資料彙集中心")
@@ -276,11 +277,11 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 st.rerun()
 
     # ----------------------------------------------------
-    # 📝 頁籤五：請假申請與電子簽核連動 (新增)
+    # 📝 頁籤五：請假申請與電子簽核連動（支援 2000 年起下拉選單）
     # ----------------------------------------------------
     elif st.session_state.emp_active_tab == 4:
         st.markdown("### 📝 員工請假申請與電子簽核連動中心")
-        st.caption("員工提交請假單後，系統將自動送交『電子簽核中心』，經主管核准後自動生效。")
+        st.caption("員工提交請假單後，系統將自動送交『電子簽核中心』，經主管核准後自動生效。支援自 2000 年起的資深經歷計算。")
 
         if st.session_state.leave_requests_db:
             st.markdown("#### 📊 現有請假申請單與簽核狀態")
@@ -295,31 +296,52 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
             with c_lf1:
                 leave_emp_id = st.selectbox("申請員工", [f"{e['id']} - {e['name']}" for e in st.session_state.employees_db])
                 leave_type = st.selectbox("請假類別 *", ["事假 (Personal Leave)", "病假 (Sick Leave)", "特休假 (Annual Leave)", "公出 (Official Business)"])
-            with c_lf2:
-                leave_start = st.date_input("開始日期", datetime.date.today())
-                leave_end = st.date_input("結束日期", datetime.date.today())
             
+            with c_lf2:
+                st.markdown("**開始日期 (支援 2000 年起早期資歷)**")
+                c_y1, c_m1, c_d1 = st.columns(3)
+                with c_y1:
+                    start_year = st.selectbox("開始年份", list(range(2000, 2031)), index=26)
+                with c_m1:
+                    start_month = st.selectbox("開始月份", list(range(1, 13)), index=9)
+                with c_d1:
+                    start_day = st.selectbox("開始日期", list(range(1, 32)), index=9)
+
+                st.markdown("**結束日期**")
+                c_y2, c_m2, c_d2 = st.columns(3)
+                with c_y2:
+                    end_year = st.selectbox("結束年份", list(range(2000, 2031)), index=26)
+                with c_m2:
+                    end_month = st.selectbox("結束月份", list(range(1, 13)), index=9)
+                with c_d2:
+                    end_day = st.selectbox("結束日期", list(range(1, 32)), index=9)
+
             leave_hours = st.number_input("請假時數 (小時)", min_value=1.0, value=8.0)
             leave_reason = st.text_area("請假事由說明 *", "因個人私事需請假一天處理。")
 
             if st.form_submit_button("🚀 提交假單並連線至電子簽核中心"):
+                try:
+                    leave_start_str = datetime.date(start_year, start_month, start_day).strftime("%Y-%m-%d")
+                    leave_end_str = datetime.date(end_year, end_month, end_day).strftime("%Y-%m-%d")
+                except ValueError:
+                    leave_start_str = str(datetime.date.today())
+                    leave_end_str = str(datetime.date.today())
+
                 new_req_id = f"LEV-2026-{len(st.session_state.leave_requests_db)+1:03d}"
                 emp_name_extracted = leave_emp_id.split(" - ")[1]
                 
-                # 1. 寫入請假資料庫
                 st.session_state.leave_requests_db.append({
                     "req_id": new_req_id,
                     "emp_id": leave_emp_id.split(" - ")[0],
                     "name": emp_name_extracted,
                     "leave_type": leave_type,
-                    "start_date": str(leave_start),
-                    "end_date": str(leave_end),
+                    "start_date": leave_start_str,
+                    "end_date": leave_end_str,
                     "hours": leave_hours,
                     "reason": leave_reason,
                     "status": "⏳ 簽核中 (Pending)"
                 })
 
-                # 2. 自動同步連動寫入全局電子簽核中心 (`approval_center_data` 或 `approval_workflow`)
                 if "approval_center_data" not in st.session_state:
                     st.session_state.approval_center_data = []
                 
@@ -332,7 +354,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     "日期": str(datetime.date.today())
                 })
 
-                st.success(f"🎉 請假單 `{new_req_id}` 已成功送出，並已同步連動至『管理部 - 電子簽核中心』等待主管審核！")
+                st.success(f"🎉 請假單 `{new_req_id}` 已成功送出（日期：{leave_start_str}），並已同步連動至『管理部 - 電子簽核中心』等待主管審核！")
                 st.rerun()
 
 
