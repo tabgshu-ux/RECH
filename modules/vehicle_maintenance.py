@@ -1,6 +1,7 @@
+import datetime
 import pandas as pd
 import streamlit as st
-import datetime
+
 
 def render_vehicle_maintenance_page(engine=None, lang="繁體中文"):
     st.title("🚗 管理部 - 車輛維修保養與車籍追蹤中心")
@@ -39,17 +40,44 @@ def render_vehicle_maintenance_page(engine=None, lang="繁體中文"):
             }
         ]
 
-    # 頁籤設定
-    tab_query, tab_upload, tab_summary = st.tabs([
+    # 初始化分頁與成功通知狀態
+    if "veh_active_tab" not in st.session_state:
+        st.session_state.veh_active_tab = 0
+    if "veh_success_msg" not in st.session_state:
+        st.session_state.veh_success_msg = ""
+
+    tab_titles = [
         "📊 車輛維修履歷查詢", 
         "📤 Excel 車籍與維修表批次上傳", 
         "📈 車隊維修成本統計分析"
-    ])
+    ]
+
+    selected_tab_name = st.radio(
+        "選擇操作模式", 
+        tab_titles, 
+        index=st.session_state.veh_active_tab, 
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+
+    if selected_tab_name == tab_titles[0]:
+        st.session_state.veh_active_tab = 0
+    elif selected_tab_name == tab_titles[1]:
+        st.session_state.veh_active_tab = 1
+    else:
+        st.session_state.veh_active_tab = 2
+
+    st.markdown("---")
+
+    # 顯示成功通知橫幅
+    if st.session_state.veh_success_msg:
+        st.success(st.session_state.veh_success_msg)
+        st.session_state.veh_success_msg = ""  # 顯示一次後清空
 
     # ----------------------------------------------------
     # 1. 車輛維修履歷查詢
     # ----------------------------------------------------
-    with tab_query:
+    if st.session_state.veh_active_tab == 0:
         st.subheader("🔍 各車牌維修保養記錄查詢")
         
         if st.session_state.vehicle_maintenance_db:
@@ -72,7 +100,7 @@ def render_vehicle_maintenance_page(engine=None, lang="繁體中文"):
     # ----------------------------------------------------
     # 2. Excel 車籍與維修表批次上傳
     # ----------------------------------------------------
-    with tab_upload:
+    elif st.session_state.veh_active_tab == 1:
         st.subheader("📤 上傳車輛維修追蹤 Excel 檔案 (.xlsx)")
         st.info("💡 支援您手邊如 `QUẢN LÝ SỬA CHỮA BẢO DƯỠNG XE Ô TÔ` 的多分頁 Excel 檔。系統會自動抓取每個分頁名稱作為車牌號碼，並解析其中的維修明細。")
 
@@ -84,61 +112,62 @@ def render_vehicle_maintenance_page(engine=None, lang="繁體中文"):
                 st.success(f"✅ 成功讀取 Excel！內含 {len(xls.sheet_names)} 個車牌分頁：`{', '.join(xls.sheet_names)}`")
 
                 if st.button("🚀 開始批次解析並匯入系統資料庫", type="primary"):
-                    imported_total = 0
-                    
-                    for sheet_name in xls.sheet_names:
-                        plate_cleaned = sheet_name.strip() # 分頁名稱即為車牌
-                        raw_df = pd.read_excel(uploaded_excel, sheet_name=sheet_name)
+                    with st.spinner("⏳ 正在全力解析所有分頁並寫入資料庫，請稍候..."):
+                        imported_total = 0
                         
-                        # 尋找包含標題列的行 (STT 或 NGÀY)
-                        header_row_idx = None
-                        for idx, row in raw_df.iterrows():
-                            row_str = str(row.values)
-                            if "NGÀY" in row_str or "SỐ KM" in row_str or "TÊN DỊCH VỤ" in row_str:
-                                header_row_idx = idx
-                                break
-                        
-                        if header_row_idx is not None:
-                            # 重新讀取並設定正確的表頭
-                            df_sheet = pd.read_excel(uploaded_excel, sheet_name=sheet_name, header=header_row_idx)
-                            df_sheet = df_sheet.dropna(subset=[df_sheet.columns[1]]) # 過濾日期空白行
+                        for sheet_name in xls.sheet_names:
+                            plate_cleaned = sheet_name.strip() # 分頁名稱即為車牌
+                            raw_df = pd.read_excel(uploaded_excel, sheet_name=sheet_name)
                             
-                            for _, r in df_sheet.iterrows():
-                                stt = r.iloc[0]
-                                if pd.isna(stt) or str(stt).strip() == "":
-                                    continue
+                            # 尋找包含標題列的行 (STT 或 NGÀY)
+                            header_row_idx = None
+                            for idx, row in raw_df.iterrows():
+                                row_str = str(row.values)
+                                if "NGÀY" in row_str or "SỐ KM" in row_str or "TÊN DỊCH VỤ" in row_str:
+                                    header_row_idx = idx
+                                    break
+                            
+                            if header_row_idx is not None:
+                                df_sheet = pd.read_excel(uploaded_excel, sheet_name=sheet_name, header=header_row_idx)
+                                df_sheet = df_sheet.dropna(subset=[df_sheet.columns[1]])
                                 
-                                maint_date = str(r.iloc[1])[:10] if not pd.isna(r.iloc[1]) else "2026-01-01"
-                                km = r.iloc[2] if not pd.isna(r.iloc[2]) else 0
-                                service = str(r.iloc[3]) if not pd.isna(r.iloc[3]) else "-"
-                                content = str(r.iloc[4]) if not pd.isna(r.iloc[4]) else "-"
-                                garage = str(r.iloc[5]) if not pd.isna(r.iloc[5]) else "-"
-                                unit = str(r.iloc[6]) if not pd.isna(r.iloc[6]) else "-"
-                                qty = r.iloc[7] if not pd.isna(r.iloc[7]) else 1.0
-                                price = r.iloc[8] if not pd.isna(r.iloc[8]) else 0.0
-                                vat = r.iloc[9] if not pd.isna(r.iloc[9]) else 0.0
-                                total = r.iloc[10] if not pd.isna(r.iloc[10]) else 0.0
-                                note = str(r.iloc[11]) if len(r) > 11 and not pd.isna(r.iloc[11]) else "-"
+                                for _, r in df_sheet.iterrows():
+                                    stt = r.iloc[0]
+                                    if pd.isna(stt) or str(stt).strip() == "":
+                                        continue
+                                    
+                                    maint_date = str(r.iloc[1])[:10] if not pd.isna(r.iloc[1]) else "2026-01-01"
+                                    km = r.iloc[2] if not pd.isna(r.iloc[2]) else 0
+                                    service = str(r.iloc[3]) if not pd.isna(r.iloc[3]) else "-"
+                                    content = str(r.iloc[4]) if not pd.isna(r.iloc[4]) else "-"
+                                    garage = str(r.iloc[5]) if not pd.isna(r.iloc[5]) else "-"
+                                    unit = str(r.iloc[6]) if not pd.isna(r.iloc[6]) else "-"
+                                    qty = r.iloc[7] if not pd.isna(r.iloc[7]) else 1.0
+                                    price = r.iloc[8] if not pd.isna(r.iloc[8]) else 0.0
+                                    vat = r.iloc[9] if not pd.isna(r.iloc[9]) else 0.0
+                                    total = r.iloc[10] if not pd.isna(r.iloc[10]) else 0.0
+                                    note = str(r.iloc[11]) if len(r) > 11 and not pd.isna(r.iloc[11]) else "-"
 
-                                # 避免重複加入
-                                new_record = {
-                                    "plate_no": plate_cleaned,
-                                    "date": maint_date,
-                                    "mileage": km,
-                                    "service_name": service,
-                                    "content": content,
-                                    "garage": garage,
-                                    "unit": unit,
-                                    "qty": qty,
-                                    "unit_price": price,
-                                    "vat": vat,
-                                    "total": total,
-                                    "note": note
-                                }
-                                st.session_state.vehicle_maintenance_db.append(new_record)
-                                imported_total += 1
+                                    new_record = {
+                                        "plate_no": plate_cleaned,
+                                        "date": maint_date,
+                                        "mileage": km,
+                                        "service_name": service,
+                                        "content": content,
+                                        "garage": garage,
+                                        "unit": unit,
+                                        "qty": qty,
+                                        "unit_price": price,
+                                        "vat": vat,
+                                        "total": total,
+                                        "note": note
+                                    }
+                                    st.session_state.vehicle_maintenance_db.append(new_record)
+                                    imported_total += 1
 
-                    st.success(f"🎉 批次匯入完成！總共成功匯入 {imported_total} 筆車輛維修保養紀錄。請至『車輛維修履歷查詢』查看。")
+                    # 設定成功訊息並自動切換回第一頁查詢頁面
+                    st.session_state.veh_success_msg = f"🎉 【批次匯入成功】已成功從 Excel 解析並匯入 {imported_total} 筆車輛維修保養紀錄到系統資料庫！"
+                    st.session_state.veh_active_tab = 0
                     st.rerun()
 
             except Exception as e:
@@ -147,12 +176,10 @@ def render_vehicle_maintenance_page(engine=None, lang="繁體中文"):
     # ----------------------------------------------------
     # 3. 車隊維修成本統計分析
     # ----------------------------------------------------
-    with tab_summary:
+    elif st.session_state.veh_active_tab == 2:
         st.subheader("📈 車隊維修成本與花費總覽")
         if st.session_state.vehicle_maintenance_db:
             df_sum = pd.DataFrame(st.session_state.vehicle_maintenance_db)
-            
-            # 確保 total 欄位為數值
             df_sum["total"] = pd.to_numeric(df_sum["total"], errors="coerce").fillna(0)
             
             plate_cost = df_sum.groupby("plate_no")["total"].sum().reset_index()
