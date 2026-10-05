@@ -17,7 +17,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "site": "西寧廠",
                 "dept": "👑 經營高層 / 董事會與總經理室 (Executive Board)",
                 "title": "董事長 (Chairman)",
-                "role": "Admin",
+                "role": "Chairman",
                 "phone": "0912345678",
                 "address": "-",
                 "face_token": "FACE-BIO-888899",
@@ -29,7 +29,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
                 "dept": "👑 經營高層 / 董事會與總經理室 (Executive Board)",
                 "title": "總經理 (General Manager)",
-                "role": "Admin",
+                "role": "GeneralManager",
                 "phone": "0918999080",
                 "address": "-",
                 "face_token": "FACE-BIO-100234",
@@ -41,7 +41,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
                 "dept": "👔 經營主管 / 營運管理中心 (Management & Operations)",
                 "title": "副總經理 (Vice General Manager)",
-                "role": "Manager",
+                "role": "ViceManager",
                 "phone": "-",
                 "address": "-",
                 "face_token": "FACE-BIO-300451",
@@ -172,7 +172,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     st.warning("⚠️ 請先在表格左側勾選要辦理離職的對象。")
 
     # ----------------------------------------------------
-    # ➕ 頁籤二：新增員工個人檔案（已加入高階經營與經營主管選項）
+    # ➕ 頁籤二：新增員工個人檔案（支援董事長、總經理、副總到部門主管角色）
     # ----------------------------------------------------
     elif st.session_state.emp_active_tab == 1:
         st.markdown("### ➕ 登錄新員工個人檔案")
@@ -215,7 +215,20 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 work_permit = st.text_input("工作許可證 / 勞工證號", value="-")
 
             face_token = st.text_input("🤖 AI 臉部辨識 / 指紋機特徵代碼 (未來打卡系統串接預留)", value="FACE-PENDING-REGISTRATION")
-            role = st.selectbox("系統權限角色 (Role)", ["Staff (一般員工)", "Manager (部門主管)", "Admin (系統管理者)"])
+            
+            # 💡 擴充系統權限角色：涵蓋董事長、總經理、副總經理、經營主管、部門主管、基層員工
+            role_options = [
+                "Chairman (董事長)",
+                "GeneralManager (總經理)",
+                "ViceManager (副總經理)",
+                "Director (經營主管 / 協理)",
+                "Manager (部門經理 / 主管)",
+                "Supervisor (部門組長 / 課長)",
+                "Staff (一般員工)",
+                "Admin (系統管理者)"
+            ]
+            role_selected = st.selectbox("系統權限角色 (Role)", role_options)
+            role_value = role_selected.split(" ")[0]
 
             submitted = st.form_submit_button("💾 儲存並新增個人檔案", type="primary", use_container_width=True)
             if submitted:
@@ -227,14 +240,14 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                         "site": work_plant,
                         "dept": dept,
                         "title": job_title,
-                        "role": role.split(" ")[0],
+                        "role": role_value,
                         "phone": phone if phone else "-",
                         "address": address if address else "-",
                         "face_token": face_token if face_token else "FACE-PENDING",
                     }
                     st.session_state.employees_db.append(new_employee)
                     
-                    st.session_state.emp_success_msg = f"🎉 【新增完成】已成功登錄 [{job_title}] [{emp_name}] (`{emp_id}`)！"
+                    st.session_state.emp_success_msg = f"🎉 【新增完成】已成功登錄 [{job_title}] [{emp_name}] (`{emp_id}`)，角色：`{role_value}`！"
                     st.session_state.emp_active_tab = 0
                     st.rerun()
                 else:
