@@ -13,6 +13,7 @@ import modules.sales_order_ar as sales_order_ar
 import modules.system_licensing as system_licensing
 import modules.user_management as user_management
 import modules.vehicle_gate_log as vehicle_gate_log  # 車輛進出與門禁時間紀錄模組
+import modules.vehicle_maintenance as vehicle_maintenance  # 車輛維修保養與 Excel 批次匯入模組
 import modules.warehouse_management as warehouse_management
 import pandas as pd
 from sqlalchemy import text
@@ -86,7 +87,7 @@ RECH_LOGO_HTML = """
 """
 
 # ----------------------------------------------------
-# 三階組織架構選單字典（已將工務部更名為工程部）
+# 三階組織架構選單字典（已包含車輛維修保養模組選項）
 # ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
@@ -111,9 +112,10 @@ NAV_STRUCTURE = {
             "👔 管理部 (Management Dept)": {
                 "features": {
                     "🏢 [行政] 固定資產設備與總務採購": "ga_assets",
-                    "✍️ [行政] 電子簽核與請款審核中心": "approval_center",
+                    "✍️️ [行政] 電子簽核與請款審核中心": "approval_center",
                     "👤 [行政] 員工個人檔案與人事管理 (人事)": "hr_employee",
                     "🚗 [行政] 廠區車輛進出與門禁時間紀錄": "vehicle_gate",
+                    "🛠️ [行政] 車輛維修保養與 Excel 批次匯入": "vehicle_maintenance",  # 👈 新增車輛維修保養選項
                     "📍 [外勤] 工程人員 GPS 拍照打卡": "field_attendance",
                     "🧾 [財務] 採購與應付帳款 (AP)": "procurement_ap",
                     "📋 [財務] 銷售與應收帳款 (AR)": "sales_order_ar",
@@ -166,9 +168,10 @@ NAV_STRUCTURE = {
             "👔 Phòng Quản lý (Management Dept)": {
                 "features": {
                     "🏢 [Hành chính] Quản lý Tài sản Cố định": "ga_assets",
-                    "✍️️ [Hành chính] Trung tâm Phê duyệt": "approval_center",
+                    "✍️ [Hành chính] Trung tâm Phê duyệt": "approval_center",
                     "👤 [Nhân sự] Hồ sơ Nhân sự & Hợp đồng": "hr_employee",
                     "🚗 [Bảo vệ] Quản lý xe ra vào nhà máy": "vehicle_gate",
+                    "🛠️ [Hành chính] Quản lý bảo trì xe & Nhập Excel": "vehicle_maintenance",
                     "📍 [Hiện trường] Chấm công GPS kỹ sư": "field_attendance",
                     "🛒 [Tài chính] Mua hàng & Phải trả (AP)": "procurement_ap",
                     "📋 [Tài chính] Quản lý Bán hàng (AR)": "sales_order_ar",
@@ -186,7 +189,7 @@ NAV_STRUCTURE = {
             "🏭 Phòng Sản xuất (Production Dept)": {
                 "features": {
                     "📦 [Kho] Quản lý Kho & Mã vạch": "wh_management",
-                    "✂️️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
+                    "✂️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
                     "🎨 [Sơn] Tổ Sơn tĩnh điện": "painting",
                     "⚡ [Lắp ráp] Tổ Lắp ráp Tủ điện": "assembly",
                 }
@@ -224,6 +227,7 @@ NAV_STRUCTURE = {
                     "✍️ [GA] E-Approval Center": "approval_center",
                     "👤 [HR] Employee Records": "hr_employee",
                     "🚗 [Security] Vehicle Gate Log": "vehicle_gate",
+                    "🛠️ [GA] Vehicle Maintenance & Excel Import": "vehicle_maintenance",
                     "📍 [Field] Engineer GPS Attendance": "field_attendance",
                     "🛒 [Finance] Procurement & AP": "procurement_ap",
                     "📋 [Finance] Sales & AR": "sales_order_ar",
@@ -467,10 +471,19 @@ elif target_route == "vehicle_gate":
         lang=curr_lang,
     )
 
+elif target_route == "vehicle_maintenance":
+    # 👈 新增：車輛維修保養與 Excel 批次匯入路由分派
+    safe_call_module(
+        vehicle_maintenance.render_vehicle_maintenance_page,
+        engine=engine,
+        lang=curr_lang,
+    )
+
 elif target_route == "wh_management":
     safe_call_module(
         warehouse_management.render_warehouse_management,
         engine=engine,
+        t=lang_dict,
         lang=curr_lang,
     )
 
