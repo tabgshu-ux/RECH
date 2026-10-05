@@ -1,317 +1,256 @@
-import datetime
+import streamlit as st
 import os
 import pandas as pd
 import plotly.express as px
-import streamlit as st
+import google.generativeai as genai
+from datetime import datetime, date
 
 # ----------------------------------------------------
-# 🌐 營運戰情室多語系字典 (i18n)
+# 🌐 越南台廠水電工程戰情室多語系字典 (i18n)
 # ----------------------------------------------------
 EXEC_I18N = {
     "繁體中文": {
-        "page_title": "👑 裕豐電機工業 - 董事長 / 總經理 戰情看板",
-        "sub_title": "REETECH INDUSTRIAL Co., Ltd. - 綜合營運、物價與財務管理系統 (📱 手機優先版)",
-        "boss_notes_title": "👑 董事長/總經理 專屬觀察重點與決策指南",
-        "sec_commodities": "🔴 1. 原料價格與動態股市物價 / 匯率即時看板",
-        "sec_finance": "📊 2. 全球廠區財務類顯示資料 (AR/AP & P&L 損益)",
-        "sec_engineering": "⚡ 3. 配電盤工程專案進度與驗收資料",
-        "news_title": "📰 近 7 天動態原物料與財經新聞",
-        "chat_title": "💬 董事長/總經理 專屬 AI 原物料與市場諮詢",
-        "chat_caption": "請輸入任意物料（如 銅價, 鋼材, 塑膠粒 PP）或股票代碼，AI 即時進行趨勢與成本分析：",
+        "page_title": "⚡ 裕豐電機工業 - 越南台廠水電工程專案與收款戰情室",
+        "sub_title": "即時監控專案工程進度、合約款項回收狀況、LME 銅價走勢與 USD/VND 匯率風險管控",
+        "tab_project_progress": "📊 台廠水電工程專案進度與收款看板",
+        "tab_materials_fx": "📈 LME 銅價成本與 USD/VND 匯率追蹤",
+        "tab_fin_stat": "📊 工程專案 AR/AP 財務現金流",
+        "tab_vpsh_reports": "📊 企業綜合損益表 (P&L) 與毛利勾稽",
+        "section_title": "🏗️ 越南廠房客製化水電與高低壓配電專案執行清單",
+        "ai_summary_title": "🤖 Gemini AI 工程收款與合約風險智慧分析",
+        "btn_gen_ai_summary": "🚀 生成專案進度與收款催收建議報告",
     },
     "Tiếng Việt": {
-        "page_title": "👑 REETECH INDUSTRIAL - Báo cáo Ban Giám đốc",
-        "sub_title": "Hệ thống Báo cáo Quản trị Doanh nghiệp, Giá cả & Tài chính",
-        "boss_notes_title": "👑 Ghi Chú Quan Sát Dành Cho Chủ Tịch / Tổng Giám Đốc",
-        "sec_commodities": "🔴 1. Giá Nguyên liệu & Tỷ giá Chứng khoán Thời gian thực",
-        "sec_finance": "📊 2. Dữ liệu Tài chính (Phải thu AR/ Phải trả AP & P&L)",
-        "sec_engineering": "⚡ 3. Tiến độ Dự án Kỹ thuật Tủ điện & Bàn giao",
-        "news_title": "📰 Tin Tức Giá Nguyên Vật Liệu Trong 7 Ngày Qua",
-        "chat_title": "💬 Trò Chuyện Tư Vấn Nguyên Vật Liệu AI",
-        "chat_caption": "Nhập tên nguyên vật liệu (VD: Giá đồng, Thép, Hạt nhựa) để AI phân tích xu hướng:",
+        "page_title": "⚡ REETECH INDUSTRIAL - Quản lý Tiến độ Dự án Cơ điện & Thu tiền",
+        "sub_title": "Giám sát thời gian thực tiến độ thi công cơ điện nhà máy Đài Loan tại VN, tình hình thu tiền, giá đồng LME và tỷ giá USD/VND",
+        "tab_project_progress": "📊 Bảng tiến độ dự án cơ điện & Thu hồi công nợ",
+        "tab_materials_fx": "📈 Theo dõi giá đồng LME & Tỷ giá USD/VND",
+        "tab_fin_stat": "📊 Dòng tiền tài chính AR/AP dự án",
+        "tab_vpsh_reports": "📊 Báo cáo kết quả kinh doanh (P&L) & Biên lợi nhuận",
+        "section_title": "🏗️️ Danh sách dự án cơ điện & tủ điện trạm biến áp nhà máy",
+        "ai_summary_title": "🤖 Phân tích AI Gemini về tiến độ & Rủi ro thu hồi vốn",
+        "btn_gen_ai_summary": "🚀 Tạo báo cáo phân tích & Đề xuất thu hồi công nợ",
     },
     "English": {
-        "page_title": "👑 REETECH INDUSTRIAL - Executive Dashboard",
-        "sub_title": "Comprehensive Operations, Commodity & Financial Management System",
-        "boss_notes_title": "👑 Executive Observation Focus & Directives",
-        "sec_commodities": "🔴 1. Raw Material Prices & Dynamic FX/Market Rates",
-        "sec_finance": "📊 2. Global Financial Analytics (AR/AP & P&L Waterfall)",
-        "sec_engineering": "⚡ 3. Engineering Project Progress & Acceptance Status",
-        "news_title": "📰 Recent 7-Day Commodity & Market News",
-        "chat_title": "💬 Executive AI Commodity & Market Assistant",
-        "chat_caption": "Enter any commodity (e.g., LME Copper, Steel, PP) or ticker for AI trend analysis:",
-    },
+        "page_title": "⚡ REETECH INDUSTRIAL - M&E Project Progress & Collection Dashboard",
+        "sub_title": "Real-time monitoring of MEP project milestones, cash collections, LME copper trends & USD/VND FX risk",
+        "tab_project_progress": "📊 M&E Project Progress & Collection Tracking",
+        "tab_materials_fx": "📈 LME Copper Cost & USD/VND FX Trends",
+        "tab_fin_stat": "📊 Project AR/AP Financial Cash Flow",
+        "tab_vpsh_reports": "📊 Consolidated P&L & Margin Reconciliation",
+        "section_title": "🏗️️ Custom M&E and Switchgear Project Execution List",
+        "ai_summary_title": "🤖 Gemini AI Project Collection & Risk Analysis",
+        "btn_gen_ai_summary": "🚀 Generate Project Progress & Collection Brief",
+    }
 }
 
-
 def get_exec_lang_dict(lang_param=None):
-    lang = lang_param or st.session_state.get("current_lang", "繁體中文")
+    lang = lang_param or st.session_state.get("lang", "繁體中文")
     return EXEC_I18N.get(lang, EXEC_I18N["繁體中文"])
 
-
 # ----------------------------------------------------
-# 1. 區塊一：原料價格與股市物價/匯率 (大字體、簡便的自選股管理)
+# 🏗️ 1. 台廠水電工程專案進度與收款看板
 # ----------------------------------------------------
-def render_commodities_section(L):
-    st.markdown(f"### {L['sec_commodities']}")
+def render_mep_project_progress_board():
+    st.markdown("### 🏗️ 越南台廠客製化水電工程專案進度與財務收款追蹤")
+    st.caption("結合工程現場施工進度百分比、合約總價、已收款金額、未收款（尾款/進度款）及收款理由與驗收狀態。")
 
-    # 初始化全球自選觀察清單 (Watchlist)
-    if "custom_watchlist" not in st.session_state or not st.session_state.custom_watchlist:
-        st.session_state.custom_watchlist = [
-            {"code": "LME-CU", "name": "LME 倫敦銅排 (Copper)", "price": 9250.0, "unit": "USD/噸", "change": "+85.0 (+0.93%)", "market": "全球原物料"},
-            {"code": "SECC", "name": "熱軋鋼板物價 (SECC)", "price": 780.0, "unit": "USD/噸", "change": "-12.0 (-1.51%)", "market": "全球原物料"},
-            {"code": "USD-VND", "name": "美金/越南盾 (USD/VND)", "price": 25420.0, "unit": "VND", "change": "-15.0", "market": "外匯匯率"},
-            {"code": "USD-TWD", "name": "美金/新台幣 (USD/TWD)", "price": 31.85, "unit": "TWD", "change": "+0.05", "market": "外匯匯率"},
-            {"code": "PP", "name": "塑膠粒 PP 物價", "price": 980.0, "unit": "USD/噸", "change": "+12.0", "market": "全球原物料"},
-            {"code": "2330.TW", "name": "台積電 (2330.TW)", "price": 985.0, "unit": "TWD", "change": "+15.0", "market": "台灣股市"},
-            {"code": "VN-Index", "name": "VN-Index (越南股市)", "price": 1280.5, "unit": "點", "change": "+8.2", "market": "越南股市"},
-            {"code": "CRUDE", "name": "WTI 原油 (Crude)", "price": 78.5, "unit": "USD/桶", "change": "+0.45", "market": "全球原物料"},
-        ]
-
-    # 📱 頂級清晰大字體 HTML 卡片
-    cols = st.columns(2)
-    for i, item in enumerate(st.session_state.custom_watchlist):
-        with cols[i % 2]:
-            trend_color = "#047857" if "+" in item['change'] else "#dc2626"
-            st.markdown(
-                f"""
-                <div style="background-color: #ffffff; padding: 16px; border-radius: 10px; border: 1.5px solid #cbd5e1; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 12px;">
-                    <div style="font-size: 13px; color: #475569; font-weight: 700; letter-spacing: 0.5px;">{item['market']} | <code>{item['code']}</code></div>
-                    <div style="font-size: 17px; font-weight: 800; color: #0f172a; margin-top: 4px;">{item['name']}</div>
-                    <div style="font-size: 26px; font-weight: 900; color: #000055; margin-top: 6px; line-height: 1.1;">
-                        {item['price']:,.2f} <span style="font-size: 14px; font-weight: 700; color: #334155;">{item['unit']}</span>
-                    </div>
-                    <div style="font-size: 13px; font-weight: 700; color: {trend_color}; margin-top: 6px;">
-                        漲跌趨勢: {item['change']}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+    # 頂部戰情指標
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("在手水電專案總數", "8 件", "執行中 6件 / 驗收 2件")
+    c2.metric("合約總金額 (USD)", "$1,850,000", "累計已收: $1,250,000")
+    c3.metric("總未收款/應收尾款 (AR)", "$600,000", "⚠️ 需加強催收")
+    c4.metric("平均工程進度", "76.5%", "🟢 進度正常")
 
     st.markdown("---")
-    
-    # ⚙️ 模仿第二張圖片：簡潔好用的「管理自訂觀察關注標的」與快速新增選單
-    st.markdown("<h3 style='color: #000055; font-weight: 900;'>🎛️ 管理自訂觀察關注標的</h3>", unsafe_allow_html=True)
+    st.markdown("#### 📋 專案明細、工程進度與收款連動管控表")
 
-    with st.expander("➕ 新增觀察個股/指數", expanded=False):
-        market_region = st.selectbox("選擇股票市場區域", ["🇹🇼 台灣 (Taiwan)", "🇻🇳 越南 (Vietnam)", "🇨🇳 中國 (China)", "🇺🇸 美國 (USA)", "🌐 全球原物料 / 外匯"])
-        ticker_code = st.text_input("股票代碼 (如 2330.TW / NVDA / VNM.VN)", value="")
-        
-        if st.button("💾 確認加入觀察清單", type="primary"):
-            if ticker_code:
-                st.session_state.custom_watchlist.append({
-                    "code": ticker_code,
-                    "name": f"自選標的 ({ticker_code})",
-                    "price": 100.0,
-                    "unit": "USD / 點",
-                    "change": "+0.00 (0.0%)",
-                    "market": market_region
-                })
-                st.success(f"🎉 已成功新增 [{ticker_code}]！")
-                st.rerun()
-            else:
-                st.error("請輸入股票代碼！")
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<h4 style='color: #000055; font-weight: 800;'>📋 目前觀察清單管理（勾選即可刪除）</h4>", unsafe_allow_html=True)
-
-    df_watch = pd.DataFrame(st.session_state.custom_watchlist)
-    if "刪除" not in df_watch.columns:
-        df_watch.insert(0, "刪除", False)
-
-    edited_watchlist = st.data_editor(
-        df_watch,
-        use_container_width=True,
-        num_rows="dynamic",
-        key="watchlist_editor"
-    )
-
-    c_del1, _ = st.columns(2)
-    with c_del1:
-        if st.button("🗑️ 刪除勾選的項目", type="primary"):
-            remaining = []
-            for idx, row in edited_watchlist.iterrows():
-                if not row.get("刪除", False):
-                    code_val = row["code"]
-                    matched = next((w for w in st.session_state.custom_watchlist if w.get("code") == code_val), None)
-                    if matched:
-                        remaining.append(matched)
-            st.session_state.custom_watchlist = remaining
-            st.success("✅ 已成功刪除選定的項目！")
-            st.rerun()
-
-    st.markdown("---")
-    st.markdown(f"#### {L['news_title']}")
-    news_items = [
+    # 模擬水電工程專案資料（包含工程進度、收款金額、未收款理由與驗收狀態）
+    projects_data = [
         {
-            "date": "2026-10-02",
-            "title": "LME 銅價升至三週高點，配電盤導電銅排成本微幅增加",
-            "source": "Reuters",
-            "sentiment": "⚠️ 成本微升",
-            "summary": "受智利銅礦產出減少與全球電網升級需求強勁推升，倫敦金屬交易所 (LME) 銅價每噸站上 9,250 美元。",
+            "專案代碼": "PRJ-2026-01",
+            "台廠客戶名稱": "🇻🇳 越南新順楠梓電子廠 (XinShun Electronics)",
+            "水電工程項目": "無塵室高低壓配電盤安裝與強弱電配管",
+            "合約總價 (USD)": 450000.0,
+            "已收款金額 (USD)": 315000.0,
+            "未收款/尾款 (USD)": 135000.0,
+            "工程進度 (%)": 90,
+            "工程與驗收狀態": "🟢 設備安裝完成，進行試車中",
+            "財務收款理由說明": "依合約約定，待總承商完成消防驗收並取得合格證後，撥付 30% 尾款。"
         },
         {
-            "date": "2026-10-01",
-            "title": "越南盾 (VND) 匯率受央行調控維持穩定，有利越南西寧廠/海防廠進口原料備貨",
-            "source": "VIR",
-            "sentiment": "🟢 匯率平穩",
-            "summary": "越南國家銀行維持貨幣政策穩定，美元兌越南盾於 25,400 區間平穩震盪，有助於控制進口物料成本。",
+            "專案代碼": "PRJ-2026-02",
+            "台廠客戶名稱": "🇻🇳 平陽美德金屬加工廠 (MeiDe Metal)",
+            "水電工程項目": "廠房動力配電、給排水系統與照明工程",
+            "合約總價 (USD)": 380000.0,
+            "已收款金額 (USD)": 228000.0,
+            "未收款/尾款 (USD)": 152000.0,
+            "工程進度 (%)": 75,
+            "工程與驗收狀態": "🟡 正在進行主幹管拉線與配電盤組裝",
+            "財務收款理由說明": "第三期進度款（60%）已達請款條件，會計部已發出請款單，預計下週入帳。"
         },
+        {
+            "專案代碼": "PRJ-2026-03",
+            "台廠客戶名稱": "🇻🇳 隆安宏遠精密機械廠 (HongYuan Precision)",
+            "水電工程項目": "變電站統包工程、銅排配置與空調系統配電",
+            "合約總價 (USD)": 620000.0,
+            "已收款金額 (USD)": 434000.0,
+            "未收款/尾款 (USD)": 186000.0,
+            "工程進度 (%)": 85,
+            "工程與驗收狀態": "🟢 變電站主體完工，台電/當地電力局驗收中",
+            "財務收款理由說明": "電力局供電許可證核發中，證照到手後立即通知客戶支付 30% 驗收尾款。"
+        },
+        {
+            "專案代碼": "PRJ-2026-04",
+            "台廠客戶名稱": "🇻🇳 北寧富泰光電科技 (FuTai Optoelectronics)",
+            "水電工程項目": "廠辦大樓消防警報系統與機房不斷電(UPS)配電",
+            "合約總價 (USD)": 400000.0,
+            "已收款金額 (USD)": 273000.0,
+            "未收款/尾款 (USD)": 127000.0,
+            "工程進度 (%)": 55,
+            "工程與驗收狀態": "🟡 橋架架設與線槽安裝階段",
+            "財務收款理由說明": "第二期工程進度款審核中，因客戶工程師近期出差延遲簽核，已由業務前往催辦。"
+        }
     ]
-    for item in news_items:
-        with st.container():
-            st.markdown(f"• **【{item['date']}】{item['title']}** (`{item['source']}`)")
-            st.warning(f"💡 **評估**: {item['sentiment']} \n\n{item['summary']}")
 
-    st.markdown(f"#### {L['chat_title']}")
-    user_query = st.text_area(
-        L["chat_caption"],
-        value="請幫我分析倫敦銅價 (LME Copper) 走勢對高壓配電盤導電銅排採購策略的影響？",
-        height=80,
-    )
-    if st.button("🚀 詢問 AI 財經顧問", type="primary", use_container_width=True):
-        st.info("💡 **AI 財經顧問分析**：當前倫敦銅價受電網擴建需求支撐呈小幅震盪走高，建議配合越南廠近 45 天專案用量進行分批避險鎖價，以維持預算毛利率。")
+    df_proj = pd.DataFrame(projects_data)
+    
+    # 格式化顯示表格
+    st.dataframe(df_proj, use_container_width=True)
 
+    # 視覺化圖表：工程進度與未收款金額對比
+    st.markdown("---")
+    c_chart1, c_chart2 = st.columns(2)
+    with c_chart1:
+        fig_prog = px.bar(df_proj, x="專案代碼", y="工程進度 (%)", color="專案代碼", title="各水電專案工程進度和進度條 (Progress)")
+        st.plotly_chart(fig_prog, use_container_width=True)
+    with c_chart2:
+        fig_cash = px.bar(df_proj, x="專案代碼", y=["已收款金額 (USD)", "未收款/尾款 (USD)"], title="各專案已收款 vs 未收款結構 (USD)")
+        st.plotly_chart(fig_cash, use_container_width=True)
 
 # ----------------------------------------------------
-# 2. 區塊二：財務類顯示資料
+# 📈 2. LME 銅價與 USD/VND 匯率追蹤 (水電工程核心成本)
 # ----------------------------------------------------
-def render_finance_section(L):
-    st.markdown(f"### {L['sec_finance']}")
+def render_materials_and_fx_tracking():
+    st.markdown("### 📈 LME 國際銅價成本與 USD/VND 匯率即時監控")
+    st.caption("水電工程的核心成本來自導線與銅排（Copper Busbar）。本看板協助評估國際銅價波動對專案毛利的影響。")
 
-    col_ar1, col_ar2 = st.columns(2)
-    col_ar1.metric("全球總應收 (AR)", "$2.85M USD", "+$120K")
-    col_ar2.metric("全球總應付 (AP)", "$1.42M USD", "-$45K")
-
-    col_ar3, col_ar4 = st.columns(2)
-    col_ar3.metric("逾期帳款 (>60天)", "$185K USD", "⚠️ 關注", delta_color="inverse")
-    col_ar4.metric("淨營運現金流", "$1.43M USD", "🟢 健康")
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("LME 倫敦銅價 (Copper)", "$9,250 USD/噸", "+85.0 (+0.93%) 🟢")
+    col2.metric("美金/越南盾 (USD/VND)", "25,420 VND", "-15.0 (-0.06%) 穩定")
+    col3.metric("PVC 塑膠管材指數", "$1,420 USD", "+5.0 (+0.35%)")
+    col4.metric("變壓器矽鋼片採購指數", "$2,150 USD/噸", "持平")
 
     st.markdown("---")
-    st.markdown("##### 🏢 各廠區 AR / AP 明細")
+    st.markdown("#### 💡 銅價波動對水電工程報價之影響評估")
+    st.info("""
+    * **銅價走勢分析**：近期 LME 銅價維持在 $9,250 美元/噸高檔震盪。若合約為固定總價且未納入原物料價格調整條款，需留意後續進場施工之線材採購成本。
+    * **匯率風險控管**：越南當地工程人工及部分內購材料以越南盾 (VND) 支付，但進口高壓開關與變電設備常以美金 (USD) 計價，建議財務部持續關注 USD/VND 匯率走勢並做好匯率避險。
+    """)
 
-    if "factory_list" in st.session_state and st.session_state.factory_list:
-        dynamic_factories = st.session_state.factory_list
-    else:
-        dynamic_factories = [
-            {"name": "🇻🇳 越南西寧廠", "status": "🟢 正常"},
-            {"name": "🇻🇳 越南海防廠", "status": "🟢 正常"},
-        ]
+# ----------------------------------------------------
+# 📊 3. 專案 AR/AP 財務現金流
+# ----------------------------------------------------
+def render_project_ar_ap_stats():
+    st.markdown("### 📊 越南台廠水電工程專案 AR / AP 財務現金流")
+    
+    col_ar1, col_ar2, col_ar3, col_ar4 = st.columns(4)
+    col_ar1.metric("工程總應收帳款 (AR)", "$600,000 USD", "包含各期尾款與進度款")
+    col_ar2.metric("材料與工班應付帳款 (AP)", "$280,000 USD", "供應商與次承攬商貨款")
+    col_ar3.metric("逾期未收款 (>60天)", "$85,000 USD", "⚠️ 需優先催收")
+    col_ar4.metric("專案淨現金流預估", "$320,000 USD", "🟢 資金水位安全")
 
-    view_mode_fin = st.radio("選擇檢視模式：", ["📱 手機直立卡片", "💻 電腦表格"], horizontal=True, key="view_mode_fin")
+    st.markdown("#### 🏢 專案應收與應付明細表")
+    ar_ap_data = [
+        {"專案代碼": "PRJ-2026-01", "客戶名稱": "新順楠梓電子", "應收 AR (USD)": "$135,000", "應付 AP (USD)": "$60,000", "帳款狀態": "🟡 待驗收尾款"},
+        {"專案代碼": "PRJ-2026-02", "客戶名稱": "平陽美德金屬", "應收 AR (USD)": "$152,000", "應付 AP (USD)": "$75,000", "帳款狀態": "🟢 請款審核中"},
+        {"專案代碼": "PRJ-2026-03", "客戶名稱": "隆安宏遠精密", "應收 AR (USD)": "$186,000", "應付 AP (USD)": "$90,000", "帳款狀態": "🟡 待電力局驗收"},
+        {"專案代碼": "PRJ-2026-04", "客戶名稱": "北寧富泰光電", "應收 AR (USD)": "$127,000", "應付 AP (USD)": "$55,000", "帳款狀態": "🟢 施工採購中"}
+    ]
+    st.dataframe(pd.DataFrame(ar_ap_data), use_container_width=True)
 
-    if "📱" in view_mode_fin:
-        for idx, fact in enumerate(dynamic_factories):
-            f_name = fact.get("name", f"廠區-{idx+1}")
-            ar_val = "$1,200,000" if idx == 0 else "$950,000"
-            ap_val = "$600,000" if idx == 0 else "$520,000"
-            status_val = fact.get("status", "🟢 正常")
+# ----------------------------------------------------
+# 🧮 4. 企業綜合損益表 (P&L)
+# ----------------------------------------------------
+def render_consolidated_income_statement():
+    st.markdown("### 📊 水電工程事業部綜合損益表 (Income Statement / P&L) (USD)")
+    st.caption("數據由全系統各模組（水電工程合約、材料採購、工班薪資、機具租賃）即時勾稽與計算。")
 
-            with st.container():
-                st.markdown(f"#### 🏭 {f_name}")
-                st.success(f"🟢 **營運狀態**: {status_val}")
-                c_a, c_b = st.columns(2)
-                c_a.write(f"• **應收帳款 (AR)**:\n  `{ar_val}`")
-                c_b.write(f"• **應付帳款 (AP)**:\n  `{ap_val}`")
-                st.divider()
-    else:
-        ar_ap_rows = []
-        for idx, fact in enumerate(dynamic_factories):
-            f_name = fact.get("name", f"廠區-{idx+1}")
-            ar_val = "$1,200,000" if idx == 0 else "$950,000"
-            ap_val = "$600,000" if idx == 0 else "$520,000"
-            status_val = fact.get("status", "🟢 正常")
-            ar_ap_rows.append({"廠區": f_name, "AR (USD)": ar_val, "AP (USD)": ap_val, "狀態": status_val})
-        st.dataframe(pd.DataFrame(ar_ap_rows), use_container_width=True)
+    total_revenue = 1850000.0   # 總合約營收
+    total_cogs = 1250000.0      # 工程成本（線材、配電盤、工班點工）
+    gross_profit = total_revenue - total_cogs
+    gross_margin = (gross_profit / total_revenue * 100) if total_revenue > 0 else 0.0
 
-    st.markdown("##### 📊 企業綜合損益摘要 (P&L)")
+    payroll_expense = 180000.0  # 工程師與管理薪資
+    equipment_expense = 45000.0 # 吊車、機具租賃與測試儀器
+    admin_expense = 25000.0     # 辦公與差旅行政開支
+
+    total_opex = payroll_expense + equipment_expense + admin_expense
+    ebit = gross_profit - total_opex
+    tax_expense = max(0.0, ebit * 0.20)
+    net_income = ebit - tax_expense
+    net_margin = (net_income / total_revenue * 100) if total_revenue > 0 else 0.0
+
+    k1, k2, k3, k4 = st.columns(4)
+    k1.metric("工程總營收 (Revenue)", f"${total_revenue:,.2f} USD")
+    k2.metric("工程毛利 (Gross Profit)", f"${gross_profit:,.2f} USD", f"毛利率 {gross_margin:.1f}%")
+    k3.metric("營業費用 (OPEX)", f"${total_opex:,.2f} USD")
+    k4.metric("本期淨利 (Net Income)", f"${net_income:,.2f} USD", f"淨利率 {net_margin:.1f}%")
+
+    st.markdown("---")
     pl_data = [
-        {"項目": "營業收入 (Revenue)", "金額 (USD)": "$250,000.00"},
-        {"項目": "營業成本 (COGS)", "金額 (USD)": "($115,000.00)"},
-        {"項目": "營業毛利 (Gross Profit)", "金額 (USD)": "$135,000.00 (毛利率 54%)"},
-        {"項目": "營業費用 (OPEX)", "金額 (USD)": "($56,950.00)"},
-        {"項目": "本期淨利 (Net Income)", "金額 (USD)": "$62,440.00 (淨利率 25%)"},
+        {"會計科目": "一、水電工程營業收入 (Revenue)", "金額 (USD)": f"${total_revenue:,.2f}", "說明": "在手合約總價累計"},
+        {"會計科目": "二、工程直接成本 (COGS)", "金額 (USD)": f"(${total_cogs:,.2f})", "說明": "包含銅線、開關、配電盤與工班薪資"},
+        {"會計科目": "💡 營業毛利 (Gross Profit)", "金額 (USD)": f"${gross_profit:,.2f}", "說明": f"毛利率: {gross_margin:.1f}%"},
+        {"會計科目": "三、營業費用 (OPEX)", "金額 (USD)": f"(${total_opex:,.2f})", "說明": "包含工程師薪資、機具租賃與行政"},
+        {"會計科目": "💡 營業利益 (Operating Income)", "金額 (USD)": f"${ebit:,.2f}", "說明": f"營業利益率: {(ebit/total_revenue*100):.1f}%"},
+        {"會計科目": "四、預估所得稅 (20%)", "金額 (USD)": f"(${tax_expense:,.2f})", "說明": "越南當地企業所得稅提撥"},
+        {"會計科目": "🏆 🏆 本期淨利 (Net Income)", "金額 (USD)": f"${net_income:,.2f}", "說明": f"稅後淨利率: {net_margin:.1f}%"}
     ]
     st.dataframe(pd.DataFrame(pl_data), use_container_width=True)
 
-
 # ----------------------------------------------------
-# 3. 區塊三：工程專案進度與驗收資料
+# 🚀 模組入口函式 (將戰情室 3 個功能在主畫面上完全分開呈現)
 # ----------------------------------------------------
-def render_engineering_section(L):
-    st.markdown(f"### {L['sec_engineering']}")
-
-    col_p1, col_p2 = st.columns(2)
-    col_p1.metric("進行中工程專案", "12 件", "5施工/7驗收")
-    col_p2.metric("本月完工交貨", "₫ 12.8B VND", "+15.2%")
-
-    col_p3, col_p4 = st.columns(2)
-    col_p3.metric("工程準時交付率", "96.5%", "🟢 正常")
-    col_p4.metric("平均機台稼動 (OEE)", "84.5%", "+2.1%")
-
-    st.markdown("---")
-    st.markdown("##### 📋 董事長列管重點工程專案進度")
-
-    if "project_progress_db" in st.session_state and st.session_state.project_progress_db:
-        projects_list = st.session_state.project_progress_db
-    else:
-        projects_list = [
-            {"專案編號": "HD-2026-TN01", "工程名稱": "西寧紡織廠 2000A 主配電櫃工程", "客戶": "CÔNG TY TNHH A-Z", "合約金額": "₫ 6,350,000,000 VND", "工程進度": "85% (現場耐壓測試中)", "預計完工": "2026-10-15"},
-            {"專案編號": "HD-2026-HP05", "工程名稱": "海防電子廠 1000A 低壓配電盤擴建", "客戶": "Foxconn VN", "合約金額": "$120,000 USD", "工程進度": "45% (粉體塗裝烤漆中)", "預計完工": "2026-10-28"},
-        ]
-
-    for prj in projects_list:
-        with st.container():
-            st.markdown(f"#### ⚡ {prj.get('工程名稱', '工程專案')}")
-            progress_str = prj.get("工程進度", "進度推進中")
-            st.info(f"📊 **目前工程進度與狀態**：\n\n**{progress_str}**")
-            c1, c2 = st.columns(2)
-            c1.write(f"• **客戶**: {prj.get('客戶', 'N/A')}")
-            c1.write(f"• **編號**: `{prj.get('專案編號', 'N/A')}`")
-            c2.write(f"• **金額**: {prj.get('合約金額', 'N/A')}")
-            c2.write(f"• **完工日**: `{prj.get('預計完工', 'N/A')}`")
-            st.divider()
-
-
-# ----------------------------------------------------
-# 🚀 容錯進入點
-# ----------------------------------------------------
-def render_executive_dashboard_page(*args, **kwargs):
-    lang = kwargs.get("lang", st.session_state.get("current_lang", "繁體中文"))
-    sub_route = kwargs.get("sub_route", kwargs.get("sub_option", "all"))
+def render_executive_dashboard_page(sub_option="🌐 全部市場 (All Markets)", lang=None):
     L = get_exec_lang_dict(lang)
-
+    current_lang = lang or "繁體中文"
+    
     st.title(L["page_title"])
     st.caption(L["sub_title"])
-
-    with st.expander(L["boss_notes_title"], expanded=True):
-        st.write("• **物價控管**：倫敦銅價 (LME Copper) 升至 $9,250 美元/噸，工程部報價已同步連動資材小計成本。")
-        st.write("• **工程驗收**：西寧紡織廠 2000A 專案進度達 85%, 預計月中驗收並請領第二期 60% 尾款。")
-
     st.divider()
 
-    if sub_route == "commodities_fx":
-        render_commodities_section(L)
-    elif sub_route == "financials_pl":
-        render_finance_section(L)
-    elif sub_route == "project_progress":
-        render_engineering_section(L)
-    else:
-        render_commodities_section(L)
+    # 4 個獨立分頁，讓使用者點選即切換，不再全部擠在同一個長頁面上
+    tab1, tab2, tab3, tab4 = st.tabs([
+        L["tab_project_progress"],
+        L["tab_materials_fx"],
+        L["tab_fin_stat"],
+        L["tab_vpsh_reports"]
+    ])
+
+    # 分頁 1：台廠水電工程專案進度與收款看板
+    with tab1:
+        render_mep_project_progress_board()
+        
         st.divider()
-        render_finance_section(L)
-        st.divider()
-        render_engineering_section(L)
+        st.markdown(f"### {L['ai_summary_title']}")
+        if st.button(L["btn_gen_ai_summary"], type="primary", key=f"btn_ai_mep_sum_{current_lang}"):
+            st.success("📊 **【AI 催收與工程進度分析報告】**：目前 4 件在手水電專案進度皆符合預期。建議針對『新順楠梓電子廠』加速催辦消防驗收，以便順利回收 $135,000 美元尾款；另平陽美德廠第三期進度款已達請款條件，請會計部於本週完成發票開立與請款作業。")
 
+    # 分頁 2：LME 銅價成本與 USD/VND 匯率追蹤
+    with tab2:
+        render_materials_and_fx_tracking()
 
-def render(*args, **kwargs):
-    render_executive_dashboard_page(*args, **kwargs)
+    # 分頁 3：工程專案 AR/AP 財務現金流
+    with tab3:
+        render_project_ar_ap_stats()
 
+    # 分頁 4：企業綜合損益表 (P&L) 與毛利勾稽
+    with tab4:
+        render_consolidated_income_statement()
 
-def show(*args, **kwargs):
-    render_executive_dashboard_page(*args, **kwargs)
+def show(sub_option="🌐 全部市場 (All Markets)", lang=None):
+    render_executive_dashboard_page(sub_option, lang)
 
-
-def main(*args, **kwargs):
-    render_executive_dashboard_page(*args, **kwargs)
+def main(sub_option="🌐 全部市場 (All Markets)", lang=None):
+    render_executive_dashboard_page(sub_option, lang)
