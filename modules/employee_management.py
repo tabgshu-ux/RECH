@@ -15,7 +15,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "name": "張董事長",
                 "nationality": "🇹🇼 台灣 (Taiwan)",
                 "site": "西寧廠",
-                "dept": "👑 經營高層 / 董事會與總經理室 (Executive)",
+                "dept": "👑 經營高層 / 董事會與總經理室 (Executive Board)",
                 "title": "董事長 (Chairman)",
                 "role": "Admin",
                 "phone": "0912345678",
@@ -24,13 +24,13 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
             },
             {
                 "id": "EMP-002",
-                "name": "Nguyễn Văn An",
+                "name": "陳智賢",
                 "nationality": "🇻🇳 越南 (Vietnamese)",
-                "site": "西寧廠",
-                "dept": "工程部",
-                "title": "kỹ sư Tủ điện",
-                "role": "Staff",
-                "phone": "0987654321",
+                "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
+                "dept": "👑 經營高層 / 董事會與總經理室 (Executive Board)",
+                "title": "總經理 (General Manager)",
+                "role": "Admin",
+                "phone": "0918999080",
                 "address": "-",
                 "face_token": "FACE-BIO-100234",
             },
@@ -39,9 +39,9 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "name": "李元隆",
                 "nationality": "🇹🇼 台灣 (Taiwanese)",
                 "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
-                "dept": "👑 經營高層 / 董事會與總經理室 (Executive)",
-                "title": "副總",
-                "role": "Staff",
+                "dept": "👔 經營主管 / 營運管理中心 (Management & Operations)",
+                "title": "副總經理 (Vice General Manager)",
+                "role": "Manager",
                 "phone": "-",
                 "address": "-",
                 "face_token": "FACE-BIO-300451",
@@ -55,14 +55,14 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
     # 3. 初始化廠區人臉辨識/指紋打卡機彙集記錄
     if "biometric_attendance_logs" not in st.session_state:
         st.session_state.biometric_attendance_logs = [
-            {"date": str(datetime.date.today()), "emp_id": "EMP-002", "name": "Nguyễn Văn An", "device": "大門口人臉辨識機 #01", "check_type": "上班打卡 (Clock In)", "time": "07:55:20", "status": "🟢 正常"},
+            {"date": str(datetime.date.today()), "emp_id": "EMP-002", "name": "陳智賢", "device": "大門口人臉辨識機 #01", "check_type": "上班打卡 (Clock In)", "time": "07:55:20", "status": "🟢 正常"},
             {"date": str(datetime.date.today()), "emp_id": "EMP-003", "name": "李元隆", "device": "辦公室指紋機 #02", "check_type": "上班打卡 (Clock In)", "time": "08:12:45", "status": "🟡 遲到"},
         ]
 
     # 4. 初始化請假申請記錄
     if "leave_requests_db" not in st.session_state:
         st.session_state.leave_requests_db = [
-            {"req_id": "LEV-2026-001", "emp_id": "EMP-002", "name": "Nguyễn Văn An", "leave_type": "事假 (Personal Leave)", "start_date": "2026-10-10", "end_date": "2026-10-10", "hours": 8.0, "reason": "家中有事需請假一天", "status": "⏳ 簽核中 (Pending)"}
+            {"req_id": "LEV-2026-001", "emp_id": "EMP-002", "name": "陳智賢", "leave_type": "事假 (Personal Leave)", "start_date": "2026-10-10", "end_date": "2026-10-10", "hours": 8.0, "reason": "家中有事需請假一天", "status": "⏳ 簽核中 (Pending)"}
         ]
 
     # 5. 初始化頁籤切換狀態
@@ -72,10 +72,10 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
     if "emp_success_msg" not in st.session_state:
         st.session_state.emp_success_msg = ""
 
-    # 五個分頁標題（包含原有 3 個 + 新增的 2 個智慧打卡與請假連動）
     tab_titles = [
         "📑 現有在職員工名冊",
         "➕ 新增員工個人檔案",
+        "📤 Excel 批次匯入員工",
         "📦 離職人員檔案與歷史查詢",
         "⏰ 廠區人臉/指紋打卡資料彙集",
         "📝 請假申請與電子簽核連動"
@@ -172,7 +172,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     st.warning("⚠️ 請先在表格左側勾選要辦理離職的對象。")
 
     # ----------------------------------------------------
-    # ➕ 頁籤二：新增員工個人檔案（已加入高階經營管理層級）
+    # ➕ 頁籤二：新增員工個人檔案（已加入高階經營與經營主管選項）
     # ----------------------------------------------------
     elif st.session_state.emp_active_tab == 1:
         st.markdown("### ➕ 登錄新員工個人檔案")
@@ -195,7 +195,8 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 dept = st.selectbox(
                     "所屬部門 / 單位 *",
                     [
-                        "👑 經營高層 / 董事會與總經理室 (Executive)",
+                        "👑 經營高層 / 董事會與總經理室 (Executive Board)",
+                        "👔 經營主管 / 營運管理中心 (Management & Operations)",
                         "管理部 (Management - 行政/財務/採購)",
                         "工務部 (Engineering - 設計/工程/品管)",
                         "生產部 - 板金組 (Sheet Metal)",
@@ -203,7 +204,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                         "生產部 - 配盤組 (Assembly)",
                     ]
                 )
-                job_title = st.text_input("職位 / 職銜 (Job Title) *", value="總經理 (General Manager)")
+                job_title = st.text_input("職位 / 職銜 (Job Title) *", value="經理 / 主管")
 
             c4, c5 = st.columns(2)
             with c4:
@@ -240,9 +241,58 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     st.error("❌ 請完整填寫員工編號與姓名！")
 
     # ----------------------------------------------------
-    # 📦 頁籤三：離職人員檔案與歷史查詢
+    # 📤 頁籤三：Excel 批次匯入員工資料
     # ----------------------------------------------------
     elif st.session_state.emp_active_tab == 2:
+        st.markdown("### 📤 上傳 Excel 檔案批次匯入員工資料庫")
+        st.info("💡 請上傳您的 Excel 檔案 (`.xlsx` 或 `.csv`)。")
+
+        uploaded_file = st.file_uploader("選擇員工名冊 Excel 檔案", type=["xlsx", "csv"])
+        
+        if uploaded_file is not None:
+            try:
+                if uploaded_file.name.endswith(".csv"):
+                    df_upload = pd.read_csv(uploaded_file)
+                else:
+                    df_upload = pd.read_excel(uploaded_file)
+
+                st.markdown("#### 🔍 預覽您上傳的 Excel 資料內容：")
+                st.dataframe(df_upload.head(5), use_container_width=True)
+
+                if st.button("🚀 確認並將資料全部匯入系統資料庫", type="primary"):
+                    imported_count = 0
+                    for _, row in df_upload.iterrows():
+                        emp_id = str(row.get("id", row.get("員工編號", f"EMP-9{imported_count}")))
+                        emp_name = str(row.get("name", row.get("姓名", "未命名")))
+                        
+                        exists = any(e["id"] == emp_id for e in st.session_state.employees_db)
+                        if not exists:
+                            new_emp = {
+                                "id": emp_id,
+                                "name": emp_name,
+                                "nationality": str(row.get("nationality", row.get("國籍", "🇻🇳 越南 (Vietnamese)"))),
+                                "site": str(row.get("site", row.get("廠區", "西寧廠"))),
+                                "dept": str(row.get("dept", row.get("部門", "👑 經營高層 / 董事會與總經理室 (Executive Board)"))),
+                                "title": str(row.get("title", row.get("職稱", "經理"))),
+                                "role": "Staff",
+                                "phone": str(row.get("phone", row.get("電話", "-"))),
+                                "address": str(row.get("address", row.get("地址", "-"))),
+                                "face_token": str(row.get("face_token", row.get("人臉代碼", "FACE-BIO-NEW"))),
+                            }
+                            st.session_state.employees_db.append(new_emp)
+                            imported_count += 1
+
+                    st.session_state.emp_success_msg = f"🎉 【批次匯入成功】已成功從 Excel 匯入 {imported_count} 筆員工資料到系統資料庫！"
+                    st.session_state.emp_active_tab = 0
+                    st.rerun()
+
+            except Exception as e:
+                st.error(f"❌ 讀取 Excel 檔案發生錯誤: {str(e)}")
+
+    # ----------------------------------------------------
+    # 📦 頁籤四：離職人員檔案與歷史查詢
+    # ----------------------------------------------------
+    elif st.session_state.emp_active_tab == 3:
         st.markdown("### 📦 離職人員歷史檔案庫 (Resigned Employees Archive)")
         st.caption("所有離職或結案的員工資料均完整保留於此，方便日後隨時搜尋與查閱。")
 
@@ -253,9 +303,9 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
             st.info("目前尚無離職歸檔人員紀錄。")
 
     # ----------------------------------------------------
-    # ⏰ 頁籤四：廠區人臉/指紋打卡資料彙集中心
+    # ⏰ 頁籤五：廠區人臉/指紋打卡資料彙集中心
     # ----------------------------------------------------
-    elif st.session_state.emp_active_tab == 3:
+    elif st.session_state.emp_active_tab == 4:
         st.markdown("### ⏰ 廠區人臉辨識系統與指紋打卡機資料彙集中心")
         st.caption("即時匯集各廠區生物辨識打卡機之刷卡記錄，自動判定出勤狀態。")
 
@@ -277,9 +327,9 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 st.rerun()
 
     # ----------------------------------------------------
-    # 📝 頁籤五：請假申請與電子簽核連動（支援 2000 年起下拉選單）
+    # 📝 頁籤六：請假申請與電子簽核連動
     # ----------------------------------------------------
-    elif st.session_state.emp_active_tab == 4:
+    elif st.session_state.emp_active_tab == 5:
         st.markdown("### 📝 員工請假申請與電子簽核連動中心")
         st.caption("員工提交請假單後，系統將自動送交『電子簽核中心』，經主管核准後自動生效。支援自 2000 年起的資深經歷計算。")
 
