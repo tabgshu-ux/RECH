@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 
 def render_employee_management(engine=None, t=None, lang="繁體中文"):
-    st.title("👤 管理部 - 員工與人事管理、智慧打卡及請假簽核中心")
+    st.title("👤 管理部 - 員工與人事管理")
     st.caption("維護全廠區員工個人檔案、合約記錄、工作廠區、離職歸檔、人臉/指紋打卡機資料彙集。")
 
     # 初始化員工資料庫
