@@ -47,11 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchendX = 0;
 
     function handleGesure() {
-        // 向左滑動超過 50px 且側邊欄為展開狀態時，自動模擬點擊收合按鈕
         if (touchendX < touchstartX - 50) {
-            const collapseBtn = document.querySelector('[data-testid="stSidebarNav"] button, button[kind="header"], [data-testid="collapsedControl"]');
             const sidebar = document.querySelector('[data-testid="stSidebar"]');
-            // 如果側邊欄目前是展開的，向左滑動就收起它
             if (sidebar && window.innerWidth <= 768) {
                 const closeBtn = document.querySelector('[data-testid="stSidebar"] button[kind="tertiary"], [data-testid="stSidebar"] button');
                 if (closeBtn) {
@@ -89,7 +86,7 @@ RECH_LOGO_HTML = """
 """
 
 # ----------------------------------------------------
-# 三階組織架構選單字典（已包含外勤打卡與三合一發票管理）
+# 三階組織架構選單字典（已將工務部更名為工程部）
 # ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
@@ -117,14 +114,14 @@ NAV_STRUCTURE = {
                     "✍️ [行政] 電子簽核與請款審核中心": "approval_center",
                     "👤 [行政] 員工個人檔案與人事管理 (人事)": "hr_employee",
                     "🚗 [行政] 廠區車輛進出與門禁時間紀錄": "vehicle_gate",
-                    "📍 [外勤] 工程人員 GPS 拍照打卡": "field_attendance",  # 外勤打卡選項
+                    "📍 [外勤] 工程人員 GPS 拍照打卡": "field_attendance",
                     "🧾 [財務] 採購與應付帳款 (AP)": "procurement_ap",
                     "📋 [財務] 銷售與應收帳款 (AR)": "sales_order_ar",
                     "💰 [財務] 全球員工薪資與保險扣款試算": "payroll_calc",
                     "📄 [財務] 越南電子發票綜合管理中心": "invoice_management",
                 }
             },
-            "🛠️ 工務部 (Engineering Dept)": {
+            "🛠️ 工程部 (Engineering Dept)": {
                 "features": {
                     "📐 [設計] 配電盤電氣與機構設計圖庫": "engineering_quote",
                     "⚡ [工程] 配電盤估價與資材報價總合": "engineering_quote",
@@ -169,10 +166,10 @@ NAV_STRUCTURE = {
             "👔 Phòng Quản lý (Management Dept)": {
                 "features": {
                     "🏢 [Hành chính] Quản lý Tài sản Cố định": "ga_assets",
-                    "✍️ [Hành chính] Trung tâm Phê duyệt": "approval_center",
+                    "✍️️ [Hành chính] Trung tâm Phê duyệt": "approval_center",
                     "👤 [Nhân sự] Hồ sơ Nhân sự & Hợp đồng": "hr_employee",
                     "🚗 [Bảo vệ] Quản lý xe ra vào nhà máy": "vehicle_gate",
-                    "📍 [Hiện trường] Chấm công GPS kỹ sư": "field_attendance",  # 👈 新增外勤打卡選項
+                    "📍 [Hiện trường] Chấm công GPS kỹ sư": "field_attendance",
                     "🛒 [Tài chính] Mua hàng & Phải trả (AP)": "procurement_ap",
                     "📋 [Tài chính] Quản lý Bán hàng (AR)": "sales_order_ar",
                     "💰 [Tài chính] Tính Lương & Khấu trừ": "payroll_calc",
@@ -189,7 +186,7 @@ NAV_STRUCTURE = {
             "🏭 Phòng Sản xuất (Production Dept)": {
                 "features": {
                     "📦 [Kho] Quản lý Kho & Mã vạch": "wh_management",
-                    "✂️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
+                    "✂️️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
                     "🎨 [Sơn] Tổ Sơn tĩnh điện": "painting",
                     "⚡ [Lắp ráp] Tổ Lắp ráp Tủ điện": "assembly",
                 }
@@ -227,7 +224,7 @@ NAV_STRUCTURE = {
                     "✍️ [GA] E-Approval Center": "approval_center",
                     "👤 [HR] Employee Records": "hr_employee",
                     "🚗 [Security] Vehicle Gate Log": "vehicle_gate",
-                    "📍 [Field] Engineer GPS Attendance": "field_attendance",  # 👈 新增外勤打卡選項
+                    "📍 [Field] Engineer GPS Attendance": "field_attendance",
                     "🛒 [Finance] Procurement & AP": "procurement_ap",
                     "📋 [Finance] Sales & AR": "sales_order_ar",
                     "💰 [Finance] Payroll & Insurance": "payroll_calc",
@@ -267,7 +264,6 @@ if "current_lang" not in st.session_state:
 # ----------------------------------------------------
 engine = db_conn.get_db_engine()
 
-
 def safe_call_module(func, *args, **kwargs):
     if not callable(func):
         return
@@ -282,7 +278,6 @@ def safe_call_module(func, *args, **kwargs):
             func()
         except Exception as e:
             st.error(f"模組載入異常: {str(e)}")
-
 
 # ----------------------------------------------------
 # 登入系統
@@ -314,7 +309,6 @@ if not st.session_state.logged_in:
                 st.session_state.logged_in = True
                 u_clean = username.strip().lower()
                 
-                # 判斷帳號角色
                 if u_clean in ["admin", "executive", "boss"]:
                     st.session_state.user_role = "admin"
                 elif u_clean in ["manager", "supervisor"]:
@@ -363,7 +357,6 @@ dept_options = list(lang_dict["departments"].keys())
 current_user_clean = str(st.session_state.user_name).strip().lower()
 current_role_clean = str(st.session_state.user_role).strip().lower()
 
-# 💡 保全權限：限制只能看到管理部，且只能操作車輛門禁（已完全移除左側藍色提示框）
 if current_role_clean == "security":
     dept_options = ["👔 管理部 (Management Dept)"]
     selected_parent_dept = dept_options[0]
@@ -374,7 +367,6 @@ if current_role_clean == "security":
     selected_feature_label = feature_labels[0]
     target_route = "vehicle_gate"
 else:
-    # 一般權限邏輯
     is_executive_access = (
         current_user_clean in ["admin", "executive", "boss", "ceo", "gm"]
         or current_role_clean in ["admin", "executive", "manager"]
@@ -443,7 +435,6 @@ elif target_route == "invoice_management":
     )
 
 elif target_route == "field_attendance":
-    # 👈 新增：外勤工程人員打卡路由分派
     safe_call_module(
         field_attendance.render_field_attendance_page,
         engine=engine,
@@ -480,7 +471,6 @@ elif target_route == "wh_management":
     safe_call_module(
         warehouse_management.render_warehouse_management,
         engine=engine,
-        t=lang_dict,
         lang=curr_lang,
     )
 
