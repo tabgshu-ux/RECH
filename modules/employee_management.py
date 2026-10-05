@@ -107,11 +107,11 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
         st.session_state.emp_success_msg = ""
 
     # ----------------------------------------------------
-    # 📑 頁籤一：現有在職員工名冊
+    # 📑 頁籤一：現有在職員工名冊（支援直接點擊修改與儲存）
     # ----------------------------------------------------
     if st.session_state.emp_active_tab == 0:
         st.markdown("### 📋 公司現有在職員工名冊（含 AI 人臉辨識與指紋 ID 串接欄位）")
-        st.info("💡 請在表格左側勾選目標員工，然後點擊下方對應的處理按鈕進行刪除或離職歸檔。")
+        st.info("💡 您可以直接在下方表格中點擊任何儲存格來修改或補齊未填完的資料（如地址、電話等），修改後請點擊下方的儲存按鈕。")
 
         df_emp = pd.DataFrame(st.session_state.employees_db)
         if "選取" not in df_emp.columns:
@@ -124,9 +124,30 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
             key="employee_editor"
         )
 
-        col_b1, col_b2, _ = st.columns([1.5, 1.5, 2])
+        col_b1, col_b2, col_b3 = st.columns([1.5, 1.5, 2])
         with col_b1:
-            if st.button("🗑️ 刪除選定項目", use_container_width=True, type="primary"):
+            if st.button("💾 儲存表格中的修改變更", use_container_width=True, type="primary"):
+                # 將編輯後的 DataFrame 寫回 employees_db
+                updated_list = []
+                for _, row in edited_emp_df.iterrows():
+                    updated_list.append({
+                        "id": str(row["id"]),
+                        "name": str(row["name"]),
+                        "nationality": str(row["nationality"]),
+                        "site": str(row["site"]),
+                        "dept": str(row["dept"]),
+                        "title": str(row["title"]),
+                        "role": str(row["role"]),
+                        "phone": str(row["phone"]),
+                        "address": str(row["address"]),
+                        "face_token": str(row["face_token"]),
+                    })
+                st.session_state.employees_db = updated_list
+                st.success("✅ 員工資料修改已成功儲存更新！")
+                st.rerun()
+
+        with col_b2:
+            if st.button("🗑️ 刪除選定項目", use_container_width=True):
                 remaining_emp = []
                 del_count = 0
                 for idx, row in edited_emp_df.iterrows():
@@ -145,7 +166,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 else:
                     st.warning("⚠️ 請先在表格左側勾選要刪除的對象。")
 
-        with col_b2:
+        with col_b3:
             if st.button("📁 辦理離職歸檔", use_container_width=True):
                 remaining_emp = []
                 moved_count = 0
@@ -172,7 +193,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     st.warning("⚠️ 請先在表格左側勾選要辦理離職的對象。")
 
     # ----------------------------------------------------
-    # ➕ 頁籤二：新增員工個人檔案（支援董事長、總經理、副總到部門主管角色）
+    # ➕ 頁籤二：新增員工個人檔案
     # ----------------------------------------------------
     elif st.session_state.emp_active_tab == 1:
         st.markdown("### ➕ 登錄新員工個人檔案")
@@ -216,7 +237,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
 
             face_token = st.text_input("🤖 AI 臉部辨識 / 指紋機特徵代碼 (未來打卡系統串接預留)", value="FACE-PENDING-REGISTRATION")
             
-            # 💡 擴充系統權限角色：涵蓋董事長、總經理、副總經理、經營主管、部門主管、基層員工
             role_options = [
                 "Chairman (董事長)",
                 "GeneralManager (總經理)",
@@ -247,7 +267,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     }
                     st.session_state.employees_db.append(new_employee)
                     
-                    st.session_state.emp_success_msg = f"🎉 【新增完成】已成功登錄 [{job_title}] [{emp_name}] (`{emp_id}`)，角色：`{role_value}`！"
+                    st.session_state.emp_success_msg = f"🎉 【新增完成】已成功登錄 [{job_title}] [{emp_name}] (`{emp_id}`)！"
                     st.session_state.emp_active_tab = 0
                     st.rerun()
                 else:
