@@ -2,12 +2,10 @@ import datetime
 import pandas as pd
 import streamlit as st
 
-
 def render_employee_management(engine=None, t=None, lang="繁體中文"):
     st.title("👤 管理部 - 員工與人事管理、智慧打卡及請假簽核中心")
     st.caption("維護全廠區員工個人檔案、合約記錄、工作廠區、離職歸檔、人臉/指紋打卡機資料彙集，以及請假單自動連動電子簽核系統。")
 
-    # 1. 初始化在職員工資料庫
     if "employees_db" not in st.session_state or not st.session_state.employees_db:
         st.session_state.employees_db = [
             {
@@ -48,24 +46,20 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
             },
         ]
 
-    # 2. 初始化離職員工歸檔資料庫
     if "resigned_employees_db" not in st.session_state:
         st.session_state.resigned_employees_db = []
 
-    # 3. 初始化廠區人臉辨識/指紋打卡機彙集記錄
     if "biometric_attendance_logs" not in st.session_state:
         st.session_state.biometric_attendance_logs = [
             {"date": str(datetime.date.today()), "emp_id": "EMP-002", "name": "陳智賢", "device": "大門口人臉辨識機 #01", "check_type": "上班打卡 (Clock In)", "time": "07:55:20", "status": "🟢 正常"},
             {"date": str(datetime.date.today()), "emp_id": "EMP-003", "name": "李元隆", "device": "辦公室指紋機 #02", "check_type": "上班打卡 (Clock In)", "time": "08:12:45", "status": "🟡 遲到"},
         ]
 
-    # 4. 初始化請假申請記錄
     if "leave_requests_db" not in st.session_state:
         st.session_state.leave_requests_db = [
             {"req_id": "LEV-2026-001", "emp_id": "EMP-002", "name": "陳智賢", "leave_type": "事假 (Personal Leave)", "start_date": "2026-10-10", "end_date": "2026-10-10", "hours": 8.0, "reason": "家中有事需請假一天", "status": "⏳ 簽核中 (Pending)"}
         ]
 
-    # 5. 使用最穩定的 st.selectbox 取代複雜的 radio 分頁導航，防止任何頁面卡死
     menu_mode = st.selectbox(
         "📌 請選擇人事管理功能模組：",
         [
@@ -80,9 +74,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
 
     st.markdown("---")
 
-    # ----------------------------------------------------
-    # 模式一：現有在職員工名冊與詳細資料修改
-    # ----------------------------------------------------
     if "1." in menu_mode:
         st.markdown("### 📋 公司現有在職員工名冊與詳細資料維護")
         st.info("💡 您可以隨時檢視清單，並在下方選擇特定員工進行詳細資料（電話、地址、人臉代碼等）的修改與更新。")
@@ -144,9 +135,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                         
                         st.success(f"🎉 【修改成功】員工 [{edit_name}] (`{selected_emp_id}`) 的詳細資料已更新儲存！")
 
-    # ----------------------------------------------------
-    # 模式二：登錄新員工個人檔案
-    # ----------------------------------------------------
     elif "2." in menu_mode:
         st.markdown("### ➕ 登錄新員工個人檔案")
 
@@ -202,9 +190,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 else:
                     st.error("❌ 請完整填寫員工編號與姓名！")
 
-    # ----------------------------------------------------
-    # 模式三：Excel 批次匯入員工
-    # ----------------------------------------------------
     elif "3." in menu_mode:
         st.markdown("### 📤 上傳 Excel 檔案批次匯入員工資料庫")
         uploaded_file = st.file_uploader("選擇員工名冊 Excel 檔案", type=["xlsx", "csv"])
@@ -230,9 +215,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
             except Exception as e:
                 st.error(f"❌ 讀取錯誤: {str(e)}")
 
-    # ----------------------------------------------------
-    # 模式四：離職人員歷史檔案庫
-    # ----------------------------------------------------
     elif "4." in menu_mode:
         st.markdown("### 📦 離職人員歷史檔案庫 (Resigned Employees Archive)")
         if st.session_state.resigned_employees_db:
@@ -240,9 +222,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
         else:
             st.info("目前尚無離職歸檔人員紀錄。")
 
-    # ----------------------------------------------------
-    # 模式五：廠區人臉/指紋打卡資料彙集
-    # ----------------------------------------------------
     elif "5." in menu_mode:
         st.markdown("### ⏰ 廠區人臉辨識系統與指紋打卡機資料彙集中心")
         col_l1, col_l2, col_l3 = st.columns(3)
@@ -251,9 +230,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
         col_l3.metric("設備狀態", "連線正常 (3/3)")
         st.dataframe(pd.DataFrame(st.session_state.biometric_attendance_logs), use_container_width=True)
 
-    # ----------------------------------------------------
-    # 模式六：請假申請與電子簽核連動
-    # ----------------------------------------------------
     elif "6." in menu_mode:
         st.markdown("### 📝 員工請假申請與電子簽核連動中心")
         if st.session_state.leave_requests_db:
@@ -287,7 +263,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     "hours": leave_hours, "reason": leave_reason, "status": "⏳ 簽核中 (Pending)"
                 })
                 st.success(f"🎉 請假單 `{new_req_id}` 已成功送出並連線至電子簽核中心！")
-
 
 def show(engine=None, t=None, lang="繁體中文"):
     render_employee_management(engine, t, lang)
