@@ -83,6 +83,48 @@ def get_active_lang(passed_lang):
             return val
     return "Tiếng Việt"  # 預設越南文
 
+# ----------------------------------------------------
+# 🔄 表格內部資料智慧語意轉譯引擎 (Smart Translation)
+# ----------------------------------------------------
+def smart_translate_project_data(text, target_lang):
+    if not text or not isinstance(text, str):
+        return text
+    
+    if target_lang == "Tiếng Việt":
+        # 客戶與廠區轉譯
+        text = text.replace("越南新順楠梓電子廠", "Nhà máy Điện tử Tân Thuận, TP.HCM")
+        text = text.replace("平陽美德金屬加工廠", "Nhà máy Cơ khí Meide Bình Dương")
+        text = text.replace("隆安宏遠精密機械廠", "Nhà máy Cơ khí chính xác Hồng Viễn, Long An")
+        text = text.replace("北寧富泰光電科技", "Công ty Công nghệ Quang điện FuTai, Bắc Ninh")
+        
+        # 工程項目專案內容轉譯
+        text = text.replace("無塵室高低壓配電安裝與強弱電配管", "Lắp đặt tủ điện trung/hạ thế phòng sạch & ống đi dây điện nhẹ")
+        text = text.replace("廠房動力配電、給排水系統與照明工程", "Hệ thống điện động lực nhà máy, cấp thoát nước & chiếu sáng")
+        text = text.replace("變電站統包工程、銅排配置與空調系統配電", "Dự án trạm biến áp EPC, lắp đặt thanh cái & điện hệ thống điều hòa")
+        text = text.replace("廠房大樓消防警報系統與機房不間斷電源(UPS)配電", "Hệ thống báo cháy tòa nhà & nguồn điện dự phòng UPS phòng máy")
+        
+        # 狀態說明轉譯
+        text = text.replace("🟢 設備安裝完成，待驗收", "🟢 Hoàn thành lắp đặt thiết bị, chờ nghiệm thu")
+        text = text.replace("🟡 正在進行主幹管配線", "🟡 Đang thi công hệ thống cáp chính")
+        text = text.replace("🟢 變電站主體完工", "🟢 Hoàn thành trạm biến áp chính")
+        text = text.replace("🟡 機架架設與線槽施工", "🟡 Lắp đặt tủ rack và máng cáp")
+        
+    elif target_lang == "English":
+        text = text.replace("越南新順楠梓電子廠", "Tan Thuan Electronics Plant, HCMC")
+        text = text.replace("平陽美德金屬加工廠", "Meide Metal Processing Plant, Binh Duong")
+        text = text.replace("隆安宏遠精密機械廠", "HongYuan Precision Machinery, Long An")
+        text = text.replace("北寧富泰光電科技", "FuTai Optoelectronics, Bac Ninh")
+        text = text.replace("無塵室高低壓配電安裝與強弱電配管", "Cleanroom switchboard installation & wiring")
+        text = text.replace("廠房動力配電、給排水系統與照明工程", "Plant power distribution, plumbing & lighting")
+        text = text.replace("變電站統包工程、銅排配置與空調系統配電", "Substation EPC, busbars & HVAC power")
+        text = text.replace("廠房大樓消防警報系統與機房不間斷電源(UPS)配電", "Building fire alarm & server room UPS power")
+        text = text.replace("🟢 設備安裝完成，待驗收", "🟢 Equipment Installed, Pending Acceptance")
+        text = text.replace("🟡 正在進行主幹管配線", "🟡 Main Trunk Cabling in Progress")
+        text = text.replace("🟢 變電站主體完工", "🟢 Substation Main Structure Completed")
+        text = text.replace("🟡 機架架設與線槽施工", "🟡 Rack Installation & Cable Tray Works")
+        
+    return text
+
 def render_engineering_page(engine=None, lang=None, **kwargs):
     active_lang = get_active_lang(lang)
     L = PROJECT_TRACKING_I18N.get(active_lang, PROJECT_TRACKING_I18N["Tiếng Việt"])
@@ -104,47 +146,46 @@ def render_engineering_page(engine=None, lang=None, **kwargs):
     st.markdown("---")
     st.markdown(f"### {L['table_header']}")
 
-    # 模擬專案資料庫
     raw_data = [
         {
             "code": "PRJ-2026-01",
-            "client": "vn 越南新順楠梓電子廠 (XinShun Electronics)",
+            "client": "越南新順楠梓電子廠 (XinShun Electronics)",
             "item": "無塵室高低壓配電安裝與強弱電配管",
             "total": 450000,
             "paid": 315000,
             "ar": 135000,
             "progress": 90,
-            "status": "🟢 設備安裝完成，待驗收" if active_lang != "Tiếng Việt" else "🟢 Hoàn thành lắp đặt thiết bị, chờ nghiệm thu"
+            "status": "🟢 設備安裝完成，待驗收"
         },
         {
             "code": "PRJ-2026-02",
-            "client": "vn 平陽美德金屬加工廠 (Meide Metal)",
+            "client": "平陽美德金屬加工廠 (Meide Metal)",
             "item": "廠房動力配電、給排水系統與照明工程",
             "total": 380000,
             "paid": 228000,
             "ar": 152000,
             "progress": 75,
-            "status": "🟡 正在進行主幹管配線" if active_lang != "Tiếng Việt" else "🟡 Đang thi công hệ thống cáp chính"
+            "status": "🟡 正在進行主幹管配線"
         },
         {
             "code": "PRJ-2026-03",
-            "client": "vn 隆安宏遠精密機械廠 (HongYuan Precision)",
+            "client": "隆安宏遠精密機械廠 (HongYuan Precision)",
             "item": "變電站統包工程、銅排配置與空調系統配電",
             "total": 620000,
             "paid": 434000,
             "ar": 186000,
             "progress": 85,
-            "status": "🟢 變電站主體完工" if active_lang != "Tiếng Việt" else "🟢 Hoàn thành trạm biến áp chính"
+            "status": "🟢 變電站主體完工"
         },
         {
             "code": "PRJ-2026-04",
-            "client": "vn 北寧富泰光電科技 (FuTai Optoelectronics)",
+            "client": "北寧富泰光電科技 (FuTai Optoelectronics)",
             "item": "廠房大樓消防警報系統與機房不間斷電源(UPS)配電",
             "total": 400000,
             "paid": 273000,
             "ar": 127000,
             "progress": 55,
-            "status": "🟡 機架架設與線槽施工" if active_lang != "Tiếng Việt" else "🟡 Lắp đặt tủ rack và máng cáp"
+            "status": "🟡 機架架設與線槽施工"
         }
     ]
 
@@ -152,13 +193,13 @@ def render_engineering_page(engine=None, lang=None, **kwargs):
     for item in raw_data:
         display_data.append({
             L["col_code"]: item["code"],
-            L["col_client"]: item["client"],
-            L["col_item"]: item["item"],
+            L["col_client"]: smart_translate_project_data(item["client"], active_lang),
+            L["col_item"]: smart_translate_project_data(item["item"], active_lang),
             L["col_total"]: f"${item['total']:,.0f}",
             L["col_paid"]: f"${item['paid']:,.0f}",
             L["col_ar"]: f"${item['ar']:,.0f}",
             L["col_progress"]: f"{item['progress']}%",
-            L["col_status"]: item["status"]
+            L["col_status"]: smart_translate_project_data(item["status"], active_lang)
         })
 
     st.dataframe(pd.DataFrame(display_data), use_container_width=True)
