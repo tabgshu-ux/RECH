@@ -1,299 +1,301 @@
 import streamlit as st
 import pandas as pd
 import datetime
+from sqlalchemy import text
 
 # ----------------------------------------------------
-# 🌐 AP 採購與應付帳款模組多語系字典 (i18n)
+# 🌐 採購與應付帳款模組多語系字典 (i18n)
 # ----------------------------------------------------
 AP_I18N = {
     "繁體中文": {
-        "title": "🛒 管理部 - 採購與應付帳款管理 (AP)",
-        "caption": "管理廠商應付帳款、發票檔案庫、UNC 銀行轉帳水單自動核銷與採購自動同步入庫。",
-        "tab_add": "📥 1. 登記新採購進貨單與自動入庫",
-        "tab_list": "📜 2. 廠商應付貨款與發票檔案庫",
-        "tab_pay": "💳 3. 銀行轉帳水單 (UNC) 登記與核銷",
-        "tab_small_cash": "🧾 4. 500萬以下小額送貨單與費用總表",
-        "tab_print": "🖨 5. 快速檢視與列印紙本發票/附件",
-        "tab_search": "🔍 6. 商品歷史報價與供應商反查系統",
-        "unc_title": "💳 銀行轉帳水單 (Ủy Nhiệm Chi - UNC) 與採購單自動核銷",
-        "unc_caption": "出納轉帳後登記 UNC，系統自動將對應之採購單更新為「已付款」，落實金流閉環。",
-        "unc_no": "水單編號 (UNC No.)",
-        "vendor_name": "收款廠商名稱",
-        "amount": "轉帳金額",
-        "bank_name": "匯款銀行",
-        "select_po": "勾選要核銷的待付款採購單 (PO)",
-        "btn_add_unc": "📥 儲存水單並完成採購單核銷",
-        "success_unc": "✅ 銀行轉帳水單已成功登記，對應採購單已自動更新為【已付款】！",
-        "delete_btn": "🗑️️ 刪除此筆水單記錄",
+        "title": "🛒 財務部 - 採購與應付帳款 (AP) 管理中心",
+        "caption": "記錄跨國廠區（西寧廠/海防廠）採購訂單、應付帳款、多幣別付款排程與供應商請款追蹤。",
+        "tab_list": "📑 應付款項總表與付款進度",
+        "tab_edit": "✍️ 修改付款進度與審核紀錄",
+        "tab_add": "➕ 登記新採購與應付帳款 (AP)",
+        "table_header": "📋 供應商應付帳款 (AP) 清冊",
+        "no_records": "目前無應付帳款紀錄。",
+        "read_error": "讀取資料失敗: ",
+        "edit_header": "✍️ 修改採購應付款與審核備註",
+        "select_ap": "請選擇要更新的採購單：",
+        "current_ap": "當前採購案",
+        "total_amount_label": "總應付款額",
+        "new_progress_label": "更新「付款與交貨進度說明」*",
+        "new_reason_label": "更新/追加「供應商對帳備註」",
+        "modifier_label": "修改人員姓名*",
+        "save_update_btn": "💾 儲存並更新 AP 紀錄",
+        "update_success": "採購單 `{target_id}` 之付款進度與備註已更新！",
+        "add_header": "➕ 登記新採購與應付帳款專案",
+        "ap_id_label": "採購/請款編號 *",
+        "supplier_label": "供應商名稱 *",
+        "supplier_placeholder": "例如: 越南胡志明市鋼鐵股份公司",
+        "item_name_label": "採購品項名稱 *",
+        "item_placeholder": "例如: 2000A 銅排母線原料 500kg",
+        "currency_label": "交易幣別 *",
+        "currency_opts": ["越南盾", "美金", "台幣", "人民幣"],
+        "usd_label": "總金額 (USD - 小數點後 3 位) *",
+        "total_lbl": "總金額 *",
+        "pay_terms_label": "付款條件 *",
+        "terms_opts": ["即期票", "月結 30 天", "月結 60 天", "分期付款"],
+        "desc_label": "採購備註說明",
+        "desc_placeholder": "填寫合約細節或交貨注意事項...",
+        "save_new_btn": "💾 儲存並建立應付帳款項目",
+        "create_success": "採購應付款專案 `{ap_id}` 建立成功！",
+        "fill_warning": "⚠️ 請完整填寫供應商名稱與品項名稱！",
+        # 表格欄位
+        "col_index": "STT",
+        "col_ap_id": "採購編號",
+        "col_supplier": "供應商名稱",
+        "col_item": "採購品項",
+        "col_currency": "幣別",
+        "col_total": "總金額",
+        "col_terms": "付款條件",
+        "col_progress": "交貨進度",
+        "col_desc": "備註說明"
     },
     "Tiếng Việt": {
-        "title": "🛒 Quản lý - Mua hàng & Phải trả (AP)",
-        "caption": "Quản lý công nợ, hóa đơn, đối soát UNC tự động và tự động nhập kho.",
-        "tab_add": "📥 1. Đăng ký mua hàng & Nhập kho tự động",
-        "tab_list": "📜 2. Kho lưu trữ hóa đơn & công nợ",
-        "tab_pay": "💳 3. Đăng ký UNC & Đối soát đơn hàng",
-        "tab_small_cash": "🧾 4. Chứng từ nhỏ & Tổng hợp chi phí",
-        "tab_print": "🖨️ 5. Xem & In hóa đơn",
-        "tab_search": "🔍 6. Tra cứu lịch sử giá",
-        "unc_title": "💳 Đăng ký Ủy Nhiệm Chi (UNC) & Đối soát đơn hàng tự động",
-        "unc_caption": "Sau khi chuyển khoản, nhập UNC và chọn đơn hàng để tự động cập nhật trạng thái đã thanh toán.",
-        "unc_no": "Số UNC",
-        "vendor_name": "Tên nhà cung cấp",
-        "amount": "Số tiền chuyển",
-        "bank_name": "Ngân hàng chuyển",
-        "select_po": "Chọn đơn hàng cần đối soát thanh toán",
-        "btn_add_unc": "📥 Lưu UNC và đối soát đơn hàng",
-        "success_unc": "✅ Đã đăng ký UNC và cập nhật trạng thái đơn hàng thành công!",
-        "delete_btn": "🗑 Xóa bản ghi UNC này",
+        "title": "🛒 Khối Tài chính - Quản lý Mua hàng & Phải trả (AP)",
+        "caption": "Quản lý đơn hàng mua, công nợ phải trả nhà cung cấp, lịch thanh toán đa tiền tệ cho Tây Ninh và Hải Phòng.",
+        "tab_list": "📑 Danh sách Phải trả & Tiến độ",
+        "tab_edit": "✍️ Cập nhật Tiến độ Thanh toán",
+        "tab_add": "➕ Đăng ký Khoản phải trả (AP) Mới",
+        "table_header": "📋 Sổ chi tiết Khoản phải trả Nhà cung cấp (AP)",
+        "no_records": "Hiện không có bản ghi khoản phải trả nào.",
+        "read_error": "Lỗi đọc dữ liệu: ",
+        "edit_header": "✍️ Sửa đổi tiến độ thanh toán & Ghi chú đối chiếu",
+        "select_ap": "Chọn đơn hàng cần cập nhật:",
+        "current_ap": "Đơn hàng hiện tại",
+        "total_amount_label": "Tổng tiền phải trả",
+        "new_progress_label": "Cập nhật \"Tiến độ giao hàng & thanh toán\" *",
+        "new_reason_label": "Cập nhật/Bổ sung \"Ghi chú đối chiếu nhà cung cấp\"",
+        "modifier_label": "Họ tên người sửa*",
+        "save_update_btn": "💾 Lưu và cập nhật AP",
+        "update_success": "Đã cập nhật đơn hàng `{target_id}` thành công!",
+        "add_header": "➕ Đăng ký khoản phải trả nhà cung cấp mới",
+        "ap_id_label": "Mã đơn hàng / AP *",
+        "supplier_label": "Tên nhà cung cấp *",
+        "supplier_placeholder": "Ví dụ: Công ty Cổ phần Thép TP.HCM",
+        "item_name_label": "Tên mặt hàng mua *",
+        "item_placeholder": "Ví dụ: Đồng thanh cái 2000A 500kg",
+        "currency_label": "Loại tiền tệ *",
+        "currency_opts": ["Đồng Việt Nam (VND)", "Đô la Mỹ (USD)", "Đài tệ (TWD)", "Nhân dân tệ (CNY)"],
+        "usd_label": "Tổng tiền (USD - 3 chữ số thập phân) *",
+        "total_lbl": "Tổng tiền *",
+        "pay_terms_label": "Điều kiện thanh toán *",
+        "terms_opts": ["Thanh toán ngay", "Công nợ 30 ngày", "Công nợ 60 ngày", "Thanh toán theo đợt"],
+        "desc_label": "Ghi chú mua hàng",
+        "desc_placeholder": "Nhập chi tiết hợp đồng hoặc lưu ý giao hàng...",
+        "save_new_btn": "💾 Lưu và đăng ký khoản phải trả",
+        "create_success": "Đã tạo thành công đơn hàng `{ap_id}`!",
+        "fill_warning": "⚠️ Vui lòng điền đầy đủ Tên nhà cung cấp và Mặt hàng!",
+        # Tiêu đề bảng
+        "col_index": "STT",
+        "col_ap_id": "Mã AP",
+        "col_supplier": "Nhà cung cấp",
+        "col_item": "Mặt hàng",
+        "col_currency": "Loại tiền",
+        "col_total": "Tổng tiền",
+        "col_terms": "Điều kiện",
+        "col_progress": "Tiến độ",
+        "col_desc": "Ghi chú"
     },
     "English": {
-        "title": "🛒 Management Dept - Procurement & Accounts Payable (AP)",
-        "caption": "Manage AP, invoices, automated UNC bank transfer reconciliation, and auto-warehouse syncing.",
-        "tab_add": "📥 1. Register Purchase & Auto-Stock-In",
-        "tab_list": "📜 2. Vendor AP & Invoice Repository",
-        "tab_pay": "💳 3. UNC Registration & PO Reconciliation",
-        "tab_small_cash": "🧾 4. Under 5M VND Small Vouchers",
-        "tab_print": "🖨️ 5. Quick Print & Preview Invoices",
-        "tab_search": "🔍 6. Product Price History & Vendor Search",
-        "unc_title": "💳 Bank Transfer Order (UNC) & PO Automated Reconciliation",
-        "unc_caption": "Register UNC after transfer to automatically reconcile and mark selected POs as paid.",
-        "unc_no": "UNC Number",
-        "vendor_name": "Vendor Name",
-        "amount": "Transfer Amount",
-        "bank_name": "Bank Name",
-        "select_po": "Select Unpaid PO to Reconcile",
-        "btn_add_unc": "📥 Save UNC & Reconcile PO",
-        "success_unc": "✅ UNC registered and PO status automatically updated to Paid!",
-        "delete_btn": "🗑️ Delete UNC Record",
+        "title": "📋 Finance - Procurement & Accounts Payable (AP)",
+        "caption": "Track procurement orders, accounts payable, multi-currency payment terms, and supplier reconciliation.",
+        "tab_list": "📑 AP Summary & Payment Schedule",
+        "tab_edit": "✍️ Update Payment Progress & Audit",
+        "tab_add": "➕ Register New AP Project",
+        "table_header": "📋 Supplier Accounts Payable Registry",
+        "no_records": "No accounts payable records found.",
+        "read_error": "Failed to read data: ",
+        "edit_header": "✍️ Modify Payment Progress & Remarks",
+        "select_project": "Select AP to update:",
+        "current_ap": "Current AP",
+        "total_amount_label": "Total Amount",
+        "new_progress_label": "Update Progress Description *",
+        "new_reason_label": "Update/Append Supplier Remarks",
+        "modifier_label": "Modifier Name *",
+        "save_update_btn": "💾 Save & Update AP Progress",
+        "update_success": "AP record `{target_id}` updated successfully!",
+        "add_header": "➕ Register New Accounts Payable",
+        "ap_id_label": "AP ID *",
+        "supplier_label": "Supplier Name *",
+        "supplier_placeholder": "Example: Ho Chi Minh Steel JSC",
+        "item_name_label": "Item Name *",
+        "item_placeholder": "Example: 2000A Copper Busbar 500kg",
+        "currency_label": "Currency *",
+        "currency_opts": ["VND", "USD", "TWD", "CNY"],
+        "usd_label": "Total Amount (USD - 3 decimals) *",
+        "total_lbl": "Total Amount *",
+        "pay_terms_label": "Payment Terms *",
+        "terms_opts": ["Immediate (Cash)", "Net 30 Days", "Net 60 Days", "Installments"],
+        "desc_label": "Procurement Remarks",
+        "desc_placeholder": "Enter contract details...",
+        "save_new_btn": "💾 Save & Register AP",
+        "create_success": "AP project `{ap_id}` successfully created!",
+        "fill_warning": "⚠️ Please fill in Supplier Name and Item Name!",
+        # Table headers
+        "col_index": "No.",
+        "col_ap_id": "AP ID",
+        "col_entity": "Supplier",
+        "col_item": "Item",
+        "col_currency": "Currency",
+        "col_total": "Total",
+        "col_terms": "Terms",
+        "col_progress": "Progress",
+        "col_desc": "Remarks"
     }
 }
 
-def get_ap_lang_dict(lang_param):
-    lang = lang_param or st.session_state.get("lang", "繁體中文")
-    return AP_I18N.get(lang, AP_I18N["繁體中文"])
+# ----------------------------------------------------
+# 🔄 採購模組專用：中越英雙向智慧對照引擎
+# ----------------------------------------------------
+def smart_translate_ap(text_val, target_lang):
+    if not text_val or not isinstance(text_val, str) or text_val.strip() in ["None", "-", ""]:
+        if target_lang == "Tiếng Việt": return "Chưa cập nhật"
+        elif target_lang == "English": return "N/A"
+        return "-"
 
-def render_procurement_ap_page(engine=None, lang="繁體中文"):
-    L = get_ap_lang_dict(lang)
+    val_lower = text_val.lower()
 
-    st.subheader(L["title"])
+    # 供應商與品項智慧對應
+    if "鋼鐵" in text_val or "steel" in val_lower or "thép" in val_lower:
+        if target_lang == "Tiếng Việt": return "Công ty Cổ phần Thép TP.HCM"
+        elif target_lang == "English": return "Ho Chi Minh Steel JSC"
+        return "越南胡志明市鋼鐵股份公司"
+    if "銅排" in text_val or "busbar" in val_lower or "đồng" in val_lower:
+        if target_lang == "Tiếng Việt": return "Đồng thanh cái 2000A 500kg"
+        elif target_lang == "English": return "2000A Copper Busbar 500kg"
+        return "2000A 銅排母線原料 500kg"
+
+    return text_val
+
+def format_curr_ap(amt, curr):
+    if not curr: curr = "越南盾"
+    if "VND" in curr or "越南盾" in curr or "Đồng" in curr: return f"₫ {amt:,.0f} VND"
+    elif "USD" in curr or "美金" in curr or "Đô la" in curr: return f"$ {amt:,.3f} USD"
+    elif "TWD" in curr or "台幣" in curr or "Đài tệ" in curr: return f"NT$ {amt:,.0f} TWD"
+    elif "CNY" in curr or "人民幣" in curr or "Nhân dân tệ" in curr: return f"¥ {amt:,.2f} CNY"
+    return f"{amt:,.3f} {curr}"
+
+def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
+    active_lang = lang or st.session_state.get("lang", "繁體中文")
+    L = AP_I18N.get(active_lang, AP_I18N["繁體中文"])
+
+    st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化資料庫
-    if "unc_db" not in st.session_state:
-        st.session_state.unc_db = []
+    tab_list, tab_edit, tab_add = st.tabs([L["tab_list"], L["tab_edit"], L["tab_add"]])
 
-    if "ap_invoices_db" not in st.session_state:
-        st.session_state.ap_invoices_db = [
-            {
-                "po_id": "PO-2026-01",
-                "vendor": "Shopee VN",
-                "item_name": "廠房五金配件",
-                "barcode": "8935012345678",
-                "qty": 10,
-                "unit": "個 / Pcs",
-                "currency": "VND",
-                "amount": 1200000.0,
-                "due_date": "2026-10-20",
-                "status": "🔴 待付款 (Pending)",
-                "file": "invoice_sample.pdf"
-            }
-        ]
-
-    if "warehouse_inventory_db" not in st.session_state:
-        st.session_state.warehouse_inventory_db = [
-            {
-                "barcode": "8935012345678",
-                "item_name": "廠房五金配件",
-                "stock_qty": 10,
-                "unit": "個 / Pcs",
-                "last_update": "2026-10-06"
-            }
-        ]
-
-    if "small_cash_vouchers_db" not in st.session_state:
-        st.session_state.small_cash_vouchers_db = [
-            {
-                "id": "PETTY-2026-01",
-                "date": "2026-10-06",
-                "channel": "Shopee VN",
-                "item": "廠房耗材",
-                "amount": 1200000.0,
-                "status": "🟢 已轉入會計費用傳票"
-            }
-        ]
-
-    # 頁籤順序：1. 新增採購並自動入庫 2. 應付帳款清單 3. UNC 銀行轉帳水單 4. 小額憑證 5. 列印 6. 歷史查詢
-    tab_add, tab_list, tab_pay, tab_small_cash, tab_print, tab_search = st.tabs([
-        L["tab_add"], L["tab_list"], L["tab_pay"], L["tab_small_cash"], L["tab_print"], L["tab_search"]
-    ])
-
-    # ----------------------------------------------------
-    # 📥 頁籤一：登記新採購進貨單與詳細品項（支援美金小數點後 3 位）
-    # ----------------------------------------------------
-    with tab_add:
-        st.markdown(f"### {L['tab_add']}")
-        st.caption("詳細記錄採購品名、條碼與數量。選擇【USD】時自動支援小數點後 3 位精準計價，選擇【VND】則以整數計價。")
-
-        col_a, col_b = st.columns(2)
-        with col_a:
-            po_num = st.text_input("採購單號 (PO No.)", value="PO-2026-02", key="ap_curr_po")
-            v_name = st.text_input("廠商名稱 (Vendor Name)", placeholder="例如: 台灣總部 / 越南供應商", key="ap_curr_v")
-            item_name = st.text_input("採購物品名稱 / 規格說明", placeholder="例如: 鞋材大底 / 膠水原料", key="ap_curr_item")
-        with col_b:
-            barcode = st.text_input("商品條碼 / 料號 (Barcode / SKU)", placeholder="例如: 8935012345678", key="ap_curr_bc")
-            c_q1, c_q2 = st.columns(2)
-            with c_q1:
-                qty = st.number_input("採購數量", min_value=1.0, value=1000.0, step=1.0, key="ap_curr_qty")
-            with c_q2:
-                unit = st.selectbox("單位", ["雙 (Pairs)", "個 (Pcs)", "公斤 (Kg)", "公升 (L)", "批 (Lot)"], key="ap_curr_unit")
-            
-            # 💡 幣別選擇欄位置於金額上方，讓系統動態判斷精度
-            curr_type = st.selectbox("計價幣別 (Currency)", ["VND", "USD", "TWD"], key="ap_curr_type")
-
-            # 🛠️ 根據幣別動態調整金額輸入精度：USD 支援小數點後 3 位 (0.001)，VND 則為整數
-            if curr_type == "USD":
-                p_amt = st.number_input("總含稅金額 (USD - 精確至小數點後 3 位)", min_value=0.0, value=1.234, format="%.3f", step=0.001, key="ap_curr_amt_usd")
-            else:
-                p_amt = st.number_input("總含稅金額 (VND / TWD - 整數)", min_value=0.0, value=500000.0, step=1000.0, key="ap_curr_amt_vnd")
-
-        if st.button("💾 儲存進貨記錄並【自動同步入庫】", type="primary", key="ap_curr_btn"):
-            if v_name and item_name:
-                # 1. 寫入應付帳款 (AP) 採購發票庫
-                st.session_state.ap_invoices_db.append({
-                    "po_id": po_num,
-                    "vendor": v_name,
-                    "item_name": item_name,
-                    "barcode": barcode if barcode else "N/A",
-                    "qty": qty,
-                    "unit": unit,
-                    "currency": curr_type,
-                    "amount": p_amt,
-                    "due_date": str(datetime.date.today()),
-                    "status": "🔴 待付款 (Pending)",
-                    "file": "manual_receipt.pdf"
-                })
-
-                # 2. 自動同步入庫至倉庫庫存
-                item_exists = False
-                for stock in st.session_state.warehouse_inventory_db:
-                    if barcode and stock["barcode"] == barcode:
-                        stock["stock_qty"] += qty
-                        stock["last_update"] = str(datetime.date.today())
-                        item_exists = True
-                        break
-                
-                if not item_exists:
-                    st.session_state.warehouse_inventory_db.append({
-                        "barcode": barcode if barcode else f"SKU-{datetime.date.today().strftime('%m%d')}",
-                        "item_name": item_name,
-                        "stock_qty": qty,
-                        "unit": unit,
-                        "last_update": str(datetime.date.today())
-                    })
-
-                st.success(f"✅ 成功採購【{item_name}】共 {qty} {unit}（金額: {p_amt:,.3f} {curr_type}）！已自動完成倉庫入庫與 AP 應付帳款登錄！")
-                st.rerun()
-            else:
-                st.warning("⚠️ 請完整填寫廠商名稱與採購物品名稱！")
-
-    # ----------------------------------------------------
-    # 📜 頁籤二：廠商應付貨款與發票檔案庫
-    # ----------------------------------------------------
+    # 1. 應付帳款總覽
     with tab_list:
-        st.markdown(f"### {L['tab_list']}")
-        df_ap = pd.DataFrame(st.session_state.ap_invoices_db)
-        st.dataframe(df_ap, use_container_width=True)
+        st.subheader(L["table_header"])
+        if engine:
+            try:
+                df_ap = pd.read_sql("SELECT * FROM invoices WHERE invoice_type='AP'", engine)
+                if not df_ap.empty:
+                    display_list = []
+                    for idx, r in df_ap.iterrows():
+                        supp_disp = smart_translate_ap(r.get("entity_name"), active_lang)
+                        proj_disp = smart_translate_ap(r.get("project_name"), active_lang)
+                        prog_disp = smart_translate_ap(r.get("progress_note"), active_lang)
 
-    # ----------------------------------------------------
-    # 💳 頁籤三：銀行轉帳水單 (UNC) 登記與自動核銷
-    # ----------------------------------------------------
-    with tab_pay:
-        st.markdown(f"### {L['unc_title']}")
-        st.caption(L['unc_caption'])
+                        display_list.append({
+                            L["col_index"]: idx + 1,
+                            L["col_ap_id"]: r.get("invoice_id"),
+                            L["col_supplier"]: supp_disp,
+                            L["col_item"]: proj_disp,
+                            L["col_currency"]: r.get("currency"),
+                            L["col_total"]: format_curr_ap(r.get("quoted_amount", 0.0), r.get("currency")),
+                            L["col_terms"]: r.get("payment_terms", "月結"),
+                            L["col_progress"]: prog_disp,
+                            L["col_desc"]: r.get("project_desc", "-")
+                        })
+                    st.dataframe(pd.DataFrame(display_list), use_container_width=True)
+                else:
+                    st.info(L["no_records"])
+            except Exception as e:
+                st.error(f"{L['read_error']}{e}")
 
-        unpaid_pos = [item for item in st.session_state.ap_invoices_db if "待" in item["status"] or "Pending" in item["status"]]
-        unpaid_po_ids = [f"{item['po_id']} - {item['vendor']} ({item['item_name']}) - {item['amount']:,.3f} {item['currency']}" for item in unpaid_pos]
+    # 2. 修改付款進度
+    with tab_edit:
+        st.subheader(L["edit_header"])
+        if engine:
+            try:
+                df_ap = pd.read_sql("SELECT * FROM invoices WHERE invoice_type='AP'", engine)
+                if not df_ap.empty:
+                    ap_opts = {f"{r['invoice_id']} - {smart_translate_ap(r['entity_name'], active_lang)}": r['invoice_id'] for _, r in df_ap.iterrows()}
+                    sel_label = st.selectbox(L["select_ap"], list(ap_opts.keys()))
+                    target_id = ap_opts[sel_label]
+                    target_row = df_ap[df_ap['invoice_id'] == target_id].iloc[0]
 
-        vietnam_banks = [
-            "Vietcombank", "BIDV", "Agribank", "VietinBank", "Techcombank",
-            "Cathay United Bank (國泰世華)", "CTBC Bank (中國信託)", "HSBC (Vietnam)", "Other / 其它"
-        ]
+                    st.markdown(f"**{L['current_ap']}**：`{target_row['invoice_id']}` | **{L['total_amount_label']}**：{format_curr_ap(target_row['quoted_amount'], target_row['currency'])}")
+                    
+                    with st.form("form_update_ap"):
+                        default_prog = smart_translate_ap(target_row.get("progress_note", ""), active_lang)
+                        new_progress = st.text_area(L["new_progress_label"], value=default_prog)
+                        new_reason = st.text_area(L["new_reason_label"], value=target_row.get("uncollected_reason", ""))
+                        modifier = st.text_input(L["modifier_label"], value=st.session_state.get("user_name", "admin"))
 
-        col1, col2 = st.columns(2)
-        with col1:
-            unc_no = st.text_input(L["unc_no"], placeholder="例如: UNC-2026-002", key="ap_curr_unc_no")
-            vendor_name = st.text_input(L["vendor_name"], placeholder="例如: 台灣總部 / 越南供應商", key="ap_curr_unc_v")
-            amount = st.number_input(L["amount"], min_value=0.0, value=1200000.0, step=1000.0, key="ap_curr_unc_amt")
-        with col2:
-            bank_name = st.selectbox(L["bank_name"], vietnam_banks, key="ap_curr_unc_bank")
-            selected_target_po = st.selectbox(L["select_po"], unpaid_po_ids if unpaid_po_ids else ["目前無待付款採購單"], key="ap_curr_unc_po")
-            currency = st.selectbox("幣別", ["VND", "USD", "TWD"], key="ap_curr_unc_curr")
+                        if st.form_submit_button(L["save_update_btn"], use_container_width=True):
+                            with engine.connect() as conn:
+                                conn.execute(
+                                    text("UPDATE invoices SET progress_note = :prog, uncollected_reason = :reason WHERE invoice_id = :id"),
+                                    {"prog": new_progress, "reason": new_reason, "id": target_id}
+                                )
+                                conn.commit()
+                            st.success(L["update_success"].format(target_id=target_id))
+                            st.rerun()
+            except Exception as e:
+                st.error(f"{L['read_error']}{e}")
 
-        if st.button(L["btn_add_unc"], type="primary", key="ap_curr_btn_unc"):
-            if unc_no and vendor_name:
-                st.session_state.unc_db.append({
-                    "id": unc_no,
-                    "vendor": vendor_name,
-                    "amount": amount,
-                    "currency": currency,
-                    "bank": bank_name,
-                    "date": str(datetime.date.today()),
-                    "matched_po": selected_target_po
-                })
+    # 3. 新增採購應付帳款
+    with tab_add:
+        st.subheader(L["add_header"])
+        c1, c2 = st.columns(2)
+        with c1:
+            ap_id = st.text_input(L["ap_id_label"], value=f"AP-2026-{datetime.datetime.now().strftime('%m%d%H%M')}")
+            supplier_name = st.text_input(L["supplier_label"], placeholder=L["supplier_placeholder"])
+            item_name = st.text_input(L["item_name_label"], placeholder=L["item_placeholder"])
+            currency = st.selectbox(L["currency_label"], L["currency_opts"])
+            
+            if "USD" in currency or "美金" in currency or "Đô la" in currency:
+                total_amount = st.number_input(L["usd_label"], min_value=0.0, value=5000.000, format="%.3f", step=0.001)
+            else:
+                total_amount = st.number_input(L["total_lbl"], min_value=0.0, value=120000000.0, step=1000000.0)
 
-                if unpaid_pos and "目前無" not in selected_target_po:
-                    target_po_id = selected_target_po.split(" - ")[0]
-                    for inv in st.session_state.ap_invoices_db:
-                        if inv["po_id"] == target_po_id:
-                            inv["status"] = "🟢 已付款 (Paid)"
+        with c2:
+            pay_terms = st.selectbox(L["pay_terms_label"], L["terms_opts"])
+            desc = st.text_area(L["desc_label"], placeholder=L["desc_placeholder"])
+            progress_note = st.text_input("初始交貨進度", value="已發出採購訂單 / 等待廠商確認")
 
-                st.success(L["success_unc"])
+        if st.button(L["save_new_btn"], type="primary", use_container_width=True):
+            if supplier_name and item_name:
+                if engine:
+                    with engine.connect() as conn:
+                        conn.execute(
+                            text("""
+                                INSERT INTO invoices (
+                                    invoice_id, entity_name, project_name, currency, amount, quoted_amount, 
+                                    payment_terms, project_desc, progress_note, invoice_type, is_paid
+                                ) VALUES (
+                                    :id, :entity, :prj, :curr, :amt, :q_amt, :terms, :desc, :prog, 'AP', false
+                                )
+                            """),
+                            {
+                                "id": ap_id, "entity": supplier_name, "prj": item_name, "curr": currency,
+                                "amt": total_amount, "q_amt": total_amount, "terms": pay_terms,
+                                "desc": desc, "prog": progress_note
+                            }
+                        )
+                        conn.commit()
+                st.success(L["create_success"].format(ap_id=ap_id))
                 st.rerun()
             else:
-                st.warning("⚠️ 請完整填寫水單編號與收款廠商名稱！")
+                st.warning(L["fill_warning"])
 
-        st.divider()
-        st.markdown("#### 📜 現有銀行轉帳水單清單與勾稽狀態")
-        if st.session_state.unc_db:
-            for idx, item in enumerate(st.session_state.unc_db):
-                with st.expander(f"📄 水單: {item['id']} | 廠商: {item['vendor']} | 金額: {item['amount']:,.3f} {item['currency']}"):
-                    st.write(f"• **匯款銀行**: {item['bank']}")
-                    st.write(f"• **轉帳日期**: {item['date']}")
-                    st.write(f"• **已勾稽採購單**: `{item['matched_po']}`")
-                    if st.button(L["delete_btn"], key=f"ap_curr_del_{idx}"):
-                        st.session_state.unc_db.pop(idx)
-                        st.success("🗑️ 已成功刪除該筆水單記錄！")
-                        st.rerun()
-        else:
-            st.info("目前尚無轉帳水單記錄。")
+def show(*args, **kwargs):
+    render_procurement_ap_page(*args, **kwargs)
 
-    # ----------------------------------------------------
-    # 🧾 頁籤四：500萬以下小額送貨單與會計費用傳票總表
-    # ----------------------------------------------------
-    with tab_small_cash:
-        st.markdown(f"### {L['tab_small_cash']}")
-        st.caption("整合現場同仁上傳之外箱送貨單與小額零用金報銷，自動結算並匯入會計總帳傳票。")
-        df_small = pd.DataFrame(st.session_state.small_cash_vouchers_db)
-        st.dataframe(df_small, use_container_width=True)
-
-    # ----------------------------------------------------
-    # 🖨️ 頁籤五：快速檢視與列印發票
-    # ----------------------------------------------------
-    with tab_print:
-        st.markdown(f"### {L['tab_print']}")
-        st.info("提供財務與會計快速預覽並列印進項發票、送貨單或 UNC 水單據。")
-
-    # ----------------------------------------------------
-    # 🔍 頁籤六：歷史報價查詢
-    # ----------------------------------------------------
-    with tab_search:
-        st.markdown(f"### {L['tab_search']}")
-        search_query = st.text_input("輸入商品條碼或品名關鍵字查詢歷史價格：", key="ap_curr_search")
-        if search_query:
-            st.success(f"🔍 查無 '{search_query}' 的過往異常波動紀錄，價格穩定。")
-
-def show(engine=None, lang="繁體中文"):
-    render_procurement_ap_page(engine, lang)
-
-def main(engine=None, lang="繁體中文"):
-    render_procurement_ap_page(engine, lang)
+def main(*args, **kwargs):
+    render_procurement_ap_page(*args, **kwargs)
