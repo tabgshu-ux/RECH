@@ -114,6 +114,13 @@ INSURANCE_RATES = {
         "housing_fund": 0.07,
         "currency": "CNY",
         "rate_label": "中國五險一金個人提撥"
+    },
+    "西寧廠": {
+        "bhxh_social": 0.08,
+        "bhyt_health": 0.015,
+        "bhtn_unemploy": 0.01,
+        "currency": "VND",
+        "rate_label": "越南法定社保/醫保/失業險"
     }
 }
 
@@ -147,7 +154,8 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
     else:
         emp_list = [
             {"id": "EMP-001", "name": "張董事長", "site": "🇹🇼 台灣總部 (Taiwan HQ)", "dept": "經營高層", "title": "董事長", "join_date": "2020-01-15"},
-            {"id": "EMP-002", "name": "Nguyễn Văn A", "site": "🇻🇳 越南廠 (Tay Ninh / Binh Duong)", "dept": "工程部", "title": "配電盤組裝工程師", "join_date": "2023-05-10"}
+            {"id": "EMP-002", "name": "陳智賢", "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)", "dept": "經營高層", "title": "總經理", "join_date": "2021-03-01"},
+            {"id": "EMP-003", "name": "李元隆", "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)", "dept": "營運管理中心", "title": "副總經理", "join_date": "2022-06-15"}
         ]
 
     # ----------------------------------------------------
@@ -160,18 +168,19 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         summary_rows = []
         for emp in emp_list:
             emp_site = emp.get("site", "🇻🇳 越南廠 (Tay Ninh / Binh Duong)")
-            ins_info = INSURANCE_RATES.get(emp_site, INSURANCE_RATES["🇻🇳 越南廠 (Tay Ninh / Binh Duong)"])
-            curr = ins_info["currency"]
+            ins_info = INSURANCE_RATES.get(emp_site, INSURANCE_RATES.get("西寧廠", {"currency": "VND"}))
+            curr = ins_info.get("currency", "VND")
             
             base = 25000000.0 if curr == "VND" else (80000.0 if curr == "TWD" else 8000.0)
             allow = 2000000.0 if curr == "VND" else 5000.0
             bonus = 1000000.0 if curr == "VND" else 2000.0
             gross = base + allow + bonus
             
-            if "越南" in emp_site:
-                tot_ins = base * 0.105
+            # 安全防護計算保險
+            if "越南" in emp_site or "西寧" in emp_site:
+                tot_ins = base * (ins_info.get("bhxh_social", 0.08) + ins_info.get("bhyt_health", 0.015) + ins_info.get("bhtn_unemploy", 0.01))
             elif "台灣" in emp_site:
-                tot_ins = base * (0.023 + 0.0517)
+                tot_ins = base * (ins_info.get("labor_ins", 0.023) + ins_info.get("health_ins", 0.0517))
             else:
                 tot_ins = base * 0.17
 
@@ -201,7 +210,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
             file_name=f"Reetech_Payroll_Summary_{datetime.date.today().strftime('%Y%m')}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+sheet",
             type="primary",
-            key=f"download_summary_excel_{uid}"  # 💡 加上唯一 key 徹底解決重複 ID 錯誤
+            key=f"download_summary_excel_{uid}"
         )
 
     # ----------------------------------------------------
@@ -223,8 +232,8 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
 
         emp = selected_emp
         emp_site = emp.get("site", "🇻🇳 越南廠 (Tay Ninh / Binh Duong)")
-        ins_info = INSURANCE_RATES.get(emp_site, INSURANCE_RATES["🇻🇳 越南廠 (Tay Ninh / Binh Duong)"])
-        curr = ins_info["currency"]
+        ins_info = INSURANCE_RATES.get(emp_site, INSURANCE_RATES.get("西寧廠", {"currency": "VND", "rate_label": "法定保險"}))
+        curr = ins_info.get("currency", "VND")
 
         st.markdown(f"#### 👤 員工姓名: **{emp['name']}** (`{emp['id']}`) | 部門: {emp['dept']} | 職位: {emp['title']}")
         st.caption(f"📍 所屬工作廠區: **{emp_site}** | 計價幣別: **{curr}**")
@@ -246,21 +255,17 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         with c6:
             other_allowance = st.number_input(L["other_allowance"], value=0.0, step=100.0, key=f"other_{emp['id']}_{uid}")
 
-        if "越南" in emp_site:
-            social_ins = base_salary * ins_info["bhxh_social"]
-            health_ins = base_salary * ins_info["bhyt_health"]
-            unemploy_ins = base_salary * ins_info["bhtn_unemploy"]
+        if "越南" in emp_site or "西寧" in emp_site:
+            social_ins = base_salary * ins_info.get("bhxh_social", 0.08)
+            health_ins = base_salary * ins_info.get("bhyt_health", 0.015)
+            unemploy_ins = base_salary * ins_info.get("bhtn_unemploy", 0.01)
             total_ins = social_ins + health_ins + unemploy_ins
         elif "台灣" in emp_site:
-            social_ins = base_salary * ins_info["labor_ins"]
-            health_ins = base_salary * ins_info["health_ins"]
-            unemploy_ins = 0.0
+            social_ins = base_salary * ins_info.get("labor_ins", 0.023)
+            health_ins = base_salary * ins_info.get("health_ins", 0.0517)
             total_ins = social_ins + health_ins
         else:
-            social_ins = base_salary * ins_info["pension"]
-            health_ins = base_salary * ins_info["medical"]
-            unemploy_ins = base_salary * ins_info["housing_fund"]
-            total_ins = social_ins + health_ins + unemploy_ins
+            total_ins = base_salary * 0.17
 
         gross_salary = base_salary + allowance + full_attendance_bonus + other_allowance
         total_deduction = total_ins + leave_deduction + loan_deduction
@@ -278,7 +283,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
                 &nbsp;&nbsp;• 其他補發項目: <b>{other_allowance:,.2f} {curr}</b><br>
                 &nbsp;&nbsp;👉 <b>總應發金額 (Gross): {gross_salary:,.2f} {curr}</b><br><br>
                 <b>2. 扣款項目 (Deductions)：</b><br>
-                &nbsp;&nbsp;• 🛡️ 當地法定保險 ({ins_info['rate_label']}): <b>- {total_ins:,.2f} {curr}</b><br>
+                &nbsp;&nbsp;• 🛡️ 當地法定保險 ({ins_info.get('rate_label', '法定保險')}): <b>- {total_ins:,.2f} {curr}</b><br>
                 &nbsp;&nbsp;• ⏰ 請假/缺勤扣款: <b>- {leave_deduction:,.2f} {curr}</b><br>
                 &nbsp;&nbsp;• 💳 員工借款/預支扣款: <b>- {loan_deduction:,.2f} {curr}</b><br>
                 &nbsp;&nbsp;👉 <b>總扣款金額: {total_deduction:,.2f} {curr}</b><br>
@@ -306,7 +311,8 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         
         mock_att = [
             {"員工編號": "EMP-001", "姓名": "張董事長", "應出勤天數": 22, "實際出勤": 22, "請假時數": 0, "全勤狀態": "🌟 全勤"},
-            {"員工編號": "EMP-002", "姓名": "Nguyễn Văn A", "應出勤天數": 22, "實際出勤": 21, "請假時數": 8, "全勤狀態": "📝 請假 1 天"}
+            {"員工編號": "EMP-002", "姓名": "陳智賢", "應出勤天數": 22, "實際出勤": 22, "請假時數": 0, "全勤狀態": "🌟 全勤"},
+            {"員工編號": "EMP-003", "姓名": "李元隆", "應出勤天數": 22, "實際出勤": 21, "請假時數": 8, "全勤狀態": "📝 請假 1 天"}
         ]
         st.dataframe(pd.DataFrame(mock_att), use_container_width=True)
 
