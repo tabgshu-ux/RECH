@@ -1,248 +1,217 @@
-import streamlit as st
-import pandas as pd
 import datetime
+import io
+import pandas as pd
 from sqlalchemy import text
+import streamlit as st
 
+# ----------------------------------------------------
+# 🌐 應收帳款與專案進度模組多語系字典 (i18n)
+# ----------------------------------------------------
 AR_I18N = {
     "繁體中文": {
-        "title": "📋 管理部 - 客戶應收帳款 (AR) & 專案分期進度管理",
-        "caption": "記錄客戶工程合約總額、動態分期付款排程管理、專案說明與進度實時追蹤。",
-        "tab_list": "📑 客戶應收款項總表與進度",
-        "tab_edit": "✍️ 修改進行進度說明與催收歷程",
-        "tab_add": "➕ 登記新應收帳款專案"
+        "title": "📜 資訊與管理中心 - 客戶應收帳款 (AR) 與專案進度",
+        "caption": "管理總合約金額、分期付款進度與催收記錄。",
+        "tab_list": "📊 應收帳款與進度清冊",
+        "tab_update": "✏️ 更新進度 & 催收款項理由",
+        "tab_add": "➕ 登記新應收帳款專案",
+        "table_title": "📊 客戶應收帳款專案清冊",
+        "search_label": "搜尋合約 / 客戶 / 專案：",
+        "update_title": "🔧 修改專案進行進度說明與催收紀錄",
+        "select_project_update": "請選擇要更新進度的款款專案：",
+        "current_project": "當前專案",
+        "update_progress_label": "更新「進行進度說明」*",
+        "update_reminder_label": "更新/追加「催收款項與客戶回應」",
+        "modifier_name": "修改人員姓名*",
+        "save_update_btn": "💾 儲存並更新專案進度",
+        "add_title": "➕ 登記新應收帳款專案",
+        "ar_code": "款項編號*",
+        "payment_mode": "付款期數模式*",
+        "client_name": "客戶名稱*",
+        "project_desc": "專案說明",
+        "project_name": "工程名稱*",
+        "currency": "交易幣別*",
+        "progress_desc": "進行進度說明",
+        "total_amount": "總帳款*",
+        "milestone_title": "📅 分期百分比 (%) 與付款日期細項設定",
+        "payment_date": "付款日期",
+        "save_new_btn": "💾 儲存並登記新專案",
+        "success_update": "✅ 專案進度與催收紀錄已成功更新！",
+        "success_add": "✅ 新應收帳款專案已成功登記！"
     },
     "Tiếng Việt": {
-        "title": "📋 Khối Quản lý - Phải thu Khách hàng (AR) & Tiến độ Dự án",
+        "title": "📜 Khối Quản lý - Phải thu Khách hàng (AR) & Tiến độ Dự án",
         "caption": "Quản lý tổng số tiền hợp đồng, lịch trình thanh toán theo đợt, cập nhật tiến độ.",
-        "tab_list": "📑 Danh sách Phải thu & Tiến độ",
-        "tab_edit": "✍️ Cập nhật Tiến độ & Lý do thu nợ",
-        "tab_add": "➕ Thêm Dự án Phải thu Mới"
+        "tab_list": "📊 Danh sách Phải thu & Tiến độ",
+        "tab_update": "✏️ Cập nhật Tiến độ & Lý do thu nợ",
+        "tab_add": "➕ Thêm Dự án Phải thu Mới",
+        "table_title": "📊 Sổ chi tiết Phải thu Khách hàng",
+        "search_label": "Tìm kiếm hợp đồng / khách hàng / dự án:",
+        "update_title": "📌 Sửa đổi tiến độ dự án và ghi chú thu nợ",
+        "select_project_update": "Chọn dự án cần cập nhật tiến độ:",
+        "current_project": "Dự án hiện tại",
+        "update_progress_label": "Cập nhật \"Mô tả tiến độ\" *",
+        "update_reminder_label": "Cập nhật/Bổ sung \"Lý do thu nợ & phản hồi từ khách hàng\"",
+        "modifier_name": "Họ tên người sửa*",
+        "save_update_btn": "💾 Lưu và cập nhật tiến độ dự án",
+        "add_title": "➕ Đăng ký dự án khoản phải thu mới",
+        "ar_code": "Mã khoản thu*",
+        "payment_mode": "Hình thức thanh toán*",
+        "client_name": "Tên khách hàng*",
+        "project_desc": "Mô tả dự án",
+        "project_name": "Tên công trình*",
+        "currency": "Loại tiền tệ*",
+        "progress_desc": "Mô tả tiến độ",
+        "total_amount": "Tổng khoản nợ*",
+        "milestone_title": "📅 Thiết lập chi tiết tỷ lệ phần trăm (%) và ngày thanh toán",
+        "payment_date": "Ngày thanh toán",
+        "save_new_btn": "💾 Lưu và đăng ký dự án mới",
+        "success_update": "✅ Đã cập nhật thành công tiến độ và ghi chú thu nợ!",
+        "success_add": "✅ Đã đăng ký thành công dự án khoản phải thu mới!"
     },
     "English": {
-        "title": "📋 Admin - Accounts Receivable (AR) & Project Installments",
-        "caption": "Track total contract amounts, installment schedules, descriptions, and progress updates.",
-        "tab_list": "📑 AR Summary & Progress",
-        "tab_edit": "✍️ Update Progress & Collection Audit",
-        "tab_add": "➕ Register New AR Project"
+        "title": "📜 Management Dept - Accounts Receivable (AR) & Project Progress",
+        "caption": "Manage total contract amounts, installment schedules, and collection records.",
+        "tab_list": "📊 AR & Progress Summary",
+        "tab_update": "✏️ Update Progress & Collection Remarks",
+        "tab_add": "➕ Register New AR Project",
+        "table_title": "📊 Customer Accounts Receivable Registry",
+        "search_label": "Search contract / client / project:",
+        "update_title": "🔧 Modify Project Progress & Collection Log",
+        "select_project_update": "Select project to update:",
+        "current_project": "Current Project",
+        "update_progress_label": "Update Progress Description *",
+        "update_reminder_label": "Update/Append Collection Remarks & Client Feedback",
+        "modifier_name": "Modifier Name *",
+        "save_update_btn": "💾 Save & Update Project Progress",
+        "add_title": "➕ Register New Accounts Receivable Project",
+        "ar_code": "AR Code *",
+        "payment_mode": "Payment Terms *",
+        "client_name": "Client Name *",
+        "project_desc": "Project Description",
+        "project_name": "Project / Engineering Name *",
+        "currency": "Currency *",
+        "progress_desc": "Progress Description",
+        "total_amount": "Total Amount *",
+        "milestone_title": "📅 Milestone Installment Percentage (%) & Due Dates",
+        "payment_date": "Payment Date",
+        "save_new_btn": "💾 Save & Register New Project",
+        "success_update": "✅ Project progress and collection records successfully updated!",
+        "success_add": "✅ New AR project successfully registered!"
     }
 }
 
-def format_curr(amt, curr):
-    if curr == "越南盾": return f"₫ {amt:,.0f} VND"
-    elif curr == "美金": return f"$ {amt:,.3f} USD"
-    elif curr == "台幣": return f"NT$ {amt:,.0f} TWD"
-    elif curr == "人民幣": return f"¥ {amt:,.2f} CNY"
-    return f"{amt:,.3f} {curr}"
+def get_ar_lang_dict(lang_param):
+    active_lang = lang_param or st.session_state.get("lang", "繁體中文")
+    return AR_I18N.get(active_lang, AR_I18N["繁體中文"])
 
-def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
-    L = AR_I18N.get(lang, AR_I18N["繁體中文"])
+def render_ar_management_page(engine=None, lang="繁體中文"):
+    active_lang = lang or st.session_state.get("lang", "繁體中文")
+    L = get_ar_lang_dict(active_lang)
+
     st.title(L["title"])
     st.caption(L["caption"])
 
-    tab_list, tab_edit, tab_add = st.tabs([L["tab_list"], L["tab_edit"], L["tab_add"]])
+    tab_list, tab_update, tab_add = st.tabs([
+        L["tab_list"],
+        L["tab_update"],
+        L["tab_add"]
+    ])
 
-    # 1. 應收帳款總覽清單
+    # 模擬或讀取資料庫中的 AR 專案
+    if "ar_projects_db" not in st.session_state:
+        st.session_state.ar_projects_db = [
+            {
+                "code": "INV-2026-001",
+                "client": "越南樟榜工業區A廠",
+                "project": "西寧廠 2000A 配電櫃新建工程",
+                "currency": "USD",
+                "total": 50000.0,
+                "mode": "不分期",
+                "progress": "工程備料中 / 準備施工",
+                "desc": "合約包含高低壓配電盤安裝及試車",
+                "reminder": "【2026-10-02 03:37 催款員: admin】客戶延至 2026-10-17 付款。理由：說工程未驗收完成，等驗收完成才付款"
+            }
+        ]
+
+    # ----------------------------------------------------
+    # 📊 頁籤一：應收帳款與進度清冊
+    # ----------------------------------------------------
     with tab_list:
-        st.subheader("📋 客戶應收帳款專案清冊")
-        if engine:
-            try:
-                df_ar = pd.read_sql("SELECT * FROM invoices WHERE invoice_type='AR'", engine)
-                if not df_ar.empty:
-                    display_list = []
-                    for idx, r in df_ar.iterrows():
-                        display_list.append({
-                            "編號": idx + 1,
-                            "請款編號": r.get("invoice_id"),
-                            "客戶名稱": r.get("entity_name"),
-                            "工程名稱": r.get("project_name"),
-                            "交易幣別": r.get("currency"),
-                            "總帳款": format_curr(r.get("quoted_amount", 0.0), r.get("currency")),
-                            "分期類型": r.get("payment_terms", "不分期"),
-                            "分期比率": r.get("installment_ratios", "100%"),
-                            "進行進度說明": r.get("progress_note", "工程備料中"),
-                            "專案說明": r.get("project_desc", "-"),
-                            "最新催收理由/歷程": r.get("uncollected_reason", "-")
-                        })
-                    st.dataframe(pd.DataFrame(display_list), use_container_width=True)
-                else:
-                    st.info("目前無應收帳款紀錄。")
-            except Exception as e:
-                st.error(f"讀取資料失敗: {e}")
-
-    # 2. 修改進行進度說明與催收歷程
-    with tab_edit:
-        st.subheader("✍️ 修改專案進行進度說明與催收紀錄")
-        if engine:
-            try:
-                df_ar = pd.read_sql("SELECT * FROM invoices WHERE invoice_type='AR'", engine)
-                if not df_ar.empty:
-                    ar_opts = {f"{r['invoice_id']} - {r['entity_name']} ({r['project_name']})": r['invoice_id'] for _, r in df_ar.iterrows()}
-                    sel_label = st.selectbox("請選擇要更新進度的請款專案：", list(ar_opts.keys()))
-                    target_id = ar_opts[sel_label]
-                    target_row = df_ar[df_ar['invoice_id'] == target_id].iloc[0]
-
-                    st.markdown(f"**當前專案**：`{target_row['project_name']}` | **總帳款**：{format_curr(target_row['quoted_amount'], target_row['currency'])}")
-                    
-                    with st.form("form_update_ar_progress"):
-                        new_progress = st.text_area("更新「進行進度說明」*", value=target_row.get("progress_note", ""))
-                        new_reason = st.text_area("更新/追加「催收理由與客戶回應」", value=target_row.get("uncollected_reason", ""))
-                        modifier = st.text_input("修改人員姓名*", value=st.session_state.get("user_name", "admin"))
-
-                        if st.form_submit_button("💾 儲存並更新專案進度", use_container_width=True):
-                            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-                            full_reason = f"【{timestamp} 修改人:{modifier}】{new_reason}"
-                            
-                            with engine.connect() as conn:
-                                conn.execute(
-                                    text("""
-                                        UPDATE invoices 
-                                        SET progress_note = :prog,
-                                            uncollected_reason = :reason,
-                                            quoter_name = :quoter
-                                        WHERE invoice_id = :id
-                                    """),
-                                    {"prog": new_progress, "reason": full_reason, "quoter": modifier, "id": target_id}
-                                )
-                                conn.commit()
-                            st.success(f"請款單 `{target_id}` 之進行進度與催收理由已更新！")
-                            st.rerun()
-            except Exception as e:
-                st.error(f"讀取專案失敗: {e}")
-
-    # 3. 新增請款專案 (具備專業介面與自訂百分比)
-    with tab_add:
-        st.subheader("➕ 登記新應收帳款專案")
+        st.markdown(f"### {L['table_title']}")
+        search_query = st.text_input(L["search_label"], key="ar_search_input")
         
-        c1, c2 = st.columns(2)
-        with c1:
-            inv_id = st.text_input("請款編號 *", value=f"AR-2026-{datetime.datetime.now().strftime('%m%d%H%M')}")
-            entity_name = st.text_input("客戶名稱 *", placeholder="越南樟榜工業區A廠")
-            project_name = st.text_input("工程名稱 *", placeholder="西寧廠 2000A 配電櫃新建工程")
-            currency = st.selectbox("交易幣別 *", ["越南盾", "美金", "台幣", "人民幣"])
-            
-            # 美金支援小數點後 3 位精準輸入
-            if currency == "美金":
-                total_amount = st.number_input("總帳款 (USD - 精確至小數點後 3 位) *", min_value=0.0, value=10000.000, format="%.3f", step=0.001)
-            else:
-                total_amount = st.number_input("總帳款 *", min_value=0.0, value=100000.0, step=1000.0)
+        df_ar = pd.DataFrame(st.session_state.ar_projects_db)
+        if search_query:
+            df_ar = df_ar[df_ar.astype(str).apply(lambda x: x.str.contains(search_query, case=False)).any(axis=1)]
 
-        with c2:
-            plan_type = st.selectbox("付款期數模式 *", ["不分期", "分三期", "分五期"])
-            project_desc = st.text_area("專案說明", placeholder="請填寫本工程施工內容與合約細節...")
-            progress_note = st.text_input("進行進度說明", value="工程備料中 / 準備施工")
+        st.dataframe(df_ar, use_container_width=True)
 
-        st.markdown("---")
-        st.markdown("##### 💳 分期百分比 (%) 與付款日期細項設定")
+    # ----------------------------------------------------
+    # ✏️ 頁籤二：更新進度 & 催收款項理由
+    # ----------------------------------------------------
+    with tab_update:
+        st.markdown(f"### {L['update_title']}")
+        
+        if not st.session_state.ar_projects_db:
+            st.info("尚無應收帳款專案可供更新。")
+        else:
+            proj_opts = {f"{p['code']} - {p['client']} ({p['project']})": p for p in st.session_state.ar_projects_db}
+            selected_proj_label = st.selectbox(L["select_project_update"], list(proj_opts.keys()), key="sel_ar_proj")
+            selected_proj = proj_opts[selected_proj_label]
 
-        ratios_str = "100%"
-        p1_amt, p2_amt, p3_amt, p4_amt, p5_amt = total_amount, 0.0, 0.0, 0.0, 0.0
-        d1, d2, d3, d4, d5 = datetime.date.today(), datetime.date.today(), datetime.date.today(), datetime.date.today(), datetime.date.today()
+            st.info(f"{L['current_project']}: **{selected_proj['code']}** | 總帳款: `{selected_proj['total']:,.3f} {selected_proj['currency']}`")
 
-        if plan_type == "不分期":
-            d1 = st.date_input("付款日期", value=datetime.date.today() + datetime.timedelta(days=30), key="ar_d_single")
-            st.info(f"全額一次付清：{format_curr(total_amount, currency)}")
+            with st.form(key="update_ar_form"):
+                new_progress = st.text_area(L["update_progress_label"], value=selected_proj.get("progress", ""))
+                new_reminder = st.text_area(L["update_reminder_label"], value=selected_proj.get("reminder", ""))
+                modifier = st.text_input(L["modifier_name"], value="admin")
 
-        elif plan_type == "分三期":
-            col_r1, col_r2, col_r3 = st.columns(3)
-            with col_r1:
-                r1 = st.number_input("第 1 期比率 (%)", min_value=0.0, max_value=100.0, value=30.0, step=1.0, key="ar_3r1")
-            with col_r2:
-                r2 = st.number_input("第 2 期比率 (%)", min_value=0.0, max_value=100.0, value=40.0, step=1.0, key="ar_3r2")
-            with col_r3:
-                r3 = st.number_input("第 3 期比率 (%)", min_value=0.0, max_value=100.0, value=30.0, step=1.0, key="ar_3r3")
-            
-            total_pct = r1 + r2 + r3
-            if abs(total_pct - 100.0) > 0.01:
-                st.warning(f"⚠️ 目前分期總比率為 `{total_pct}%`（請調整至總和 100%）")
-            else:
-                st.success("✅ 分期比率總和剛好 100%")
+                submitted = st.form_submit_button(L["save_update_btn"], type="primary")
+                if submitted:
+                    selected_proj["progress"] = new_progress
+                    selected_proj["reminder"] = new_reminder
+                    st.success(L["success_update"])
 
-            ratios_str = f"{r1}% / {r2}% / {r3}%"
-            p1_amt = total_amount * (r1 / 100.0)
-            p2_amt = total_amount * (r2 / 100.0)
-            p3_amt = total_amount * (r3 / 100.0)
+    # ----------------------------------------------------
+    # ➕ 頁籤三：登記新應收帳款專案
+    # ----------------------------------------------------
+    with tab_add:
+        st.markdown(f"### {L['add_title']}")
 
-            col_a, col_b = st.columns(2)
-            with col_a:
-                st.write(f"• **第一期金額**：`{format_curr(p1_amt, currency)}`")
-                d1 = st.date_input("第一期收款日期", value=datetime.date.today() + datetime.timedelta(days=7), key="ar_3d1")
-                st.write(f"• **第二期金額**：`{format_curr(p2_amt, currency)}`")
-                d2 = st.date_input("第二期收款日期", value=datetime.date.today() + datetime.timedelta(days=30), key="ar_3d2")
-            with col_b:
-                st.write(f"• **第三期金額**：`{format_curr(p3_amt, currency)}`")
-                d3 = st.date_input("第三期收款日期", value=datetime.date.today() + datetime.timedelta(days=60), key="ar_3d3")
+        with st.form(key="add_ar_form"):
+            c1, c2 = st.columns(2)
+            with c1:
+                new_code = st.text_input(L["ar_code"], value=f"AR-2026-{datetime.datetime.now().strftime('%H%M%S')}")
+                client_name = st.text_input(L["client_name"], value="越南樟榜工業區A廠")
+                project_name = st.text_input(L["project_name"], value="西寧廠 2000A 配電櫃新建工程")
+                currency = st.selectbox(L["currency"], ["VND", "USD", "TWD", "CNY"])
+                total_amt = st.number_input(L["total_amount"], value=100000.0, step=10000.0)
+            with c2:
+                payment_mode = st.selectbox(L["payment_mode"], ["不分期", "分三期 (30%, 30%, 40%)", "按月計價工程款"])
+                project_desc = st.text_area(L["project_desc"], value="請填寫工程施工內容與合約細節...")
+                progress_desc = st.text_area(L["progress_desc"], value="工程備料中 / 準備施工")
 
-        elif plan_type == "分五期":
-            col_r1, col_r2, col_r3, col_r4, col_r5 = st.columns(5)
-            with col_r1:
-                r1 = st.number_input("第 1 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r1")
-            with col_r2:
-                r2 = st.number_input("第 2 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r2")
-            with col_r3:
-                r3 = st.number_input("第 3 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r3")
-            with col_r4:
-                r4 = st.number_input("第 4 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r4")
-            with col_r5:
-                r5 = st.number_input("第 5 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r5")
+            st.markdown(f"#### {L['milestone_title']}")
+            st.date_input(L["payment_date"], value=datetime.date.today(), key="pay_date_input")
 
-            total_pct = r1 + r2 + r3 + r4 + r5
-            if abs(total_pct - 100.0) > 0.01:
-                st.warning(f"⚠️ 目前分期總比率為 `{total_pct}%`（請調整至總和 100%）")
-            else:
-                st.success("✅ 分期比率總和剛好 100%")
+            submitted_add = st.form_submit_button(L["save_new_btn"], type="primary")
+            if submitted_add:
+                new_item = {
+                    "code": new_code,
+                    "client": client_name,
+                    "project": project_name,
+                    "currency": currency,
+                    "total": total_amt,
+                    "mode": payment_mode,
+                    "progress": progress_desc,
+                    "desc": project_desc,
+                    "reminder": f"【{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')} 建立專案】"
+                }
+                st.session_state.ar_projects_db.append(new_item)
+                st.success(L["success_add"])
 
-            ratios_str = f"{r1}% / {r2}% / {r3}% / {r4}% / {r5}%"
-            p1_amt = total_amount * (r1 / 100.0)
-            p2_amt = total_amount * (r2 / 100.0)
-            p3_amt = total_amount * (r3 / 100.0)
-            p4_amt = total_amount * (r4 / 100.0)
-            p5_amt = total_amount * (r5 / 100.0)
+def show(engine=None, lang="繁體中文"):
+    render_ar_management_page(engine, lang)
 
-            col_a, col_b = st.columns(2)
-            with col_a:
-                st.write(f"• **第一期金額**：`{format_curr(p1_amt, currency)}`")
-                d1 = st.date_input("第一期收款日期", value=datetime.date.today() + datetime.timedelta(days=7), key="ar_5d1")
-                st.write(f"• **第二期金額**：`{format_curr(p2_amt, currency)}`")
-                d2 = st.date_input("第二期收款日期", value=datetime.date.today() + datetime.timedelta(days=30), key="ar_5d2")
-                st.write(f"• **第三期金額**：`{format_curr(p3_amt, currency)}`")
-                d3 = st.date_input("第三期收款日期", value=datetime.date.today() + datetime.timedelta(days=60), key="ar_5d3")
-            with col_b:
-                st.write(f"• **第四期金額**：`{format_curr(p4_amt, currency)}`")
-                d4 = st.date_input("第四期收款日期", value=datetime.date.today() + datetime.timedelta(days=90), key="ar_5d4")
-                st.write(f"• **第五期金額**：`{format_curr(p5_amt, currency)}`")
-                d5 = st.date_input("第五期收款日期", value=datetime.date.today() + datetime.timedelta(days=120), key="ar_5d5")
-
-        st.markdown("")
-        if st.button("💾 儲存並建立應收請款專案", type="primary", use_container_width=True):
-            if entity_name and project_name:
-                if engine:
-                    with engine.connect() as conn:
-                        conn.execute(
-                            text("""
-                                INSERT INTO invoices (
-                                    invoice_id, entity_name, project_name, currency, amount, quoted_amount, 
-                                    payment_terms, installment_ratios, project_desc, progress_note, 
-                                    due_date, invoice_type, is_paid
-                                ) VALUES (
-                                    :id, :entity, :prj, :curr, :amt, :q_amt, 
-                                    :terms, :ratios, :desc, :prog, 
-                                    :due, 'AR', false
-                                )
-                            """),
-                            {
-                                "id": inv_id, "entity": entity_name, "prj": project_name, "curr": currency,
-                                "amt": p1_amt, "q_amt": total_amount, "terms": plan_type, "ratios": ratios_str,
-                                "desc": project_desc, "prog": progress_note, "due": d1
-                            }
-                        )
-                        conn.commit()
-                st.success(f"專案 `{inv_id}` 建立成功！")
-                st.rerun()
-            else:
-                st.warning("⚠️ 請完整填寫客戶名稱與工程名稱！")
-
-def show(*args, **kwargs):
-    render_sales_order_ar_page(*args, **kwargs)
-
-def main(*args, **kwargs):
-    render_sales_order_ar_page(*args, **kwargs)
+def main(engine=None, lang="繁體中文"):
+    render_ar_management_page(engine, lang)
