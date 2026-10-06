@@ -86,7 +86,7 @@ GPS_ATTENDANCE_I18N = {
     }
 }
 
-def render_gps_attendance_page(lang="繁體中文", **kwargs):
+def render_field_attendance_page(lang="繁體中文", **kwargs):
     active_lang = lang or st.session_state.get("current_lang", "繁體中文")
     L = GPS_ATTENDANCE_I18N.get(active_lang, GPS_ATTENDANCE_I18N["繁體中文"])
 
@@ -146,8 +146,8 @@ def render_gps_attendance_page(lang="繁體中文", **kwargs):
         st.markdown(f"### {L['tab_monitor']}")
         st.success("🛰️ 目前系統監控中：所有外派施工人員 GPS 訊號穩定，無越界或異常離場狀況。")
 
-def show(*args, **kwargs):
-    render_gps_attendance_page(*args, **kwargs)
+def show(lang="繁體中文", **kwargs):
+    render_field_attendance_page(lang, **kwargs)
 
-def main(*args, **kwargs):
-    render_gps_attendance_page(*args, **kwargs)
+def main(lang="繁體中文", **kwargs):
+    render_field_attendance_page(lang, **kwargs)
