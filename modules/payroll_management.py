@@ -1,4 +1,5 @@
 import datetime
+import io
 import pandas as pd
 from sqlalchemy import text
 import streamlit as st
@@ -28,6 +29,7 @@ PAYROLL_I18N = {
         "att_caption": "提供請假與全勤獎金發放依據。",
         "hist_title": "📜 歷史發薪紀錄與清冊",
         "hist_caption": "供財務與會計部查閱各月份薪資發放總表。",
+        "export_excel_btn": "📊 下載全廠區本月薪資結算總表 (Excel)",
     },
     "Tiếng Việt": {
         "title": "💰 Bộ phận Tài chính - Trung tâm Tính lương & Khấu trừ Bảo hiểm",
@@ -50,6 +52,7 @@ PAYROLL_I18N = {
         "att_caption": "Cung cấp cơ sở cho việc tính thưởng chuyên cần và nghỉ phép.",
         "hist_title": "📜 Lịch sử chi trả lương & Danh sách",
         "hist_caption": "Dành cho bộ phận tài chính và kế toán tra cứu tổng hợp.",
+        "export_excel_btn": "📊 Tải xuống bảng tổng hợp lương tháng (Excel)",
     },
     "English": {
         "title": "💰 Finance Dept - Employee Payroll & Insurance Calculation Center",
@@ -72,6 +75,7 @@ PAYROLL_I18N = {
         "att_caption": "Provides the basis for leave and full-attendance bonuses.",
         "hist_title": "📜 Historical Payroll Records & Registry",
         "hist_caption": "For finance and accounting departments to review monthly payroll tables.",
+        "export_excel_btn": "📊 Download Monthly Payroll Summary (Excel)",
     }
 }
 
@@ -111,6 +115,28 @@ INSURANCE_RATES = {
         "rate_label": "中國五險一金個人提撥"
     }
 }
+
+# ----------------------------------------------------
+# 📊 匯出 Excel 輔助函式
+# ----------------------------------------------------
+def convert_payroll_to_excel(emp_list):
+    output = io.BytesIO()
+    data_rows = []
+    for emp in emp_list:
+        data_rows.append({
+            "員工編號": emp['id'],
+            "員工姓名": emp['name'],
+            "部門": emp['dept'],
+            "職位": emp['title'],
+            "廠區": emp.get("site", ""),
+            "幣別": "TWD" if "台灣" in emp.get("site", "") else "VND"
+        })
+    
+    df_export = pd.DataFrame(data_rows)
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df_export.to_excel(writer, sheet_name='Payroll_Summary', index=False)
+    
+    return output.getvalue()
 
 
 def render_payroll_management_page(engine=None, lang="繁體中文"):
@@ -246,11 +272,21 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         st.dataframe(pd.DataFrame(mock_att), use_container_width=True)
 
     # ----------------------------------------------------
-    # 📜 頁籤三：歷史發薪紀錄
+    # 📜 頁籤三：歷史發薪紀錄與 Excel 下載
     # ----------------------------------------------------
     with tab_history:
         st.markdown(f"### {L['hist_title']}")
         st.caption(L["hist_caption"])
+        
+        st.markdown("---")
+        excel_data = convert_payroll_to_excel(emp_list)
+        st.download_button(
+            label=L["export_excel_btn"],
+            data=excel_data,
+            file_name=f"Reetech_Payroll_{datetime.date.today().strftime('%Y%m')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+sheet",
+            type="primary"
+        )
 
 
 def show(engine=None, lang="繁體中文"):
