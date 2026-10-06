@@ -26,6 +26,14 @@ GPS_ATTENDANCE_I18N = {
         "btn_checkin": "🚀 確認上班簽到",
         "success_checkin": "✅ 成功完成上班簽到！GPS 座標與現場照片已同步至管理中心。",
         "fill_warning": "⚠️ 請填寫工作說明並上傳現場照片！",
+        # 下班簽退
+        "checkout_header": "🔴 辦理下班簽退 (Check-Out)",
+        "checkout_caption": "💡 當您離開施工工地時，請點擊下方按鈕進行簽退並記錄離場座標。",
+        "btn_checkout": "🚀 確認下班離場 (Check-Out)",
+        "success_checkout": "✅ 已成功記錄下班離場時間與 GPS 座標！",
+        # 狀態
+        "status_onsite": "🟢 駐點施工中 (On-Site)",
+        "status_offsite": "🔴 已離場簽退 (Checked-Out)",
         "col_time": "時間",
         "col_emp": "員工",
         "col_project": "專案名稱",
@@ -52,6 +60,14 @@ GPS_ATTENDANCE_I18N = {
         "btn_checkin": "🚀 Xác nhận vào ca",
         "success_checkin": "✅ Đã chấm công vào ca thành công! Tọa độ và ảnh đã được đồng bộ về ban quản lý.",
         "fill_warning": "⚠️ Vui lòng điền mô tả công việc và tải ảnh hiện trường!",
+        # Tan ca
+        "checkout_header": "🔴 Đăng ký tan ca / Rời công trường (Check-Out)",
+        "checkout_caption": "💡 Khi bạn rời khỏi công trường, vui lòng bấm nút bên dưới để ghi nhận tọa độ rời đi.",
+        "btn_checkout": "🚀 Xác nhận rời công trường (Check-Out)",
+        "success_checkout": "✅ Đã ghi nhận thời gian tan ca và tọa độ GPS thành công!",
+        # Trạng thái
+        "status_onsite": "🟢 Đang thi công trực tuyến (On-Site)",
+        "status_offsite": "🔴 Đã rời công trường (Checked-Out)",
         "col_time": "Thời gian",
         "col_emp": "Nhân viên",
         "col_project": "Dự án",
@@ -78,6 +94,14 @@ GPS_ATTENDANCE_I18N = {
         "btn_checkin": "🚀 Confirm Check-In",
         "success_checkin": "✅ Check-in recorded successfully! GPS and photo synchronized to management.",
         "fill_warning": "⚠️ Please fill in work description and upload site photo!",
+        # Check-Out
+        "checkout_header": "🔴 Register Site Check-Out",
+        "checkout_caption": "💡 When leaving the construction site, click below to check out and record your exit coordinates.",
+        "btn_checkout": "🚀 Confirm Check-Out",
+        "success_checkout": "✅ Check-out time and GPS coordinates recorded successfully!",
+        # Status
+        "status_onsite": "🟢 On-Site",
+        "status_offsite": "🔴 Checked-Out",
         "col_time": "Timestamp",
         "col_emp": "Employee",
         "col_project": "Project",
@@ -95,7 +119,7 @@ def render_field_attendance_page(lang="繁體中文", **kwargs):
 
     if "gps_logs_db" not in st.session_state:
         st.session_state.gps_logs_db = [
-            {"time": "2026-10-06 07:45:10", "emp": "admin", "project": "PROJ-2026-Lắp đặt tủ điện nhà máy TP.HCM", "gps": "10.8231° N, 106.6297° E", "status": "🟢 駐點施工中 (On-Site)"}
+            {"time": "2026-10-06 07:45:10", "emp": "admin", "project": "PROJ-2026-Lắp đặt tủ điện nhà máy TP.HCM", "gps": "10.8231° N, 106.6297° E", "status": L["status_onsite"]}
         ]
 
     tab1, tab2, tab3, tab4 = st.tabs([
@@ -125,7 +149,7 @@ def render_field_attendance_page(lang="繁體中文", **kwargs):
                         "emp": emp_name,
                         "project": project,
                         "gps": gps_coord,
-                        "status": "🟢 駐點施工中 (On-Site)"
+                        "status": L["status_onsite"]
                     })
                     st.success(L["success_checkin"])
                     st.rerun()
@@ -133,10 +157,10 @@ def render_field_attendance_page(lang="繁體中文", **kwargs):
                     st.warning(L["fill_warning"])
 
     with tab2:
-        st.markdown("### 🔴 辦理下班簽退 (Check-Out)")
-        st.info("當您離開施工工地時，請點擊下方按鈕進行簽退並記錄離場座標。")
-        if st.button("🚀 確認下班離場 (Check-Out)", type="primary"):
-            st.success("✅ 已成功記錄下班離場時間與 GPS 座標！")
+        st.markdown(f"### {L['checkout_header']}")
+        st.info(L["checkout_caption"])
+        if st.button(L["btn_checkout"], type="primary"):
+            st.success(L["success_checkout"])
 
     with tab3:
         st.markdown(f"### {L['tab_history']}")
