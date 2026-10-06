@@ -109,24 +109,24 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
             }
         ]
 
-    # 依照最常用順序排列頁籤：1. 新增採購 2. 應付帳款清單 3. UNC 銀行轉帳水單 4. 小額憑證 5. 列印 6. 歷史查詢
+    # 頁籤順序：1. 新增採購 2. 應付帳款清單 3. UNC 銀行轉帳水單 4. 小額憑證 5. 列印 6. 歷史查詢
     tab_add, tab_list, tab_pay, tab_small_cash, tab_print, tab_search = st.tabs([
         L["tab_add"], L["tab_list"], L["tab_pay"], L["tab_small_cash"], L["tab_print"], L["tab_search"]
     ])
 
     # ----------------------------------------------------
-    # ➕ 頁籤一：登記新採購進貨單與廠商發票（優先置頂）
+    # ➕ 頁籤一：登記新採購進貨單與廠商發票
     # ----------------------------------------------------
     with tab_add:
         st.markdown("### ➕ 1. 手動登記新採購進貨單與廠商發票")
-        with st.form("form_add_ap_inv_main"):
+        with st.form("unique_form_add_ap_inv_v2"):
             col_a, col_b = st.columns(2)
             with col_a:
-                po_num = st.text_input("採購單號 (PO No.)", value="PO-2026-02")
-                v_name = st.text_input("廠商名稱 (Vendor Name)", placeholder="例如: 台灣總部 / 越南供應商")
+                po_num = st.text_input("採購單號 (PO No.)", value="PO-2026-02", key="input_po_num_v2")
+                v_name = st.text_input("廠商名稱 (Vendor Name)", placeholder="例如: 台灣總部 / 越南供應商", key="input_v_name_v2")
             with col_b:
-                p_amt = st.number_input("發票含稅金額", value=500000.0, step=50000.0)
-                curr_type = st.selectbox("計價幣別", ["VND", "USD", "TWD"], key="ap_curr_add")
+                p_amt = st.number_input("發票含稅金額", value=500000.0, step=50000.0, key="input_p_amt_v2")
+                curr_type = st.selectbox("計價幣別", ["VND", "USD", "TWD"], key="ap_curr_add_v2")
 
             if st.form_submit_button("💾 儲存進貨發票至應付帳款資料庫", type="primary"):
                 if v_name:
@@ -169,16 +169,16 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
             "Cathay United Bank (國泰世華)", "CTBC Bank (中國信託)", "HSBC (Vietnam)", "Other / 其它"
         ]
 
-        with st.form("form_add_unc_main"): # 修正 key 避免衝突
+        with st.form("unique_form_add_unc_v2"):
             col1, col2 = st.columns(2)
             with col1:
-                unc_no = st.text_input(L["unc_no"], placeholder="例如: UNC-2026-002")
-                vendor_name = st.text_input(L["vendor_name"], placeholder="例如: 台灣總部 / 越南供應商")
-                amount = st.number_input(L["amount"], min_value=0.0, value=1200000.0, step=100000.0)
+                unc_no = st.text_input(L["unc_no"], placeholder="例如: UNC-2026-002", key="input_unc_no_v2")
+                vendor_name = st.text_input(L["vendor_name"], placeholder="例如: 台灣總部 / 越南供應商", key="input_unc_vendor_v2")
+                amount = st.number_input(L["amount"], min_value=0.0, value=1200000.0, step=100000.0, key="input_unc_amt_v2")
             with col2:
-                bank_name = st.selectbox(L["bank_name"], vietnam_banks)
-                selected_target_po = st.selectbox(L["select_po"], unpaid_po_ids if unpaid_po_ids else ["目前無待付款採購單"])
-                currency = st.selectbox("幣別", ["VND", "USD", "TWD"], key="unc_curr_sel")
+                bank_name = st.selectbox(L["bank_name"], vietnam_banks, key="input_unc_bank_v2")
+                selected_target_po = st.selectbox(L["select_po"], unpaid_po_ids if unpaid_po_ids else ["目前無待付款採購單"], key="input_unc_po_v2")
+                currency = st.selectbox("幣別", ["VND", "USD", "TWD"], key="unc_curr_sel_v2")
 
             submitted = st.form_submit_button(L["btn_add_unc"], type="primary")
             if submitted:
@@ -212,7 +212,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
                     st.write(f"• **匯款銀行**: {item['bank']}")
                     st.write(f"• **轉帳日期**: {item['date']}")
                     st.write(f"• **已勾稽採購單**: `{item['matched_po']}`")
-                    if st.button(L["delete_btn"], key=f"del_unc_{idx}"):
+                    if st.button(L["delete_btn"], key=f"unique_del_unc_{idx}"):
                         st.session_state.unc_db.pop(idx)
                         st.success("🗑️ 已成功刪除該筆水單記錄！")
                         st.rerun()
@@ -240,7 +240,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
     # ----------------------------------------------------
     with tab_search:
         st.markdown("### 🔍 6. 商品歷史報價與供應商反查系統")
-        search_query = st.text_input("輸入商品條碼或品名關鍵字查詢歷史價格：")
+        search_query = st.text_input("輸入商品條碼或品名關鍵字查詢歷史價格：", key="search_query_input_v2")
         if search_query:
             st.success(f"🔍 查無 '{search_query}' 的過往異常波動紀錄，價格穩定。")
 
