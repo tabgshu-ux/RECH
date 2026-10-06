@@ -153,11 +153,14 @@ def render_payroll_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown(f"### {L['tab_history']}")
         st.info("📜 歷史薪資與會計傳票紀錄封存中。")
 
+def render_payroll_management_page(*args, **kwargs):
+    render_payroll_page(*args, **kwargs)
+
 def show(*args, **kwargs):
     render_payroll_page(*args, **kwargs)
 
 def main(*args, **kwargs):
     render_payroll_page(*args, **kwargs)
 
-def render_payroll(*args, **kwargs):
+def render_payroll_management(*args, **kwargs):
     render_payroll_page(*args, **kwargs)
