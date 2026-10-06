@@ -100,7 +100,6 @@ def render_engineering_quotation_page(engine=None, lang=None, **kwargs):
     st.markdown(f"### {L['sec2_title']}")
     st.caption(L["sec2_caption"])
 
-    # 模擬物料選擇與計算
     c_item1, c_q1, c_p1, c_s1 = st.columns([3, 1, 1, 1])
     with c_item1:
         st.text_input(L["lbl_item1"], value="[CU-BUS-10100] Đồng thanh cái Busbar 10x100mm", disabled=True)
@@ -120,6 +119,9 @@ def render_engineering_quotation_page(engine=None, lang=None, **kwargs):
         st.text_input("Price 2", value="$1,850.00", disabled=True, label_visibility="collapsed")
     with c_s2:
         st.text_input("Sub 2", value=f"${q2 * 1850.00:,.2f}", disabled=True, label_visibility="collapsed")
+
+def render_engineering_page(*args, **kwargs):
+    render_engineering_quotation_page(*args, **kwargs)
 
 def render_engineering_quotation(*args, **kwargs):
     render_engineering_quotation_page(*args, **kwargs)
