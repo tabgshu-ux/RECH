@@ -11,7 +11,7 @@ PAYROLL_I18N = {
     "繁體中文": {
         "title": "💰 財務部 - 員工薪資與保險扣款試算中心",
         "caption": "提供各廠區員工底薪、津貼、保險、借款扣款明細與薪資單列印",
-        "tab_list": "📊 全廠區本月薪資總表 (Excel 清單)",
+        "tab_list": "📊 全廠區本月薪資詳細總表與 Excel 匯出",
         "tab_calc": "🧮 單一員工詳細薪資與保險試算",
         "tab_attendance": "📱 出勤與考勤記錄同步",
         "tab_history": "📜 歷史發薪紀錄與清冊",
@@ -29,12 +29,12 @@ PAYROLL_I18N = {
         "att_caption": "提供請假與全勤獎金發放依據。",
         "hist_title": "📜 歷史發薪紀錄與清冊",
         "hist_caption": "供財務與會計部查閱各月份薪資發放總表。",
-        "export_excel_btn": "📊 下載全廠區本月薪資結算總表 (Excel)",
+        "export_excel_btn": "📊 下載全廠區本月完整薪資明細總表 (Excel)",
     },
     "Tiếng Việt": {
         "title": "💰 Bộ phận Tài chính - Trung tâm Tính lương & Khấu trừ Bảo hiểm",
         "caption": "Cung cấp chi tiết lương cơ bản, phụ cấp, bảo hiểm, khấu trừ khoản vay và in phiếu lương",
-        "tab_list": "📊 Tổng hợp lương toàn nhà máy (Excel)",
+        "tab_list": "📊 Bảng lương chi tiết toàn nhà máy & Xuất Excel",
         "tab_calc": "🧮 Tính lương chi tiết từng nhân viên",
         "tab_attendance": "📱 Đồng bộ chấm công & Chuyên cần",
         "tab_history": "📜 Lịch sử bảng lương & Danh sách",
@@ -52,12 +52,12 @@ PAYROLL_I18N = {
         "att_caption": "Cung cấp cơ sở cho việc tính thưởng chuyên cần và nghỉ phép.",
         "hist_title": "📜 Lịch sử chi trả lương & Danh sách",
         "hist_caption": "Dành cho bộ phận tài chính và kế toán tra cứu tổng hợp.",
-        "export_excel_btn": "📊 Tải xuống bảng tổng hợp lương tháng (Excel)",
+        "export_excel_btn": "📊 Tải xuống bảng chi tiết lương tháng (Excel)",
     },
     "English": {
         "title": "💰 Finance Dept - Employee Payroll & Insurance Calculation Center",
         "caption": "Provides basic salary, allowances, insurance, loan deductions, and payslip printing",
-        "tab_list": "📊 Plant-wide Payroll Summary (Excel View)",
+        "tab_list": "📊 Plant-wide Detailed Payroll Summary & Excel Export",
         "tab_calc": "🧮 Individual Employee Payroll Calculator",
         "tab_attendance": "📱 Attendance & Time Tracking Sync",
         "tab_history": "📜 Payroll History & Records",
@@ -75,7 +75,7 @@ PAYROLL_I18N = {
         "att_caption": "Provides the basis for leave and full-attendance bonuses.",
         "hist_title": "📜 Historical Payroll Records & Registry",
         "hist_caption": "For finance and accounting departments to review monthly payroll tables.",
-        "export_excel_btn": "📊 Download Monthly Payroll Summary (Excel)",
+        "export_excel_btn": "📊 Download Detailed Monthly Payroll Summary (Excel)",
     }
 }
 
@@ -124,13 +124,13 @@ INSURANCE_RATES = {
 }
 
 # ----------------------------------------------------
-# 📊 匯出 Excel 輔助函式
+# 📊 匯出完整詳細 Excel 輔助函式
 # ----------------------------------------------------
 def convert_payroll_to_excel(summary_data):
     output = io.BytesIO()
     df_export = pd.DataFrame(summary_data)
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df_export.to_excel(writer, sheet_name='Payroll_Summary', index=False)
+        df_export.to_excel(writer, sheet_name='Detailed_Payroll_Master', index=False)
     return output.getvalue()
 
 
@@ -157,11 +157,11 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         ]
 
     # ----------------------------------------------------
-    # 📊 頁籤一：全廠區員工薪資總表
+    # 📊 頁籤一：全廠區員工薪資詳細總表與 Excel 匯出
     # ----------------------------------------------------
     with tab_list:
-        st.markdown("### 📊 全廠區員工本月薪資總表 (依工號 / 報表清單)")
-        st.caption("您可以直接檢視全廠員工清單,並點擊下方下載按鈕匯出完整 Excel 報表。")
+        st.markdown("### 📊 全廠區員工本月詳細薪資與扣款總表")
+        st.caption("完整包含底薪、津貼、全勤、法定保險、請假扣款、預支借款與實發淨額，可直接匯出完整 Excel。")
 
         summary_rows = []
         for emp in emp_list:
@@ -172,7 +172,11 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
             base = 25000000.0 if curr == "VND" else (80000.0 if curr == "TWD" else 8000.0)
             allow = 2000000.0 if curr == "VND" else 5000.0
             bonus = 1000000.0 if curr == "VND" else 2000.0
-            gross = base + allow + bonus
+            leave_ded = 0.0
+            loan_ded = 0.0
+            other_add = 0.0
+            
+            gross = base + allow + bonus + other_add
             
             if "越南" in emp_site or "西寧" in emp_site:
                 tot_ins = base * (ins_info.get("bhxh_social", 0.08) + ins_info.get("bhyt_health", 0.015) + ins_info.get("bhtn_unemploy", 0.01))
@@ -181,7 +185,8 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
             else:
                 tot_ins = base * 0.17
 
-            net = gross - tot_ins
+            total_deductions = tot_ins + leave_ded + loan_ded
+            net = gross - total_deductions
 
             summary_rows.append({
                 "工號": emp['id'],
@@ -190,10 +195,16 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
                 "職位": emp['title'],
                 "廠區": emp_site,
                 "幣別": curr,
-                "基本底薪": f"{base:,.2f}",
-                "總應發金額": f"{gross:,.2f}",
-                "保險與扣款": f"{tot_ins:,.2f}",
-                "本月實發淨額": f"{net:,.2f}"
+                "基本底薪": base,
+                "職務津貼": allow,
+                "全勤/加班費": bonus,
+                "其他補發": other_add,
+                "總應發金額": gross,
+                "法定保險扣款": tot_ins,
+                "請假缺勤扣款": leave_ded,
+                "借款預支扣款": loan_ded,
+                "總扣款金額": total_deductions,
+                "本月實發淨額": net
             })
 
         df_summary = pd.DataFrame(summary_rows)
@@ -204,10 +215,10 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         st.download_button(
             label=L["export_excel_btn"],
             data=excel_data,
-            file_name=f"Reetech_Payroll_Summary_{datetime.date.today().strftime('%Y%m')}.xlsx",
+            file_name=f"Reetech_Detailed_Payroll_{datetime.date.today().strftime('%Y%m')}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+sheet",
             type="primary",
-            key="download_summary_excel_fixed"
+            key="download_detailed_excel_fixed"
         )
 
     # ----------------------------------------------------
@@ -215,7 +226,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
     # ----------------------------------------------------
     with tab_calc:
         st.markdown("### 🧮 單一員工詳細薪資結構與保險試算")
-        st.caption("請先從下方下拉選單中選擇特定員工,即可針對該員工進行薪資微調、詳細試算與列印薪資單。")
+        st.caption("請先從下方下拉選單中選擇特定員工，即可針對該員工進行薪資微調、詳細試算與列印薪資單。")
 
         col_m1, col_m2 = st.columns(2)
         with col_m1:
@@ -236,7 +247,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         st.markdown(f"#### 👤 員工姓名: **{emp['name']}** (`{emp_id}`) | 部門: {emp['dept']} | 職位: {emp['title']}")
         st.caption(f"📍 所屬工作廠區: **{emp_site}** | 計價幣別: **{curr}**")
 
-        # 💡 關鍵修正：將 key 綁定員工編號 emp_id，切換員工時數值才會各自獨立保存
         c1, c2, c3 = st.columns(3)
         with c1:
             default_base = 25000000.0 if curr == "VND" else (80000.0 if curr == "TWD" else 8000.0)
