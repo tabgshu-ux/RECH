@@ -29,7 +29,6 @@ VEHICLE_MAINT_I18N = {
         "btn_save": "💾 儲存維修保養紀錄",
         "success_save": "✅ 車輛 `{plate}` 維修紀錄已成功建立！",
         "fill_warning": "⚠️ 請完整填寫車牌號碼與維修說明！",
-        # 表格欄位
         "col_index": "STT",
         "col_plate": "車牌號碼",
         "col_type": "維修類別",
@@ -60,7 +59,6 @@ VEHICLE_MAINT_I18N = {
         "btn_save": "💾 Lưu bản ghi bảo trì",
         "success_save": "✅ Đã lưu lịch sử bảo trì cho xe `{plate}`!",
         "fill_warning": "⚠️ Vui lòng điền Biển số xe và Mô tả sửa chữa!",
-        # Tiêu đề bảng
         "col_index": "STT",
         "col_plate": "Biển số xe",
         "col_type": "Loại bảo trì",
@@ -91,7 +89,6 @@ VEHICLE_MAINT_I18N = {
         "btn_save": "💾 Save Maintenance Record",
         "success_save": "✅ Maintenance record for vehicle `{plate}` saved successfully!",
         "fill_warning": "⚠️ Please fill in License Plate and Repair Details!",
-        # Table headers
         "col_index": "No.",
         "col_plate": "License Plate",
         "col_type": "Maintenance Type",
@@ -102,7 +99,7 @@ VEHICLE_MAINT_I18N = {
 }
 
 # ----------------------------------------------------
-# 🔄 智慧語意對照引擎 (車輛與維修項目互轉)
+# 🔄 智慧語意動態轉換引擎
 # ----------------------------------------------------
 def smart_translate_maint(text_val, target_lang):
     if not text_val or not isinstance(text_val, str):
@@ -110,26 +107,26 @@ def smart_translate_maint(text_val, target_lang):
     
     val_lower = text_val.lower()
 
-    if "定期保養" in text_val or "routine" in val_lower or "bảo dưỡng định kỳ" in val_lower:
-        if target_lang == "Tiếng Việt": return "Bảo dưỡng định kỳ"
-        elif target_lang == "English": return "Routine Maintenance"
-        return "定期保養 (定期維護)"
-
-    if "更換機油" in text_val or "oil change" in val_lower or "thay nhớt" in val_lower:
-        if target_lang == "Tiếng Việt": return "Thay nhớt động cơ, lọc nhớt và kiểm tra phanh"
-        elif target_lang == "English": return "Engine oil, filter replacement & brake check"
-        return "更換引擎機油、機油濾芯與煞車檢查"
+    if target_lang == "Tiếng Việt":
+        if "定期保養" in text_val: return "Bảo dưỡng định kỳ"
+        if "輪胎更換" in text_val: return "Thay lốp xe"
+        if "更換引擎機油、機油濾芯與煞車檢查" in text_val: return "Thay nhớt động cơ, lọc nhớt và kiểm tra phanh"
+        if "更換全新米其林前輪兩條與四輪定位" in text_val: return "Thay 2 lốp trước Michelin mới và cân chỉnh độ chụm 4 bánh"
+    elif target_lang == "English":
+        if "定期保養" in text_val: return "Routine Maintenance"
+        if "輪胎更換" in text_val: return "Tire Replacement"
+        if "更換引擎機油、機油濾芯與煞車檢查" in text_val: return "Engine oil, filter replacement & brake check"
+        if "更換全新米其林前輪兩條與四輪定位" in text_val: return "Replace 2 new Michelin front tires & 4-wheel alignment"
 
     return text_val
 
 def render_vehicle_maintenance_page(engine=None, lang="繁體中文", **kwargs):
-    active_lang = lang or st.session_state.get("lang", "繁體中文")
+    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
     L = VEHICLE_MAINT_I18N.get(active_lang, VEHICLE_MAINT_I18N["繁體中文"])
 
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化維修資料庫
     if "vehicle_maint_db" not in st.session_state:
         st.session_state.vehicle_maint_db = [
             {
