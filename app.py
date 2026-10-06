@@ -80,14 +80,14 @@ NAV_STRUCTURE = {
                     "📍 [外勤] 工程人員 GPS 拍照打卡": "field_attendance",
                     "🛒 [財務] 採購與應付帳款 (AP)": "procurement_ap",
                     "📋 [財務] 銷售與應收帳款 (AR)": "sales_order_ar",
-                    "💰 [財務] 全球員工薪資與保險扣款試算": "payroll_calc",
+                    "💰 [財務] 員工薪資與保險扣款試算": "payroll_calc",
                     "📄 [財務] 越南電子發票綜合管理中心": "invoice_management",
                 }
             },
             "🛠️ 工程管理中心 (Engineering Center)": {
                 "features": {
-                    "⚡ [工程] 配電盤與工程專案報價 (含折讓與 AR)": "eng_quote",
-                    "📊 [工程] 全球水電工程驗收與進度追蹤": "eng_progress",
+                    "⚡ [工程] 配電盤與工程專案報價": "eng_quote",
+                    "📊 [工程] 水電工程驗收與進度追蹤": "eng_progress",
                 }
             },
             "📐 設計部門 (Design Dept)": {
