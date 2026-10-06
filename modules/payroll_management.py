@@ -4,6 +4,82 @@ from sqlalchemy import text
 import streamlit as st
 
 # ----------------------------------------------------
+# 🌐 薪資與保險模組多語系字典 (i18n)
+# ----------------------------------------------------
+PAYROLL_I18N = {
+    "繁體中文": {
+        "title": "💰 財務部 - 員工薪資與保險扣款試算中心",
+        "caption": "提供各廠區員工底薪、津貼、保險、借款扣款明細與薪資單列印",
+        "tab_calc": "🧮 員工薪資單與保險試算",
+        "tab_attendance": "📱 出勤與考勤記錄同步",
+        "tab_history": "📜 歷史發薪紀錄與清冊",
+        "section_title": "📋 員工本月薪資結構、保險、借款扣款與實發淨額明細",
+        "select_month": "選擇薪資結算月份",
+        "info_calc": "💡 系統會根據員工所屬廠區自動計算當地法定保險與幣別。",
+        "base_salary": "基本底薪 (Base Salary)",
+        "allowance": "職務與專業津貼",
+        "full_attendance": "全勤獎金 / 加班津貼",
+        "leave_deduction": "請假/缺勤扣款金額",
+        "loan_deduction": "本月借款/預支扣款",
+        "other_allowance": "其他加項/補發金額",
+        "print_btn": "🖨️ 列印/匯出薪資單",
+        "approve_btn": "💾 確認核准並入帳",
+        "att_title": "📱 出勤與考勤時數總結",
+        "att_caption": "提供請假與全勤獎金發放依據。",
+        "hist_title": "📜 歷史發薪紀錄與清冊",
+        "hist_caption": "供財務與會計部查閱各月份薪資發放總表。",
+    },
+    "Tiếng Việt": {
+        "title": "💰 Bộ phận Tài chính - Trung tâm Tính lương & Khấu trừ Bảo hiểm",
+        "caption": "Cung cấp chi tiết lương cơ bản, phụ cấp, bảo hiểm, khấu trừ khoản vay và in phiếu lương",
+        "tab_calc": "🧮 Tính lương & Bảo hiểm nhân viên",
+        "tab_attendance": "📱 Đồng bộ chấm công & Chuyên cần",
+        "tab_history": "📜 Lịch sử bảng lương & Danh sách",
+        "section_title": "📋 Cơ cấu lương tháng, bảo hiểm, khấu trừ và thực nhận chi tiết",
+        "select_month": "Chọn tháng quyết toán lương",
+        "info_calc": "💡 Hệ thống tự động tính toán bảo hiểm và tiền tệ theo nhà máy của nhân viên.",
+        "base_salary": "Lương cơ bản (Base Salary)",
+        "allowance": "Phụ cấp chức vụ & chuyên môn",
+        "full_attendance": "Thưởng chuyên cần / Làm thêm giờ",
+        "leave_deduction": "Khấu trừ nghỉ phép / vắng mặt",
+        "loan_deduction": "Khấu trừ tạm ứng / khoản vay",
+        "other_allowance": "Các khoản cộng / bù khác",
+        "print_btn": "🖨️ In / Xuất phiếu lương",
+        "approve_btn": "💾 Xác nhận duyệt & Ghi sổ",
+        "att_title": "📱 Tổng kết giờ làm việc & Chấm công",
+        "att_caption": "Cung cấp cơ sở cho việc tính thưởng chuyên cần và nghỉ phép.",
+        "hist_title": "📜 Lịch sử chi trả lương & Danh sách",
+        "hist_caption": "Dành cho bộ phận tài chính và kế toán tra cứu tổng hợp.",
+    },
+    "English": {
+        "title": "💰 Finance Dept - Employee Payroll & Insurance Calculation Center",
+        "caption": "Provides basic salary, allowances, insurance, loan deductions, and payslip printing",
+        "tab_calc": "🧮 Payroll & Insurance Calculator",
+        "tab_attendance": "📱 Attendance & Time Tracking Sync",
+        "tab_history": "📜 Payroll History & Records",
+        "section_title": "📋 Monthly Salary Structure, Insurance, Deductions & Net Payable",
+        "select_month": "Select Payroll Settlement Month",
+        "info_calc": "💡 The system automatically calculates local statutory insurance and currency based on the employee's plant site.",
+        "base_salary": "Base Salary",
+        "allowance": "Position & Professional Allowance",
+        "full_attendance": "Full Attendance / Overtime Bonus",
+        "leave_deduction": "Leave / Absence Deduction",
+        "loan_deduction": "Monthly Loan / Advance Deduction",
+        "other_allowance": "Other Additions / Retroactive Pay",
+        "print_btn": "🖨️ Print / Export Payslip",
+        "approve_btn": "💾 Approve & Post Entry",
+        "att_title": "📱 Attendance & Working Hours Summary",
+        "att_caption": "Provides the basis for leave and full-attendance bonuses.",
+        "hist_title": "📜 Historical Payroll Records & Registry",
+        "hist_caption": "For finance and accounting departments to review monthly payroll tables.",
+    }
+}
+
+def get_payroll_lang_dict(lang_param):
+    lang = lang_param or st.session_state.get("lang", "繁體中文")
+    return PAYROLL_I18N.get(lang, PAYROLL_I18N["繁體中文"])
+
+# ----------------------------------------------------
 # 🌐 各國強制社會保險與所得稅扣款比率字典
 # ----------------------------------------------------
 INSURANCE_RATES = {
@@ -28,9 +104,9 @@ INSURANCE_RATES = {
         "rate_label": "台灣勞健保自付額 (勞保+健保級距)"
     },
     "🇨🇳 中國廠區 (Dongguan Plant)": {
-        "pension": 0.08,          # 養老 8%
-        "medical": 0.02,          # 醫療 2%
-        "housing_fund": 0.07,     # 住房公積金 7%
+        "pension": 0.08,         # 養老 8%
+        "medical": 0.02,         # 醫療 2%
+        "housing_fund": 0.07,    # 住房公積金 7%
         "currency": "CNY",
         "rate_label": "中國五險一金個人提撥"
     }
@@ -38,13 +114,15 @@ INSURANCE_RATES = {
 
 
 def render_payroll_management_page(engine=None, lang="繁體中文"):
-    st.title("💰 財務部 - 員工薪資與保險扣款試算中心")
-    st.caption("提供各廠區員工底薪、津貼、保險、借款扣款明細與薪資單列印")
+    L = get_payroll_lang_dict(lang)
+    
+    st.title(L["title"])
+    st.caption(L["caption"])
 
     tab_calc, tab_attendance, tab_history = st.tabs([
-        "🧮 員工薪資單與保險試算",
-        "📱 出勤與考勤記錄同步",
-        "📜 歷史發薪紀錄與清冊"
+        L["tab_calc"],
+        L["tab_attendance"],
+        L["tab_history"]
     ])
 
     # 讀取動態 HR 人員名冊
@@ -60,13 +138,13 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
     # 🧮 頁籤一：詳細薪資單與保險試算
     # ----------------------------------------------------
     with tab_calc:
-        st.markdown("### 📋 員工本月薪資結構、保險、借款扣款與實發淨額明細")
+        st.markdown(f"### {L['section_title']}")
         
         col_m1, col_m2 = st.columns(2)
         with col_m1:
-            pay_month = st.date_input("選擇薪資結算月份", value=datetime.date.today(), key="payroll_month")
+            pay_month = st.date_input(L["select_month"], value=datetime.date.today(), key="payroll_month")
         with col_m2:
-            st.info("💡 系統會根據員工所屬廠區自動計算當地法定保險與幣別。")
+            st.info(L["info_calc"])
 
         st.divider()
 
@@ -83,21 +161,20 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     default_base = 25000000.0 if curr == "VND" else (80000.0 if curr == "TWD" else 8000.0)
-                    base_salary = st.number_input(f"基本底薪 (Base Salary)", value=default_base, step=1000.0, key=f"base_{emp['id']}")
+                    base_salary = st.number_input(L["base_salary"], value=default_base, step=1000.0, key=f"base_{emp['id']}")
                 with c2:
-                    allowance = st.number_input(f"職務與專業津貼", value=2000000.0 if curr == "VND" else 5000.0, step=500.0, key=f"allow_{emp['id']}")
+                    allowance = st.number_input(L["allowance"], value=2000000.0 if curr == "VND" else 5000.0, step=500.0, key=f"allow_{emp['id']}")
                 with c3:
-                    full_attendance_bonus = st.number_input(f"全勤獎金 / 加班津貼", value=1000000.0 if curr == "VND" else 2000.0, step=500.0, key=f"bonus_{emp['id']}")
+                    full_attendance_bonus = st.number_input(L["full_attendance"], value=1000000.0 if curr == "VND" else 2000.0, step=500.0, key=f"bonus_{emp['id']}")
 
                 # 扣款與借款調整欄位
                 c4, c5, c6 = st.columns(3)
                 with c4:
-                    leave_deduction = st.number_input(f"請假/缺勤扣款金額", value=0.0, step=100.0, key=f"leave_{emp['id']}")
+                    leave_deduction = st.number_input(L["leave_deduction"], value=0.0, step=100.0, key=f"leave_{emp['id']}")
                 with c5:
-                    # 💡 新增：員工借款/預支扣款金額
-                    loan_deduction = st.number_input(f"本月借款/預支扣款", value=0.0, step=500.0, key=f"loan_{emp['id']}")
+                    loan_deduction = st.number_input(L["loan_deduction"], value=0.0, step=500.0, key=f"loan_{emp['id']}")
                 with c6:
-                    other_allowance = st.number_input(f"其他加項/補發金額", value=0.0, step=100.0, key=f"other_{emp['id']}")
+                    other_allowance = st.number_input(L["other_allowance"], value=0.0, step=100.0, key=f"other_{emp['id']}")
 
                 # 自動計算保險扣款
                 if "越南" in emp_site:
@@ -147,10 +224,10 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
 
                 col_btn1, col_btn2 = st.columns(2)
                 with col_btn1:
-                    if st.button(f"🖨️ 列印/匯出薪資單 [{emp['name']}]", key=f"print_{emp['id']}"):
+                    if st.button(f"{L['print_btn']} [{emp['name']}]", key=f"print_{emp['id']}"):
                         st.success(f"✅ 已成功產生 {emp['name']} 的薪資單，可連接印表機列印。")
                 with col_btn2:
-                    if st.button(f"💾 確認核准並入帳 [{emp['name']}]", type="primary", key=f"approve_{emp['id']}"):
+                    if st.button(f"{L['approve_btn']} [{emp['name']}]", type="primary", key=f"approve_{emp['id']}"):
                         st.success(f"🎉 已成功核准 {emp['name']} 本月薪資 ({net_payable:,.2f} {curr})！")
 
                 st.divider()
@@ -159,8 +236,8 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
     # 📱 頁籤二：出勤記錄
     # ----------------------------------------------------
     with tab_attendance:
-        st.markdown("### 📱 出勤與考勤時數總結")
-        st.info("提供請假與全勤獎金發放依據。")
+        st.markdown(f"### {L['att_title']}")
+        st.info(L["att_caption"])
         
         mock_att = [
             {"員工編號": "EMP-001", "姓名": "張董事長", "應出勤天數": 22, "實際出勤": 22, "請假時數": 0, "全勤狀態": "🌟 全勤"},
@@ -172,8 +249,8 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
     # 📜 頁籤三：歷史發薪紀錄
     # ----------------------------------------------------
     with tab_history:
-        st.markdown("### 📜 歷史發薪紀錄與清冊")
-        st.caption("供財務與會計部查閱各月份薪資發放總表。")
+        st.markdown(f"### {L['hist_title']}")
+        st.caption(L["hist_caption"])
 
 
 def show(engine=None, lang="繁體中文"):
