@@ -10,6 +10,7 @@ PROJECT_TRACKING_I18N = {
         "title": "⚡ 全球廠區客製化水電工程專案與財務收款追蹤",
         "caption": "結合工程現場施工進度百分比、合約總價、已收款金額、未收款（尾款/進度款）及收款理由與驗收狀態。",
         "kpi1_title": "在手水電專案總數",
+        "kpi1_val": "8 件",
         "kpi1_sub": "↑ 執行中 6 件 / 驗收 2 件",
         "kpi2_title": "合約總金額 (USD)",
         "kpi2_sub": "↑ 累計已收: $1,250,000",
@@ -32,6 +33,7 @@ PROJECT_TRACKING_I18N = {
         "title": "⚡ Theo dõi Dự án Cơ điện & Thu hồi Công nợ Toàn cầu",
         "caption": "Kết hợp phần trăm tiến độ thi công, tổng giá trị hợp đồng, số tiền đã thu, công nợ phải trả/phải thu và trạng thái nghiệm thu.",
         "kpi1_title": "Tổng số dự án cơ điện",
+        "kpi1_val": "8 dự án",
         "kpi1_sub": "↑ Đang thực hiện 6 / Nghiệm thu 2",
         "kpi2_title": "Tổng giá trị hợp đồng (USD)",
         "kpi2_sub": "↑ Đã thu lũy kế: $1,250,000",
@@ -54,6 +56,7 @@ PROJECT_TRACKING_I18N = {
         "title": "⚡ Global M&E Engineering Projects & Financial Collection Tracking",
         "caption": "Combines site progress percentage, contract totals, collected amounts, accounts receivable (AR), and acceptance status.",
         "kpi1_title": "Total M&E Projects",
+        "kpi1_val": "8 projects",
         "kpi1_sub": "↑ Active: 6 / Acceptance: 2",
         "kpi2_title": "Total Contract Value (USD)",
         "kpi2_sub": "↑ Cumulative Collected: $1,250,000",
@@ -83,32 +86,23 @@ def get_active_lang(passed_lang):
             return val
     return "Tiếng Việt"  # 預設越南文
 
-# ----------------------------------------------------
-# 🔄 表格內部資料智慧語意轉譯引擎 (Smart Translation)
-# ----------------------------------------------------
 def smart_translate_project_data(text, target_lang):
     if not text or not isinstance(text, str):
         return text
     
     if target_lang == "Tiếng Việt":
-        # 客戶與廠區轉譯
         text = text.replace("越南新順楠梓電子廠", "Nhà máy Điện tử Tân Thuận, TP.HCM")
         text = text.replace("平陽美德金屬加工廠", "Nhà máy Cơ khí Meide Bình Dương")
         text = text.replace("隆安宏遠精密機械廠", "Nhà máy Cơ khí chính xác Hồng Viễn, Long An")
         text = text.replace("北寧富泰光電科技", "Công ty Công nghệ Quang điện FuTai, Bắc Ninh")
-        
-        # 工程項目專案內容轉譯
         text = text.replace("無塵室高低壓配電安裝與強弱電配管", "Lắp đặt tủ điện trung/hạ thế phòng sạch & ống đi dây điện nhẹ")
         text = text.replace("廠房動力配電、給排水系統與照明工程", "Hệ thống điện động lực nhà máy, cấp thoát nước & chiếu sáng")
         text = text.replace("變電站統包工程、銅排配置與空調系統配電", "Dự án trạm biến áp EPC, lắp đặt thanh cái & điện hệ thống điều hòa")
         text = text.replace("廠房大樓消防警報系統與機房不間斷電源(UPS)配電", "Hệ thống báo cháy tòa nhà & nguồn điện dự phòng UPS phòng máy")
-        
-        # 狀態說明轉譯
         text = text.replace("🟢 設備安裝完成，待驗收", "🟢 Hoàn thành lắp đặt thiết bị, chờ nghiệm thu")
         text = text.replace("🟡 正在進行主幹管配線", "🟡 Đang thi công hệ thống cáp chính")
         text = text.replace("🟢 變電站主體完工", "🟢 Hoàn thành trạm biến áp chính")
         text = text.replace("🟡 機架架設與線槽施工", "🟡 Lắp đặt tủ rack và máng cáp")
-        
     elif target_lang == "English":
         text = text.replace("越南新順楠梓電子廠", "Tan Thuan Electronics Plant, HCMC")
         text = text.replace("平陽美德金屬加工廠", "Meide Metal Processing Plant, Binh Duong")
@@ -135,7 +129,7 @@ def render_engineering_page(engine=None, lang=None, **kwargs):
     # KPI 區塊
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.metric(label=L["kpi1_title"], value="8 件", delta=L["kpi1_sub"])
+        st.metric(label=L["kpi1_title"], value=L["kpi1_val"], delta=L["kpi1_sub"])
     with c2:
         st.metric(label=L["kpi2_title"], value="$1,850,000", delta=L["kpi2_sub"])
     with c3:
