@@ -59,7 +59,7 @@ AR_I18N = {
         "create_success": "專案 `{inv_id}` 建立成功！",
         "fill_warning": "⚠️ 請完整填寫客戶名稱與工程名稱！",
         # 表格動態標題
-        "col_index": "編號",
+        "col_index": "STT",
         "col_inv_id": "請款編號",
         "col_entity": "客戶名稱",
         "col_project": "工程名稱",
@@ -202,18 +202,18 @@ AR_I18N = {
 }
 
 # ----------------------------------------------------
-# 🔄 智慧雙向對照翻譯引擎 (支援客戶名稱與工程名稱互轉)
+# 🔄 智慧模糊語意對照引擎 (支援關鍵字比對與互轉)
 # ----------------------------------------------------
 def smart_translate(text_val, target_lang):
-    if not text_val or not isinstance(text_val, str) or text_val in ["None", "-", ""]:
+    if not text_val or not isinstance(text_val, str) or text_val.strip() in ["None", "-", ""]:
         if target_lang == "Tiếng Việt": return "Chưa cập nhật"
         elif target_lang == "English": return "N/A"
         return "-"
 
-    text_lower = text_val.lower()
+    val_lower = text_val.lower()
 
-    # 1. 客戶名稱對應
-    if "樟榜" in text_val or "trảng bàng" in text_lower or "tay ninh" in text_lower:
+    # 1. 客戶名稱智慧對應 (支援中越互轉)
+    if "樟榜" in text_val or "trảng bàng" in val_lower or "tay ninh" in val_lower or "工業區" in text_val:
         if target_lang == "Tiếng Việt":
             return "Nhà máy A KCN Trảng Bàng, Tây Ninh"
         elif target_lang == "繁體中文":
@@ -221,8 +221,8 @@ def smart_translate(text_val, target_lang):
         elif target_lang == "English":
             return "Tay Ninh Plant Client A"
 
-    # 2. 工程名稱對應
-    if "西寧" in text_val or "2000a" in text_lower or "配電櫃" in text_val or "tủ điện" in text_lower:
+    # 2. 工程名稱智慧對應 (支援中越互轉)
+    if "西寧" in text_val or "2000a" in val_lower or "配電櫃" in text_val or "tủ điện" in val_lower or "新建工程" in text_val:
         if target_lang == "Tiếng Việt":
             return "Lắp đặt tủ điện 2000A nhà máy Tây Ninh"
         elif target_lang == "繁體中文":
@@ -230,8 +230,8 @@ def smart_translate(text_val, target_lang):
         elif target_lang == "English":
             return "Tay Ninh 2000A Switchboard Installation"
 
-    # 3. 進度說明對應
-    if "備料" in text_val or "準備" in text_val or "chuẩn bị" in text_lower:
+    # 3. 進度說明智慧對應
+    if "備料" in text_val or "準備" in text_val or "chuẩn bị" in val_lower or "thi công" in val_lower:
         if target_lang == "Tiếng Việt":
             return "Đang chuẩn bị vật tư / Chuẩn bị thi công"
         elif target_lang == "繁體中文":
@@ -240,7 +240,7 @@ def smart_translate(text_val, target_lang):
             return "Material preparation / Preparing construction"
 
     # 4. 付款期數模式對應
-    if "不分期" in text_val or "1" in text_val and "đợt" in text_lower or "single" in text_lower or "lump" in text_lower:
+    if "不分期" in text_val or "1" in text_val and "đợt" in val_lower or "single" in val_lower or "lump" in val_lower:
         if target_lang == "Tiếng Việt": return "Thanh toán 1 lần"
         elif target_lang == "繁體中文": return "不分期"
         return "Single"
@@ -253,6 +253,7 @@ def smart_translate(text_val, target_lang):
         elif target_lang == "繁體中文": return "分五期"
         return "5 Installments"
 
+    # 若未命中預設對照，直接回傳原字串避免空白
     return text_val
 
 def format_curr(amt, curr):
