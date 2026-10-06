@@ -147,15 +147,12 @@ EMPLOYEE_I18N = {
 }
 
 # ----------------------------------------------------
-# 🔄 智慧語意對照引擎 (處理員工姓名、職稱與廠區)
+# 🔄 智慧語意對照引擎 (處理員工姓名、職稱與部門)
 # ----------------------------------------------------
 def smart_translate_emp(text_val, target_lang):
     if not text_val or not isinstance(text_val, str):
         return text_val
     
-    val_lower = text_val.lower()
-
-    # 1. 董事長與總經理職稱/姓名動態轉譯
     if target_lang == "Tiếng Việt":
         if "張董事長" in text_val: return "Chủ tịch Trương (Chairman)"
         if "李元隆" in text_val: return "Lý Nguyên Long (Vice GM)"
@@ -164,6 +161,7 @@ def smart_translate_emp(text_val, target_lang):
         if "副總經理" in text_val: return "Phó Tổng Giám đốc (Vice GM)"
         if "專員" in text_val: return "Chuyên viên (Specialist)"
         if "管理部" in text_val: return "Ban Quản lý"
+        if "營運管理中心" in text_val: return "Trung tâm Quản lý Vận hành"
         if "西寧廠" in text_val: return "Nhà máy Tây Ninh"
     elif target_lang == "English":
         if "張董事長" in text_val: return "Chairman Chang"
@@ -173,6 +171,7 @@ def smart_translate_emp(text_val, target_lang):
         if "副總經理" in text_val: return "Vice General Manager"
         if "專員" in text_val: return "Specialist"
         if "管理部" in text_val: return "Management Dept"
+        if "營運管理中心" in text_val: return "Operations Management Center"
         if "西寧廠" in text_val: return "Tay Ninh Plant"
 
     return text_val
@@ -213,9 +212,9 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
             {
                 "id": "EMP-003",
                 "name": "李元隆",
-                "nationality": "🇹🇼 台灣 (Taiwan)",
+                "nationality": "🇹🇼 台灣 (Taiwanese)",
                 "site": "西寧廠",
-                "dept": "管理部",
+                "dept": "👑 經營主管 / 營運管理中心 (Management & Operations)",
                 "title": "副總經理 (Vice General Manager)",
                 "role": "ViceManager",
                 "phone": "-",
@@ -287,48 +286,3 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
         
         with st.form("mock_punch"):
             p_id = st.selectbox(L["select_emp"], [e["id"] + " - " + smart_translate_emp(e["name"], active_lang) for e in st.session_state.employees_db])
-            p_type = st.radio(L["punch_type"], [L["clock_in"], L["clock_out"]], horizontal=True)
-            if st.form_submit_button(L["btn_punch"]):
-                emp_name = p_id.split(" - ")[1]
-                now_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                st.session_state.attendance_db.insert(0, {
-                    "時間": now_time,
-                    "員工": emp_name,
-                    "類型": p_type,
-                    "狀態": "✅ 正常"
-                })
-                st.success(f"✅ {emp_name} {L['success_punch']}")
-
-        if st.session_state.attendance_db:
-            st.dataframe(pd.DataFrame(st.session_state.attendance_db), use_container_width=True)
-        else:
-            st.info(L["no_punch"])
-
-    with tab3:
-        st.markdown(f"### {L['leave_header']}")
-        with st.form("leave_form"):
-            l_emp = st.selectbox(L["lbl_leave_emp"], [smart_translate_emp(e["name"], active_lang) for e in st.session_state.employees_db])
-            l_type = st.selectbox(L["lbl_leave_type"], L["leave_opts"])
-            l_reason = st.text_area(L["lbl_reason"])
-            if st.form_submit_button(L["btn_submit_leave"]):
-                st.session_state.leave_requests_db.append({
-                    "申請人": l_emp,
-                    "假別": l_type,
-                    "事由": l_reason,
-                    "狀態": "⏳ 待主管簽核"
-                })
-                st.success(L["success_leave"])
-                st.rerun()
-
-        if st.session_state.leave_requests_db:
-            st.markdown(f"#### {L['leave_list_header']}")
-            st.dataframe(pd.DataFrame(st.session_state.leave_requests_db), use_container_width=True)
-
-def show(engine=None, t=None, lang="繁體中文"):
-    render_employee_management(engine, t, lang)
-
-def main(engine=None, t=None, lang="繁體中文"):
-    render_employee_management(engine, t, lang)
-
-def render_employee_management_page(engine=None, t=None, lang="繁體中文"):
-    render_employee_management(engine, t, lang)
