@@ -24,9 +24,9 @@ PAYROLL_I18N = {
         "license_allowance": "執照/牌照加給 (Phụ cấp giấy phép)",
         "tips": "小費 / 獎金 (Tiền tips)",
         "loan_deduction": "本月借款預支 (Tiền ứng)",
-        "print_btn": "🖨️ 列印正式薪資單",
-        "approve_btn": "💾 確認核准並拋轉會計傳票",
-        "export_excel_btn": "📊 下載標準薪資總表 (Excel)",
+        "print_btn": "列印正式薪資單",
+        "approve_btn": "確認核准並拋轉會計傳票",
+        "export_excel_btn": "下載標準薪資總表 (Excel)",
     },
     "Tiếng Việt": {
         "title": "💰 Bộ phận Tài chính - Trung tâm Tính lương & Khấu trừ Bảo hiểm",
@@ -44,9 +44,9 @@ PAYROLL_I18N = {
         "license_allowance": "Phụ cấp giấy phép",
         "tips": "Tiền tips / Thưởng",
         "loan_deduction": "Tiền ứng / Tạm ứng",
-        "print_btn": "🖨️ In phiếu lương chính thức",
-        "approve_btn": "💾 Xác nhận duyệt & Ghi sổ kế toán",
-        "export_excel_btn": "📊 Tải xuống bảng lương chuẩn (Excel)",
+        "print_btn": "In phiếu lương chính thức",
+        "approve_btn": "Xác nhận duyệt & Ghi sổ kế toán",
+        "export_excel_btn": "Tải xuống bảng lương chuẩn (Excel)",
     },
     "English": {
         "title": "💰 Finance Dept - Employee Payroll & Insurance Calculation Center",
@@ -64,9 +64,9 @@ PAYROLL_I18N = {
         "license_allowance": "License Allowance",
         "tips": "Tips / Bonus",
         "loan_deduction": "Advance / Loan Deduction",
-        "print_btn": "🖨️ Print Official Payslip",
-        "approve_btn": "💾 Approve & Post to Accounting",
-        "export_excel_btn": "📊 Download Standard Payroll Summary (Excel)",
+        "print_btn": "Print Official Payslip",
+        "approve_btn": "Approve & Post to Accounting",
+        "export_excel_btn": "Download Standard Payroll Summary (Excel)",
     }
 }
 
@@ -98,7 +98,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         L["tab_history"]
     ])
 
-    # 💡 裕豐電機工業正確的工程與管理團隊預設名冊
     if "employees_db" in st.session_state and st.session_state.employees_db:
         emp_list = st.session_state.employees_db
     else:
@@ -124,7 +123,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
     # 📊 頁籤一：全廠區員工薪資總表與 Excel 匯出
     # ----------------------------------------------------
     with tab_list:
-        st.markdown("### 📊 全廠區員工本月薪資總表")
+        st.markdown("### 全廠區員工本月薪資總表")
 
         summary_rows = []
         for emp in emp_list:
@@ -206,7 +205,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
     # 🧮 頁籤二：單一員工詳細薪資與加班、假日 3 倍薪試算
     # ----------------------------------------------------
     with tab_calc:
-        st.markdown("### 🧮 單一員工薪資與加班試算")
+        st.markdown("### 單一員工薪資與加班試算")
 
         col_m1, col_m2 = st.columns(2)
         with col_m1:
@@ -222,8 +221,8 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         emp_id = emp['id']
         emp_site = emp.get("site", "🇻🇳 越南西寧廠")
 
-        st.markdown(f"#### 👤 員工姓名: **{emp['name']}** (`{emp_id}`) | 部門: {emp['dept']} | 職稱: {emp['title']}")
-        st.caption(f"📍 工作廠區: **{emp_site}** | 到職日: {emp.get('join_date', '2024-01-01')}")
+        st.markdown(f"#### 員工姓名: **{emp['name']}** (`{emp_id}`) | 部門: {emp['dept']} | 職稱: {emp['title']}")
+        st.caption(f"工作廠區: {emp_site} | 到職日: {emp.get('join_date', '2024-01-01')}")
 
         c1, c2, c3 = st.columns(3)
         with c1:
@@ -275,55 +274,61 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         total_deduct = total_insurance + leave_deduction + tardiness_deduction + loan_deduction
         net_payable = total_due - total_deduct
 
-        # 💡 修正：使用純 Markdown 呈現薪資單，徹底避免 HTML 標籤外露
-        st.markdown(f"""
----
-### 📄 裕豐電機工業 (Reetech Industrial) - 正式薪資結算明細單
-**結算月份**: {pay_month.strftime('%Y年%m月')} | **工號**: {emp_id} | **姓名**: {emp['name']} | **部門**: {emp['dept']}
+        st.markdown("---")
+        st.markdown(f"### 裕豐電機工業 (Reetech Industrial) - 正式薪資結算明細單")
+        st.markdown(f"**結算月份**: {pay_month.strftime('%Y年%m月')} | **工號**: {emp_id} | **姓名**: {emp['name']} | **部門**: {emp['dept']}")
 
-#### 1. 薪資換算基準
-- 標準工作天數: `{work_days}` 天
-- 日薪: `{daily_wage:,.2f} ₫`
-- 時薪: `{hourly_wage:,.2f} ₫`
-- 每分鐘薪資: `{minute_wage:,.2f} ₫`
+        st.markdown("#### 1. 薪資換算基準")
+        col_b1, col_b2, col_b3, col_b4 = st.columns(4)
+        with col_b1: st.markdown(f"標準工作天數: `{work_days}` 天")
+        with col_b2: st.markdown(f"日薪: `{daily_wage:,.2f} ₫`")
+        with col_b3: st.markdown(f"時薪: `{hourly_wage:,.2f} ₫`")
+        with col_b4: st.markdown(f"每分鐘薪資: `{minute_wage:,.2f} ₫`")
 
-#### 2. 應付金額 (Số tiền đến hạn)
-- 薪資總額 / 底薪: `{base_salary:,.2f} ₫`
-- 餐費補助: `{meal_allowance:,.2f} ₫`
-- 油費補助: `{fuel_allowance:,.2f} ₫`
-- 職務加給: `{position_allowance:,.2f} ₫`
-- 執照加給: `{license_allowance:,.2f} ₫`
-- 平日加班費 (`{ot_normal_hours}` 小時 @ 1.5x): `{overtime_pay:,.2f} ₫`
-- 🌟 國定假日 3 倍薪 (`{holiday_work_days}` 天 @ 300%): `{holiday_pay:,.2f} ₫`
-- 小費/獎金: `{tips:,.2f} ₫`
-- **👉 應付金額總合計 (Total Due): `{total_due:,.2f} ₫`**
+        st.markdown("---")
+        # 💡 仿照圖片二：左右雙欄並排顯示「應付金額」與「應扣金額」
+        col_due, col_ded = st.columns(2)
 
-#### 3. 應扣金額 (Số tiền khấu trừ)
-- 🛡️ 社會保險 (BHXH 8%): `- {bhxh:,.2f} ₫`
-- 🛡️ 醫療保險 (BHYT 1.5%): `- {bhyt:,.2f} ₫`
-- 🛡️ 失業險 (BHTN 1%): `- {bhtn:,.2f} ₫`
-- 📝 請假扣款 (`{leave_days}` 天): `- {leave_deduction:,.2f} ₫`
-- ⏰ 遲到扣款 (`{tardiness_mins}` 分鐘): `- {tardiness_deduction:,.2f} ₫`
-- 💳 預支借款 (Tiền ứng): `- {loan_deduction:,.2f} ₫`
-- **👉 應扣金額合計 (Total Deduct): `{total_deduct:,.2f} ₫`**
+        with col_due:
+            st.markdown("#### 2. 應付金額 (Số tiền đến hạn)")
+            st.markdown(f"- 薪資總額 / 底薪: `{base_salary:,.2f} ₫`")
+            st.markdown(f"- 餐費補助: `{meal_allowance:,.2f} ₫`")
+            st.markdown(f"- 油費補助: `{fuel_allowance:,.2f} ₫`")
+            st.markdown(f"- 職務加給: `{position_allowance:,.2f} ₫`")
+            st.markdown(f"- 執照加給: `{license_allowance:,.2f} ₫`")
+            st.markdown(f"- 平日加班費 (`{ot_normal_hours}` 小時 @ 1.5x): `{overtime_pay:,.2f} ₫`")
+            st.markdown(f"- 國定假日 3 倍薪 (`{holiday_work_days}` 天 @ 300%): `{holiday_pay:,.2f} ₫`")
+            st.markdown(f"- 小費/獎金: `{tips:,.2f} ₫`")
+            st.markdown(f"**應付金額總合計 (Total Due): `{total_due:,.2f} ₫`**")
 
----
-### 💰 本月實領金額 (Số tiền thực lãnh): `{net_payable:,.2f} VND`
-        """)
+        with col_ded:
+            st.markdown("#### 3. 應扣金額 (Số tiền khấu trừ)")
+            st.markdown(f"- 社會保險 (BHXH 8%): `- {bhxh:,.2f} ₫`")
+            st.markdown(f"- 醫療保險 (BHYT 1.5%): `- {bhyt:,.2f} ₫`")
+            st.markdown(f"- 失業險 (BHTN 1%): `- {bhtn:,.2f} ₫`")
+            st.markdown(f"- 請假扣款 (`{leave_days}` 天): `- {leave_deduction:,.2f} ₫`")
+            st.markdown(f"- 遲到扣款 (`{tardiness_mins}` 分鐘): `- {tardiness_deduction:,.2f} ₫`")
+            st.markdown(f"- 預支借款 (Tiền ứng): `- {loan_deduction:,.2f} ₫`")
+            st.markdown("")
+            st.markdown("")
+            st.markdown(f"**應扣金額合計 (Total Deduct): `{total_deduct:,.2f} ₫`**")
+
+        st.markdown("---")
+        st.markdown(f"### 💰 本月實領金額 (Số tiền thực lãnh): `{net_payable:,.2f} VND`")
 
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
             if st.button(L["print_btn"], key=f"print_std_{emp_id}"):
-                st.success(f"✅ 已成功產生 {emp['name']} 的正式薪資單。")
+                st.success(f"已成功產生 {emp['name']} 的正式薪資單。")
         with col_btn2:
             if st.button(L["approve_btn"], type="primary", key=f"approve_std_{emp_id}"):
-                st.success(f"🎉 已成功核准 {emp['name']} 本月薪資並拋轉會計總帳傳票！")
+                st.success(f"已成功核准 {emp['name']} 本月薪資並拋轉會計總帳傳票！")
 
     # ----------------------------------------------------
     # 📱 頁籤三：出勤打卡與請假記錄
     # ----------------------------------------------------
     with tab_attendance:
-        st.markdown("### 📱 出勤打卡與加班記錄總結")
+        st.markdown("### 出勤打卡與加班記錄總結")
         
         att_data = [
             {"工號": "EMP-001", "姓名": "張董事長", "部門": "管理部", "出勤天數": 26, "請假天數": 0, "遲到分鐘": 0, "平日加班(時)": 0, "國定假日出勤(天)": 0},
@@ -336,7 +341,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
     # 📜 頁籤四：歷史發薪紀錄
     # ----------------------------------------------------
     with tab_history:
-        st.markdown("### 📜 歷史發薪紀錄與傳票拋轉")
+        st.markdown("### 歷史發薪紀錄與傳票拋轉")
         st.info("歷月份薪資發放憑證與會計傳票拋轉記錄運作中。")
 
 
