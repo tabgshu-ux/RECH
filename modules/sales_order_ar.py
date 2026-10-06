@@ -4,7 +4,7 @@ import datetime
 from sqlalchemy import text
 
 # ----------------------------------------------------
-# 🌐 應收帳款與專案進度模組多語系字典 (i18n)
+# 🌐 應收帳款與專案進度模組多語系字典 & 智慧詞彙對照 (i18n)
 # ----------------------------------------------------
 AR_I18N = {
     "繁體中文": {
@@ -109,7 +109,7 @@ AR_I18N = {
         "period_5_date": "Ngày thu đợt 5",
         "save_new_btn": "💾 Lưu và đăng ký dự án phải thu",
         "create_success": "Đã tạo thành công dự án `{inv_id}`!",
-        "fill_warning": "⚠️️ Vui lòng điền đầy đủ Tên khách hàng và Tên công trình!"
+        "fill_warning": "⚠️ Vui lòng điền đầy đủ Tên khách hàng và Tên công trình!"
     },
     "English": {
         "title": "📋 Admin - Accounts Receivable (AR) & Project Installments",
@@ -165,6 +165,38 @@ AR_I18N = {
     }
 }
 
+# ----------------------------------------------------
+# 🔄 智慧中越雙向對照字典（讓台幹輸入的中文與越幹輸入的越文自動互轉）
+# ----------------------------------------------------
+SMART_TRANSLATION_MAP = {
+    "越南樟榜工業區A廠": "Nhà máy A KCN Trảng Bàng, Tây Ninh",
+    "Nhà máy A KCN Trảng Bàng, Tây Ninh": "越南樟榜工業區A廠",
+    "西寧廠 2000A 配電櫃新建工程": "Lắp đặt tủ điện 2000A nhà máy Tây Ninh",
+    "Lắp đặt tủ điện 2000A nhà máy Tây Ninh": "西寧廠 2000A 配電櫃新建工程",
+    "工程備料中 / 準備施工": "Đang chuẩn bị vật tư / Chuẩn bị thi công",
+    "Đang chuẩn bị vật tư / Chuẩn bị thi công": "工程備料中 / 準備施工",
+    "工程備料中": "Đang chuẩn bị vật tư",
+    "Đang chuẩn bị vật tư": "工程備料中",
+    "不分期": "Thanh toán 1 lần",
+    "Thanh toán 1 lần": "不分期",
+    "分三期": "Thanh toán 3 đợt",
+    "Thanh toán 3 đợt": "分三期",
+    "分五期": "Thanh toán 5 đợt",
+    "Thanh toán 5 đợt": "分五期"
+}
+
+def smart_translate(text_val, target_lang):
+    if not text_val or not isinstance(text_val, str):
+        return text_val
+    if target_lang == "Tiếng Việt":
+        return SMART_TRANSLATION_MAP.get(text_val, text_val)
+    elif target_lang == "繁體中文":
+        # 如果是越文，反查中文
+        for zh, vn in SMART_TRANSLATION_MAP.items():
+            if vn == text_val:
+                return zh
+    return text_val
+
 def format_curr(amt, curr):
     if "VND" in curr or "越南盾" in curr or "Đồng" in curr: return f"₫ {amt:,.0f} VND"
     elif "USD" in curr or "美金" in curr or "Đô la" in curr: return f"$ {amt:,.3f} USD"
@@ -190,16 +222,22 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
                 if not df_ar.empty:
                     display_list = []
                     for idx, r in df_ar.iterrows():
+                        # 動態套用智慧翻譯轉換 (客戶名稱、工程名稱、進度說明)
+                        entity_display = smart_translate(r.get("entity_name"), active_lang)
+                        project_display = smart_translate(r.get("project_name"), active_lang)
+                        progress_display = smart_translate(r.get("progress_note"), active_lang)
+                        terms_display = smart_translate(r.get("payment_terms"), active_lang)
+
                         display_list.append({
                             "編號": idx + 1,
                             "請款編號": r.get("invoice_id"),
-                            "客戶名稱": r.get("entity_name"),
-                            "工程名稱": r.get("project_name"),
+                            "客戶名稱": entity_display,
+                            "工程名稱": project_display,
                             "交易幣別": r.get("currency"),
                             "總帳款": format_curr(r.get("quoted_amount", 0.0), r.get("currency")),
-                            "分期類型": r.get("payment_terms", "不分期"),
+                            "分期類型": terms_display,
                             "分期比率": r.get("installment_ratios", "100%"),
-                            "進行進度說明": r.get("progress_note", "工程備料中"),
+                            "進行進度說明": progress_display,
                             "專案說明": r.get("project_desc", "-"),
                             "最新催收理由/歷程": r.get("uncollected_reason", "-")
                         })
@@ -216,15 +254,17 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
             try:
                 df_ar = pd.read_sql("SELECT * FROM invoices WHERE invoice_type='AR'", engine)
                 if not df_ar.empty:
-                    ar_opts = {f"{r['invoice_id']} - {r['entity_name']} ({r['project_name']})": r['invoice_id'] for _, r in df_ar.iterrows()}
+                    ar_opts = {f"{r['invoice_id']} - {smart_translate(r['entity_name'], active_lang)} ({smart_translate(r['project_name'], active_lang)})": r['invoice_id'] for _, r in df_ar.iterrows()}
                     sel_label = st.selectbox(L["select_project"], list(ar_opts.keys()))
                     target_id = ar_opts[sel_label]
                     target_row = df_ar[df_ar['invoice_id'] == target_id].iloc[0]
 
-                    st.markdown(f"**{L['current_project']}**：`{target_row['project_name']}` | **{L['total_amount_label']}**：{format_curr(target_row['quoted_amount'], target_row['currency'])}")
+                    proj_name_disp = smart_translate(target_row['project_name'], active_lang)
+                    st.markdown(f"**{L['current_project']}**：`{proj_name_disp}` | **{L['total_amount_label']}**：{format_curr(target_row['quoted_amount'], target_row['currency'])}")
                     
                     with st.form("form_update_ar_progress"):
-                        new_progress = st.text_area(L["new_progress_label"], value=target_row.get("progress_note", ""))
+                        default_prog = smart_translate(target_row.get("progress_note", ""), active_lang)
+                        new_progress = st.text_area(L["new_progress_label"], value=default_prog)
                         new_reason = st.text_area(L["new_reason_label"], value=target_row.get("uncollected_reason", ""))
                         modifier = st.text_input(L["modifier_label"], value=st.session_state.get("user_name", "admin"))
 
@@ -249,7 +289,7 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
             except Exception as e:
                 st.error(f"{L['read_error']}{e}")
 
-    # 3. 新增請款專案 (具備專業介面與自訂百分比)
+    # 3. 新增請款專案
     with tab_add:
         st.subheader(L["add_header"])
         
@@ -268,7 +308,7 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
         with c2:
             plan_type = st.selectbox(L["plan_type_label"], L["plan_opts"])
             project_desc = st.text_area(L["proj_desc_label"], placeholder=L["proj_desc_placeholder"])
-            progress_note = st.text_input(L["progress_note_label"], value="工程備料中 / 準備施工")
+            progress_note = st.text_input(L["progress_note_label"], value="工程備料中 / 準備施工" if active_lang == "繁體中文" else "Đang chuẩn bị vật tư / Chuẩn bị thi công")
 
         st.markdown("---")
         st.markdown(f"##### {L['milestone_header']}")
@@ -277,7 +317,6 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
         p1_amt, p2_amt, p3_amt, p4_amt, p5_amt = total_amount, 0.0, 0.0, 0.0, 0.0
         d1, d2, d3, d4, d5 = datetime.date.today(), datetime.date.today(), datetime.date.today(), datetime.date.today(), datetime.date.today()
 
-        # 判斷付款期數模式（支援各語系比對）
         is_single = ("不分期" in plan_type) or ("1" in plan_type and "đợt" in plan_type) or ("Single" in plan_type)
         is_three = ("分三期" in plan_type) or ("3" in plan_type)
         is_five = ("分五期" in plan_type) or ("5" in plan_type)
@@ -289,11 +328,11 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
         elif is_three:
             col_r1, col_r2, col_r3 = st.columns(3)
             with col_r1:
-                r1 = st.number_input("第 1 期比率 (%)", min_value=0.0, max_value=100.0, value=30.0, step=1.0, key="ar_3r1")
+                r1 = st.number_input("第 1 期比率 (%)" if active_lang=="繁體中文" else "Tỷ lệ đợt 1 (%)", min_value=0.0, max_value=100.0, value=30.0, step=1.0, key="ar_3r1")
             with col_r2:
-                r2 = st.number_input("第 2 期比率 (%)", min_value=0.0, max_value=100.0, value=40.0, step=1.0, key="ar_3r2")
+                r2 = st.number_input("第 2 期比率 (%)" if active_lang=="繁體中文" else "Tỷ lệ đợt 2 (%)", min_value=0.0, max_value=100.0, value=40.0, step=1.0, key="ar_3r2")
             with col_r3:
-                r3 = st.number_input("第 3 期比率 (%)", min_value=0.0, max_value=100.0, value=30.0, step=1.0, key="ar_3r3")
+                r3 = st.number_input("第 3 期比率 (%)" if active_lang=="繁體中文" else "Tỷ lệ đợt 3 (%)", min_value=0.0, max_value=100.0, value=30.0, step=1.0, key="ar_3r3")
             
             total_pct = r1 + r2 + r3
             if abs(total_pct - 100.0) > 0.01:
