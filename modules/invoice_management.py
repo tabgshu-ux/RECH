@@ -162,13 +162,16 @@ def render_e_invoice_page(engine=None, lang=None, **kwargs):
 
     with tab_query:
         st.markdown(f"### {L['tab_query']}")
-        st.success("🔍 Tra cứu cổng thông tin điện tử Tổng cục Thuế (GDT) trực tuyến hoạt động bình常。" if active_lang == "Tiếng Việt" else "🔍 稅務總局 (GDT) 電子發票入口網站連線正常。")
+        st.success("🔍 Tra cứu cổng thông tin điện tử Tổng cục Thuế (GDT) trực tuyến hoạt động bình thường." if active_lang == "Tiếng Việt" else "🔍 稅務總局 (GDT) 電子發票入口網站連線正常。")
+
+def render_invoice_management(*args, **kwargs):
+    render_e_invoice_page(*args, **kwargs)
+
+def render_e_invoice_management(*args, **kwargs):
+    render_e_invoice_page(*args, **kwargs)
 
 def show(*args, **kwargs):
     render_e_invoice_page(*args, **kwargs)
 
 def main(*args, **kwargs):
-    render_e_invoice_page(*args, **kwargs)
-
-def render_e_invoice_management(*args, **kwargs):
     render_e_invoice_page(*args, **kwargs)
