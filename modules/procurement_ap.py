@@ -8,25 +8,25 @@ import datetime
 PROCUREMENT_AP_I18N = {
     "繁體中文": {
         "title": "🛒 財務部 - 採購管理 & 應付帳款 (AP)",
-        "caption": "管理土地租賃續約、公務車輛、生產原料、固定資產與多幣別應付帳款追蹤。",
+        "caption": "管理土地租賃續約、公司用車、生產原料、固定資產與多幣別應付帳款追蹤。",
         "tab_list": "📑 應付帳款總表與進度",
         "tab_progress": "💳 供應商付款狀態更新",
         "tab_add": "➕ 登記款項應付 (AP) 新增",
         "table_header": "📋 供應商與政府應付帳款明細總表 (AP)",
         "no_records": "目前無應付帳款紀錄。",
         "progress_header": "💳 供應商與政府規費付款進度管理",
-        "progress_caption": "💡 在此選擇對應的 AP 編號，並更新土地租約續約金、政府規費或車輛採購的付款狀態。",
+        "progress_caption": "💡 在此選擇對應的 AP 編號，並更新土地租約續約金、政府規費或公司用車採購的付款狀態。",
         "btn_update_progress": "🚀 確認更新付款狀態",
         "success_update": "✅ 應付帳款付款狀態已成功更新！",
         
         "add_header": "➕ 登記全新應付帳款與合約款項 (AP)",
         "lbl_code": "AP 帳款編號 *",
         "lbl_vendor": "供應商 / 政府機關名稱 *",
-        "vendor_placeholder": "例如: 越南西寧省人民委員會 / 土地管理局",
+        "vendor_placeholder": "例如: 越南西寧省人民委員會 / 車輛授權經銷商",
         "lbl_category": "採購品項、資產與土地合約分類 *",
         "cat_opts": [
             "土地租賃與政府續約權利金 (Land Lease / LURC)",
-            "廠區公務車、貨車與大客車 (固定資產)",
+            "公司用車 ( 董事長/總經理座車、公務車與貨車 )",
             "📁 辦公文具與行政消耗品",
             "🍳 廠區廚具、餐廳與宿舍設施",
             "⚡ 高低壓配電盤與斷路器零件",
@@ -36,7 +36,7 @@ PROCUREMENT_AP_I18N = {
             "🛡️ 勞安防護與廠區環保耗材"
         ],
         "lbl_item": "款項與合約詳細說明 *",
-        "item_placeholder": "例如: 西寧廠土地租約到期續約權利金及規費",
+        "item_placeholder": "例如: 採購董事長專屬公務座車及領牌規費",
         "lbl_currency": "幣別選擇 *",
         "lbl_amount": "總金額 *",
         "lbl_terms": "付款條件 / 續約條款 *",
@@ -57,25 +57,25 @@ PROCUREMENT_AP_I18N = {
     },
     "Tiếng Việt": {
         "title": "🛒 Khối Tài chính - Quản lý Mua hàng & Phải trả (AP)",
-        "caption": "Quản lý thuê đất gia hạn với chính phủ, xe ô tô công ty, tài sản cố định và khoản phải trả.",
+        "caption": "Quản lý thuê đất gia hạn, xe công ty (xe chủ tịch, xe tổng giám đốc, xe tải), tài sản cố định.",
         "tab_list": "📑 Danh sách Phải trả & Tiến độ",
         "tab_progress": "💳 Cập nhật Trạng thái Thanh toán",
         "tab_add": "➕ Đăng ký Khoản phải trả (AP) Mới",
         "table_header": "📋 Sổ chi tiết Khoản phải trả Nhà cung cấp & Cơ quan nhà nước (AP)",
         "no_records": "Hiện không có bản ghi phải trả nào.",
         "progress_header": "💳 Quản lý trạng thái thanh toán & Phí gia hạn",
-        "progress_caption": "💡 Chọn mã AP tương ứng để cập nhật thanh toán tiền thuê đất, gia hạn với chính phủ hoặc mua xe.",
+        "progress_caption": "💡 Chọn mã AP tương ứng để cập nhật thanh toán tiền thuê đất hoặc mua xe ô tô công ty.",
         "btn_update_progress": "🚀 Xác nhận cập nhật trạng thái",
         "success_update": "✅ Đã cập nhật trạng thái thanh toán thành công!",
         
         "add_header": "➕ Đăng ký Khoản phải trả & Hợp đồng Mới",
         "lbl_code": "Mã AP *",
         "lbl_vendor": "Tên nhà cung cấp / Cơ quan nhà nước *",
-        "vendor_placeholder": "Ví dụ: UBND tỉnh Tây Ninh / Sở Tài nguyên và Môi trường",
+        "vendor_placeholder": "Ví dụ: UBND tỉnh Tây Ninh / Đại lý xe ô tô chính hãng",
         "lbl_category": "Phân loại mặt hàng, Tài sản & Thuê đất *",
         "cat_opts": [
             "Thuê đất & Tiền sử dụng đất gia hạn (Land Lease / LURC)",
-            "Xe ô tô công ty, xe tải & xe khách (Tài sản cố định)",
+            "Xe ô tô công ty (Xe chủ tịch, xe TGĐ, xe công tác & xe tải)",
             "📁 Văn phòng phẩm & Vật tư hành chính",
             "🍳 Dụng cụ nhà bếp, nhà ăn & ký túc xá",
             "⚡ Tủ điện trung/hạ thế & linh kiện",
@@ -85,7 +85,7 @@ PROCUREMENT_AP_I18N = {
             "🛡️ Thiết bị bảo hộ lao động & vật tư"
         ],
         "lbl_item": "Mô tả chi tiết khoản thanh toán *",
-        "item_placeholder": "Ví dụ: Phí gia hạn thuê đất nhà máy Tây Ninh",
+        "item_placeholder": "Ví dụ: Mua xe ô tô phục vụ Ban Giám đốc và Chủ tịch",
         "lbl_currency": "Loại tiền *",
         "lbl_amount": "Tổng số tiền *",
         "lbl_terms": "Điều kiện thanh toán *",
@@ -106,25 +106,25 @@ PROCUREMENT_AP_I18N = {
     },
     "English": {
         "title": "🛒 Finance - Procurement & Accounts Payable (AP)",
-        "caption": "Manage land lease renewals, company vehicles, fixed assets, and accounts payable.",
+        "caption": "Manage land lease renewals, company vehicles (chairman/GM cars, trucks), fixed assets.",
         "tab_list": "📑 Accounts Payable & Progress",
         "tab_progress": "💳 Update Payment Status",
         "tab_add": "➕ Register New AP Record",
         "table_header": "📋 Supplier & Government Accounts Payable Registry (AP)",
         "no_records": "No accounts payable records found.",
         "progress_header": "💳 Supplier & Government Fee Payment Management",
-        "progress_caption": "💡 Select the corresponding AP code to update land lease renewal, government fees, or vehicle payments.",
+        "progress_caption": "💡 Select the corresponding AP code to update land lease renewal or company vehicle purchases.",
         "btn_update_progress": "🚀 Confirm Payment Status Update",
         "success_update": "✅ AP payment status updated successfully!",
         
         "add_header": "➕ Register New AP & Contract Record",
         "lbl_code": "AP Code *",
         "lbl_vendor": "Supplier / Government Authority *",
-        "vendor_placeholder": "Example: Tay Ninh Provincial People's Committee",
+        "vendor_placeholder": "Example: Tay Ninh Provincial People's Committee / Auto Dealer",
         "lbl_category": "Item, Asset & Land Lease Category *",
         "cat_opts": [
             "Land Lease & Government Renewal Fee (Land Lease / LURC)",
-            "Company Cars, Trucks & Buses (Fixed Assets)",
+            "Company Vehicles (Chairman/GM Cars, Business Cars & Trucks)",
             "📁 Office Stationery & Admin Supplies",
             "🍳 Kitchenware, Cafeteria & Dormitory Facilities",
             "⚡ Switchgear & Circuit Breakers",
@@ -134,7 +134,7 @@ PROCUREMENT_AP_I18N = {
             "🛡️ PPE & Environmental Consumables"
         ],
         "lbl_item": "Detailed Description *",
-        "item_placeholder": "Example: Tay Ninh plant land lease extension fee",
+        "item_placeholder": "Example: Purchasing executive car for Chairman",
         "lbl_currency": "Currency *",
         "lbl_amount": "Total Amount *",
         "lbl_terms": "Payment Terms *",
@@ -163,13 +163,13 @@ def smart_translate_ap(text_val, target_lang):
         if "尚未更新" in text_val: return "Chưa cập nhật"
         if "T/T 30天票期" in text_val: return "T/T 30 ngày (Thanh toán chậm)"
         if "土地租賃與政府續約權利金" in text_val: return "Thuê đất & Tiền sử dụng đất gia hạn"
-        if "廠區公務車、貨車與大客車" in text_val: return "Xe ô tô công ty, xe tải & xe khách"
+        if "公司用車" in text_val: return "Xe ô tô công ty (Xe chủ tịch, xe TGĐ & xe tải)"
     elif target_lang == "English":
         if "施耐德電氣越南分公司" in text_val: return "Schneider Electric Vietnam"
         if "尚未更新" in text_val: return "Not Updated"
         if "T/T 30天票期" in text_val: return "T/T 30 Days Credit"
         if "土地租賃與政府續約權利金" in text_val: return "Land Lease & Government Renewal Fee"
-        if "廠區公務車、貨車與大客車" in text_val: return "Company Cars, Trucks & Buses"
+        if "公司用車" in text_val: return "Company Vehicles (Chairman/GM Cars & Trucks)"
     return text_val
 
 def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
@@ -246,12 +246,12 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                         "code": ap_code,
                         "vendor": vendor,
                         "category": category,
-                        "item": item_desc if item_desc else "土地續約或車輛資產款項",
+                        "item": item_desc if item_desc else "公司用車或土地續約款項",
                         "currency": currency,
                         "amount": amount,
                         "terms": terms,
                         "status": "審核完成 (Approved)",
-                        "note": "合約續約"
+                        "note": "資產購置"
                     })
                     st.success(L["success_save"].format(ap_code=ap_code))
                     st.rerun()
