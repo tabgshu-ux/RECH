@@ -40,7 +40,6 @@ EMPLOYEE_I18N = {
         "btn_submit_leave": "📤 送出請假申請",
         "success_leave": "✅ 請假申請已送出，等待主管審核。",
         "leave_list_header": "📋 目前請假單列表",
-        # 表格動態標題
         "col_id": "工號",
         "col_name": "姓名",
         "col_nation": "國籍",
@@ -49,11 +48,13 @@ EMPLOYEE_I18N = {
         "col_title": "職稱",
         "col_role": "角色",
         "col_phone": "電話",
-        "col_face": "生物辨識代碼"
+        "col_face": "生物辨識代碼",
+        "site_opts": ["西寧廠", "🇻🇳 越南西寧廠 (Tay Ninh Plant)", "平陽廠"],
+        "nat_opts": ["🇹🇼 台灣 (Taiwan)", "🇻🇳 越南 (Vietnamese)", "🇨🇳 中國 (Chinese)"]
     },
     "Tiếng Việt": {
         "title": "👤 Khối Quản lý - Quản lý Nhân sự & Nhân viên",
-        "caption": "Quản lý hồ sơ nhân viên, hợp đồng lao động, nhà máy làm việc, chấm công sinh mập khuôn mặt/vân tay.",
+        "caption": "Quản lý hồ sơ nhân viên, hợp đồng lao động, nhà máy làm việc, chấm công sinh trắc học.",
         "tab_roster": "📋 Danh sách Nhân viên",
         "tab_punch": "⏰ Nhật ký Chấm công thông minh",
         "tab_leave": "📝 Trung tâm Đơn nghỉ phép",
@@ -85,7 +86,6 @@ EMPLOYEE_I18N = {
         "btn_submit_leave": "📤 Gửi đơn xin nghỉ",
         "success_leave": "✅ Đơn xin nghỉ đã được gửi, chờ quản lý duyệt.",
         "leave_list_header": "📋 Danh sách đơn nghỉ phép hiện tại",
-        # Tiêu đề bảng
         "col_id": "Mã NV",
         "col_name": "Họ tên",
         "col_nation": "Quốc tịch",
@@ -94,7 +94,9 @@ EMPLOYEE_I18N = {
         "col_title": "Chức vụ",
         "col_role": "Quyền",
         "col_phone": "Điện thoại",
-        "col_face": "Mã sinh trắc"
+        "col_face": "Mã sinh trắc",
+        "site_opts": ["Nhà máy Tây Ninh", "Nhà máy Tây Ninh (Tay Ninh Plant)", "Nhà máy Bình Dương"],
+        "nat_opts": ["🇹🇼 Đài Loan (Taiwan)", "🇻🇳 Việt Nam (Vietnamese)", "🇨🇳 Trung Quốc (Chinese)"]
     },
     "English": {
         "title": "👤 Admin - Employee & HR Management",
@@ -130,7 +132,6 @@ EMPLOYEE_I18N = {
         "btn_submit_leave": "📤 Submit Leave Request",
         "success_leave": "✅ Leave request submitted, pending approval.",
         "leave_list_header": "📋 Current Leave Requests",
-        # Table headers
         "col_id": "Emp ID",
         "col_name": "Name",
         "col_nation": "Nationality",
@@ -139,12 +140,14 @@ EMPLOYEE_I18N = {
         "col_title": "Job Title",
         "col_role": "Role",
         "col_phone": "Phone",
-        "col_face": "Biometric Token"
+        "col_face": "Biometric Token",
+        "site_opts": ["Tay Ninh Plant", "Tay Ninh Plant (Tay Ninh)", "Binh Duong Plant"],
+        "nat_opts": ["🇹🇼 Taiwan", "🇻🇳 Vietnamese", "🇨🇳 Chinese"]
     }
 }
 
 # ----------------------------------------------------
-# 🔄 智慧語意對照引擎 (處理職稱與部門在不同語系間的轉換)
+# 🔄 智慧語意對照引擎 (處理員工姓名、職稱與廠區)
 # ----------------------------------------------------
 def smart_translate_emp(text_val, target_lang):
     if not text_val or not isinstance(text_val, str):
@@ -152,46 +155,35 @@ def smart_translate_emp(text_val, target_lang):
     
     val_lower = text_val.lower()
 
-    # 1. 越南員工姓名保持原樣
-    if "nguyễn" in val_lower or "trần" in val_lower or "lê" in val_lower or "phạm" in val_lower:
-        return text_val
-
-    # 2. 部門名稱轉換
-    if "管理部" in text_val or "management" in val_lower or "executive" in val_lower:
-        if target_lang == "Tiếng Việt": return "Ban Giám đốc / Phòng Quản lý"
-        elif target_lang == "English": return "Executive & Management Dept"
-        return "👑 經營高層與管理部"
-
-    # 3. 職稱名稱轉換
-    if "董事長" in text_val or "chairman" in val_lower:
-        if target_lang == "Tiếng Việt": return "Chủ tịch HĐQT (Chairman)"
-        elif target_lang == "English": return "Chairman"
-        return "董事長 (Chairman)"
-    if "總經理" in text_val or "general manager" in val_lower:
-        if target_lang == "Tiếng Việt": return "Tổng Giám đốc (General Manager)"
-        elif target_lang == "English": return "General Manager"
-        return "總經理 (General Manager)"
-    if "副總經理" in text_val or "vice" in val_lower:
-        if target_lang == "Tiếng Việt": return "Phó Tổng Giám đốc (Vice GM)"
-        elif target_lang == "English": return "Vice General Manager"
-        return "副總經理 (Vice General Manager)"
-
-    # 4. 廠區據點轉換
-    if "西寧廠" in text_val or "tay ninh" in val_lower:
-        if target_lang == "Tiếng Việt": return "Nhà máy Tây Ninh (Tay Ninh Plant)"
-        elif target_lang == "English": return "Tay Ninh Plant"
-        return "🇻🇳 越南西寧廠 (Tay Ninh Plant)"
+    # 1. 董事長與總經理職稱/姓名動態轉譯
+    if target_lang == "Tiếng Việt":
+        if "張董事長" in text_val: return "Chủ tịch Trương (Chairman)"
+        if "李元隆" in text_val: return "Lý Nguyên Long (Vice GM)"
+        if "董事長" in text_val: return "Chủ tịch HĐQT (Chairman)"
+        if "總經理" in text_val: return "Tổng Giám đốc (General Manager)"
+        if "副總經理" in text_val: return "Phó Tổng Giám đốc (Vice GM)"
+        if "專員" in text_val: return "Chuyên viên (Specialist)"
+        if "管理部" in text_val: return "Ban Quản lý"
+        if "西寧廠" in text_val: return "Nhà máy Tây Ninh"
+    elif target_lang == "English":
+        if "張董事長" in text_val: return "Chairman Chang"
+        if "李元隆" in text_val: return "Lee Yuan-Lung (Vice GM)"
+        if "董事長" in text_val: return "Chairman"
+        if "總經理" in text_val: return "General Manager"
+        if "副總經理" in text_val: return "Vice General Manager"
+        if "專員" in text_val: return "Specialist"
+        if "管理部" in text_val: return "Management Dept"
+        if "西寧廠" in text_val: return "Tay Ninh Plant"
 
     return text_val
 
 def render_employee_management(engine=None, t=None, lang="繁體中文"):
-    active_lang = lang or st.session_state.get("lang", "繁體中文")
+    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
     L = EMPLOYEE_I18N.get(active_lang, EMPLOYEE_I18N["繁體中文"])
 
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化員工資料庫[cite: 27]
     if "employees_db" not in st.session_state:
         st.session_state.employees_db = [
             {
@@ -199,7 +191,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "name": "張董事長",
                 "nationality": "🇹🇼 台灣 (Taiwan)",
                 "site": "西寧廠",
-                "dept": "👑 經營高層 / 董事會與總經理室 (Executive Board)",
+                "dept": "管理部",
                 "title": "董事長 (Chairman)",
                 "role": "Chairman",
                 "phone": "0912345678",
@@ -210,8 +202,8 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                 "id": "EMP-002",
                 "name": "Nguyễn Văn A",
                 "nationality": "🇻🇳 越南 (Vietnamese)",
-                "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
-                "dept": "👑 經營高層 / 董事會與總經理室 (Executive Board)",
+                "site": "西寧廠",
+                "dept": "管理部",
                 "title": "總經理 (General Manager)",
                 "role": "GeneralManager",
                 "phone": "0918999080",
@@ -221,9 +213,9 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
             {
                 "id": "EMP-003",
                 "name": "李元隆",
-                "nationality": "🇹🇼 台灣 (Taiwanese)",
-                "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)",
-                "dept": "👔 經營主管 / 營運管理中心 (Management & Operations)",
+                "nationality": "🇹🇼 台灣 (Taiwan)",
+                "site": "西寧廠",
+                "dept": "管理部",
                 "title": "副總經理 (Vice General Manager)",
                 "role": "ViceManager",
                 "phone": "-",
@@ -246,8 +238,8 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
         for emp in st.session_state.employees_db:
             display_list.append({
                 L["col_id"]: emp["id"],
-                L["col_name"]: emp["name"],
-                L["col_nation"]: emp["nationality"],
+                L["col_name"]: smart_translate_emp(emp["name"], active_lang),
+                L["col_nation"]: smart_translate_emp(emp["nationality"], active_lang),
                 L["col_site"]: smart_translate_emp(emp["site"], active_lang),
                 L["col_dept"]: smart_translate_emp(emp["dept"], active_lang),
                 L["col_title"]: smart_translate_emp(emp["title"], active_lang),
@@ -264,10 +256,10 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
             with c1:
                 new_id = st.text_input(L["lbl_emp_id"], value="EMP-104")
                 new_name = st.text_input(L["lbl_name"])
-                new_nationality = st.selectbox(L["lbl_nationality"], ["🇹🇼 台灣 (Taiwan)", "🇻🇳 越南 (Vietnamese)", "🇨🇳 中國 (Chinese)"])
+                new_nationality = st.selectbox(L["lbl_nationality"], L["nat_opts"])
             with c2:
-                new_site = st.selectbox(L["lbl_site"], ["西寧廠", "🇻🇳 越南西寧廠 (Tay Ninh Plant)", "平陽廠"])
-                new_title = st.text_input(L["lbl_title"], value="專員")
+                new_site = st.selectbox(L["lbl_site"], L["site_opts"])
+                new_title = st.text_input(L["lbl_title"], value="專員" if active_lang == "繁體中文" else ("Chuyên viên" if active_lang == "Tiếng Việt" else "Specialist"))
                 new_role = st.selectbox(L["lbl_role"], ["Chairman", "GeneralManager", "ViceManager", "Director", "Manager", "Supervisor", "Staff", "Admin"])
             
             if st.form_submit_button(L["btn_add_emp"], type="primary"):
@@ -294,7 +286,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
         st.info(L["punch_caption"])
         
         with st.form("mock_punch"):
-            p_id = st.selectbox(L["select_emp"], [e["id"] + " - " + e["name"] for e in st.session_state.employees_db])
+            p_id = st.selectbox(L["select_emp"], [e["id"] + " - " + smart_translate_emp(e["name"], active_lang) for e in st.session_state.employees_db])
             p_type = st.radio(L["punch_type"], [L["clock_in"], L["clock_out"]], horizontal=True)
             if st.form_submit_button(L["btn_punch"]):
                 emp_name = p_id.split(" - ")[1]
@@ -305,7 +297,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
                     "類型": p_type,
                     "狀態": "✅ 正常"
                 })
-                st.success(f"✅ {emp_name} 於 {now_time} {L['success_punch']}")
+                st.success(f"✅ {emp_name} {L['success_punch']}")
 
         if st.session_state.attendance_db:
             st.dataframe(pd.DataFrame(st.session_state.attendance_db), use_container_width=True)
@@ -315,7 +307,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文"):
     with tab3:
         st.markdown(f"### {L['leave_header']}")
         with st.form("leave_form"):
-            l_emp = st.selectbox(L["lbl_leave_emp"], [e["name"] for e in st.session_state.employees_db])
+            l_emp = st.selectbox(L["lbl_leave_emp"], [smart_translate_emp(e["name"], active_lang) for e in st.session_state.employees_db])
             l_type = st.selectbox(L["lbl_leave_type"], L["leave_opts"])
             l_reason = st.text_area(L["lbl_reason"])
             if st.form_submit_button(L["btn_submit_leave"]):
