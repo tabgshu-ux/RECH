@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import datetime
-import uuid
 
 # ----------------------------------------------------
 # 🌐 AP 採購與應付帳款模組多語系字典 (i18n)
@@ -10,7 +9,7 @@ AP_I18N = {
     "繁體中文": {
         "title": "🛒 管理部 - 採購與應付帳款管理 (AP)",
         "caption": "管理廠商應付帳款、發票檔案庫、UNC 銀行轉帳水單自動核銷與 500 萬以下小額零用金報銷。",
-        "tab_add": "➕ 1. 登記新採購進貨單與廠商發票",
+        "tab_add": "📥 1. 登記新採購進貨單與廠商發票",
         "tab_list": "📜 2. 廠商應付貨款與發票檔案庫",
         "tab_pay": "💳 3. 銀行轉帳水單 (UNC) 登記與核銷",
         "tab_small_cash": "🧾 4. 500萬以下小額送貨單與費用總表",
@@ -30,7 +29,7 @@ AP_I18N = {
     "Tiếng Việt": {
         "title": "🛒 Quản lý - Mua hàng & Phải trả (AP)",
         "caption": "Quản lý công nợ, hóa đơn, đối soát UNC tự động và chứng từ nhỏ dưới 5 triệu VND.",
-        "tab_add": "➕ 1. Đăng ký mua hàng (Thủ công)",
+        "tab_add": "📥 1. Đăng ký mua hàng (Thủ công)",
         "tab_list": "📜 2. Kho lưu trữ hóa đơn & công nợ",
         "tab_pay": "💳 3. Đăng ký UNC & Đối soát đơn hàng",
         "tab_small_cash": "🧾 4. Chứng từ nhỏ & Tổng hợp chi phí",
@@ -50,7 +49,7 @@ AP_I18N = {
     "English": {
         "title": "🛒 Management Dept - Procurement & Accounts Payable (AP)",
         "caption": "Manage AP, invoices, automated UNC bank transfer reconciliation, and small voucher expenses.",
-        "tab_add": "➕ 1. Register New Purchase & Invoice",
+        "tab_add": "📥 1. Register New Purchase & Invoice",
         "tab_list": "📜 2. Vendor AP & Invoice Repository",
         "tab_pay": "💳 3. UNC Registration & PO Reconciliation",
         "tab_small_cash": "🧾 4. Under 5M VND Small Vouchers",
@@ -75,11 +74,6 @@ def get_ap_lang_dict(lang_param):
 
 def render_procurement_ap_page(engine=None, lang="繁體中文"):
     L = get_ap_lang_dict(lang)
-
-    # 產生一組動態隨機碼作為本次渲染的 Unique Suffix，徹底杜絕重複 key 錯誤
-    if "ap_uid" not in st.session_state:
-        st.session_state.ap_uid = str(uuid.uuid4())[:8]
-    uid = st.session_state.ap_uid
 
     st.subheader(L["title"])
     st.caption(L["caption"])
@@ -115,25 +109,25 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
             }
         ]
 
-    # 頁籤順序：1. 新增採購 2. 應付帳款清單 3. UNC 銀行轉帳水單 4. 小額憑證 5. 列印 6. 歷史查詢
+    # 依照最常用順序排列頁籤：1. 新增採購 2. 應付帳款清單 3. UNC 銀行轉帳水單 4. 小額憑證 5. 列印 6. 歷史查詢
     tab_add, tab_list, tab_pay, tab_small_cash, tab_print, tab_search = st.tabs([
         L["tab_add"], L["tab_list"], L["tab_pay"], L["tab_small_cash"], L["tab_print"], L["tab_search"]
     ])
 
     # ----------------------------------------------------
-    # ➕ 頁籤一：登記新採購進貨單與廠商發票
+    # 📥 頁籤一：登記新採購進貨單與廠商發票（置頂主攻功能）
     # ----------------------------------------------------
     with tab_add:
-        st.markdown("### ➕ 1. 手動登記新採購進貨單與廠商發票")
+        st.markdown(f"### {L['tab_add']}")
         col_a, col_b = st.columns(2)
         with col_a:
-            po_num = st.text_input("採購單號 (PO No.)", value="PO-2026-02", key=f"po_num_{uid}")
-            v_name = st.text_input("廠商名稱 (Vendor Name)", placeholder="例如: 台灣總部 / 越南供應商", key=f"v_name_{uid}")
+            po_num = st.text_input("採購單號 (PO No.)", value="PO-2026-02", key="ap_fixed_po_num")
+            v_name = st.text_input("廠商名稱 (Vendor Name)", placeholder="例如: 台灣總部 / 越南供應商", key="ap_fixed_v_name")
         with col_b:
-            p_amt = st.number_input("發票含稅金額", value=500000.0, step=50000.0, key=f"p_amt_{uid}")
-            curr_type = st.selectbox("計價幣別", ["VND", "USD", "TWD"], key=f"ap_curr_{uid}")
+            p_amt = st.number_input("發票含稅金額", value=500000.0, step=50000.0, key="ap_fixed_p_amt")
+            curr_type = st.selectbox("計價幣別", ["VND", "USD", "TWD"], key="ap_fixed_curr")
 
-        if st.button("💾 儲存進貨發票至應付帳款資料庫", type="primary", key=f"btn_save_inv_{uid}"):
+        if st.button("💾 儲存進貨發票至應付帳款資料庫", type="primary", key="ap_fixed_btn_save"):
             if v_name:
                 st.session_state.ap_invoices_db.append({
                     "po_id": po_num,
@@ -155,12 +149,12 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
     # 📜 頁籤二：廠商應付貨款與發票檔案庫
     # ----------------------------------------------------
     with tab_list:
-        st.markdown("### 📜 2. 廠商應付貨款與發票檔案庫 (含付款狀態自動連動)")
+        st.markdown(f"### {L['tab_list']}")
         df_ap = pd.DataFrame(st.session_state.ap_invoices_db)
         st.dataframe(df_ap, use_container_width=True)
 
     # ----------------------------------------------------
-    # 💳 頁籤三：銀行轉帳水單 (UNC) 與採購單自動核銷勾稽
+    # 💳 頁籤三：銀行轉帳水單 (UNC) 登記與自動核銷
     # ----------------------------------------------------
     with tab_pay:
         st.markdown(f"### {L['unc_title']}")
@@ -176,15 +170,15 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
 
         col1, col2 = st.columns(2)
         with col1:
-            unc_no = st.text_input(L["unc_no"], placeholder="例如: UNC-2026-002", key=f"unc_no_{uid}")
-            vendor_name = st.text_input(L["vendor_name"], placeholder="例如: 台灣總部 / 越南供應商", key=f"unc_vendor_{uid}")
-            amount = st.number_input(L["amount"], min_value=0.0, value=1200000.0, step=100000.0, key=f"unc_amt_{uid}")
+            unc_no = st.text_input(L["unc_no"], placeholder="例如: UNC-2026-002", key="ap_fixed_unc_no")
+            vendor_name = st.text_input(L["vendor_name"], placeholder="例如: 台灣總部 / 越南供應商", key="ap_fixed_unc_vendor")
+            amount = st.number_input(L["amount"], min_value=0.0, value=1200000.0, step=100000.0, key="ap_fixed_unc_amt")
         with col2:
-            bank_name = st.selectbox(L["bank_name"], vietnam_banks, key=f"unc_bank_{uid}")
-            selected_target_po = st.selectbox(L["select_po"], unpaid_po_ids if unpaid_po_ids else ["目前無待付款採購單"], key=f"unc_po_{uid}")
-            currency = st.selectbox("幣別", ["VND", "USD", "TWD"], key=f"unc_curr_{uid}")
+            bank_name = st.selectbox(L["bank_name"], vietnam_banks, key="ap_fixed_unc_bank")
+            selected_target_po = st.selectbox(L["select_po"], unpaid_po_ids if unpaid_po_ids else ["目前無待付款採購單"], key="ap_fixed_unc_po")
+            currency = st.selectbox("幣別", ["VND", "USD", "TWD"], key="ap_fixed_unc_curr")
 
-        if st.button(L["btn_add_unc"], type="primary", key=f"btn_save_unc_{uid}"):
+        if st.button(L["btn_add_unc"], type="primary", key="ap_fixed_btn_unc_save"):
             if unc_no and vendor_name:
                 st.session_state.unc_db.append({
                     "id": unc_no,
@@ -215,7 +209,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
                     st.write(f"• **匯款銀行**: {item['bank']}")
                     st.write(f"• **轉帳日期**: {item['date']}")
                     st.write(f"• **已勾稽採購單**: `{item['matched_po']}`")
-                    if st.button(L["delete_btn"], key=f"del_unc_{idx}_{uid}"):
+                    if st.button(L["delete_btn"], key=f"ap_fixed_del_{idx}"):
                         st.session_state.unc_db.pop(idx)
                         st.success("🗑️ 已成功刪除該筆水單記錄！")
                         st.rerun()
@@ -226,7 +220,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
     # 🧾 頁籤四：500萬以下小額送貨單與會計費用傳票總表
     # ----------------------------------------------------
     with tab_small_cash:
-        st.markdown("### 🧾 4. 越南廠區未達 500 萬 VND 小額送貨單與會計費用傳票總表")
+        st.markdown(f"### {L['tab_small_cash']}")
         st.caption("整合現場同仁上傳之外箱送貨單與小額零用金報銷，自動結算並匯入會計總帳傳票。")
         df_small = pd.DataFrame(st.session_state.small_cash_vouchers_db)
         st.dataframe(df_small, use_container_width=True)
@@ -235,18 +229,19 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
     # 🖨️ 頁籤五：快速檢視與列印發票
     # ----------------------------------------------------
     with tab_print:
-        st.markdown("### 🖨️ 5. 快速檢視與列印紙本發票/附件")
+        st.markdown(f"### {L['tab_print']}")
         st.info("提供財務與會計快速預覽並列印進項發票、送貨單或 UNC 水單據。")
 
     # ----------------------------------------------------
     # 🔍 頁籤六：歷史報價查詢
     # ----------------------------------------------------
     with tab_search:
-        st.markdown("### 🔍 6. 商品歷史報價與供應商反查系統")
-        search_query = st.text_input("輸入商品條碼或品名關鍵字查詢歷史價格：", key=f"search_query_{uid}")
+        st.markdown(f"### {L['tab_search']}")
+        search_query = st.text_input("輸入商品條碼或品名關鍵字查詢歷史價格：", key="ap_fixed_search")
         if search_query:
             st.success(f"🔍 查無 '{search_query}' 的過往異常波動紀錄，價格穩定。")
 
+# 確保對外進入點單一且不會重複渲染
 def show(engine=None, lang="繁體中文"):
     render_procurement_ap_page(engine, lang)
 
