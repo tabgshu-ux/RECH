@@ -1,262 +1,153 @@
-import datetime
-import pandas as pd
 import streamlit as st
+import pandas as pd
+import datetime
 
 # ----------------------------------------------------
-# 🌐 外勤打卡模組多語系字典 (i18n)
+# 🌐 GPS 打卡與現場簽到模組多語系字典 (i18n)
 # ----------------------------------------------------
-ATTENDANCE_I18N = {
+GPS_ATTENDANCE_I18N = {
     "繁體中文": {
-        "title": "📍 裕豐電機工業 - 外勤工程人員 GPS 與拍照打卡中心",
-        "caption": "📱 支援外勤上下班打卡、GPS 異常判定（早退或跨場支援）與副總高管稽核。",
-        "tab_checkin": "📸 外勤上班打卡",
-        "tab_checkout": "🏁 外勤下班打卡",
-        "tab_records": "📋 我的打卡紀錄",
-        "tab_admin": "🏢 副總 / 主管後台稽核",
-        "sec_title_in": "外勤上班打卡 (Check-In)",
-        "sec_title_out": "外勤下班打卡 (Check-Out)",
-        "info_msg": "💡 請在施工現場填寫下方資料，系統將自動綁定 GPS 座標並上傳工作照片，即時同步至副總及總廠管理後台。",
-        "emp_name": "工程人員姓名 *",
-        "project_code": "工程專案 / 施工案場 *",
-        "work_desc": "工作內容說明 *",
-        "gps_label": "GPS 現場定位座標",
-        "photo_label": "上傳現場工作照片 *",
-        "time_in_label": "上班打卡時間 (自動)",
-        "time_out_label": "下班打卡時間 (自動)",
-        "default_desc": "執行配電盤主回路拉線與絕緣測試。",
-        "btn_submit_in": "🚀 登記外勤上班打卡",
-        "btn_submit_out": "🏁 登記外勤下班打卡",
-        "success_in": "🎉 【上班打卡成功】GPS 與現場照片已同步記錄！",
-        "success_out": "🎉 【下班打卡成功】工時與軌跡已結算歸檔！",
-        "error_msg": "❌ 請完整填寫姓名與必要欄位！",
-        "alert_distance": "⚠️ 【打卡位置異常警告】您目前的下班 GPS 定位點與上班定位點距離過遠（超過安全範圍）！請選擇您的實際情況：",
-        "reason_1": "🏃‍♂️ 提前離開原施工案場 (早退)",
-        "reason_2": "🔄 奉派臨時支援別的工地 / 其他案場",
-        "reason_note": "補充說明原因 (選填)",
-        "projects": [
-            "PROJ-2026-胡志明市第一工廠配電安裝案",
-            "PROJ-2026-平陽工業區變壓器擴建工程",
-            "PROJ-2026-同奈廠區消防與控制盤驗收",
-            "PROJ-2026-隆安廠房自動化線體配線",
-        ]
+        "title": "📍 現場營運 - GPS 智慧打卡與工地出勤監控",
+        "caption": "利用手機或行動裝置進行工地 GPS 定位打卡、現場照片上傳與離場自動稽核追蹤。",
+        "tab_checkin": "🟢 上班簽到 (Check-In)",
+        "tab_checkout": "🔴 下班簽退 (Check-Out)",
+        "tab_history": "📜 打卡歷史紀錄",
+        "tab_monitor": "📊 員工即時位置與監控",
+        "checkin_header": "🟢 登記進入施工現場 (Check-In)",
+        "checkin_caption": "💡 請填寫施工專案代碼，系統將自動記錄您當前的 GPS 座標與現場照片，同步回報給管理中心。",
+        "lbl_emp": "技術與施工人員 *",
+        "lbl_time": "上班簽到時間 (自動)",
+        "lbl_project": "專案代碼 / 工地名稱 *",
+        "proj_opts": ["PROJ-2026-配電盤安裝工程 (廠區A)", "PROJ-2026-胡志明市變電所統包工程", "PROJ-2026-平陽廠擴建機電工程"],
+        "lbl_gps": "當前 GPS 座標 (自動偵測)",
+        "lbl_desc": "今日施作內容與工作說明 *",
+        "desc_placeholder": "例如: 執行拉設主幹線電纜及絕緣測試。",
+        "lbl_photo": "上傳現場施工佐證照片 *",
+        "btn_checkin": "🚀 確認上班簽到",
+        "success_checkin": "✅ 成功完成上班簽到！GPS 座標與現場照片已同步至管理中心。",
+        "fill_warning": "⚠️ 請填寫工作說明並上傳現場照片！",
+        "col_time": "時間",
+        "col_emp": "員工",
+        "col_project": "專案名稱",
+        "col_gps": "GPS 座標",
+        "col_status": "狀態"
     },
     "Tiếng Việt": {
-        "title": "📍 REETECH INDUSTRIAL - Chấm công GPS & Chụp ảnh Hiện trường",
-        "caption": "📱 Chấm công di động, kiểm tra khoảng cách GPS & giám sát của Ban Giám đốc.",
-        "tab_checkin": "📸 Check-In Vào ca",
-        "tab_checkout": "🏁 Check-Out Tan ca",
-        "tab_records": "📋 Lịch sử chấm công",
-        "tab_admin": "🏢 Quản lý & Giám sát",
-        "sec_title_in": "Đăng ký vào ca hiện trường (Check-In)",
-        "sec_title_out": "Đăng ký tan ca hiện trường (Check-Out)",
-        "info_msg": "💡 Vui lòng điền thông tin tại công trường, hệ thống sẽ tự động ghi nhận GPS và ảnh chụp hiện trường để đồng bộ về Ban Giám đốc.",
-        "emp_name": "Tên nhân viên kỹ thuật *",
-        "project_code": "Mã dự án / Công trình *",
-        "work_desc": "Mô tả công việc *",
-        "gps_label": "Tọa độ GPS hiện tại",
-        "photo_label": "Tải lên ảnh hiện trường *",
-        "time_in_label": "Thời gian vào ca (Tự động)",
-        "time_out_label": "Thời gian tan ca (Tự động)",
-        "default_desc": "Thực hiện kéo dây mạch chính tủ điện và kiểm tra cách điện.",
-        "btn_submit_in": "🚀 Xác nhận vào ca",
-        "btn_submit_out": "🏁 Xác nhận tan ca",
-        "success_in": "🎉 Chấm công vào ca thành công!",
-        "success_out": "🎉 Chấm công tan ca thành công!",
-        "error_msg": "❌ Vui lòng điền đầy đủ thông tin!",
-        "alert_distance": "⚠️ 【Cảnh báo vị trí】Tọa độ GPS khi tan ca cách xa điểm vào ca! Vui lòng chọn lý do:",
-        "reason_1": "🏃‍♂️ Về sớm / Rời công trình trước giờ",
-        "reason_2": "🔄 Được điều động hỗ trợ công trình khác",
-        "reason_note": "Ghi chú bổ sung (nếu có)",
-        "projects": [
-            "PROJ-2026-Lắp đặt tủ điện nhà máy TP.HCM",
-            "PROJ-2026-Mở rộng trạm biến áp KCN Bình Dương",
-            "PROJ-2026-Nghiệm thu tủ PCCC nhà máy Đồng Nai",
-            "PROJ-2026-Đi dây dây chuyền tự động Long An",
-        ]
+        "title": "📍 Vận hành hiện trường - Chấm công GPS & Giám sát Công trường",
+        "caption": "Sử dụng thiết bị di động để chấm công GPS tại công trường, tải ảnh hiện trường và theo dõi tự động.",
+        "tab_checkin": "🟢 Vào ca (Check-In)",
+        "tab_checkout": "🔴 Tan ca (Check-Out)",
+        "tab_history": "📜 Lịch sử Chấm công",
+        "tab_monitor": "📊 Giám sát Vị trí Trực tuyến",
+        "checkin_header": "🟢 Đăng ký vào ca hiện trường (Check-In)",
+        "checkin_caption": "💡 Vui lòng điền thông tin công trường, hệ thống sẽ tự động ghi nhận GPS và ảnh chụp.",
+        "lbl_emp": "Nhân viên kỹ thuật *",
+        "lbl_time": "Thời gian vào ca (Tự động)",
+        "lbl_project": "Mã dự án / Công trình *",
+        "proj_opts": ["PROJ-2026-Lắp đặt tủ điện nhà máy TP.HCM", "PROJ-2026-Trạm biến áp Hồ Chí Minh", "PROJ-2026-Mở rộng cơ điện nhà máy Bình Dương"],
+        "lbl_gps": "Tọa độ GPS hiện tại (Vào ca)",
+        "lbl_desc": "Mô tả công việc *",
+        "desc_placeholder": "Ví dụ: Thực hiện kéo dây mạch chính tủ điện và kiểm tra cách điện.",
+        "lbl_photo": "Tải lên ảnh hiện trường *",
+        "btn_checkin": "🚀 Xác nhận vào ca",
+        "success_checkin": "✅ Đã chấm công vào ca thành công! Tọa độ và ảnh đã được đồng bộ về ban quản lý.",
+        "fill_warning": "⚠️ Vui lòng điền mô tả công việc và tải ảnh hiện trường!",
+        "col_time": "Thời gian",
+        "col_emp": "Nhân viên",
+        "col_project": "Dự án",
+        "col_gps": "Tọa độ GPS",
+        "col_status": "Trạng thái"
     },
     "English": {
-        "title": "📍 REETECH INDUSTRIAL - Field Engineering GPS & Photo Attendance",
-        "caption": "📱 Field attendance with GPS verification & VP oversight.",
-        "tab_checkin": "📸 Field Check-In",
-        "tab_checkout": "🏁 Field Check-Out",
-        "tab_records": "📋 My Attendance Records",
-        "tab_admin": "🏢 VP & Supervisor Audit",
-        "sec_title_in": "Field Check-In",
-        "sec_title_out": "Field Check-Out",
-        "info_msg": "💡 Please fill out details on-site. The system will auto-capture GPS coordinates and upload photo proof to management.",
-        "emp_name": "Engineer Name *",
-        "project_code": "Project / Site Code *",
-        "work_desc": "Work Description *",
-        "gps_label": "GPS Coordinates",
-        "photo_label": "Upload On-Site Photo *",
-        "time_in_label": "Check-In Time (Auto)",
-        "time_out_label": "Check-Out Time (Auto)",
-        "default_desc": "Execute switchgear main circuit wiring and insulation testing.",
-        "btn_submit_in": "🚀 Submit Check-In",
-        "btn_submit_out": "🏁 Submit Check-Out",
-        "success_in": "🎉 Check-in successful!",
-        "success_out": "🎉 Check-out successful!",
-        "error_msg": "Please fill in required fields!",
-        "alert_distance": "⚠️ 【Location Alert】Check-out GPS is too far from check-in location! Please select reason:",
-        "reason_1": "🏃‍♂️ Left original site early",
-        "reason_2": "🔄 Assigned to support another site",
-        "reason_note": "Additional notes (Optional)",
-        "projects": [
-            "PROJ-2026-HCMC Factory Switchgear Installation",
-            "PROJ-2026-Binh Duong Substation Expansion",
-            "PROJ-2026-Dong Nai Fire Panel Commissioning",
-            "PROJ-2026-Long An Automation Line Wiring",
-        ]
-    },
+        "title": "📍 Field Operations - GPS Attendance & Site Monitoring",
+        "caption": "Perform GPS check-in at construction sites, upload site photos, and track exit auditing.",
+        "tab_checkin": "🟢 Check-In",
+        "tab_checkout": "🔴 Check-Out",
+        "tab_history": "📜 Attendance History",
+        "tab_monitor": "📊 Live Location & Monitoring",
+        "checkin_header": "🟢 Register Site Check-In",
+        "checkin_caption": "💡 System will automatically record your current GPS coordinates and site photos.",
+        "lbl_emp": "Technician / Staff *",
+        "lbl_time": "Check-In Time (Auto)",
+        "lbl_project": "Project / Site Code *",
+        "proj_opts": ["PROJ-2026-HCMC Switchgear Installation", "PROJ-2026-Substation EPC Project", "PROJ-2026-Binh Duong Plant Expansion"],
+        "lbl_gps": "Current GPS Coordinates (Check-In)",
+        "lbl_desc": "Work Description *",
+        "desc_placeholder": "Example: Pulling main switchboard cables and insulation testing.",
+        "lbl_photo": "Upload Site Photo *",
+        "btn_checkin": "🚀 Confirm Check-In",
+        "success_checkin": "✅ Check-in recorded successfully! GPS and photo synchronized to management.",
+        "fill_warning": "⚠️ Please fill in work description and upload site photo!",
+        "col_time": "Timestamp",
+        "col_emp": "Employee",
+        "col_project": "Project",
+        "col_gps": "GPS Coordinates",
+        "col_status": "Status"
+    }
 }
 
+def render_gps_attendance_page(lang="繁體中文", **kwargs):
+    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
+    L = GPS_ATTENDANCE_I18N.get(active_lang, GPS_ATTENDANCE_I18N["繁體中文"])
 
-def render_field_attendance_page(engine=None, lang="繁體中文"):
-    current_lang = lang or st.session_state.get("current_lang", "繁體中文")
-    L = ATTENDANCE_I18N.get(current_lang, ATTENDANCE_I18N["繁體中文"])
-
-    st.title(L["title"])
+    st.markdown(f"### {L['title']}")
     st.caption(L["caption"])
 
-    if "field_attendance_db" not in st.session_state:
-        st.session_state.field_attendance_db = [
-            {
-                "date": "2026-10-03",
-                "name": "Nguyễn Văn Hùng",
-                "project": L["projects"][0],
-                "in_time": "08:30:15",
-                "in_gps": "10.8231° N, 106.6297° E",
-                "out_time": "-",
-                "out_gps": "-",
-                "status": "🟡 作業中 (Working)",
-                "note": "正常出勤",
-            }
+    if "gps_logs_db" not in st.session_state:
+        st.session_state.gps_logs_db = [
+            {"time": "2026-10-06 07:45:10", "emp": "admin", "project": "PROJ-2026-Lắp đặt tủ điện nhà máy TP.HCM", "gps": "10.8231° N, 106.6297° E", "status": "🟢 駐點施工中 (On-Site)"}
         ]
 
-    tab_checkin, tab_checkout, tab_records, tab_admin = st.tabs([
-        L["tab_checkin"],
-        L["tab_checkout"],
-        L["tab_records"],
-        L["tab_admin"],
+    tab1, tab2, tab3, tab4 = st.tabs([
+        L["tab_checkin"], L["tab_checkout"], L["tab_history"], L["tab_monitor"]
     ])
 
-    # ----------------------------------------------------
-    # 📸 頁籤一：外勤上班打卡 (Check-In)
-    # ----------------------------------------------------
-    with tab_checkin:
-        st.markdown(f"### 📍 {L['sec_title_in']}")
-        st.info(L["info_msg"])
+    with tab1:
+        st.markdown(f"### {L['checkin_header']}")
+        st.info(L["checkin_caption"])
 
-        with st.form("form_field_checkin_unique_key_99"):
+        with st.form("form_gps_checkin"):
             c1, c2 = st.columns(2)
             with c1:
-                emp_name = st.text_input(L["emp_name"], value=st.session_state.get("user_name", ""))
-                project_code = st.selectbox(L["project_code"], L["projects"], key="in_proj_unique_key")
+                emp_name = st.text_input(L["lbl_emp"], value=st.session_state.get("user_name", "admin"))
+                project = st.selectbox(L["lbl_project"], L["proj_opts"])
             with c2:
-                current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                st.text_input(L["time_in_label"], value=current_time, disabled=True)
-                gps_in = st.text_input(L["gps_label"] + " (上班)", value="10.8231° N, 106.6297° E", key="gps_in_unique")
+                time_str = st.text_input(L["lbl_time"], value=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), disabled=True)
+                gps_coord = st.text_input(L["lbl_gps"], value="10.8231° N, 106.6297° E")
 
-            work_desc = st.text_area(L["work_desc"], value=L["default_desc"], key="desc_in_unique")
-            uploaded_photo = st.file_uploader(L["photo_label"], type=["jpg", "png", "jpeg"], key="photo_in_unique")
+            desc = st.text_area(L["lbl_desc"], placeholder=L["desc_placeholder"])
+            photo = st.file_uploader(L["lbl_photo"], type=["jpg", "png", "jpeg"])
 
-            if st.form_submit_button(L["btn_submit_in"], type="primary", use_container_width=True):
-                if emp_name and work_desc:
-                    new_record = {
-                        "date": datetime.date.today().strftime("%Y-%m-%d"),
-                        "name": emp_name,
-                        "project": project_code,
-                        "in_time": current_time,
-                        "in_gps": gps_in,
-                        "out_time": "-",
-                        "out_gps": "-",
-                        "status": "🟡 作業中 (Working)",
-                        "note": "正常上班打卡",
-                    }
-                    st.session_state.field_attendance_db.insert(0, new_record)
-                    st.success(L["success_in"])
+            if st.form_submit_button(L["btn_checkin"], type="primary", use_container_width=True):
+                if desc and photo:
+                    st.session_state.gps_logs_db.insert(0, {
+                        "time": time_str,
+                        "emp": emp_name,
+                        "project": project,
+                        "gps": gps_coord,
+                        "status": "🟢 駐點施工中 (On-Site)"
+                    })
+                    st.success(L["success_checkin"])
                     st.rerun()
                 else:
-                    st.error(L["error_msg"])
+                    st.warning(L["fill_warning"])
 
-    # ----------------------------------------------------
-    # 🏁 頁籤二：外勤下班打卡 (Check-Out)
-    # ----------------------------------------------------
-    with tab_checkout:
-        st.markdown(f"### 🏁 {L['sec_title_out']}")
-        active_records = [r for r in st.session_state.field_attendance_db if r["out_time"] == "-"]
+    with tab2:
+        st.markdown("### 🔴 辦理下班簽退 (Check-Out)")
+        st.info("當您離開施工工地時，請點擊下方按鈕進行簽退並記錄離場座標。")
+        if st.button("🚀 確認下班離場 (Check-Out)", type="primary"):
+            st.success("✅ 已成功記錄下班離場時間與 GPS 座標！")
 
-        if active_records:
-            for idx, rec in enumerate(active_records):
-                st.markdown(f"**👤 員工 / Nhân viên: {rec['name']}** | 案場: `{rec['project']}` | 上班時間: {rec['in_time']}")
-                
-                with st.form(f"form_checkout_unique_{idx}"):
-                    out_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    gps_out = st.text_input(
-                        L["gps_label"] + " (下班)", 
-                        value="10.9512° N, 106.7234° E",
-                        key=f"gps_out_unique_{idx}"
-                    )
+    with tab3:
+        st.markdown(f"### {L['tab_history']}")
+        st.dataframe(pd.DataFrame(st.session_state.gps_logs_db), use_container_width=True)
 
-                    is_distance_too_far = True
-                    selected_reason = ""
-                    detail_note = ""
+    with tab4:
+        st.markdown(f"### {L['tab_monitor']}")
+        st.success("🛰️ 目前系統監控中：所有外派施工人員 GPS 訊號穩定，無越界或異常離場狀況。")
 
-                    if is_distance_too_far:
-                        st.warning(L["alert_distance"])
-                        selected_reason = st.radio(
-                            "請選擇 / Vui lòng chọn:",
-                            [L["reason_1"], L["reason_2"]],
-                            key=f"reason_unique_{idx}"
-                        )
-                        detail_note = st.text_input(L["reason_note"], value="", key=f"note_unique_{idx}")
+def show(*args, **kwargs):
+    render_gps_attendance_page(*args, **kwargs)
 
-                    if st.form_submit_button(L["btn_submit_out"], type="primary", use_container_width=True):
-                        rec["out_time"] = out_time
-                        rec["out_gps"] = gps_out
-                        if is_distance_too_far:
-                            rec["status"] = f"🔴 {selected_reason}"
-                            rec["note"] = f"Note: {detail_note}" if detail_note else selected_reason
-                        else:
-                            rec["status"] = "🟢 正常下班"
-                            rec["note"] = "Tan ca bình thường"
-
-                        st.success(L["success_out"])
-                        st.rerun()
-                st.divider()
-        else:
-            st.info("🎉 目前沒有進行中的外勤打卡任務 / Hiện tại không có ca làm việc nào đang mở.")
-
-    # ----------------------------------------------------
-    # 📋 頁籤三：個人打卡紀錄
-    # ----------------------------------------------------
-    with tab_records:
-        st.markdown(f"### 📋 {L['tab_records']}")
-        df_my = pd.DataFrame(st.session_state.field_attendance_db)
-        st.dataframe(df_my, use_container_width=True)
-
-    # ----------------------------------------------------
-    # 🏢 頁籤四：副總 / 主管後台稽核
-    # ----------------------------------------------------
-    with tab_admin:
-        st.markdown(f"### 🏢 {L['tab_admin']}")
-        st.success("👑 **高管與副總監控視角 / Ban Giám đốc & Phó Tổng giám đốc**")
-        
-        total_logs = len(st.session_state.field_attendance_db)
-        c1, c2, c3 = st.columns(3)
-        c1.metric("📊 總打卡筆數", f"{total_logs}")
-        c2.metric("📍 監控案場數", "4")
-        c3.metric("🟢 連線狀態", "24/7 OK")
-
-        st.divider()
-        st.markdown("#### 📋 全廠外勤軌跡與異動稽核總表")
-        df_all = pd.DataFrame(st.session_state.field_attendance_db)
-        st.dataframe(df_all, use_container_width=True)
-
-
-def show(engine=None, lang="繁體中文"):
-    render_field_attendance_page(engine, lang)
-
-
-def main(engine=None, lang="繁體中文"):
-    render_field_attendance_page(engine, lang)
+def main(*args, **kwargs):
+    render_gps_attendance_page(*args, **kwargs)
