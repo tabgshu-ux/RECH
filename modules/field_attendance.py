@@ -31,14 +31,17 @@ GPS_ATTENDANCE_I18N = {
         "checkout_caption": "💡 當您離開施工工地時，請點擊下方按鈕進行簽退並記錄離場座標。",
         "btn_checkout": "🚀 確認下班離場 (Check-Out)",
         "success_checkout": "✅ 已成功記錄下班離場時間與 GPS 座標！",
-        # 狀態
+        # 狀態與表格欄位
         "status_onsite": "🟢 駐點施工中 (On-Site)",
         "status_offsite": "🔴 已離場簽退 (Checked-Out)",
-        "col_time": "時間",
-        "col_emp": "員工",
-        "col_project": "專案名稱",
+        "col_time": "打卡時間",
+        "col_emp": "施工員工",
+        "col_project": "專案工地",
         "col_gps": "GPS 座標",
-        "col_status": "狀態"
+        "col_status": "出勤狀態",
+        "history_header": "📜 打卡歷史與出勤紀錄總表",
+        "monitor_header": "📊 員工即時位置與監控中心",
+        "monitor_msg": "🛰️ 目前系統監控中：所有外派施工人員 GPS 訊號穩定，無越界或異常離場狀況。"
     },
     "Tiếng Việt": {
         "title": "📍 Vận hành hiện trường - Chấm công GPS & Giám sát Công trường",
@@ -65,14 +68,17 @@ GPS_ATTENDANCE_I18N = {
         "checkout_caption": "💡 Khi bạn rời khỏi công trường, vui lòng bấm nút bên dưới để ghi nhận tọa độ rời đi.",
         "btn_checkout": "🚀 Xác nhận rời công trường (Check-Out)",
         "success_checkout": "✅ Đã ghi nhận thời gian tan ca và tọa độ GPS thành công!",
-        # Trạng thái
+        # Trạng thái & Tiêu đề bảng
         "status_onsite": "🟢 Đang thi công trực tuyến (On-Site)",
         "status_offsite": "🔴 Đã rời công trường (Checked-Out)",
-        "col_time": "Thời gian",
+        "col_time": "Thời gian chấm công",
         "col_emp": "Nhân viên",
-        "col_project": "Dự án",
+        "col_project": "Dự án / Công trình",
         "col_gps": "Tọa độ GPS",
-        "col_status": "Trạng thái"
+        "col_status": "Trạng thái",
+        "history_header": "📜 Lịch sử chấm công & Báo cáo ra vào",
+        "monitor_header": "📊 Trung tâm Giám sát Vị trí Trực tuyến",
+        "monitor_msg": "🛰️ Hệ thống đang giám sát: Tín hiệu GPS của tất cả nhân viên hiện trường ổn định, không phát hiện vi phạm."
     },
     "English": {
         "title": "📍 Field Operations - GPS Attendance & Site Monitoring",
@@ -99,16 +105,33 @@ GPS_ATTENDANCE_I18N = {
         "checkout_caption": "💡 When leaving the construction site, click below to check out and record your exit coordinates.",
         "btn_checkout": "🚀 Confirm Check-Out",
         "success_checkout": "✅ Check-out time and GPS coordinates recorded successfully!",
-        # Status
+        # Status & Table headers
         "status_onsite": "🟢 On-Site",
         "status_offsite": "🔴 Checked-Out",
         "col_time": "Timestamp",
         "col_emp": "Employee",
-        "col_project": "Project",
+        "col_project": "Project Site",
         "col_gps": "GPS Coordinates",
-        "col_status": "Status"
+        "col_status": "Status",
+        "history_header": "📜 Attendance History & Logs",
+        "monitor_header": "📊 Live Location & Monitoring Center",
+        "monitor_msg": "🛰️ System monitoring active: All field technicians' GPS signals stable, no geofence violations."
     }
 }
+
+def smart_translate_gps_status(status_val, target_lang):
+    if not status_val or not isinstance(status_val, str):
+        return status_val
+    val_lower = status_val.lower()
+    if "駐點施工中" in status_val or "on-site" in val_lower or "đang thi công" in val_lower:
+        if target_lang == "Tiếng Việt": return "🟢 Đang thi công trực tuyến (On-Site)"
+        elif target_lang == "English": return "🟢 On-Site"
+        return "🟢 駐點施工中 (On-Site)"
+    if "已離場" in status_val or "checked-out" in val_lower or "đã rời" in val_lower:
+        if target_lang == "Tiếng Việt": return "🔴 Đã rời công trường (Checked-Out)"
+        elif target_lang == "English": return "🔴 Checked-Out"
+        return "🔴 已離場簽退 (Checked-Out)"
+    return status_val
 
 def render_field_attendance_page(lang="繁體中文", **kwargs):
     active_lang = lang or st.session_state.get("current_lang", "繁體中文")
@@ -119,7 +142,7 @@ def render_field_attendance_page(lang="繁體中文", **kwargs):
 
     if "gps_logs_db" not in st.session_state:
         st.session_state.gps_logs_db = [
-            {"time": "2026-10-06 07:45:10", "emp": "admin", "project": "PROJ-2026-Lắp đặt tủ điện nhà máy TP.HCM", "gps": "10.8231° N, 106.6297° E", "status": L["status_onsite"]}
+            {"time": "2026-10-06 07:45:10", "emp": "admin", "project": "PROJ-2026-Lắp đặt tủ điện nhà máy TP.HCM", "gps": "10.8231° N, 106.6297° E", "status": "🟢 駐點施工中 (On-Site)"}
         ]
 
     tab1, tab2, tab3, tab4 = st.tabs([
@@ -149,7 +172,7 @@ def render_field_attendance_page(lang="繁體中文", **kwargs):
                         "emp": emp_name,
                         "project": project,
                         "gps": gps_coord,
-                        "status": L["status_onsite"]
+                        "status": "🟢 駐點施工中 (On-Site)"
                     })
                     st.success(L["success_checkin"])
                     st.rerun()
@@ -163,12 +186,21 @@ def render_field_attendance_page(lang="繁體中文", **kwargs):
             st.success(L["success_checkout"])
 
     with tab3:
-        st.markdown(f"### {L['tab_history']}")
-        st.dataframe(pd.DataFrame(st.session_state.gps_logs_db), use_container_width=True)
+        st.markdown(f"### {L['history_header']}")
+        display_data = []
+        for item in st.session_state.gps_logs_db:
+            display_data.append({
+                L["col_time"]: item["time"],
+                L["col_emp"]: item["emp"],
+                L["col_project"]: item["project"],
+                L["col_gps"]: item["gps"],
+                L["col_status"]: smart_translate_gps_status(item["status"], active_lang)
+            })
+        st.dataframe(pd.DataFrame(display_data), use_container_width=True)
 
     with tab4:
-        st.markdown(f"### {L['tab_monitor']}")
-        st.success("🛰️ 目前系統監控中：所有外派施工人員 GPS 訊號穩定，無越界或異常離場狀況。")
+        st.markdown(f"### {L['monitor_header']}")
+        st.success(L["monitor_msg"])
 
 def show(lang="繁體中文", **kwargs):
     render_field_attendance_page(lang, **kwargs)
