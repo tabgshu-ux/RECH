@@ -1,16 +1,152 @@
 import pandas as pd
 import streamlit as st
 
+# ----------------------------------------------------
+# 🌐 電子簽核與審核中心模組多語系字典 (i18n)
+# ----------------------------------------------------
+APPROVAL_I18N = {
+    "繁體中文": {
+        "title": "✍️ 管理部 - 電子簽核與請款審核中心",
+        "caption": "跨部門電子流程審核：涵蓋請假、採購、合約、請款、借款與資產報廢等全方位簽核。",
+        "tab_pending": "📥 待審核清單 (Pending)",
+        "tab_history": "📜 歷史簽核紀錄 (History)",
+        "tab_new": "➕ 提交新簽核申請 (Submit)",
+        "pending_header": "📥 待審核項目列表",
+        "no_pending": "🎉 目前沒有需要您審核的待辦事項！",
+        "btn_approve": "✅ 核准簽核",
+        "btn_reject": "❌ 駁回退回",
+        "success_approve": "🎉 已成功核准單據 [{id}]！",
+        "warning_reject": "⚠️️ 已將單據 [{id}] 駁回並退給申請人。",
+        "history_header": "📜 歷史簽核與歸檔紀錄",
+        "new_header": "➕ 提交跨部門電子簽核申請",
+        "lbl_category": "選擇簽核項目類別 *",
+        "cat_opts": [
+            "🌴 人事行政 - 員工請假/加班單",
+            "💰 財務採購 - 採購單與請款單 (AP)",
+            "📜 業務合約 - 客戶報價與工程合約",
+            "💳 財務行政 - 員工借款/預支薪資申請",
+            "🛠️ 工務技術 - 設計變更與驗收單",
+            "📦 生產總務 - 設備報廢與資產購置",
+        ],
+        "lbl_title": "簽核主旨標題 *",
+        "title_default": "西寧廠新進技術員請假單",
+        "lbl_amount": "涉及金額 / 數量 (若無填 -)",
+        "lbl_applicant": "申請人姓名與職稱 *",
+        "lbl_details": "填寫詳細事由與說明 *",
+        "btn_submit": "🚀 提交送出電子簽核",
+        "success_submit": "🎉 簽核單 [{new_id}] 已成功提交並發送給部門主管與管理中心！",
+        "fill_warning": "請完整填寫主旨與詳細事由！",
+        "status_pending": "待審核",
+        "status_approved": "已核准",
+        "status_rejected": "已駁回"
+    },
+    "Tiếng Việt": {
+        "title": "✍️ Khối Quản lý - Trung tâm Phê duyệt Điện tử",
+        "caption": "Phê duyệt quy trình điện tử liên bộ phận: xin nghỉ phép, mua hàng, hợp đồng, thanh toán và thanh lý tài sản.",
+        "tab_pending": "📥 Danh sách Chờ duyệt (Pending)",
+        "tab_history": "📜 Lịch sử Phê duyệt (History)",
+        "tab_new": "➕ Gửi Yêu cầu Phê duyệt Mới",
+        "pending_header": "📥 Danh sách chờ phê duyệt",
+        "no_pending": "🎉 Hiện không có hạng mục nào cần bạn phê duyệt!",
+        "btn_approve": "✅ Phê duyệt",
+        "btn_reject": "❌ Từ chối",
+        "success_approve": "🎉 Đã phê duyệt thành công chứng từ [{id}]!",
+        "warning_reject": "⚠️ Đã từ chối chứng từ [{id}] và trả về cho người yêu cầu.",
+        "history_header": "📜 Lịch sử phê duyệt & Lưu trữ",
+        "new_header": "➕ Gửi đơn xin phê duyệt điện tử",
+        "lbl_category": "Chọn loại phê duyệt *",
+        "cat_opts": [
+            "🌴 Nhân sự - Đơn xin nghỉ phép / tăng ca",
+            "💰 Tài chính - Đơn mua hàng & thanh toán (AP)",
+            "📜 Kinh doanh - Báo giá & Hợp đồng dự án",
+            "💳 Tài chính - Tạm ứng lương / Khoản vay",
+            "🛠️ Kỹ thuật - Thay đổi thiết kế & Nghiệm thu",
+            "📦 Hành chính - Thanh lý thiết bị & Mua sắm",
+        ],
+        "lbl_title": "Tiêu đề nội dung *",
+        "title_default": "Đơn xin nghỉ phép kỹ thuật viên nhà máy Tây Ninh",
+        "lbl_amount": "Số tiền / Số lượng liên quan",
+        "lbl_applicant": "Họ tên & Chức vụ người nộp *",
+        "lbl_details": "Nội dung chi tiết & Lý do *",
+        "btn_submit": "🚀 Gửi yêu cầu phê duyệt",
+        "success_submit": "🎉 Đơn phê duyệt [{new_id}] đã được gửi thành công đến quản lý!",
+        "fill_warning": "Vui lòng điền đầy đủ tiêu đề và nội dung chi tiết!",
+        "status_pending": "Chờ duyệt",
+        "status_approved": "Đã duyệt",
+        "status_rejected": "Từ chối"
+    },
+    "English": {
+        "title": "✍️ Admin - E-Approval & Payment Review Center",
+        "caption": "Cross-departmental electronic approvals covering leave requests, procurement, contracts, payments, and asset disposal.",
+        "tab_pending": "📥 Pending Approvals",
+        "tab_history": "📜 Approval History",
+        "tab_new": "➕ Submit New Request",
+        "pending_header": "📥 Pending Approval Items",
+        "no_pending": "🎉 No pending items require your review!",
+        "btn_approve": "✅ Approve",
+        "btn_reject": "❌ Reject",
+        "success_approve": "🎉 Successfully approved document [{id}]!",
+        "warning_reject": "⚠️ Document [{id}] has been rejected and returned.",
+        "history_header": "📜 Approval History & Archives",
+        "new_header": "➕ Submit Cross-Departmental E-Approval",
+        "lbl_category": "Select Request Category *",
+        "cat_opts": [
+            "🌴 HR - Leave / Overtime Request",
+            "💰 Finance - Procurement & AP Invoice",
+            "📜 Sales - Quotation & Engineering Contract",
+            "💳 Finance - Employee Advance / Loan",
+            "🛠️ Engineering - Design Change & Inspection",
+            "📦 GA - Asset Disposal & Procurement",
+        ],
+        "lbl_title": "Subject Title *",
+        "title_default": "Leave Request for Tay Ninh Technician",
+        "lbl_amount": "Amount / Quantity",
+        "lbl_applicant": "Applicant Name & Title *",
+        "lbl_details": "Detailed Description *",
+        "btn_submit": "🚀 Submit E-Approval",
+        "success_submit": "🎉 Approval request [{new_id}] successfully submitted!",
+        "fill_warning": "Please fill in the title and detailed description!",
+        "status_pending": "Pending",
+        "status_approved": "Approved",
+        "status_rejected": "Rejected"
+    }
+}
 
-def render_approval_center(lang="繁體中文"):
-    st.title("✍️ 管理部 - 電子簽核與請款審核中心")
-    st.caption("跨部門電子流程審核：涵蓋請假、採購、合約、請款、借款與資產報廢等全方位簽核。")
+# ----------------------------------------------------
+# 🔄 簽核模組專用：中越英智慧語意對照引擎
+# ----------------------------------------------------
+def smart_translate_approval(text_val, target_lang):
+    if not text_val or not isinstance(text_val, str):
+        return text_val
+    
+    val_lower = text_val.lower()
 
-    # 取得當前登入者身分
+    if "待審核" in text_val or "pending" in val_lower or "chờ duyệt" in val_lower:
+        if target_lang == "Tiếng Việt": return "Chờ duyệt"
+        elif target_lang == "English": return "Pending"
+        return "⏳ 待審核"
+    if "已核准" in text_val or "approved" in val_lower or "đã duyệt" in val_lower:
+        if target_lang == "Tiếng Việt": return "Đã duyệt"
+        elif target_lang == "English": return "Approved"
+        return "✅ 已核准"
+    if "已駁回" in text_val or "rejected" in val_lower or "từ chối" in val_lower:
+        if target_lang == "Tiếng Việt": return "Từ chối"
+        elif target_lang == "English": return "Rejected"
+        return "❌ 已駁回"
+
+    return text_val
+
+def render_approval_center(lang="繁體中文", **kwargs):
+    active_lang = lang or st.session_state.get("lang", "繁體中文")
+    L = APPROVAL_I18N.get(active_lang, APPROVAL_I18N["繁體中文"])
+
+    st.title(L["title"])
+    st.caption(L["caption"])
+
     current_user = st.session_state.get("user_name", "Staff")
     current_role = st.session_state.get("user_role", "staff").lower()
 
-    # 初始化簽核表單資料庫 (若無資料)
+    # 初始化簽核表單資料庫
     if "approval_tasks_db" not in st.session_state or not st.session_state.approval_tasks_db:
         st.session_state.approval_tasks_db = [
             {
@@ -32,45 +168,20 @@ def render_approval_center(lang="繁體中文"):
                 "amount": "$12,500 USD",
                 "details": "採購環保靜電粉末塗料 500 公斤",
                 "status": "待審核",
-            },
-            {
-                "id": "APP-2026-003",
-                "category": "📜 業務合約 - 工程合約審核",
-                "title": "西寧紡織廠 2000A 主配電櫃合約",
-                "applicant": "張偉豪 (Manager)",
-                "date": "2026-10-01",
-                "amount": "₫ 6,350,000,000 VND",
-                "details": "合約條款已由法務與財務確認，申請董事長用印",
-                "status": "待審核",
-            },
-            {
-                "id": "APP-2026-004",
-                "category": "💳 財務行政 - 員工借款/預支申請",
-                "title": "生產部作業員急難預支薪資",
-                "applicant": "王小明 (Staff)",
-                "date": "2026-10-01",
-                "amount": "5,000,000 VND",
-                "details": "家中急需，申請預支並分 2 個月從薪資扣回",
-                "status": "待審核",
-            },
+            }
         ]
 
     tab_pending, tab_history, tab_new = st.tabs([
-        "📥 待審核清單 (Pending)",
-        "📜 歷史簽核紀錄 (History)",
-        "➕ 提交新簽核申請 (Submit)"
+        L["tab_pending"], L["tab_history"], L["tab_new"]
     ])
 
-    # ----------------------------------------------------
-    # 📥 頁籤一：待審核清單
-    # ----------------------------------------------------
     with tab_pending:
-        st.markdown(f"### 📥 待審核項目列表 (當前登入: `{current_user}` | 角色: `{current_role.upper()}`)")
+        st.markdown(f"### {L['pending_header']} (當前登入: `{current_user}` | 角色: `{current_role.upper()}`)")
         
         pending_items = [item for item in st.session_state.approval_tasks_db if item["status"] == "待審核"]
 
         if not pending_items:
-            st.success("🎉 目前沒有需要您審核的待辦事項！")
+            st.success(L["no_pending"])
         else:
             for item in pending_items:
                 with st.container():
@@ -80,8 +191,8 @@ def render_approval_center(lang="繁體中文"):
                             <div style="font-size: 13px; color: #64748b; font-weight: 700;">📂 類別: {item['category']} | 編號: <code>{item['id']}</code></div>
                             <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 4px;">📌 {item['title']}</div>
                             <div style="font-size: 14px; color: #334155; margin-top: 6px;">
-                                • <b>申請人</b>: {item['applicant']} &nbsp;|&nbsp; <b>申請日期</b>: {item['date']} &nbsp;|&nbsp; <b>金額/影響</b>: <span style="color: #047857; font-weight:bold;">{item['amount']}</span><br>
-                                • <b>內容細節</b>: {item['details']}
+                                • <b>申請人</b>: {item['applicant']} &nbsp;|&nbsp; <b>日期</b>: {item['date']} &nbsp;|&nbsp; <b>金額</b>: <span style="color: #047857; font-weight:bold;">{item['amount']}</span><br>
+                                • <b>內容</b>: {item['details']}
                             </div>
                         </div>
                         """,
@@ -90,52 +201,46 @@ def render_approval_center(lang="繁體中文"):
 
                     col_btn1, col_btn2, _ = st.columns([1, 1, 3])
                     with col_btn1:
-                        if st.button("✅ 核准簽核", type="primary", key=f"approve_{item['id']}"):
+                        if st.button(L["btn_approve"], type="primary", key=f"approve_{item['id']}"):
                             item["status"] = "已核准"
-                            st.success(f"🎉 已成功核准單據 [{item['id']}]！")
+                            st.success(L["success_approve"].format(id=item['id']))
                             st.rerun()
                     with col_btn2:
-                        if st.button("❌ 駁回退回", key=f"reject_{item['id']}"):
+                        if st.button(L["btn_reject"], key=f"reject_{item['id']}"):
                             item["status"] = "已駁回"
-                            st.warning(f"⚠️ 已將單據 [{item['id']}] 駁回並退給申請人。")
+                            st.warning(L["warning_reject"].format(id=item['id']))
                             st.rerun()
                     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ----------------------------------------------------
-    # 📜 頁籤二：歷史紀錄
-    # ----------------------------------------------------
     with tab_history:
-        st.markdown("### 📜 歷史簽核與歸檔紀錄")
-        df_history = pd.DataFrame(st.session_state.approval_tasks_db)
-        st.dataframe(df_history, use_container_width=True)
+        st.markdown(f"### {L['history_header']}")
+        history_data = []
+        for item in st.session_state.approval_tasks_db:
+            history_data.append({
+                "編號": item["id"],
+                "類別": item["category"],
+                "主旨": item["title"],
+                "申請人": item["applicant"],
+                "日期": item["date"],
+                "金額": item["amount"],
+                "狀態": smart_translate_approval(item["status"], active_lang)
+            })
+        st.dataframe(pd.DataFrame(history_data), use_container_width=True)
 
-    # ----------------------------------------------------
-    # ➕ 頁籤三：提交新簽核申請
-    # ----------------------------------------------------
     with tab_new:
-        st.markdown("### ➕ 提交跨部門電子簽核申請")
+        st.markdown(f"### {L['new_header']}")
         with st.form("form_submit_approval"):
             c1, c2 = st.columns(2)
             with c1:
-                category = st.selectbox(
-                    "選擇簽核項目類別 *",
-                    [
-                        "🌴 人事行政 - 員工請假/加班單",
-                        "💰 財務採購 - 採購單與請款單 (AP)",
-                        "📜 業務合約 - 客戶報價與工程合約",
-                        "💳 財務行政 - 員工借款/預支薪資申請",
-                        "🛠️ 工務技術 - 設計變更與驗收單",
-                        "📦 生產總務 - 設備報廢與資產購置",
-                    ]
-                )
-                title = st.text_input("簽核主旨標題 *", value="西寧廠新進技術員請假單")
+                category = st.selectbox(L["lbl_category"], L["cat_opts"])
+                title = st.text_input(L["lbl_title"], value=L["title_default"])
             with c2:
-                amount = st.text_input("涉及金額 / 數量 (若無填 -)", value="-")
-                applicant = st.text_input("申請人姓名與職稱 *", value=f"{current_user} ({current_role.upper()})")
+                amount = st.text_input(L["lbl_amount"], value="-")
+                applicant = st.text_input(L["lbl_applicant"], value=f"{current_user} ({current_role.upper()})")
 
-            details = st.text_area("填寫詳細事由與說明 *", value="因個人因素申請請假...")
+            details = st.text_area(L["lbl_details"], value="因個人因素申請...")
 
-            if st.form_submit_button("🚀 提交送出電子簽核", type="primary", use_container_width=True):
+            if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
                 if title and details:
                     new_id = f"APP-2026-{len(st.session_state.approval_tasks_db)+1:03d}"
                     st.session_state.approval_tasks_db.append({
@@ -148,15 +253,13 @@ def render_approval_center(lang="繁體中文"):
                         "details": details,
                         "status": "待審核",
                     })
-                    st.success(f"🎉 簽核單 [{new_id}] 已成功提交並發送給部門主管與管理中心！")
+                    st.success(L["success_submit"].format(new_id=new_id))
                     st.rerun()
                 else:
-                    st.error("請完整填寫主旨與詳細事由！")
+                    st.warning(L["fill_warning"])
 
+def show(lang="繁體中文", **kwargs):
+    render_approval_center(lang, **kwargs)
 
-def show(lang="繁體中文"):
-    render_approval_center(lang)
-
-
-def main(lang="繁體中文"):
-    render_approval_center(lang)
+def main(lang="繁體中文", **kwargs):
+    render_approval_center(lang, **kwargs)
