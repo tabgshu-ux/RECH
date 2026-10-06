@@ -89,9 +89,9 @@ def get_payroll_lang_dict(lang_param):
 # ----------------------------------------------------
 INSURANCE_RATES = {
     "🇻🇳 越南廠 (Tay Ninh / Binh Duong)": {
-        "bhxh_social": 0.08,     # 社保 8%
-        "bhyt_health": 0.015,    # 醫保 1.5%
-        "bhtn_unemploy": 0.01,   # 失業險 1%
+        "bhxh_social": 0.08,
+        "bhyt_health": 0.015,
+        "bhtn_unemploy": 0.01,
         "currency": "VND",
         "rate_label": "越南法定社保/醫保/失業險 (個人負擔 10.5%)"
     },
@@ -103,15 +103,15 @@ INSURANCE_RATES = {
         "rate_label": "越南法定社保/醫保/失業險 (個人負擔 10.5%)"
     },
     "🇹🇼 台灣總部 (Taiwan HQ)": {
-        "labor_ins": 0.023,      # 勞保約 2.3%
-        "health_ins": 0.0517,    # 健保約 5.17% (自付額)
+        "labor_ins": 0.023,
+        "health_ins": 0.0517,
         "currency": "TWD",
         "rate_label": "台灣勞健保自付額 (勞保+健保級距)"
     },
     "🇨🇳 中國廠區 (Dongguan Plant)": {
-        "pension": 0.08,         # 養老 8%
-        "medical": 0.02,         # 醫療 2%
-        "housing_fund": 0.07,    # 住房公積金 7%
+        "pension": 0.08,
+        "medical": 0.02,
+        "housing_fund": 0.07,
         "currency": "CNY",
         "rate_label": "中國五險一金個人提撥"
     }
@@ -135,7 +135,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 調整分頁順序：把總表與 Excel 匯出放在第一頁，方便快速檢視與下載
     tab_list, tab_calc, tab_attendance, tab_history = st.tabs([
         L["tab_list"],
         L["tab_calc"],
@@ -152,20 +151,18 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         ]
 
     # ----------------------------------------------------
-    # 📊 頁籤一：全廠區員工薪資總表 (類似 Excel 一列一列排版)
+    # 📊 頁籤一：全廠區員工薪資總表
     # ----------------------------------------------------
     with tab_list:
         st.markdown("### 📊 全廠區員工本月薪資總表 (依工號 / 報表清單)")
         st.caption("您可以直接檢視全廠員工清單，並點擊下方下載按鈕匯出完整 Excel 報表。")
 
-        # 整理成表格清單資料
         summary_rows = []
         for emp in emp_list:
             emp_site = emp.get("site", "🇻🇳 越南廠 (Tay Ninh / Binh Duong)")
             ins_info = INSURANCE_RATES.get(emp_site, INSURANCE_RATES["🇻🇳 越南廠 (Tay Ninh / Binh Duong)"])
             curr = ins_info["currency"]
             
-            # 預設試算數值
             base = 25000000.0 if curr == "VND" else (80000.0 if curr == "TWD" else 8000.0)
             allow = 2000000.0 if curr == "VND" else 5000.0
             bonus = 1000000.0 if curr == "VND" else 2000.0
@@ -203,11 +200,12 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
             data=excel_data,
             file_name=f"Reetech_Payroll_Summary_{datetime.date.today().strftime('%Y%m')}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+sheet",
-            type="primary"
+            type="primary",
+            key=f"download_summary_excel_{uid}"  # 💡 加上唯一 key 徹底解決重複 ID 錯誤
         )
 
     # ----------------------------------------------------
-    # 🧮 頁籤二：單一員工詳細薪資與保險試算 (點選後才打開詳細資料)
+    # 🧮 頁籤二：單一員工詳細薪資與保險試算
     # ----------------------------------------------------
     with tab_calc:
         st.markdown("### 🧮 單一員工詳細薪資結構與保險試算")
@@ -217,7 +215,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         with col_m1:
             pay_month = st.date_input(L["select_month"], value=datetime.date.today(), key=f"payroll_month_{uid}")
         with col_m2:
-            # 建立員工選擇清單選項
             emp_opts = {f"{emp['id']} - {emp['name']} ({emp['dept']})": emp for emp in emp_list}
             selected_emp_label = st.selectbox("請選擇欲檢視的員工：", list(emp_opts.keys()), key=f"sel_emp_{uid}")
             selected_emp = emp_opts[selected_emp_label]
