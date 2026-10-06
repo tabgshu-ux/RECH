@@ -9,12 +9,12 @@ AP_I18N = {
     "繁體中文": {
         "title": "🛒 管理部 - 採購與應付帳款管理 (AP)",
         "caption": "管理廠商應付帳款、發票檔案庫、UNC 銀行轉帳水單自動核銷與 500 萬以下小額零用金報銷。",
-        "tab_pay": "💳 銀行轉帳水單 (UNC) 登記與採購單勾稽",
-        "tab_small_cash": "🧾 500萬以下小額送貨單與費用總表",
-        "tab_list": "📜 廠商應付貨款與發票檔案庫",
-        "tab_print": "🖨 快速檢視與列印紙本發票/附件",
-        "tab_search": "🔍 商品歷史報價與供應商反查系統",
-        "tab_add": "➕ 登記新採購進貨單與廠商發票 (手動)",
+        "tab_add": "➕ 1. 登記新採購進貨單與廠商發票",
+        "tab_list": "📜 2. 廠商應付貨款與發票檔案庫",
+        "tab_pay": "💳 3. 銀行轉帳水單 (UNC) 登記與核銷",
+        "tab_small_cash": "🧾 4. 500萬以下小額送貨單與費用總表",
+        "tab_print": "🖨 5. 快速檢視與列印紙本發票/附件",
+        "tab_search": "🔍 6. 商品歷史報價與供應商反查系統",
         "unc_title": "💳 銀行轉帳水單 (Ủy Nhiệm Chi - UNC) 與採購單自動核銷",
         "unc_caption": "出納轉帳後登記 UNC，系統自動將對應之採購單更新為「已付款」，落實金流閉環。",
         "unc_no": "水單編號 (UNC No.)",
@@ -29,12 +29,12 @@ AP_I18N = {
     "Tiếng Việt": {
         "title": "🛒 Quản lý - Mua hàng & Phải trả (AP)",
         "caption": "Quản lý công nợ, hóa đơn, đối soát UNC tự động và chứng từ nhỏ dưới 5 triệu VND.",
-        "tab_pay": "💳 Đăng ký UNC & Đối soát đơn hàng",
-        "tab_small_cash": "🧾 Chứng từ nhỏ & Tổng hợp chi phí",
-        "tab_list": "📜 Kho lưu trữ hóa đơn & công nợ",
-        "tab_print": "🖨️ Xem & In hóa đơn",
-        "tab_search": "🔍 Tra cứu lịch sử giá",
-        "tab_add": "➕ Đăng ký mua hàng (Thủ công)",
+        "tab_add": "➕ 1. Đăng ký mua hàng (Thủ công)",
+        "tab_list": "📜 2. Kho lưu trữ hóa đơn & công nợ",
+        "tab_pay": "💳 3. Đăng ký UNC & Đối soát đơn hàng",
+        "tab_small_cash": "🧾 4. Chứng từ nhỏ & Tổng hợp chi phí",
+        "tab_print": "🖨️ 5. Xem & In hóa đơn",
+        "tab_search": "🔍 6. Tra cứu lịch sử giá",
         "unc_title": "💳 Đăng ký Ủy Nhiệm Chi (UNC) & Đối soát đơn hàng tự động",
         "unc_caption": "Sau khi chuyển khoản, nhập UNC và chọn đơn hàng để tự động cập nhật trạng thái đã thanh toán.",
         "unc_no": "Số UNC",
@@ -44,17 +44,17 @@ AP_I18N = {
         "select_po": "Chọn đơn hàng cần đối soát thanh toán",
         "btn_add_unc": "📥 Lưu UNC và đối soát đơn hàng",
         "success_unc": "✅ Đã đăng ký UNC và cập nhật trạng thái đơn hàng thành công!",
-        "delete_btn": "🗑️️ Xóa bản ghi UNC này",
+        "delete_btn": "🗑 Xóa bản ghi UNC này",
     },
     "English": {
         "title": "🛒 Management Dept - Procurement & Accounts Payable (AP)",
         "caption": "Manage AP, invoices, automated UNC bank transfer reconciliation, and small voucher expenses.",
-        "tab_pay": "💳 UNC Registration & PO Reconciliation",
-        "tab_small_cash": "🧾 Under 5M VND Small Vouchers & Expense Summary",
-        "tab_list": "📜 Vendor AP & Invoice Repository",
-        "tab_print": "🖨️ Quick Print & Preview Invoices",
-        "tab_search": "🔍 Product Price History & Vendor Search",
-        "tab_add": "➕ Register New Purchase & Invoice (Manual)",
+        "tab_add": "➕ 1. Register New Purchase & Invoice",
+        "tab_list": "📜 2. Vendor AP & Invoice Repository",
+        "tab_pay": "💳 3. UNC Registration & PO Reconciliation",
+        "tab_small_cash": "🧾 4. Under 5M VND Small Vouchers",
+        "tab_print": "🖨️ 5. Quick Print & Preview Invoices",
+        "tab_search": "🔍 6. Product Price History & Vendor Search",
         "unc_title": "💳 Bank Transfer Order (UNC) & PO Automated Reconciliation",
         "unc_caption": "Register UNC after transfer to automatically reconcile and mark selected POs as paid.",
         "unc_no": "UNC Number",
@@ -97,7 +97,6 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
             }
         ]
 
-    # 初始化 500 萬以下小額送貨單與零用金資料庫
     if "small_cash_vouchers_db" not in st.session_state:
         st.session_state.small_cash_vouchers_db = [
             {
@@ -110,19 +109,58 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
             }
         ]
 
-    # 頁籤選單（擴增小額送貨單頁籤）
-    tab_pay, tab_small_cash, tab_list, tab_print, tab_search, tab_add = st.tabs([
-        L["tab_pay"], L["tab_small_cash"], L["tab_list"], L["tab_print"], L["tab_search"], L["tab_add"]
+    # 依照最常用順序排列頁籤：1. 新增採購 2. 應付帳款清單 3. UNC 銀行轉帳水單 4. 小額憑證 5. 列印 6. 歷史查詢
+    tab_add, tab_list, tab_pay, tab_small_cash, tab_print, tab_search = st.tabs([
+        L["tab_add"], L["tab_list"], L["tab_pay"], L["tab_small_cash"], L["tab_print"], L["tab_search"]
     ])
 
     # ----------------------------------------------------
-    # 💳 頁籤一：銀行轉帳水單 (UNC) 與採購單自動核銷勾稽
+    # ➕ 頁籤一：登記新採購進貨單與廠商發票（優先置頂）
+    # ----------------------------------------------------
+    with tab_add:
+        st.markdown("### ➕ 1. 手動登記新採購進貨單與廠商發票")
+        with st.form("form_add_ap_inv_main"):
+            col_a, col_b = st.columns(2)
+            with col_a:
+                po_num = st.text_input("採購單號 (PO No.)", value="PO-2026-02")
+                v_name = st.text_input("廠商名稱 (Vendor Name)", placeholder="例如: 台灣總部 / 越南供應商")
+            with col_b:
+                p_amt = st.number_input("發票含稅金額", value=500000.0, step=50000.0)
+                curr_type = st.selectbox("計價幣別", ["VND", "USD", "TWD"], key="ap_curr_add")
+
+            if st.form_submit_button("💾 儲存進貨發票至應付帳款資料庫", type="primary"):
+                if v_name:
+                    st.session_state.ap_invoices_db.append({
+                        "po_id": po_num,
+                        "vendor": v_name,
+                        "barcode": "8930000000000",
+                        "product": "一般採購耗材",
+                        "currency": curr_type,
+                        "amount": p_amt,
+                        "due_date": str(datetime.date.today()),
+                        "status": "🔴 待付款 (Pending)",
+                        "file": "manual_receipt.pdf"
+                    })
+                    st.success("✅ 成功新增進貨發票記錄並列入應付帳款清單！")
+                    st.rerun()
+                else:
+                    st.warning("⚠️ 請填寫廠商名稱！")
+
+    # ----------------------------------------------------
+    # 📜 頁籤二：廠商應付貨款與發票檔案庫
+    # ----------------------------------------------------
+    with tab_list:
+        st.markdown("### 📜 2. 廠商應付貨款與發票檔案庫 (含付款狀態自動連動)")
+        df_ap = pd.DataFrame(st.session_state.ap_invoices_db)
+        st.dataframe(df_ap, use_container_width=True)
+
+    # ----------------------------------------------------
+    # 💳 頁籤三：銀行轉帳水單 (UNC) 與採購單自動核銷勾稽
     # ----------------------------------------------------
     with tab_pay:
         st.markdown(f"### {L['unc_title']}")
         st.caption(L['unc_caption'])
 
-        # 篩選出所有「待付款」的採購單供財務勾選
         unpaid_pos = [item for item in st.session_state.ap_invoices_db if "待" in item["status"] or "Pending" in item["status"]]
         unpaid_po_ids = [f"{item['po_id']} - {item['vendor']} ({item['amount']:,.0f} {item['currency']})" for item in unpaid_pos]
 
@@ -131,7 +169,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
             "Cathay United Bank (國泰世華)", "CTBC Bank (中國信託)", "HSBC (Vietnam)", "Other / 其它"
         ]
 
-        with st.form("form_add_unc"):
+        with st.form("form_add_unc_main"): # 修正 key 避免衝突
             col1, col2 = st.columns(2)
             with col1:
                 unc_no = st.text_input(L["unc_no"], placeholder="例如: UNC-2026-002")
@@ -140,12 +178,11 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
             with col2:
                 bank_name = st.selectbox(L["bank_name"], vietnam_banks)
                 selected_target_po = st.selectbox(L["select_po"], unpaid_po_ids if unpaid_po_ids else ["目前無待付款採購單"])
-                currency = st.selectbox("幣別", ["VND", "USD", "TWD"])
+                currency = st.selectbox("幣別", ["VND", "USD", "TWD"], key="unc_curr_sel")
 
             submitted = st.form_submit_button(L["btn_add_unc"], type="primary")
             if submitted:
                 if unc_no and vendor_name:
-                    # 1. 登記 UNC
                     st.session_state.unc_db.append({
                         "id": unc_no,
                         "vendor": vendor_name,
@@ -156,7 +193,6 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
                         "matched_po": selected_target_po
                     })
 
-                    # 2. 自動連動更新對應採購單狀態為「已付款」
                     if unpaid_pos and "目前無" not in selected_target_po:
                         target_po_id = selected_target_po.split(" - ")[0]
                         for inv in st.session_state.ap_invoices_db:
@@ -184,63 +220,29 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
             st.info("目前尚無轉帳水單記錄。")
 
     # ----------------------------------------------------
-    # 🧾 頁籤二：500萬以下小額送貨單與會計費用傳票總表
+    # 🧾 頁籤四：500萬以下小額送貨單與會計費用傳票總表
     # ----------------------------------------------------
     with tab_small_cash:
-        st.markdown("### 🧾 越南廠區未達 500 萬 VND 小額送貨單與會計費用傳票總表")
+        st.markdown("### 🧾 4. 越南廠區未達 500 萬 VND 小額送貨單與會計費用傳票總表")
         st.caption("整合現場同仁上傳之外箱送貨單與小額零用金報銷，自動結算並匯入會計總帳傳票。")
-        
         df_small = pd.DataFrame(st.session_state.small_cash_vouchers_db)
         st.dataframe(df_small, use_container_width=True)
 
     # ----------------------------------------------------
-    # 📜 頁籤三：廠商應付貨款與發票檔案庫
-    # ----------------------------------------------------
-    with tab_list:
-        st.markdown("### 📜 廠商應付貨款與發票檔案庫 (含付款狀態自動連動)")
-        df_ap = pd.DataFrame(st.session_state.ap_invoices_db)
-        st.dataframe(df_ap, use_container_width=True)
-
-    # ----------------------------------------------------
-    # 🖨️ 頁籤四：快速檢視與列印發票
+    # 🖨️ 頁籤五：快速檢視與列印發票
     # ----------------------------------------------------
     with tab_print:
-        st.markdown("### 🖨️ 快速檢視與列印紙本發票/附件")
+        st.markdown("### 🖨️ 5. 快速檢視與列印紙本發票/附件")
         st.info("提供財務與會計快速預覽並列印進項發票、送貨單或 UNC 水單據。")
 
     # ----------------------------------------------------
-    # 🔍 頁籤五：歷史報價查詢
+    # 🔍 頁籤六：歷史報價查詢
     # ----------------------------------------------------
     with tab_search:
-        st.markdown("### 🔍 商品歷史報價與供應商反查系統")
+        st.markdown("### 🔍 6. 商品歷史報價與供應商反查系統")
         search_query = st.text_input("輸入商品條碼或品名關鍵字查詢歷史價格：")
         if search_query:
             st.success(f"🔍 查無 '{search_query}' 的過往異常波動紀錄，價格穩定。")
-
-    # ----------------------------------------------------
-    # ➕ 頁籤六：手動新增採購進貨單與發票
-    # ----------------------------------------------------
-    with tab_add:
-        st.markdown("### ➕ 手動登記新採購進貨單與發票")
-        with st.form("form_add_ap_inv"):
-            po_num = st.text_input("採購單號 (PO No.)", value="PO-2026-02")
-            v_name = st.text_input("廠商名稱 (Vendor Name)")
-            p_amt = st.number_input("發票含稅金額", value=500000.0, step=50000.0)
-            if st.form_submit_button("💾 儲存進貨發票至資料庫", type="primary"):
-                if v_name:
-                    st.session_state.ap_invoices_db.append({
-                        "po_id": po_num,
-                        "vendor": v_name,
-                        "barcode": "8930000000000",
-                        "product": "一般採購耗材",
-                        "currency": "VND",
-                        "amount": p_amt,
-                        "due_date": str(datetime.date.today()),
-                        "status": "🔴 待付款 (Pending)",
-                        "file": "manual_receipt.pdf"
-                    })
-                    st.success("✅ 成功新增進貨發票記錄！")
-                    st.rerun()
 
 def show(engine=None, lang="繁體中文"):
     render_procurement_ap_page(engine, lang)
