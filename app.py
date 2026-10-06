@@ -87,7 +87,7 @@ RECH_LOGO_HTML = """
 """
 
 # ----------------------------------------------------
-# 三階組織架構選單字典（已包含車輛維修保養模組選項）
+# 三階組織架構選單字典（已將工程部子功能正確修正為工程驗收進度）
 # ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
@@ -112,12 +112,12 @@ NAV_STRUCTURE = {
             "👔 管理部 (Management Dept)": {
                 "features": {
                     "🏢 [行政] 固定資產設備與總務採購": "ga_assets",
-                    "✍️️ [行政] 電子簽核與請款審核中心": "approval_center",
+                    "✍ [行政] 電子簽核與請款審核中心": "approval_center",
                     "👤 [行政] 員工個人檔案與人事管理 (人事)": "hr_employee",
                     "🚗 [行政] 廠區車輛進出與門禁時間紀錄": "vehicle_gate",
-                    "🛠️ [行政] 車輛維修保養與 Excel 批次匯入": "vehicle_maintenance",  # 👈 新增車輛維修保養選項
+                    "🛠️ [行政] 車輛維修保養與 Excel 批次匯入": "vehicle_maintenance",
                     "📍 [外勤] 工程人員 GPS 拍照打卡": "field_attendance",
-                    "🧾 [財務] 採購與應付帳款 (AP)": "procurement_ap",
+                    "🛒 [財務] 採購與應付帳款 (AP)": "procurement_ap",
                     "📋 [財務] 銷售與應收帳款 (AR)": "sales_order_ar",
                     "💰 [財務] 全球員工薪資與保險扣款試算": "payroll_calc",
                     "📄 [財務] 越南電子發票綜合管理中心": "invoice_management",
@@ -127,7 +127,7 @@ NAV_STRUCTURE = {
                 "features": {
                     "📐 [設計] 配電盤電氣與機構設計圖庫": "engineering_quote",
                     "⚡ [工程] 配電盤估價與資材報價總合": "engineering_quote",
-                    "🔍 [品管] 工程驗收與品質檢驗紀錄": "project_progress",
+                    "📊 [工程] 工程驗收與進度追蹤": "project_progress",  # 👈 已修正為工程驗收與進度追蹤
                 }
             },
             "🏭 生產部 (Production Dept)": {
@@ -183,7 +183,7 @@ NAV_STRUCTURE = {
                 "features": {
                     "📐 [Thiết kế] Bản vẽ Tủ điện": "engineering_quote",
                     "⚡ [Kỹ thuật] Báo giá Tủ điện & Dự toán": "engineering_quote",
-                    "🔍 [QC] Kiểm tra Chất lượng": "project_progress",
+                    "📊 [Kỹ thuật] Tiến độ nghiệm thu dự án cơ điện": "project_progress",  # 👈 已修正
                 }
             },
             "🏭 Phòng Sản xuất (Production Dept)": {
@@ -239,7 +239,7 @@ NAV_STRUCTURE = {
                 "features": {
                     "📐 [Design] Switchgear Drawings": "engineering_quote",
                     "⚡ [Engineering] Costing & Quotation": "engineering_quote",
-                    "🔍 [QC] Quality Inspection": "project_progress",
+                    "📊 [Engineering] M&E Acceptance & Progress": "project_progress",  # 👈 已修正
                 }
             },
             "🏭 Production Dept": {
@@ -472,7 +472,6 @@ elif target_route == "vehicle_gate":
     )
 
 elif target_route == "vehicle_maintenance":
-    # 👈 新增：車輛維修保養與 Excel 批次匯入路由分派
     safe_call_module(
         vehicle_maintenance.render_vehicle_maintenance_page,
         engine=engine,
