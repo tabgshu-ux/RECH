@@ -1,21 +1,22 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import os
 
 # ----------------------------------------------------
-# 🌐 工程部專屬模組多語系字典 (i18n)
+# 🌐 工程管理中心與設計部門多語系字典 (i18n)
 # ----------------------------------------------------
 ENG_DEPT_I18N = {
     "繁體中文": {
-        "title": "🛠️ 裕豐電機工業 - 工程部綜合管理中心",
-        "caption": "完整涵蓋工程報價系統（含倉庫連動、業務議價折讓、發票稅與一鍵傳動 AR）、設計圖庫、及工程驗收追蹤。",
-        "tab_quote": "⚙️ 1. 工程報價系統 (含業務議價與傳動 AR)",
-        "tab_design": "📐 2. 設計圖庫與規格",
+        "title": "🛠️ 裕豐電機工業 - 工程管理中心與設計部門",
+        "caption": "涵蓋工程報價系統（含倉庫連動、業務議價與一鍵傳動 AR）、設計圖庫 Storage 上傳中心、及工程驗收追蹤。",
+        "tab_quote": "⚙️️ 1. 工程報價與傳動 AR",
+        "tab_design": "📐 2. 設計圖庫 Storage 上傳與下載",
         "tab_progress": "📊 3. 工程驗收與進度追蹤",
         
         # 報價系統
         "quote_title": "⚙️ 配電盤與工程專案報價系統 (Quotation, Discount & AR Transfer)",
-        "quote_caption": "工程部專用報價：填入專案資訊、連動倉庫庫存與單價，支援業務折讓議價，並一鍵傳動至財務應收帳款。",
+        "quote_caption": "工程管理專用報價：填入專案資訊、連動倉庫庫存與單價，支援業務折讓議價，並一鍵傳動至財務應收帳款。",
         "sec1_title": "📋 1. 工程專案基本資訊",
         "lbl_vendor": "廠商名稱 *",
         "vendor_placeholder": "例如: 越南新順工程承攬有限公司",
@@ -43,15 +44,22 @@ ENG_DEPT_I18N = {
         "btn_transfer_ar": "🚀 一鍵傳動至財務應收帳款 (AR) 系統",
         "success_ar": "✅ 成功！工程報價已成功傳動至財務部應收帳款（AR）模組！",
         
-        # 設計圖庫
-        "design_title": "📐 配電盤電氣與機構設計圖庫",
-        "design_caption": "管理各廠區高低壓配電盤、ACB/MCCB、Busbar 銅排配置與 CAD/PDF 設計圖檔。",
+        # 設計圖庫 Storage
+        "design_title": "📐 配電盤電氣與機構設計圖庫 Storage 雲端中心",
+        "design_caption": "設計工程師可在此上傳 CAD/PDF/圖片圖檔至公司內部 Storage，供管理中心與各廠區直接下載。",
+        "upload_header": "📤 上傳新設計圖檔至公司 Storage",
+        "lbl_dwg_no": "圖號編碼 *",
+        "lbl_dwg_name": "專案/圖檔名稱 *",
+        "lbl_file_uploader": "選擇設計圖檔 (PDF, CAD, PNG, JPG)",
+        "btn_upload": "💾 儲存並上傳至公司 Storage",
+        "success_upload": "✅ 圖檔已成功上傳至公司內部 Storage，管理中心現可隨時下載！",
+        "storage_header": "📂 公司內部 Storage 現有圖庫列表",
         "col_drawing_no": "圖號編碼",
         "col_project_name": "專案/廠區名稱",
-        "col_spec": "電氣規格",
-        "col_version": "版次",
-        "col_designer": "設計工程師",
-        "col_action": "圖檔操作",
+        "col_spec": "檔案名稱",
+        "col_version": "上傳時間",
+        "col_designer": "上傳人員",
+        "col_action": "圖檔下載",
         
         # 工程驗收進度
         "prog_title": "⚡ 全球廠區水電工程驗收與進度追蹤",
@@ -76,10 +84,10 @@ ENG_DEPT_I18N = {
         "col_status": "工程與驗收狀態"
     },
     "Tiếng Việt": {
-        "title": "🛠️ REETECH INDUSTRIAL - Trung tâm Quản lý Khối Kỹ thuật",
-        "caption": "Bao gồm hệ thống báo giá, chiết khấu thương mại cho nhân viên kinh doanh, thuế VAT và truyền dữ liệu sang AR.",
-        "tab_quote": "⚙️ 1. Hệ thống Báo giá (Chiết khấu & AR)",
-        "tab_design": "📐 2. Thư viện Bản vẽ Thiết kế",
+        "title": "🛠️ REETECH INDUSTRIAL - Trung tâm Quản lý & Phòng Thiết kế",
+        "caption": "Bao gồm báo giá, kho lưu trữ Storage bản vẽ thiết kế, và theo dõi tiến độ nghiệm thu.",
+        "tab_quote": "⚙️ 1. Báo giá & Chuyển AR",
+        "tab_design": "📐 2. Kho Storage Bản vẽ Thiết kế",
         "tab_progress": "📊 3. Theo dõi Tiến độ & Nghiệm thu",
         
         "quote_title": "⚙️ Hệ thống Báo giá & Chiết khấu Thương mại (Chuyển dữ liệu AR)",
@@ -107,18 +115,25 @@ ENG_DEPT_I18N = {
         "lbl_vat_rate": "Thuế suất VAT (%)",
         "lbl_vat_amount": "Tiền thuế VAT:",
         "lbl_system_total": "Tổng tiền tính toán tự động:",
-        "lbl_final_override": "✍️ Tổng giá trị báo giá cuối cùng sau chiết khấu (Kinh doanh có thể chỉnh sửa):",
+        "lbl_final_override": "✍️ Tổng giá trị báo giá cuối cùng sau chiết khấu:",
         "btn_transfer_ar": "🚀 Truyền dữ liệu sang Phải thu Tài chính (AR)",
         "success_ar": "✅ Thành công! Báo giá đã được truyền sang hệ thống Quản lý Phải thu (AR) của Tài chính!",
         
-        "design_title": "📐 Thư viện Bản vẽ Thiết kế Tủ điện & Cơ khí",
-        "design_caption": "Quản lý bản vẽ CAD/PDF tủ điện trung hạ thế, ACB/MCCB, thanh cái Busbar.",
+        "design_title": "📐 Kho Lưu trữ Storage Bản vẽ Thiết kế Điện & Cơ khí",
+        "design_caption": "Kỹ sư thiết kế tải lên bản vẽ CAD/PDF lên Storage công ty để bộ phận quản lý tải về.",
+        "upload_header": "📤 Tải lên bản vẽ mới vào Storage công ty",
+        "lbl_dwg_no": "Mã bản vẽ *",
+        "lbl_dwg_name": "Tên dự án / Bản vẽ *",
+        "lbl_file_uploader": "Chọn tệp bản vẽ (PDF, CAD, PNG, JPG)",
+        "btn_upload": "💾 Lưu và Tải lên Storage",
+        "success_upload": "✅ Tệp đã được tải lên Storage thành công, bộ phận quản lý có thể tải về!",
+        "storage_header": "📂 Danh sách bản vẽ hiện có trong Storage",
         "col_drawing_no": "Mã bản vẽ",
         "col_project_name": "Tên dự án / Nhà máy",
-        "col_spec": "Quy cách điện",
-        "col_version": "Phiên bản",
-        "col_designer": "Kỹ sư thiết kế",
-        "col_action": "Thao tác",
+        "col_spec": "Tên tệp",
+        "col_version": "Thời gian",
+        "col_designer": "Người tải lên",
+        "col_action": "Tải xuống",
         
         "prog_title": "⚡ Theo dõi Tiến độ & Nghiệm thu Dự án Cơ điện",
         "prog_caption": "Chuyên dụng kỹ thuật: Tập trung giám sát phần trăm tiến độ thi công, trạng thái nghiệm thu.",
@@ -142,10 +157,10 @@ ENG_DEPT_I18N = {
         "col_status": "Trạng thái thi công & Nghiệm thu"
     },
     "English": {
-        "title": "🛠️ REETECH INDUSTRIAL - Engineering Department Management Center",
-        "caption": "Engineering quotation with sales discount override, VAT calculation, and direct AR transfer.",
-        "tab_quote": "⚙️️ 1. Quotation System (Sales Discount & AR)",
-        "tab_design": "📐 2. Design Drawings Library",
+        "title": "🛠️ REETECH INDUSTRIAL - Engineering Center & Design Dept",
+        "caption": "Quotation system, design storage center for uploading/downloading drawings, and acceptance tracking.",
+        "tab_quote": "⚙️ 1. Quotation & AR Transfer",
+        "tab_design": "📐 2. Design Storage (Upload & Download)",
         "tab_progress": "📊 3. M&E Acceptance & Progress Tracking",
         
         "quote_title": "⚙️ Switchgear & Engineering Project Quotation System (AR Integration)",
@@ -173,18 +188,25 @@ ENG_DEPT_I18N = {
         "lbl_vat_rate": "VAT Rate (%)",
         "lbl_vat_amount": "VAT Amount:",
         "lbl_system_total": "System Calculated Total:",
-        "lbl_final_override": "✍️ Final Quoted Amount after Sales Discount (Editable for negotiation):",
+        "lbl_final_override": "✍️ Final Quoted Amount after Sales Discount:",
         "btn_transfer_ar": "🚀 Transfer to Finance Accounts Receivable (AR)",
         "success_ar": "✅ Success! Engineering quotation successfully transferred to Finance AR module!",
         
-        "design_title": "📐 Switchgear & Mechanical Design Drawings Library",
-        "design_caption": "Manage CAD/PDF drawings for switchboards, ACB/MCCB, and Busbar configurations.",
+        "design_title": "📐 Switchgear & Mechanical Design Drawings Storage Center",
+        "design_caption": "Design engineers can upload CAD/PDF/image drawings to corporate storage for management download.",
+        "upload_header": "📤 Upload New Design Drawing to Storage",
+        "lbl_dwg_no": "Drawing No. *",
+        "lbl_dwg_name": "Project / Drawing Name *",
+        "lbl_file_uploader": "Select Drawing File (PDF, CAD, PNG, JPG)",
+        "btn_upload": "💾 Save & Upload to Storage",
+        "success_upload": "✅ File successfully uploaded to corporate storage, management can now download!",
+        "storage_header": "📂 Corporate Storage Drawings Repository",
         "col_drawing_no": "Drawing No.",
         "col_project_name": "Project / Plant Name",
-        "col_spec": "Electrical Spec",
-        "col_version": "Version",
-        "col_designer": "Designer",
-        "col_action": "Action",
+        "col_spec": "File Name",
+        "col_version": "Upload Time",
+        "col_designer": "Uploader",
+        "col_action": "Download",
         
         "prog_title": "⚡ M&E Engineering Progress & Acceptance Tracking",
         "prog_caption": "Engineering focused: Dedicated monitoring of site construction progress, acceptance status, and contract control.",
@@ -319,13 +341,11 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
             st.metric(label=L["lbl_vat_amount"], value=f"${vat_amount:,.2f}")
             st.metric(label=L["lbl_system_total"], value=f"${system_grand_total:,.2f}")
 
-        # 業務員減免與最終議價總金額輸入框
         final_quoted_amount = st.number_input(
             L["lbl_final_override"],
             min_value=0.0,
             value=float(system_grand_total),
-            step=100.0,
-            help="業務員可在此輸入減免後的最終議價總金額"
+            step=100.0
         )
 
         st.markdown("---")
@@ -334,18 +354,49 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
             st.info(f"📌 **傳動詳情 (Transferred to AR)**: {vendor_name} | {proj_name} | 最終報價金額: **${final_quoted_amount:,.2f} {currency}** (含 VAT {vat_rate}%)")
 
     # ----------------------------------------------------
-    # Tab 2: 設計圖庫
+    # Tab 2: 設計圖庫 Storage 上傳與下載中心
     # ----------------------------------------------------
     with tab_design:
         st.markdown(f"### {L['design_title']}")
         st.caption(L['design_caption'])
         
-        drawings_data = [
-            {L["col_drawing_no"]: "DWG-2026-MBD-01", L["col_project_name"]: "越南新順楠梓電子廠 (M&E)", L["col_spec"]: "2000A 主配電盤 (MSB)", L["col_version"]: "V2.1", L["col_designer"]: "Nguyễn Văn An", L["col_action"]: "📥 Download CAD / PDF"},
-            {L["col_drawing_no"]: "DWG-2026-MBD-02", L["col_project_name"]: "平陽美德金屬加工廠", L["col_spec"]: "1200A 動力分電盤 (Sub-DB)", L["col_version"]: "V1.0", L["col_designer"]: "Trần Minh Quân", L["col_action"]: "📥 Download CAD / PDF"},
-            {L["col_drawing_no"]: "DWG-2026-MBD-03", L["col_project_name"]: "隆安宏遠精密機械廠", L["col_spec"]: "變電站 22kV 綜合控制盤", L["col_version"]: "V3.0", L["col_designer"]: "Lê Hoàng Phúc", L["col_action"]: "📥 Download CAD / PDF"},
-        ]
-        st.dataframe(pd.DataFrame(drawings_data), use_container_width=True)
+        # 初始化 session_state 用於儲存上傳到 Storage 的檔案清單
+        if "storage_drawings" not in st.session_state:
+            st.session_state.storage_drawings = [
+                {L["col_drawing_no"]: "DWG-2026-MBD-01", L["col_project_name"]: "越南新順楠梓電子廠 (M&E)", L["col_spec"]: "MSB_2000A_Schematic.pdf", L["col_version"]: "2026-10-01 10:30", L["col_designer"]: "Nguyễn Văn An", L["col_action"]: "📥 Download"},
+                {L["col_drawing_no"]: "DWG-2026-MBD-02", L["col_project_name"]: "平陽美德金屬加工廠", L["col_spec"]: "Sub_DB_Layout.dwg", L["col_version"]: "2026-10-03 14:15", L["col_designer"]: "Trần Minh Quân", L["col_action"]: "📥 Download"},
+                {L["col_drawing_no"]: "DWG-2026-MBD-03", L["col_project_name"]: "隆安宏遠精密機械廠", L["col_spec"]: "Substation_Busbar.png", L["col_version"]: "2026-10-05 09:00", L["col_designer"]: "Lê Hoàng Phúc", L["col_action"]: "📥 Download"},
+            ]
+
+        with st.form("upload_storage_form"):
+            st.markdown(f"#### {L['upload_header']}")
+            u_col1, u_col2 = st.columns(2)
+            with u_col1:
+                new_dwg_no = st.text_input(L["lbl_dwg_no"], placeholder="例如: DWG-2026-04")
+            with u_col2:
+                new_proj_name = st.text_input(L["lbl_dwg_name"], placeholder="例如: 北寧富泰光電廠配電盤圖")
+            
+            uploaded_file = st.file_uploader(L["lbl_file_uploader"], type=["pdf", "dwg", "png", "jpg", "zip"])
+            
+            submitted_upload = st.form_submit_button(L["btn_upload"], use_container_width=True)
+            if submitted_upload:
+                if new_dwg_no and new_proj_name and uploaded_file:
+                    file_info = {
+                        L["col_drawing_no"]: new_dwg_no,
+                        L["col_project_name"]: new_proj_name,
+                        L["col_spec"]: uploaded_file.name,
+                        L["col_version"]: datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+                        L["col_designer"]: st.session_state.get("user_name", "Designer"),
+                        L["col_action"]: "📥 Download"
+                    }
+                    st.session_state.storage_drawings.insert(0, file_info)
+                    st.success(L["success_upload"])
+                else:
+                    st.warning("⚠️ 請完整填寫圖號編碼、專案名稱並選擇要上傳的圖檔檔案！")
+
+        st.markdown("---")
+        st.markdown(f"#### {L['storage_header']}")
+        st.dataframe(pd.DataFrame(st.session_state.storage_drawings), use_container_width=True)
 
     # ----------------------------------------------------
     # Tab 3: 工程驗收與進度追蹤
