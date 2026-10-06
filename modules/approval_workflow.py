@@ -16,7 +16,7 @@ APPROVAL_I18N = {
         "btn_approve": "✅ 核准簽核",
         "btn_reject": "❌ 駁回退回",
         "success_approve": "🎉 已成功核准單據 [{id}]！",
-        "warning_reject": "⚠️️ 已將單據 [{id}] 駁回並退給申請人。",
+        "warning_reject": "⚠️ 已將單據 [{id}] 駁回並退給申請人。",
         "history_header": "📜 歷史簽核與歸檔紀錄",
         "new_header": "➕ 提交跨部門電子簽核申請",
         "lbl_category": "選擇簽核項目類別 *",
@@ -36,9 +36,12 @@ APPROVAL_I18N = {
         "btn_submit": "🚀 提交送出電子簽核",
         "success_submit": "🎉 簽核單 [{new_id}] 已成功提交並發送給部門主管與管理中心！",
         "fill_warning": "請完整填寫主旨與詳細事由！",
-        "status_pending": "待審核",
-        "status_approved": "已核准",
-        "status_rejected": "已駁回"
+        "lbl_cat_card": "📂 類別",
+        "lbl_id": "編號",
+        "lbl_applicant_card": "申請人",
+        "lbl_date_card": "申請日期",
+        "lbl_amount_card": "金額/影響",
+        "lbl_details_card": "內容細節"
     },
     "Tiếng Việt": {
         "title": "✍️ Khối Quản lý - Trung tâm Phê duyệt Điện tử",
@@ -60,7 +63,7 @@ APPROVAL_I18N = {
             "💰 Tài chính - Đơn mua hàng & thanh toán (AP)",
             "📜 Kinh doanh - Báo giá & Hợp đồng dự án",
             "💳 Tài chính - Tạm ứng lương / Khoản vay",
-            "🛠️ Kỹ thuật - Thay đổi thiết kế & Nghiệm thu",
+            "🛠️️ Kỹ thuật - Thay đổi thiết kế & Nghiệm thu",
             "📦 Hành chính - Thanh lý thiết bị & Mua sắm",
         ],
         "lbl_title": "Tiêu đề nội dung *",
@@ -71,9 +74,12 @@ APPROVAL_I18N = {
         "btn_submit": "🚀 Gửi yêu cầu phê duyệt",
         "success_submit": "🎉 Đơn phê duyệt [{new_id}] đã được gửi thành công đến quản lý!",
         "fill_warning": "Vui lòng điền đầy đủ tiêu đề và nội dung chi tiết!",
-        "status_pending": "Chờ duyệt",
-        "status_approved": "Đã duyệt",
-        "status_rejected": "Từ chối"
+        "lbl_cat_card": "📂 Phân loại",
+        "lbl_id": "Mã số",
+        "lbl_applicant_card": "Người nộp",
+        "lbl_date_card": "Ngày nộp",
+        "lbl_amount_card": "Số tiền",
+        "lbl_details_card": "Chi tiết"
     },
     "English": {
         "title": "✍️ Admin - E-Approval & Payment Review Center",
@@ -95,7 +101,7 @@ APPROVAL_I18N = {
             "💰 Finance - Procurement & AP Invoice",
             "📜 Sales - Quotation & Engineering Contract",
             "💳 Finance - Employee Advance / Loan",
-            "🛠️ Engineering - Design Change & Inspection",
+            "🛠️️ Engineering - Design Change & Inspection",
             "📦 GA - Asset Disposal & Procurement",
         ],
         "lbl_title": "Subject Title *",
@@ -106,38 +112,39 @@ APPROVAL_I18N = {
         "btn_submit": "🚀 Submit E-Approval",
         "success_submit": "🎉 Approval request [{new_id}] successfully submitted!",
         "fill_warning": "Please fill in the title and detailed description!",
-        "status_pending": "Pending",
-        "status_approved": "Approved",
-        "status_rejected": "Rejected"
+        "lbl_cat_card": "📂 Category",
+        "lbl_id": "ID",
+        "lbl_applicant_card": "Applicant",
+        "lbl_date_card": "Date",
+        "lbl_amount_card": "Amount",
+        "lbl_details_card": "Details"
     }
 }
 
 # ----------------------------------------------------
-# 🔄 簽核模組專用：中越英智慧語意對照引擎
+# 🔄 智慧語意動態轉換引擎 (讓內部資料隨著語系切換)
 # ----------------------------------------------------
-def smart_translate_approval(text_val, target_lang):
+def smart_translate_approval_content(text_val, target_lang):
     if not text_val or not isinstance(text_val, str):
         return text_val
     
     val_lower = text_val.lower()
 
-    if "待審核" in text_val or "pending" in val_lower or "chờ duyệt" in val_lower:
-        if target_lang == "Tiếng Việt": return "Chờ duyệt"
-        elif target_lang == "English": return "Pending"
-        return "⏳ 待審核"
-    if "已核准" in text_val or "approved" in val_lower or "đã duyệt" in val_lower:
-        if target_lang == "Tiếng Việt": return "Đã duyệt"
-        elif target_lang == "English": return "Approved"
-        return "✅ 已核准"
-    if "已駁回" in text_val or "rejected" in val_lower or "từ chối" in val_lower:
-        if target_lang == "Tiếng Việt": return "Từ chối"
-        elif target_lang == "English": return "Rejected"
-        return "❌ 已駁回"
+    if target_lang == "Tiếng Việt":
+        if "越南西寧廠技術員事假 2 天" in text_val: return "Nghỉ phép 2 ngày của kỹ thuật viên nhà máy Tây Ninh"
+        if "因家屬探親請假 2 天" in text_val: return "Xin nghỉ 2 ngày thăm người thân (đã sắp xếp người thay thế)"
+        if "西寧廠塗裝粉體原料採購款" in text_val: return "Thanh toán mua nguyên liệu sơn tĩnh điện nhà máy Tây Ninh"
+        if "採購環保靜電粉末塗料 500 公斤" in text_val: return "Mua 500kg bột sơn tĩnh điện thân thiện môi trường"
+    elif target_lang == "English":
+        if "越南西寧廠技術員事假 2 天" in text_val: return "Tay Ninh Plant Technician 2-Day Leave"
+        if "因家屬探親請假 2 天" in text_val: return "Family visit leave for 2 days (backup arranged)"
+        if "西寧廠塗裝粉體原料採購款" in text_val: return "Tay Ninh Plant Powder Coating Material Purchase"
+        if "採購環保靜電粉末塗料 500 公斤" in text_val: return "Purchase 500kg eco-friendly electrostatic coating powder"
 
     return text_val
 
 def render_approval_center(lang="繁體中文", **kwargs):
-    active_lang = lang or st.session_state.get("lang", "繁體中文")
+    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
     L = APPROVAL_I18N.get(active_lang, APPROVAL_I18N["繁體中文"])
 
     st.title(L["title"])
@@ -146,7 +153,6 @@ def render_approval_center(lang="繁體中文", **kwargs):
     current_user = st.session_state.get("user_name", "Staff")
     current_role = st.session_state.get("user_role", "staff").lower()
 
-    # 初始化簽核表單資料庫
     if "approval_tasks_db" not in st.session_state or not st.session_state.approval_tasks_db:
         st.session_state.approval_tasks_db = [
             {
@@ -184,15 +190,19 @@ def render_approval_center(lang="繁體中文", **kwargs):
             st.success(L["no_pending"])
         else:
             for item in pending_items:
+                # 動態轉譯卡片內部內容
+                card_title = smart_translate_approval_content(item['title'], active_lang)
+                card_details = smart_translate_approval_content(item['details'], active_lang)
+
                 with st.container():
                     st.markdown(
                         f"""
                         <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 12px;">
-                            <div style="font-size: 13px; color: #64748b; font-weight: 700;">📂 類別: {item['category']} | 編號: <code>{item['id']}</code></div>
-                            <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 4px;">📌 {item['title']}</div>
+                            <div style="font-size: 13px; color: #64748b; font-weight: 700;">{L['lbl_cat_card']}: {item['category']} | {L['lbl_id']}: <code>{item['id']}</code></div>
+                            <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 4px;">📌 {card_title}</div>
                             <div style="font-size: 14px; color: #334155; margin-top: 6px;">
-                                • <b>申請人</b>: {item['applicant']} &nbsp;|&nbsp; <b>日期</b>: {item['date']} &nbsp;|&nbsp; <b>金額</b>: <span style="color: #047857; font-weight:bold;">{item['amount']}</span><br>
-                                • <b>內容</b>: {item['details']}
+                                • <b>{L['lbl_applicant_card']}</b>: {item['applicant']} &nbsp;|&nbsp; <b>{L['lbl_date_card']}</b>: {item['date']} &nbsp;|&nbsp; <b>{L['lbl_amount_card']}</b>: <span style="color: #047857; font-weight:bold;">{item['amount']}</span><br>
+                                • <b>{L['lbl_details_card']}</b>: {card_details}
                             </div>
                         </div>
                         """,
@@ -203,12 +213,12 @@ def render_approval_center(lang="繁體中文", **kwargs):
                     with col_btn1:
                         if st.button(L["btn_approve"], type="primary", key=f"approve_{item['id']}"):
                             item["status"] = "已核准"
-                            st.success(L["success_approve"].format(id=item['id']))
+                            st.success(f"🎉 成功核准 / Approved [{item['id']}]！")
                             st.rerun()
                     with col_btn2:
                         if st.button(L["btn_reject"], key=f"reject_{item['id']}"):
                             item["status"] = "已駁回"
-                            st.warning(L["warning_reject"].format(id=item['id']))
+                            st.warning(f"⚠️ 已駁回 / Rejected [{item['id']}]。")
                             st.rerun()
                     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -217,13 +227,13 @@ def render_approval_center(lang="繁體中文", **kwargs):
         history_data = []
         for item in st.session_state.approval_tasks_db:
             history_data.append({
-                "編號": item["id"],
-                "類別": item["category"],
-                "主旨": item["title"],
-                "申請人": item["applicant"],
-                "日期": item["date"],
-                "金額": item["amount"],
-                "狀態": smart_translate_approval(item["status"], active_lang)
+                "ID": item["id"],
+                "Category": item["category"],
+                "Title": smart_translate_approval_content(item["title"], active_lang),
+                "Applicant": item["applicant"],
+                "Date": item["date"],
+                "Amount": item["amount"],
+                "Status": item["status"]
             })
         st.dataframe(pd.DataFrame(history_data), use_container_width=True)
 
@@ -238,7 +248,7 @@ def render_approval_center(lang="繁體中文", **kwargs):
                 amount = st.text_input(L["lbl_amount"], value="-")
                 applicant = st.text_input(L["lbl_applicant"], value=f"{current_user} ({current_role.upper()})")
 
-            details = st.text_area(L["lbl_details"], value="因個人因素申請...")
+            details = st.text_area(L["lbl_details"], value="...")
 
             if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
                 if title and details:
@@ -253,7 +263,7 @@ def render_approval_center(lang="繁體中文", **kwargs):
                         "details": details,
                         "status": "待審核",
                     })
-                    st.success(L["success_submit"].format(new_id=new_id))
+                    st.success(f"🎉 成功送出 / Success [{new_id}]！")
                     st.rerun()
                 else:
                     st.warning(L["fill_warning"])
