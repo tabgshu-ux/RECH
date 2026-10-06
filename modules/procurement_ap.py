@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import uuid
 
 # ----------------------------------------------------
 # 🌐 AP 採購與應付帳款模組多語系字典 (i18n)
@@ -75,6 +76,9 @@ def get_ap_lang_dict(lang_param):
 def render_procurement_ap_page(engine=None, lang="繁體中文"):
     L = get_ap_lang_dict(lang)
 
+    # 產生動態隨機字串，確保每次載入的元件 key 絕對獨一無二
+    uid = str(uuid.uuid4())[:6]
+
     st.subheader(L["title"])
     st.caption(L["caption"])
 
@@ -99,7 +103,6 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
             }
         ]
 
-    # 初始化全域倉庫庫存資料庫 (warehouse_inventory_db) 確保與倉庫模組連動
     if "warehouse_inventory_db" not in st.session_state:
         st.session_state.warehouse_inventory_db = [
             {
@@ -137,21 +140,21 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
 
         col_a, col_b = st.columns(2)
         with col_a:
-            po_num = st.text_input("採購單號 (PO No.)", value="PO-2026-02", key="ap_sync_po_num")
-            v_name = st.text_input("廠商名稱 (Vendor Name)", placeholder="例如: 台灣總部 / 越南供應商", key="ap_sync_v_name")
-            item_name = st.text_input("採購物品名稱 / 規格說明", placeholder="例如: 3相無熔絲開關 / 配電箱耗材", key="ap_sync_item_name")
+            po_num = st.text_input("採購單號 (PO No.)", value="PO-2026-02", key=f"po_num_{uid}")
+            v_name = st.text_input("廠商名稱 (Vendor Name)", placeholder="例如: 台灣總部 / 越南供應商", key=f"v_name_{uid}")
+            item_name = st.text_input("採購物品名稱 / 規格說明", placeholder="例如: 3相無熔絲開關 / 配電箱耗材", key=f"item_name_{uid}")
         with col_b:
-            barcode = st.text_input("商品條碼 / 料號 (Barcode / SKU)", placeholder="例如: 8935012345678", key="ap_sync_barcode")
+            barcode = st.text_input("商品條碼 / 料號 (Barcode / SKU)", placeholder="例如: 8935012345678", key=f"barcode_{uid}")
             c_q1, c_q2 = st.columns(2)
             with c_q1:
-                qty = st.number_input("採購數量", min_value=1.0, value=10.0, step=1.0, key="ap_sync_qty")
+                qty = st.number_input("採購數量", min_value=1.0, value=10.0, step=1.0, key=f"qty_{uid}")
             with c_q2:
-                unit = st.selectbox("單位", ["個 (Pcs)", "套 (Sets)", "公斤 (Kg)", "公尺 (M)", "批 (Lot)"], key="ap_sync_unit")
+                unit = st.selectbox("單位", ["個 (Pcs)", "套 (Sets)", "公斤 (Kg)", "公尺 (M)", "批 (Lot)"], key=f"unit_{uid}")
             
-            p_amt = st.number_input("總含稅金額 (Total Amount)", value=500000.0, step=50000.0, key="ap_sync_amt")
-            curr_type = st.selectbox("計價幣別", ["VND", "USD", "TWD"], key="ap_sync_curr")
+            p_amt = st.number_input("總含稅金額 (Total Amount)", value=500000.0, step=50000.0, key=f"p_amt_{uid}")
+            curr_type = st.selectbox("計價幣別", ["VND", "USD", "TWD"], key=f"curr_{uid}")
 
-        if st.button("💾 儲存進貨記錄並【自動同步入庫】", type="primary", key="ap_sync_btn_save"):
+        if st.button("💾 儲存進貨記錄並【自動同步入庫】", type="primary", key=f"btn_save_{uid}"):
             if v_name and item_name:
                 # 1. 寫入應付帳款 (AP) 採購發票庫
                 st.session_state.ap_invoices_db.append({
@@ -172,13 +175,12 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
                 item_exists = False
                 for stock in st.session_state.warehouse_inventory_db:
                     if barcode and stock["barcode"] == barcode:
-                        stock["stock_qty"] += qty  # 若條碼已存在，累加庫存
+                        stock["stock_qty"] += qty
                         stock["last_update"] = str(datetime.date.today())
                         item_exists = True
                         break
                 
                 if not item_exists:
-                    # 若為全新商品，新增一筆庫存紀錄
                     st.session_state.warehouse_inventory_db.append({
                         "barcode": barcode if barcode else f"SKU-{datetime.date.today().strftime('%m%d')}",
                         "item_name": item_name,
@@ -217,15 +219,15 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
 
         col1, col2 = st.columns(2)
         with col1:
-            unc_no = st.text_input(L["unc_no"], placeholder="例如: UNC-2026-002", key="ap_sync_unc_no")
-            vendor_name = st.text_input(L["vendor_name"], placeholder="例如: 台灣總部 / 越南供應商", key="ap_sync_unc_vendor")
-            amount = st.number_input(L["amount"], min_value=0.0, value=1200000.0, step=100000.0, key="ap_sync_unc_amt")
+            unc_no = st.text_input(L["unc_no"], placeholder="例如: UNC-2026-002", key=f"unc_no_{uid}")
+            vendor_name = st.text_input(L["vendor_name"], placeholder="例如: 台灣總部 / 越南供應商", key=f"unc_vendor_{uid}")
+            amount = st.number_input(L["amount"], min_value=0.0, value=1200000.0, step=100000.0, key=f"unc_amt_{uid}")
         with col2:
-            bank_name = st.selectbox(L["bank_name"], vietnam_banks, key="ap_sync_unc_bank")
-            selected_target_po = st.selectbox(L["select_po"], unpaid_po_ids if unpaid_po_ids else ["目前無待付款採購單"], key="ap_sync_unc_po")
-            currency = st.selectbox("幣別", ["VND", "USD", "TWD"], key="ap_sync_unc_curr")
+            bank_name = st.selectbox(L["bank_name"], vietnam_banks, key=f"unc_bank_{uid}")
+            selected_target_po = st.selectbox(L["select_po"], unpaid_po_ids if unpaid_po_ids else ["目前無待付款採購單"], key=f"unc_po_{uid}")
+            currency = st.selectbox("幣別", ["VND", "USD", "TWD"], key=f"unc_curr_{uid}")
 
-        if st.button(L["btn_add_unc"], type="primary", key="ap_sync_btn_unc_save"):
+        if st.button(L["btn_add_unc"], type="primary", key=f"btn_unc_{uid}"):
             if unc_no and vendor_name:
                 st.session_state.unc_db.append({
                     "id": unc_no,
@@ -256,7 +258,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
                     st.write(f"• **匯款銀行**: {item['bank']}")
                     st.write(f"• **轉帳日期**: {item['date']}")
                     st.write(f"• **已勾稽採購單**: `{item['matched_po']}`")
-                    if st.button(L["delete_btn"], key=f"ap_sync_del_{idx}"):
+                    if st.button(L["delete_btn"], key=f"del_unc_{idx}_{uid}"):
                         st.session_state.unc_db.pop(idx)
                         st.success("🗑️ 已成功刪除該筆水單記錄！")
                         st.rerun()
@@ -284,7 +286,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
     # ----------------------------------------------------
     with tab_search:
         st.markdown(f"### {L['tab_search']}")
-        search_query = st.text_input("輸入商品條碼或品名關鍵字查詢歷史價格：", key="ap_sync_search")
+        search_query = st.text_input("輸入商品條碼或品名關鍵字查詢歷史價格：", key=f"search_{uid}")
         if search_query:
             st.success(f"🔍 查無 '{search_query}' 的過往異常波動紀錄，價格穩定。")
 
