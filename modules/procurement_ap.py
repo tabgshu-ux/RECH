@@ -23,20 +23,20 @@ PROCUREMENT_AP_I18N = {
         "lbl_code": "AP 帳款編號 *",
         "lbl_vendor": "供應商 / 政府機關名稱 *",
         "vendor_placeholder": "例如: 越南西寧省人民委員會 / 車輛授權經銷商",
-        "lbl_category": "採購品項、資產與土地合約分類 *",
+        "lbl_category": "採購品項與合約分類 *",
         "cat_opts": [
-            "土地租賃與政府續約權利金 (Land Lease / LURC)",
-            "公司用車 ( 董事長/總經理座車、公務車與貨車 )",
-            "📁 辦公文具與行政消耗品",
-            "🍳 廠區廚具、餐廳與宿舍設施",
-            "⚡ 高低壓配電盤與斷路器零件",
-            "🔩 銅排、線材與金屬原物料",
-            "💻 廠區 IT 設備與辦公軟體",
-            "🏭 生產機械具與模具設備 (固定資產)",
-            "🛡️ 勞安防護與廠區環保耗材"
+            "土地租賃與政府續約",
+            "公司用車",
+            "辦公文具與行政消耗品",
+            "廠區廚具、餐廳與宿舍設施",
+            "高低壓配電盤與斷路器零件",
+            "銅排、線材與金屬原物料",
+            "廠區 IT 設備與辦公軟體",
+            "生產機械具與模具設備 (固定資產)",
+            "勞安防護與廠區環保耗材"
         ],
         "lbl_item": "款項與合約詳細說明 *",
-        "item_placeholder": "例如: 採購董事長專屬公務座車及領牌規費",
+        "item_placeholder": "例如: 採購公務座車及領牌規費",
         "lbl_currency": "幣別選擇 *",
         "lbl_amount": "總金額 *",
         "lbl_terms": "付款條件 / 續約條款 *",
@@ -57,7 +57,7 @@ PROCUREMENT_AP_I18N = {
     },
     "Tiếng Việt": {
         "title": "🛒 Khối Tài chính - Quản lý Mua hàng & Phải trả (AP)",
-        "caption": "Quản lý thuê đất gia hạn, xe công ty (xe chủ tịch, xe tổng giám đốc, xe tải), tài sản cố định.",
+        "caption": "Quản lý thuê đất gia hạn, xe công ty, tài sản cố định và khoản phải trả.",
         "tab_list": "📑 Danh sách Phải trả & Tiến độ",
         "tab_progress": "💳 Cập nhật Trạng thái Thanh toán",
         "tab_add": "➕ Đăng ký Khoản phải trả (AP) Mới",
@@ -71,21 +71,21 @@ PROCUREMENT_AP_I18N = {
         "add_header": "➕ Đăng ký Khoản phải trả & Hợp đồng Mới",
         "lbl_code": "Mã AP *",
         "lbl_vendor": "Tên nhà cung cấp / Cơ quan nhà nước *",
-        "vendor_placeholder": "Ví dụ: UBND tỉnh Tây Ninh / Đại lý xe ô tô chính hãng",
-        "lbl_category": "Phân loại mặt hàng, Tài sản & Thuê đất *",
+        "vendor_placeholder": "Ví dụ: UBND tỉnh Tây Ninh / Đại lý xe ô tô",
+        "lbl_category": "Phân loại mặt hàng & Hợp đồng *",
         "cat_opts": [
-            "Thuê đất & Tiền sử dụng đất gia hạn (Land Lease / LURC)",
-            "Xe ô tô công ty (Xe chủ tịch, xe TGĐ, xe công tác & xe tải)",
-            "📁 Văn phòng phẩm & Vật tư hành chính",
-            "🍳 Dụng cụ nhà bếp, nhà ăn & ký túc xá",
-            "⚡ Tủ điện trung/hạ thế & linh kiện",
-            "🔩 Đồng thanh cái, dây cáp & vật tư",
-            "💻 Thiết bị IT & phần mềm văn phòng",
-            "🏭 Máy móc sản xuất & Khuôn (Tài sản cố định)",
-            "🛡️ Thiết bị bảo hộ lao động & vật tư"
+            "Thuê đất & Gia hạn",
+            "Xe công ty",
+            "Văn phòng phẩm & Vật tư hành chính",
+            "Dụng cụ nhà bếp, nhà ăn & ký túc xá",
+            "Tủ điện trung/hạ thế & linh kiện",
+            "Đồng thanh cái, dây cáp & vật tư",
+            "Thiết bị IT & phần mềm",
+            "Máy móc sản xuất & Khuôn (TSCĐ)",
+            "Thiết bị bảo hộ lao động & môi trường"
         ],
         "lbl_item": "Mô tả chi tiết khoản thanh toán *",
-        "item_placeholder": "Ví dụ: Mua xe ô tô phục vụ Ban Giám đốc và Chủ tịch",
+        "item_placeholder": "Ví dụ: Mua xe ô tô công ty",
         "lbl_currency": "Loại tiền *",
         "lbl_amount": "Tổng số tiền *",
         "lbl_terms": "Điều kiện thanh toán *",
@@ -106,7 +106,7 @@ PROCUREMENT_AP_I18N = {
     },
     "English": {
         "title": "🛒 Finance - Procurement & Accounts Payable (AP)",
-        "caption": "Manage land lease renewals, company vehicles (chairman/GM cars, trucks), fixed assets.",
+        "caption": "Manage land lease renewals, company vehicles, fixed assets, and accounts payable.",
         "tab_list": "📑 Accounts Payable & Progress",
         "tab_progress": "💳 Update Payment Status",
         "tab_add": "➕ Register New AP Record",
@@ -121,20 +121,20 @@ PROCUREMENT_AP_I18N = {
         "lbl_code": "AP Code *",
         "lbl_vendor": "Supplier / Government Authority *",
         "vendor_placeholder": "Example: Tay Ninh Provincial People's Committee / Auto Dealer",
-        "lbl_category": "Item, Asset & Land Lease Category *",
+        "lbl_category": "Item & Contract Category *",
         "cat_opts": [
-            "Land Lease & Government Renewal Fee (Land Lease / LURC)",
-            "Company Vehicles (Chairman/GM Cars, Business Cars & Trucks)",
-            "📁 Office Stationery & Admin Supplies",
-            "🍳 Kitchenware, Cafeteria & Dormitory Facilities",
-            "⚡ Switchgear & Circuit Breakers",
-            "🔩 Copper Busbars & Raw Materials",
-            "💻 Plant IT Equipment & Software",
-            "🏭 Production Machinery & Molds (Fixed Assets)",
-            "🛡️ PPE & Environmental Consumables"
+            "Land Lease & Renewal",
+            "Company Vehicles",
+            "Office Stationery & Admin Supplies",
+            "Kitchenware, Cafeteria & Dormitory Facilities",
+            "Switchgear & Circuit Breakers",
+            "Copper Busbars & Raw Materials",
+            "Plant IT Equipment & Software",
+            "Production Machinery & Molds (Fixed Assets)",
+            "PPE & Environmental Consumables"
         ],
         "lbl_item": "Detailed Description *",
-        "item_placeholder": "Example: Purchasing executive car for Chairman",
+        "item_placeholder": "Example: Purchasing company vehicle",
         "lbl_currency": "Currency *",
         "lbl_amount": "Total Amount *",
         "lbl_terms": "Payment Terms *",
@@ -162,14 +162,14 @@ def smart_translate_ap(text_val, target_lang):
         if "施耐德電氣越南分公司" in text_val: return "Schneider Electric (Chi nhánh Việt Nam)"
         if "尚未更新" in text_val: return "Chưa cập nhật"
         if "T/T 30天票期" in text_val: return "T/T 30 ngày (Thanh toán chậm)"
-        if "土地租賃與政府續約權利金" in text_val: return "Thuê đất & Tiền sử dụng đất gia hạn"
-        if "公司用車" in text_val: return "Xe ô tô công ty (Xe chủ tịch, xe TGĐ & xe tải)"
+        if "土地租賃與政府續約" in text_val: return "Thuê đất & Gia hạn"
+        if "公司用車" in text_val: return "Xe công ty"
     elif target_lang == "English":
         if "施耐德電氣越南分公司" in text_val: return "Schneider Electric Vietnam"
         if "尚未更新" in text_val: return "Not Updated"
         if "T/T 30天票期" in text_val: return "T/T 30 Days Credit"
-        if "土地租賃與政府續約權利金" in text_val: return "Land Lease & Government Renewal Fee"
-        if "公司用車" in text_val: return "Company Vehicles (Chairman/GM Cars & Trucks)"
+        if "土地租賃與政府續約" in text_val: return "Land Lease & Renewal"
+        if "公司用車" in text_val: return "Company Vehicles"
     return text_val
 
 def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
@@ -184,7 +184,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
             {
                 "code": "AP-2026-001",
                 "vendor": "越南西寧省人民委員會 (土地管理局)",
-                "category": "土地租賃與政府續約權利金 (Land Lease / LURC)",
+                "category": "土地租賃與政府續約",
                 "item": "西寧廠土地租約到期續約權利金及規費",
                 "currency": "USD",
                 "amount": 120000.0,
