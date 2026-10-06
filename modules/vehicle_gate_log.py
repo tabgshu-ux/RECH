@@ -111,12 +111,16 @@ def smart_translate_gate(text_val, target_lang):
         elif target_lang == "English": return "🔴 Check-Out (Exit)"
         return "🔴 車輛出廠 (Check-Out)"
 
-    # 駕駛單位與事由轉譯
+    # 車輛類型轉譯
     if target_lang == "Tiếng Việt":
+        if "公務車" in text_val: return "Xe công ty (Company Car)"
+        if "貨車" in text_val: return "Xe tải (Truck)"
         if "載送總經理赴胡志明市開會" in text_val: return "Đưa Tổng Giám đốc đi họp tại TP. Hồ Chí Minh"
         if "運送 2000A 銅排母線原料 500kg" in text_val: return "Vận chuyển 500kg nguyên liệu đồng thanh cái 2000A"
         if "鋼鐵供應商" in text_val: return "Nhà cung cấp Thép"
     elif target_lang == "English":
+        if "公務車" in text_val: return "Company Car"
+        if "貨車" in text_val: return "Truck"
         if "載送總經理赴胡志明市開會" in text_val: return "Transporting General Manager to meeting in HCMC"
         if "運送 2000A 銅排母線原料 500kg" in text_val: return "Delivering 500kg of 2000A copper busbar raw materials"
         if "鋼鐵供應商" in text_val: return "Steel Supplier"
@@ -161,7 +165,7 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
                     L["col_index"]: idx,
                     L["col_plate"]: item["plate"],
                     L["col_driver"]: smart_translate_gate(item["driver"], active_lang),
-                    L["col_type"]: item["type"],
+                    L["col_type"]: smart_translate_gate(item["type"], active_lang),
                     L["col_dir"]: smart_translate_gate(item["direction"], active_lang),
                     L["col_purpose"]: smart_translate_gate(item["purpose"], active_lang),
                     L["col_time"]: item["time"]
