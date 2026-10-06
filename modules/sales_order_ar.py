@@ -11,7 +11,7 @@ AR_I18N = {
         "title": "📋 管理部 - 客戶應收帳款 (AR) & 專案分期進度管理",
         "caption": "記錄客戶工程合約總額、動態分期付款排程管理、專案說明與進度實時追蹤。",
         "tab_list": "📑 客戶應收款項總表與進度",
-        "tab_edit": "✍️️ 修改進行進度說明與催收歷程",
+        "tab_edit": "✍️ 修改進行進度說明與催收歷程",
         "tab_add": "➕ 登記新應收帳款專案",
         "table_header": "📋 客戶應收帳款專案清冊",
         "no_records": "目前無應收帳款紀錄。",
@@ -57,7 +57,19 @@ AR_I18N = {
         "period_5_date": "第五期收款日期",
         "save_new_btn": "💾 儲存並建立應收請款專案",
         "create_success": "專案 `{inv_id}` 建立成功！",
-        "fill_warning": "⚠️ 請完整填寫客戶名稱與工程名稱！"
+        "fill_warning": "⚠️ 請完整填寫客戶名稱與工程名稱！",
+        # 表格動態標題
+        "col_index": "編號",
+        "col_inv_id": "請款編號",
+        "col_entity": "客戶名稱",
+        "col_project": "工程名稱",
+        "col_currency": "交易幣別",
+        "col_total": "總帳款",
+        "col_terms": "分期類型",
+        "col_ratios": "分期比率",
+        "col_progress": "進行進度說明",
+        "col_desc": "專案說明",
+        "col_reason": "最新催收理由/歷程"
     },
     "Tiếng Việt": {
         "title": "📋 Khối Quản lý - Phải thu Khách hàng (AR) & Tiến độ Dự án",
@@ -109,7 +121,19 @@ AR_I18N = {
         "period_5_date": "Ngày thu đợt 5",
         "save_new_btn": "💾 Lưu và đăng ký dự án phải thu",
         "create_success": "Đã tạo thành công dự án `{inv_id}`!",
-        "fill_warning": "⚠️ Vui lòng điền đầy đủ Tên khách hàng và Tên công trình!"
+        "fill_warning": "⚠️ Vui lòng điền đầy đủ Tên khách hàng và Tên công trình!",
+        # 表格動態標題
+        "col_index": "STT",
+        "col_inv_id": "Mã hóa đơn",
+        "col_entity": "Tên khách hàng",
+        "col_project": "Tên công trình",
+        "col_currency": "Loại tiền",
+        "col_total": "Tổng tiền",
+        "col_terms": "Hình thức",
+        "col_ratios": "Tỷ lệ đợt",
+        "col_progress": "Mô tả tiến độ",
+        "col_desc": "Mô tả dự án",
+        "col_reason": "Lịch sử thu nợ"
     },
     "English": {
         "title": "📋 Admin - Accounts Receivable (AR) & Project Installments",
@@ -161,12 +185,24 @@ AR_I18N = {
         "period_5_date": "Period 5 Due Date",
         "save_new_btn": "💾 Save & Register AR Project",
         "create_success": "Project `{inv_id}` successfully created!",
-        "fill_warning": "⚠️ Please fill in Client Name and Project Name!"
+        "fill_warning": "⚠️ Please fill in Client Name and Project Name!",
+        # 表格動態標題
+        "col_index": "No.",
+        "col_inv_id": "Invoice ID",
+        "col_entity": "Client Name",
+        "col_project": "Project Name",
+        "col_currency": "Currency",
+        "col_total": "Total",
+        "col_terms": "Terms",
+        "col_ratios": "Installment Ratios",
+        "col_progress": "Progress Note",
+        "col_desc": "Project Desc",
+        "col_reason": "Collection History"
     }
 }
 
 # ----------------------------------------------------
-# 🔄 智慧模糊語意對照引擎 (支援關鍵字比對與截斷容錯)
+# 🔄 智慧雙向對照翻譯引擎 (支援客戶名稱與工程名稱互轉)
 # ----------------------------------------------------
 def smart_translate(text_val, target_lang):
     if not text_val or not isinstance(text_val, str) or text_val in ["None", "-", ""]:
@@ -176,28 +212,34 @@ def smart_translate(text_val, target_lang):
 
     text_lower = text_val.lower()
 
-    # 1. 判斷是否為客戶名稱 (樟榜 / Trảng Bàng)
+    # 1. 客戶名稱對應
     if "樟榜" in text_val or "trảng bàng" in text_lower or "tay ninh" in text_lower:
         if target_lang == "Tiếng Việt":
             return "Nhà máy A KCN Trảng Bàng, Tây Ninh"
         elif target_lang == "繁體中文":
             return "越南樟榜工業區A廠"
+        elif target_lang == "English":
+            return "Tay Ninh Plant Client A"
 
-    # 2. 判斷是否為工程名稱 (西寧 / 2000A / 配電櫃 / tủ điện)
+    # 2. 工程名稱對應
     if "西寧" in text_val or "2000a" in text_lower or "配電櫃" in text_val or "tủ điện" in text_lower:
         if target_lang == "Tiếng Việt":
             return "Lắp đặt tủ điện 2000A nhà máy Tây Ninh"
         elif target_lang == "繁體中文":
             return "西寧廠 2000A 配電櫃新建工程"
+        elif target_lang == "English":
+            return "Tay Ninh 2000A Switchboard Installation"
 
-    # 3. 判斷進度說明 (備料 / 施工 / chuẩn bị / thi công)
+    # 3. 進度說明對應
     if "備料" in text_val or "準備" in text_val or "chuẩn bị" in text_lower:
         if target_lang == "Tiếng Việt":
             return "Đang chuẩn bị vật tư / Chuẩn bị thi công"
         elif target_lang == "繁體中文":
             return "工程備料中 / 準備施工"
+        elif target_lang == "English":
+            return "Material preparation / Preparing construction"
 
-    # 4. 判斷付款期數模式 (不分期 / 分三期 / 分五期)
+    # 4. 付款期數模式對應
     if "不分期" in text_val or "1" in text_val and "đợt" in text_lower or "single" in text_lower or "lump" in text_lower:
         if target_lang == "Tiếng Việt": return "Thanh toán 1 lần"
         elif target_lang == "繁體中文": return "不分期"
@@ -246,17 +288,17 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
                         desc_display = smart_translate(r.get("project_desc"), active_lang)
 
                         display_list.append({
-                            "編號": idx + 1,
-                            "請款編號": r.get("invoice_id"),
-                            "客戶名稱": entity_display,
-                            "工程名稱": project_display,
-                            "交易幣別": r.get("currency"),
-                            "總帳款": format_curr(r.get("quoted_amount", 0.0), r.get("currency")),
-                            "分期類型": terms_display,
-                            "分期比率": r.get("installment_ratios", "100%"),
-                            "進行進度說明": progress_display,
-                            "專案說明": desc_display if desc_display != "-" else "-",
-                            "最新催收理由/歷程": r.get("uncollected_reason", "-")
+                            L["col_index"]: idx + 1,
+                            L["col_inv_id"]: r.get("invoice_id"),
+                            L["col_entity"]: entity_display,
+                            L["col_project"]: project_display,
+                            L["col_currency"]: r.get("currency"),
+                            L["col_total"]: format_curr(r.get("quoted_amount", 0.0), r.get("currency")),
+                            L["col_terms"]: terms_display,
+                            L["col_ratios"]: r.get("installment_ratios", "100%"),
+                            L["col_progress"]: progress_display,
+                            L["col_desc"]: desc_display if desc_display != "-" else "-",
+                            L["col_reason"]: r.get("uncollected_reason", "-")
                         })
                     st.dataframe(pd.DataFrame(display_list), use_container_width=True)
                 else:
