@@ -8,23 +8,25 @@ import datetime
 PROCUREMENT_AP_I18N = {
     "繁體中文": {
         "title": "🛒 財務部 - 採購管理 & 應付帳款 (AP)",
-        "caption": "管理生產原料、固定資產、總務文具廚具、多幣別付款排程與西寧/海防廠立帳追蹤。",
+        "caption": "管理土地租賃續約、公務車輛、生產原料、固定資產與多幣別應付帳款追蹤。",
         "tab_list": "📑 應付帳款總表與進度",
         "tab_progress": "💳 供應商付款狀態更新",
         "tab_add": "➕ 登記款項應付 (AP) 新增",
-        "table_header": "📋 供應商應付帳款明細總表 (AP)",
+        "table_header": "📋 供應商與政府應付帳款明細總表 (AP)",
         "no_records": "目前無應付帳款紀錄。",
-        "progress_header": "💳 供應商付款與撥款進度管理",
-        "progress_caption": "💡 在此選擇對應的採購單/AP編號，並更新給供應商的付款或電匯（TT）完成狀態。",
+        "progress_header": "💳 供應商與政府規費付款進度管理",
+        "progress_caption": "💡 在此選擇對應的 AP 編號，並更新土地租約續約金、政府規費或車輛採購的付款狀態。",
         "btn_update_progress": "🚀 確認更新付款狀態",
-        "success_update": "✅ 供應商應付帳款付款狀態已成功更新！",
+        "success_update": "✅ 應付帳款付款狀態已成功更新！",
         
-        "add_header": "➕ 登記全新供應商應付帳款 (AP)",
+        "add_header": "➕ 登記全新應付帳款與合約款項 (AP)",
         "lbl_code": "AP 帳款編號 *",
-        "lbl_vendor": "供應商名稱 (Nhà cung cấp) *",
-        "vendor_placeholder": "例如: 泰寧辦公文具與總務行號",
-        "lbl_category": "採購品項與資產分類 *",
+        "lbl_vendor": "供應商 / 政府機關名稱 *",
+        "vendor_placeholder": "例如: 越南西寧省人民委員會 / 土地管理局",
+        "lbl_category": "採購品項、資產與土地合約分類 *",
         "cat_opts": [
+            "土地租賃與政府續約權利金 (Land Lease / LURC)",
+            "廠區公務車、貨車與大客車 (固定資產)",
             "📁 辦公文具與行政消耗品",
             "🍳 廠區廚具、餐廳與宿舍設施",
             "⚡ 高低壓配電盤與斷路器零件",
@@ -33,19 +35,19 @@ PROCUREMENT_AP_I18N = {
             "🏭 生產機械具與模具設備 (固定資產)",
             "🛡️ 勞安防護與廠區環保耗材"
         ],
-        "lbl_item": "採購品項詳細說明 *",
-        "item_placeholder": "例如: 採購 A4 印表紙 50 箱及辦公桌椅一批",
+        "lbl_item": "款項與合約詳細說明 *",
+        "item_placeholder": "例如: 西寧廠土地租約到期續約權利金及規費",
         "lbl_currency": "幣別選擇 *",
-        "lbl_amount": "採購總金額 *",
-        "lbl_terms": "付款條件 / 信用期 *",
-        "terms_opts": ["T/T 30天票期", "L/C 即期信用狀", "貨到付款 (COD)", "3-6-9 期分期付款"],
+        "lbl_amount": "總金額 *",
+        "lbl_terms": "付款條件 / 續約條款 *",
+        "terms_opts": ["政府續約一次付清", "T/T 30天票期", "L/C 即期信用狀", "分期付款 (分年攤提)"],
         "btn_save": "💾 儲存並建立 AP 帳款檔案",
         "success_save": "✅ AP 帳款編號 `{ap_code}` 已成功建立！",
-        "fill_warning": "⚠️ 請完整填寫 AP 編號與供應商名稱！",
+        "fill_warning": "⚠️ 請完整填寫 AP 編號與名稱！",
         "col_index": "STT",
         "col_code": "AP 編號",
-        "col_vendor": "供應商名稱",
-        "col_cat": "品項分類",
+        "col_vendor": "供應商/機關",
+        "col_cat": "分類",
         "col_item": "詳細說明",
         "col_curr": "幣別",
         "col_total": "總金額",
@@ -55,23 +57,25 @@ PROCUREMENT_AP_I18N = {
     },
     "Tiếng Việt": {
         "title": "🛒 Khối Tài chính - Quản lý Mua hàng & Phải trả (AP)",
-        "caption": "Quản lý nguyên vật liệu, tài sản cố định, văn phòng phẩm, dụng cụ nhà bếp và lịch thanh toán nhà máy.",
+        "caption": "Quản lý thuê đất gia hạn với chính phủ, xe ô tô công ty, tài sản cố định và khoản phải trả.",
         "tab_list": "📑 Danh sách Phải trả & Tiến độ",
         "tab_progress": "💳 Cập nhật Trạng thái Thanh toán",
         "tab_add": "➕ Đăng ký Khoản phải trả (AP) Mới",
-        "table_header": "📋 Sổ chi tiết Khoản phải trả Nhà cung cấp (AP)",
+        "table_header": "📋 Sổ chi tiết Khoản phải trả Nhà cung cấp & Cơ quan nhà nước (AP)",
         "no_records": "Hiện không có bản ghi phải trả nào.",
-        "progress_header": "💳 Quản lý trạng thái thanh toán nhà cung cấp",
-        "progress_caption": "💡 Chọn mã AP tương ứng bên dưới để xác nhận đã thanh toán hoặc chuyển khoản cho nhà cung cấp.",
+        "progress_header": "💳 Quản lý trạng thái thanh toán & Phí gia hạn",
+        "progress_caption": "💡 Chọn mã AP tương ứng để cập nhật thanh toán tiền thuê đất, gia hạn với chính phủ hoặc mua xe.",
         "btn_update_progress": "🚀 Xác nhận cập nhật trạng thái",
         "success_update": "✅ Đã cập nhật trạng thái thanh toán thành công!",
         
-        "add_header": "➕ Đăng ký Khoản phải trả Nhà cung cấp Mới",
+        "add_header": "➕ Đăng ký Khoản phải trả & Hợp đồng Mới",
         "lbl_code": "Mã AP *",
-        "lbl_vendor": "Tên nhà cung cấp *",
-        "vendor_placeholder": "Ví dụ: Công ty Văn phòng phẩm & Tổng hợp",
-        "lbl_category": "Phân loại mặt hàng & Tài sản *",
+        "lbl_vendor": "Tên nhà cung cấp / Cơ quan nhà nước *",
+        "vendor_placeholder": "Ví dụ: UBND tỉnh Tây Ninh / Sở Tài nguyên và Môi trường",
+        "lbl_category": "Phân loại mặt hàng, Tài sản & Thuê đất *",
         "cat_opts": [
+            "Thuê đất & Tiền sử dụng đất gia hạn (Land Lease / LURC)",
+            "Xe ô tô công ty, xe tải & xe khách (Tài sản cố định)",
             "📁 Văn phòng phẩm & Vật tư hành chính",
             "🍳 Dụng cụ nhà bếp, nhà ăn & ký túc xá",
             "⚡ Tủ điện trung/hạ thế & linh kiện",
@@ -80,18 +84,18 @@ PROCUREMENT_AP_I18N = {
             "🏭 Máy móc sản xuất & Khuôn (Tài sản cố định)",
             "🛡️ Thiết bị bảo hộ lao động & vật tư"
         ],
-        "lbl_item": "Mô tả chi tiết mặt hàng *",
-        "item_placeholder": "Ví dụ: Mua 50 thùng giấy A4 và bộ bàn ghế văn phòng",
+        "lbl_item": "Mô tả chi tiết khoản thanh toán *",
+        "item_placeholder": "Ví dụ: Phí gia hạn thuê đất nhà máy Tây Ninh",
         "lbl_currency": "Loại tiền *",
         "lbl_amount": "Tổng số tiền *",
         "lbl_terms": "Điều kiện thanh toán *",
-        "terms_opts": ["T/T 30 ngày", "L/C trả ngay", "Thanh toán khi nhận hàng (COD)", "Trả góp 3-6-9 tháng"],
+        "terms_opts": ["Thanh toán 1 lần cho chính phủ", "T/T 30 ngày", "L/C trả ngay", "Trả góp theo năm"],
         "btn_save": "💾 Lưu và tạo hồ sơ AP",
         "success_save": "✅ Đã tạo thành công khoản AP `{ap_code}`!",
-        "fill_warning": "⚠️ Vui lòng điền Mã AP và Tên nhà cung cấp!",
+        "fill_warning": "⚠️ Vui lòng điền Mã AP và Tên!",
         "col_index": "STT",
         "col_code": "Mã AP",
-        "col_vendor": "Nhà cung cấp",
+        "col_vendor": "Đối tác/Cơ quan",
         "col_cat": "Phân loại",
         "col_item": "Chi tiết",
         "col_curr": "Loại tiền",
@@ -102,23 +106,25 @@ PROCUREMENT_AP_I18N = {
     },
     "English": {
         "title": "🛒 Finance - Procurement & Accounts Payable (AP)",
-        "caption": "Manage raw materials, fixed assets, stationery, kitchenware, and accounts payable schedules.",
+        "caption": "Manage land lease renewals, company vehicles, fixed assets, and accounts payable.",
         "tab_list": "📑 Accounts Payable & Progress",
         "tab_progress": "💳 Update Payment Status",
         "tab_add": "➕ Register New AP Record",
-        "table_header": "📋 Supplier Accounts Payable Registry (AP)",
+        "table_header": "📋 Supplier & Government Accounts Payable Registry (AP)",
         "no_records": "No accounts payable records found.",
-        "progress_header": "💳 Supplier Payment Status Management",
-        "progress_caption": "💡 Select the corresponding AP code to update wire transfer or payment completion status for suppliers.",
+        "progress_header": "💳 Supplier & Government Fee Payment Management",
+        "progress_caption": "💡 Select the corresponding AP code to update land lease renewal, government fees, or vehicle payments.",
         "btn_update_progress": "🚀 Confirm Payment Status Update",
         "success_update": "✅ AP payment status updated successfully!",
         
-        "add_header": "➕ Register New Supplier AP Record",
+        "add_header": "➕ Register New AP & Contract Record",
         "lbl_code": "AP Code *",
-        "lbl_vendor": "Supplier Name *",
-        "vendor_placeholder": "Example: Office Stationery & General Supplies Co.",
-        "lbl_category": "Item & Asset Category *",
+        "lbl_vendor": "Supplier / Government Authority *",
+        "vendor_placeholder": "Example: Tay Ninh Provincial People's Committee",
+        "lbl_category": "Item, Asset & Land Lease Category *",
         "cat_opts": [
+            "Land Lease & Government Renewal Fee (Land Lease / LURC)",
+            "Company Cars, Trucks & Buses (Fixed Assets)",
             "📁 Office Stationery & Admin Supplies",
             "🍳 Kitchenware, Cafeteria & Dormitory Facilities",
             "⚡ Switchgear & Circuit Breakers",
@@ -127,18 +133,18 @@ PROCUREMENT_AP_I18N = {
             "🏭 Production Machinery & Molds (Fixed Assets)",
             "🛡️ PPE & Environmental Consumables"
         ],
-        "lbl_item": "Detailed Item Description *",
-        "item_placeholder": "Example: 50 boxes of A4 paper and office desks",
+        "lbl_item": "Detailed Description *",
+        "item_placeholder": "Example: Tay Ninh plant land lease extension fee",
         "lbl_currency": "Currency *",
         "lbl_amount": "Total Amount *",
         "lbl_terms": "Payment Terms *",
-        "terms_opts": ["T/T 30 Days", "At-Sight L/C", "Cash on Delivery (COD)", "Installment (3-6-9 Months)"],
+        "terms_opts": ["One-time Government Payment", "T/T 30 Days", "At-Sight L/C", "Annual Installment"],
         "btn_save": "💾 Save & Create AP Record",
         "success_save": "✅ AP record `{ap_code}` successfully created!",
-        "fill_warning": "⚠️ Please fill in AP Code and Supplier Name!",
+        "fill_warning": "⚠️ Please fill in AP Code and Name!",
         "col_index": "No.",
         "col_code": "AP Code",
-        "col_vendor": "Supplier",
+        "col_vendor": "Vendor/Authority",
         "col_cat": "Category",
         "col_item": "Description",
         "col_curr": "Currency",
@@ -156,14 +162,14 @@ def smart_translate_ap(text_val, target_lang):
         if "施耐德電氣越南分公司" in text_val: return "Schneider Electric (Chi nhánh Việt Nam)"
         if "尚未更新" in text_val: return "Chưa cập nhật"
         if "T/T 30天票期" in text_val: return "T/T 30 ngày (Thanh toán chậm)"
-        if "辦公文具與行政消耗品" in text_val: return "Văn phòng phẩm & Vật tư hành chính"
-        if "廠區廚具、餐廳與宿舍設施" in text_val: return "Dụng cụ nhà bếp, nhà ăn & ký túc xá"
+        if "土地租賃與政府續約權利金" in text_val: return "Thuê đất & Tiền sử dụng đất gia hạn"
+        if "廠區公務車、貨車與大客車" in text_val: return "Xe ô tô công ty, xe tải & xe khách"
     elif target_lang == "English":
         if "施耐德電氣越南分公司" in text_val: return "Schneider Electric Vietnam"
         if "尚未更新" in text_val: return "Not Updated"
         if "T/T 30天票期" in text_val: return "T/T 30 Days Credit"
-        if "辦公文具與行政消耗品" in text_val: return "Office Stationery & Admin Supplies"
-        if "廠區廚具、餐廳與宿舍設施" in text_val: return "Kitchenware, Cafeteria & Dormitory Facilities"
+        if "土地租賃與政府續約權利金" in text_val: return "Land Lease & Government Renewal Fee"
+        if "廠區公務車、貨車與大客車" in text_val: return "Company Cars, Trucks & Buses"
     return text_val
 
 def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
@@ -176,15 +182,15 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
     if "procurement_ap_db" not in st.session_state:
         st.session_state.procurement_ap_db = [
             {
-                "code": "AP-2026-888",
-                "vendor": "施耐德電氣越南分公司",
-                "category": "⚡ 高低壓配電盤與斷路器零件",
-                "item": "尚未更新",
+                "code": "AP-2026-001",
+                "vendor": "越南西寧省人民委員會 (土地管理局)",
+                "category": "土地租賃與政府續約權利金 (Land Lease / LURC)",
+                "item": "西寧廠土地租約到期續約權利金及規費",
                 "currency": "USD",
-                "amount": 45000.0,
-                "terms": "T/T 30天票期",
-                "status": "尚未更新",
-                "note": "-"
+                "amount": 120000.0,
+                "terms": "政府續約一次付清",
+                "status": "審核中 (Pending)",
+                "note": "合約即將到期續約"
             }
         ]
 
@@ -204,7 +210,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                     L["col_cat"]: smart_translate_ap(item.get("category", "標準品項"), active_lang),
                     L["col_item"]: smart_translate_ap(item["item"], active_lang),
                     L["col_curr"]: item["currency"],
-                    L["col_total"]: f"${item['amount']:,.3f} USD",
+                    L["col_total"]: f"${item['amount']:,.2f} USD",
                     L["col_terms"]: smart_translate_ap(item["terms"], active_lang),
                     L["col_status"]: smart_translate_ap(item["status"], active_lang),
                     L["col_note"]: item["note"]
@@ -229,7 +235,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                 category = st.selectbox(L["lbl_category"], L["cat_opts"])
             with c2:
                 currency = st.selectbox(L["lbl_currency"], ["USD", "VND", "TWD", "EUR"])
-                amount = st.number_input(L["lbl_amount"], min_value=0.0, value=15000.0, step=1000.0)
+                amount = st.number_input(L["lbl_amount"], min_value=0.0, value=50000.0, step=5000.0)
                 terms = st.selectbox(L["lbl_terms"], L["terms_opts"])
 
             item_desc = st.text_input(L["lbl_item"], placeholder=L["item_placeholder"])
@@ -240,12 +246,12 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                         "code": ap_code,
                         "vendor": vendor,
                         "category": category,
-                        "item": item_desc if item_desc else "一般總務與文具品項",
+                        "item": item_desc if item_desc else "土地續約或車輛資產款項",
                         "currency": currency,
                         "amount": amount,
                         "terms": terms,
                         "status": "審核完成 (Approved)",
-                        "note": "-"
+                        "note": "合約續約"
                     })
                     st.success(L["success_save"].format(ap_code=ap_code))
                     st.rerun()
