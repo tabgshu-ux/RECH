@@ -8,13 +8,40 @@ import datetime
 ENG_DEPT_I18N = {
     "繁體中文": {
         "title": "🛠️ 裕豐電機工業 - 工程部綜合管理中心",
-        "caption": "完整涵蓋配電盤電氣機構設計圖庫、資材估價報價、以及全球廠區水電工程驗收與進度追蹤。",
-        "tab_design": "📐 1. 設計圖庫與規格",
-        "tab_quote": "⚙️ 2. 配電盤估價與報價",
+        "caption": "完整涵蓋工程報價系統（串接倉庫與發票稅計算）、設計圖庫、以及工程驗收與進度追蹤。",
+        "tab_quote": "⚙️ 1. 工程報價系統 (含倉庫連動與稅額)",
+        "tab_design": "📐 2. 設計圖庫與規格",
         "tab_progress": "📊 3. 工程驗收與進度追蹤",
         
+        # 報價系統
+        "quote_title": "⚙️ 配電盤與工程專案報價系統 (Quotation & VAT Control)",
+        "quote_caption": "工程部專用報價：填入專案資訊、連動倉庫庫存餘額與單價，自動加總並計入發票稅。",
+        "sec1_title": "📋 1. 工程專案基本資訊",
+        "lbl_vendor": "廠商名稱 *",
+        "vendor_placeholder": "例如: 越南新順工程承攬有限公司",
+        "lbl_project": "工程名稱 / 專案名稱 *",
+        "proj_placeholder": "例如: 西寧紡織廠 2000A 主配電盤新建工程",
+        "lbl_location": "工程位置 / 廠區地點 *",
+        "loc_placeholder": "例如: 越南 Tây Ninh 省張幫工業區 A2 廠房",
+        "lbl_currency": "計價幣別",
+        
+        "sec2_title": "📦 2. 報價內容明細 (連動倉庫庫存與金額)",
+        "sec2_caption": "選取所需配電資材，系統將自動讀取倉庫剩餘數量、單價並計算小計：",
+        "col_item_code": "物料編號",
+        "col_item_name": "報價內容 / 資材品項",
+        "col_warehouse_stock": "倉庫剩餘數量",
+        "col_qty": "報價數量 (Qty)",
+        "col_unit_price": "倉庫單價 (USD)",
+        "col_subtotal": "金額小計 (USD)",
+        
+        "sec3_title": "💰 3. 金額加總與發票稅 (VAT) 計算",
+        "lbl_subtotal_sum": "未稅金額總計 (Subtotal):",
+        "lbl_vat_rate": "發票稅率 (VAT %)",
+        "lbl_vat_amount": "營業稅金額 (VAT Amount):",
+        "lbl_grand_total": "💵 報價總金額 (Grand Total - 含稅):",
+        
         # 設計圖庫
-        "design_title": "📐 配電盤電氣與機構設計圖庫 (Switchgear Design & Drawings)",
+        "design_title": "📐 配電盤電氣與機構設計圖庫",
         "design_caption": "管理各廠區高低壓配電盤、ACB/MCCB、Busbar 銅排配置與 CAD/PDF 設計圖檔。",
         "col_drawing_no": "圖號編碼",
         "col_project_name": "專案/廠區名稱",
@@ -22,21 +49,6 @@ ENG_DEPT_I18N = {
         "col_version": "版次",
         "col_designer": "設計工程師",
         "col_action": "圖檔操作",
-        
-        # 報價系統
-        "quote_title": "⚙️ 配電盤與物料報價系統 (Costing & Quotation)",
-        "quote_caption": "供工程與業務管理：自由選取物料、規格、數量和工資以自動計算總報價。",
-        "sec1_title": "📋 1. 專案資訊 & 技術規格",
-        "lbl_project": "專案名稱 / 客戶名稱 *",
-        "lbl_currency": "計價幣別",
-        "lbl_req": "技術需求與規格說明 *",
-        "sec2_title": "📦 2. 選擇配電盤物料 & 計算金額 (自動計算)",
-        "sec2_caption": "請由下拉式選單選擇所需的配電強弱電材，並填入數量：",
-        "lbl_item1": "資材品項 #1",
-        "lbl_item2": "資材品項 #2",
-        "col_qty": "數量 (Qty)",
-        "col_price": "單價 (USD)",
-        "col_subtotal": "小計 (USD)",
         
         # 工程驗收進度
         "prog_title": "⚡ 全球廠區水電工程驗收與進度追蹤",
@@ -62,13 +74,39 @@ ENG_DEPT_I18N = {
     },
     "Tiếng Việt": {
         "title": "🛠️ REETECH INDUSTRIAL - Trung tâm Quản lý Khối Kỹ thuật",
-        "caption": "Quản lý toàn diện kho bản vẽ thiết kế điện/cơ khí, báo giá vật tư tủ điện, và theo dõi tiến độ nghiệm thu công trình cơ điện.",
-        "tab_design": "📐 1. Thư viện Bản vẽ Thiết kế",
-        "tab_quote": "⚙️ 2. Báo giá Tủ điện & Vật tư",
+        "caption": "Bao gồm hệ thống báo giá kỹ thuật (liên kết kho và thuế VAT), thư viện bản vẽ, và theo dõi tiến độ nghiệm thu.",
+        "tab_quote": "⚙️ 1. Hệ thống Báo giá (Tồn kho & VAT)",
+        "tab_design": "📐 2. Thư viện Bản vẽ Thiết kế",
         "tab_progress": "📊 3. Theo dõi Tiến độ & Nghiệm thu",
         
+        "quote_title": "⚙️ Hệ thống Báo giá Tủ điện & Dự toán Công trình",
+        "quote_caption": "Dành cho kỹ thuật: Nhập thông tin dự án, liên kết tồn kho kho hàng, tính tổng tiền và thuế VAT.",
+        "sec1_title": "📋 1. Thông tin Dự án",
+        "lbl_vendor": "Tên Nhà thầu / Khách hàng *",
+        "vendor_placeholder": "Ví dụ: Công ty TNHH Xây lắp Tân Thuận",
+        "lbl_project": "Tên Dự án / Công trình *",
+        "proj_placeholder": "Ví dụ: Nhà máy dệt Tây Ninh - Tủ điện 2000A",
+        "lbl_location": "Địa điểm công trình / Nhà máy *",
+        "loc_placeholder": "Ví dụ: KCN Trảng Bàng, Tây Ninh, Việt Nam",
+        "lbl_currency": "Loại tiền tệ",
+        
+        "sec2_title": "📦 2. Chi tiết Nội dung Báo giá (Liên kết Tồn kho & Đơn giá)",
+        "sec2_caption": "Chọn vật tư thiết bị, hệ thống tự động đọc số lượng tồn kho và đơn giá:",
+        "col_item_code": "Mã vật tư",
+        "col_item_name": "Nội dung báo giá / Tên vật tư",
+        "col_warehouse_stock": "Tồn kho hiện tại",
+        "col_qty": "Số lượng báo giá (Qty)",
+        "col_unit_price": "Đơn giá kho (USD)",
+        "col_subtotal": "Thành tiền (USD)",
+        
+        "sec3_title": "💰 3. Tổng hợp Thành tiền & Tính Thuế VAT",
+        "lbl_subtotal_sum": "Tổng giá trị chưa thuế (Subtotal):",
+        "lbl_vat_rate": "Thuế suất VAT (%)",
+        "lbl_vat_amount": "Tiền thuế VAT:",
+        "lbl_grand_total": "💵 Tổng giá trị báo giá (Grand Total - Gồm VAT):",
+        
         "design_title": "📐 Thư viện Bản vẽ Thiết kế Tủ điện & Cơ khí",
-        "design_caption": "Quản lý bản vẽ CAD/PDF tủ điện trung hạ thế, ACB/MCCB, thanh cái Busbar cho các nhà máy.",
+        "design_caption": "Quản lý bản vẽ CAD/PDF tủ điện trung hạ thế, ACB/MCCB, thanh cái Busbar.",
         "col_drawing_no": "Mã bản vẽ",
         "col_project_name": "Tên dự án / Nhà máy",
         "col_spec": "Quy cách điện",
@@ -76,22 +114,8 @@ ENG_DEPT_I18N = {
         "col_designer": "Kỹ sư thiết kế",
         "col_action": "Thao tác",
         
-        "quote_title": "⚙️ Hệ thống Báo giá Tủ điện & Vật tư",
-        "quote_caption": "Dành cho quản lý kỹ thuật và kinh doanh: Tự do chọn vật tư, quy cách, số lượng và giá công để tính tổng báo giá.",
-        "sec1_title": "📋 1. Thông tin Dự án & Quy cách Kỹ thuật",
-        "lbl_project": "Tên Dự án / Tên Khách hàng *",
-        "lbl_currency": "Loại tiền tệ",
-        "lbl_req": "Mô tả yêu cầu kỹ thuật *",
-        "sec2_title": "📦 2. Chọn Vật tư Tủ điện & Thành tiền (Tự động tính)",
-        "sec2_caption": "Chọn từ danh sách để chọn vật tư, quy cách, số lượng:",
-        "lbl_item1": "Mặt hàng #1",
-        "lbl_item2": "Mặt hàng #2",
-        "col_qty": "Số lượng (Qty)",
-        "col_price": "Đơn giá (USD)",
-        "col_subtotal": "Thành tiền (USD)",
-        
         "prog_title": "⚡ Theo dõi Tiến độ & Nghiệm thu Dự án Cơ điện",
-        "prog_caption": "Chuyên dụng kỹ thuật: Tập trung giám sát phần trăm tiến độ thi công, trạng thái nghiệm thu và hợp đồng.",
+        "prog_caption": "Chuyên dụng kỹ thuật: Tập trung giám sát phần trăm tiến độ thi công, trạng thái nghiệm thu.",
         "kpi1_title": "Tổng số dự án cơ điện",
         "kpi1_val": "8 dự án",
         "kpi1_sub": "↑ Đang thực hiện 6 / Nghiệm thu 2",
@@ -113,33 +137,45 @@ ENG_DEPT_I18N = {
     },
     "English": {
         "title": "🛠️ REETECH INDUSTRIAL - Engineering Department Management Center",
-        "caption": "Comprehensive management of switchgear design drawings, material costing/quotations, and M&E project acceptance progress.",
-        "tab_design": "📐 1. Design Drawings Library",
-        "tab_quote": "⚙️ 2. Switchgear Costing & Quotation",
+        "caption": "Engineering quotation system (with warehouse inventory & VAT calculation), design library, and acceptance tracking.",
+        "tab_quote": "⚙️ 1. Quotation System (Inventory & VAT)",
+        "tab_design": "📐 2. Design Drawings Library",
         "tab_progress": "📊 3. M&E Acceptance & Progress Tracking",
         
+        "quote_title": "⚙️ Switchgear & Engineering Project Quotation System",
+        "quote_caption": "Engineering quotation: Input project details, link warehouse inventory stock & unit prices, auto-calculate subtotal and VAT.",
+        "sec1_title": "📋 1. Project Basic Information",
+        "lbl_vendor": "Vendor / Client Name *",
+        "vendor_placeholder": "Example: Tan Thuan M&E Engineering Co., Ltd.",
+        "lbl_project": "Project Name / Work Name *",
+        "proj_placeholder": "Example: Tay Ninh Textile Plant - 2000A Switchboard",
+        "lbl_location": "Project Location / Plant Site *",
+        "loc_placeholder": "Example: Trang Bang Industrial Zone, Tay Ninh, Vietnam",
+        "lbl_currency": "Currency",
+        
+        "sec2_title": "📦 2. Quotation Item Details (Linked to Warehouse Stock & Pricing)",
+        "sec2_caption": "Select required electrical materials, system auto-retrieves warehouse remaining stock and unit price:",
+        "col_item_code": "Item Code",
+        "col_item_name": "Quotation Content / Material Name",
+        "col_warehouse_stock": "Warehouse Stock",
+        "col_qty": "Quoted Qty",
+        "col_unit_price": "Warehouse Unit Price (USD)",
+        "col_subtotal": "Subtotal (USD)",
+        
+        "sec3_title": "💰 3. Subtotal Sum & VAT Calculation",
+        "lbl_subtotal_sum": "Subtotal (Excluding Tax):",
+        "lbl_vat_rate": "VAT Rate (%)",
+        "lbl_vat_amount": "VAT Amount:",
+        "lbl_grand_total": "💵 Grand Total (Including VAT):",
+        
         "design_title": "📐 Switchgear & Mechanical Design Drawings Library",
-        "design_caption": "Manage CAD/PDF drawings for medium/low voltage switchboards, ACB/MCCB, and Busbar configurations.",
+        "design_caption": "Manage CAD/PDF drawings for switchboards, ACB/MCCB, and Busbar configurations.",
         "col_drawing_no": "Drawing No.",
         "col_project_name": "Project / Plant Name",
         "col_spec": "Electrical Spec",
         "col_version": "Version",
         "col_designer": "Designer",
         "col_action": "Action",
-        
-        "quote_title": "⚙️ Switchgear & Material Quotation System",
-        "quote_caption": "For engineering and sales: Select materials, specifications, quantities, and labor costs for automatic quotation.",
-        "sec1_title": "📋 1. Project Information & Technical Specs",
-        "lbl_project": "Project Name / Client Name *",
-        "lbl_currency": "Currency",
-        "lbl_req": "Technical Requirements & Specs *",
-        "sec2_title": "📦 2. Select Switchboard Materials & Subtotal (Auto-calculated)",
-        "sec2_caption": "Select required switchboard materials from the dropdown and enter quantities:",
-        "lbl_item1": "Item #1",
-        "lbl_item2": "Item #2",
-        "col_qty": "Quantity (Qty)",
-        "col_price": "Unit Price (USD)",
-        "col_subtotal": "Subtotal (USD)",
         
         "prog_title": "⚡ M&E Engineering Progress & Acceptance Tracking",
         "prog_caption": "Engineering focused: Dedicated monitoring of site construction progress, acceptance status, and contract control.",
@@ -211,12 +247,79 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
     st.title(L["title"])
     st.caption(L["caption"])
 
-    tab_design, tab_quote, tab_progress = st.tabs([
-        L["tab_design"], L["tab_quote"], L["tab_progress"]
+    # 調整順序：第一個是報價系統，第二個是設計圖庫，第三個是工程驗收進度
+    tab_quote, tab_design, tab_progress = st.tabs([
+        L["tab_quote"], L["tab_design"], L["tab_progress"]
     ])
 
     # ----------------------------------------------------
-    # Tab 1: 設計圖庫
+    # Tab 1: 工程報價系統 (串接倉庫庫存、單價、金額加總與發票稅)
+    # ----------------------------------------------------
+    with tab_quote:
+        st.markdown(f"### {L['quote_title']}")
+        st.caption(L['quote_caption'])
+        
+        st.markdown(f"### {L['sec1_title']}")
+        c1, c2, c3 = st.columns([2, 2, 1])
+        with c1:
+            vendor_name = st.text_input(L["lbl_vendor"], placeholder=L["vendor_placeholder"])
+        with c2:
+            proj_name = st.text_input(L["lbl_project"], placeholder=L["proj_placeholder"])
+        with c3:
+            currency = st.selectbox(L["lbl_currency"], ["USD", "VND", "TWD", "EUR"])
+
+        loc_name = st.text_input(L["lbl_location"], placeholder=L["loc_placeholder"])
+
+        st.markdown(f"### {L['sec2_title']}")
+        st.caption(L['sec2_caption'])
+
+        # 模擬從倉庫讀取的資材與庫存資料
+        warehouse_items = [
+            {"code": "CU-BUS-10100", "name": "銅排 Busbar 10x100mm (高純度)", "stock": 450.0, "price": 12.50},
+            {"code": "CB-ACB-2000A", "name": "空氣斷路器 ACB 2000A (Schneider)", "stock": 8.0, "price": 1850.00},
+            {"code": "CB-MCCB-250A", "name": "塑殼斷路器 MCCB 250A (LS/Schneider)", "stock": 35.0, "price": 145.00},
+            {"code": "CAB-PVC-4CX95", "name": "控制電纜 PVC 4Cx95mm²", "stock": 1200.0, "price": 8.20}
+        ]
+
+        quote_rows = []
+        subtotal_sum = 0.0
+
+        for idx, wh in enumerate(warehouse_items):
+            cols = st.columns([1.2, 2.5, 1.2, 1.2, 1.2, 1.5])
+            with cols[0]:
+                st.text_input(f"Code {idx}", value=wh["code"], disabled=True, label_visibility="collapsed")
+            with cols[1]:
+                st.text_input(f"Name {idx}", value=wh["name"], disabled=True, label_visibility="collapsed")
+            with cols[2]:
+                # 倉庫剩餘數量顯示
+                st.metric(label="Stock", value=f"{wh['stock']:,.1f}", label_visibility="collapsed")
+            with cols[3]:
+                # 報價數量輸入
+                qty = st.number_input(f"Qty {idx}", min_value=0.0, value=10.0 if idx < 2 else 0.0, step=1.0, label_visibility="collapsed")
+            with cols[4]:
+                # 倉庫單價
+                st.text_input(f"Price {idx}", value=f"${wh['price']:,.2f}", disabled=True, label_visibility="collapsed")
+            with cols[5]:
+                # 小計計算
+                line_total = qty * wh["price"]
+                subtotal_sum += line_total
+                st.text_input(f"Sub {idx}", value=f"${line_total:,.2f}", disabled=True, label_visibility="collapsed")
+
+        st.markdown("---")
+        st.markdown(f"### {L['sec3_title']}")
+        
+        q_c1, q_c2 = st.columns(2)
+        with q_c1:
+            st.metric(label=L["lbl_subtotal_sum"], value=f"${subtotal_sum:,.2f}")
+            vat_rate = st.selectbox(L["lbl_vat_rate"], [10, 8, 0, 5], index=0)
+        with q_c2:
+            vat_amount = subtotal_sum * (vat_rate / 100.0)
+            grand_total = subtotal_sum + vat_amount
+            st.metric(label=L["lbl_vat_amount"], value=f"${vat_amount:,.2f}")
+            st.markdown(f"### {L['lbl_grand_total']} **${grand_total:,.2f}**")
+
+    # ----------------------------------------------------
+    # Tab 2: 設計圖庫
     # ----------------------------------------------------
     with tab_design:
         st.markdown(f"### {L['design_title']}")
@@ -228,45 +331,6 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
             {L["col_drawing_no"]: "DWG-2026-MBD-03", L["col_project_name"]: "隆安宏遠精密機械廠", L["col_spec"]: "變電站 22kV 綜合控制盤", L["col_version"]: "V3.0", L["col_designer"]: "Lê Hoàng Phúc", L["col_action"]: "📥 Download CAD / PDF"},
         ]
         st.dataframe(pd.DataFrame(drawings_data), use_container_width=True)
-
-    # ----------------------------------------------------
-    # Tab 2: 配電盤估價與報價
-    # ----------------------------------------------------
-    with tab_quote:
-        st.markdown(f"### {L['quote_title']}")
-        st.caption(L['quote_caption'])
-        
-        st.markdown(f"### {L['sec1_title']}")
-        c1, c2 = st.columns([3, 1])
-        with c1:
-            proj_name = st.text_input(L["lbl_project"], value="Nhà máy dệt Tây Ninh - Tủ điện chính 2000A" if active_lang == "Tiếng Việt" else "西寧紡織廠 2000A 主配電盤新建工程")
-        with c2:
-            currency = st.selectbox(L["lbl_currency"], ["USD", "VND", "TWD", "EUR"])
-
-        req_desc = st.text_area(L["lbl_req"], value="Bao gồm gia công thanh cái đồng, lắp đặt ACB 2000A và kiểm tra cách điện." if active_lang == "Tiếng Việt" else "包含高純度銅排母線加工、2000A ACB 空氣斷路器組裝與現場耐壓絕緣測試。")
-
-        st.markdown(f"### {L['sec2_title']}")
-        st.caption(L['sec2_caption'])
-
-        c_item1, c_q1, c_p1, c_s1 = st.columns([3, 1, 1, 1])
-        with c_item1:
-            st.text_input(L["lbl_item1"], value="[CU-BUS-10100] Đồng thanh cái Busbar 10x100mm", disabled=True)
-        with c_q1:
-            q1 = st.number_input("Qty 1", min_value=0.0, value=150.0, step=10.0, label_visibility="collapsed")
-        with c_p1:
-            st.text_input("Price 1", value="$12.50", disabled=True, label_visibility="collapsed")
-        with c_s1:
-            st.text_input("Sub 1", value=f"${q1 * 12.50:,.2f}", disabled=True, label_visibility="collapsed")
-
-        c_item2, c_q2, c_p2, c_s2 = st.columns([3, 1, 1, 1])
-        with c_item2:
-            st.text_input(L["lbl_item2"], value="[CB-ACB-2000A] Máy cắt không khí ACB 2000A (Schneider)", disabled=True)
-        with c_q2:
-            q2 = st.number_input("Qty 2", min_value=0.0, value=2.0, step=1.0, label_visibility="collapsed")
-        with c_p2:
-            st.text_input("Price 2", value="$1,850.00", disabled=True, label_visibility="collapsed")
-        with c_s2:
-            st.text_input("Sub 2", value=f"${q2 * 1850.00:,.2f}", disabled=True, label_visibility="collapsed")
 
     # ----------------------------------------------------
     # Tab 3: 工程驗收與進度追蹤
@@ -311,7 +375,7 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
         st.dataframe(pd.DataFrame(display_data), use_container_width=True)
 
 # ----------------------------------------------------
-# 萬用相容函式與分身 (確保無論 app.py 呼叫哪一個都 100% 成功)
+# 萬用相容函式與分身
 # ----------------------------------------------------
 def render_engineering_department(*args, **kwargs):
     render_engineering_department_page(*args, **kwargs)
@@ -320,7 +384,7 @@ def render_engineering_page(*args, **kwargs):
     render_engineering_department_page(*args, **kwargs)
 
 def render_engineering_quotation_page(*args, **kwargs):
-    render_engineering_department_page(*args, **kwargs, default_tab=1)
+    render_engineering_department_page(*args, **kwargs, default_tab=0)
 
 def render_project_tracking(*args, **kwargs):
     render_engineering_department_page(*args, **kwargs, default_tab=2)
