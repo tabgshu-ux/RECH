@@ -64,7 +64,7 @@ APPROVAL_I18N = {
             "💰 Tài chính - Đơn mua hàng & thanh toán (AP)",
             "📜 Kinh doanh - Báo giá & Hợp đồng dự án",
             "💳 Tài chính - Tạm ứng lương / Khoản vay",
-            "🛠️ Kỹ thuật - Thay đổi thiết kế & Nghiệm thu",
+            "🛠️️ Kỹ thuật - Thay đổi thiết kế & Nghiệm thu",
             "📦 Hành chính - Thanh lý thiết bị & Mua sắm",
         ],
         "lbl_title": "Tiêu đề nội dung *",
@@ -129,15 +129,21 @@ def smart_translate_approval_content(text_val, target_lang):
         return text_val
     
     if target_lang == "Tiếng Việt":
+        if "人事行政" in text_val: return "Nhân sự - Đơn xin nghỉ phép / tăng ca"
+        if "財務採購" in text_val: return "Tài chính - Đơn mua hàng & thanh toán (AP)"
         if "越南西寧廠技術員事假 2 天" in text_val: return "Nghỉ phép 2 ngày của kỹ thuật viên nhà máy Tây Ninh"
         if "因家屬探親請假 2 天" in text_val: return "Xin nghỉ 2 ngày thăm người thân (đã sắp xếp người thay thế)"
         if "西寧廠塗裝粉體原料採購款" in text_val: return "Thanh toán mua nguyên liệu sơn tĩnh điện nhà máy Tây Ninh"
         if "採購環保靜電粉末塗料 500 公斤" in text_val: return "Mua 500kg bột sơn tĩnh điện thân thiện môi trường"
+        if "陳美璇" in text_val: return "Trần Mỹ Tuyền (Nhân viên tài chính)"
     elif target_lang == "English":
+        if "人事行政" in text_val: return "HR - Leave / Overtime Request"
+        if "財務採購" in text_val: return "Finance - Procurement & AP Invoice"
         if "越南西寧廠技術員事假 2 天" in text_val: return "Tay Ninh Plant Technician 2-Day Leave"
         if "因家屬探親請假 2 天" in text_val: return "Family visit leave for 2 days (backup arranged)"
         if "西寧廠塗裝粉體原料採購款" in text_val: return "Tay Ninh Plant Powder Coating Material Purchase"
         if "採購環保靜電粉末塗料 500 公斤" in text_val: return "Purchase 500kg eco-friendly electrostatic coating powder"
+        if "陳美璇" in text_val: return "Tran My Tuyen (Finance Staff)"
 
     return text_val
 
@@ -188,17 +194,19 @@ def render_approval_center(lang="繁體中文", **kwargs):
             st.success(L["no_pending"])
         else:
             for item in pending_items:
+                card_cat = smart_translate_approval_content(item['category'], active_lang)
                 card_title = smart_translate_approval_content(item['title'], active_lang)
+                card_applicant = smart_translate_approval_content(item['applicant'], active_lang)
                 card_details = smart_translate_approval_content(item['details'], active_lang)
 
                 with st.container():
                     st.markdown(
                         f"""
                         <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin-bottom: 12px;">
-                            <div style="font-size: 13px; color: #64748b; font-weight: 700;">{L['lbl_cat_card']}: {item['category']} | {L['lbl_id']}: <code>{item['id']}</code></div>
+                            <div style="font-size: 13px; color: #64748b; font-weight: 700;">{L['lbl_cat_card']}: {card_cat} | {L['lbl_id']}: <code>{item['id']}</code></div>
                             <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 4px;">📌 {card_title}</div>
                             <div style="font-size: 14px; color: #334155; margin-top: 6px;">
-                                • <b>{L['lbl_applicant_card']}</b>: {item['applicant']} &nbsp;|&nbsp; <b>{L['lbl_date_card']}</b>: {item['date']} &nbsp;|&nbsp; <b>{L['lbl_amount_card']}</b>: <span style="color: #047857; font-weight:bold;">{item['amount']}</span><br>
+                                • <b>{L['lbl_applicant_card']}</b>: {card_applicant} &nbsp;|&nbsp; <b>{L['lbl_date_card']}</b>: {item['date']} &nbsp;|&nbsp; <b>{L['lbl_amount_card']}</b>: <span style="color: #047857; font-weight:bold;">{item['amount']}</span><br>
                                 • <b>{L['lbl_details_card']}</b>: {card_details}
                             </div>
                         </div>
@@ -225,9 +233,9 @@ def render_approval_center(lang="繁體中文", **kwargs):
         for item in st.session_state.approval_tasks_db:
             history_data.append({
                 "ID": item["id"],
-                "Category": item["category"],
+                "Category": smart_translate_approval_content(item["category"], active_lang),
                 "Title": smart_translate_approval_content(item["title"], active_lang),
-                "Applicant": item["applicant"],
+                "Applicant": smart_translate_approval_content(item["applicant"], active_lang),
                 "Date": item["date"],
                 "Amount": item["amount"],
                 "Status": item["status"]
