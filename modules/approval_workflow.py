@@ -41,7 +41,8 @@ APPROVAL_I18N = {
         "lbl_applicant_card": "申請人",
         "lbl_date_card": "申請日期",
         "lbl_amount_card": "金額/影響",
-        "lbl_details_card": "內容細節"
+        "lbl_details_card": "內容細節",
+        "login_info": "📥 待審核項目列表 (當前登入: `{user}` | 角色: `{role}`)"
     },
     "Tiếng Việt": {
         "title": "✍️ Khối Quản lý - Trung tâm Phê duyệt Điện tử",
@@ -63,7 +64,7 @@ APPROVAL_I18N = {
             "💰 Tài chính - Đơn mua hàng & thanh toán (AP)",
             "📜 Kinh doanh - Báo giá & Hợp đồng dự án",
             "💳 Tài chính - Tạm ứng lương / Khoản vay",
-            "🛠️️ Kỹ thuật - Thay đổi thiết kế & Nghiệm thu",
+            "🛠️ Kỹ thuật - Thay đổi thiết kế & Nghiệm thu",
             "📦 Hành chính - Thanh lý thiết bị & Mua sắm",
         ],
         "lbl_title": "Tiêu đề nội dung *",
@@ -79,7 +80,8 @@ APPROVAL_I18N = {
         "lbl_applicant_card": "Người nộp",
         "lbl_date_card": "Ngày nộp",
         "lbl_amount_card": "Số tiền",
-        "lbl_details_card": "Chi tiết"
+        "lbl_details_card": "Chi tiết",
+        "login_info": "📥 Danh sách chờ duyệt (Đăng nhập: `{user}` | Quyền: `{role}`)"
     },
     "English": {
         "title": "✍️ Admin - E-Approval & Payment Review Center",
@@ -101,7 +103,7 @@ APPROVAL_I18N = {
             "💰 Finance - Procurement & AP Invoice",
             "📜 Sales - Quotation & Engineering Contract",
             "💳 Finance - Employee Advance / Loan",
-            "🛠️️ Engineering - Design Change & Inspection",
+            "🛠️ Engineering - Design Change & Inspection",
             "📦 GA - Asset Disposal & Procurement",
         ],
         "lbl_title": "Subject Title *",
@@ -117,19 +119,15 @@ APPROVAL_I18N = {
         "lbl_applicant_card": "Applicant",
         "lbl_date_card": "Date",
         "lbl_amount_card": "Amount",
-        "lbl_details_card": "Details"
+        "lbl_details_card": "Details",
+        "login_info": "📥 Pending Approval List (User: `{user}` | Role: `{role}`)"
     }
 }
 
-# ----------------------------------------------------
-# 🔄 智慧語意動態轉換引擎 (讓內部資料隨著語系切換)
-# ----------------------------------------------------
 def smart_translate_approval_content(text_val, target_lang):
     if not text_val or not isinstance(text_val, str):
         return text_val
     
-    val_lower = text_val.lower()
-
     if target_lang == "Tiếng Việt":
         if "越南西寧廠技術員事假 2 天" in text_val: return "Nghỉ phép 2 ngày của kỹ thuật viên nhà máy Tây Ninh"
         if "因家屬探親請假 2 天" in text_val: return "Xin nghỉ 2 ngày thăm người thân (đã sắp xếp người thay thế)"
@@ -182,7 +180,7 @@ def render_approval_center(lang="繁體中文", **kwargs):
     ])
 
     with tab_pending:
-        st.markdown(f"### {L['pending_header']} (當前登入: `{current_user}` | 角色: `{current_role.upper()}`)")
+        st.markdown(f"### {L['login_info'].format(user=current_user, role=current_role.upper())}")
         
         pending_items = [item for item in st.session_state.approval_tasks_db if item["status"] == "待審核"]
 
@@ -190,7 +188,6 @@ def render_approval_center(lang="繁體中文", **kwargs):
             st.success(L["no_pending"])
         else:
             for item in pending_items:
-                # 動態轉譯卡片內部內容
                 card_title = smart_translate_approval_content(item['title'], active_lang)
                 card_details = smart_translate_approval_content(item['details'], active_lang)
 
@@ -213,12 +210,12 @@ def render_approval_center(lang="繁體中文", **kwargs):
                     with col_btn1:
                         if st.button(L["btn_approve"], type="primary", key=f"approve_{item['id']}"):
                             item["status"] = "已核准"
-                            st.success(f"🎉 成功核准 / Approved [{item['id']}]！")
+                            st.success(f"🎉 Approved [{item['id']}]！")
                             st.rerun()
                     with col_btn2:
                         if st.button(L["btn_reject"], key=f"reject_{item['id']}"):
                             item["status"] = "已駁回"
-                            st.warning(f"⚠️ 已駁回 / Rejected [{item['id']}]。")
+                            st.warning(f"⚠️ Rejected [{item['id']}].")
                             st.rerun()
                     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -263,7 +260,7 @@ def render_approval_center(lang="繁體中文", **kwargs):
                         "details": details,
                         "status": "待審核",
                     })
-                    st.success(f"🎉 成功送出 / Success [{new_id}]！")
+                    st.success(f"🎉 Success [{new_id}]！")
                     st.rerun()
                 else:
                     st.warning(L["fill_warning"])
