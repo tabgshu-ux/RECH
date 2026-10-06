@@ -1,436 +1,216 @@
-import email
-from email.header import decode_header
-import imaplib
-import os
-import xml.etree.ElementTree as ET
-import pandas as pd
 import streamlit as st
+import pandas as pd
+import datetime
 
 # ----------------------------------------------------
-# 🌐 越南電子發票模組多語系字典 (i18n)
+# 🌐 越南電子發票管理模組多語系字典 (i18n)
 # ----------------------------------------------------
 INVOICE_I18N = {
     "繁體中文": {
-        "title": "🇻🇳 裕豐電機工業 - 越南電子發票自動讀取與小額憑證中心",
-        "caption": "📱 整合 XML 檔案解析、IMAP 信箱讀取、發票額度預警及 500 萬 VND 以下小額送貨單上傳管控。",
-        "tab_xml": "📄 越南電子發票 XML 解析與登錄",
-        "tab_small_cash": "🧾 500萬以下小額憑證與送貨單上傳",
-        "tab_email": "📧 通用信箱發票讀取 (IMAP)",
-        "tab_quota": "📊 電子發票張數監控與加購",
-        "xml_uploader": "選擇越南電子發票檔 (.xml)",
-        "success_xml": "✅ XML 發票解析成功！",
-        "btn_save_db": "💾 確認匯入系統資料庫",
-        "success_save": "🎉 發票已成功登錄！",
-        "db_list": "📜 已登錄發票與憑證資料庫列表：",
-        "imap_title": "📧 通用電子郵件發票自動讀取 (IMAP)",
-        "server_label": "IMAP 伺服器地址：",
-        "user_label": "電子信箱帳號：",
-        "pass_label": "信箱密碼 / App 專用密碼：",
-        "btn_fetch": "🚀 開始連線信箱讀取發票",
-        "spinner_fetch": "正在連線 IMAP 信箱並解析電子發票...",
+        "title": "📄 財務部 - 越南電子發票綜合管理中心",
+        "caption": "符合越南税务局 (GDT) 規範之電子發票 (Hóa đơn điện tử) 開立、檢核、總額彙整與狀態追蹤。",
+        "tab_list": "📑 電子發票總表與合規狀態",
+        "tab_issue": "➕ 開立新電子發票 (Hóa đơn mới)",
+        "tab_verify": "🔍 稅務局發票代碼驗證 (Mã cơ quan thuế)",
+        "table_header": "📋 廠區電子發票清冊 (E-Invoices Registry)",
+        "no_records": "目前無電子發票紀錄。",
+        "issue_header": "➕ 開立越南標準電子發票 (VAT 10%)",
+        "lbl_inv_code": "發票代碼/序號 *",
+        "lbl_cust_name": "買方客戶名稱 (Tên người mua) *",
+        "cust_placeholder": "例如: 越南樟榜工業區A廠 (Nhà máy A KCN Trảng Bàng)",
+        "lbl_tax_code": "買方統一編號/稅號 (Mã số thuế) *",
+        "tax_placeholder": "例如: 3901234567",
+        "lbl_amount": "銷售未稅金額 (USD) *",
+        "lbl_desc": "品項與勞務說明 (Nội dung hàng hóa)",
+        "desc_placeholder": "例如: 配電盤統包工程與設備安裝費",
+        "btn_issue": "💾 簽發並上傳稅務局系統",
+        "success_issue": "✅ 電子發票 `{inv_code}` 已成功開立並取得稅務驗證碼！",
+        "fill_warning": "⚠️ 請完整填寫發票代碼、客戶名稱與稅號！",
+        "verify_header": "🔍 越南稅務局 (GDT) 發票代碼線上檢核",
+        "verify_input": "請輸入要查核的發票代碼 (Lookup Code):",
+        "btn_verify": "🔎 查詢稅務局驗證狀態",
+        "verify_result_ok": "✅ 驗證成功：此發票已向越南稅務總局完成申報，合規有效 (Hợp lệ)。",
+        # 表格動態欄位
+        "col_index": "STT",
+        "col_code": "發票代碼",
+        "col_cust": "買方客戶",
+        "col_tax": "稅號",
+        "col_subtotal": "未稅金額",
+        "col_vat": "VAT (10%)",
+        "col_total": "含稅總額",
+        "col_status": "稅務狀態",
+        "col_date": "開立日期"
     },
     "Tiếng Việt": {
-        "title": "🇻🇳 REETECH INDUSTRIAL - Trung tâm Hóa đơn điện tử & Chứng từ nhỏ",
-        "caption": "📱 Tích hợp phân tích XML, đọc email (IMAP), giám sát hạn mức và chứng từ giao hàng dưới 5 triệu VND.",
-        "tab_xml": "📄 Phân tích & Đăng ký XML",
-        "tab_small_cash": "🧾 Chứng từ nhỏ & Biên nhận dưới 5tr",
-        "tab_email": "📧 Đọc Hóa đơn qua Email (IMAP)",
-        "tab_quota": "📊 Giám sát hạn mức hóa đơn",
-        "xml_uploader": "Chọn file hóa đơn điện tử (.xml)",
-        "success_xml": "✅ Đọc XML hóa đơn thành công!",
-        "btn_save_db": "💾 Xác nhận lưu vào Cơ sở dữ liệu",
-        "success_save": "🎉 Hóa đơn đã được đăng ký thành công!",
-        "db_list": "📜 Danh sách hóa đơn và chứng từ đã đăng ký:",
-        "imap_title": "📧 Tự động đọc hóa đơn qua Email (IMAP)",
-        "server_label": "Địa chỉ máy chủ IMAP:",
-        "user_label": "Tài khoản Email:",
-        "pass_label": "Mật khẩu Email / App Password:",
-        "btn_fetch": "🚀 Bắt đầu kết nối đọc hóa đơn",
-        "spinner_fetch": "Đang kết nối IMAP và phân tích hóa đơn...",
+        "title": "📄 Khối Tài chính - Trung tâm Quản lý Hóa đơn Điện tử",
+        "caption": "Quản lý phát hành, tra cứu, tổng hợp hóa đơn điện tử tuân thủ quy định Tổng cục Thuế (GDT).",
+        "tab_list": "📑 Danh sách Hóa đơn & Trạng thái",
+        "tab_issue": "➕ Phát hành Hóa đơn Mới",
+        "tab_verify": "🔍 Tra cứu Mã cơ quan thuế",
+        "table_header": "📋 Sổ chi tiết Hóa đơn Điện tử (E-Invoices)",
+        "no_records": "Hiện không có bản ghi hóa đơn nào.",
+        "issue_header": "➕ Lập hóa đơn điện tử tiêu chuẩn (VAT 10%)",
+        "lbl_inv_code": "Ký hiệu / Số hóa đơn *",
+        "lbl_cust_name": "Tên người mua / Khách hàng *",
+        "cust_placeholder": "Ví dụ: Nhà máy A KCN Trảng Bàng, Tây Ninh",
+        "lbl_tax_code": "Mã số thuế người mua *",
+        "tax_placeholder": "Ví dụ: 3901234567",
+        "lbl_amount": "Tiền hàng chưa thuế (USD) *",
+        "lbl_desc": "Nội dung hàng hóa / dịch vụ *",
+        "desc_placeholder": "Ví dụ: Lắp đặt tủ điện và thiết bị cơ điện",
+        "btn_issue": "💾 Ký số và Phát hành hóa đơn",
+        "success_issue": "✅ Đã phát hành thành công hóa đơn `{inv_code}`!",
+        "fill_warning": "⚠️ Vui lòng điền đầy đủ Mã hóa đơn, Tên khách hàng và Mã số thuế!",
+        "verify_header": "🔍 Tra cứu hóa đơn trực tuyến Tổng cục Thuế (GDT)",
+        "verify_input": "Nhập mã tra cứu hóa đơn (Lookup Code):",
+        "btn_verify": "🔎 Kiểm tra trạng thái thuế",
+        "verify_result_ok": "✅ Hợp lệ: Hóa đơn đã được khai báo và xác thực thành công bởi cơ quan thuế.",
+        # Tiêu đề bảng
+        "col_index": "STT",
+        "col_code": "Ký hiệu hóa đơn",
+        "col_cust": "Khách hàng",
+        "col_tax": "Mã số thuế",
+        "col_subtotal": "Chưa thuế",
+        "col_vat": "VAT (10%)",
+        "col_total": "Tổng cộng",
+        "col_status": "Trạng thái",
+        "col_date": "Ngày lập"
     },
     "English": {
-        "title": "🇻🇳 REETECH INDUSTRIAL - E-Invoice & Small Voucher Center",
-        "caption": "📱 XML parser, IMAP fetch, quota monitoring, and under 5M VND small delivery voucher uploads.",
-        "tab_xml": "📄 E-Invoice XML Parser & Registration",
-        "tab_small_cash": "🧾 Under 5M VND Small Vouchers",
-        "tab_email": "📧 Email E-Invoice Reader (IMAP)",
-        "tab_quota": "📊 E-Invoice Quota & Top-up",
-        "xml_uploader": "Select Vietnam E-Invoice File (.xml)",
-        "success_xml": "✅ XML Invoice parsed successfully!",
-        "btn_save_db": "💾 Save to System Database",
-        "success_save": "🎉 Invoice successfully registered!",
-        "db_list": "📜 Registered Invoice & Voucher Database:",
-        "imap_title": "📧 Automated Email E-Invoice Reader (IMAP)",
-        "server_label": "IMAP Server Address:",
-        "user_label": "Email Account:",
-        "pass_label": "Email Password / App Password:",
-        "btn_fetch": "🚀 Start Fetching Invoices",
-        "spinner_fetch": "Connecting to IMAP and parsing invoices...",
-    },
+        "title": "📄 Finance - E-Invoice Comprehensive Management Center",
+        "caption": "Issue, verify, and track electronic invoices (Hóa đơn điện tử) compliant with Vietnam GDT regulations.",
+        "tab_list": "📑 E-Invoices Registry & Status",
+        "tab_issue": "➕ Issue New E-Invoice",
+        "tab_verify": "🔍 GDT Tax Code Verification",
+        "table_header": "📋 Customer E-Invoices Registry",
+        "no_records": "No electronic invoices found.",
+        "issue_header": "➕ Issue Standard E-Invoice (VAT 10%)",
+        "lbl_inv_code": "Invoice Code / No. *",
+        "lbl_cust_name": "Buyer / Customer Name *",
+        "cust_placeholder": "Example: Tay Ninh Plant Client A",
+        "lbl_tax_code": "Buyer Tax Code *",
+        "tax_placeholder": "Example: 3901234567",
+        "lbl_amount": "Amount Excl. VAT (USD) *",
+        "lbl_desc": "Item Description *",
+        "desc_placeholder": "Example: Switchgear installation and engineering services",
+        "btn_issue": "💾 Sign & Issue to Tax Authority",
+        "success_issue": "✅ E-invoice `{inv_code}` successfully issued and verified!",
+        "fill_warning": "⚠️ Please fill in Invoice Code, Customer Name, and Tax Code!",
+        "verify_header": "🔍 Vietnam GDT Tax Authority Invoice Verification",
+        "verify_input": "Enter Invoice Lookup Code:",
+        "btn_verify": "🔎 Verify Tax Status",
+        "verify_result_ok": "✅ Valid: This invoice has been successfully declared and authenticated by the GDT.",
+        # Table headers
+        "col_index": "No.",
+        "col_code": "Invoice Code",
+        "col_cust": "Customer",
+        "col_tax": "Tax Code",
+        "col_subtotal": "Excl. VAT",
+        "col_vat": "VAT (10%)",
+        "col_total": "Total Incl. VAT",
+        "col_status": "Tax Status",
+        "col_date": "Issue Date"
+    }
 }
 
-
-def get_lang_dict(lang_param):
-    return INVOICE_I18N.get(lang_param, INVOICE_I18N["繁體中文"])
-
-
 # ----------------------------------------------------
-# 1. 核心的越南 XML 發票解析邏輯 (parse_vietnam_xml)
+# 🔄 電子發票模組專用：中越英智慧雙向語意對照引擎
 # ----------------------------------------------------
-def parse_vietnam_xml(xml_bytes):
-    try:
-        root = ET.fromstring(xml_bytes)
+def smart_translate_invoice(text_val, target_lang):
+    if not text_val or not isinstance(text_val, str):
+        return text_val
+    
+    val_lower = text_val.lower()
 
-        def get_text(node, tag_name):
-            if node is None:
-                return ""
-            for elem in node.iter():
-                if elem.tag.endswith(tag_name):
-                    return elem.text.strip() if elem.text else ""
-            return ""
+    # 客戶名稱智慧對應
+    if "樟榜" in text_val or "trảng bàng" in val_lower or "tay ninh" in val_lower:
+        if target_lang == "Tiếng Việt": return "Nhà máy A KCN Trảng Bàng, Tây Ninh"
+        elif target_lang == "English": return "Tay Ninh Plant Client A"
+        return "越南樟榜工業區A廠"
 
-        return {
-            "invoice_no": get_text(root, "SHDon") or get_text(root, "InvoiceNo"),
-            "pattern": get_text(root, "KHMSHDon") or get_text(root, "InvoicePattern"),
-            "seller_name": get_text(root, "TenNBan") or get_text(root, "ComName"),
-            "seller_tax_code": get_text(root, "MSTNBan") or get_text(root, "ComTaxCode"),
-            "total_amount": float(
-                get_text(root, "TgTTTBSo")
-                or get_text(root, "TotalAmountWithVAT")
-                or 0
-            ),
-            "currency": get_text(root, "DVTTe") or "VND",
-            "date": get_text(root, "NLap") or get_text(root, "AriseDate"),
-        }
-    except Exception as e:
-        st.error(f"❌ XML 解析失敗: {e}")
-        return None
+    # 發票狀態對應
+    if "已驗證" in text_val or "hợp lệ" in val_lower or "valid" in val_lower:
+        if target_lang == "Tiếng Việt": return "Đã cấp mã (Hợp lệ)"
+        elif target_lang == "English": return "Verified (Valid)"
+        return "🟢 稅務局已驗證 (合規)"
 
+    return text_val
 
-# ----------------------------------------------------
-# 2. IMAP 信箱發票自動抓取邏輯
-# ----------------------------------------------------
-def fetch_invoices_from_email(
-    imap_server, email_user, email_pass, folder="INBOX", search_limit=10
-):
-    invoices = []
-    try:
-        mail = imaplib.IMAP4_SSL(imap_server)
-        mail.login(email_user, email_pass)
-        mail.select(folder)
+def render_invoice_management(engine=None, lang="繁體中文", **kwargs):
+    active_lang = lang or st.session_state.get("lang", "繁體中文")
+    L = INVOICE_I18N.get(active_lang, INVOICE_I18N["繁體中文"])
 
-        status, messages = mail.search(
-            None, 'OR OR (SUBJECT "invoice") (SUBJECT "hóa đơn") (SUBJECT "發票")'
-        )
-        email_ids = messages[0].split()
-
-        if not email_ids:
-            return (
-                [],
-                "ℹ️ 信箱中未找到符合「invoice / hóa đơn / 發票」關鍵字的郵件。",
-            )
-
-        for e_id in email_ids[-search_limit:]:
-            res, msg_data = mail.fetch(e_id, "(RFC822)")
-            for response_part in msg_data:
-                if isinstance(response_part, tuple):
-                    msg = email.message_from_bytes(response_part[1])
-
-                    subject, encoding = decode_header(msg["Subject"])[0]
-                    if isinstance(subject, bytes):
-                        subject = subject.decode(
-                            encoding if encoding else "utf-8", errors="ignore"
-                        )
-
-                    sender = msg.get("From")
-                    date_sent = msg.get("Date")
-
-                    attachments = []
-                    if msg.is_multipart():
-                        for part in msg.walk():
-                            content_disposition = str(
-                                part.get("Content-Disposition")
-                            )
-                            if "attachment" in content_disposition:
-                                filename = part.get_filename()
-                                if filename:
-                                    attachments.append(filename)
-
-                    invoices.append(
-                        {
-                            "id": e_id.decode(),
-                            "subject": subject,
-                            "sender": sender,
-                            "date": date_sent,
-                            "attachments": (
-                                attachments if attachments else ["（內文無附件）"]
-                            ),
-                        }
-                    )
-
-        mail.logout()
-        return invoices, "✅ 成功連線並讀取電子發票郵件！"
-    except Exception as e:
-        return [], f"❌ IMAP 信箱連線失敗: {str(e)}"
-
-
-# ----------------------------------------------------
-# 3. 越南電子發票額度與沙盒預警元件
-# ----------------------------------------------------
-def render_invoice_quota_widget():
-    st.markdown("#### 🇻🇳 越南電子發票 (Hóa đơn điện tử) 張數額度與預警中心")
-    tax_id = os.getenv("VN_TAX_ID", "")
-    is_live_mode = bool(tax_id)
-
-    if is_live_mode:
-        st.success(f"🟢 **正式連線模式** (公司稅號 MST: `{tax_id}`)")
-        total_quota = 5000
-        used_quota = 4820
-    else:
-        st.info("🟡 **沙盒模擬模式** (未設定公司發票 API，目前使用測試模擬數據)")
-        col_m1, col_m2 = st.columns(2)
-        with col_m1:
-            total_quota = st.number_input(
-                "設定測試總發票張數：",
-                value=1000,
-                step=100,
-                key="mock_total_quota",
-            )
-        with col_m2:
-            used_quota = st.number_input(
-                "設定測試已使用張數：", value=850, step=50, key="mock_used_quota"
-            )
-
-    remaining_quota = total_quota - used_quota
-    remaining_ratio = (
-        (remaining_quota / total_quota) * 100 if total_quota > 0 else 0
-    )
-
-    col1, col2, col3 = st.columns(3)
-    col1.metric("發票套裝總張數", f"{total_quota:,} 張")
-    col2.metric("已開立張數", f"{used_quota:,} 張")
-
-    if remaining_ratio <= 10:
-        col3.metric(
-            "剩餘可用張數",
-            f"{remaining_quota:,} 張 ({remaining_ratio:.1f}%)",
-            delta="-極低 alert",
-            delta_color="inverse",
-        )
-        st.error(
-            f"🚨 **緊急預警**：發票剩餘張數僅剩 `{remaining_quota}` 張 ({remaining_ratio:.1f}%)！預計 2 天內用盡，請儘速加購發票套裝！"
-        )
-    elif remaining_ratio <= 20:
-        col3.metric(
-            "剩餘可用張數",
-            f"{remaining_quota:,} 張 ({remaining_ratio:.1f}%)",
-            delta="-偏低 warning",
-            delta_color="inverse",
-        )
-        st.warning(
-            f"⚠️ **用量提醒**：發票剩餘張數低於 20% (剩餘 `{remaining_quota}` 張)，建議通知財務發起加購。"
-        )
-    else:
-        col3.metric(
-            "剩餘可用張數", f"{remaining_quota:,} 張 ({remaining_ratio:.1f}%)"
-        )
-        st.success("🟢 發票數量充裕，運作正常。")
-
-    st.markdown("---")
-    col_btn1, col_btn2 = st.columns([1, 2])
-    with col_btn1:
-        if st.button(
-            "🚀 一鍵發起發票加購請購單 (Top-up Order)",
-            type="primary",
-            key="btn_topup_invoice",
-        ):
-            st.success(
-                "✅ 已自動建立請購單：【加購 5,000 張電子發票套裝】，並發送簽核通知至財務主管！"
-            )
-
-    with col_btn2:
-        with st.expander(
-            "⚙️ 填入公司稅號與正式發票 API 金鑰 (公司成立後填入)"
-        ):
-            new_tax_id = st.text_input(
-                "公司稅號 (Mã số thuế - MST)：",
-                value=tax_id,
-                placeholder="例如: 0312345678",
-            )
-            provider = st.selectbox(
-                "電子發票服務商：",
-                [
-                    "VNPT (Hóa đơn điện tử)",
-                    "Viettel (S-Invoice)",
-                    "MISA (meInvoice)",
-                    "EasyInvoice",
-                    "BKAV",
-                ],
-            )
-            api_token = st.text_input(
-                "服務商 API Token / Password：", type="password"
-            )
-            if st.button("💾 儲存正式發票 API 連線設定"):
-                os.environ["VN_TAX_ID"] = new_tax_id
-                st.success(
-                    "✅ 已成功儲存發票 API 設定！系統即將連線真實發票服務商。"
-                )
-                st.rerun()
-
-
-# ----------------------------------------------------
-# 4. render_invoice_management 介面與功能整合 (多語系支援)
-# ----------------------------------------------------
-def render_invoice_management(engine=None, lang="繁體中文"):
-    current_lang = lang or st.session_state.get("current_lang", "繁體中文")
-    L = get_lang_dict(current_lang)
-
-    st.subheader(L["title"])
+    st.title(L["title"])
     st.caption(L["caption"])
 
-    if "invoice_db" not in st.session_state:
-        st.session_state.invoice_db = [
+    # 初始化發票資料庫
+    if "invoices_db" not in st.session_state:
+        st.session_state.invoices_db = [
             {
-                "invoice_no": "PETTY-2026-01",
-                "pattern": "小額憑證",
-                "seller_name": "Shopee VN (蝦皮小額五金)",
-                "seller_tax_code": "-",
-                "total_amount": 1200000.0,
-                "currency": "VND",
-                "date": "2026-10-06",
-                "type": "未達 500 萬 VND 小額憑證 (送貨單/收據)",
-                "uploader": "Admin (系統管理員)"
+                "code": "26E-0001",
+                "cust": "越南樟榜工業區A廠",
+                "tax_code": "3901234567",
+                "amount": 25000.0,
+                "vat": 2500.0,
+                "total": 27500.0,
+                "status": "已驗證",
+                "date": "2026-10-02"
+            },
+            {
+                "code": "26E-0002",
+                "cust": "越南平陽美德金屬廠",
+                "tax_code": "3709876543",
+                "amount": 15000.0,
+                "vat": 1500.0,
+                "total": 16500.0,
+                "status": "已驗證",
+                "date": "2026-10-04"
             }
         ]
 
-    tab_xml, tab_small_cash, tab_email, tab_quota = st.tabs(
-        [L["tab_xml"], L["tab_small_cash"], L["tab_email"], L["tab_quota"]]
-    )
+    tab_list, tab_issue, tab_verify = st.tabs([
+        L["tab_list"], L["tab_issue"], L["tab_verify"]
+    ])
 
-    # 頁籤一：XML 上傳、解析與 Pandas 資料表登記功能
-    with tab_xml:
-        uploaded_xml = st.file_uploader(
-            L["xml_uploader"], type=["xml"], key="uploader_xml_file"
-        )
-        if uploaded_xml is not None:
-            parsed_data = parse_vietnam_xml(uploaded_xml.read())
-            if parsed_data:
-                parsed_data["type"] = "正規電子發票 (VAT)"
-                st.success(L["success_xml"])
-                st.json(parsed_data)
-                if st.button(
-                    L["btn_save_db"], type="primary", key="btn_save_xml_db"
-                ):
-                    user_name = st.session_state.get("user_info", {}).get(
-                        "name", "Alex Chen (管理者)"
-                    )
-                    parsed_data["uploader"] = user_name
-                    st.session_state.invoice_db.append(parsed_data)
-                    st.success(L["success_save"])
-                    st.rerun()
+    with tab_list:
+        st.markdown(f"### {L['table_header']}")
+        if st.session_state.invoices_db:
+            display_data = []
+            for idx, inv in enumerate(st.session_state.invoices_db, 1):
+                display_data.append({
+                    L["col_index"]: idx,
+                    L["col_code"]: inv["code"],
+                    L["col_cust"]: smart_translate_invoice(inv["cust"], active_lang),
+                    L["col_tax"]: inv["tax_code"],
+                    L["col_subtotal"]: f"${inv['amount']:,.2f} USD",
+                    L["col_vat"]: f"${inv['vat']:,.2f} USD",
+                    L["col_total"]: f"${inv['total']:,.2f} USD",
+                    L["col_status"]: smart_translate_invoice(inv["status"], active_lang),
+                    L["col_date"]: inv["date"]
+                })
+            st.dataframe(pd.DataFrame(display_data), use_container_width=True)
+        else:
+            st.info(L["no_records"])
 
-    # 頁籤二：500萬以下小額憑證與外箱送貨單照片上傳
-    with tab_small_cash:
-        st.markdown("### 🧾 越南廠區小額零用金與蝦皮採購送貨單登錄")
-        st.caption("針對未達 500 萬 VND 之小額採購，透過送貨單據與外箱照片進行合規報銷歸檔。")
-
-        with st.form("small_cash_form"):
+    with tab_issue:
+        st.markdown(f"### {L['issue_header']}")
+        with st.form("form_issue_invoice"):
             c1, c2 = st.columns(2)
             with c1:
-                item_name = st.text_input("採購品名 / 用途說明", placeholder="例如：廠房水電維修五金耗材")
-                amount_vnd = st.number_input("採購金額 (VND)", min_value=0, value=1200000, step=100000)
+                inv_code = st.text_input(L["lbl_inv_code"], value=f"26E-{len(st.session_state.invoices_db)+1:04d}")
+                cust_name = st.text_input(L["lbl_cust_name"], placeholder=L["cust_placeholder"])
+                tax_code = st.text_input(L["lbl_tax_code"], placeholder=L["tax_placeholder"])
             with c2:
-                purchase_channel = st.selectbox("採購管道", ["蝦皮購物 (Shopee VN)", "當地實體五金行", "其他小額零用金"])
-                voucher_type = st.selectbox("憑證類型", ["未達 500 萬 VND 小額憑證 (送貨單/收據)", "免用統一發票收據"])
+                amount = st.number_input(L["lbl_amount"], min_value=0.0, value=10000.0, step=500.0)
+                vat_amount = amount * 0.1
+                st.info(f"💡 自動計算 VAT (10%)：**${vat_amount:,.2f} USD**（含稅總計：**${amount + vat_amount:,.2f} USD**）")
+                desc = st.text_area(L["lbl_desc"], placeholder=L["desc_placeholder"])
 
-            # 拍照或上傳外箱送貨單據照片
-            uploaded_voucher_img = st.file_uploader(
-                "📷 請上傳外箱送貨單據或收據照片（作為報銷佐證）", 
-                type=["png", "jpg", "jpeg"]
-            )
-
-            if st.form_submit_button("📤 提交小額憑證與送貨單歸檔", type="primary"):
-                if item_name and uploaded_voucher_img:
-                    new_voucher = {
-                        "invoice_no": f"PETTY-{len(st.session_state.invoice_db)+1:03d}",
-                        "pattern": "小額憑證",
-                        "seller_name": purchase_channel,
-                        "seller_tax_code": "-",
-                        "total_amount": float(amount_vnd),
-                        "currency": "VND",
-                        "date": "2026-10-06",
-                        "type": voucher_type,
-                        "uploader": st.session_state.get("user_info", {}).get("name", "Admin")
-                    }
-                    st.session_state.invoice_db.append(new_voucher)
-                    st.success(f"✅ 成功登錄小額採購：{item_name}（金額：{amount_vnd:,.0f} VND），已綁定外箱送貨單據照片！")
-                    st.rerun()
-                else:
-                    st.warning("⚠️ 請完整填寫品名並上傳外箱送貨單據照片以確保合規！")
-
-    # 共同顯示已登錄的發票與憑證列表
-    st.divider()
-    if st.session_state.invoice_db:
-        st.markdown(f"#### {L['db_list']}")
-        st.dataframe(
-            pd.DataFrame(st.session_state.invoice_db),
-            use_container_width=True,
-        )
-
-    # 頁籤三：IMAP 信箱發票讀取
-    with tab_email:
-        st.markdown(f"#### {L['imap_title']}")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            imap_server = st.text_input(
-                L["server_label"], value="imap.gmail.com", key="imap_server"
-            )
-        with col2:
-            email_user = st.text_input(
-                L["user_label"], value="accounting@company.com", key="email_user"
-            )
-        with col3:
-            email_pass = st.text_input(
-                L["pass_label"], type="password", key="email_pass"
-            )
-
-        if st.button(
-            L["btn_fetch"], type="primary", key="btn_fetch_email_invoices"
-        ):
-            with st.spinner(L["spinner_fetch"]):
-                invoices, msg = fetch_invoices_from_email(
-                    imap_server, email_user, email_pass
-                )
-                if invoices:
-                    st.success(msg)
-                    for inv in invoices:
-                        with st.expander(
-                            f"📄 【{inv['date']}】{inv['subject']} — 寄件者: {inv['sender']}"
-                        ):
-                            st.write(f"• **郵件 ID**: `{inv['id']}`")
-                            st.write(
-                                f"• **偵測到的發票附件/檔案**: `{', '.join(inv['attachments'])}`"
-                            )
-                else:
-                    st.info(msg)
-
-    # 頁籤四：發票張數預警與購買
-    with tab_quota:
-        render_invoice_quota_widget()
-
-
-# 保持相容入口，確保全系統調用均不跳錯
-def render_invoice_management_page(engine=None, lang="繁體中文"):
-    render_invoice_management(engine, lang)
-
-
-def render_invoice(engine=None, lang="繁體中文"):
-    render_invoice_management(engine, lang)
-
-
-def show(engine=None, lang="繁體中文"):
-    render_invoice_management(engine, lang)
-
-
-def main(engine=None, lang="繁體中文"):
-    render_invoice_management(engine, lang)
+            if st.form_submit_button(L["btn_issue"], type="primary", use_container_width=True):
+                if inv_code and cust_name and tax_code:
+                    st.session_state.invoices_db.insert(0, {
+                        "code": inv_code,
+                        "cust": cust_name,
+                        "tax_code": tax_code,
+                        "amount": amount,
+                        "vat": vat_amount
