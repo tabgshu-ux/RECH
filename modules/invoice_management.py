@@ -11,16 +11,17 @@ import streamlit as st
 # ----------------------------------------------------
 INVOICE_I18N = {
     "繁體中文": {
-        "title": "🇻🇳 裕豐電機工業 - 越南電子發票自動讀取與登記中心",
-        "caption": "📱 整合 XML 檔案解析、通用信箱自動讀取 (IMAP) 與發票張數額度預警監控。",
+        "title": "🇻🇳 裕豐電機工業 - 越南電子發票自動讀取與小額憑證中心",
+        "caption": "📱 整合 XML 檔案解析、IMAP 信箱讀取、發票額度預警及 500 萬 VND 以下小額送貨單上傳管控。",
         "tab_xml": "📄 越南電子發票 XML 解析與登錄",
+        "tab_small_cash": "🧾 500萬以下小額憑證與送貨單上傳",
         "tab_email": "📧 通用信箱發票讀取 (IMAP)",
         "tab_quota": "📊 電子發票張數監控與加購",
         "xml_uploader": "選擇越南電子發票檔 (.xml)",
         "success_xml": "✅ XML 發票解析成功！",
         "btn_save_db": "💾 確認匯入系統資料庫",
         "success_save": "🎉 發票已成功登錄！",
-        "db_list": "📜 已登錄發票資料庫列表：",
+        "db_list": "📜 已登錄發票與憑證資料庫列表：",
         "imap_title": "📧 通用電子郵件發票自動讀取 (IMAP)",
         "server_label": "IMAP 伺服器地址：",
         "user_label": "電子信箱帳號：",
@@ -29,16 +30,17 @@ INVOICE_I18N = {
         "spinner_fetch": "正在連線 IMAP 信箱並解析電子發票...",
     },
     "Tiếng Việt": {
-        "title": "🇻🇳 REETECH INDUSTRIAL - Trung tâm Đọc & Đăng ký Hóa đơn điện tử",
-        "caption": "📱 Tích hợp phân tích XML, đọc email tự động (IMAP) và giám sát hạn mức hóa đơn.",
+        "title": "🇻🇳 REETECH INDUSTRIAL - Trung tâm Hóa đơn điện tử & Chứng từ nhỏ",
+        "caption": "📱 Tích hợp phân tích XML, đọc email (IMAP), giám sát hạn mức và chứng từ giao hàng dưới 5 triệu VND.",
         "tab_xml": "📄 Phân tích & Đăng ký XML",
+        "tab_small_cash": "🧾 Chứng từ nhỏ & Biên nhận dưới 5tr",
         "tab_email": "📧 Đọc Hóa đơn qua Email (IMAP)",
-        "tab_quota": "📊 Giám sát & Mua thêm Hóa đơn",
+        "tab_quota": "📊 Giám sát hạn mức hóa đơn",
         "xml_uploader": "Chọn file hóa đơn điện tử (.xml)",
         "success_xml": "✅ Đọc XML hóa đơn thành công!",
         "btn_save_db": "💾 Xác nhận lưu vào Cơ sở dữ liệu",
         "success_save": "🎉 Hóa đơn đã được đăng ký thành công!",
-        "db_list": "📜 Danh sách hóa đơn đã đăng ký:",
+        "db_list": "📜 Danh sách hóa đơn và chứng từ đã đăng ký:",
         "imap_title": "📧 Tự động đọc hóa đơn qua Email (IMAP)",
         "server_label": "Địa chỉ máy chủ IMAP:",
         "user_label": "Tài khoản Email:",
@@ -47,16 +49,17 @@ INVOICE_I18N = {
         "spinner_fetch": "Đang kết nối IMAP và phân tích hóa đơn...",
     },
     "English": {
-        "title": "🇻🇳 REETECH INDUSTRIAL - E-Invoice Auto-Reading & Registration Center",
-        "caption": "📱 Integrated XML parser, IMAP auto-fetch, and e-invoice quota monitoring.",
+        "title": "🇻🇳 REETECH INDUSTRIAL - E-Invoice & Small Voucher Center",
+        "caption": "📱 XML parser, IMAP fetch, quota monitoring, and under 5M VND small delivery voucher uploads.",
         "tab_xml": "📄 E-Invoice XML Parser & Registration",
+        "tab_small_cash": "🧾 Under 5M VND Small Vouchers",
         "tab_email": "📧 Email E-Invoice Reader (IMAP)",
         "tab_quota": "📊 E-Invoice Quota & Top-up",
         "xml_uploader": "Select Vietnam E-Invoice File (.xml)",
         "success_xml": "✅ XML Invoice parsed successfully!",
         "btn_save_db": "💾 Save to System Database",
         "success_save": "🎉 Invoice successfully registered!",
-        "db_list": "📜 Registered Invoice Database:",
+        "db_list": "📜 Registered Invoice & Voucher Database:",
         "imap_title": "📧 Automated Email E-Invoice Reader (IMAP)",
         "server_label": "IMAP Server Address:",
         "user_label": "Email Account:",
@@ -286,10 +289,22 @@ def render_invoice_management(engine=None, lang="繁體中文"):
     st.caption(L["caption"])
 
     if "invoice_db" not in st.session_state:
-        st.session_state.invoice_db = []
+        st.session_state.invoice_db = [
+            {
+                "invoice_no": "PETTY-2026-01",
+                "pattern": "小額憑證",
+                "seller_name": "Shopee VN (蝦皮小額五金)",
+                "seller_tax_code": "-",
+                "total_amount": 1200000.0,
+                "currency": "VND",
+                "date": "2026-10-06",
+                "type": "未達 500 萬 VND 小額憑證 (送貨單/收據)",
+                "uploader": "Admin (系統管理員)"
+            }
+        ]
 
-    tab_xml, tab_email, tab_quota = st.tabs(
-        [L["tab_xml"], L["tab_email"], L["tab_quota"]]
+    tab_xml, tab_small_cash, tab_email, tab_quota = st.tabs(
+        [L["tab_xml"], L["tab_small_cash"], L["tab_email"], L["tab_quota"]]
     )
 
     # 頁籤一：XML 上傳、解析與 Pandas 資料表登記功能
@@ -300,6 +315,7 @@ def render_invoice_management(engine=None, lang="繁體中文"):
         if uploaded_xml is not None:
             parsed_data = parse_vietnam_xml(uploaded_xml.read())
             if parsed_data:
+                parsed_data["type"] = "正規電子發票 (VAT)"
                 st.success(L["success_xml"])
                 st.json(parsed_data)
                 if st.button(
@@ -313,15 +329,55 @@ def render_invoice_management(engine=None, lang="繁體中文"):
                     st.success(L["success_save"])
                     st.rerun()
 
-        st.divider()
-        if st.session_state.invoice_db:
-            st.markdown(f"#### {L['db_list']}")
-            st.dataframe(
-                pd.DataFrame(st.session_state.invoice_db),
-                use_container_width=True,
+    # 頁籤二：500萬以下小額憑證與外箱送貨單照片上傳
+    with tab_small_cash:
+        st.markdown("### 🧾 越南廠區小額零用金與蝦皮採購送貨單登錄")
+        st.caption("針對未達 500 萬 VND 之小額採購，透過送貨單據與外箱照片進行合規報銷歸檔。")
+
+        with st.form("small_cash_form"):
+            c1, c2 = st.columns(2)
+            with c1:
+                item_name = st.text_input("採購品名 / 用途說明", placeholder="例如：廠房水電維修五金耗材")
+                amount_vnd = st.number_input("採購金額 (VND)", min_value=0, value=1200000, step=100000)
+            with c2:
+                purchase_channel = st.selectbox("採購管道", ["蝦皮購物 (Shopee VN)", "當地實體五金行", "其他小額零用金"])
+                voucher_type = st.selectbox("憑證類型", ["未達 500 萬 VND 小額憑證 (送貨單/收據)", "免用統一發票收據"])
+
+            # 拍照或上傳外箱送貨單據照片
+            uploaded_voucher_img = st.file_uploader(
+                "📷 請上傳外箱送貨單據或收據照片（作為報銷佐證）", 
+                type=["png", "jpg", "jpeg"]
             )
 
-    # 頁籤二：IMAP 信箱發票讀取
+            if st.form_submit_button("📤 提交小額憑證與送貨單歸檔", type="primary"):
+                if item_name and uploaded_voucher_img:
+                    new_voucher = {
+                        "invoice_no": f"PETTY-{len(st.session_state.invoice_db)+1:03d}",
+                        "pattern": "小額憑證",
+                        "seller_name": purchase_channel,
+                        "seller_tax_code": "-",
+                        "total_amount": float(amount_vnd),
+                        "currency": "VND",
+                        "date": "2026-10-06",
+                        "type": voucher_type,
+                        "uploader": st.session_state.get("user_info", {}).get("name", "Admin")
+                    }
+                    st.session_state.invoice_db.append(new_voucher)
+                    st.success(f"✅ 成功登錄小額採購：{item_name}（金額：{amount_vnd:,.0f} VND），已綁定外箱送貨單據照片！")
+                    st.rerun()
+                else:
+                    st.warning("⚠️ 請完整填寫品名並上傳外箱送貨單據照片以確保合規！")
+
+    # 共同顯示已登錄的發票與憑證列表
+    st.divider()
+    if st.session_state.invoice_db:
+        st.markdown(f"#### {L['db_list']}")
+        st.dataframe(
+            pd.DataFrame(st.session_state.invoice_db),
+            use_container_width=True,
+        )
+
+    # 頁籤三：IMAP 信箱發票讀取
     with tab_email:
         st.markdown(f"#### {L['imap_title']}")
         col1, col2, col3 = st.columns(3)
@@ -358,7 +414,7 @@ def render_invoice_management(engine=None, lang="繁體中文"):
                 else:
                     st.info(msg)
 
-    # 頁籤三：發票張數預警與購買
+    # 頁籤四：發票張數預警與購買
     with tab_quota:
         render_invoice_quota_widget()
 
