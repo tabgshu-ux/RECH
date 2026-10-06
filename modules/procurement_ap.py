@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import datetime
-import uuid
 
 # ----------------------------------------------------
 # 🌐 AP 採購與應付帳款模組多語系字典 (i18n)
@@ -25,7 +24,7 @@ AP_I18N = {
         "select_po": "勾選要核銷的待付款採購單 (PO)",
         "btn_add_unc": "📥 儲存水單並完成採購單核銷",
         "success_unc": "✅ 銀行轉帳水單已成功登記，對應採購單已自動更新為【已付款】！",
-        "delete_btn": "🗑️ 刪除此筆水單記錄",
+        "delete_btn": "🗑️️ 刪除此筆水單記錄",
     },
     "Tiếng Việt": {
         "title": "🛒 Quản lý - Mua hàng & Phải trả (AP)",
@@ -76,9 +75,6 @@ def get_ap_lang_dict(lang_param):
 def render_procurement_ap_page(engine=None, lang="繁體中文"):
     L = get_ap_lang_dict(lang)
 
-    # 產生動態隨機識別碼，徹底解決雙重渲染帶來的 key 衝突
-    uid = str(uuid.uuid4())[:8]
-
     st.subheader(L["title"])
     st.caption(L["caption"])
 
@@ -90,8 +86,8 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
         st.session_state.ap_invoices_db = [
             {
                 "po_id": "PO-2026-01",
-                "vendor": "蝦皮購物 (Shopee VN 五金)",
-                "item_name": "廠房水電維修五金零配件",
+                "vendor": "Shopee VN",
+                "item_name": "廠房五金配件",
                 "barcode": "8935012345678",
                 "qty": 10,
                 "unit": "個 / Pcs",
@@ -107,7 +103,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
         st.session_state.warehouse_inventory_db = [
             {
                 "barcode": "8935012345678",
-                "item_name": "廠房水電維修五金零配件",
+                "item_name": "廠房五金配件",
                 "stock_qty": 10,
                 "unit": "個 / Pcs",
                 "last_update": "2026-10-06"
@@ -119,8 +115,8 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
             {
                 "id": "PETTY-2026-01",
                 "date": "2026-10-06",
-                "channel": "蝦皮購物 (Shopee VN)",
-                "item": "廠房水電維修五金耗材",
+                "channel": "Shopee VN",
+                "item": "廠房耗材",
                 "amount": 1200000.0,
                 "status": "🟢 已轉入會計費用傳票"
             }
@@ -132,30 +128,37 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
     ])
 
     # ----------------------------------------------------
-    # 📥 頁籤一：登記新採購進貨單與詳細品項（自動同步入庫）
+    # 📥 頁籤一：登記新採購進貨單與詳細品項（支援美金小數點後 3 位）
     # ----------------------------------------------------
     with tab_add:
         st.markdown(f"### {L['tab_add']}")
-        st.caption("詳細記錄採購品名、條碼與數量，送出後系統將【自動同步入庫】至廠區倉庫庫存中。")
+        st.caption("詳細記錄採購品名、條碼與數量。選擇【USD】時自動支援小數點後 3 位精準計價，選擇【VND】則以整數計價。")
 
         col_a, col_b = st.columns(2)
         with col_a:
-            po_num = st.text_input("採購單號 (PO No.)", value="PO-2026-02", key=f"po_num_{uid}")
-            v_name = st.text_input("廠商名稱 (Vendor Name)", placeholder="例如: 台灣總部 / 越南供應商", key=f"v_name_{uid}")
-            item_name = st.text_input("採購物品名稱 / 規格說明", placeholder="例如: 3相無熔絲開關 / 配電箱耗材", key=f"item_name_{uid}")
+            po_num = st.text_input("採購單號 (PO No.)", value="PO-2026-02", key="ap_curr_po")
+            v_name = st.text_input("廠商名稱 (Vendor Name)", placeholder="例如: 台灣總部 / 越南供應商", key="ap_curr_v")
+            item_name = st.text_input("採購物品名稱 / 規格說明", placeholder="例如: 鞋材大底 / 膠水原料", key="ap_curr_item")
         with col_b:
-            barcode = st.text_input("商品條碼 / 料號 (Barcode / SKU)", placeholder="例如: 8935012345678", key=f"barcode_{uid}")
+            barcode = st.text_input("商品條碼 / 料號 (Barcode / SKU)", placeholder="例如: 8935012345678", key="ap_curr_bc")
             c_q1, c_q2 = st.columns(2)
             with c_q1:
-                qty = st.number_input("採購數量", min_value=1.0, value=10.0, step=1.0, key=f"qty_{uid}")
+                qty = st.number_input("採購數量", min_value=1.0, value=1000.0, step=1.0, key="ap_curr_qty")
             with c_q2:
-                unit = st.selectbox("單位", ["個 (Pcs)", "套 (Sets)", "公斤 (Kg)", "公尺 (M)", "批 (Lot)"], key=f"unit_{uid}")
+                unit = st.selectbox("單位", ["雙 (Pairs)", "個 (Pcs)", "公斤 (Kg)", "公升 (L)", "批 (Lot)"], key="ap_curr_unit")
             
-            p_amt = st.number_input("總含稅金額 (Total Amount)", value=500000.0, step=50000.0, key=f"p_amt_{uid}")
-            curr_type = st.selectbox("計價幣別", ["VND", "USD", "TWD"], key=f"curr_{uid}")
+            # 💡 幣別選擇欄位置於金額上方，讓系統動態判斷精度
+            curr_type = st.selectbox("計價幣別 (Currency)", ["VND", "USD", "TWD"], key="ap_curr_type")
 
-        if st.button("💾 儲存進貨記錄並【自動同步入庫】", type="primary", key=f"btn_save_{uid}"):
+            # 🛠️ 根據幣別動態調整金額輸入精度：USD 支援小數點後 3 位 (0.001)，VND 則為整數
+            if curr_type == "USD":
+                p_amt = st.number_input("總含稅金額 (USD - 精確至小數點後 3 位)", min_value=0.0, value=1.234, format="%.3f", step=0.001, key="ap_curr_amt_usd")
+            else:
+                p_amt = st.number_input("總含稅金額 (VND / TWD - 整數)", min_value=0.0, value=500000.0, step=1000.0, key="ap_curr_amt_vnd")
+
+        if st.button("💾 儲存進貨記錄並【自動同步入庫】", type="primary", key="ap_curr_btn"):
             if v_name and item_name:
+                # 1. 寫入應付帳款 (AP) 採購發票庫
                 st.session_state.ap_invoices_db.append({
                     "po_id": po_num,
                     "vendor": v_name,
@@ -170,6 +173,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
                     "file": "manual_receipt.pdf"
                 })
 
+                # 2. 自動同步入庫至倉庫庫存
                 item_exists = False
                 for stock in st.session_state.warehouse_inventory_db:
                     if barcode and stock["barcode"] == barcode:
@@ -187,7 +191,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
                         "last_update": str(datetime.date.today())
                     })
 
-                st.success(f"✅ 成功採購【{item_name}】共 {qty} {unit}！已同步列入應付帳款，並【自動完成倉庫入庫】！")
+                st.success(f"✅ 成功採購【{item_name}】共 {qty} {unit}（金額: {p_amt:,.3f} {curr_type}）！已自動完成倉庫入庫與 AP 應付帳款登錄！")
                 st.rerun()
             else:
                 st.warning("⚠️ 請完整填寫廠商名稱與採購物品名稱！")
@@ -208,7 +212,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
         st.caption(L['unc_caption'])
 
         unpaid_pos = [item for item in st.session_state.ap_invoices_db if "待" in item["status"] or "Pending" in item["status"]]
-        unpaid_po_ids = [f"{item['po_id']} - {item['vendor']} ({item['item_name']}) - {item['amount']:,.0f} {item['currency']}" for item in unpaid_pos]
+        unpaid_po_ids = [f"{item['po_id']} - {item['vendor']} ({item['item_name']}) - {item['amount']:,.3f} {item['currency']}" for item in unpaid_pos]
 
         vietnam_banks = [
             "Vietcombank", "BIDV", "Agribank", "VietinBank", "Techcombank",
@@ -217,15 +221,15 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
 
         col1, col2 = st.columns(2)
         with col1:
-            unc_no = st.text_input(L["unc_no"], placeholder="例如: UNC-2026-002", key=f"unc_no_{uid}")
-            vendor_name = st.text_input(L["vendor_name"], placeholder="例如: 台灣總部 / 越南供應商", key=f"unc_vendor_{uid}")
-            amount = st.number_input(L["amount"], min_value=0.0, value=1200000.0, step=100000.0, key=f"unc_amt_{uid}")
+            unc_no = st.text_input(L["unc_no"], placeholder="例如: UNC-2026-002", key="ap_curr_unc_no")
+            vendor_name = st.text_input(L["vendor_name"], placeholder="例如: 台灣總部 / 越南供應商", key="ap_curr_unc_v")
+            amount = st.number_input(L["amount"], min_value=0.0, value=1200000.0, step=1000.0, key="ap_curr_unc_amt")
         with col2:
-            bank_name = st.selectbox(L["bank_name"], vietnam_banks, key=f"unc_bank_{uid}")
-            selected_target_po = st.selectbox(L["select_po"], unpaid_po_ids if unpaid_po_ids else ["目前無待付款採購單"], key=f"unc_po_{uid}")
-            currency = st.selectbox("幣別", ["VND", "USD", "TWD"], key=f"unc_curr_{uid}")
+            bank_name = st.selectbox(L["bank_name"], vietnam_banks, key="ap_curr_unc_bank")
+            selected_target_po = st.selectbox(L["select_po"], unpaid_po_ids if unpaid_po_ids else ["目前無待付款採購單"], key="ap_curr_unc_po")
+            currency = st.selectbox("幣別", ["VND", "USD", "TWD"], key="ap_curr_unc_curr")
 
-        if st.button(L["btn_add_unc"], type="primary", key=f"btn_unc_{uid}"):
+        if st.button(L["btn_add_unc"], type="primary", key="ap_curr_btn_unc"):
             if unc_no and vendor_name:
                 st.session_state.unc_db.append({
                     "id": unc_no,
@@ -252,11 +256,11 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
         st.markdown("#### 📜 現有銀行轉帳水單清單與勾稽狀態")
         if st.session_state.unc_db:
             for idx, item in enumerate(st.session_state.unc_db):
-                with st.expander(f"📄 水單: {item['id']} | 廠商: {item['vendor']} | 金額: {item['amount']:,.2f} {item['currency']}"):
+                with st.expander(f"📄 水單: {item['id']} | 廠商: {item['vendor']} | 金額: {item['amount']:,.3f} {item['currency']}"):
                     st.write(f"• **匯款銀行**: {item['bank']}")
                     st.write(f"• **轉帳日期**: {item['date']}")
                     st.write(f"• **已勾稽採購單**: `{item['matched_po']}`")
-                    if st.button(L["delete_btn"], key=f"del_unc_{idx}_{uid}"):
+                    if st.button(L["delete_btn"], key=f"ap_curr_del_{idx}"):
                         st.session_state.unc_db.pop(idx)
                         st.success("🗑️ 已成功刪除該筆水單記錄！")
                         st.rerun()
@@ -284,7 +288,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
     # ----------------------------------------------------
     with tab_search:
         st.markdown(f"### {L['tab_search']}")
-        search_query = st.text_input("輸入商品條碼或品名關鍵字查詢歷史價格：", key=f"search_{uid}")
+        search_query = st.text_input("輸入商品條碼或品名關鍵字查詢歷史價格：", key="ap_curr_search")
         if search_query:
             st.success(f"🔍 查無 '{search_query}' 的過往異常波動紀錄，價格穩定。")
 
