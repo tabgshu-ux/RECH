@@ -115,36 +115,35 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
     ])
 
     # ----------------------------------------------------
-    # ➕ 頁籤一：登記新採購進貨單與廠商發票
+    # ➕ 頁籤一：登記新採購進貨單與廠商發票（無 Form 限制）
     # ----------------------------------------------------
     with tab_add:
         st.markdown("### ➕ 1. 手動登記新採購進貨單與廠商發票")
-        with st.form("unique_form_add_ap_inv_v2"):
-            col_a, col_b = st.columns(2)
-            with col_a:
-                po_num = st.text_input("採購單號 (PO No.)", value="PO-2026-02", key="input_po_num_v2")
-                v_name = st.text_input("廠商名稱 (Vendor Name)", placeholder="例如: 台灣總部 / 越南供應商", key="input_v_name_v2")
-            with col_b:
-                p_amt = st.number_input("發票含稅金額", value=500000.0, step=50000.0, key="input_p_amt_v2")
-                curr_type = st.selectbox("計價幣別", ["VND", "USD", "TWD"], key="ap_curr_add_v2")
+        col_a, col_b = st.columns(2)
+        with col_a:
+            po_num = st.text_input("採購單號 (PO No.)", value="PO-2026-02", key="safe_po_num")
+            v_name = st.text_input("廠商名稱 (Vendor Name)", placeholder="例如: 台灣總部 / 越南供應商", key="safe_v_name")
+        with col_b:
+            p_amt = st.number_input("發票含稅金額", value=500000.0, step=50000.0, key="safe_p_amt")
+            curr_type = st.selectbox("計價幣別", ["VND", "USD", "TWD"], key="safe_ap_curr")
 
-            if st.form_submit_button("💾 儲存進貨發票至應付帳款資料庫", type="primary"):
-                if v_name:
-                    st.session_state.ap_invoices_db.append({
-                        "po_id": po_num,
-                        "vendor": v_name,
-                        "barcode": "8930000000000",
-                        "product": "一般採購耗材",
-                        "currency": curr_type,
-                        "amount": p_amt,
-                        "due_date": str(datetime.date.today()),
-                        "status": "🔴 待付款 (Pending)",
-                        "file": "manual_receipt.pdf"
-                    })
-                    st.success("✅ 成功新增進貨發票記錄並列入應付帳款清單！")
-                    st.rerun()
-                else:
-                    st.warning("⚠️ 請填寫廠商名稱！")
+        if st.button("💾 儲存進貨發票至應付帳款資料庫", type="primary", key="safe_btn_save_inv"):
+            if v_name:
+                st.session_state.ap_invoices_db.append({
+                    "po_id": po_num,
+                    "vendor": v_name,
+                    "barcode": "8930000000000",
+                    "product": "一般採購耗材",
+                    "currency": curr_type,
+                    "amount": p_amt,
+                    "due_date": str(datetime.date.today()),
+                    "status": "🔴 待付款 (Pending)",
+                    "file": "manual_receipt.pdf"
+                })
+                st.success("✅ 成功新增進貨發票記錄並列入應付帳款清單！")
+                st.rerun()
+            else:
+                st.warning("⚠️ 請填寫廠商名稱！")
 
     # ----------------------------------------------------
     # 📜 頁籤二：廠商應付貨款與發票檔案庫
@@ -155,7 +154,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
         st.dataframe(df_ap, use_container_width=True)
 
     # ----------------------------------------------------
-    # 💳 頁籤三：銀行轉帳水單 (UNC) 與採購單自動核銷勾稽
+    # 💳 頁籤三：銀行轉帳水單 (UNC) 與採購單自動核銷勾稽（無 Form 限制）
     # ----------------------------------------------------
     with tab_pay:
         st.markdown(f"### {L['unc_title']}")
@@ -169,40 +168,38 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
             "Cathay United Bank (國泰世華)", "CTBC Bank (中國信託)", "HSBC (Vietnam)", "Other / 其它"
         ]
 
-        with st.form("unique_form_add_unc_v2"):
-            col1, col2 = st.columns(2)
-            with col1:
-                unc_no = st.text_input(L["unc_no"], placeholder="例如: UNC-2026-002", key="input_unc_no_v2")
-                vendor_name = st.text_input(L["vendor_name"], placeholder="例如: 台灣總部 / 越南供應商", key="input_unc_vendor_v2")
-                amount = st.number_input(L["amount"], min_value=0.0, value=1200000.0, step=100000.0, key="input_unc_amt_v2")
-            with col2:
-                bank_name = st.selectbox(L["bank_name"], vietnam_banks, key="input_unc_bank_v2")
-                selected_target_po = st.selectbox(L["select_po"], unpaid_po_ids if unpaid_po_ids else ["目前無待付款採購單"], key="input_unc_po_v2")
-                currency = st.selectbox("幣別", ["VND", "USD", "TWD"], key="unc_curr_sel_v2")
+        col1, col2 = st.columns(2)
+        with col1:
+            unc_no = st.text_input(L["unc_no"], placeholder="例如: UNC-2026-002", key="safe_unc_no")
+            vendor_name = st.text_input(L["vendor_name"], placeholder="例如: 台灣總部 / 越南供應商", key="safe_unc_vendor")
+            amount = st.number_input(L["amount"], min_value=0.0, value=1200000.0, step=100000.0, key="safe_unc_amt")
+        with col2:
+            bank_name = st.selectbox(L["bank_name"], vietnam_banks, key="safe_unc_bank")
+            selected_target_po = st.selectbox(L["select_po"], unpaid_po_ids if unpaid_po_ids else ["目前無待付款採購單"], key="safe_unc_po")
+            currency = st.selectbox("幣別", ["VND", "USD", "TWD"], key="safe_unc_curr")
 
-            submitted = st.form_submit_button(L["btn_add_unc"], type="primary")
-            if submitted:
-                if unc_no and vendor_name:
-                    st.session_state.unc_db.append({
-                        "id": unc_no,
-                        "vendor": vendor_name,
-                        "amount": amount,
-                        "currency": currency,
-                        "bank": bank_name,
-                        "date": str(datetime.date.today()),
-                        "matched_po": selected_target_po
-                    })
+        if st.button(L["btn_add_unc"], type="primary", key="safe_btn_save_unc"):
+            if unc_no and vendor_name:
+                st.session_state.unc_db.append({
+                    "id": unc_no,
+                    "vendor": vendor_name,
+                    "amount": amount,
+                    "currency": currency,
+                    "bank": bank_name,
+                    "date": str(datetime.date.today()),
+                    "matched_po": selected_target_po
+                })
 
-                    if unpaid_pos and "目前無" not in selected_target_po:
-                        target_po_id = selected_target_po.split(" - ")[0]
-                        for inv in st.session_state.ap_invoices_db:
-                            if inv["po_id"] == target_po_id:
-                                inv["status"] = "🟢 已付款 (Paid)"
+                if unpaid_pos and "目前無" not in selected_target_po:
+                    target_po_id = selected_target_po.split(" - ")[0]
+                    for inv in st.session_state.ap_invoices_db:
+                        if inv["po_id"] == target_po_id:
+                            inv["status"] = "🟢 已付款 (Paid)"
 
-                    st.success(L["success_unc"])
-                    st.rerun()
-                else:
-                    st.warning("⚠️ 請完整填寫水單編號與收款廠商名稱！")
+                st.success(L["success_unc"])
+                st.rerun()
+            else:
+                st.warning("⚠️ 請完整填寫水單編號與收款廠商名稱！")
 
         st.divider()
         st.markdown("#### 📜 現有銀行轉帳水單清單與勾稽狀態")
@@ -212,7 +209,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
                     st.write(f"• **匯款銀行**: {item['bank']}")
                     st.write(f"• **轉帳日期**: {item['date']}")
                     st.write(f"• **已勾稽採購單**: `{item['matched_po']}`")
-                    if st.button(L["delete_btn"], key=f"unique_del_unc_{idx}"):
+                    if st.button(L["delete_btn"], key=f"safe_del_unc_{idx}"):
                         st.session_state.unc_db.pop(idx)
                         st.success("🗑️ 已成功刪除該筆水單記錄！")
                         st.rerun()
@@ -240,7 +237,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
     # ----------------------------------------------------
     with tab_search:
         st.markdown("### 🔍 6. 商品歷史報價與供應商反查系統")
-        search_query = st.text_input("輸入商品條碼或品名關鍵字查詢歷史價格：", key="search_query_input_v2")
+        search_query = st.text_input("輸入商品條碼或品名關鍵字查詢歷史價格：", key="safe_search_query")
         if search_query:
             st.success(f"🔍 查無 '{search_query}' 的過往異常波動紀錄，價格穩定。")
 
