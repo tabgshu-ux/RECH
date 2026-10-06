@@ -7,10 +7,10 @@ import datetime
 # ----------------------------------------------------
 ASSET_I18N = {
     "繁體中文": {
-        "title": "REETECH INDUSTRIAL - 管理部 - 設備與資產管理",
-        "caption": "管理廠區生產機具、辦公電腦、伺服器及公務車輛在西寧廠與海防廠之資產清冊與折舊狀態。",
-        "tab_list": "📑 資產總覽與折舊狀態",
-        "tab_add": "➕ 登記新設備與資產",
+        "title": "📦 裕豐電機工業 - 生產設備與固定資產管理",
+        "caption": "管理西寧廠/海防廠生產機械設備、辦公個人電腦、攜帶式筆電與公務/使用車輛。",
+        "tab_list": "📑 設備與資產總覽",
+        "tab_register": "➕ 新增設備與資產登記",
         "metric_total": "總登記資產數",
         "metric_cost": "總取得成本",
         "metric_sites": "涵蓋廠區據點",
@@ -18,38 +18,39 @@ ASSET_I18N = {
         "table_header": "📋 廠區固定資產與設備總清冊",
         "no_records": "目前無資產紀錄。",
         "add_header": "➕ 登記全新廠區資產與設備",
-        "lbl_code": "資產編號 (Asset ID) *",
-        "lbl_name": "資產名稱 *",
+        "lbl_code": "資產/設備編號 *",
+        "lbl_name": "資產/設備名稱 *",
         "name_placeholder": "例如: CNC 數控母線排彎折加工機",
         "lbl_category": "資產類別 *",
         "cat_opts": ["生產與加工機具", "辦公電腦與IT設備", "筆記型電腦與行動裝置", "公務車輛與運輸工具", "廠區檢測儀器"],
         "lbl_site": "存放廠區 *",
-        "site_opts": ["越南西寧廠 (Tay Ninh Plant)", "越南海防廠 (Hai Phong Plant)", "台灣總部 (Taiwan HQ)"],
-        "lbl_brand": "品牌與型號",
-        "lbl_barcode": "資產條碼 / 財產編號",
+        "site_opts": ["越南西寧廠 (Tay Ninh Plant)", "越南海防廠 (Hai Phong Plant)"],
+        "lbl_brand": "品牌與型號細節",
+        "lbl_barcode": "車牌號碼 / 財產條碼",
         "lbl_status": "目前狀態 *",
-        "status_opts": ["使用中 (In Use)", "維修保養中 (Maintenance)", "閒置備用 (Idle)", "已報廢 (Disposed)"],
+        "status_opts": ["🟢 在用", "🔧 維修中", "📦 庫存備用"],
         "lbl_cost": "取得成本 (USD) *",
         "btn_save": "💾 儲存並建立資產檔案",
-        "success_save": "✅ 資產 `{asset_id}` 已成功建檔！",
+        "success_save": "✅ 資產已成功建檔！",
         "fill_warning": "⚠️ 請完整填寫資產編號與名稱！",
-        # 表格欄位
         "col_index": "STT",
         "col_select": "選擇",
         "col_id": "資產編號",
         "col_name": "資產名稱",
-        "col_cat": "資產類別",
+        "col_cat": "類別",
         "col_site": "存放廠區",
-        "col_brand": "品牌型號",
-        "col_barcode": "財產條碼",
+        "col_brand": "品牌與型號",
+        "col_barcode": "車牌/條碼",
         "col_status": "目前狀態",
-        "col_cost": "取得成本"
+        "col_cost": "取得成本",
+        "btn_del": "🗑️ 刪除勾選的資產/設備",
+        "success_del": "✅ 已成功刪除選定的資產項目！"
     },
     "Tiếng Việt": {
-        "title": "REETECH INDUSTRIAL - Khối Quản lý - Quản lý Thiết bị & Tài sản",
-        "caption": "Quản lý máy móc sản xuất, máy tính, thiết bị IT và xe công ty tại nhà máy Tây Ninh và Hải Phòng.",
+        "title": "📦 REETECH INDUSTRIAL - Quản lý Thiết bị & Tài sản Cố định",
+        "caption": "Quản lý máy móc sản xuất, máy tính, laptop và xe công ty tại Tây Ninh và Hải Phòng.",
         "tab_list": "📑 Tổng quan Thiết bị & Tài sản",
-        "tab_add": "➕ Đăng ký Thiết bị / Tài sản Mới",
+        "tab_register": "➕ Đăng ký Thiết bị / Tài sản Mới",
         "metric_total": "Tổng tài sản",
         "metric_cost": "Tổng giá trị đầu tư",
         "metric_sites": "Khu vực nhà máy",
@@ -57,38 +58,39 @@ ASSET_I18N = {
         "table_header": "📋 Sổ chi tiết Tài sản Cố định & Thiết bị Nhà máy",
         "no_records": "Hiện không có bản ghi tài sản nào.",
         "add_header": "➕ Đăng ký tài sản & thiết bị nhà máy mới",
-        "lbl_code": "Mã tài sản (Asset ID) *",
+        "lbl_code": "Mã tài sản *",
         "lbl_name": "Tên tài sản *",
         "name_placeholder": "Ví dụ: Máy chấn đồng CNC",
         "lbl_category": "Phân loại tài sản *",
-        "cat_opts": ["Máy móc sản xuất", "Máy tính để bàn (Desktop)", "Laptop & Thiết bị di động", "Phương tiện vận chuyển / Xe", "Thiết bị đo lường"],
+        "cat_opts": ["Thiết bị gia công", "Máy tính để bàn (PC)", "Laptop", "Phương tiện vận chuyển / Xe", "Thiết bị QC"],
         "lbl_site": "Nhà máy lưu kho *",
-        "site_opts": ["Nhà máy Tây Ninh", "Nhà máy Hải Phòng", "Trụ sở Đài Loan (HQ)"],
-        "lbl_brand": "Hãng sản xuất & Model",
-        "lbl_barcode": "Mã vạch tài sản",
+        "site_opts": ["Nhà máy Tây Ninh", "Nhà máy Hải Phòng"],
+        "lbl_brand": "Thương hiệu & Model",
+        "lbl_barcode": "Biển số xe / Mã vạch",
         "lbl_status": "Trạng thái hiện tại *",
-        "status_opts": ["Đang sử dụng (In Use)", "Đang bảo trì (Maintenance)", "Dự phòng (Idle)", "Đã thanh lý (Disposed)"],
+        "status_opts": ["🟢 Đang sử dụng", "🔧 Đang bảo trì", "📦 Dự phòng"],
         "lbl_cost": "Nguyên giá (USD) *",
-        "btn_save": "💾 Lưu và tạo hồ sơ tài sản",
-        "success_save": "✅ Đã tạo thành công tài sản `{asset_id}`!",
+        "btn_save": "💾 Lưu thông tin tài sản",
+        "success_save": "✅ Đã đăng ký tài sản thành công!",
         "fill_warning": "⚠️ Vui lòng điền Mã tài sản và Tên tài sản!",
-        # Tiêu đề bảng
         "col_index": "STT",
         "col_select": "Chọn",
         "col_id": "Mã TS",
         "col_name": "Tên tài sản",
         "col_cat": "Phân loại",
         "col_site": "Nhà máy",
-        "col_brand": "Hãng/Model",
-        "col_barcode": "Mã vạch",
+        "col_brand": "Thương hiệu",
+        "col_barcode": "Biển số/Mã",
         "col_status": "Trạng thái",
-        "col_cost": "Nguyên giá"
+        "col_cost": "Nguyên giá",
+        "btn_del": "🗑️ Xóa tài sản đã chọn",
+        "success_del": "✅ Đã xóa thành công tài sản đã chọn!"
     },
     "English": {
-        "title": "REETECH INDUSTRIAL - Admin - Equipment & Fixed Assets",
-        "caption": "Manage plant machinery, office computers, IT servers, and company vehicles across Tay Ninh and Hai Phong plants.",
-        "tab_list": "📑 Assets Overview & Depreciation",
-        "tab_add": "➕ Register New Asset",
+        "title": "📦 REETECH INDUSTRIAL - Equipment & Fixed Asset Management",
+        "caption": "Manage production machinery, PCs, laptops, and vehicles in Tay Ninh and Hai Phong plants.",
+        "tab_list": "📑 Asset Overview",
+        "tab_register": "➕ Register New Asset",
         "metric_total": "Total Registered Assets",
         "metric_cost": "Total Acquisition Cost",
         "metric_sites": "Covered Plant Locations",
@@ -96,37 +98,38 @@ ASSET_I18N = {
         "table_header": "📋 Plant Fixed Assets & Equipment Registry",
         "no_records": "No asset records found.",
         "add_header": "➕ Register New Plant Asset",
-        "lbl_code": "Asset ID *",
+        "lbl_code": "Asset Code *",
         "lbl_name": "Asset Name *",
         "name_placeholder": "Example: CNC Copper Busbar Bending Machine",
-        "lbl_category": "Asset Category *",
-        "cat_opts": ["Production & Machining Equipment", "Desktop Computers & IT", "Laptops & Mobile Devices", "Company Vehicles & Transport", "Testing Instruments"],
+        "lbl_category": "Category *",
+        "cat_opts": ["Busbar Machine", "Desktop PC", "Laptop", "Company Vehicle", "QC Equipment"],
         "lbl_site": "Plant Location *",
-        "site_opts": ["Tay Ninh Plant", "Hai Phong Plant", "Taiwan HQ"],
-        "lbl_brand": "Brand & Model",
-        "lbl_barcode": "Asset Barcode / Tag",
+        "site_opts": ["Tay Ninh Plant", "Hai Phong Plant"],
+        "lbl_brand": "Brand & Model Details",
+        "lbl_barcode": "License Plate / Barcode",
         "lbl_status": "Current Status *",
-        "status_opts": ["In Use", "Under Maintenance", "Idle / Backup", "Disposed"],
+        "status_opts": ["🟢 In Use", "🔧 Maintenance", "📦 Backup Stock"],
         "lbl_cost": "Acquisition Cost (USD) *",
-        "btn_save": "💾 Save & Create Asset Record",
-        "success_save": "✅ Asset `{asset_id}` successfully created!",
-        "fill_warning": "⚠️ Please fill in Asset ID and Name!",
-        # Table headers
+        "btn_save": "💾 Save Asset Data",
+        "success_save": "✅ Asset registered successfully!",
+        "fill_warning": "⚠️ Please fill in Asset Code and Name!",
         "col_index": "No.",
         "col_select": "Select",
-        "col_id": "Asset ID",
+        "col_id": "Asset Code",
         "col_name": "Asset Name",
         "col_cat": "Category",
         "col_site": "Plant",
         "col_brand": "Brand / Model",
-        "col_barcode": "Barcode",
+        "col_barcode": "Plate / Barcode",
         "col_status": "Status",
-        "col_cost": "Cost"
+        "col_cost": "Cost",
+        "btn_del": "🗑️ Delete Selected Assets",
+        "success_del": "✅ Selected assets successfully deleted!"
     }
 }
 
 # ----------------------------------------------------
-# 🔄 智慧語意對照引擎 (資產名稱與廠區互轉)
+# 🔄 智慧語意對照引擎
 # ----------------------------------------------------
 def smart_translate_asset(text_val, target_lang):
     if not text_val or not isinstance(text_val, str):
@@ -134,7 +137,6 @@ def smart_translate_asset(text_val, target_lang):
     
     val_lower = text_val.lower()
 
-    # 廠區智慧對應
     if "西寧廠" in text_val or "tay ninh" in val_lower:
         if target_lang == "Tiếng Việt": return "Nhà máy Tây Ninh"
         elif target_lang == "English": return "Tay Ninh Plant"
@@ -144,132 +146,148 @@ def smart_translate_asset(text_val, target_lang):
         elif target_lang == "English": return "Hai Phong Plant"
         return "越南海防廠"
 
-    # 資產狀態對應
     if "使用中" in text_val or "in use" in val_lower or "đang sử dụng" in val_lower:
-        if target_lang == "Tiếng Việt": return "🟢 Đang sử dụng (In Use)"
+        if target_lang == "Tiếng Việt": return "🟢 Đang sử dụng"
         elif target_lang == "English": return "🟢 In Use"
-        return "🟢 使用中 (In Use)"
+        return "🟢 在用"
 
     return text_val
 
-def render_asset_management(engine=None, lang="繁體中文", **kwargs):
-    active_lang = lang or st.session_state.get("lang", "繁體中文")
-    L = ASSET_I18N.get(active_lang, ASSET_I18N["繁體中文"])
+def render_asset_management_page(*args, **kwargs):
+    lang = kwargs.get("lang") or st.session_state.get("current_lang", "繁體中文")
+    L = ASSET_I18N.get(lang, ASSET_I18N["繁體中文"])
 
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化資產資料庫
-    if "assets_db" not in st.session_state:
+    if "assets_db" not in st.session_state or not st.session_state.assets_db:
         st.session_state.assets_db = [
             {
                 "id": "EQ-TN-001",
-                "name": "CNC 數控母線排彎折加工機",
+                "name": "CNC 數控母線銅排彎折加工機",
                 "category": "生產與加工機具",
                 "site": "越南西寧廠",
-                "brand": "Amada - CNC Busbar 160T",
-                "barcode": "-",
-                "status": "使用中",
-                "cost": 45000.0
+                "brand_model": "Amada - CNC Busbar 160T",
+                "plate_no": "-",
+                "status": "🟢 在用",
+                "cost": 45000.0,
             },
             {
                 "id": "AST-PC-001",
                 "name": "西寧廠財務主管辦公電腦",
-                "category": "辦公電腦與IT設備",
+                "category": "個人電腦 (Desktop PC)",
                 "site": "越南西寧廠",
-                "brand": "Dell - OptiPlex 7090 i7",
-                "barcode": "-",
-                "status": "使用中",
-                "cost": 1200.0
-            },
-            {
-                "id": "AST-LAP-001",
-                "name": "海防廠工程部攜帶式筆電",
-                "category": "筆記型電腦與行動裝置",
-                "site": "越南海防廠",
-                "brand": "Apple - MacBook Pro 16 M3",
-                "barcode": "-",
-                "status": "使用中",
-                "cost": 2200.0
+                "brand_model": "Dell - OptiPlex 7090 i7",
+                "plate_no": "-",
+                "status": "🟢 在用",
+                "cost": 1200.0,
             },
             {
                 "id": "AST-CAR-001",
                 "name": "西寧廠廠長商務公務車",
-                "category": "公務車輛與運輸工具",
+                "category": "使用車輛 (Vehicle)",
                 "site": "越南西寧廠",
-                "brand": "Toyota - Fortuner 2.8L",
-                "barcode": "61A-888.66",
-                "status": "使用中",
-                "cost": 28000.0
-            }
+                "brand_model": "Toyota - Fortuner 2.8L",
+                "plate_no": "61A-888.66",
+                "status": "🟢 在用",
+                "cost": 28000.0,
+            },
         ]
+    else:
+        for item in st.session_state.assets_db:
+            if "brand_model" not in item and "brand" in item:
+                item["brand_model"] = item["brand"]
+            if "brand_model" not in item:
+                item["brand_model"] = "-"
+            if "plate_no" not in item:
+                item["plate_no"] = "-"
 
-    tab_list, tab_add = st.tabs([L["tab_list"], L["tab_add"]])
+    tab1, tab2 = st.tabs([L["tab_list"], L["tab_register"]])
 
-    with tab_list:
-        total_cost = sum([item["cost"] for item in st.session_state.assets_db])
-        
-        c1, c2, c3 = st.columns(3)
-        with c1: st.metric(L["metric_total"], f"{len(st.session_state.assets_db)} 項")
-        with c2: st.metric(L["metric_cost"], f"${total_cost:,.0f} USD")
-        with c3: st.metric(L["metric_sites"], L["sites_val"])
+    with tab1:
+        total_assets = len(st.session_state.assets_db)
+        total_val = sum(item.get("cost", 0) for item in st.session_state.assets_db)
 
+        col_m1, col_m2, col_m3 = st.columns(3)
+        col_m1.metric(L["metric_total"], f"{total_assets} 項")
+        col_m2.metric(L["metric_cost"], f"${total_val:,.0f} USD")
+        col_m3.metric(L["metric_sites"], L["sites_val"])
+
+        st.divider()
         st.markdown(f"### {L['table_header']}")
-        if st.session_state.assets_db:
-            display_data = []
-            for idx, item in enumerate(st.session_state.assets_db, 1):
-                display_data.append({
-                    L["col_index"]: idx,
-                    L["col_id"]: item["id"],
-                    L["col_name"]: item["name"],
-                    L["col_cat"]: item["category"],
-                    L["col_site"]: smart_translate_asset(item["site"], active_lang),
-                    L["col_brand"]: item["brand"],
-                    L["col_barcode"]: item["barcode"],
-                    L["col_status"]: smart_translate_asset(item["status"], active_lang),
-                    L["col_cost"]: f"${item['cost']:,.0f} USD"
-                })
-            st.dataframe(pd.DataFrame(display_data), use_container_width=True)
-        else:
-            st.info(L["no_records"])
 
-    with tab_add:
+        display_data = []
+        for item in st.session_state.assets_db:
+            display_data.append({
+                L["col_select"]: False,
+                L["col_id"]: item.get("id", ""),
+                L["col_name"]: item.get("name", ""),
+                L["col_cat"]: item.get("category", ""),
+                L["col_site"]: smart_translate_asset(item.get("site", ""), lang),
+                L["col_brand"]: item.get("brand_model", "-"),
+                L["col_barcode"]: item.get("plate_no", "-"),
+                L["col_status"]: smart_translate_asset(item.get("status", ""), lang),
+                L["col_cost"]: f"${item.get('cost', 0):,.0f} USD",
+            })
+
+        df_assets = pd.DataFrame(display_data)
+        
+        edited_df = st.data_editor(
+            df_assets,
+            use_container_width=True,
+            num_rows="dynamic",
+            key="asset_editor"
+        )
+
+        if st.button(L["btn_del"], type="primary"):
+            remaining_assets = []
+            for idx, row in edited_df.iterrows():
+                if not row.get(L["col_select"], False):
+                    orig_id = row[L["col_id"]]
+                    matched = next((a for a in st.session_state.assets_db if a.get("id") == orig_id), None)
+                    if matched:
+                        remaining_assets.append(matched)
+            st.session_state.assets_db = remaining_assets
+            st.success(L["success_del"])
+            st.rerun()
+
+    with tab2:
         st.markdown(f"### {L['add_header']}")
-        with st.form("form_add_asset"):
-            c1, c2 = st.columns(2)
-            with c1:
-                asset_id = st.text_input(L["lbl_code"], value="AST-HP-002")
-                asset_name = st.text_input(L["lbl_name"], placeholder=L["name_placeholder"])
-                category = st.selectbox(L["lbl_category"], L["cat_opts"])
-                site = st.selectbox(L["lbl_site"], L["site_opts"])
-            with c2:
-                brand = st.text_input(L["lbl_brand"], value="HP / Dell / Schneider")
-                barcode = st.text_input(L["lbl_barcode"], value="-")
-                status = st.selectbox(L["lbl_status"], L["status_opts"])
-                cost = st.number_input(L["lbl_cost"], min_value=0.0, value=1500.0, step=100.0)
+        c1, c2 = st.columns(2)
+        code = c1.text_input(L["lbl_code"], value="AST-DEV-005")
+        name = c2.text_input(L["lbl_name"], placeholder=L["name_placeholder"])
 
-            if st.form_submit_button(L["btn_save"], type="primary", use_container_width=True):
-                if asset_id and asset_name:
-                    st.session_state.assets_db.insert(0, {
-                        "id": asset_id,
-                        "name": asset_name,
-                        "category": category,
-                        "site": site,
-                        "brand": brand,
-                        "barcode": barcode,
-                        "status": "使用中" if "使用" in status or "In Use" in status else status,
-                        "cost": cost
-                    })
-                    st.success(L["success_save"].format(asset_id=asset_id))
-                    st.rerun()
-                else:
-                    st.warning(L["fill_warning"])
+        c3, c4 = st.columns(2)
+        cat = c3.selectbox(L["lbl_category"], L["cat_opts"])
+        site = c4.selectbox(L["lbl_site"], L["site_opts"])
+
+        c5, c6 = st.columns(2)
+        status = c5.selectbox(L["lbl_status"], L["status_opts"])
+        cost = c6.number_input(L["lbl_cost"], min_value=0.0, value=1500.0, step=100.0)
+
+        st.divider()
+        c_b1, c_b2 = st.columns(2)
+        with c_b1:
+            brand_model = st.text_input(L["lbl_brand"], value="", placeholder="例如: Dell Latitude / Toyota")
+        with c_b2:
+            plate_no = st.text_input(L["lbl_barcode"], value="-", placeholder="例如: 61A-123.45")
+
+        if st.button(L["btn_save"], type="primary"):
+            st.session_state.assets_db.append({
+                "id": code,
+                "name": name if name else "未命名資產",
+                "category": cat,
+                "site": site,
+                "brand_model": brand_model if brand_model else "-",
+                "plate_no": plate_no,
+                "status": status,
+                "cost": cost,
+            })
+            st.success(L["success_save"])
+            st.rerun()
 
 def show(*args, **kwargs):
-    render_asset_management(*args, **kwargs)
+    render_asset_management_page(*args, **kwargs)
 
 def main(*args, **kwargs):
-    render_asset_management(*args, **kwargs)
-
-def render_asset_management_page(*args, **kwargs):
-    render_asset_management(*args, **kwargs)
+    render_asset_management_page(*args, **kwargs)
