@@ -11,20 +11,20 @@ AP_I18N = {
         "caption": "管理廠商應付帳款與發票檔案庫、歷史價格追蹤、自動讀取信箱發票水單 (UNC) 核銷。",
         "tab_pay": "💳 銀行轉帳水單 (Ủy Nhiệm Chi - UNC) 登記",
         "tab_list": "📜 廠商應付貨款與發票檔案庫",
-        "tab_print": "🖨️️ 快速檢視與列印紙本發票/附件",
+        "tab_print": "🖨 快速檢視與列印紙本發票/附件",
         "tab_search": "🔍 商品歷史報價與供應商反查系統",
         "tab_add": "➕ 登記新採購進貨單與廠商發票 (手動)",
         "unc_title": "💳 銀行轉帳水單 (Ủy Nhiệm Chi - UNC) 登記與核銷",
-        "unc_caption": "出納經 Vietcombank / BIDV 轉帳後，輸入水單號碼辦理核銷，落實越南銀行轉帳法規要求。",
+        "unc_caption": "支援越南當地各大銀行與外資/台資在越分行轉帳水單登記，落實法規要求。",
         "unc_no": "水單編號 (UNC No.)",
         "vendor_name": "收款廠商名稱",
         "amount": "轉帳金額 (VND / USD)",
-        "bank_name": "匯款銀行",
+        "bank_name": "匯款銀行 (越南當地 / 外資在越銀行)",
+        "custom_bank": "請輸入自訂或外資在越銀行名稱 (例如: Cathay United Bank, CTBC, HSBC)",
         "date": "轉帳日期",
         "btn_add_unc": "📥 儲存並核銷轉帳水單",
         "success_unc": "✅ 銀行轉帳水單已成功登記並完成應付帳款核銷！",
         "delete_btn": "🗑️ 刪除此筆水單記錄",
-        "edit_btn": "✏️ 修改水單資料",
     },
     "Tiếng Việt": {
         "title": "🛒 Quản lý - Mua hàng & Phải trả (AP)",
@@ -35,16 +35,16 @@ AP_I18N = {
         "tab_search": "🔍 Tra cứu lịch sử giá",
         "tab_add": "➕ Đăng ký mua hàng (Thủ công)",
         "unc_title": "💳 Đăng ký & Đối soát Ủy Nhiệm Chi (UNC)",
-        "unc_caption": "Sau khi chuyển khoản qua Vietcombank / BIDV, nhập số UNC để đối soát công nợ theo quy định.",
+        "unc_caption": "Hỗ trợ các ngân hàng tại Việt Nam và các ngân hàng nước ngoài tại Việt Nam.",
         "unc_no": "Số UNC",
         "vendor_name": "Tên nhà cung cấp",
         "amount": "Số tiền chuyển (VND / USD)",
         "bank_name": "Ngân hàng chuyển",
+        "custom_bank": "Nhập tên ngân hàng nước ngoài/khác",
         "date": "Ngày chuyển",
         "btn_add_unc": "📥 Lưu và đối soát UNC",
         "success_unc": "✅ Đã đăng ký UNC và đối soát thành công!",
         "delete_btn": "🗑️ Xóa bản ghi UNC này",
-        "edit_btn": "✏️ Sửa thông tin UNC",
     },
     "English": {
         "title": "🛒 Management Dept - Procurement & Accounts Payable (AP)",
@@ -55,16 +55,16 @@ AP_I18N = {
         "tab_search": "🔍 Product Price History & Vendor Search",
         "tab_add": "➕ Register New Purchase & Invoice (Manual)",
         "unc_title": "💳 Bank Transfer Order (UNC) Registration & Reconciliation",
-        "unc_caption": "Enter UNC details after bank transfer via Vietcombank / BIDV to reconcile accounts payable.",
+        "unc_caption": "Supports local Vietnamese banks and foreign/Taiwanese banks operating in Vietnam.",
         "unc_no": "UNC Number",
         "vendor_name": "Vendor Name",
         "amount": "Transfer Amount",
         "bank_name": "Bank Name",
+        "custom_bank": "Enter Foreign/Custom Bank Name in Vietnam",
         "date": "Transfer Date",
         "btn_add_unc": "📥 Save & Reconcile UNC",
         "success_unc": "✅ Bank transfer order registered and reconciled successfully!",
         "delete_btn": "🗑️ Delete UNC Record",
-        "edit_btn": "✏️ Edit UNC Details",
     }
 }
 
@@ -86,13 +86,12 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
                 "vendor": "Vinamilk Industrial Co.",
                 "amount": 15000000.0,
                 "currency": "VND",
-                "bank": "Vietcombank (Tay Ninh)",
+                "bank": "Vietcombank",
                 "date": "2026-10-05",
                 "status": "🟢 已核銷 (Reconciled)"
             }
         ]
 
-    # 初始化應付帳款與進貨清單資料庫
     if "ap_invoices_db" not in st.session_state:
         st.session_state.ap_invoices_db = [
             {
@@ -108,7 +107,6 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
             }
         ]
 
-    # 頁籤選單
     tab_pay, tab_list, tab_print, tab_search, tab_add = st.tabs([
         L["tab_pay"], L["tab_list"], L["tab_print"], L["tab_search"], L["tab_add"]
     ])
@@ -120,7 +118,34 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
         st.markdown(f"### {L['unc_title']}")
         st.caption(L['unc_caption'])
 
-        # 新增 UNC 表單 (Create)
+        # 完整越南主流銀行與外資/台資銀行清單
+        vietnam_banks = [
+            "Vietcombank (Joint Stock Commercial Bank for Foreign Trade of Vietnam)",
+            "BIDV (Bank for Investment and Development of Vietnam)",
+            "Agribank (Vietnam Bank for Agriculture and Rural Development)",
+            "VietinBank (Vietnam Joint Stock Commercial Bank for Industry and Trade)",
+            "Techcombank (Vietnam Technological and Commercial Joint Stock Bank)",
+            "MB Bank (Military Commercial Joint Stock Bank)",
+            "ACB (Asia Commercial Joint Stock Bank)",
+            "VPBank (Vietnam Prosperity Joint Stock Commercial Bank)",
+            "Sacombank (Saigon Thuong Tin Commercial Joint Stock Bank)",
+            "TPBank (Tien Phong Commercial Joint Stock Bank)",
+            "HDBank (Ho Chi Minh City Development Joint Stock Commercial Bank)",
+            "SHB (Saigon - Hanoi Commercial Joint Stock Bank)",
+            "VIB (Vietnam International Commercial Joint Stock Bank)",
+            "MSB (Maritime Commercial Joint Stock Bank)",
+            "Eximbank (Vietnam Export Import Commercial Joint Stock Bank)",
+            "Cathay United Bank (台灣國泰世華 - 越南分行)",
+            "CTBC Bank (台灣中國信託 - 越南分行)",
+            "Taipei Fubon Bank (台灣台北富邦 - 越南分行)",
+            "First Commercial Bank (台灣第一銀行 - 越南分行)",
+            "Mega International Commercial Bank (台灣兆豐銀行 - 越南分行)",
+            "E.Sun Commercial Bank (台灣玉山銀行 - 越南分行)",
+            "HSBC (Vietnam) Ltd.",
+            "Standard Chartered Bank (Vietnam)",
+            "Other / 其它自訂外資及在越銀行"
+        ]
+
         with st.form("form_add_unc"):
             col1, col2 = st.columns(2)
             with col1:
@@ -128,7 +153,15 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
                 vendor_name = st.text_input(L["vendor_name"], placeholder="例如: 台灣總部 / 越南在地供應商")
                 amount = st.number_input(L["amount"], min_value=0.0, value=5000000.0, step=100000.0)
             with col2:
-                bank_name = st.selectbox(L["bank_name"], ["Vietcombank", "BIDV", "Techcombank", "Agribank", "Other"])
+                selected_bank = st.selectbox(L["bank_name"], vietnam_banks)
+                
+                # 如果選到 Other，動態顯示自訂輸入框
+                final_bank_name = selected_bank
+                if "Other" in selected_bank or "其它" in selected_bank:
+                    custom_bank_input = st.text_input(L["custom_bank"], placeholder="請輸入銀行英文全名")
+                    if custom_bank_input:
+                        final_bank_name = custom_bank_input
+
                 transfer_date = st.date_input(L["date"], value=datetime.date.today())
                 currency = st.selectbox("幣別", ["VND", "USD", "TWD"])
 
@@ -140,7 +173,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
                         "vendor": vendor_name,
                         "amount": amount,
                         "currency": currency,
-                        "bank": bank_name,
+                        "bank": final_bank_name,
                         "date": str(transfer_date),
                         "status": "🟢 已核銷 (Reconciled)"
                     })
@@ -160,18 +193,15 @@ def render_procurement_ap_page(engine=None, lang="繁體中文"):
                     col_b.write(f"• **日期**: {item['date']}")
                     col_c.write(f"• **狀態**: {item['status']}")
 
-                    # 修改與刪除按鈕 (Update / Delete)
-                    c_del, c_edit = st.columns(2)
-                    with c_del:
-                        if st.button(L["delete_btn"], key=f"del_unc_{idx}"):
-                            st.session_state.unc_db.pop(idx)
-                            st.success("🗑️ 已成功刪除該筆水單記錄！")
-                            st.rerun()
+                    if st.button(L["delete_btn"], key=f"del_unc_{idx}"):
+                        st.session_state.unc_db.pop(idx)
+                        st.success("🗑️ 已成功刪除該筆水單記錄！")
+                        st.rerun()
         else:
             st.info("目前尚無轉帳水單記錄。")
 
     # ----------------------------------------------------
-    # 📜 頁籤二：廠商應付貨款與發票檔案庫 (List & CRUD)
+    # 📜 頁籤二：廠商應付貨款與發票檔案庫
     # ----------------------------------------------------
     with tab_list:
         st.markdown("### 📜 廠商應付貨款與發票檔案庫")
