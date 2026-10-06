@@ -3,7 +3,6 @@ import io
 import pandas as pd
 from sqlalchemy import text
 import streamlit as st
-import uuid
 
 # ----------------------------------------------------
 # 🌐 薪資與保險模組多語系字典 (i18n)
@@ -137,7 +136,6 @@ def convert_payroll_to_excel(summary_data):
 
 def render_payroll_management_page(engine=None, lang="繁體中文"):
     L = get_payroll_lang_dict(lang)
-    uid = str(uuid.uuid4())[:6]
 
     st.title(L["title"])
     st.caption(L["caption"])
@@ -163,7 +161,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
     # ----------------------------------------------------
     with tab_list:
         st.markdown("### 📊 全廠區員工本月薪資總表 (依工號 / 報表清單)")
-        st.caption("您可以直接檢視全廠員工清單，並點擊下方下載按鈕匯出完整 Excel 報表。")
+        st.caption("您可以直接檢視全廠員工清單,並點擊下方下載按鈕匯出完整 Excel 報表。")
 
         summary_rows = []
         for emp in emp_list:
@@ -176,7 +174,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
             bonus = 1000000.0 if curr == "VND" else 2000.0
             gross = base + allow + bonus
             
-            # 安全防護計算保險
             if "越南" in emp_site or "西寧" in emp_site:
                 tot_ins = base * (ins_info.get("bhxh_social", 0.08) + ins_info.get("bhyt_health", 0.015) + ins_info.get("bhtn_unemploy", 0.01))
             elif "台灣" in emp_site:
@@ -210,7 +207,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
             file_name=f"Reetech_Payroll_Summary_{datetime.date.today().strftime('%Y%m')}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+sheet",
             type="primary",
-            key=f"download_summary_excel_{uid}"
+            key="download_summary_excel_fixed"
         )
 
     # ----------------------------------------------------
@@ -218,42 +215,44 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
     # ----------------------------------------------------
     with tab_calc:
         st.markdown("### 🧮 單一員工詳細薪資結構與保險試算")
-        st.caption("請先從下方下拉選單中選擇特定員工，即可針對該員工進行薪資微調、詳細試算與列印薪資單。")
+        st.caption("請先從下方下拉選單中選擇特定員工,即可針對該員工進行薪資微調、詳細試算與列印薪資單。")
 
         col_m1, col_m2 = st.columns(2)
         with col_m1:
-            pay_month = st.date_input(L["select_month"], value=datetime.date.today(), key=f"payroll_month_{uid}")
+            pay_month = st.date_input(L["select_month"], value=datetime.date.today(), key="payroll_month_fixed")
         with col_m2:
             emp_opts = {f"{emp['id']} - {emp['name']} ({emp['dept']})": emp for emp in emp_list}
-            selected_emp_label = st.selectbox("請選擇欲檢視的員工：", list(emp_opts.keys()), key=f"sel_emp_{uid}")
+            selected_emp_label = st.selectbox("請選擇欲檢視的員工：", list(emp_opts.keys()), key="sel_emp_fixed")
             selected_emp = emp_opts[selected_emp_label]
 
         st.divider()
 
         emp = selected_emp
+        emp_id = emp['id']
         emp_site = emp.get("site", "🇻🇳 越南廠 (Tay Ninh / Binh Duong)")
         ins_info = INSURANCE_RATES.get(emp_site, INSURANCE_RATES.get("西寧廠", {"currency": "VND", "rate_label": "法定保險"}))
         curr = ins_info.get("currency", "VND")
 
-        st.markdown(f"#### 👤 員工姓名: **{emp['name']}** (`{emp['id']}`) | 部門: {emp['dept']} | 職位: {emp['title']}")
+        st.markdown(f"#### 👤 員工姓名: **{emp['name']}** (`{emp_id}`) | 部門: {emp['dept']} | 職位: {emp['title']}")
         st.caption(f"📍 所屬工作廠區: **{emp_site}** | 計價幣別: **{curr}**")
 
+        # 💡 關鍵修正：將 key 綁定員工編號 emp_id，切換員工時數值才會各自獨立保存
         c1, c2, c3 = st.columns(3)
         with c1:
             default_base = 25000000.0 if curr == "VND" else (80000.0 if curr == "TWD" else 8000.0)
-            base_salary = st.number_input(L["base_salary"], value=default_base, step=1000.0, key=f"base_{emp['id']}_{uid}")
+            base_salary = st.number_input(L["base_salary"], value=default_base, step=1000.0, key=f"base_{emp_id}")
         with c2:
-            allowance = st.number_input(L["allowance"], value=2000000.0 if curr == "VND" else 5000.0, step=500.0, key=f"allow_{emp['id']}_{uid}")
+            allowance = st.number_input(L["allowance"], value=2000000.0 if curr == "VND" else 5000.0, step=500.0, key=f"allow_{emp_id}")
         with c3:
-            full_attendance_bonus = st.number_input(L["full_attendance"], value=1000000.0 if curr == "VND" else 2000.0, step=500.0, key=f"bonus_{emp['id']}_{uid}")
+            full_attendance_bonus = st.number_input(L["full_attendance"], value=1000000.0 if curr == "VND" else 2000.0, step=500.0, key=f"bonus_{emp_id}")
 
         c4, c5, c6 = st.columns(3)
         with c4:
-            leave_deduction = st.number_input(L["leave_deduction"], value=0.0, step=100.0, key=f"leave_{emp['id']}_{uid}")
+            leave_deduction = st.number_input(L["leave_deduction"], value=0.0, step=100.0, key=f"leave_{emp_id}")
         with c5:
-            loan_deduction = st.number_input(L["loan_deduction"], value=0.0, step=500.0, key=f"loan_{emp['id']}_{uid}")
+            loan_deduction = st.number_input(L["loan_deduction"], value=0.0, step=500.0, key=f"loan_{emp_id}")
         with c6:
-            other_allowance = st.number_input(L["other_allowance"], value=0.0, step=100.0, key=f"other_{emp['id']}_{uid}")
+            other_allowance = st.number_input(L["other_allowance"], value=0.0, step=100.0, key=f"other_{emp_id}")
 
         if "越南" in emp_site or "西寧" in emp_site:
             social_ins = base_salary * ins_info.get("bhxh_social", 0.08)
@@ -296,10 +295,10 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
 
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
-            if st.button(f"{L['print_btn']} [{emp['name']}]", key=f"print_{emp['id']}_{uid}"):
+            if st.button(f"{L['print_btn']} [{emp['name']}]", key=f"print_{emp_id}"):
                 st.success(f"✅ 已成功產生 {emp['name']} 的薪資單，可連接印表機列印。")
         with col_btn2:
-            if st.button(f"{L['approve_btn']} [{emp['name']}]", type="primary", key=f"approve_{emp['id']}_{uid}"):
+            if st.button(f"{L['approve_btn']} [{emp['name']}]", type="primary", key=f"approve_{emp_id}"):
                 st.success(f"🎉 已成功核准 {emp['name']} 本月薪資 ({net_payable:,.2f} {curr})！")
 
     # ----------------------------------------------------
