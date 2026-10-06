@@ -6,13 +6,13 @@ import google.generativeai as genai
 from datetime import datetime, date
 
 # ----------------------------------------------------
-# 🌐 越南台廠水電工程戰情室多語系字典 (i18n)
+# 🌐 越南水電工程戰情室多語系字典 (i18n)
 # ----------------------------------------------------
 EXEC_I18N = {
     "繁體中文": {
-        "page_title": "⚡ 裕豐電機工業 - 越南台廠水電工程專案與收款戰情室",
+        "page_title": "⚡ 裕豐電機工業 - 越南水電工程專案與收款戰情室",
         "sub_title": "即時監控專案工程進度、合約款項回收狀況、LME 銅價走勢與 USD/VND 匯率風險管控",
-        "tab_project_progress": "📊 台廠水電工程專案進度與收款看板",
+        "tab_project_progress": "📊 水電工程專案進度與收款看板",
         "tab_materials_fx": "📈 LME 銅價成本與 USD/VND 匯率追蹤",
         "tab_fin_stat": "📊 工程專案 AR/AP 財務現金流",
         "tab_vpsh_reports": "📊 企業綜合損益表 (P&L) 與毛利勾稽",
@@ -49,10 +49,10 @@ def get_exec_lang_dict(lang_param=None):
     return EXEC_I18N.get(lang, EXEC_I18N["繁體中文"])
 
 # ----------------------------------------------------
-# 🏗️ 1. 台廠水電工程專案進度與收款看板
+# 🏗️ 1. 水電工程專案進度與收款看板
 # ----------------------------------------------------
 def render_mep_project_progress_board():
-    st.markdown("### 🏗️ 越南台廠客製化水電工程專案進度與財務收款追蹤")
+    st.markdown("### 🏗️ 越南客製化水電工程專案進度與財務收款追蹤")
     st.caption("結合工程現場施工進度百分比、合約總價、已收款金額、未收款（尾款/進度款）及收款理由與驗收狀態。")
 
     # 頂部戰情指標
@@ -69,7 +69,7 @@ def render_mep_project_progress_board():
     projects_data = [
         {
             "專案代碼": "PRJ-2026-01",
-            "台廠客戶名稱": "🇻🇳 越南新順楠梓電子廠 (XinShun Electronics)",
+            "客戶名稱": "🇻🇳 越南新順楠梓電子廠 (XinShun Electronics)",
             "水電工程項目": "無塵室高低壓配電盤安裝與強弱電配管",
             "合約總價 (USD)": 450000.0,
             "已收款金額 (USD)": 315000.0,
@@ -80,7 +80,7 @@ def render_mep_project_progress_board():
         },
         {
             "專案代碼": "PRJ-2026-02",
-            "台廠客戶名稱": "🇻🇳 平陽美德金屬加工廠 (MeiDe Metal)",
+            "客戶名稱": "🇻🇳 平陽美德金屬加工廠 (MeiDe Metal)",
             "水電工程項目": "廠房動力配電、給排水系統與照明工程",
             "合約總價 (USD)": 380000.0,
             "已收款金額 (USD)": 228000.0,
@@ -91,7 +91,7 @@ def render_mep_project_progress_board():
         },
         {
             "專案代碼": "PRJ-2026-03",
-            "台廠客戶名稱": "🇻🇳 隆安宏遠精密機械廠 (HongYuan Precision)",
+            "客戶名稱": "🇻🇳 隆安宏遠精密機械廠 (HongYuan Precision)",
             "水電工程項目": "變電站統包工程、銅排配置與空調系統配電",
             "合約總價 (USD)": 620000.0,
             "已收款金額 (USD)": 434000.0,
@@ -102,7 +102,7 @@ def render_mep_project_progress_board():
         },
         {
             "專案代碼": "PRJ-2026-04",
-            "台廠客戶名稱": "🇻🇳 北寧富泰光電科技 (FuTai Optoelectronics)",
+            "客戶名稱": "🇻🇳 北寧富泰光電科技 (FuTai Optoelectronics)",
             "水電工程項目": "廠辦大樓消防警報系統與機房不斷電(UPS)配電",
             "合約總價 (USD)": 400000.0,
             "已收款金額 (USD)": 273000.0,
@@ -152,7 +152,7 @@ def render_materials_and_fx_tracking():
 # 📊 3. 專案 AR/AP 財務現金流
 # ----------------------------------------------------
 def render_project_ar_ap_stats():
-    st.markdown("### 📊 越南台廠水電工程專案 AR / AP 財務現金流")
+    st.markdown("### 📊 越南水電工程專案 AR / AP 財務現金流")
     
     col_ar1, col_ar2, col_ar3, col_ar4 = st.columns(4)
     col_ar1.metric("工程總應收帳款 (AR)", "$600,000 USD", "包含各期尾款與進度款")
@@ -228,7 +228,7 @@ def render_executive_dashboard_page(sub_option="🌐 全部市場 (All Markets)"
         L["tab_vpsh_reports"]
     ])
 
-    # 分頁 1：台廠水電工程專案進度與收款看板
+    # 分頁 1：水電工程專案進度與收款看板
     with tab1:
         render_mep_project_progress_board()
         
