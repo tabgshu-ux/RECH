@@ -98,36 +98,37 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         L["tab_history"]
     ])
 
+    # 💡 裕豐電機工業正確的工程與管理團隊預設名冊
     if "employees_db" in st.session_state and st.session_state.employees_db:
         emp_list = st.session_state.employees_db
     else:
         emp_list = [
             {
-                "id": "EMP-001", "name": "Phạm Thanh Qúy (范青贵)", "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)", 
-                "dept": "營運部", "title": "副店長 (Phó cửa hàng trưởng)", "join_date": "2024-11-14", "base_salary": 6000000.0, 
-                "tardiness_mins": 0, "leave_days": 0, "ot_normal_hours": 10, "holiday_work_days": 1
+                "id": "EMP-001", "name": "張董事長", "site": "🇹🇼 台灣總部 (Taiwan HQ)", 
+                "dept": "管理部", "title": "董事長 (Chairman)", "join_date": "2020-01-15", "base_salary": 80000.0, 
+                "tardiness_mins": 0, "leave_days": 0, "ot_normal_hours": 0, "holiday_work_days": 0
             },
             {
-                "id": "EMP-002", "name": "Nguyễn Văn A", "site": "🇻🇳 越南廠 (Tay Ninh / Binh Duong)", 
-                "dept": "工程部", "title": "配電盤組裝工程師", "join_date": "2023-05-10", "base_salary": 8000000.0, 
-                "tardiness_mins": 15, "leave_days": 1, "ot_normal_hours": 20, "holiday_work_days": 2
+                "id": "EMP-002", "name": "Nguyễn Văn A", "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)", 
+                "dept": "工程部", "title": "高級機電工程師 (Senior M&E Engineer)", "join_date": "2023-05-10", "base_salary": 15000000.0, 
+                "tardiness_mins": 10, "leave_days": 0, "ot_normal_hours": 15, "holiday_work_days": 1
             },
             {
                 "id": "EMP-003", "name": "陳智賢", "site": "🇻🇳 越南西寧廠 (Tay Ninh Plant)", 
-                "dept": "經營高層", "title": "總經理 (General Manager)", "join_date": "2021-03-01", "base_salary": 25000000.0, 
-                "tardiness_mins": 0, "leave_days": 0, "ot_normal_hours": 0, "holiday_work_days": 0
+                "dept": "工程部", "title": "配電盤組裝技師 (Panel Assembly Technician)", "join_date": "2022-03-01", "base_salary": 9000000.0, 
+                "tardiness_mins": 0, "leave_days": 1, "ot_normal_hours": 22, "holiday_work_days": 2
             }
         ]
 
     # ----------------------------------------------------
-    # 📊 頁籤一：全廠區員工薪資詳細總表與 Excel 匯出
+    # 📊 頁籤一：全廠區員工薪資總表與 Excel 匯出
     # ----------------------------------------------------
     with tab_list:
         st.markdown("### 📊 全廠區員工本月薪資總表")
 
         summary_rows = []
         for emp in emp_list:
-            base = emp.get("base_salary", 6000000.0)
+            base = emp.get("base_salary", 9000000.0)
             work_days = 26.0
             
             daily_wage = base / work_days
@@ -151,10 +152,10 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
 
             meal = 250000.0
             fuel = 250000.0
-            phone = 0.0
-            position_bonus = 2000000.0
+            phone = 200000.0
+            position_bonus = 1000000.0
             license_bonus = 1000000.0
-            tips = 871000.0
+            tips = 0.0
 
             total_due = base + meal + fuel + phone + overtime_pay + holiday_pay + position_bonus + license_bonus + tips
             total_deduct = total_insurance + leave_deduction + tardiness_deduction + 0.0
@@ -163,22 +164,20 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
             summary_rows.append({
                 "工號": emp['id'],
                 "姓名": emp['name'],
+                "部門": emp['dept'],
                 "職稱": emp['title'],
+                "廠區": emp['site'],
                 "薪資總額(底薪)": base,
-                "總工作天數": work_days,
                 "請假天數": leave_days,
                 "遲到分鐘": tardiness_mins,
-                "平日加班時數(1.5x)": ot_normal_hours,
-                "國定假日出勤天數(3x)": holiday_work_days,
-                "日薪": round(daily_wage, 2),
-                "時薪": round(hourly_wage, 2),
+                "平日加班(1.5x)": ot_normal_hours,
+                "國定假日(3x)": holiday_work_days,
                 "餐費補助": meal,
                 "油費補助": fuel,
                 "加班費": round(overtime_pay, 2),
                 "國定假日3倍薪": round(holiday_pay, 2),
                 "職務加給": position_bonus,
-                "執照加給": license_bonus,
-                "小費獎金": tips,
+                "證照加給": license_bonus,
                 "應付金額合計": round(total_due, 2),
                 "社會保險(8%)": bhxh,
                 "醫療保險(1.5%)": bhyt,
@@ -221,14 +220,14 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
 
         emp = selected_emp
         emp_id = emp['id']
-        emp_site = emp.get("site", "🇻🇳 越南廠")
+        emp_site = emp.get("site", "🇻🇳 越南西寧廠")
 
-        st.markdown(f"#### 👤 員工姓名: **{emp['name']}** (`{emp_id}`) | 職稱: {emp['title']}")
+        st.markdown(f"#### 👤 員工姓名: **{emp['name']}** (`{emp_id}`) | 部門: {emp['dept']} | 職稱: {emp['title']}")
         st.caption(f"📍 工作廠區: **{emp_site}** | 到職日: {emp.get('join_date', '2024-01-01')}")
 
         c1, c2, c3 = st.columns(3)
         with c1:
-            base_salary = st.number_input(L["base_salary"], value=float(emp.get("base_salary", 6000000.0)), step=100000.0, key=f"base_{emp_id}")
+            base_salary = st.number_input(L["base_salary"], value=float(emp.get("base_salary", 9000000.0)), step=100000.0, key=f"base_{emp_id}")
         with c2:
             meal_allowance = st.number_input(L["meal_allowance"], value=250000.0, step=50000.0, key=f"meal_{emp_id}")
         with c3:
@@ -236,11 +235,11 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
 
         c4, c5, c6 = st.columns(3)
         with c4:
-            position_allowance = st.number_input(L["position_allowance"], value=2000000.0, step=100000.0, key=f"pos_{emp_id}")
+            position_allowance = st.number_input(L["position_allowance"], value=1000000.0, step=100000.0, key=f"pos_{emp_id}")
         with c5:
             license_allowance = st.number_input(L["license_allowance"], value=1000000.0, step=100000.0, key=f"lic_{emp_id}")
         with c6:
-            tips = st.number_input(L["tips"], value=871000.0, step=50000.0, key=f"tips_{emp_id}")
+            tips = st.number_input(L["tips"], value=0.0, step=50000.0, key=f"tips_{emp_id}")
 
         st.markdown("---")
         
@@ -276,40 +275,41 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         total_deduct = total_insurance + leave_deduction + tardiness_deduction + loan_deduction
         net_payable = total_due - total_deduct
 
-        st.markdown(
-            f"""
-            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #cbd5e1; font-family: sans-serif; color: #1e293b;">
-                <h3 style="margin-top:0; color:#0f172a;">📄 裕豐電機工業 (Reetech Industrial) - 薪資結算明細單</h3>
-                <p style="margin:2px 0; color:#475569;"><b>結算月份</b>: {pay_month.strftime('%Y年%m月')} | <b>工號</b>: {emp_id} | <b>姓名</b>: {emp['name']}</p>
-                <hr style="margin: 10px 0; border:0; border-top:1px solid #94a3b8;">
-                
-                <b>1. 薪資換算基準：</b><br>
-                &nbsp;&nbsp;• 標準工作天數: {work_days} 天 | 日薪: <b>{daily_wage:,.2f} ₫</b> | 時薪: <b>{hourly_wage:,.2f} ₫</b> | 每分鐘: <b>{minute_wage:,.2f} ₫</b><br><br>
+        # 💡 修正：使用純 Markdown 呈現薪資單，徹底避免 HTML 標籤外露
+        st.markdown(f"""
+---
+### 📄 裕豐電機工業 (Reetech Industrial) - 正式薪資結算明細單
+**結算月份**: {pay_month.strftime('%Y年%m月')} | **工號**: {emp_id} | **姓名**: {emp['name']} | **部門**: {emp['dept']}
 
-                <b>2. 應付金額：</b><br>
-                &nbsp;&nbsp;• 薪資總額 / 底薪: <b>{base_salary:,.2f} ₫</b><br>
-                &nbsp;&nbsp;• 餐費補助: {meal_allowance:,.2f} ₫ | 油費補助: {fuel_allowance:,.2f} ₫<br>
-                &nbsp;&nbsp;• 職務加給: {position_allowance:,.2f} ₫ | 執照加給: {license_allowance:,.2f} ₫<br>
-                &nbsp;&nbsp;• 平日加班費 ({ot_normal_hours} 小時 @ 1.5x): <b>{overtime_pay:,.2f} ₫</b><br>
-                &nbsp;&nbsp;• 🌟 國定假日 3 倍薪 ({holiday_work_days} 天 @ 300%): <b>{holiday_pay:,.2f} ₫</b><br>
-                &nbsp;&nbsp;• 小費/獎金: {tips:,.2f} ₫<br>
-                &nbsp;&nbsp;👉 <b>應付金額總合計: {total_due:,.2f} ₫</b><br><br>
+#### 1. 薪資換算基準
+- 標準工作天數: `{work_days}` 天
+- 日薪: `{daily_wage:,.2f} ₫`
+- 時薪: `{hourly_wage:,.2f} ₫`
+- 每分鐘薪資: `{minute_wage:,.2f} ₫`
 
-                <b>3. 應扣金額：</b><br>
-                &nbsp;&nbsp;• 🛡️ 社會保險 (BHXH 8%): <b>- {bhxh:,.2f} ₫</b><br>
-                &nbsp;&nbsp;• 🛡️ 醫療保險 (BHYT 1.5%): <b>- {bhyt:,.2f} ₫</b><br>
-                &nbsp;&nbsp;• 🛡️ 失業險 (BHTN 1%): <b>- {bhtn:,.2f} ₫</b><br>
-                &nbsp;&nbsp;• 📝 請假扣款 ({leave_days} 天): <b>- {leave_deduction:,.2f} ₫</b><br>
-                &nbsp;&nbsp;• ⏰ 遲到扣款 ({tardiness_mins} 分鐘): <b>- {tardiness_deduction:,.2f} ₫</b><br>
-                &nbsp;&nbsp;• 💳 預支借款: <b>- {loan_deduction:,.2f} ₫</b><br>
-                &nbsp;&nbsp;👉 <b>應扣金額合計: {total_deduct:,.2f} ₫</b><br>
-                
-                <hr style="margin: 15px 0; border:0; border-top:2px solid #047857;">
-                <h2 style="color: #047857; margin:0;">💰 實領金額: {net_payable:,.2f} VND</h2>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+#### 2. 應付金額 (Số tiền đến hạn)
+- 薪資總額 / 底薪: `{base_salary:,.2f} ₫`
+- 餐費補助: `{meal_allowance:,.2f} ₫`
+- 油費補助: `{fuel_allowance:,.2f} ₫`
+- 職務加給: `{position_allowance:,.2f} ₫`
+- 執照加給: `{license_allowance:,.2f} ₫`
+- 平日加班費 (`{ot_normal_hours}` 小時 @ 1.5x): `{overtime_pay:,.2f} ₫`
+- 🌟 國定假日 3 倍薪 (`{holiday_work_days}` 天 @ 300%): `{holiday_pay:,.2f} ₫`
+- 小費/獎金: `{tips:,.2f} ₫`
+- **👉 應付金額總合計 (Total Due): `{total_due:,.2f} ₫`**
+
+#### 3. 應扣金額 (Số tiền khấu trừ)
+- 🛡️ 社會保險 (BHXH 8%): `- {bhxh:,.2f} ₫`
+- 🛡️ 醫療保險 (BHYT 1.5%): `- {bhyt:,.2f} ₫`
+- 🛡️ 失業險 (BHTN 1%): `- {bhtn:,.2f} ₫`
+- 📝 請假扣款 (`{leave_days}` 天): `- {leave_deduction:,.2f} ₫`
+- ⏰ 遲到扣款 (`{tardiness_mins}` 分鐘): `- {tardiness_deduction:,.2f} ₫`
+- 💳 預支借款 (Tiền ứng): `- {loan_deduction:,.2f} ₫`
+- **👉 應扣金額合計 (Total Deduct): `{total_deduct:,.2f} ₫`**
+
+---
+### 💰 本月實領金額 (Số tiền thực lãnh): `{net_payable:,.2f} VND`
+        """)
 
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
@@ -326,9 +326,9 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         st.markdown("### 📱 出勤打卡與加班記錄總結")
         
         att_data = [
-            {"工號": "EMP-001", "姓名": "Phạm Thanh Qúy", "出勤天數": 26, "請假天數": 0, "遲到分鐘": 0, "平日加班(時)": 10, "國定假日出勤(天)": 1, "狀態": "🟢 正常出勤"},
-            {"工號": "EMP-002", "姓名": "Nguyễn Văn A", "出勤天數": 25, "請假天數": 1, "遲到分鐘": 15, "平日加班(時)": 20, "國定假日出勤(天)": 2, "狀態": "⭐ 有加班/假日出勤"},
-            {"工號": "EMP-003", "姓名": "陳智賢", "出勤天數": 26, "請假天數": 0, "遲到分鐘": 0, "平日加班(時)": 0, "國定假日出勤(天)": 0, "狀態": "🟢 正常出勤"}
+            {"工號": "EMP-001", "姓名": "張董事長", "部門": "管理部", "出勤天數": 26, "請假天數": 0, "遲到分鐘": 0, "平日加班(時)": 0, "國定假日出勤(天)": 0},
+            {"工號": "EMP-002", "姓名": "Nguyễn Văn A", "部門": "工程部", "出勤天數": 26, "請假天數": 0, "遲到分鐘": 10, "平日加班(時)": 15, "國定假日出勤(天)": 1},
+            {"工號": "EMP-003", "姓名": "陳智賢", "部門": "工程部", "出勤天數": 25, "請假天數": 1, "遲到分鐘": 0, "平日加班(時)": 22, "國定假日出勤(天)": 2}
         ]
         st.dataframe(pd.DataFrame(att_data), use_container_width=True)
 
