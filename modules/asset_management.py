@@ -128,9 +128,6 @@ ASSET_I18N = {
     }
 }
 
-# ----------------------------------------------------
-# 🔄 智慧語意對照引擎
-# ----------------------------------------------------
 def smart_translate_asset(text_val, target_lang):
     if not text_val or not isinstance(text_val, str):
         return text_val
@@ -209,7 +206,7 @@ def render_asset_management_page(*args, **kwargs):
         total_val = sum(item.get("cost", 0) for item in st.session_state.assets_db)
 
         col_m1, col_m2, col_m3 = st.columns(3)
-        col_m1.metric(L["metric_total"], f"{total_assets} 項")
+        col_m1.metric(L["metric_total"], f"{total_assets} 項" if lang == "繁體中文" else f"{total_assets} items")
         col_m2.metric(L["metric_cost"], f"${total_val:,.0f} USD")
         col_m3.metric(L["metric_sites"], L["sites_val"])
 
@@ -268,9 +265,9 @@ def render_asset_management_page(*args, **kwargs):
         st.divider()
         c_b1, c_b2 = st.columns(2)
         with c_b1:
-            brand_model = st.text_input(L["lbl_brand"], value="", placeholder="例如: Dell Latitude / Toyota")
+            brand_model = st.text_input(L["lbl_brand"], value="", placeholder="Ví dụ: Dell / Toyota")
         with c_b2:
-            plate_no = st.text_input(L["lbl_barcode"], value="-", placeholder="例如: 61A-123.45")
+            plate_no = st.text_input(L["lbl_barcode"], value="-", placeholder="Ví dụ: 61A-123.45")
 
         if st.button(L["btn_save"], type="primary"):
             st.session_state.assets_db.append({
