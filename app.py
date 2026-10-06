@@ -3,7 +3,7 @@ import modules.approval_workflow as approval_workflow
 import modules.asset_management as asset_management
 import modules.db_connection as db_conn
 import modules.employee_management as employee_management
-import modules.engineering_department as engineering_department  # 👈 引用全新的工程部綜合模組
+import modules.engineering_department as engineering_department
 import modules.executive_dashboard as executive_dashboard
 import modules.field_attendance as field_attendance
 import modules.invoice_management as invoice_management
@@ -84,11 +84,15 @@ NAV_STRUCTURE = {
                     "📄 [財務] 越南電子發票綜合管理中心": "invoice_management",
                 }
             },
-            "🛠️ 工程部 (Engineering Dept)": {
+            "🛠️ 工程管理中心 (Engineering Center)": {
                 "features": {
-                    "📐 [設計] 配電盤電氣與機構設計圖庫": "eng_design",
-                    "⚡ [工程] 配電盤估價與資材報價總合": "eng_quote",
-                    "📊 [工程] 工程驗收與進度追蹤": "eng_progress",
+                    "⚡ [工程] 配電盤與工程專案報價 (含折讓與 AR)": "eng_quote",
+                    "📊 [工程] 全球水電工程驗收與進度追蹤": "eng_progress",
+                }
+            },
+            "📐 設計部門 (Design Dept)": {
+                "features": {
+                    "🎨 [設計] 配電盤電氣與機構設計圖庫上傳中心": "eng_design",
                 }
             },
             "🏭 生產部 (Production Dept)": {
@@ -140,17 +144,21 @@ NAV_STRUCTURE = {
                     "📄 [Tài chính] Quản lý Hóa đơn điện tử tổng hợp": "invoice_management",
                 }
             },
-            "🛠️ Phòng Kỹ thuật (Engineering Dept)": {
+            "🛠️ Trung tâm Quản lý Kỹ thuật (Engineering Center)": {
                 "features": {
-                    "📐 [Thiết kế] Bản vẽ Tủ điện": "eng_design",
-                    "⚡ [Kỹ thuật] Báo giá Tủ điện & Dự toán": "eng_quote",
+                    "⚡ [Kỹ thuật] Báo giá Dự án & Truyền AR": "eng_quote",
                     "📊 [Kỹ thuật] Tiến độ nghiệm thu dự án cơ điện": "eng_progress",
+                }
+            },
+            "📐 Phòng Thiết kế (Design Dept)": {
+                "features": {
+                    "🎨 [Thiết kế] Kho tải lên & Tải về Bản vẽ": "eng_design",
                 }
             },
             "🏭 Phòng Sản xuất (Production Dept)": {
                 "features": {
                     "📦 [Kho] Quản lý Kho & Mã vạch": "wh_management",
-                    "✂️️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
+                    "✂️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
                     "🎨 [Sơn] Tổ Sơn tĩnh điện": "painting",
                     "⚡ [Lắp ráp] Tổ Lắp ráp Tủ điện": "assembly",
                 }
@@ -185,7 +193,7 @@ NAV_STRUCTURE = {
             "👔 Management Dept (GA & Finance)": {
                 "features": {
                     "🏢 [GA] Asset Management": "ga_assets",
-                    "✍️️ [GA] E-Approval Center": "approval_center",
+                    "✍️ [GA] E-Approval Center": "approval_center",
                     "👤 [HR] Employee Records": "hr_employee",
                     "🚗 [Security] Vehicle Gate Log": "vehicle_gate",
                     "🛠️ [GA] Vehicle Maintenance & Excel Import": "vehicle_maintenance",
@@ -196,11 +204,15 @@ NAV_STRUCTURE = {
                     "📄 [Finance] E-Invoice Comprehensive Center": "invoice_management",
                 }
             },
-            "🛠️ Engineering Dept": {
+            "🛠️ Engineering Management Center": {
                 "features": {
-                    "📐 [Design] Switchgear Drawings": "eng_design",
-                    "⚡ [Engineering] Costing & Quotation": "eng_quote",
+                    "⚡ [Engineering] Quotation & AR Transfer": "eng_quote",
                     "📊 [Engineering] M&E Acceptance & Progress": "eng_progress",
+                }
+            },
+            "📐 Design Dept": {
+                "features": {
+                    "🎨 [Design] Drawings Storage & Download": "eng_design",
                 }
             },
             "🏭 Production Dept": {
@@ -360,15 +372,15 @@ if target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
             executive_dashboard.show, sub_route=target_route, lang=curr_lang
         )
 
-# 🛠️ 工程部三大子功能路由（精準對應工程部綜合模組及其預設頁籤）
+# 🛠️ 工程管理中心與設計部門路由分流
 elif target_route == "eng_quote":
     safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=0)
 
-elif target_route == "eng_design":
-    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=1)
-
 elif target_route == "eng_progress":
     safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=2)
+
+elif target_route == "eng_design":
+    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=1)
 
 elif target_route == "procurement_ap":
     safe_call_module(procurement_ap.render_procurement_ap_page, engine=engine, lang=curr_lang)
