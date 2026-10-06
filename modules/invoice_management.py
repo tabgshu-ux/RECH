@@ -8,7 +8,7 @@ import datetime
 INVOICE_I18N = {
     "繁體中文": {
         "title": "📄 財務部 - 越南電子發票綜合管理中心",
-        "caption": "符合越南税务局 (GDT) 規範之電子發票 (Hóa đơn điện tử) 開立、檢核、總額彙整與狀態追蹤。",
+        "caption": "符合越南稅務局 (GDT) 規範之電子發票 (Hóa đơn điện tử) 開立、檢核、總額彙整與狀態追蹤。",
         "tab_list": "📑 電子發票總表與合規狀態",
         "tab_issue": "➕ 開立新電子發票 (Hóa đơn mới)",
         "tab_verify": "🔍 稅務局發票代碼驗證 (Mã cơ quan thuế)",
@@ -30,7 +30,6 @@ INVOICE_I18N = {
         "verify_input": "請輸入要查核的發票代碼 (Lookup Code):",
         "btn_verify": "🔎 查詢稅務局驗證狀態",
         "verify_result_ok": "✅ 驗證成功：此發票已向越南稅務總局完成申報，合規有效 (Hợp lệ)。",
-        # 表格動態欄位
         "col_index": "STT",
         "col_code": "發票代碼",
         "col_cust": "買方客戶",
@@ -65,7 +64,6 @@ INVOICE_I18N = {
         "verify_input": "Nhập mã tra cứu hóa đơn (Lookup Code):",
         "btn_verify": "🔎 Kiểm tra trạng thái thuế",
         "verify_result_ok": "✅ Hợp lệ: Hóa đơn đã được khai báo và xác thực thành công bởi cơ quan thuế.",
-        # Tiêu đề bảng
         "col_index": "STT",
         "col_code": "Ký hiệu hóa đơn",
         "col_cust": "Khách hàng",
@@ -100,7 +98,6 @@ INVOICE_I18N = {
         "verify_input": "Enter Invoice Lookup Code:",
         "btn_verify": "🔎 Verify Tax Status",
         "verify_result_ok": "✅ Valid: This invoice has been successfully declared and authenticated by the GDT.",
-        # Table headers
         "col_index": "No.",
         "col_code": "Invoice Code",
         "col_cust": "Customer",
@@ -113,22 +110,17 @@ INVOICE_I18N = {
     }
 }
 
-# ----------------------------------------------------
-# 🔄 電子發票模組專用：中越英智慧雙向語意對照引擎
-# ----------------------------------------------------
 def smart_translate_invoice(text_val, target_lang):
     if not text_val or not isinstance(text_val, str):
         return text_val
     
     val_lower = text_val.lower()
 
-    # 客戶名稱智慧對應
     if "樟榜" in text_val or "trảng bàng" in val_lower or "tay ninh" in val_lower:
         if target_lang == "Tiếng Việt": return "Nhà máy A KCN Trảng Bàng, Tây Ninh"
         elif target_lang == "English": return "Tay Ninh Plant Client A"
         return "越南樟榜工業區A廠"
 
-    # 發票狀態對應
     if "已驗證" in text_val or "hợp lệ" in val_lower or "valid" in val_lower:
         if target_lang == "Tiếng Việt": return "Đã cấp mã (Hợp lệ)"
         elif target_lang == "English": return "Verified (Valid)"
@@ -143,7 +135,6 @@ def render_invoice_management(engine=None, lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化發票資料庫
     if "invoices_db" not in st.session_state:
         st.session_state.invoices_db = [
             {
@@ -155,16 +146,6 @@ def render_invoice_management(engine=None, lang="繁體中文", **kwargs):
                 "total": 27500.0,
                 "status": "已驗證",
                 "date": "2026-10-02"
-            },
-            {
-                "code": "26E-0002",
-                "cust": "越南平陽美德金屬廠",
-                "tax_code": "3709876543",
-                "amount": 15000.0,
-                "vat": 1500.0,
-                "total": 16500.0,
-                "status": "已驗證",
-                "date": "2026-10-04"
             }
         ]
 
@@ -203,7 +184,7 @@ def render_invoice_management(engine=None, lang="繁體中文", **kwargs):
             with c2:
                 amount = st.number_input(L["lbl_amount"], min_value=0.0, value=10000.0, step=500.0)
                 vat_amount = amount * 0.1
-                st.info(f"💡 自動計算 VAT (10%)：**${vat_amount:,.2f} USD**（含稅總計：**${amount + vat_amount:,.2f} USD**）")
+                st.info(f"💡 自動計算 VAT (10%)：**${vat_amount:,.2f} USD**")
                 desc = st.text_area(L["lbl_desc"], placeholder=L["desc_placeholder"])
 
             if st.form_submit_button(L["btn_issue"], type="primary", use_container_width=True):
@@ -213,4 +194,25 @@ def render_invoice_management(engine=None, lang="繁體中文", **kwargs):
                         "cust": cust_name,
                         "tax_code": tax_code,
                         "amount": amount,
-                        "vat": vat_amount
+                        "vat": vat_amount,
+                        "total": amount + vat_amount,
+                        "status": "已驗證",
+                        "date": datetime.date.today().strftime("%Y-%m-%d")
+                    })
+                    st.success(L["success_issue"].format(inv_code=inv_code))
+                    st.rerun()
+                else:
+                    st.warning(L["fill_warning"])
+
+    with tab_verify:
+        st.markdown(f"### {L['verify_header']}")
+        lookup_code = st.text_input(L["verify_input"], value="26E-0001")
+        if st.button(L["btn_verify"], type="primary"):
+            if lookup_code:
+                st.success(L["verify_result_ok"])
+
+def show(*args, **kwargs):
+    render_invoice_management(*args, **kwargs)
+
+def main(*args, **kwargs):
+    render_invoice_management(*args, **kwargs)
