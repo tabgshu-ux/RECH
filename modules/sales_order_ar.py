@@ -4,14 +4,14 @@ import datetime
 from sqlalchemy import text
 
 # ----------------------------------------------------
-# 🌐 應收帳款與專案進度模組多語系字典 & 智慧詞彙對照 (i18n)
+# 🌐 應收帳款與專案進度模組多語系字典 (i18n)
 # ----------------------------------------------------
 AR_I18N = {
     "繁體中文": {
         "title": "📋 管理部 - 客戶應收帳款 (AR) & 專案分期進度管理",
         "caption": "記錄客戶工程合約總額、動態分期付款排程管理、專案說明與進度實時追蹤。",
         "tab_list": "📑 客戶應收款項總表與進度",
-        "tab_edit": "✍️ 修改進行進度說明與催收歷程",
+        "tab_edit": "✍️️ 修改進行進度說明與催收歷程",
         "tab_add": "➕ 登記新應收帳款專案",
         "table_header": "📋 客戶應收帳款專案清冊",
         "no_records": "目前無應收帳款紀錄。",
@@ -166,38 +166,55 @@ AR_I18N = {
 }
 
 # ----------------------------------------------------
-# 🔄 智慧中越雙向對照字典（讓台幹輸入的中文與越幹輸入的越文自動互轉）
+# 🔄 智慧模糊語意對照引擎 (支援關鍵字比對與截斷容錯)
 # ----------------------------------------------------
-SMART_TRANSLATION_MAP = {
-    "越南樟榜工業區A廠": "Nhà máy A KCN Trảng Bàng, Tây Ninh",
-    "Nhà máy A KCN Trảng Bàng, Tây Ninh": "越南樟榜工業區A廠",
-    "西寧廠 2000A 配電櫃新建工程": "Lắp đặt tủ điện 2000A nhà máy Tây Ninh",
-    "Lắp đặt tủ điện 2000A nhà máy Tây Ninh": "西寧廠 2000A 配電櫃新建工程",
-    "工程備料中 / 準備施工": "Đang chuẩn bị vật tư / Chuẩn bị thi công",
-    "Đang chuẩn bị vật tư / Chuẩn bị thi công": "工程備料中 / 準備施工",
-    "工程備料中": "Đang chuẩn bị vật tư",
-    "Đang chuẩn bị vật tư": "工程備料中",
-    "不分期": "Thanh toán 1 lần",
-    "Thanh toán 1 lần": "不分期",
-    "分三期": "Thanh toán 3 đợt",
-    "Thanh toán 3 đợt": "分三期",
-    "分五期": "Thanh toán 5 đợt",
-    "Thanh toán 5 đợt": "分五期"
-}
-
 def smart_translate(text_val, target_lang):
-    if not text_val or not isinstance(text_val, str):
-        return text_val
-    if target_lang == "Tiếng Việt":
-        return SMART_TRANSLATION_MAP.get(text_val, text_val)
-    elif target_lang == "繁體中文":
-        # 如果是越文，反查中文
-        for zh, vn in SMART_TRANSLATION_MAP.items():
-            if vn == text_val:
-                return zh
+    if not text_val or not isinstance(text_val, str) or text_val in ["None", "-", ""]:
+        if target_lang == "Tiếng Việt": return "Chưa cập nhật"
+        elif target_lang == "English": return "N/A"
+        return "-"
+
+    text_lower = text_val.lower()
+
+    # 1. 判斷是否為客戶名稱 (樟榜 / Trảng Bàng)
+    if "樟榜" in text_val or "trảng bàng" in text_lower or "tay ninh" in text_lower:
+        if target_lang == "Tiếng Việt":
+            return "Nhà máy A KCN Trảng Bàng, Tây Ninh"
+        elif target_lang == "繁體中文":
+            return "越南樟榜工業區A廠"
+
+    # 2. 判斷是否為工程名稱 (西寧 / 2000A / 配電櫃 / tủ điện)
+    if "西寧" in text_val or "2000a" in text_lower or "配電櫃" in text_val or "tủ điện" in text_lower:
+        if target_lang == "Tiếng Việt":
+            return "Lắp đặt tủ điện 2000A nhà máy Tây Ninh"
+        elif target_lang == "繁體中文":
+            return "西寧廠 2000A 配電櫃新建工程"
+
+    # 3. 判斷進度說明 (備料 / 施工 / chuẩn bị / thi công)
+    if "備料" in text_val or "準備" in text_val or "chuẩn bị" in text_lower:
+        if target_lang == "Tiếng Việt":
+            return "Đang chuẩn bị vật tư / Chuẩn bị thi công"
+        elif target_lang == "繁體中文":
+            return "工程備料中 / 準備施工"
+
+    # 4. 判斷付款期數模式 (不分期 / 分三期 / 分五期)
+    if "不分期" in text_val or "1" in text_val and "đợt" in text_lower or "single" in text_lower or "lump" in text_lower:
+        if target_lang == "Tiếng Việt": return "Thanh toán 1 lần"
+        elif target_lang == "繁體中文": return "不分期"
+        return "Single"
+    if "分三期" in text_val or "3" in text_val:
+        if target_lang == "Tiếng Việt": return "Thanh toán 3 đợt"
+        elif target_lang == "繁體中文": return "分三期"
+        return "3 Installments"
+    if "分五期" in text_val or "5" in text_val:
+        if target_lang == "Tiếng Việt": return "Thanh toán 5 đợt"
+        elif target_lang == "繁體中文": return "分五期"
+        return "5 Installments"
+
     return text_val
 
 def format_curr(amt, curr):
+    if not curr: curr = "越南盾"
     if "VND" in curr or "越南盾" in curr or "Đồng" in curr: return f"₫ {amt:,.0f} VND"
     elif "USD" in curr or "美金" in curr or "Đô la" in curr: return f"$ {amt:,.3f} USD"
     elif "TWD" in curr or "台幣" in curr or "Đài tệ" in curr: return f"NT$ {amt:,.0f} TWD"
@@ -222,11 +239,11 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
                 if not df_ar.empty:
                     display_list = []
                     for idx, r in df_ar.iterrows():
-                        # 動態套用智慧翻譯轉換 (客戶名稱、工程名稱、進度說明)
                         entity_display = smart_translate(r.get("entity_name"), active_lang)
                         project_display = smart_translate(r.get("project_name"), active_lang)
                         progress_display = smart_translate(r.get("progress_note"), active_lang)
                         terms_display = smart_translate(r.get("payment_terms"), active_lang)
+                        desc_display = smart_translate(r.get("project_desc"), active_lang)
 
                         display_list.append({
                             "編號": idx + 1,
@@ -238,7 +255,7 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
                             "分期類型": terms_display,
                             "分期比率": r.get("installment_ratios", "100%"),
                             "進行進度說明": progress_display,
-                            "專案說明": r.get("project_desc", "-"),
+                            "專案說明": desc_display if desc_display != "-" else "-",
                             "最新催收理由/歷程": r.get("uncollected_reason", "-")
                         })
                     st.dataframe(pd.DataFrame(display_list), use_container_width=True)
