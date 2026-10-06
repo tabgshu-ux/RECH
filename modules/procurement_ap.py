@@ -8,7 +8,7 @@ import datetime
 PROCUREMENT_AP_I18N = {
     "繁體中文": {
         "title": "🛒 財務部 - 採購管理 & 應付帳款 (AP)",
-        "caption": "管理採購單、供應商應付帳款、多幣別付款排程與西寧/海防廠立帳追蹤。",
+        "caption": "管理生產原料、固定資產、總務文具廚具、多幣別付款排程與西寧/海防廠立帳追蹤。",
         "tab_list": "📑 應付帳款總表與進度",
         "tab_progress": "💳 供應商付款狀態更新",
         "tab_add": "➕ 登記款項應付 (AP) 新增",
@@ -22,17 +22,19 @@ PROCUREMENT_AP_I18N = {
         "add_header": "➕ 登記全新供應商應付帳款 (AP)",
         "lbl_code": "AP 帳款編號 *",
         "lbl_vendor": "供應商名稱 (Nhà cung cấp) *",
-        "vendor_placeholder": "例如: 施耐德電氣越南分公司",
-        "lbl_category": "採購品項分類 *",
+        "vendor_placeholder": "例如: 泰寧辦公文具與總務行號",
+        "lbl_category": "採購品項與資產分類 *",
         "cat_opts": [
+            "📁 辦公文具與行政消耗品",
+            "🍳 廠區廚具、餐廳與宿舍設施",
             "⚡ 高低壓配電盤與斷路器零件",
-            "🔩 銅排、線材與五金原物料",
+            "🔩 銅排、線材與金屬原物料",
             "💻 廠區 IT 設備與辦公軟體",
-            "🏭 生產機械具備用零件與模具",
+            "🏭 生產機械具與模具設備 (固定資產)",
             "🛡️ 勞安防護與廠區環保耗材"
         ],
         "lbl_item": "採購品項詳細說明 *",
-        "item_placeholder": "例如: 廠區高壓配電盤及斷路器設備",
+        "item_placeholder": "例如: 採購 A4 印表紙 50 箱及辦公桌椅一批",
         "lbl_currency": "幣別選擇 *",
         "lbl_amount": "採購總金額 *",
         "lbl_terms": "付款條件 / 信用期 *",
@@ -53,7 +55,7 @@ PROCUREMENT_AP_I18N = {
     },
     "Tiếng Việt": {
         "title": "🛒 Khối Tài chính - Quản lý Mua hàng & Phải trả (AP)",
-        "caption": "Quản lý đơn hàng mua, công nợ phải trả nhà cung cấp, lịch thanh toán đa tiền tệ cho Tây Ninh và Hải Phòng.",
+        "caption": "Quản lý nguyên vật liệu, tài sản cố định, văn phòng phẩm, dụng cụ nhà bếp và lịch thanh toán nhà máy.",
         "tab_list": "📑 Danh sách Phải trả & Tiến độ",
         "tab_progress": "💳 Cập nhật Trạng thái Thanh toán",
         "tab_add": "➕ Đăng ký Khoản phải trả (AP) Mới",
@@ -67,17 +69,19 @@ PROCUREMENT_AP_I18N = {
         "add_header": "➕ Đăng ký Khoản phải trả Nhà cung cấp Mới",
         "lbl_code": "Mã AP *",
         "lbl_vendor": "Tên nhà cung cấp *",
-        "vendor_placeholder": "Ví dụ: Schneider Electric Vietnam",
-        "lbl_category": "Phân loại mặt hàng *",
+        "vendor_placeholder": "Ví dụ: Công ty Văn phòng phẩm & Tổng hợp",
+        "lbl_category": "Phân loại mặt hàng & Tài sản *",
         "cat_opts": [
+            "📁 Văn phòng phẩm & Vật tư hành chính",
+            "🍳 Dụng cụ nhà bếp, nhà ăn & ký túc xá",
             "⚡ Tủ điện trung/hạ thế & linh kiện",
             "🔩 Đồng thanh cái, dây cáp & vật tư",
             "💻 Thiết bị IT & phần mềm văn phòng",
-            "🏭 Phụ tùng máy móc sản xuất & khuôn",
+            "🏭 Máy móc sản xuất & Khuôn (Tài sản cố định)",
             "🛡️ Thiết bị bảo hộ lao động & vật tư"
         ],
         "lbl_item": "Mô tả chi tiết mặt hàng *",
-        "item_placeholder": "Ví dụ: Tủ điện trung thế và thiết bị đóng cắt",
+        "item_placeholder": "Ví dụ: Mua 50 thùng giấy A4 và bộ bàn ghế văn phòng",
         "lbl_currency": "Loại tiền *",
         "lbl_amount": "Tổng số tiền *",
         "lbl_terms": "Điều kiện thanh toán *",
@@ -98,7 +102,7 @@ PROCUREMENT_AP_I18N = {
     },
     "English": {
         "title": "🛒 Finance - Procurement & Accounts Payable (AP)",
-        "caption": "Manage purchase orders, supplier accounts payable, multi-currency payment schedules for Tay Ninh and Hai Phong.",
+        "caption": "Manage raw materials, fixed assets, stationery, kitchenware, and accounts payable schedules.",
         "tab_list": "📑 Accounts Payable & Progress",
         "tab_progress": "💳 Update Payment Status",
         "tab_add": "➕ Register New AP Record",
@@ -112,17 +116,19 @@ PROCUREMENT_AP_I18N = {
         "add_header": "➕ Register New Supplier AP Record",
         "lbl_code": "AP Code *",
         "lbl_vendor": "Supplier Name *",
-        "vendor_placeholder": "Example: Schneider Electric Vietnam",
-        "lbl_category": "Item Category *",
+        "vendor_placeholder": "Example: Office Stationery & General Supplies Co.",
+        "lbl_category": "Item & Asset Category *",
         "cat_opts": [
+            "📁 Office Stationery & Admin Supplies",
+            "🍳 Kitchenware, Cafeteria & Dormitory Facilities",
             "⚡ Switchgear & Circuit Breakers",
             "🔩 Copper Busbars & Raw Materials",
             "💻 Plant IT Equipment & Software",
-            "🏭 Production Machinery Parts & Molds",
+            "🏭 Production Machinery & Molds (Fixed Assets)",
             "🛡️ PPE & Environmental Consumables"
         ],
         "lbl_item": "Detailed Item Description *",
-        "item_placeholder": "Example: High-voltage switchboards and circuit breakers",
+        "item_placeholder": "Example: 50 boxes of A4 paper and office desks",
         "lbl_currency": "Currency *",
         "lbl_amount": "Total Amount *",
         "lbl_terms": "Payment Terms *",
@@ -150,10 +156,14 @@ def smart_translate_ap(text_val, target_lang):
         if "施耐德電氣越南分公司" in text_val: return "Schneider Electric (Chi nhánh Việt Nam)"
         if "尚未更新" in text_val: return "Chưa cập nhật"
         if "T/T 30天票期" in text_val: return "T/T 30 ngày (Thanh toán chậm)"
+        if "辦公文具與行政消耗品" in text_val: return "Văn phòng phẩm & Vật tư hành chính"
+        if "廠區廚具、餐廳與宿舍設施" in text_val: return "Dụng cụ nhà bếp, nhà ăn & ký túc xá"
     elif target_lang == "English":
         if "施耐德電氣越南分公司" in text_val: return "Schneider Electric Vietnam"
         if "尚未更新" in text_val: return "Not Updated"
         if "T/T 30天票期" in text_val: return "T/T 30 Days Credit"
+        if "辦公文具與行政消耗品" in text_val: return "Office Stationery & Admin Supplies"
+        if "廠區廚具、餐廳與宿舍設施" in text_val: return "Kitchenware, Cafeteria & Dormitory Facilities"
     return text_val
 
 def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
@@ -230,7 +240,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                         "code": ap_code,
                         "vendor": vendor,
                         "category": category,
-                        "item": item_desc if item_desc else "標準採購零組件",
+                        "item": item_desc if item_desc else "一般總務與文具品項",
                         "currency": currency,
                         "amount": amount,
                         "terms": terms,
