@@ -32,14 +32,17 @@ AR_I18N = {
         "project_name_label": "工程名稱 *",
         "project_placeholder": "西寧廠 2000A 配電櫃新建工程",
         "currency_label": "交易幣別 *",
+        "currency_opts": ["越南盾", "美金", "台幣", "人民幣"],
         "usd_label": "總帳款 (USD - 精確至小數點後 3 位) *",
         "total_lbl": "總帳款 *",
         "plan_type_label": "付款期數模式 *",
+        "plan_opts": ["不分期", "分三期", "分五期"],
         "proj_desc_label": "專案說明",
         "proj_desc_placeholder": "請填寫本工程施工內容與合約細節...",
         "progress_note_label": "進行進度說明",
         "milestone_header": "💳 分期百分比 (%) 與付款日期細項設定",
         "single_pay_info": "全額一次付清：",
+        "payment_date_label": "付款日期",
         "ratio_warning": "⚠️ 目前分期總比率為 `{total_pct}%`（請調整至總和 100%）",
         "ratio_success": "✅ 分期比率總和剛好 100%",
         "period_1_amt": "第一期金額",
@@ -81,14 +84,17 @@ AR_I18N = {
         "project_name_label": "Tên công trình *",
         "project_placeholder": "Lắp đặt tủ điện 2000A nhà máy Tây Ninh",
         "currency_label": "Loại tiền tệ *",
+        "currency_opts": ["Đồng Việt Nam (VND)", "Đô la Mỹ (USD)", "Đài tệ (TWD)", "Nhân dân tệ (CNY)"],
         "usd_label": "Tổng tiền (USD - Chính xác đến 3 chữ số thập phân) *",
         "total_lbl": "Tổng tiền *",
         "plan_type_label": "Hình thức thanh toán *",
+        "plan_opts": ["Thanh toán 1 lần", "Thanh toán 3 đợt", "Thanh toán 5 đợt"],
         "proj_desc_label": "Mô tả dự án",
         "proj_desc_placeholder": "Nhập nội dung thi công và chi tiết hợp đồng...",
         "progress_note_label": "Mô tả tiến độ",
         "milestone_header": "💳 Thiết lập tỷ lệ phần trăm (%) và ngày thanh toán theo đợt",
         "single_pay_info": "Thanh toán 100% một lần:",
+        "payment_date_label": "Ngày thanh toán",
         "ratio_warning": "⚠️ Tổng tỷ lệ hiện tại là `{total_pct}%` (Vui lòng điều chỉnh tổng bằng 100%)",
         "ratio_success": "✅ Tổng tỷ lệ phân kỳ đúng 100%",
         "period_1_amt": "Số tiền đợt 1",
@@ -103,7 +109,7 @@ AR_I18N = {
         "period_5_date": "Ngày thu đợt 5",
         "save_new_btn": "💾 Lưu và đăng ký dự án phải thu",
         "create_success": "Đã tạo thành công dự án `{inv_id}`!",
-        "fill_warning": "⚠️ Vui lòng điền đầy đủ Tên khách hàng và Tên công trình!"
+        "fill_warning": "⚠️️ Vui lòng điền đầy đủ Tên khách hàng và Tên công trình!"
     },
     "English": {
         "title": "📋 Admin - Accounts Receivable (AR) & Project Installments",
@@ -130,14 +136,17 @@ AR_I18N = {
         "project_name_label": "Project Name *",
         "project_placeholder": "Tay Ninh 2000A Switchboard Installation",
         "currency_label": "Currency *",
+        "currency_opts": ["VND", "USD", "TWD", "CNY"],
         "usd_label": "Total Amount (USD - 3 decimal places) *",
         "total_lbl": "Total Amount *",
         "plan_type_label": "Payment Terms *",
+        "plan_opts": ["Lump Sum (Single)", "3 Installments", "5 Installments"],
         "proj_desc_label": "Project Description",
         "proj_desc_placeholder": "Enter construction scope and contract details...",
         "progress_note_label": "Progress Description",
         "milestone_header": "💳 Milestone Installment Percentage (%) & Due Dates",
         "single_pay_info": "Full payment in one lump sum:",
+        "payment_date_label": "Payment Due Date",
         "ratio_warning": "⚠️ Total ratio is currently `{total_pct}%` (Please adjust to sum up to 100%)",
         "ratio_success": "✅ Installment ratios sum up to 100%",
         "period_1_amt": "Period 1 Amount",
@@ -157,10 +166,10 @@ AR_I18N = {
 }
 
 def format_curr(amt, curr):
-    if curr == "越南盾": return f"₫ {amt:,.0f} VND"
-    elif curr == "美金": return f"$ {amt:,.3f} USD"
-    elif curr == "台幣": return f"NT$ {amt:,.0f} TWD"
-    elif curr == "人民幣": return f"¥ {amt:,.2f} CNY"
+    if "VND" in curr or "越南盾" in curr or "Đồng" in curr: return f"₫ {amt:,.0f} VND"
+    elif "USD" in curr or "美金" in curr or "Đô la" in curr: return f"$ {amt:,.3f} USD"
+    elif "TWD" in curr or "台幣" in curr or "Đài tệ" in curr: return f"NT$ {amt:,.0f} TWD"
+    elif "CNY" in curr or "人民幣" in curr or "Nhân dân tệ" in curr: return f"¥ {amt:,.2f} CNY"
     return f"{amt:,.3f} {curr}"
 
 def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
@@ -249,15 +258,15 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
             inv_id = st.text_input(L["inv_id_label"], value=f"AR-2026-{datetime.datetime.now().strftime('%m%d%H%M')}")
             entity_name = st.text_input(L["entity_name_label"], placeholder=L["entity_placeholder"])
             project_name = st.text_input(L["project_name_label"], placeholder=L["project_placeholder"])
-            currency = st.selectbox(L["currency_label"], ["越南盾", "美金", "台幣", "人民幣"])
+            currency = st.selectbox(L["currency_label"], L["currency_opts"])
             
-            if currency == "美金":
+            if "USD" in currency or "美金" in currency or "Đô la" in currency:
                 total_amount = st.number_input(L["usd_label"], min_value=0.0, value=10000.000, format="%.3f", step=0.001)
             else:
                 total_amount = st.number_input(L["total_lbl"], min_value=0.0, value=100000.0, step=1000.0)
 
         with c2:
-            plan_type = st.selectbox(L["plan_type_label"], ["不分期", "分三期", "分五期"])
+            plan_type = st.selectbox(L["plan_type_label"], L["plan_opts"])
             project_desc = st.text_area(L["proj_desc_label"], placeholder=L["proj_desc_placeholder"])
             progress_note = st.text_input(L["progress_note_label"], value="工程備料中 / 準備施工")
 
@@ -268,11 +277,16 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
         p1_amt, p2_amt, p3_amt, p4_amt, p5_amt = total_amount, 0.0, 0.0, 0.0, 0.0
         d1, d2, d3, d4, d5 = datetime.date.today(), datetime.date.today(), datetime.date.today(), datetime.date.today(), datetime.date.today()
 
-        if plan_type == "不分期":
-            d1 = st.date_input("付款日期", value=datetime.date.today() + datetime.timedelta(days=30), key="ar_d_single")
+        # 判斷付款期數模式（支援各語系比對）
+        is_single = ("不分期" in plan_type) or ("1" in plan_type and "đợt" in plan_type) or ("Single" in plan_type)
+        is_three = ("分三期" in plan_type) or ("3" in plan_type)
+        is_five = ("分五期" in plan_type) or ("5" in plan_type)
+
+        if is_single:
+            d1 = st.date_input(L["payment_date_label"], value=datetime.date.today() + datetime.timedelta(days=30), key="ar_d_single")
             st.info(f"{L['single_pay_info']} {format_curr(total_amount, currency)}")
 
-        elif plan_type == "分三期":
+        elif is_three:
             col_r1, col_r2, col_r3 = st.columns(3)
             with col_r1:
                 r1 = st.number_input("第 1 期比率 (%)", min_value=0.0, max_value=100.0, value=30.0, step=1.0, key="ar_3r1")
@@ -302,7 +316,7 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
                 st.write(f"• **{L['period_3_amt']}**：`{format_curr(p3_amt, currency)}`")
                 d3 = st.date_input(L["period_3_date"], value=datetime.date.today() + datetime.timedelta(days=60), key="ar_3d3")
 
-        elif plan_type == "分五期":
+        elif is_five:
             col_r1, col_r2, col_r3, col_r4, col_r5 = st.columns(5)
             with col_r1:
                 r1 = st.number_input("第 1 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r1")
@@ -378,6 +392,5 @@ def show(*args, **kwargs):
 def main(*args, **kwargs):
     render_sales_order_ar_page(*args, **kwargs)
 
-# 兼容主程式直接呼叫 render_sales_order_ar_page
 def render_sales_order_ar(*args, **kwargs):
     render_sales_order_ar_page(*args, **kwargs)
