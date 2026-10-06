@@ -44,7 +44,7 @@ PAYROLL_I18N = {
         "lbl_overtime": "Số giờ tăng ca (Hours)",
         "lbl_bonus": "Thưởng hiệu suất & Phụ cấp (Bonus)",
         "btn_save_calc": "💾 Lưu và tính lại lương",
-        "success_calc": "✅ Đã tính toán lại lương và tăng ca cho nhân viên `{emp_name}` thành công!",
+        "success_save": "✅ Đã tính toán lại lương và tăng ca cho nhân viên `{emp_name}` thành công!",
         
         "col_id": "Mã NV",
         "col_name": "Họ tên",
@@ -68,7 +68,7 @@ PAYROLL_I18N = {
         "lbl_overtime": "Overtime Hours",
         "lbl_bonus": "Performance Bonus & Allowance",
         "btn_save_calc": "💾 Save & Recalculate Payroll",
-        "success_calc": "✅ Payroll and overtime for employee `{emp_name}` recalculated successfully!",
+        "success_save": "✅ Payroll and overtime for employee `{emp_name}` recalculated successfully!",
         
         "col_id": "Emp ID",
         "col_name": "Name",
@@ -94,9 +94,19 @@ def smart_translate_payroll_emp(text_val, target_lang):
         if "李元隆" in text_val: return "Lee Yuan-Lung (Vice GM)"
     return text_val
 
-def render_payroll_page(engine=None, lang="繁體中文", **kwargs):
-    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
-    L = PAYROLL_I18N.get(active_lang, PAYROLL_I18N["繁體中文"])
+def get_active_lang(passed_lang):
+    # 優先檢查傳入參數、session_state 中的各種常見語系鍵值
+    if passed_lang in PAYROLL_I18N:
+        return passed_lang
+    for key in ["current_lang", "lang", "language", "selected_lang"]:
+        val = st.session_state.get(key)
+        if val in PAYROLL_I18N:
+            return val
+    return "Tiếng Việt"  # 預設改為越南文
+
+def render_payroll_page(engine=None, lang=None, **kwargs):
+    active_lang = get_active_lang(lang)
+    L = PAYROLL_I18N.get(active_lang, PAYROLL_I18N["Tiếng Việt"])
 
     st.title(L["title"])
     st.caption(L["caption"])
@@ -147,11 +157,17 @@ def render_payroll_page(engine=None, lang="繁體中文", **kwargs):
 
     with tab_summary:
         st.markdown(f"### {L['tab_summary']}")
-        st.success("📊 廠區出勤與 300% 加班時數統計正常，社會保險扣除額（SI 8%, HI 1.5%, UI 1%）計算無誤。")
+        if active_lang == "Tiếng Việt":
+            st.success("📊 Thống kê chấm công và số giờ tăng ca 300% ổn định, mức khấu trừ bảo hiểm xã hội (SI 8%, HI 1.5%, UI 1%) chính xác.")
+        else:
+            st.success("📊 廠區出勤與 300% 加班時數統計正常，社會保險扣除額計算無誤。")
 
     with tab_history:
         st.markdown(f"### {L['tab_history']}")
-        st.info("📜 歷史薪資與會計傳票紀錄封存中。")
+        if active_lang == "Tiếng Việt":
+            st.info("📜 Lịch sử bảng lương và chứng từ kế toán đang được lưu trữ.")
+        else:
+            st.info("📜 歷史薪資與會計傳票紀錄封存中。")
 
 def render_payroll_management_page(*args, **kwargs):
     render_payroll_page(*args, **kwargs)
