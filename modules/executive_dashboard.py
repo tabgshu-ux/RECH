@@ -109,7 +109,7 @@ def generate_gemini_project_insights(projects_df, copper_price, usd_vnd):
     try:
         genai.configure(api_key=api_key)
         # 使用穩定且支援文字推理的模型
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         response = model.generate_content(prompt)
         return response.text
     except Exception as e:
