@@ -3,12 +3,12 @@ import pandas as pd
 import datetime
 
 # ----------------------------------------------------
-# 🌐 全球廠區水電工程專案追蹤模組多語系字典 (i18n)
+# 🌐 全球廠區水電工程驗收與進度追蹤模組多語系字典 (i18n)
 # ----------------------------------------------------
 PROJECT_TRACKING_I18N = {
     "繁體中文": {
-        "title": "⚡ 全球廠區客製化水電工程專案與財務收款追蹤",
-        "caption": "結合工程現場施工進度百分比、合約總價、已收款金額、未收款（尾款/進度款）及收款理由與驗收狀態。",
+        "title": "⚡ 裕豐電機工業 - 水電工程驗收與進度追蹤",
+        "caption": "純工程導向：專注監控工程現場施工進度百分比、驗收狀態與合約管控。",
         "kpi1_title": "在手水電專案總數",
         "kpi1_val": "8 件",
         "kpi1_sub": "↑ 執行中 6 件 / 驗收 2 件",
@@ -19,7 +19,7 @@ PROJECT_TRACKING_I18N = {
         "kpi4_title": "平均工程進度",
         "kpi4_sub": "● 進度正常",
         
-        "table_header": "📋 專案明細、工程進度與收款連動管控表",
+        "table_header": "📋 專案明細、工程進度與驗收狀態管控表",
         "col_code": "專案代碼",
         "col_client": "客戶名稱 / 廠區",
         "col_item": "水電工程項目",
@@ -30,8 +30,8 @@ PROJECT_TRACKING_I18N = {
         "col_status": "工程與驗收狀態"
     },
     "Tiếng Việt": {
-        "title": "⚡ Theo dõi Dự án Cơ điện & Thu hồi Công nợ Toàn cầu",
-        "caption": "Kết hợp phần trăm tiến độ thi công, tổng giá trị hợp đồng, số tiền đã thu, công nợ phải trả/phải thu và trạng thái nghiệm thu.",
+        "title": "⚡ REETECH INDUSTRIAL - Theo dõi Tiến độ & Nghiệm thu Dự án Cơ điện",
+        "caption": "Chuyên dụng kỹ thuật: Tập trung giám sát phần trăm tiến độ thi công, trạng thái nghiệm thu và hợp đồng.",
         "kpi1_title": "Tổng số dự án cơ điện",
         "kpi1_val": "8 dự án",
         "kpi1_sub": "↑ Đang thực hiện 6 / Nghiệm thu 2",
@@ -42,7 +42,7 @@ PROJECT_TRACKING_I18N = {
         "kpi4_title": "Tiến độ thi công trung bình",
         "kpi4_sub": "● Tiến độ bình thường",
         
-        "table_header": "📋 Bảng chi tiết dự án, tiến độ thi công và kiểm soát công nợ",
+        "table_header": "📋 Bảng chi tiết dự án, tiến độ thi công và trạng thái nghiệm thu",
         "col_code": "Mã dự án",
         "col_client": "Tên khách hàng / Nhà máy",
         "col_item": "Hạng mục cơ điện",
@@ -53,8 +53,8 @@ PROJECT_TRACKING_I18N = {
         "col_status": "Trạng thái thi công & Nghiệm thu"
     },
     "English": {
-        "title": "⚡ Global M&E Engineering Projects & Financial Collection Tracking",
-        "caption": "Combines site progress percentage, contract totals, collected amounts, accounts receivable (AR), and acceptance status.",
+        "title": "⚡ REETECH INDUSTRIAL - M&E Engineering Progress & Acceptance Tracking",
+        "caption": "Engineering focused: Dedicated monitoring of site construction progress, acceptance status, and contract control.",
         "kpi1_title": "Total M&E Projects",
         "kpi1_val": "8 projects",
         "kpi1_sub": "↑ Active: 6 / Acceptance: 2",
@@ -65,7 +65,7 @@ PROJECT_TRACKING_I18N = {
         "kpi4_title": "Average Engineering Progress",
         "kpi4_sub": "● Progress Normal",
         
-        "table_header": "📋 Project Details, Progress & Collection Control Table",
+        "table_header": "📋 Project Details, Progress & Acceptance Status Table",
         "col_code": "Project Code",
         "col_client": "Client / Plant",
         "col_item": "M&E Item",
@@ -86,9 +86,6 @@ def get_active_lang(passed_lang):
             return val
     return "Tiếng Việt"  # 預設越南文
 
-# ----------------------------------------------------
-# 🔄 智慧語意動態轉譯引擎 (保留所有既有資料結構與功能)
-# ----------------------------------------------------
 def smart_translate_project_data(text, target_lang):
     if not text or not isinstance(text, str):
         return text
@@ -129,7 +126,7 @@ def render_engineering_page(engine=None, lang=None, **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 完整保留昨天的 KPI 統計區塊與互動邏輯
+    # 純工程專案 KPI 統計區塊
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         st.metric(label=L["kpi1_title"], value=L["kpi1_val"], delta=L["kpi1_sub"])
@@ -143,7 +140,6 @@ def render_engineering_page(engine=None, lang=None, **kwargs):
     st.markdown("---")
     st.markdown(f"### {L['table_header']}")
 
-    # 完整保留昨天的所有專案明細資料與欄位結構
     raw_data = [
         {
             "code": "PRJ-2026-01",
@@ -202,7 +198,7 @@ def render_engineering_page(engine=None, lang=None, **kwargs):
 
     st.dataframe(pd.DataFrame(display_data), use_container_width=True)
 
-# 完整保留所有路由分身函式，確保 app.py 呼叫萬無一失
+# 完整補齊所有路由分身函式
 def render_project_tracking(*args, **kwargs):
     render_engineering_page(*args, **kwargs)
 
