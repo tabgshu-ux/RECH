@@ -141,7 +141,7 @@ PROCUREMENT_AP_I18N = {
         "terms_opts": ["One-time Government Payment", "T/T 30 Days", "At-Sight L/C", "Annual Installment"],
         "btn_save": "💾 Save & Create AP Record",
         "success_save": "✅ AP record `{ap_code}` successfully created!",
-        "fill_warning": "⚠️ Please fill in AP Code and Name!",
+        "fill_warning": "⚠️️ Please fill in AP Code and Name!",
         "col_index": "No.",
         "col_code": "AP Code",
         "col_vendor": "Vendor/Authority",
@@ -164,12 +164,14 @@ def smart_translate_ap(text_val, target_lang):
         if "T/T 30天票期" in text_val: return "T/T 30 ngày (Thanh toán chậm)"
         if "土地租賃與政府續約" in text_val: return "Thuê đất & Gia hạn"
         if "公司用車" in text_val: return "Xe công ty"
+        if "標準品項" in text_val: return "Mặt hàng tiêu chuẩn"
     elif target_lang == "English":
         if "施耐德電氣越南分公司" in text_val: return "Schneider Electric Vietnam"
         if "尚未更新" in text_val: return "Not Updated"
         if "T/T 30天票期" in text_val: return "T/T 30 Days Credit"
         if "土地租賃與政府續約" in text_val: return "Land Lease & Renewal"
         if "公司用車" in text_val: return "Company Vehicles"
+        if "標準品項" in text_val: return "Standard Item"
     return text_val
 
 def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
@@ -182,15 +184,15 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
     if "procurement_ap_db" not in st.session_state:
         st.session_state.procurement_ap_db = [
             {
-                "code": "AP-2026-001",
-                "vendor": "越南西寧省人民委員會 (土地管理局)",
-                "category": "土地租賃與政府續約",
-                "item": "西寧廠土地租約到期續約權利金及規費",
+                "code": "AP-2026-888",
+                "vendor": "施耐德電氣越南分公司",
+                "category": "高低壓配電盤與斷路器零件",
+                "item": "尚未更新",
                 "currency": "USD",
-                "amount": 120000.0,
-                "terms": "政府續約一次付清",
-                "status": "審核中 (Pending)",
-                "note": "合約即將到期續約"
+                "amount": 45000.0,
+                "terms": "T/T 30天票期",
+                "status": "尚未更新",
+                "note": "-"
             }
         ]
 
@@ -246,7 +248,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                         "code": ap_code,
                         "vendor": vendor,
                         "category": category,
-                        "item": item_desc if item_desc else "公司用車或土地續約款項",
+                        "item": item_desc if item_desc else "標準品項",
                         "currency": currency,
                         "amount": amount,
                         "terms": terms,
