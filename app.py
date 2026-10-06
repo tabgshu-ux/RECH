@@ -3,23 +3,22 @@ import modules.approval_workflow as approval_workflow
 import modules.asset_management as asset_management
 import modules.db_connection as db_conn
 import modules.employee_management as employee_management
-import modules.engineering_pipeline as engineering_pipeline
+import modules.engineering_department as engineering_department  # 👈 引用全新的工程部綜合模組
 import modules.executive_dashboard as executive_dashboard
-import modules.field_attendance as field_attendance  # 外勤工程人員 GPS 與拍照打卡模組
+import modules.field_attendance as field_attendance
 import modules.invoice_management as invoice_management
 import modules.payroll_management as payroll_management
 import modules.procurement_ap as procurement_ap
 import modules.sales_order_ar as sales_order_ar
 import modules.system_licensing as system_licensing
 import modules.user_management as user_management
-import modules.vehicle_gate_log as vehicle_gate_log  # 車輛進出與門禁時間紀錄模組
-import modules.vehicle_maintenance as vehicle_maintenance  # 車輛維修保養與 Excel 批次匯入模組
+import modules.vehicle_gate_log as vehicle_gate_log
+import modules.vehicle_maintenance as vehicle_maintenance
 import modules.warehouse_management as warehouse_management
 import pandas as pd
 from sqlalchemy import text
 import streamlit as st
 
-# 📱 100% 移動優先：設定頁面並預設手機側邊欄展開
 st.set_page_config(
     page_title="裕豐電機工業 REETECH INDUSTRIAL AI ERP",
     page_icon="⚡",
@@ -27,9 +26,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ----------------------------------------------------
-# 📱 注入手機優先 RWD CSS 與 側邊欄滑動/點擊手勢優化 JS
-# ----------------------------------------------------
 MOBILE_CSS_AND_JS = """
 <style>
 @media only screen and (max-width: 768px) {
@@ -40,55 +36,20 @@ MOBILE_CSS_AND_JS = """
     .block-container { padding: 1rem 0.5rem !important; }
 }
 </style>
-
-<script>
-// 📱 手機板側邊欄手勢優化：支援在側邊欄內向左滑動直接收回目錄，免回頂部
-document.addEventListener('DOMContentLoaded', () => {
-    let touchstartX = 0;
-    let touchendX = 0;
-
-    function handleGesure() {
-        if (touchendX < touchstartX - 50) {
-            const sidebar = document.querySelector('[data-testid="stSidebar"]');
-            if (sidebar && window.innerWidth <= 768) {
-                const closeBtn = document.querySelector('[data-testid="stSidebar"] button[kind="tertiary"], [data-testid="stSidebar"] button');
-                if (closeBtn) {
-                    closeBtn.click();
-                }
-            }
-        }
-    }
-
-    document.addEventListener('touchstart', e => {
-        touchstartX = e.changedTouches[0].screenX;
-    }, false);
-
-    document.addEventListener('touchend', e => {
-        touchendX = e.changedTouches[0].screenX;
-        handleGesure();
-    }, false);
-});
-</script>
 """
 st.markdown(MOBILE_CSS_AND_JS, unsafe_allow_html=True)
 
-# ----------------------------------------------------
-# 🏢 RECH 企業品牌 Logo 橫幅
-# ----------------------------------------------------
 RECH_LOGO_HTML = """
 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; padding: 6px 8px; background: transparent; border-bottom: 2px solid rgba(15, 23, 42, 0.15);">
-    <div style="font-size: 28px; font-weight: 900; color: #000055; letter-spacing: -1px; line-height: 1; font-family: 'Segoe UI', Arial, sans-serif;">RECH</div>
-    <div style="border-left: 2px solid #000055; padding-left: 8px; line-height: 1.15; font-family: 'Segoe UI', Arial, sans-serif;">
-        <div style="font-size: 13px; font-weight: 800; color: #000055; letter-spacing: 0.5px;">裕豐電機工業有限公司</div>
-        <div style="font-size: 8.5px; font-weight: 700; color: #1E293B; letter-spacing: 0.2px;">REETECH INDUSTRIAL CO., LTD</div>
-        <div style="font-size: 8px; font-weight: 700; color: #334155; letter-spacing: 0.1px;">CÔNG TY TNHH CN DŨ PHONG</div>
+    <div style="font-size: 28px; font-weight: 900; color: #000055; letter-spacing: -1px; line-height: 1;">RECH</div>
+    <div style="border-left: 2px solid #000055; padding-left: 8px; line-height: 1.15;">
+        <div style="font-size: 13px; font-weight: 800; color: #000055;">裕豐電機工業有限公司</div>
+        <div style="font-size: 8.5px; font-weight: 700; color: #1E293B;">REETECH INDUSTRIAL CO., LTD</div>
+        <div style="font-size: 8px; font-weight: 700; color: #334155;">CÔNG TY TNHH CN DŨ PHONG</div>
     </div>
 </div>
 """
 
-# ----------------------------------------------------
-# 三階組織架構選單字典（已將工程部子功能正確修正為工程驗收進度）
-# ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
         "company_name": "裕豐電機工業有限公司",
@@ -106,7 +67,7 @@ NAV_STRUCTURE = {
                 "features": {
                     "🔴 原料價格與隨時股市物價/匯率": "commodities_fx",
                     "📊 財務類顯示資料 (AR/AP & P&L)": "financials_pl",
-                    "⚡ 工程專案進度與驗收資料": "project_progress",
+                    "⚡ 工程專案進度與驗收資料": "project_progress_exec",
                 }
             },
             "👔 管理部 (Management Dept)": {
@@ -125,9 +86,9 @@ NAV_STRUCTURE = {
             },
             "🛠️ 工程部 (Engineering Dept)": {
                 "features": {
-                    "📐 [設計] 配電盤電氣與機構設計圖庫": "engineering_quote",
-                    "⚡ [工程] 配電盤估價與資材報價總合": "engineering_quote",
-                    "📊 [工程] 工程驗收與進度追蹤": "project_progress",  # 👈 已修正為工程驗收與進度追蹤
+                    "📐 [設計] 配電盤電氣與機構設計圖庫": "eng_design",
+                    "⚡ [工程] 配電盤估價與資材報價總合": "eng_quote",
+                    "📊 [工程] 工程驗收與進度追蹤": "eng_progress",
                 }
             },
             "🏭 生產部 (Production Dept)": {
@@ -162,7 +123,7 @@ NAV_STRUCTURE = {
                 "features": {
                     "🔴 Giá Nguyên liệu & Tỷ giá": "commodities_fx",
                     "📊 Dữ liệu Tài chính": "financials_pl",
-                    "⚡ Tiến độ Dự án Kỹ thuật": "project_progress",
+                    "⚡ Tiến độ Dự án Kỹ thuật": "project_progress_exec",
                 }
             },
             "👔 Phòng Quản lý (Management Dept)": {
@@ -181,15 +142,15 @@ NAV_STRUCTURE = {
             },
             "🛠️ Phòng Kỹ thuật (Engineering Dept)": {
                 "features": {
-                    "📐 [Thiết kế] Bản vẽ Tủ điện": "engineering_quote",
-                    "⚡ [Kỹ thuật] Báo giá Tủ điện & Dự toán": "engineering_quote",
-                    "📊 [Kỹ thuật] Tiến độ nghiệm thu dự án cơ điện": "project_progress",  # 👈 已修正
+                    "📐 [Thiết kế] Bản vẽ Tủ điện": "eng_design",
+                    "⚡ [Kỹ thuật] Báo giá Tủ điện & Dự toán": "eng_quote",
+                    "📊 [Kỹ thuật] Tiến độ nghiệm thu dự án cơ điện": "eng_progress",
                 }
             },
             "🏭 Phòng Sản xuất (Production Dept)": {
                 "features": {
                     "📦 [Kho] Quản lý Kho & Mã vạch": "wh_management",
-                    "✂️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
+                    "✂️️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
                     "🎨 [Sơn] Tổ Sơn tĩnh điện": "painting",
                     "⚡ [Lắp ráp] Tổ Lắp ráp Tủ điện": "assembly",
                 }
@@ -218,13 +179,13 @@ NAV_STRUCTURE = {
                 "features": {
                     "🔴 Raw Material Prices & FX": "commodities_fx",
                     "📊 Financial Analytics": "financials_pl",
-                    "⚡ Engineering Project Progress": "project_progress",
+                    "⚡ Engineering Project Progress": "project_progress_exec",
                 }
             },
             "👔 Management Dept (GA & Finance)": {
                 "features": {
                     "🏢 [GA] Asset Management": "ga_assets",
-                    "✍️ [GA] E-Approval Center": "approval_center",
+                    "✍️️ [GA] E-Approval Center": "approval_center",
                     "👤 [HR] Employee Records": "hr_employee",
                     "🚗 [Security] Vehicle Gate Log": "vehicle_gate",
                     "🛠️ [GA] Vehicle Maintenance & Excel Import": "vehicle_maintenance",
@@ -237,9 +198,9 @@ NAV_STRUCTURE = {
             },
             "🛠️ Engineering Dept": {
                 "features": {
-                    "📐 [Design] Switchgear Drawings": "engineering_quote",
-                    "⚡ [Engineering] Costing & Quotation": "engineering_quote",
-                    "📊 [Engineering] M&E Acceptance & Progress": "project_progress",  # 👈 已修正
+                    "📐 [Design] Switchgear Drawings": "eng_design",
+                    "⚡ [Engineering] Costing & Quotation": "eng_quote",
+                    "📊 [Engineering] M&E Acceptance & Progress": "eng_progress",
                 }
             },
             "🏭 Production Dept": {
@@ -263,9 +224,6 @@ NAV_STRUCTURE = {
 if "current_lang" not in st.session_state:
     st.session_state.current_lang = "繁體中文"
 
-# ----------------------------------------------------
-# 取得資料庫引擎
-# ----------------------------------------------------
 engine = db_conn.get_db_engine()
 
 def safe_call_module(func, *args, **kwargs):
@@ -283,9 +241,6 @@ def safe_call_module(func, *args, **kwargs):
         except Exception as e:
             st.error(f"模組載入異常: {str(e)}")
 
-# ----------------------------------------------------
-# 登入系統
-# ----------------------------------------------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.user_role = ""
@@ -312,7 +267,6 @@ if not st.session_state.logged_in:
             if password == "123":
                 st.session_state.logged_in = True
                 u_clean = username.strip().lower()
-                
                 if u_clean in ["admin", "executive", "boss"]:
                     st.session_state.user_role = "admin"
                 elif u_clean in ["manager", "supervisor"]:
@@ -321,16 +275,12 @@ if not st.session_state.logged_in:
                     st.session_state.user_role = "security"
                 else:
                     st.session_state.user_role = "staff"
-
                 st.session_state.user_name = username
                 st.rerun()
             else:
                 st.error("帳號或密碼錯誤 / Incorrect password")
     st.stop()
 
-# ----------------------------------------------------
-# 側邊欄選單
-# ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
 lang_list = ["繁體中文", "Tiếng Việt", "English"]
@@ -393,12 +343,12 @@ else:
     )
     target_route = features_dict[selected_feature_label]
 
+curr_lang = st.session_state.current_lang
+
 # ----------------------------------------------------
 # 模組安全路由分流
 # ----------------------------------------------------
-curr_lang = st.session_state.current_lang
-
-if target_route in ["commodities_fx", "financials_pl", "project_progress"]:
+if target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
     if hasattr(executive_dashboard, "render_executive_dashboard_page"):
         safe_call_module(
             executive_dashboard.render_executive_dashboard_page,
@@ -410,95 +360,55 @@ if target_route in ["commodities_fx", "financials_pl", "project_progress"]:
             executive_dashboard.show, sub_route=target_route, lang=curr_lang
         )
 
+# 🛠️ 工程部三大子功能路由（精準對應工程部綜合模組及其預設頁籤）
+elif target_route == "eng_quote":
+    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=0)
+
+elif target_route == "eng_design":
+    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=1)
+
+elif target_route == "eng_progress":
+    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=2)
+
 elif target_route == "procurement_ap":
-    safe_call_module(
-        procurement_ap.render_procurement_ap_page,
-        engine=engine,
-        lang=curr_lang,
-    )
+    safe_call_module(procurement_ap.render_procurement_ap_page, engine=engine, lang=curr_lang)
 
 elif target_route == "sales_order_ar":
-    safe_call_module(
-        sales_order_ar.render_sales_order_ar_page,
-        engine=engine,
-        lang=curr_lang,
-    )
+    safe_call_module(sales_order_ar.render_sales_order_ar_page, engine=engine, lang=curr_lang)
 
 elif target_route == "payroll_calc":
-    safe_call_module(
-        payroll_management.render_payroll_management_page,
-        engine=engine,
-        lang=curr_lang,
-    )
+    safe_call_module(payroll_management.render_payroll_management_page, engine=engine, lang=curr_lang)
 
 elif target_route == "invoice_management":
-    safe_call_module(
-        invoice_management.render_invoice_management,
-        engine=engine,
-        lang=curr_lang,
-    )
+    safe_call_module(invoice_management.render_invoice_management, engine=engine, lang=curr_lang)
 
 elif target_route == "field_attendance":
-    safe_call_module(
-        field_attendance.render_field_attendance_page,
-        engine=engine,
-        lang=curr_lang,
-    )
-
-elif target_route == "engineering_quote":
-    safe_call_module(engineering_pipeline.render_engineering_page)
+    safe_call_module(field_attendance.render_field_attendance_page, engine=engine, lang=curr_lang)
 
 elif target_route == "ga_assets":
-    safe_call_module(
-        asset_management.render_asset_management_page, lang=curr_lang
-    )
+    safe_call_module(asset_management.render_asset_management_page, lang=curr_lang)
 
 elif target_route == "approval_center":
     safe_call_module(approval_workflow.render_approval_center, lang=curr_lang)
 
 elif target_route == "hr_employee":
-    safe_call_module(
-        employee_management.render_employee_management,
-        engine=engine,
-        t=lang_dict,
-        lang=curr_lang,
-    )
+    safe_call_module(employee_management.render_employee_management, engine=engine, t=lang_dict, lang=curr_lang)
 
 elif target_route == "vehicle_gate":
-    safe_call_module(
-        vehicle_gate_log.render_vehicle_gate_log_page,
-        engine=engine,
-        lang=curr_lang,
-    )
+    safe_call_module(vehicle_gate_log.render_vehicle_gate_log_page, engine=engine, lang=curr_lang)
 
 elif target_route == "vehicle_maintenance":
-    safe_call_module(
-        vehicle_maintenance.render_vehicle_maintenance_page,
-        engine=engine,
-        lang=curr_lang,
-    )
+    safe_call_module(vehicle_maintenance.render_vehicle_maintenance_page, engine=engine, lang=curr_lang)
 
 elif target_route == "wh_management":
-    safe_call_module(
-        warehouse_management.render_warehouse_management,
-        engine=engine,
-        t=lang_dict,
-        lang=curr_lang,
-    )
+    safe_call_module(warehouse_management.render_warehouse_management, engine=engine, t=lang_dict, lang=curr_lang)
 
 elif target_route in ["sheet_metal", "painting", "assembly"]:
     st.title(selected_feature_label)
-    st.info(
-        "Hệ thống đang hoạt động bình thường /"
-        " 現場工單追蹤與 QC 品質檢驗模組順利運作中。"
-    )
+    st.info("Hệ thống đang hoạt động bình thường / 現場工單與生產追蹤模組順利運作中。")
 
 elif target_route == "it_admin":
-    safe_call_module(
-        user_management.render_user_management_page, lang=curr_lang
-    )
+    safe_call_module(user_management.render_user_management_page, lang=curr_lang)
 
 elif target_route == "it_licensing":
-    safe_call_module(
-        system_licensing.render_licensing_control_page, lang=curr_lang
-    )
+    safe_call_module(system_licensing.render_licensing_control_page, lang=curr_lang)
