@@ -26,7 +26,6 @@ GATE_LOG_I18N = {
         "btn_save": "💾 記錄門禁進出時間",
         "success_save": "✅ 車輛 `{plate}` 門禁紀錄已成功登記！",
         "fill_warning": "⚠️ 請完整填寫車牌號碼與駕駛姓名！",
-        # 表格動態欄位
         "col_index": "STT",
         "col_plate": "車牌號碼",
         "col_driver": "駕駛與單位",
@@ -55,7 +54,6 @@ GATE_LOG_I18N = {
         "btn_save": "💾 Ghi nhận thời gian ra vào",
         "success_save": "✅ Đã ghi nhận门禁 cho xe `{plate}` thành công!",
         "fill_warning": "⚠️ Vui lòng điền Biển số xe và Tên tài xế!",
-        # Tiêu đề bảng
         "col_index": "STT",
         "col_plate": "Biển số xe",
         "col_driver": "Tài xế & Đơn vị",
@@ -84,7 +82,6 @@ GATE_LOG_I18N = {
         "btn_save": "💾 Record Gate Access Time",
         "success_save": "✅ Gate log for vehicle `{plate}` recorded successfully!",
         "fill_warning": "⚠️ Please fill in License Plate and Driver Name!",
-        # Table headers
         "col_index": "No.",
         "col_plate": "License Plate",
         "col_driver": "Driver & Unit",
@@ -96,7 +93,7 @@ GATE_LOG_I18N = {
 }
 
 # ----------------------------------------------------
-# 🔄 門禁模組專用：中越英智慧語意對照引擎
+# 🔄 智慧語意動態轉換引擎
 # ----------------------------------------------------
 def smart_translate_gate(text_val, target_lang):
     if not text_val or not isinstance(text_val, str):
@@ -105,25 +102,34 @@ def smart_translate_gate(text_val, target_lang):
     val_lower = text_val.lower()
 
     if "車輛入廠" in text_val or "check-in" in val_lower or "vào cổng" in val_lower:
-        if target_lang == "Tiếng Việt": return "Xe vào cổng (Check-In)"
-        elif target_lang == "English": return "Check-In (Entry)"
+        if target_lang == "Tiếng Việt": return "🟢 Xe vào cổng (Check-In)"
+        elif target_lang == "English": return "🟢 Check-In (Entry)"
         return "🟢 車輛入廠 (Check-In)"
 
     if "車輛出廠" in text_val or "check-out" in val_lower or "ra cổng" in val_lower:
-        if target_lang == "Tiếng Việt": return "Xe ra cổng (Check-Out)"
-        elif target_lang == "English": return "Check-Out (Exit)"
+        if target_lang == "Tiếng Việt": return "🔴 Xe ra cổng (Check-Out)"
+        elif target_lang == "English": return "🔴 Check-Out (Exit)"
         return "🔴 車輛出廠 (Check-Out)"
+
+    # 駕駛單位與事由轉譯
+    if target_lang == "Tiếng Việt":
+        if "載送總經理赴胡志明市開會" in text_val: return "Đưa Tổng Giám đốc đi họp tại TP. Hồ Chí Minh"
+        if "運送 2000A 銅排母線原料 500kg" in text_val: return "Vận chuyển 500kg nguyên liệu đồng thanh cái 2000A"
+        if "鋼鐵供應商" in text_val: return "Nhà cung cấp Thép"
+    elif target_lang == "English":
+        if "載送總經理赴胡志明市開會" in text_val: return "Transporting General Manager to meeting in HCMC"
+        if "運送 2000A 銅排母線原料 500kg" in text_val: return "Delivering 500kg of 2000A copper busbar raw materials"
+        if "鋼鐵供應商" in text_val: return "Steel Supplier"
 
     return text_val
 
 def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
-    active_lang = lang or st.session_state.get("lang", "繁體中文")
+    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
     L = GATE_LOG_I18N.get(active_lang, GATE_LOG_I18N["繁體中文"])
 
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化門禁資料庫
     if "vehicle_gate_db" not in st.session_state:
         st.session_state.vehicle_gate_db = [
             {
@@ -154,10 +160,10 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
                 display_data.append({
                     L["col_index"]: idx,
                     L["col_plate"]: item["plate"],
-                    L["col_driver"]: item["driver"],
+                    L["col_driver"]: smart_translate_gate(item["driver"], active_lang),
                     L["col_type"]: item["type"],
                     L["col_dir"]: smart_translate_gate(item["direction"], active_lang),
-                    L["col_purpose"]: item["purpose"],
+                    L["col_purpose"]: smart_translate_gate(item["purpose"], active_lang),
                     L["col_time"]: item["time"]
                 })
             st.dataframe(pd.DataFrame(display_data), use_container_width=True)
