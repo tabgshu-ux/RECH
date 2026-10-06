@@ -13,11 +13,9 @@ AR_I18N = {
         "tab_list": "📑 客戶應收款項總表與進度",
         "tab_edit": "✍️ 修改進行進度說明與催收歷程",
         "tab_add": "➕ 登記新應收帳款專案",
-        # 頁籤一
         "table_header": "📋 客戶應收帳款專案清冊",
         "no_records": "目前無應收帳款紀錄。",
         "read_error": "讀取資料失敗: ",
-        # 頁籤二
         "edit_header": "✍️ 修改專案進行進度說明與催收紀錄",
         "select_project": "請選擇要更新進度的請款專案：",
         "current_project": "當前專案",
@@ -27,7 +25,6 @@ AR_I18N = {
         "modifier_label": "修改人員姓名*",
         "save_update_btn": "💾 儲存並更新專案進度",
         "update_success": "請款單 `{target_id}` 之進行進度與催收理由已更新！",
-        # 頁籤三
         "add_header": "➕ 登記新應收帳款專案",
         "inv_id_label": "請款編號 *",
         "entity_name_label": "客戶名稱 *",
@@ -65,11 +62,9 @@ AR_I18N = {
         "tab_list": "📑 Danh sách Phải thu & Tiến độ",
         "tab_edit": "✍️ Cập nhật Tiến độ & Lý do thu nợ",
         "tab_add": "➕ Thêm Dự án Phải thu Mới",
-        # 頁籤一
         "table_header": "📋 Sổ chi tiết Phải thu Khách hàng",
         "no_records": "Hiện không có bản ghi khoản phải thu nào.",
         "read_error": "Lỗi đọc dữ liệu: ",
-        # 頁籤二
         "edit_header": "✍️ Sửa đổi tiến độ dự án và ghi chú thu nợ",
         "select_project": "Chọn dự án cần cập nhật tiến độ:",
         "current_project": "Dự án hiện tại",
@@ -79,7 +74,6 @@ AR_I18N = {
         "modifier_label": "Họ tên người sửa*",
         "save_update_btn": "💾 Lưu và cập nhật tiến độ dự án",
         "update_success": "Đã cập nhật tiến độ và lý do thu nợ cho hóa đơn `{target_id}`!",
-        # 頁籤三
         "add_header": "➕ Đăng ký dự án khoản phải thu mới",
         "inv_id_label": "Mã hóa đơn / khoản thu *",
         "entity_name_label": "Tên khách hàng *",
@@ -117,11 +111,9 @@ AR_I18N = {
         "tab_list": "📑 AR Summary & Progress",
         "tab_edit": "✍️ Update Progress & Collection Audit",
         "tab_add": "➕ Register New AR Project",
-        # 頁籤一
         "table_header": "📋 Customer Accounts Receivable Registry",
         "no_records": "No accounts receivable records found.",
         "read_error": "Failed to read data: ",
-        # 頁籤二
         "edit_header": "✍️ Modify Project Progress & Collection Log",
         "select_project": "Select project to update:",
         "current_project": "Current Project",
@@ -131,7 +123,6 @@ AR_I18N = {
         "modifier_label": "Modifier Name *",
         "save_update_btn": "💾 Save & Update Project Progress",
         "update_success": "Progress and collection reasons for invoice `{target_id}` updated successfully!",
-        # 頁籤三
         "add_header": "➕ Register New Accounts Receivable Project",
         "inv_id_label": "Invoice ID *",
         "entity_name_label": "Client Name *",
@@ -173,7 +164,6 @@ def format_curr(amt, curr):
     return f"{amt:,.3f} {curr}"
 
 def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
-    # 支援動態從 session_state 或參數取得語系
     active_lang = lang or st.session_state.get("lang", "繁體中文")
     L = AR_I18N.get(active_lang, AR_I18N["繁體中文"])
 
@@ -343,4 +333,51 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
                 st.write(f"• **{L['period_1_amt']}**：`{format_curr(p1_amt, currency)}`")
                 d1 = st.date_input(L["period_1_date"], value=datetime.date.today() + datetime.timedelta(days=7), key="ar_5d1")
                 st.write(f"• **{L['period_2_amt']}**：`{format_curr(p2_amt, currency)}`")
-                d2 = st.date_input(L["period_2_date"], value=datetime.date.today() + datetime.timedelta(days=30), key
+                d2 = st.date_input(L["period_2_date"], value=datetime.date.today() + datetime.timedelta(days=30), key="ar_5d2")
+                st.write(f"• **{L['period_3_amt']}**：`{format_curr(p3_amt, currency)}`")
+                d3 = st.date_input(L["period_3_date"], value=datetime.date.today() + datetime.timedelta(days=60), key="ar_5d3")
+            with col_b:
+                st.write(f"• **{L['period_4_amt']}**：`{format_curr(p4_amt, currency)}`")
+                d4 = st.date_input(L["period_4_date"], value=datetime.date.today() + datetime.timedelta(days=90), key="ar_5d4")
+                st.write(f"• **{L['period_5_amt']}**：`{format_curr(p5_amt, currency)}`")
+                d5 = st.date_input(L["period_5_date"], value=datetime.date.today() + datetime.timedelta(days=120), key="ar_5d5")
+
+        st.markdown("")
+        if st.button(L["save_new_btn"], type="primary", use_container_width=True):
+            if entity_name and project_name:
+                if engine:
+                    with engine.connect() as conn:
+                        conn.execute(
+                            text("""
+                                INSERT INTO invoices (
+                                    invoice_id, entity_name, project_name, currency, amount, quoted_amount, 
+                                    payment_terms, installment_ratios, project_desc, progress_note, 
+                                    due_date, invoice_type, is_paid
+                                ) VALUES (
+                                    :id, :entity, :prj, :curr, :amt, :q_amt, 
+                                    :terms, :ratios, :desc, :prog, 
+                                    :due, 'AR', false
+                                )
+                            """),
+                            {
+                                "id": inv_id, "entity": entity_name, "prj": project_name, "curr": currency,
+                                "amt": p1_amt, "q_amt": total_amount, "terms": plan_type, "ratios": ratios_str,
+                                "desc": project_desc, "prog": progress_note, "due": d1
+                            }
+                        )
+                        conn.commit()
+                st.success(L["create_success"].format(inv_id=inv_id))
+                st.rerun()
+            else:
+                st.warning(L["fill_warning"])
+
+# 💡 確保主程式所有可能的呼叫方式皆能 100% 相容對應
+def show(*args, **kwargs):
+    render_sales_order_ar_page(*args, **kwargs)
+
+def main(*args, **kwargs):
+    render_sales_order_ar_page(*args, **kwargs)
+
+# 兼容主程式直接呼叫 render_sales_order_ar_page
+def render_sales_order_ar(*args, **kwargs):
+    render_sales_order_ar_page(*args, **kwargs)
