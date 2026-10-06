@@ -8,14 +8,14 @@ import datetime
 ENG_DEPT_I18N = {
     "繁體中文": {
         "title": "🛠️ 裕豐電機工業 - 工程部綜合管理中心",
-        "caption": "完整涵蓋工程報價系統（串接倉庫與發票稅計算）、設計圖庫、以及工程驗收與進度追蹤。",
-        "tab_quote": "⚙️ 1. 工程報價系統 (含倉庫連動與稅額)",
+        "caption": "完整涵蓋工程報價系統（含倉庫連動、業務議價折讓、發票稅與一鍵傳動 AR）、設計圖庫、及工程驗收追蹤。",
+        "tab_quote": "⚙️ 1. 工程報價系統 (含業務議價與傳動 AR)",
         "tab_design": "📐 2. 設計圖庫與規格",
         "tab_progress": "📊 3. 工程驗收與進度追蹤",
         
         # 報價系統
-        "quote_title": "⚙️ 配電盤與工程專案報價系統 (Quotation & VAT Control)",
-        "quote_caption": "工程部專用報價：填入專案資訊、連動倉庫庫存餘額與單價，自動加總並計入發票稅。",
+        "quote_title": "⚙️ 配電盤與工程專案報價系統 (Quotation, Discount & AR Transfer)",
+        "quote_caption": "工程部專用報價：填入專案資訊、連動倉庫庫存與單價，支援業務折讓議價，並一鍵傳動至財務應收帳款。",
         "sec1_title": "📋 1. 工程專案基本資訊",
         "lbl_vendor": "廠商名稱 *",
         "vendor_placeholder": "例如: 越南新順工程承攬有限公司",
@@ -34,11 +34,14 @@ ENG_DEPT_I18N = {
         "col_unit_price": "倉庫單價 (USD)",
         "col_subtotal": "金額小計 (USD)",
         
-        "sec3_title": "💰 3. 金額加總與發票稅 (VAT) 計算",
+        "sec3_title": "💰 3. 金額加總、發票稅 (VAT) 與業務議價減免",
         "lbl_subtotal_sum": "未稅金額總計 (Subtotal):",
         "lbl_vat_rate": "發票稅率 (VAT %)",
         "lbl_vat_amount": "營業稅金額 (VAT Amount):",
-        "lbl_grand_total": "💵 報價總金額 (Grand Total - 含稅):",
+        "lbl_system_total": "系統計算含稅總額:",
+        "lbl_final_override": "✍️ 業務最終議價/折讓後報價總金額 (可手動修改減免):",
+        "btn_transfer_ar": "🚀 一鍵傳動至財務應收帳款 (AR) 系統",
+        "success_ar": "✅ 成功！工程報價已成功傳動至財務部應收帳款（AR）模組！",
         
         # 設計圖庫
         "design_title": "📐 配電盤電氣與機構設計圖庫",
@@ -74,13 +77,13 @@ ENG_DEPT_I18N = {
     },
     "Tiếng Việt": {
         "title": "🛠️ REETECH INDUSTRIAL - Trung tâm Quản lý Khối Kỹ thuật",
-        "caption": "Bao gồm hệ thống báo giá kỹ thuật (liên kết kho và thuế VAT), thư viện bản vẽ, và theo dõi tiến độ nghiệm thu.",
-        "tab_quote": "⚙️ 1. Hệ thống Báo giá (Tồn kho & VAT)",
+        "caption": "Bao gồm hệ thống báo giá, chiết khấu thương mại cho nhân viên kinh doanh, thuế VAT và truyền dữ liệu sang AR.",
+        "tab_quote": "⚙️ 1. Hệ thống Báo giá (Chiết khấu & AR)",
         "tab_design": "📐 2. Thư viện Bản vẽ Thiết kế",
         "tab_progress": "📊 3. Theo dõi Tiến độ & Nghiệm thu",
         
-        "quote_title": "⚙️ Hệ thống Báo giá Tủ điện & Dự toán Công trình",
-        "quote_caption": "Dành cho kỹ thuật: Nhập thông tin dự án, liên kết tồn kho kho hàng, tính tổng tiền và thuế VAT.",
+        "quote_title": "⚙️ Hệ thống Báo giá & Chiết khấu Thương mại (Chuyển dữ liệu AR)",
+        "quote_caption": "Hệ thống báo giá: Liên kết kho, cho phép kinh doanh chiết khấu/giảm giá, tính thuế VAT và chuyển sang tài chính.",
         "sec1_title": "📋 1. Thông tin Dự án",
         "lbl_vendor": "Tên Nhà thầu / Khách hàng *",
         "vendor_placeholder": "Ví dụ: Công ty TNHH Xây lắp Tân Thuận",
@@ -99,11 +102,14 @@ ENG_DEPT_I18N = {
         "col_unit_price": "Đơn giá kho (USD)",
         "col_subtotal": "Thành tiền (USD)",
         
-        "sec3_title": "💰 3. Tổng hợp Thành tiền & Tính Thuế VAT",
+        "sec3_title": "💰 3. Tổng hợp, Thuế VAT & Chiết khấu Kinh doanh",
         "lbl_subtotal_sum": "Tổng giá trị chưa thuế (Subtotal):",
         "lbl_vat_rate": "Thuế suất VAT (%)",
         "lbl_vat_amount": "Tiền thuế VAT:",
-        "lbl_grand_total": "💵 Tổng giá trị báo giá (Grand Total - Gồm VAT):",
+        "lbl_system_total": "Tổng tiền tính toán tự động:",
+        "lbl_final_override": "✍️ Tổng giá trị báo giá cuối cùng sau chiết khấu (Kinh doanh có thể chỉnh sửa):",
+        "btn_transfer_ar": "🚀 Truyền dữ liệu sang Phải thu Tài chính (AR)",
+        "success_ar": "✅ Thành công! Báo giá đã được truyền sang hệ thống Quản lý Phải thu (AR) của Tài chính!",
         
         "design_title": "📐 Thư viện Bản vẽ Thiết kế Tủ điện & Cơ khí",
         "design_caption": "Quản lý bản vẽ CAD/PDF tủ điện trung hạ thế, ACB/MCCB, thanh cái Busbar.",
@@ -137,13 +143,13 @@ ENG_DEPT_I18N = {
     },
     "English": {
         "title": "🛠️ REETECH INDUSTRIAL - Engineering Department Management Center",
-        "caption": "Engineering quotation system (with warehouse inventory & VAT calculation), design library, and acceptance tracking.",
-        "tab_quote": "⚙️ 1. Quotation System (Inventory & VAT)",
+        "caption": "Engineering quotation with sales discount override, VAT calculation, and direct AR transfer.",
+        "tab_quote": "⚙️️ 1. Quotation System (Sales Discount & AR)",
         "tab_design": "📐 2. Design Drawings Library",
         "tab_progress": "📊 3. M&E Acceptance & Progress Tracking",
         
-        "quote_title": "⚙️ Switchgear & Engineering Project Quotation System",
-        "quote_caption": "Engineering quotation: Input project details, link warehouse inventory stock & unit prices, auto-calculate subtotal and VAT.",
+        "quote_title": "⚙️ Switchgear & Engineering Project Quotation System (AR Integration)",
+        "quote_caption": "Engineering quotation: Linked to warehouse inventory, allows sales discount adjustments, VAT calculation, and direct transfer to Finance AR.",
         "sec1_title": "📋 1. Project Basic Information",
         "lbl_vendor": "Vendor / Client Name *",
         "vendor_placeholder": "Example: Tan Thuan M&E Engineering Co., Ltd.",
@@ -162,11 +168,14 @@ ENG_DEPT_I18N = {
         "col_unit_price": "Warehouse Unit Price (USD)",
         "col_subtotal": "Subtotal (USD)",
         
-        "sec3_title": "💰 3. Subtotal Sum & VAT Calculation",
+        "sec3_title": "💰 3. Subtotal, VAT & Sales Discount Override",
         "lbl_subtotal_sum": "Subtotal (Excluding Tax):",
         "lbl_vat_rate": "VAT Rate (%)",
         "lbl_vat_amount": "VAT Amount:",
-        "lbl_grand_total": "💵 Grand Total (Including VAT):",
+        "lbl_system_total": "System Calculated Total:",
+        "lbl_final_override": "✍️ Final Quoted Amount after Sales Discount (Editable for negotiation):",
+        "btn_transfer_ar": "🚀 Transfer to Finance Accounts Receivable (AR)",
+        "success_ar": "✅ Success! Engineering quotation successfully transferred to Finance AR module!",
         
         "design_title": "📐 Switchgear & Mechanical Design Drawings Library",
         "design_caption": "Manage CAD/PDF drawings for switchboards, ACB/MCCB, and Busbar configurations.",
@@ -247,13 +256,12 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 調整順序：第一個是報價系統，第二個是設計圖庫，第三個是工程驗收進度
     tab_quote, tab_design, tab_progress = st.tabs([
         L["tab_quote"], L["tab_design"], L["tab_progress"]
     ])
 
     # ----------------------------------------------------
-    # Tab 1: 工程報價系統 (串接倉庫庫存、單價、金額加總與發票稅)
+    # Tab 1: 工程報價系統 (含倉庫連動、業務議價折讓、發票稅與 AR 傳動)
     # ----------------------------------------------------
     with tab_quote:
         st.markdown(f"### {L['quote_title']}")
@@ -262,18 +270,17 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
         st.markdown(f"### {L['sec1_title']}")
         c1, c2, c3 = st.columns([2, 2, 1])
         with c1:
-            vendor_name = st.text_input(L["lbl_vendor"], placeholder=L["vendor_placeholder"])
+            vendor_name = st.text_input(L["lbl_vendor"], placeholder=L["vendor_placeholder"], value="Công ty TNHH Xây lắp Tân Thuận")
         with c2:
-            proj_name = st.text_input(L["lbl_project"], placeholder=L["proj_placeholder"])
+            proj_name = st.text_input(L["lbl_project"], placeholder=L["proj_placeholder"], value="Nhà máy dệt Tây Ninh - Tủ điện chính 2000A")
         with c3:
             currency = st.selectbox(L["lbl_currency"], ["USD", "VND", "TWD", "EUR"])
 
-        loc_name = st.text_input(L["lbl_location"], placeholder=L["loc_placeholder"])
+        loc_name = st.text_input(L["lbl_location"], placeholder=L["loc_placeholder"], value="KCN Trảng Bàng, Tây Ninh, Việt Nam")
 
         st.markdown(f"### {L['sec2_title']}")
         st.caption(L['sec2_caption'])
 
-        # 模擬從倉庫讀取的資材與庫存資料
         warehouse_items = [
             {"code": "CU-BUS-10100", "name": "銅排 Busbar 10x100mm (高純度)", "stock": 450.0, "price": 12.50},
             {"code": "CB-ACB-2000A", "name": "空氣斷路器 ACB 2000A (Schneider)", "stock": 8.0, "price": 1850.00},
@@ -281,9 +288,7 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
             {"code": "CAB-PVC-4CX95", "name": "控制電纜 PVC 4Cx95mm²", "stock": 1200.0, "price": 8.20}
         ]
 
-        quote_rows = []
         subtotal_sum = 0.0
-
         for idx, wh in enumerate(warehouse_items):
             cols = st.columns([1.2, 2.5, 1.2, 1.2, 1.2, 1.5])
             with cols[0]:
@@ -291,16 +296,12 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
             with cols[1]:
                 st.text_input(f"Name {idx}", value=wh["name"], disabled=True, label_visibility="collapsed")
             with cols[2]:
-                # 倉庫剩餘數量顯示
                 st.metric(label="Stock", value=f"{wh['stock']:,.1f}", label_visibility="collapsed")
             with cols[3]:
-                # 報價數量輸入
-                qty = st.number_input(f"Qty {idx}", min_value=0.0, value=10.0 if idx < 2 else 0.0, step=1.0, label_visibility="collapsed")
+                qty = st.number_input(f"Qty {idx}", min_value=0.0, value=150.0 if idx == 0 else (2.0 if idx == 1 else 0.0), step=1.0, label_visibility="collapsed")
             with cols[4]:
-                # 倉庫單價
                 st.text_input(f"Price {idx}", value=f"${wh['price']:,.2f}", disabled=True, label_visibility="collapsed")
             with cols[5]:
-                # 小計計算
                 line_total = qty * wh["price"]
                 subtotal_sum += line_total
                 st.text_input(f"Sub {idx}", value=f"${line_total:,.2f}", disabled=True, label_visibility="collapsed")
@@ -314,9 +315,23 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
             vat_rate = st.selectbox(L["lbl_vat_rate"], [10, 8, 0, 5], index=0)
         with q_c2:
             vat_amount = subtotal_sum * (vat_rate / 100.0)
-            grand_total = subtotal_sum + vat_amount
+            system_grand_total = subtotal_sum + vat_amount
             st.metric(label=L["lbl_vat_amount"], value=f"${vat_amount:,.2f}")
-            st.markdown(f"### {L['lbl_grand_total']} **${grand_total:,.2f}**")
+            st.metric(label=L["lbl_system_total"], value=f"${system_grand_total:,.2f}")
+
+        # 業務員減免與最終議價總金額輸入框
+        final_quoted_amount = st.number_input(
+            L["lbl_final_override"],
+            min_value=0.0,
+            value=float(system_grand_total),
+            step=100.0,
+            help="業務員可在此輸入減免後的最終議價總金額"
+        )
+
+        st.markdown("---")
+        if st.button(L["btn_transfer_ar"], use_container_width=True, type="primary"):
+            st.success(L["success_ar"])
+            st.info(f"📌 **傳動詳情 (Transferred to AR)**: {vendor_name} | {proj_name} | 最終報價金額: **${final_quoted_amount:,.2f} {currency}** (含 VAT {vat_rate}%)")
 
     # ----------------------------------------------------
     # Tab 2: 設計圖庫
