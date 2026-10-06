@@ -3,6 +3,7 @@ import io
 import pandas as pd
 from sqlalchemy import text
 import streamlit as st
+import uuid
 
 # ----------------------------------------------------
 # 🌐 薪資與保險模組多語系字典 (i18n)
@@ -142,6 +143,9 @@ def convert_payroll_to_excel(emp_list):
 def render_payroll_management_page(engine=None, lang="繁體中文"):
     L = get_payroll_lang_dict(lang)
     
+    # 產生動態隨機字串，徹底杜絕重複 key 衝突
+    uid = str(uuid.uuid4())[:6]
+
     st.title(L["title"])
     st.caption(L["caption"])
 
@@ -168,7 +172,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         
         col_m1, col_m2 = st.columns(2)
         with col_m1:
-            pay_month = st.date_input(L["select_month"], value=datetime.date.today(), key="payroll_month")
+            pay_month = st.date_input(L["select_month"], value=datetime.date.today(), key=f"payroll_month_{uid}")
         with col_m2:
             st.info(L["info_calc"])
 
@@ -183,24 +187,24 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
                 st.markdown(f"#### 👤 員工姓名: **{emp['name']}** (`{emp['id']}`) | 部門: {emp['dept']} | 職位: {emp['title']}")
                 st.caption(f"📍 所屬工作廠區: **{emp_site}** | 計價幣別: **{curr}**")
 
-                # 薪資結構細項設定
+                # 薪資結構細項設定 (加入 uid 確保 key 唯一)
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     default_base = 25000000.0 if curr == "VND" else (80000.0 if curr == "TWD" else 8000.0)
-                    base_salary = st.number_input(L["base_salary"], value=default_base, step=1000.0, key=f"base_{emp['id']}")
+                    base_salary = st.number_input(L["base_salary"], value=default_base, step=1000.0, key=f"base_{emp['id']}_{uid}")
                 with c2:
-                    allowance = st.number_input(L["allowance"], value=2000000.0 if curr == "VND" else 5000.0, step=500.0, key=f"allow_{emp['id']}")
+                    allowance = st.number_input(L["allowance"], value=2000000.0 if curr == "VND" else 5000.0, step=500.0, key=f"allow_{emp['id']}_{uid}")
                 with c3:
-                    full_attendance_bonus = st.number_input(L["full_attendance"], value=1000000.0 if curr == "VND" else 2000.0, step=500.0, key=f"bonus_{emp['id']}")
+                    full_attendance_bonus = st.number_input(L["full_attendance"], value=1000000.0 if curr == "VND" else 2000.0, step=500.0, key=f"bonus_{emp['id']}_{uid}")
 
                 # 扣款與借款調整欄位
                 c4, c5, c6 = st.columns(3)
                 with c4:
-                    leave_deduction = st.number_input(L["leave_deduction"], value=0.0, step=100.0, key=f"leave_{emp['id']}")
+                    leave_deduction = st.number_input(L["leave_deduction"], value=0.0, step=100.0, key=f"leave_{emp['id']}_{uid}")
                 with c5:
-                    loan_deduction = st.number_input(L["loan_deduction"], value=0.0, step=500.0, key=f"loan_{emp['id']}")
+                    loan_deduction = st.number_input(L["loan_deduction"], value=0.0, step=500.0, key=f"loan_{emp['id']}_{uid}")
                 with c6:
-                    other_allowance = st.number_input(L["other_allowance"], value=0.0, step=100.0, key=f"other_{emp['id']}")
+                    other_allowance = st.number_input(L["other_allowance"], value=0.0, step=100.0, key=f"other_{emp['id']}_{uid}")
 
                 # 自動計算保險扣款
                 if "越南" in emp_site:
@@ -250,10 +254,10 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
 
                 col_btn1, col_btn2 = st.columns(2)
                 with col_btn1:
-                    if st.button(f"{L['print_btn']} [{emp['name']}]", key=f"print_{emp['id']}"):
+                    if st.button(f"{L['print_btn']} [{emp['name']}]", key=f"print_{emp['id']}_{uid}"):
                         st.success(f"✅ 已成功產生 {emp['name']} 的薪資單，可連接印表機列印。")
                 with col_btn2:
-                    if st.button(f"{L['approve_btn']} [{emp['name']}]", type="primary", key=f"approve_{emp['id']}"):
+                    if st.button(f"{L['approve_btn']} [{emp['name']}]", type="primary", key=f"approve_{emp['id']}_{uid}"):
                         st.success(f"🎉 已成功核准 {emp['name']} 本月薪資 ({net_payable:,.2f} {curr})！")
 
                 st.divider()
