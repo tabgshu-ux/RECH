@@ -118,7 +118,7 @@ INSURANCE_RATES = {
 }
 
 # ----------------------------------------------------
-# 📊 匯出 Excel 輔助函式
+# 📊 匯出 Excel 輔助函式 (修正相容性，免用 xlsxwriter)
 # ----------------------------------------------------
 def convert_payroll_to_excel(emp_list):
     output = io.BytesIO()
@@ -134,7 +134,7 @@ def convert_payroll_to_excel(emp_list):
         })
     
     df_export = pd.DataFrame(data_rows)
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df_export.to_excel(writer, sheet_name='Payroll_Summary', index=False)
     
     return output.getvalue()
@@ -143,7 +143,6 @@ def convert_payroll_to_excel(emp_list):
 def render_payroll_management_page(engine=None, lang="繁體中文"):
     L = get_payroll_lang_dict(lang)
     
-    # 產生動態隨機字串，徹底杜絕重複 key 衝突
     uid = str(uuid.uuid4())[:6]
 
     st.title(L["title"])
@@ -155,7 +154,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
         L["tab_history"]
     ])
 
-    # 讀取動態 HR 人員名冊
     if "employees_db" in st.session_state and st.session_state.employees_db:
         emp_list = st.session_state.employees_db
     else:
@@ -187,7 +185,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
                 st.markdown(f"#### 👤 員工姓名: **{emp['name']}** (`{emp['id']}`) | 部門: {emp['dept']} | 職位: {emp['title']}")
                 st.caption(f"📍 所屬工作廠區: **{emp_site}** | 計價幣別: **{curr}**")
 
-                # 薪資結構細項設定 (加入 uid 確保 key 唯一)
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     default_base = 25000000.0 if curr == "VND" else (80000.0 if curr == "TWD" else 8000.0)
@@ -197,7 +194,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
                 with c3:
                     full_attendance_bonus = st.number_input(L["full_attendance"], value=1000000.0 if curr == "VND" else 2000.0, step=500.0, key=f"bonus_{emp['id']}_{uid}")
 
-                # 扣款與借款調整欄位
                 c4, c5, c6 = st.columns(3)
                 with c4:
                     leave_deduction = st.number_input(L["leave_deduction"], value=0.0, step=100.0, key=f"leave_{emp['id']}_{uid}")
@@ -206,7 +202,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
                 with c6:
                     other_allowance = st.number_input(L["other_allowance"], value=0.0, step=100.0, key=f"other_{emp['id']}_{uid}")
 
-                # 自動計算保險扣款
                 if "越南" in emp_site:
                     social_ins = base_salary * ins_info["bhxh_social"]
                     health_ins = base_salary * ins_info["bhyt_health"]
@@ -223,12 +218,10 @@ def render_payroll_management_page(engine=None, lang="繁體中文"):
                     unemploy_ins = base_salary * ins_info["housing_fund"]
                     total_ins = social_ins + health_ins + unemploy_ins
 
-                # 總應發與實發計算（加入借款扣款）
                 gross_salary = base_salary + allowance + full_attendance_bonus + other_allowance
                 total_deduction = total_ins + leave_deduction + loan_deduction
                 net_payable = gross_salary - total_deduction
 
-                # 📊 薪資單明細呈現
                 st.markdown(
                     f"""
                     <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; font-family: sans-serif; color: #1e293b;">
