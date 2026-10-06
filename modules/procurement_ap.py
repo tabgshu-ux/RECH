@@ -14,7 +14,6 @@ PROCUREMENT_AP_I18N = {
         "tab_add": "➕ 登記款項應付 (AP) 新增",
         "table_header": "📋 供應商應付帳款明細總表 (AP)",
         "no_records": "目前無應付帳款紀錄。",
-        # 更清楚明瞭的說明
         "progress_header": "💳 供應商付款與撥款進度管理",
         "progress_caption": "💡 在此選擇對應的採購單/AP編號，並更新給供應商的付款或電匯（TT）完成狀態。",
         "btn_update_progress": "🚀 確認更新付款狀態",
@@ -24,7 +23,15 @@ PROCUREMENT_AP_I18N = {
         "lbl_code": "AP 帳款編號 *",
         "lbl_vendor": "供應商名稱 (Nhà cung cấp) *",
         "vendor_placeholder": "例如: 施耐德電氣越南分公司",
-        "lbl_item": "採購品項說明 *",
+        "lbl_category": "採購品項分類 *",
+        "cat_opts": [
+            "⚡ 高低壓配電盤與斷路器零件",
+            "🔩 銅排、線材與五金原物料",
+            "💻 廠區 IT 設備與辦公軟體",
+            "🏭 生產機械具備用零件與模具",
+            "🛡️ 勞安防護與廠區環保耗材"
+        ],
+        "lbl_item": "採購品項詳細說明 *",
         "item_placeholder": "例如: 廠區高壓配電盤及斷路器設備",
         "lbl_currency": "幣別選擇 *",
         "lbl_amount": "採購總金額 *",
@@ -36,7 +43,8 @@ PROCUREMENT_AP_I18N = {
         "col_index": "STT",
         "col_code": "AP 編號",
         "col_vendor": "供應商名稱",
-        "col_item": "品項說明",
+        "col_cat": "品項分類",
+        "col_item": "詳細說明",
         "col_curr": "幣別",
         "col_total": "總金額",
         "col_terms": "付款條件",
@@ -51,7 +59,6 @@ PROCUREMENT_AP_I18N = {
         "tab_add": "➕ Đăng ký Khoản phải trả (AP) Mới",
         "table_header": "📋 Sổ chi tiết Khoản phải trả Nhà cung cấp (AP)",
         "no_records": "Hiện không có bản ghi phải trả nào.",
-        # Tiếng Việt rõ ràng hơn
         "progress_header": "💳 Quản lý trạng thái thanh toán nhà cung cấp",
         "progress_caption": "💡 Chọn mã AP tương ứng bên dưới để xác nhận đã thanh toán hoặc chuyển khoản cho nhà cung cấp.",
         "btn_update_progress": "🚀 Xác nhận cập nhật trạng thái",
@@ -61,7 +68,15 @@ PROCUREMENT_AP_I18N = {
         "lbl_code": "Mã AP *",
         "lbl_vendor": "Tên nhà cung cấp *",
         "vendor_placeholder": "Ví dụ: Schneider Electric Vietnam",
-        "lbl_item": "Mô tả mặt hàng / Dịch vụ *",
+        "lbl_category": "Phân loại mặt hàng *",
+        "cat_opts": [
+            "⚡ Tủ điện trung/hạ thế & linh kiện",
+            "🔩 Đồng thanh cái, dây cáp & vật tư",
+            "💻 Thiết bị IT & phần mềm văn phòng",
+            "🏭 Phụ tùng máy móc sản xuất & khuôn",
+            "🛡️ Thiết bị bảo hộ lao động & vật tư"
+        ],
+        "lbl_item": "Mô tả chi tiết mặt hàng *",
         "item_placeholder": "Ví dụ: Tủ điện trung thế và thiết bị đóng cắt",
         "lbl_currency": "Loại tiền *",
         "lbl_amount": "Tổng số tiền *",
@@ -73,7 +88,8 @@ PROCUREMENT_AP_I18N = {
         "col_index": "STT",
         "col_code": "Mã AP",
         "col_vendor": "Nhà cung cấp",
-        "col_item": "Mặt hàng",
+        "col_cat": "Phân loại",
+        "col_item": "Chi tiết",
         "col_curr": "Loại tiền",
         "col_total": "Tổng tiền",
         "col_terms": "Điều kiện",
@@ -88,7 +104,6 @@ PROCUREMENT_AP_I18N = {
         "tab_add": "➕ Register New AP Record",
         "table_header": "📋 Supplier Accounts Payable Registry (AP)",
         "no_records": "No accounts payable records found.",
-        # Clear English
         "progress_header": "💳 Supplier Payment Status Management",
         "progress_caption": "💡 Select the corresponding AP code to update wire transfer or payment completion status for suppliers.",
         "btn_update_progress": "🚀 Confirm Payment Status Update",
@@ -98,7 +113,15 @@ PROCUREMENT_AP_I18N = {
         "lbl_code": "AP Code *",
         "lbl_vendor": "Supplier Name *",
         "vendor_placeholder": "Example: Schneider Electric Vietnam",
-        "lbl_item": "Item Description *",
+        "lbl_category": "Item Category *",
+        "cat_opts": [
+            "⚡ Switchgear & Circuit Breakers",
+            "🔩 Copper Busbars & Raw Materials",
+            "💻 Plant IT Equipment & Software",
+            "🏭 Production Machinery Parts & Molds",
+            "🛡️ PPE & Environmental Consumables"
+        ],
+        "lbl_item": "Detailed Item Description *",
         "item_placeholder": "Example: High-voltage switchboards and circuit breakers",
         "lbl_currency": "Currency *",
         "lbl_amount": "Total Amount *",
@@ -110,7 +133,8 @@ PROCUREMENT_AP_I18N = {
         "col_index": "No.",
         "col_code": "AP Code",
         "col_vendor": "Supplier",
-        "col_item": "Item",
+        "col_cat": "Category",
+        "col_item": "Description",
         "col_curr": "Currency",
         "col_total": "Total",
         "col_terms": "Terms",
@@ -144,6 +168,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
             {
                 "code": "AP-2026-888",
                 "vendor": "施耐德電氣越南分公司",
+                "category": "⚡ 高低壓配電盤與斷路器零件",
                 "item": "尚未更新",
                 "currency": "USD",
                 "amount": 45000.0,
@@ -166,6 +191,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                     L["col_index"]: idx,
                     L["col_code"]: item["code"],
                     L["col_vendor"]: smart_translate_ap(item["vendor"], active_lang),
+                    L["col_cat"]: smart_translate_ap(item.get("category", "標準品項"), active_lang),
                     L["col_item"]: smart_translate_ap(item["item"], active_lang),
                     L["col_curr"]: item["currency"],
                     L["col_total"]: f"${item['amount']:,.3f} USD",
@@ -190,17 +216,20 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
             with c1:
                 ap_code = st.text_input(L["lbl_code"], value=f"AP-2026-{len(st.session_state.procurement_ap_db)+1:03d}")
                 vendor = st.text_input(L["lbl_vendor"], placeholder=L["vendor_placeholder"])
-                currency = st.selectbox(L["lbl_currency"], ["USD", "VND", "TWD", "EUR"])
+                category = st.selectbox(L["lbl_category"], L["cat_opts"])
             with c2:
+                currency = st.selectbox(L["lbl_currency"], ["USD", "VND", "TWD", "EUR"])
                 amount = st.number_input(L["lbl_amount"], min_value=0.0, value=15000.0, step=1000.0)
                 terms = st.selectbox(L["lbl_terms"], L["terms_opts"])
-                item_desc = st.text_input(L["lbl_item"], placeholder=L["item_placeholder"])
+
+            item_desc = st.text_input(L["lbl_item"], placeholder=L["item_placeholder"])
 
             if st.form_submit_button(L["btn_save"], type="primary", use_container_width=True):
                 if ap_code and vendor:
                     st.session_state.procurement_ap_db.insert(0, {
                         "code": ap_code,
                         "vendor": vendor,
+                        "category": category,
                         "item": item_desc if item_desc else "標準採購零組件",
                         "currency": currency,
                         "amount": amount,
