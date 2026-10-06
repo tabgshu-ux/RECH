@@ -83,7 +83,7 @@ def get_active_lang(passed_lang):
             return val
     return "Tiếng Việt"  # 預設越南文
 
-def render_project_tracking_page(engine=None, lang=None, **kwargs):
+def render_engineering_page(engine=None, lang=None, **kwargs):
     active_lang = get_active_lang(lang)
     L = PROJECT_TRACKING_I18N.get(active_lang, PROJECT_TRACKING_I18N["Tiếng Việt"])
 
@@ -97,7 +97,7 @@ def render_project_tracking_page(engine=None, lang=None, **kwargs):
     with c2:
         st.metric(label=L["kpi2_title"], value="$1,850,000", delta=L["kpi2_sub"])
     with c3:
-        st.metric(label=L["kpi3_title"], value="$600,000", delta=L["kpi3_sub"], delta_value_color="inverse")
+        st.metric(label=L["kpi3_title"], value="$600,000", delta=L["kpi3_sub"])
     with c4:
         st.metric(label=L["kpi4_title"], value="76.5%", delta=L["kpi4_sub"])
 
@@ -163,15 +163,15 @@ def render_project_tracking_page(engine=None, lang=None, **kwargs):
 
     st.dataframe(pd.DataFrame(display_data), use_container_width=True)
 
-# 內建所有分身函式，徹底防止 AttributeError
+# 完整補齊所有可能被主程式呼叫的函式分身
 def render_project_tracking(*args, **kwargs):
-    render_project_tracking_page(*args, **kwargs)
+    render_engineering_page(*args, **kwargs)
 
-def render_project_tracking_page_func(*args, **kwargs):
-    render_project_tracking_page(*args, **kwargs)
+def render_project_tracking_page(*args, **kwargs):
+    render_engineering_page(*args, **kwargs)
 
 def show(*args, **kwargs):
-    render_project_tracking_page(*args, **kwargs)
+    render_engineering_page(*args, **kwargs)
 
 def main(*args, **kwargs):
-    render_project_tracking_page(*args, **kwargs)
+    render_engineering_page(*args, **kwargs)
