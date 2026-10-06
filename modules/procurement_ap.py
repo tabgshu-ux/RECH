@@ -10,10 +10,16 @@ PROCUREMENT_AP_I18N = {
         "title": "🛒 財務部 - 採購管理 & 應付帳款 (AP)",
         "caption": "管理採購單、供應商應付帳款、多幣別付款排程與西寧/海防廠立帳追蹤。",
         "tab_list": "📑 應付帳款總表與進度",
-        "tab_progress": "💳 更新進度款支付狀態",
+        "tab_progress": "💳 供應商付款狀態更新",
         "tab_add": "➕ 登記款項應付 (AP) 新增",
         "table_header": "📋 供應商應付帳款明細總表 (AP)",
         "no_records": "目前無應付帳款紀錄。",
+        # 更清楚明瞭的說明
+        "progress_header": "💳 供應商付款與撥款進度管理",
+        "progress_caption": "💡 在此選擇對應的採購單/AP編號，並更新給供應商的付款或電匯（TT）完成狀態。",
+        "btn_update_progress": "🚀 確認更新付款狀態",
+        "success_update": "✅ 供應商應付帳款付款狀態已成功更新！",
+        
         "add_header": "➕ 登記全新供應商應付帳款 (AP)",
         "lbl_code": "AP 帳款編號 *",
         "lbl_vendor": "供應商名稱 (Nhà cung cấp) *",
@@ -41,10 +47,16 @@ PROCUREMENT_AP_I18N = {
         "title": "🛒 Khối Tài chính - Quản lý Mua hàng & Phải trả (AP)",
         "caption": "Quản lý đơn hàng mua, công nợ phải trả nhà cung cấp, lịch thanh toán đa tiền tệ cho Tây Ninh và Hải Phòng.",
         "tab_list": "📑 Danh sách Phải trả & Tiến độ",
-        "tab_progress": "💳 Cập nhật Tiến độ Thanh toán",
+        "tab_progress": "💳 Cập nhật Trạng thái Thanh toán",
         "tab_add": "➕ Đăng ký Khoản phải trả (AP) Mới",
         "table_header": "📋 Sổ chi tiết Khoản phải trả Nhà cung cấp (AP)",
         "no_records": "Hiện không có bản ghi phải trả nào.",
+        # Tiếng Việt rõ ràng hơn
+        "progress_header": "💳 Quản lý trạng thái thanh toán nhà cung cấp",
+        "progress_caption": "💡 Chọn mã AP tương ứng bên dưới để xác nhận đã thanh toán hoặc chuyển khoản cho nhà cung cấp.",
+        "btn_update_progress": "🚀 Xác nhận cập nhật trạng thái",
+        "success_update": "✅ Đã cập nhật trạng thái thanh toán thành công!",
+        
         "add_header": "➕ Đăng ký Khoản phải trả Nhà cung cấp Mới",
         "lbl_code": "Mã AP *",
         "lbl_vendor": "Tên nhà cung cấp *",
@@ -72,10 +84,16 @@ PROCUREMENT_AP_I18N = {
         "title": "🛒 Finance - Procurement & Accounts Payable (AP)",
         "caption": "Manage purchase orders, supplier accounts payable, multi-currency payment schedules for Tay Ninh and Hai Phong.",
         "tab_list": "📑 Accounts Payable & Progress",
-        "tab_progress": "💳 Update Payment Progress",
+        "tab_progress": "💳 Update Payment Status",
         "tab_add": "➕ Register New AP Record",
         "table_header": "📋 Supplier Accounts Payable Registry (AP)",
         "no_records": "No accounts payable records found.",
+        # Clear English
+        "progress_header": "💳 Supplier Payment Status Management",
+        "progress_caption": "💡 Select the corresponding AP code to update wire transfer or payment completion status for suppliers.",
+        "btn_update_progress": "🚀 Confirm Payment Status Update",
+        "success_update": "✅ AP payment status updated successfully!",
+        
         "add_header": "➕ Register New Supplier AP Record",
         "lbl_code": "AP Code *",
         "lbl_vendor": "Supplier Name *",
@@ -160,10 +178,10 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
             st.info(L["no_records"])
 
     with tab_progress:
-        st.markdown("### 💳 更新 AP 應付帳款付款進度")
-        st.info("請選擇對應的 AP 帳款編號並更新其付款與撥款狀態。")
-        if st.button("🚀 確認更新付款進度", type="primary"):
-            st.success("✅ AP 帳款付款進度已成功更新！")
+        st.markdown(f"### {L['progress_header']}")
+        st.info(L["progress_caption"])
+        if st.button(L["btn_update_progress"], type="primary"):
+            st.success(L["success_update"])
 
     with tab_add:
         st.markdown(f"### {L['add_header']}")
