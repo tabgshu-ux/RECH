@@ -54,7 +54,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                     fac_choices = ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"]
                 e_fac = st.selectbox("工作廠區 (Factory)", fac_choices)
                 
-                # 排除資訊管理部，僅保留一般公司部門
                 if lang == "Tiếng Việt":
                     dept_display_map = {
                         "管理部": "Phòng Quản lý (Management Dept)",
@@ -83,11 +82,12 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
 
                 e_title = st.text_input("職稱 / 職務", placeholder="例如: 現場工程師 / 技術員")
 
+                # 修改此處：將「門禁保全」簡稱為「保全」
                 if lang == "Tiếng Việt":
                     role_display_map = {
                         "staff": "Nhân viên chung (Staff)",
                         "manager": "Quản lý / Chủ quản (Manager)",
-                        "security": "Bảo vệ / Cổng ra vào (Security)",
+                        "security": "Bảo vệ (Security)",
                         "admin": "Quản trị hệ thống (Admin)"
                     }
                 elif lang == "English":
@@ -101,7 +101,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                     role_display_map = {
                         "staff": "一般員工 (Staff)",
                         "manager": "部門主管 (Manager)",
-                        "security": "門禁保全 (Security)",
+                        "security": "保全 (Security)",
                         "admin": "系統管理員 (Admin)"
                     }
 
