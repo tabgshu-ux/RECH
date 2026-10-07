@@ -79,6 +79,7 @@ NAV_STRUCTURE = {
             "👔 管理部 (Management Dept)": {
                 "features": {
                     "👤 員工個人檔案與人事管理": "hr_employee",
+                    "🏭 廠區與工作廠區管理 (新增/維護廠區)": "factory_mgmt",
                     "📍 外勤員工打卡資料與出勤統計計算": "field_attendance",
                     "🚗 廠區車輛進出口門禁紀錄": "vehicle_gate",
                     "🛠️ 車輛維修保養紀錄": "vehicle_maintenance",
@@ -138,6 +139,7 @@ NAV_STRUCTURE = {
             "👔 Phòng Quản lý (Management Dept)": {
                 "features": {
                     "👤 Hồ sơ nhân sự": "hr_employee",
+                    "🏭 Quản lý Nhà máy / Cơ sở": "factory_mgmt",
                     "📍 Chấm công GPS & Thống kê": "field_attendance",
                     "🚗 Quản lý xe ra vào": "vehicle_gate",
                     "🛠️ Bảo trì xe": "vehicle_maintenance",
@@ -197,6 +199,7 @@ NAV_STRUCTURE = {
             "👔 Management Dept (GA & Finance)": {
                 "features": {
                     "👤 HR Records": "hr_employee",
+                    "🏭 Factory Management": "factory_mgmt",
                     "📍 GPS Attendance & Stats": "field_attendance",
                     "🚗 Vehicle Gate Log": "vehicle_gate",
                     "🛠️ Vehicle Maintenance": "vehicle_maintenance",
@@ -408,8 +411,34 @@ elif target_route == "invoice_management":
 elif target_route == "field_attendance":
     safe_call_module(field_attendance.render_field_attendance_page, engine=engine, lang=curr_lang)
 
-elif target_route == "ga_assets":
-    safe_call_module(asset_management.render_asset_management_page, lang=curr_lang)
+elif target_route == "factory_mgmt":
+    st.title("🏭 廠區與工作廠區管理 (Factory Management)")
+    st.info("在此您可以新增、修改與刪除公司廠區（如西寧廠、平陽廠等）。")
+    if "factory_list" not in st.session_state:
+        st.session_state.factory_list = [
+            {"廠區編號": "FAC-01", "廠區名稱": "西寧廠 (Tay Ninh)", "負責人": "張董事長", "電話": "0912345678"},
+            {"廠區編號": "FAC-02", "廠區名稱": "平陽廠 (Binh Duong)", "負責人": "阮文強", "電話": "0918999080"}
+        ]
+    
+    # 搜尋功能
+    search_q = st.text_input("🔍 搜尋廠區 / Search Factory", placeholder="輸入廠區名稱或編號搜尋...")
+    filtered_fac = [f for f in st.session_state.factory_list if search_q.lower() in f["廠區名稱"].lower() or search_q.lower() in f["廠區編號"].lower()] if search_q else st.session_state.factory_list
+    
+    st.dataframe(pd.DataFrame(filtered_fac), use_container_width=True)
+    
+    with st.form("add_factory_form"):
+        st.markdown("### ➕ 新增廠區")
+        fn_id = st.text_input("廠區編號", value=f"FAC-{len(st.session_state.factory_list)+1:02d}")
+        fn_name = st.text_input("廠區名稱 (Factory Name)")
+        fn_mgr = st.text_input("負責人 (Manager)")
+        fn_tel = st.text_input("聯絡電話 (Phone)")
+        if st.form_submit_button("🚀 確認新增廠區", type="primary"):
+            if fn_name:
+                st.session_state.factory_list.append({"廠區編號": fn_id, "廠區名稱": fn_name, "負責人": fn_mgr, "電話": fn_tel})
+                st.success(f"✅ 廠區 {fn_name} 新增成功！")
+                st.rerun()
+            else:
+                st.warning("⚠️ 請填寫廠區名稱！")
 
 elif target_route == "hr_employee":
     safe_call_module(employee_management.render_employee_management, engine=engine, t=lang_dict, lang=curr_lang)
