@@ -433,4 +433,5 @@ elif target_route in ["sheet_metal", "painting", "assembly"]:
 elif target_route == "it_admin":
     safe_call_module(user_management.render_user_management_page, lang=curr_lang)
 
-elif target_route == "
+elif target_route == "it_licensing":
+    safe_call_module(system_licensing.render_licensing_control_page, lang=curr_lang)
