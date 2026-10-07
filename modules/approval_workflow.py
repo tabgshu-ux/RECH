@@ -298,6 +298,3 @@ def show(*args, **kwargs):
 
 def main(*args, **kwargs):
     render_approval_center(*args, **kwargs)
-
-def render_approval_center(*args, **kwargs):
-    render_approval_center(*args, **kwargs)
