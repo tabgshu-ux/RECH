@@ -33,7 +33,12 @@ SALES_ORDER_AR_I18N = {
         "col_total": "合約總金額 (VND)",
         "col_collected": "已收款金額",
         "col_outstanding": "未收款總計",
-        "col_status": "對帳狀態"
+        "col_status": "對帳狀態",
+        # 表格美化欄位
+        "col_phase": "請款階段 / 專案項目",
+        "col_pct": "請款比例 (%)",
+        "col_amt": "請款金額 (VND)",
+        "col_st": "狀態"
     },
     "Tiếng Việt": {
         "title": "📋 Khối Tài chính - Quản lý Phải thu (AR) & Đối chiếu Hợp đồng",
@@ -62,7 +67,11 @@ SALES_ORDER_AR_I18N = {
         "col_total": "Tổng giá trị (VND)",
         "col_collected": "Đã thu",
         "col_outstanding": "Còn lại (Chưa thu)",
-        "col_status": "Trạng thái"
+        "col_status": "Trạng thái",
+        "col_phase": "Giai đoạn thanh toán",
+        "col_pct": "Tỷ lệ (%)",
+        "col_amt": "Số tiền (VND)",
+        "col_st": "Trạng thái"
     },
     "English": {
         "title": "📋 Finance - Engineering AR & Contract Billing Center",
@@ -91,7 +100,11 @@ SALES_ORDER_AR_I18N = {
         "col_total": "Total Amount (VND)",
         "col_collected": "Collected",
         "col_outstanding": "Outstanding",
-        "col_status": "Status"
+        "col_status": "Status",
+        "col_phase": "Milestone Phase",
+        "col_pct": "Percentage (%)",
+        "col_amt": "Amount (VND)",
+        "col_st": "Status"
     }
 }
 
@@ -102,9 +115,13 @@ def smart_translate_ar(text_val, target_lang):
     if target_lang == "Tiếng Việt":
         if "進行中" in text_val: return "Đang thực hiện (In Progress)"
         if "已結案" in text_val: return "Đã hoàn thành (Closed)"
+        if "已收款" in text_val: return "Đã thu tiền"
+        if "審核中" in text_val: return "Đang duyệt"
     elif target_lang == "English":
         if "進行中" in text_val: return "In Progress"
         if "已結案" in text_val: return "Closed"
+        if "已收款" in text_val: return "Collected"
+        if "審核中" in text_val: return "Reviewing"
     return text_val
 
 def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
@@ -114,7 +131,7 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化 2026 工程請款對帳單資料庫（對應上傳之 2026年工程請款對帳單明細.xls）
+    # 初始化 2026 工程請款對帳單資料庫
     if "sales_ar_db" not in st.session_state:
         st.session_state.sales_ar_db = [
             {
@@ -220,8 +237,18 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
 
         st.markdown("---")
         st.markdown("#### 📑 分期請款進度與對帳明細 (Milestone Details)")
-        milestones_df = pd.DataFrame(selected_contract["milestones"])
-        st.dataframe(milestones_df, use_container_width=True)
+        
+        # 格式化分期表格數字，加上千分位與單位
+        formatted_milestones = []
+        for m in selected_contract["milestones"]:
+            formatted_milestones.append({
+                L["col_phase"]: m["phase"],
+                L["col_pct"]: f"{m['pct']:.2f}%" if m['pct'] > 0 else "0.00%",
+                L["col_amt"]: f"{m['amount']:,.0f} VND",
+                L["col_st"]: smart_translate_ar(m["status"], active_lang)
+            })
+            
+        st.dataframe(pd.DataFrame(formatted_milestones), use_container_width=True)
 
     with tab_add:
         st.markdown(f"### {L['add_header']}")
