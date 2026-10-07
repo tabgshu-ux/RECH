@@ -78,16 +78,14 @@ NAV_STRUCTURE = {
             },
             "👔 管理部 (Management Dept)": {
                 "features": {
-                    "🏢 [行政] 固定資產設備與總務採購": "ga_assets",
-                    "✍️ [行政] 企業合約管理與主管審查": "contract_mgmt",
-                    "👤 [行政] 員工個人檔案與人事管理 (人事)": "hr_employee",
-                    "🚗 [行政] 廠區車輛進出與門禁時間紀錄": "vehicle_gate",
-                    "🛠️ [行政] 車輛維修保養與 Excel 批次匯入": "vehicle_maintenance",
-                    "📍 [外勤] 工程人員 GPS 拍照打卡": "field_attendance",
-                    "🛒 [財務] 採購與應付帳款 (AP)": "procurement_ap",
-                    "📋 [財務] 銷售與應收帳款 (AR)": "sales_order_ar",
-                    "💰 [財務] 員工薪資與保險扣款試算": "payroll_calc",
-                    "📄 [財務] 越南電子發票綜合管理中心": "invoice_management",
+                    "👤 1. 員工個人檔案與人事管理": "hr_employee",
+                    "📍 2. 外勤員工打卡資料與出勤統計計算": "field_attendance",
+                    "🚗 3. 廠區車輛進出口門禁紀錄": "vehicle_gate",
+                    "🛠️ 4. 車輛維修保養紀錄": "vehicle_maintenance",
+                    "🛒 5. 採購與應付帳款 (AP)": "procurement_ap",
+                    "📋 6. 應收帳款": "sales_order_ar",
+                    "💰 7. 員工薪資管理": "payroll_calc",
+                    "📄 8. 電子發票綜合管理": "invoice_management",
                 }
             },
             "🛠️ 工程與設計管理中心 (Engineering & Design Center)": {
@@ -139,16 +137,14 @@ NAV_STRUCTURE = {
             },
             "👔 Phòng Quản lý (Management Dept)": {
                 "features": {
-                    "🏢 [Hành chính] Quản lý Tài sản Cố định": "ga_assets",
-                    "✍️ [Hành chính] Quản lý Hợp đồng & Phê duyệt": "contract_mgmt",
-                    "👤 [Nhân sự] Hồ sơ Nhân sự & Hợp đồng": "hr_employee",
-                    "🚗 [Bảo vệ] Quản lý xe ra vào nhà máy": "vehicle_gate",
-                    "🛠️ [Hành chính] Quản lý bảo trì xe & Nhập Excel": "vehicle_maintenance",
-                    "📍 [Hiện trường] Chấm công GPS kỹ sư": "field_attendance",
-                    "🛒 [Tài chính] Mua hàng & Phải trả (AP)": "procurement_ap",
-                    "📋 [Tài chính] Quản lý Bán hàng (AR)": "sales_order_ar",
-                    "💰 [Tài chính] Tính Lương & Khấu trừ": "payroll_calc",
-                    "📄 [Tài chính] Quản lý Hóa đơn điện tử tổng hợp": "invoice_management",
+                    "👤 1. Hồ sơ nhân sự": "hr_employee",
+                    "📍 2. Chấm công GPS & Thống kê": "field_attendance",
+                    "🚗 3. Quản lý xe ra vào": "vehicle_gate",
+                    "🛠️ 4. Bảo trì xe": "vehicle_maintenance",
+                    "🛒 5. Mua hàng & Phải trả (AP)": "procurement_ap",
+                    "📋 6. Phải thu": "sales_order_ar",
+                    "💰 7. Quản lý Lương": "payroll_calc",
+                    "📄 8. Quản lý Hóa đơn điện tử": "invoice_management",
                 }
             },
             "🛠️ Trung tâm Quản lý Kỹ thuật & Thiết kế": {
@@ -200,16 +196,14 @@ NAV_STRUCTURE = {
             },
             "👔 Management Dept (GA & Finance)": {
                 "features": {
-                    "🏢 [GA] Asset Management": "ga_assets",
-                    "✍️ [GA] Enterprise Contract Management": "contract_mgmt",
-                    "👤 [HR] Employee Records": "hr_employee",
-                    "🚗 [Security] Vehicle Gate Log": "vehicle_gate",
-                    "🛠️ [GA] Vehicle Maintenance & Excel Import": "vehicle_maintenance",
-                    "📍 [Field] Engineer GPS Attendance": "field_attendance",
-                    "🛒 [Finance] Procurement & AP": "procurement_ap",
-                    "📋 [Finance] Sales & AR": "sales_order_ar",
-                    "💰 [Finance] Payroll & Insurance": "payroll_calc",
-                    "📄 [Finance] E-Invoice Comprehensive Center": "invoice_management",
+                    "👤 1. HR Records": "hr_employee",
+                    "📍 2. GPS Attendance & Stats": "field_attendance",
+                    "🚗 3. Vehicle Gate Log": "vehicle_gate",
+                    "🛠️ 4. Vehicle Maintenance": "vehicle_maintenance",
+                    "🛒 5. Procurement & AP": "procurement_ap",
+                    "📋 6. Accounts Receivable": "sales_order_ar",
+                    "💰 7. Payroll Management": "payroll_calc",
+                    "📄 8. E-Invoice Management": "invoice_management",
                 }
             },
             "🛠️ Engineering & Design Management Center": {
@@ -333,11 +327,11 @@ if current_role_clean == "security":
     st.sidebar.markdown(f"**{lang_dict['parent_header']}**")
     
     if st.session_state.current_lang == "繁體中文":
-        feature_labels = ["🚗 [行政] 廠區車輛進出與門禁時間紀錄"]
+        feature_labels = ["🚗 3. 廠區車輛進出口門禁紀錄"]
     elif st.session_state.current_lang == "Tiếng Việt":
-        feature_labels = ["🚗 [Bảo vệ] Quản lý xe ra vào nhà máy"]
+        feature_labels = ["🚗 3. Quản lý xe ra vào"]
     else:
-        feature_labels = ["🚗 [Security] Vehicle Gate Log"]
+        feature_labels = ["🚗 3. Vehicle Gate Log"]
         
     selected_feature_label = feature_labels[0]
     target_route = "vehicle_gate"
@@ -347,11 +341,9 @@ else:
         or current_role_clean in ["admin", "executive", "manager"]
     )
 
-    # 1. 如果不是 executive/admin，隱藏營運戰情室
     if not is_executive_access:
         dept_options = [d for d in dept_options if "營運戰情室" not in d and "Executive" not in d and "Ban Giám đốc" not in d]
 
-    # 2. 如果不是 admin，隱藏資訊管理部 (IT & System)
     if current_role_clean != "admin":
         dept_options = [d for d in dept_options if "資訊管理部" not in d and "IT" not in d and "Phòng IT" not in d]
 
@@ -417,26 +409,4 @@ elif target_route == "field_attendance":
     safe_call_module(field_attendance.render_field_attendance_page, engine=engine, lang=curr_lang)
 
 elif target_route == "ga_assets":
-    safe_call_module(asset_management.render_asset_management_page, lang=curr_lang)
-
-elif target_route == "hr_employee":
-    safe_call_module(employee_management.render_employee_management, engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route == "vehicle_gate":
-    safe_call_module(vehicle_gate_log.render_vehicle_gate_log_page, engine=engine, lang=curr_lang)
-
-elif target_route == "vehicle_maintenance":
-    safe_call_module(vehicle_maintenance.render_vehicle_maintenance_page, engine=engine, lang=curr_lang)
-
-elif target_route == "wh_management":
-    safe_call_module(warehouse_management.render_warehouse_management, engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route in ["sheet_metal", "painting", "assembly"]:
-    st.title(selected_feature_label)
-    st.info("Hệ thống đang hoạt động bình thường / 現場工單與生產追蹤模組順利運作中。")
-
-elif target_route == "it_admin":
-    safe_call_module(user_management.render_user_management_page, lang=curr_lang)
-
-elif target_route == "it_licensing":
-    safe_call_module(system_licensing.render_licensing_control_page, lang=curr_lang)
+    safe_call_module(asset_management.render_asset_management_page, lang=curr_
