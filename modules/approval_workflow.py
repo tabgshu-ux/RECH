@@ -5,7 +5,7 @@ import datetime
 APPROVAL_I18N = {
     "繁體中文": {
         "title": "✍️ 管理部 - 電子簽核與請款/請假審核中心",
-        "caption": "提交採購申請或請假單，系統自動依據規則（部門主管 ➔ 負責部門負責人 ➔ 請假≧3天經理簽核 ➔ 請假≧5天副總簽核）進行多級簽核，並提供即時進度追蹤。",
+        "caption": "提交採購申請或請假單，系統自動依據規則進行多級簽核，並提供即時進度追蹤。",
         "tab_submit": "📝 提交新簽核申請 (請假/採購)",
         "tab_track": "📊 簽核進度即時追蹤 (Flow Tracker)",
         "tab_review": "🎛️ 主管/經理/副總審核簽章",
@@ -18,10 +18,13 @@ APPROVAL_I18N = {
         "dept_opts": ["營運戰情室", "管理部", "工程與設計管理中心", "生產部"],
         "lbl_reason": "申請事由與說明 *",
         "reason_placeholder_leave": "例如: 因家庭事務請假 4 天...",
-        "reason_placeholder_po": "例如: 採購廠區高壓電纜一批、斷路器及銅排...",
+        "reason_placeholder_po": "例如: 廠區高壓電纜採購說明...",
         
         "lbl_days": "請假天數 (天) *",
+        "lbl_item_name": "採購項目名稱 *",
+        "lbl_qty": "採購數量 *",
         "lbl_amount": "採購金額 (VND) *",
+        "lbl_photo": "上傳參考照片 / 報價單 / 規格圖檔",
 
         "btn_submit": "🚀 提交送出簽核",
         "success_submit": "✅ 簽核單 `{doc_id}` 已成功送出！已進入第一階段簽核。",
@@ -42,12 +45,12 @@ APPROVAL_I18N = {
         "col_type": "類型",
         "col_applicant": "申請人",
         "col_dept": "部門",
-        "col_status": "目前簽核關卡 (Current Stage)",
+        "col_status": "目前簽核關卡",
         "col_result": "審核結果"
     },
     "Tiếng Việt": {
         "title": "✍️ Trung tâm Phê duyệt Điện tử (Approval Center)",
-        "caption": "Gửi yêu cầu nghỉ phép hoặc mua hàng; hệ thống tự động định tuyến quy trình phê duyệt đa cấp.",
+        "caption": "Gửi yêu cầu nghỉ phép hoặc mua hàng...",
         "tab_submit": "📝 Gửi Đơn Mới",
         "tab_track": "📊 Theo dõi Tiến độ Trực tiếp",
         "tab_review": "🎛️ Phê duyệt của Quản lý",
@@ -58,10 +61,13 @@ APPROVAL_I18N = {
         "lbl_dept": "Phòng ban *",
         "dept_opts": ["Ban Giám đốc", "Phòng Quản lý", "Trung tâm Kỹ thuật", "Phòng Sản xuất"],
         "lbl_reason": "Lý do *",
-        "reason_placeholder_leave": "Ví dụ: Nghỉ phép 4 ngày...",
+        "reason_placeholder_leave": "Ví dụ: Nghỉ phép...",
         "reason_placeholder_po": "Ví dụ: Mua sắm vật tư...",
         "lbl_days": "Số ngày nghỉ *",
+        "lbl_item_name": "Tên vật tư / hàng hóa *",
+        "lbl_qty": "Số lượng *",
         "lbl_amount": "Giá trị mua (VND) *",
+        "lbl_photo": "Tải ảnh đính kèm",
         "btn_submit": "🚀 Gửi duyệt",
         "success_submit": "✅ Đã gửi đơn `{doc_id}` thành công!",
         "warning_fill": "⚠️ Vui lòng điền đầy đủ thông tin!",
@@ -78,12 +84,12 @@ APPROVAL_I18N = {
         "col_type": "Loại",
         "col_applicant": "Người nộp",
         "col_dept": "Phòng ban",
-        "col_status": "Trạng thái hiện tại",
+        "col_status": "Trạng thái",
         "col_result": "Kết quả"
     },
     "English": {
         "title": "✍️ E-Approval & Request Workflow Center",
-        "caption": "Submit leave or purchase requests. The system automatically routes through multi-level approvals and tracks progress in real-time.",
+        "caption": "Submit leave or purchase requests...",
         "tab_submit": "📝 Submit New Request",
         "tab_track": "📊 Real-time Flow Tracker",
         "tab_review": "🎛️ Management Review & Sign",
@@ -97,7 +103,10 @@ APPROVAL_I18N = {
         "reason_placeholder_leave": "Example: 4 days personal leave...",
         "reason_placeholder_po": "Example: Purchase high voltage cables...",
         "lbl_days": "Leave Days (Days) *",
+        "lbl_item_name": "Item Name *",
+        "lbl_qty": "Quantity *",
         "lbl_amount": "Purchase Amount (VND) *",
+        "lbl_photo": "Upload Photo / Quotation / Specs",
         "btn_submit": "🚀 Submit Request",
         "success_submit": "✅ Request `{doc_id}` successfully submitted!",
         "warning_fill": "⚠️ Please fill in all required fields!",
@@ -134,6 +143,8 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                 "applicant": "陳裕民 (Staff)",
                 "dept": "工程與設計管理中心",
                 "days": 4,
+                "item_name": "",
+                "qty": 0,
                 "amount": 0.0,
                 "reason": "家屬婚喪喜慶請假 4 天",
                 "stage_idx": 2, 
@@ -151,6 +162,8 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                 "applicant": "阮文強 (Tech)",
                 "dept": "生產部",
                 "days": 0,
+                "item_name": "高壓電纜一批與銅排",
+                "qty": 5,
                 "amount": 150000000.0,
                 "reason": "廠區配電盤銅排與斷路器採購",
                 "stage_idx": 1,
@@ -178,15 +191,25 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                 dept = st.selectbox(L["lbl_dept"], L["dept_opts"])
                 
             days = 0.0
+            item_name = ""
+            qty = 1
             amount = 0.0
+            uploaded_photo = None
             
-            # 根據單據類型動態切換輸入欄位
-            is_leave = "請假" in req_type or "Leave" in req_type
+            is_leave = "請假" in req_type or "Leave" in req_type or "nghỉ" in req_type.lower()
+            
             if is_leave:
                 days = st.number_input(L["lbl_days"], min_value=0.5, value=3.0, step=0.5)
                 reason = st.text_area(L["lbl_reason"], placeholder=L["reason_placeholder_leave"])
             else:
+                c_i1, c_i2 = st.columns(2)
+                with c_i1:
+                    item_name = st.text_input(L["lbl_item_name"], placeholder="例如: 高壓電纜 / 斷路器")
+                with c_i2:
+                    qty = st.number_input(L["lbl_qty"], min_value=1, value=1, step=1)
+                
                 amount = st.number_input(L["lbl_amount"], min_value=0.0, value=50000000.0, step=10000000.0)
+                uploaded_photo = st.file_uploader(L["lbl_photo"], type=["jpg", "png", "jpeg", "pdf"])
                 reason = st.text_area(L["lbl_reason"], placeholder=L["reason_placeholder_po"])
 
             if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
@@ -209,8 +232,11 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                         "applicant": applicant,
                         "dept": dept,
                         "days": days,
+                        "item_name": item_name,
+                        "qty": qty,
                         "amount": amount,
                         "reason": reason,
+                        "has_photo": uploaded_photo is not None,
                         "stage_idx": 0,
                         "stages": stages,
                         "status": f"進行中 (等待 {stages[0]})",
@@ -234,7 +260,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                     if item['days'] > 0:
                         c3.markdown(f"**請假天數**: {item['days']} 天")
                     else:
-                        c3.markdown(f"**採購金額**: {item['amount']:,.0f} VND")
+                        c3.markdown(f"**採購項目**: {item.get('item_name', 'N/A')} (數量: {item.get('qty', 1)})<br>**採購金額**: {item['amount']:,.0f} VND", unsafe_allow_html=True)
 
                     st.markdown("#### 🔄 即時簽核進度與關卡 (Flow Status)")
                     
@@ -260,6 +286,8 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
 
             st.markdown(f"**目前關卡**: `{target_item['stages'][target_item['stage_idx']]}`")
             st.markdown(f"**申請事由**: {target_item['reason']}")
+            if target_item.get('item_name'):
+                st.markdown(f"**採購項目**: {target_item['item_name']} | **數量**: {target_item.get('qty', 1)} | **金額**: {target_item['amount']:,.0f} VND")
             
             comment = st.text_input(L["lbl_comment"], value="同意辦理")
 
