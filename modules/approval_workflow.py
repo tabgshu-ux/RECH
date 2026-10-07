@@ -13,9 +13,8 @@ APPROVAL_I18N = {
         "submit_header": "📝 填寫電子簽核單",
         "lbl_type": "申請單類型 *",
         "type_opts": ["請假單 (Leave Request)", "採購申請單 (Purchase Requisition)"],
-        "lbl_applicant": "申請人姓名 *",
-        "lbl_dept": "所屬部門 *",
-        "dept_opts": ["營運戰情室", "管理部", "工程與設計管理中心", "生產部"],
+        "lbl_applicant": "申請人 (已鎖定登入帳號)",
+        "lbl_dept": "所屬部門 (依帳號自動對應)",
         "lbl_reason": "申請事由與說明 *",
         "reason_placeholder_leave": "例如: 因家庭事務請假 4 天...",
         "reason_placeholder_po": "例如: 廠區高壓電纜採購說明...",
@@ -57,9 +56,8 @@ APPROVAL_I18N = {
         "submit_header": "📝 Điền đơn điện tử",
         "lbl_type": "Loại đơn *",
         "type_opts": ["Đơn nghỉ phép", "Đơn mua hàng"],
-        "lbl_applicant": "Người nộp *",
-        "lbl_dept": "Phòng ban *",
-        "dept_opts": ["Ban Giám đốc", "Phòng Quản lý", "Trung tâm Kỹ thuật", "Phòng Sản xuất"],
+        "lbl_applicant": "Người nộp",
+        "lbl_dept": "Phòng ban",
         "lbl_reason": "Lý do *",
         "reason_placeholder_leave": "Ví dụ: Nghỉ phép...",
         "reason_placeholder_po": "Ví dụ: Mua sắm vật tư...",
@@ -96,9 +94,8 @@ APPROVAL_I18N = {
         "submit_header": "📝 Submit Electronic Request Form",
         "lbl_type": "Request Type *",
         "type_opts": ["Leave Request", "Purchase Requisition"],
-        "lbl_applicant": "Applicant Name *",
-        "lbl_dept": "Department *",
-        "dept_opts": ["Executive", "Management Dept", "Engineering & Design", "Production Dept"],
+        "lbl_applicant": "Applicant (Locked)",
+        "lbl_dept": "Department (Locked)",
         "lbl_reason": "Reason / Description *",
         "reason_placeholder_leave": "Example: 4 days personal leave...",
         "reason_placeholder_po": "Example: Purchase high voltage cables...",
@@ -183,12 +180,24 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
     with tab_submit:
         st.markdown(f"### {L['submit_header']}")
         with st.form("form_submit_approval"):
+            current_user = st.session_state.get("user_name", "admin")
+            role = st.session_state.get("user_role", "admin")
+            
+            # 自動依據登入者判定預設部門
+            default_dept = "管理部"
+            if role == "admin":
+                default_dept = "營運戰情室"
+            elif "生產" in current_user or role == "staff":
+                default_dept = "生產部"
+
             c1, c2 = st.columns(2)
             with c1:
                 req_type = st.selectbox(L["lbl_type"], L["type_opts"])
-                applicant = st.text_input(L["lbl_applicant"], value=st.session_state.get("user_name", "員工"))
+                # 申請人鎖定為登入帳號，無法更改
+                applicant = st.text_input(L["lbl_applicant"], value=current_user, disabled=True)
             with c2:
-                dept = st.selectbox(L["lbl_dept"], L["dept_opts"])
+                # 所屬部門鎖定為對應部門，無法更改
+                dept = st.text_input(L["lbl_dept"], value=default_dept, disabled=True)
                 
             days = 0.0
             item_name = ""
@@ -213,7 +222,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                 reason = st.text_area(L["lbl_reason"], placeholder=L["reason_placeholder_po"])
 
             if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
-                if applicant and reason:
+                if current_user and reason:
                     new_id = f"REQ-2026-{len(st.session_state.approval_db)+1:03d}"
                     
                     if is_leave:
@@ -229,8 +238,8 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                     st.session_state.approval_db.insert(0, {
                         "id": new_id,
                         "type": req_type,
-                        "applicant": applicant,
-                        "dept": dept,
+                        "applicant": current_user,
+                        "dept": default_dept,
                         "days": days,
                         "item_name": item_name,
                         "qty": qty,
@@ -241,7 +250,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                         "stages": stages,
                         "status": f"進行中 (等待 {stages[0]})",
                         "history": [
-                            {"stage": stages[0], "status": "審核中 (等待中)", "by": f"{dept} 主管", "time": "未審核"}
+                            {"stage": stages[0], "status": "審核中 (等待中)", "by": f"{default_dept} 主管", "time": "未審核"}
                         ]
                     })
                     st.success(L["success_submit"].format(doc_id=new_id))
