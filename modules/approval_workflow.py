@@ -15,14 +15,11 @@ APPROVAL_I18N = {
         "type_opts": ["請假單 (Leave Request)", "採購申請單 (Purchase Requisition)"],
         "lbl_applicant": "申請人姓名 *",
         "lbl_dept": "所屬部門 *",
-        "dept_opts": ["營運戰情室", "管理部", "工程與設計管理中心", "生產部", "資訊管理部"],
+        "dept_opts": ["營運戰情室", "管理部", "工程與設計管理中心", "生產部"],
         "lbl_reason": "申請事由與說明 *",
         "reason_placeholder": "例如: 因家庭事務請假 4 天 / 採購廠區高壓電纜一批",
         
-        # 請假專用
         "lbl_days": "請假天數 (天) *",
-        
-        # 採購專用
         "lbl_amount": "採購金額 (VND) *",
 
         "btn_submit": "🚀 提交送出簽核",
@@ -58,7 +55,7 @@ APPROVAL_I18N = {
         "type_opts": ["Đơn nghỉ phép", "Đơn mua hàng"],
         "lbl_applicant": "Người nộp *",
         "lbl_dept": "Phòng ban *",
-        "dept_opts": ["Ban Giám đốc", "Phòng Quản lý", "Trung tâm Kỹ thuật", "Phòng Sản xuất", "Phòng IT"],
+        "dept_opts": ["Ban Giám đốc", "Phòng Quản lý", "Trung tâm Kỹ thuật", "Phòng Sản xuất"],
         "lbl_reason": "Lý do *",
         "reason_placeholder": "Ví dụ: Nghỉ phép 4 ngày...",
         "lbl_days": "Số ngày nghỉ *",
@@ -93,7 +90,7 @@ APPROVAL_I18N = {
         "type_opts": ["Leave Request", "Purchase Requisition"],
         "lbl_applicant": "Applicant Name *",
         "lbl_dept": "Department *",
-        "dept_opts": ["Executive", "Management Dept", "Engineering & Design", "Production Dept", "IT Dept"],
+        "dept_opts": ["Executive", "Management Dept", "Engineering & Design", "Production Dept"],
         "lbl_reason": "Reason / Description *",
         "reason_placeholder": "Example: 4 days personal leave / Purchase cables",
         "lbl_days": "Leave Days (Days) *",
