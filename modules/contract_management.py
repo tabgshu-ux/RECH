@@ -8,16 +8,23 @@ import datetime
 CONTRACT_I18N = {
     "繁體中文": {
         "title": "✍️ 管理部 - 企業合約管理與主管審查中心",
-        "caption": "管理裕豐電機工業各項工程合約、設備採購合約與租賃合約，支援線上即時修改、合約狀態追蹤及舊合約檔案上傳供主管審查。",
-        "tab_list": "📑 合約清冊與線上即時編輯",
+        "caption": "管理裕豐電機工業各項工程合約、設備採購合約與租賃合約，支援線上即時修改、合約狀態追蹤、檔案上傳與刪除功能。",
+        "tab_list": "📑 合約清冊與線上編輯/刪除",
         "tab_add": "➕ 新增合約登記",
         "tab_upload": "📤 上傳舊合約與附件（主管審查）",
         "table_header": "📋 裕豐電機工業現行合約總覽",
         "no_records": "目前無合約紀錄。",
-        "edit_header": "✏️ 線上修改合約資料",
-        "select_contract": "選擇要修改的合約 *",
+        "edit_header": "✏️ 線上修改或刪除合約資料",
+        "select_contract": "選擇要修改/刪除的合約 *",
+        "lbl_edit_name": "合約名稱 / 專案主題 *",
+        "lbl_edit_party": "簽約對象 *",
+        "lbl_edit_type": "合約類型 *",
+        "lbl_edit_amount": "合約金額 (VND) *",
+        "lbl_edit_status": "合約狀態 *",
         "btn_update": "💾 儲存修改內容",
+        "btn_delete": "🗑️ 刪除此合約",
         "success_update": "✅ 合約 `{code}` 資料已成功更新！",
+        "success_delete": "🗑️ 合約 `{code}` 已成功刪除！",
         "add_header": "➕ 登記全新合約",
         "lbl_code": "合約編號 *",
         "lbl_name": "合約名稱 / 專案主題 *",
@@ -37,7 +44,6 @@ CONTRACT_I18N = {
         "lbl_file": "選擇合約檔案 (.pdf, .doc, .docx, .xls)",
         "btn_upload_file": "🚀 確認上傳合約檔案",
         "success_upload": "✅ 檔案 `{filename}` 已成功上傳並歸檔至專案合約！",
-        # 表格欄位
         "col_index": "STT",
         "col_code": "合約編號",
         "col_name": "合約名稱",
@@ -49,17 +55,24 @@ CONTRACT_I18N = {
         "col_file": "合約附件"
     },
     "Tiếng Việt": {
-        "title": "✍️ Khối Hành chính - Quản lý Hợp đồng & Phê duyệt của Quản lý",
-        "caption": "Quản lý hợp đồng xây dựng, mua sắm thiết bị và cho thuê; hỗ trợ chỉnh sửa trực tuyến và tải lên hợp đồng cũ để kiểm tra.",
-        "tab_list": "📑 Danh sách Hợp đồng & Chỉnh sửa",
+        "title": "✍️ Khối Hành chính - Quản lý Hợp đồng & Phê duyệt",
+        "caption": "Quản lý hợp đồng xây dựng, mua sắm thiết bị và cho thuê; hỗ trợ chỉnh sửa, xóa và tải lên hợp đồng cũ để kiểm tra.",
+        "tab_list": "📑 Danh sách Hợp đồng & Chỉnh sửa/Xóa",
         "tab_add": "➕ Đăng ký Hợp đồng Mới",
         "tab_upload": "📤 Tải lên Hợp đồng Cũ (Dành cho Quản lý)",
         "table_header": "📋 Tổng quan Hợp đồng hiện hành",
         "no_records": "Hiện không có bản ghi hợp đồng nào.",
-        "edit_header": "✏️ Chỉnh sửa thông tin hợp đồng",
-        "select_contract": "Chọn hợp đồng cần sửa *",
+        "edit_header": "✏️ Chỉnh sửa hoặc xóa thông tin hợp đồng",
+        "select_contract": "Chọn hợp đồng cần sửa/xóa *",
+        "lbl_edit_name": "Tên hợp đồng *",
+        "lbl_edit_party": "Đối tác *",
+        "lbl_edit_type": "Loại hợp đồng *",
+        "lbl_edit_amount": "Giá trị (VND) *",
+        "lbl_edit_status": "Trạng thái *",
         "btn_update": "💾 Lưu thay đổi",
+        "btn_delete": "🗑️ Xóa hợp đồng này",
         "success_update": "✅ Đã cập nhật thành công hợp đồng `{code}`!",
+        "success_delete": "🗑️ Đã xóa thành công hợp đồng `{code}`!",
         "add_header": "➕ Đăng ký hợp đồng mới",
         "lbl_code": "Mã hợp đồng *",
         "lbl_name": "Tên hợp đồng / Dự án *",
@@ -91,16 +104,23 @@ CONTRACT_I18N = {
     },
     "English": {
         "title": "✍️ GA - Enterprise Contract Management & Review Center",
-        "caption": "Manage engineering, equipment procurement, and lease contracts with inline editing and document uploads for management review.",
-        "tab_list": "📑 Contract List & Inline Editing",
+        "caption": "Manage engineering, equipment procurement, and lease contracts with inline editing, deletion, and document uploads.",
+        "tab_list": "📑 Contract List & Edit/Delete",
         "tab_add": "➕ Register New Contract",
         "tab_upload": "📤 Upload Old Contracts for Review",
         "table_header": "📋 Active Enterprise Contracts Overview",
         "no_records": "No contract records found.",
-        "edit_header": "✏️ Edit Contract Details",
-        "select_contract": "Select Contract to Edit *",
+        "edit_header": "✏️ Edit or Delete Contract Details",
+        "select_contract": "Select Contract to Edit/Delete *",
+        "lbl_edit_name": "Contract Name *",
+        "lbl_edit_party": "Counterparty *",
+        "lbl_edit_type": "Contract Type *",
+        "lbl_edit_amount": "Amount (VND) *",
+        "lbl_edit_status": "Status *",
         "btn_update": "💾 Save Changes",
+        "btn_delete": "🗑️ Delete Contract",
         "success_update": "✅ Contract `{code}` updated successfully!",
+        "success_delete": "🗑️ Contract `{code}` deleted successfully!",
         "add_header": "➕ Register New Contract",
         "lbl_code": "Contract No. *",
         "lbl_name": "Contract Name / Project *",
@@ -139,7 +159,6 @@ def render_contract_management_page(engine=None, lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化合約資料庫
     if "enterprise_contracts_db" not in st.session_state:
         st.session_state.enterprise_contracts_db = [
             {
@@ -205,20 +224,30 @@ def render_contract_management_page(engine=None, lang="繁體中文", **kwargs):
             with st.form("form_edit_contract"):
                 c1, c2 = st.columns(2)
                 with c1:
-                    new_name = st.text_input("合約名稱", value=target_contract["name"])
-                    new_party = st.text_input("簽約對象", value=target_contract["party"])
-                    new_type = st.selectbox("合約類型", ["工程承攬合約", "設備採購合約", "土地與廠房租賃", "委任與技術服務合約"], index=0)
+                    new_name = st.text_input(L["lbl_edit_name"], value=target_contract["name"])
+                    new_party = st.text_input(L["lbl_edit_party"], value=target_contract["party"])
+                    new_type = st.selectbox(L["lbl_edit_type"], ["工程承攬合約", "設備採購合約", "土地與廠房租賃", "委任與技術服務合約"], index=0)
                 with c2:
-                    new_amount = st.number_input("合約金額 (VND)", min_value=0.0, value=float(target_contract["amount"]), step=100000000.0)
-                    new_status = st.selectbox("合約狀態", ["進行中 (Active)", "已驗收結案 (Closed)", "暫停中 (Suspended)", "審核中 (Reviewing)"])
+                    new_amount = st.number_input(L["lbl_edit_amount"], min_value=0.0, value=float(target_contract["amount"]), step=100000000.0)
+                    new_status = st.selectbox(L["lbl_edit_status"], ["進行中 (Active)", "已驗收結案 (Closed)", "暫停中 (Suspended)", "審核中 (Reviewing)"])
 
-                if st.form_submit_button(L["btn_update"], type="primary", use_container_width=True):
+                col_btn1, col_btn2 = st.columns(2)
+                submitted_update = col_btn1.form_submit_button(L["btn_update"], type="primary", use_container_width=True)
+                submitted_delete = col_btn2.form_submit_button(L["btn_delete"], type="secondary", use_container_width=True)
+
+                if submitted_update:
                     target_contract["name"] = new_name
                     target_contract["party"] = new_party
                     target_contract["type"] = new_type
                     target_contract["amount"] = new_amount
                     target_contract["status"] = new_status
                     st.success(L["success_update"].format(code=target_contract["code"]))
+                    st.rerun()
+                elif submitted_delete:
+                    st.session_state.enterprise_contracts_db = [
+                        item for item in st.session_state.enterprise_contracts_db if item["code"] != target_contract["code"]
+                    ]
+                    st.success(L["success_delete"].format(code=target_contract["code"]))
                     st.rerun()
         else:
             st.info(L["no_records"])
@@ -233,7 +262,7 @@ def render_contract_management_page(engine=None, lang="繁體中文", **kwargs):
                 party = st.text_input(L["lbl_party"], placeholder=L["party_placeholder"])
             with c2:
                 c_type = st.selectbox(L["lbl_type"], L["type_opts"])
-                amount = st.number_input(L["lbl_amount"], min_value=0.0, value=5000000000.0, step=100000000.0)
+                amount = st.number_input(L["lbl_amount"], min_value=0.0, value=5000000000.0, step=500000000.0)
                 c_date = st.date_input(L["lbl_date"], value=datetime.date.today())
 
             status = st.selectbox(L["lbl_status"], L["status_opts"])
