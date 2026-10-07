@@ -5,10 +5,10 @@ import datetime
 CONTRACT_I18N = {
     "繁體中文": {
         "title": "✍️ 管理部 - 企業合約管理與主管審查中心",
-        "caption": "管理裕豐電機工業各項工程合約、設備採購合約與租賃合約，支援線上即時修改、合約狀態追蹤、手動輸入或上傳舊合約供主管審查與刪除。",
+        "caption": "管理裕豐電機工業各項工程合約、設備採購合約與租賃合約，支援線上修改、刪除、新增與舊合約檔案上傳。",
         "tab_list": "📑 合約清冊與線上編輯/刪除",
         "tab_add": "➕ 新增合約登記",
-        "tab_upload": "📤 上傳舊合約檔案（自動建立或對應）",
+        "tab_upload": "📤 上傳舊合約檔案",
         "table_header": "📋 裕豐電機工業現行合約總覽",
         "no_records": "目前無合約紀錄。",
         "edit_header": "✏️ 線上修改或刪除合約資料",
@@ -37,15 +37,15 @@ CONTRACT_I18N = {
         "success_save": "✅ 合約 `{code}` 已成功建立！",
         "fill_warning": "⚠️ 請完整填寫合約編號、名稱與簽約對象！",
         
-        # 舊合約上傳修正部分
-        "upload_header": "📤 上傳舊合約檔案（支援自動建檔供主管審查）",
-        "lbl_upload_code": "手動輸入舊合約編號 *",
-        "lbl_upload_name": "手動輸入合約名稱 / 專案主題 *",
+        # 舊合約上傳（完全拿掉多餘文字）
+        "upload_header": "📤 上傳舊合約檔案",
+        "lbl_upload_code": "合約編號 *",
+        "lbl_upload_name": "合約名稱 / 專案主題 *",
         "lbl_upload_party": "簽約對方 / 客戶名稱 *",
         "lbl_file": "選擇合約檔案 (.pdf, .doc, .docx, .xls, .xlsx) *",
-        "btn_upload_file": "🚀 上傳並建立舊合約審查記錄",
-        "success_upload": "✅ 舊合約檔案 `{filename}` 已成功上傳並建立記錄供主管審查！",
-        "upload_warning": "⚠️ 請填寫合約編號、名稱並選擇檔案！",
+        "btn_upload_file": "🚀 上傳檔案",
+        "success_upload": "✅ 檔案 `{filename}` 已成功上傳！",
+        "upload_warning": "⚠️ 請填寫完整資料並選擇檔案！",
 
         "col_index": "STT",
         "col_code": "合約編號",
@@ -92,13 +92,13 @@ CONTRACT_I18N = {
         "fill_warning": "⚠️ Vui lòng điền Mã hợp đồng, Tên và Đối tác!",
         
         "upload_header": "📤 Tải lên file hợp đồng cũ",
-        "lbl_upload_code": "Mã hợp đồng cũ *",
-        "lbl_upload_name": "Tên hợp đồng / Dự án *",
+        "lbl_upload_code": "Mã hợp đồng *",
+        "lbl_upload_name": "Tên hợp đồng *",
         "lbl_upload_party": "Tên đối tác *",
-        "lbl_file": "Chọn file hợp đồng (.pdf, .doc, .docx, .xls) *",
-        "btn_upload_file": "🚀 Tải lên và Lưu hồ sơ",
+        "lbl_file": "Chọn file hợp đồng *",
+        "btn_upload_file": "🚀 Tải lên",
         "success_upload": "✅ Đã tải lên file `{filename}` thành công!",
-        "upload_warning": "⚠️ Vui lòng điền đầy đủ thông tin và chọn file!",
+        "upload_warning": "⚠️ Vui lòng điền đầy đủ thông tin!",
 
         "col_index": "STT",
         "col_code": "Mã HĐ",
@@ -112,7 +112,7 @@ CONTRACT_I18N = {
     },
     "English": {
         "title": "✍️ GA - Enterprise Contract Management & Review Center",
-        "caption": "Manage engineering, equipment procurement, and lease contracts with manual entry, file uploads for old contracts, and deletion.",
+        "caption": "Manage engineering, equipment procurement, and lease contracts with editing, deletion, and old contract uploads.",
         "tab_list": "📑 Contract List & Edit/Delete",
         "tab_add": "➕ Register New Contract",
         "tab_upload": "📤 Upload Old Contracts",
@@ -144,14 +144,14 @@ CONTRACT_I18N = {
         "success_save": "✅ Contract `{code}` successfully created!",
         "fill_warning": "⚠️ Please fill in Contract No., Name, and Counterparty!",
         
-        "upload_header": "📤 Upload Old Contract File & Manual Info",
-        "lbl_upload_code": "Old Contract No. *",
-        "lbl_upload_name": "Contract Name / Project *",
+        "upload_header": "📤 Upload Old Contract File",
+        "lbl_upload_code": "Contract No. *",
+        "lbl_upload_name": "Contract Name *",
         "lbl_upload_party": "Counterparty Name *",
-        "lbl_file": "Choose Contract File (.pdf, .doc, .docx, .xls) *",
-        "btn_upload_file": "🚀 Upload & Create Record",
+        "lbl_file": "Choose Contract File *",
+        "btn_upload_file": "🚀 Upload File",
         "success_upload": "✅ File `{filename}` uploaded successfully!",
-        "upload_warning": "⚠️ Please fill in all fields and select a file!",
+        "upload_warning": "⚠️ Please fill in all fields!",
 
         "col_index": "No.",
         "col_code": "Contract No.",
@@ -301,7 +301,7 @@ def render_contract_management_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown(f"### {L['upload_header']}")
         with st.form("form_upload_old_contract"):
             up_code = st.text_input(L["lbl_upload_code"], value="OLD-2024-DOC")
-            up_name = st.text_input(L["lbl_upload_name"], value="舊合約專案存檔")
+            up_name = st.text_input(L["lbl_upload_name"], value="舊合約檔案")
             up_party = st.text_input(L["lbl_upload_party"], placeholder="例如: 某某供應商 / 業主")
             
             uploaded_file = st.file_uploader(L["lbl_file"], type=["pdf", "doc", "docx", "xls", "xlsx"])
@@ -312,10 +312,10 @@ def render_contract_management_page(engine=None, lang="繁體中文", **kwargs):
                         "code": up_code,
                         "name": up_name,
                         "party": up_party,
-                        "type": "歷史舊合約 (Archived)",
+                        "type": "歷史舊合約",
                         "amount": 0.0,
                         "date": datetime.date.today().strftime("%Y-%m-%d"),
-                        "status": "已歸檔審查 (Archived)",
+                        "status": "已歸檔",
                         "file": uploaded_file.name
                     })
                     st.success(L["success_upload"].format(filename=uploaded_file.name))
