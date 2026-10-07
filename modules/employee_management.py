@@ -23,7 +23,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             {"廠區編號": "FAC-02", "廠區名稱": "海防廠 (Hai Phong)", "負責人": "阮文強", "電話": "0918999080"}
         ]
 
-    search_q = st.text_input("🔍 搜尋員工姓名 / 工號 / 職稱", placeholder="輸入關鍵字搜尋員工...")
+    search_q = st.text_input("🔍 搜尋員工姓名 / 工號 / 職稱", placeholder="輸入關鍵字搜尋員工...", key="emp_search_input")
     filtered_emp = [
         e for e in st.session_state.employee_db 
         if search_q.lower() in e["姓名"].lower() or search_q.lower() in e["工號"].lower() or search_q.lower() in e["職稱"].lower()
@@ -36,39 +36,38 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
 
     with tab_add:
         with st.form("add_employee_form"):
-            st.markdown("### 📌 步驟 1: 選擇員工國籍/廠區 (選擇後即時切換下方欄位)")[cite: 20]
-            nat_choice = st.selectbox("員工國籍 / 所屬廠區 *", ["VN 越南 (Vietnam)", "台灣 (Taiwan)", "其他 (Other)"])
+            st.markdown("### 📌 步驟 1: 選擇員工國籍/廠區 (選擇後即時切換下方欄位)")
+            nat_choice = st.selectbox("員工國籍 / 所屬廠區 *", ["VN 越南 (Vietnam)", "台灣 (Taiwan)", "其他 (Other)"], key="add_nat_choice")
             
             st.markdown("---")
             c1, c2 = st.columns(2)
             with c1:
-                e_id = st.text_input("員工工號 (Emp ID) *", value=f"VN-{len(st.session_state.employee_db)+1:03d}" if "越南" in nat_choice else f"TW-{len(st.session_state.employee_db)+1:03d}")
-                e_dept = st.selectbox("所屬部門", ["生產一課 (射出)", "管理部", "營運戰情室", "工程與設計管理中心", "生產部"])
-                e_phone = st.text_input("聯絡電話 (Phone) *", placeholder="0912345678")
+                e_id = st.text_input("員工工號 (Emp ID) *", value=f"VN-{len(st.session_state.employee_db)+1:03d}" if "越南" in nat_choice else f"TW-{len(st.session_state.employee_db)+1:03d}", key="add_e_id")
+                e_dept = st.selectbox("所屬部門", ["生產一課 (射出)", "管理部", "營運戰情室", "工程與設計管理中心", "生產部"], key="add_e_dept")
+                e_phone = st.text_input("聯絡電話 (Phone) *", placeholder="0912345678", key="add_e_phone")
             with c2:
-                e_name = st.text_input("員工全名 (Full Name) *", placeholder="請輸入姓名...")
-                e_title = st.text_input("職位名稱", placeholder="例如: 射出工程師")
-                e_role = st.selectbox("系統權限角色 (Role)", ["staff (一般員工)", "manager (部門主管)", "security (保全)", "admin (系統管理員)"])
+                e_name = st.text_input("員工全名 (Full Name) *", placeholder="請輸入姓名...", key="add_e_name")
+                e_title = st.text_input("職位名稱", placeholder="例如: 射出工程師", key="add_e_title")
+                e_role = st.selectbox("系統權限角色 (Role)", ["staff (一般員工)", "manager (部門主管)", "security (保全)", "admin (系統管理員)"], key="add_e_role")
 
-            e_addr = st.text_input("居住/戶籍地址 (Address) *", placeholder="請輸入完整地址...")
+            e_addr = st.text_input("居住/戶籍地址 (Address) *", placeholder="請輸入完整地址...", key="add_e_addr")
 
-            # 步驟 2 越南專屬欄位（依據國籍選擇即時顯示）
             if "越南" in nat_choice:
                 st.markdown("---")
-                st.markdown("### 📌 步驟 2: 輸入【VN 越南 (Vietnam)】專屬身分、起薪與法定保險資訊")[cite: 20]
+                st.markdown("### 📌 步驟 2: 輸入【VN 越南 (Vietnam)】專屬身分、起薪與法定保險資訊")
                 
                 sc1, sc2, sc3 = st.columns(3)
                 with sc1:
-                    cccd = st.text_input("身份證字號 (Số CCCD)", placeholder="03809500...")
-                    base_salary = st.number_input("約定起薪 / 保險起薪 (VND)", value=9000000.0, step=100000.0)
+                    cccd = st.text_input("身份證字號 (Số CCCD)", placeholder="03809500...", key="add_cccd")
+                    base_salary = st.number_input("約定起薪 / 保險起薪 (VND)", value=9000000.0, step=100000.0, key="add_base_salary")
                 with sc2:
-                    hire_date = st.date_input("入職/到職日期")
-                    monthly_ins = st.number_input("每月社醫保個人扣繳 (10.5% VND)", value=945000.0, step=10000.0)
+                    hire_date = st.date_input("入職/到職日期", key="add_hire_date")
+                    monthly_ins = st.number_input("每月社醫保個人扣繳 (10.5% VND)", value=945000.0, step=10000.0, key="add_monthly_ins")
                 with sc3:
-                    hospital = st.text_input("醫保指定醫院 (Bệnh viện)", value="Bệnh viện Quốc tế Hạnh Phúc")
-                    allowance = st.number_input("各類津貼總計 (VND)", value=1530000.0, step=10000.0)
+                    hospital = st.text_input("醫保指定醫院 (Bệnh viện)", value="Bệnh viện Quốc tế Hạnh Phúc", key="add_hospital")
+                    allowance = st.number_input("各類津貼總計 (VND)", value=1530000.0, step=10000.0, key="add_allowance")
                 
-                contract_date = st.date_input("合約原署日期")
+                contract_date = st.date_input("合約原署日期", key="add_contract_date")
             else:
                 cccd = ""
                 base_salary = 0.0
@@ -108,15 +107,15 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     with tab_edit:
         if st.session_state.employee_db:
             emp_opts = {f"{e['工號']} - {e['姓名']}": e for e in st.session_state.employee_db}
-            sel_emp_key = st.selectbox("選擇要修改的員工", list(emp_opts.keys()))
+            sel_emp_key = st.selectbox("選擇要修改的員工", list(emp_opts.keys()), key="edit_emp_select")
             target_emp = emp_opts[sel_emp_key]
 
             with st.form("edit_employee_form"):
                 st.markdown("### ✏️ 修改員工檔案")
-                ed_name = st.text_input("員工姓名", value=target_emp["姓名"])
-                ed_title = st.text_input("職稱", value=target_emp["職稱"])
-                ed_phone = st.text_input("電話", value=target_emp["電話"])
-                ed_addr = st.text_input("戶籍地址", value=target_emp.get("戶籍地址", ""))
+                ed_name = st.text_input("員工姓名", value=target_emp["姓名"], key="edit_ed_name")
+                ed_title = st.text_input("職稱", value=target_emp["職稱"], key="edit_ed_title")
+                ed_phone = st.text_input("電話", value=target_emp["電話"], key="edit_ed_phone")
+                ed_addr = st.text_input("戶籍地址", value=target_emp.get("戶籍地址", ""), key="edit_ed_addr")
 
                 if st.form_submit_button("💾 儲存修改", type="primary"):
                     for e in st.session_state.employee_db:
@@ -133,7 +132,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     with tab_del:
         if st.session_state.employee_db:
             del_opts = {f"{e['工號']} - {e['姓名']}": e for e in st.session_state.employee_db}
-            sel_del_key = st.selectbox("選擇要刪除的員工", list(del_opts.keys()))
+            sel_del_key = st.selectbox("選擇要刪除的員工", list(del_opts.keys()), key="del_emp_select")
             target_del = del_opts[sel_del_key]
 
             with st.form("delete_employee_form"):
