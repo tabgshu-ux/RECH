@@ -394,4 +394,43 @@ elif target_route == "eng_design":
     safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=1)
 
 elif target_route == "procurement_ap":
-    safe_call_module(procurement_ap.render_procurement_ap_page,
+    safe_call_module(procurement_ap.render_procurement_ap_page, engine=engine, lang=curr_lang)
+
+elif target_route == "sales_order_ar":
+    safe_call_module(sales_order_ar.render_sales_order_ar_page, engine=engine, lang=curr_lang)
+
+elif target_route == "contract_mgmt":
+    safe_call_module(contract_management.render_contract_management_page, engine=engine, lang=curr_lang)
+
+elif target_route == "payroll_calc":
+    safe_call_module(payroll_management.render_payroll_management_page, engine=engine, lang=curr_lang)
+
+elif target_route == "invoice_management":
+    safe_call_module(invoice_management.render_invoice_management, engine=engine, lang=curr_lang)
+
+elif target_route == "field_attendance":
+    safe_call_module(field_attendance.render_field_attendance_page, engine=engine, lang=curr_lang)
+
+elif target_route == "ga_assets":
+    safe_call_module(asset_management.render_asset_management_page, lang=curr_lang)
+
+elif target_route == "hr_employee":
+    safe_call_module(employee_management.render_employee_management, engine=engine, t=lang_dict, lang=curr_lang)
+
+elif target_route == "vehicle_gate":
+    safe_call_module(vehicle_gate_log.render_vehicle_gate_log_page, engine=engine, lang=curr_lang)
+
+elif target_route == "vehicle_maintenance":
+    safe_call_module(vehicle_maintenance.render_vehicle_maintenance_page, engine=engine, lang=curr_lang)
+
+elif target_route == "wh_management":
+    safe_call_module(warehouse_management.render_warehouse_management, engine=engine, t=lang_dict, lang=curr_lang)
+
+elif target_route in ["sheet_metal", "painting", "assembly"]:
+    st.title(selected_feature_label)
+    st.info("Hệ thống đang hoạt động bình thường / 現場工單與生產追蹤模組順利運作中。")
+
+elif target_route == "it_admin":
+    safe_call_module(user_management.render_user_management_page, lang=curr_lang)
+
+elif target_route == "
