@@ -83,8 +83,8 @@ AR_I18N = {
         "select_project": "Chọn dự án cần cập nhật tiến độ:",
         "current_project": "Dự án hiện tại",
         "total_amount_label": "Tổng tiền",
-        "new_progress_label": "Cập nhật \"Mô tả tiến độ\" *",
-        "new_reason_label": "Cập nhật/Bổ sung \"Lý do thu nợ & phản hồi từ khách hàng\"",
+        "new_progress_label": "Cập nhật Mô tả tiến độ *",
+        "new_reason_label": "Cập nhật/Bổ sung Lý do thu nợ & phản hồi từ khách hàng",
         "modifier_label": "Họ tên người sửa*",
         "save_update_btn": "💾 Lưu và cập nhật tiến độ dự án",
         "update_success": "Đã cập nhật tiến độ và lý do thu nợ cho hóa đơn `{target_id}`!",
@@ -200,4 +200,54 @@ AR_I18N = {
 
 def smart_translate(text_val, target_lang):
     if not text_val or not isinstance(text_val, str) or text_val.strip() in ["None", "-", ""]:
-        if target_lang == "Ti
+        if target_lang == "Tiếng Việt": return "Chưa cập nhật"
+        elif target_lang == "English": return "N/A"
+        return "-"
+    return text_val
+
+def format_curr(amt, curr):
+    if not curr: curr = "越南盾"
+    if "VND" in curr or "越南盾" in curr or "Đồng" in curr: return f"₫ {amt:,.0f} VND"
+    elif "USD" in curr or "美金" in curr or "Đô la" in curr: return f"$ {amt:,.3f} USD"
+    return f"{amt:,.3f} {curr}"
+
+def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
+    active_lang = lang or st.session_state.get("lang", "繁體中文")
+    L = AR_I18N.get(active_lang, AR_I18N["繁體中文"])
+
+    st.title(L["title"])
+    st.caption(L["caption"])
+
+    tab_list, tab_edit, tab_add = st.tabs([L["tab_list"], L["tab_edit"], L["tab_add"]])
+
+    # 1. 應收帳款總覽清單與工程對帳單明細
+    with tab_list:
+        st.subheader(L["table_header"])
+        default_ar_records = [
+            {"invoice_id": "HD-2026-01", "entity_name": "和鼎隆建築責任有限公司 (Ho Team)", "project_name": "廠房電力系統與給排水統包工程", "currency": "VND", "quoted_amount": 222171208288.0, "payment_terms": "分五期", "installment_ratios": "20% / 20% / 20% / 20% / 20%", "progress_note": "施工完成 71.4%, 待驗收", "project_desc": "合約總價 222,171,208,288 VND | 已收: 160,661,508,865 VND | AR: 61,509,699,423 VND", "uncollected_reason": "正常履約中"},
+            {"invoice_id": "HD-2026-02", "entity_name": "第一傳動越南責任有限公司 (Timotion)", "project_name": "高低壓配電站與自動化線路", "currency": "VND", "quoted_amount": 50978160000.0, "payment_terms": "分五期", "installment_ratios": "30% / 20% / 30% / 15% / 5%", "progress_note": "變電站與配電盤送電完成", "project_desc": "合約總價 50,978,160,000 VND | 已收: 14,488,848,000 VND | AR: 36,489,312,000 VND", "uncollected_reason": "待驗收合格後請款"},
+            {"invoice_id": "HD-2026-03", "entity_name": "越南佳威實業有限公司 (Jia Wei)", "project_name": "寧平省美順工業區電力及給排水系統", "currency": "VND", "quoted_amount": 21859200000.0, "payment_terms": "分四期", "installment_ratios": "30% / 20% / 30% / 20%", "progress_note": "過路橋架施工完成，電站送電中", "project_desc": "合約總價 21,859,200,000 VND | 已收: 0 VND | AR: 21,859,200,000 VND", "uncollected_reason": "依約定進度請款中"},
+            {"invoice_id": "HD-2026-04", "entity_name": "彥豪智能科技（越南）責任有限公司", "project_name": "智能廠房電力與控制系統", "currency": "VND", "quoted_amount": 40955200000.0, "payment_terms": "分三期", "installment_ratios": "20% / 50% / 30%", "progress_note": "簽定訂金完成，依驗收記錄請款", "project_desc": "合約總價 40,955,200,000 VND | 已收: 13,078,029,218 VND | AR: 27,877,170,782 VND", "uncollected_reason": "等待工程驗收單確認"}
+        ]
+
+        df_ar = pd.DataFrame()
+        if engine:
+            try:
+                df_ar = pd.read_sql("SELECT * FROM invoices WHERE invoice_type='AR'", engine)
+            except Exception:
+                pass
+
+        if df_ar.empty:
+            df_ar = pd.DataFrame(default_ar_records)
+
+        if not df_ar.empty:
+            display_list = []
+            for idx, r in df_ar.iterrows():
+                entity_display = smart_translate(str(r.get("entity_name", "")), active_lang)
+                project_display = smart_translate(str(r.get("project_name", "")), active_lang)
+                progress_display = smart_translate(str(r.get("progress_note", "")), active_lang)
+                terms_display = smart_translate(str(r.get("payment_terms", "")), active_lang)
+                desc_display = smart_translate(str(r.get("project_desc", "")), active_lang)
+
+                display_list.append({
+                    L["col_index"]:
