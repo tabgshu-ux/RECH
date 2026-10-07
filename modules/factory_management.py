@@ -8,10 +8,9 @@ def render_factory_management_page(engine=None, lang="繁體中文", **kwargs):
     if "factory_list" not in st.session_state:
         st.session_state.factory_list = [
             {"廠區編號": "FAC-01", "廠區名稱": "西寧廠 (Tay Ninh)", "負責人": "張董事長", "電話": "0912345678"},
-            {"廠區編號": "FAC-02", "廠區名稱": "平陽廠 (Binh Duong)", "負責人": "阮文強", "電話": "0918999080"}
+            {"廠區編號": "FAC-02", "廠區名稱": "海防廠 (Hai Phong)", "負責人": "阮文強", "電話": "0918999080"}
         ]
     
-    # 搜尋功能
     search_q = st.text_input("🔍 搜尋廠區 / Search Factory", placeholder="輸入廠區名稱或編號搜尋...")
     filtered_fac = [f for f in st.session_state.factory_list if search_q.lower() in f["廠區名稱"].lower() or search_q.lower() in f["廠區編號"].lower()] if search_q else st.session_state.factory_list
     
