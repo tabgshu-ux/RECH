@@ -79,8 +79,8 @@ NAV_STRUCTURE = {
             "👔 管理部 (Management Dept)": {
                 "features": {
                     "👤 員工個人檔案與人事管理": "hr_employee",
-                    "🏭 廠區與工作廠區管理 (新增/維護廠區)": "factory_mgmt",
                     "📍 外勤員工打卡資料與出勤統計計算": "field_attendance",
+                    "🏭 廠區與工作廠區管理 (新增/維護廠區)": "factory_mgmt",
                     "🚗 廠區車輛進出口門禁紀錄": "vehicle_gate",
                     "🛠️ 車輛維修保養紀錄": "vehicle_maintenance",
                     "🛒 採購與應付帳款 (AP)": "procurement_ap",
@@ -139,8 +139,8 @@ NAV_STRUCTURE = {
             "👔 Phòng Quản lý (Management Dept)": {
                 "features": {
                     "👤 Hồ sơ nhân sự": "hr_employee",
-                    "🏭 Quản lý Nhà máy / Cơ sở": "factory_mgmt",
                     "📍 Chấm công GPS & Thống kê": "field_attendance",
+                    "🏭 Quản lý Nhà máy / Cơ sở": "factory_mgmt",
                     "🚗 Quản lý xe ra vào": "vehicle_gate",
                     "🛠️ Bảo trì xe": "vehicle_maintenance",
                     "🛒 Mua hàng & Phải trả (AP)": "procurement_ap",
@@ -199,8 +199,8 @@ NAV_STRUCTURE = {
             "👔 Management Dept (GA & Finance)": {
                 "features": {
                     "👤 HR Records": "hr_employee",
-                    "🏭 Factory Management": "factory_mgmt",
                     "📍 GPS Attendance & Stats": "field_attendance",
+                    "🏭 Factory Management": "factory_mgmt",
                     "🚗 Vehicle Gate Log": "vehicle_gate",
                     "🛠️ Vehicle Maintenance": "vehicle_maintenance",
                     "🛒 Procurement & AP": "procurement_ap",
