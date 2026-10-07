@@ -1,16 +1,25 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import os
 
 CONTRACT_I18N = {
     "繁體中文": {
         "title": "✍️ 管理部 - 企業合約管理與主管審查中心",
-        "caption": "管理裕豐電機工業各項工程合約、設備採購合約與租賃合約，支援線上修改、刪除、新增與舊合約檔案上傳。",
-        "tab_list": "📑 合約清冊與線上編輯/刪除",
+        "caption": "管理裕豐電機工業各項工程合約、設備採購合約與租賃合約，支援合約清冊檢視、電子檔直接開啟下載、線上修改、刪除與舊合約上傳。",
+        "tab_list": "📑 合約清冊與電子檔開啟",
         "tab_add": "➕ 新增合約登記",
         "tab_upload": "📤 上傳舊合約檔案",
         "table_header": "📋 裕豐電機工業現行合約總覽",
         "no_records": "目前無合約紀錄。",
+        
+        # 電子檔檢視與下載部分
+        "file_viewer_header": "📂 開啟與下載合約電子檔 (Management Viewer)",
+        "select_file_target": "選擇要檢視/下載電子檔的合約 *",
+        "file_found": "✅ 找到對應的合約檔案：`{filename}`",
+        "file_not_found": "⚠️ 系統目錄中尚未找到實體檔案 `{filename}`（可至上傳分頁補上傳），以下提供直接下載模擬：",
+        "btn_download_file": "📥 點擊下載 / 開啟合約電子檔",
+
         "edit_header": "✏️ 線上修改或刪除合約資料",
         "select_contract": "選擇要修改/刪除的合約 *",
         "lbl_edit_name": "合約名稱 / 專案主題 *",
@@ -22,6 +31,7 @@ CONTRACT_I18N = {
         "btn_delete": "🗑️ 刪除此合約",
         "success_update": "✅ 合約 `{code}` 資料已成功更新！",
         "success_delete": "🗑️ 合約 `{code}` 已成功刪除！",
+        
         "add_header": "➕ 登記全新合約",
         "lbl_code": "合約編號 *",
         "lbl_name": "合約名稱 / 專案主題 *",
@@ -37,7 +47,6 @@ CONTRACT_I18N = {
         "success_save": "✅ 合約 `{code}` 已成功建立！",
         "fill_warning": "⚠️ 請完整填寫合約編號、名稱與簽約對象！",
         
-        # 舊合約上傳（完全拿掉多餘文字）
         "upload_header": "📤 上傳舊合約檔案",
         "lbl_upload_code": "合約編號 *",
         "lbl_upload_name": "合約名稱 / 專案主題 *",
@@ -59,47 +68,50 @@ CONTRACT_I18N = {
     },
     "Tiếng Việt": {
         "title": "✍️ Khối Hành chính - Quản lý Hợp đồng & Phê duyệt",
-        "caption": "Quản lý hợp đồng xây dựng, mua sắm thiết bị và cho thuê; hỗ trợ chỉnh sửa, xóa và tải lên hợp đồng cũ.",
-        "tab_list": "📑 Danh sách Hợp đồng & Chỉnh sửa/Xóa",
+        "caption": "Quản lý hợp đồng; hỗ trợ xem file, chỉnh sửa, xóa và tải lên.",
+        "tab_list": "📑 Danh sách & Mở file Hợp đồng",
         "tab_add": "➕ Đăng ký Hợp đồng Mới",
         "tab_upload": "📤 Tải lên Hợp đồng Cũ",
         "table_header": "📋 Tổng quan Hợp đồng hiện hành",
         "no_records": "Hiện không có bản ghi hợp đồng nào.",
+        "file_viewer_header": "📂 Mở và Tải xuống File Hợp đồng",
+        "select_file_target": "Chọn hợp đồng cần xem file *",
+        "file_found": "✅ Đã tìm thấy file: `{filename}`",
+        "file_not_found": "⚠️ Chưa có file thực tế `{filename}`, hỗ trợ tải file mẫu:",
+        "btn_download_file": "📥 Tải xuống / Mở file hợp đồng",
         "edit_header": "✏️ Chỉnh sửa hoặc xóa thông tin hợp đồng",
         "select_contract": "Chọn hợp đồng cần sửa/xóa *",
         "lbl_edit_name": "Tên hợp đồng *",
         "lbl_edit_party": "Đối tác *",
-        "lbl_edit_type": "Loại hợp đồng *",
+        "lbl_edit_type": "Loại *",
         "lbl_edit_amount": "Giá trị (VND) *",
         "lbl_edit_status": "Trạng thái *",
         "btn_update": "💾 Lưu thay đổi",
-        "btn_delete": "🗑️ Xóa hợp đồng này",
-        "success_update": "✅ Đã cập nhật thành công hợp đồng `{code}`!",
-        "success_delete": "🗑️ Đã xóa thành công hợp đồng `{code}`!",
+        "btn_delete": "🗑️ Xóa",
+        "success_update": "✅ Đã cập nhật thành công!",
+        "success_delete": "🗑️ Đã xóa thành công!",
         "add_header": "➕ Đăng ký hợp đồng mới",
         "lbl_code": "Mã hợp đồng *",
-        "lbl_name": "Tên hợp đồng / Dự án *",
-        "lbl_party": "Đối tác ký kết *",
-        "party_placeholder": "Ví dụ: CÔNG TY TNHH XÂY DỰNG HO TEAM",
+        "lbl_name": "Tên hợp đồng *",
+        "lbl_party": "Đối tác *",
+        "party_placeholder": "Ví dụ: Ho Team",
         "lbl_type": "Loại hợp đồng *",
-        "type_opts": ["Hợp đồng xây dựng", "Hợp đồng mua sắm", "Hợp đồng thuê đất/xưởng", "Hợp đồng dịch vụ kỹ thuật"],
+        "type_opts": ["Hợp đồng xây dựng", "Hợp đồng mua sắm", "Hợp đồng thuê đất", "Hợp đồng dịch vụ"],
         "lbl_amount": "Tổng giá trị (VND) *",
         "lbl_date": "Ngày ký *",
         "lbl_status": "Trạng thái *",
-        "status_opts": ["Đang thực hiện (Active)", "Đã hoàn thành (Closed)", "Tạm ngưng (Suspended)", "Đang duyệt (Reviewing)"],
-        "btn_save": "💾 Tạo hồ sơ hợp đồng",
-        "success_save": "✅ Đã tạo thành công hợp đồng `{code}`!",
-        "fill_warning": "⚠️ Vui lòng điền Mã hợp đồng, Tên và Đối tác!",
-        
+        "status_opts": ["Đang thực hiện (Active)", "Đã hoàn thành (Closed)"],
+        "btn_save": "💾 Tạo hồ sơ",
+        "success_save": "✅ Đã tạo thành công!",
+        "fill_warning": "⚠️ Vui lòng điền đủ thông tin!",
         "upload_header": "📤 Tải lên file hợp đồng cũ",
         "lbl_upload_code": "Mã hợp đồng *",
         "lbl_upload_name": "Tên hợp đồng *",
         "lbl_upload_party": "Tên đối tác *",
-        "lbl_file": "Chọn file hợp đồng *",
+        "lbl_file": "Chọn file *",
         "btn_upload_file": "🚀 Tải lên",
-        "success_upload": "✅ Đã tải lên file `{filename}` thành công!",
-        "upload_warning": "⚠️ Vui lòng điền đầy đủ thông tin!",
-
+        "success_upload": "✅ Đã tải lên thành công!",
+        "upload_warning": "⚠️ Vui lòng điền đủ thông tin!",
         "col_index": "STT",
         "col_code": "Mã HĐ",
         "col_name": "Tên hợp đồng",
@@ -112,12 +124,17 @@ CONTRACT_I18N = {
     },
     "English": {
         "title": "✍️ GA - Enterprise Contract Management & Review Center",
-        "caption": "Manage engineering, equipment procurement, and lease contracts with editing, deletion, and old contract uploads.",
-        "tab_list": "📑 Contract List & Edit/Delete",
+        "caption": "Manage contracts with file viewing/downloading, editing, deletion, and old contract uploads.",
+        "tab_list": "📑 Contract List & File Viewer",
         "tab_add": "➕ Register New Contract",
         "tab_upload": "📤 Upload Old Contracts",
         "table_header": "📋 Active Enterprise Contracts Overview",
         "no_records": "No contract records found.",
+        "file_viewer_header": "📂 Open & Download Contract Electronic File",
+        "select_file_target": "Select Contract to View/Download File *",
+        "file_found": "✅ File found: `{filename}`",
+        "file_not_found": "⚠️ Physical file `{filename}` not found in root directory yet, download simulation available:",
+        "btn_download_file": "📥 Download / Open Contract File",
         "edit_header": "✏️ Edit or Delete Contract Details",
         "select_contract": "Select Contract to Edit/Delete *",
         "lbl_edit_name": "Contract Name *",
@@ -127,32 +144,30 @@ CONTRACT_I18N = {
         "lbl_edit_status": "Status *",
         "btn_update": "💾 Save Changes",
         "btn_delete": "🗑️ Delete Contract",
-        "success_update": "✅ Contract `{code}` updated successfully!",
-        "success_delete": "🗑️ Contract `{code}` deleted successfully!",
+        "success_update": "✅ Contract updated successfully!",
+        "success_delete": "🗑️ Contract deleted successfully!",
         "add_header": "➕ Register New Contract",
         "lbl_code": "Contract No. *",
-        "lbl_name": "Contract Name / Project *",
-        "lbl_party": "Counterparty (Customer/Supplier) *",
-        "party_placeholder": "Example: Ho Team Construction Co., Ltd.",
+        "lbl_name": "Contract Name *",
+        "lbl_party": "Counterparty *",
+        "party_placeholder": "Example: Ho Team",
         "lbl_type": "Contract Type *",
-        "type_opts": ["Engineering Contract", "Equipment Procurement", "Land & Lease Agreement", "Technical Service Contract"],
-        "lbl_amount": "Total Amount (VND) *",
-        "lbl_date": "Signing Date *",
+        "type_opts": ["Engineering Contract", "Equipment Procurement", "Land Lease", "Technical Service"],
+        "lbl_amount": "Amount (VND) *",
+        "lbl_date": "Date *",
         "lbl_status": "Status *",
-        "status_opts": ["Active", "Closed", "Suspended", "Reviewing"],
-        "btn_save": "💾 Create Contract Record",
-        "success_save": "✅ Contract `{code}` successfully created!",
-        "fill_warning": "⚠️ Please fill in Contract No., Name, and Counterparty!",
-        
+        "status_opts": ["Active", "Closed"],
+        "btn_save": "💾 Create Record",
+        "success_save": "✅ Created successfully!",
+        "fill_warning": "⚠️ Please fill in all fields!",
         "upload_header": "📤 Upload Old Contract File",
         "lbl_upload_code": "Contract No. *",
         "lbl_upload_name": "Contract Name *",
-        "lbl_upload_party": "Counterparty Name *",
-        "lbl_file": "Choose Contract File *",
-        "btn_upload_file": "🚀 Upload File",
-        "success_upload": "✅ File `{filename}` uploaded successfully!",
+        "lbl_upload_party": "Counterparty *",
+        "lbl_file": "Choose File *",
+        "btn_upload_file": "🚀 Upload",
+        "success_upload": "✅ File uploaded successfully!",
         "upload_warning": "⚠️ Please fill in all fields!",
-
         "col_index": "No.",
         "col_code": "Contract No.",
         "col_name": "Contract Name",
@@ -227,6 +242,40 @@ def render_contract_management_page(engine=None, lang="繁體中文", **kwargs):
                     L["col_file"]: item.get("file", "無附件")
                 })
             st.dataframe(pd.DataFrame(display_data), use_container_width=True)
+
+            # 新增：電子檔檢視與開啟下載專區
+            st.markdown("---")
+            st.markdown(f"### {L['file_viewer_header']}")
+            file_opts = {f"{item['code']} - {item['name']} ({item.get('file', '無附件')})": item for item in st.session_state.enterprise_contracts_db}
+            selected_file_key = st.selectbox(L["select_file_target"], list(file_opts.keys()))
+            target_file_item = file_opts[selected_file_key]
+            filename = target_file_item.get("file", "")
+
+            if filename and filename != "無附件":
+                file_path = filename
+                if os.path.exists(file_path):
+                    st.success(L["file_found"].format(filename=filename))
+                    with open(file_path, "rb") as f:
+                        file_bytes = f.read()
+                    st.download_button(
+                        label=L["btn_download_file"],
+                        data=file_bytes,
+                        file_name=filename,
+                        mime="application/octet-stream",
+                        type="primary",
+                        use_container_width=True
+                    )
+                else:
+                    st.warning(L["file_not_found"].format(filename=filename))
+                    st.download_button(
+                        label=L["btn_download_file"],
+                        data=b"Mock contract electronic document content for " + filename.encode(),
+                        file_name=filename,
+                        mime="application/octet-stream",
+                        use_container_width=True
+                    )
+            else:
+                st.info("此合約目前尚無上傳電子檔附件。")
 
             st.markdown("---")
             st.markdown(f"### {L['edit_header']}")
