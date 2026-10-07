@@ -86,14 +86,10 @@ NAV_STRUCTURE = {
                     "📄 [財務] 越南電子發票綜合管理中心": "invoice_management",
                 }
             },
-            "🛠️ 工程管理中心 (Engineering Center)": {
+            "🛠️ 工程與設計管理中心 (Engineering & Design Center)": {
                 "features": {
                     "⚡ [工程] 配電盤與工程專案報價": "eng_quote",
                     "📊 [工程] 水電工程驗收與進度追蹤": "eng_progress",
-                }
-            },
-            "📐 設計部門 (Design Dept)": {
-                "features": {
                     "🎨 [設計] 配電盤電氣與機構設計圖庫上傳中心": "eng_design",
                 }
             },
@@ -147,14 +143,10 @@ NAV_STRUCTURE = {
                     "📄 [Tài chính] Quản lý Hóa đơn điện tử tổng hợp": "invoice_management",
                 }
             },
-            "🛠️ Trung tâm Quản lý Kỹ thuật (Engineering Center)": {
+            "🛠️ Trung tâm Quản lý Kỹ thuật & Thiết kế": {
                 "features": {
                     "⚡ [Kỹ thuật] Báo giá Dự án & Truyền AR": "eng_quote",
                     "📊 [Kỹ thuật] Tiến độ nghiệm thu dự án cơ điện": "eng_progress",
-                }
-            },
-            "📐 Phòng Thiết kế (Design Dept)": {
-                "features": {
                     "🎨 [Thiết kế] Kho tải lên & Tải về Bản vẽ": "eng_design",
                 }
             },
@@ -208,14 +200,10 @@ NAV_STRUCTURE = {
                     "📄 [Finance] E-Invoice Comprehensive Center": "invoice_management",
                 }
             },
-            "🛠️ Engineering Management Center": {
+            "🛠️ Engineering & Design Management Center": {
                 "features": {
                     "⚡ [Engineering] Quotation & AR Transfer": "eng_quote",
                     "📊 [Engineering] M&E Acceptance & Progress": "eng_progress",
-                }
-            },
-            "📐 Design Dept": {
-                "features": {
                     "🎨 [Design] Drawings Storage & Download": "eng_design",
                 }
             },
@@ -375,3 +363,58 @@ if target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
         safe_call_module(
             executive_dashboard.show, sub_route=target_route, lang=curr_lang
         )
+
+elif target_route == "eng_quote":
+    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=0)
+
+elif target_route == "eng_progress":
+    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=2)
+
+elif target_route == "eng_design":
+    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=1)
+
+elif target_route == "procurement_ap":
+    safe_call_module(procurement_ap.render_procurement_ap_page, engine=engine, lang=curr_lang)
+
+elif target_route == "sales_order_ar":
+    safe_call_module(sales_order_ar.render_sales_order_ar_page, engine=engine, lang=curr_lang)
+
+elif target_route == "contract_mgmt":
+    safe_call_module(contract_management.render_contract_management_page, engine=engine, lang=curr_lang)
+
+elif target_route == "payroll_calc":
+    safe_call_module(payroll_management.render_payroll_management_page, engine=engine, lang=curr_lang)
+
+elif target_route == "invoice_management":
+    safe_call_module(invoice_management.render_invoice_management, engine=engine, lang=curr_lang)
+
+elif target_route == "field_attendance":
+    safe_call_module(field_attendance.render_field_attendance_page, engine=engine, lang=curr_lang)
+
+elif target_route == "ga_assets":
+    safe_call_module(asset_management.render_asset_management_page, lang=curr_lang)
+
+elif target_route == "approval_center":
+    safe_call_module(approval_workflow.render_approval_center, lang=curr_lang)
+
+elif target_route == "hr_employee":
+    safe_call_module(employee_management.render_employee_management, engine=engine, t=lang_dict, lang=curr_lang)
+
+elif target_route == "vehicle_gate":
+    safe_call_module(vehicle_gate_log.render_vehicle_gate_log_page, engine=engine, lang=curr_lang)
+
+elif target_route == "vehicle_maintenance":
+    safe_call_module(vehicle_maintenance.render_vehicle_maintenance_page, engine=engine, lang=curr_lang)
+
+elif target_route == "wh_management":
+    safe_call_module(warehouse_management.render_warehouse_management, engine=engine, t=lang_dict, lang=curr_lang)
+
+elif target_route in ["sheet_metal", "painting", "assembly"]:
+    st.title(selected_feature_label)
+    st.info("Hệ thống đang hoạt động bình thường / 現場工單與生產追蹤模組順利運作中。")
+
+elif target_route == "it_admin":
+    safe_call_module(user_management.render_user_management_page, lang=curr_lang)
+
+elif target_route == "it_licensing":
+    safe_call_module(system_licensing.render_licensing_control_page, lang=curr_lang)
