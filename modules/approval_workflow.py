@@ -13,6 +13,7 @@ APPROVAL_I18N = {
         
         "leave_header": "📝 填寫請假申請單",
         "po_header": "🛒 填寫採購與請款申請單",
+        "history_header": "📋 我提交的歷史申請紀錄",
         
         "lbl_applicant": "申請人 (已鎖定登入帳號)",
         "lbl_dept": "所屬部門 (依帳號自動對應)",
@@ -89,7 +90,6 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
             }
         ]
 
-    # 上方分頁：明確拆分為請假、採購、追蹤、審核
     tab_leave, tab_po, tab_track, tab_review = st.tabs([
         L["tab_leave"], L["tab_po"], L["tab_track"], L["tab_review"]
     ])
@@ -102,6 +102,26 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
         default_dept = "營運戰情室"
     elif "生產" in current_user or role == "staff":
         default_dept = "生產部"
+
+    # 共用的歷史紀錄渲染函式
+    def render_my_history(filter_type_keyword):
+        st.markdown("---")
+        st.markdown(f"#### {L['history_header']}")
+        user_items = [item for item in st.session_state.approval_db if filter_type_keyword in item['type']]
+        if user_items:
+            history_data = []
+            for it in user_items:
+                history_data.append({
+                    "單號": it["id"],
+                    "類型": it["type"],
+                    "申請人": it["applicant"],
+                    "部門": it["dept"],
+                    "內容說明": it["reason"],
+                    "目前狀態": it["status"]
+                })
+            st.dataframe(pd.DataFrame(history_data), use_container_width=True)
+        else:
+            st.info("目前尚無相關的歷史申請紀錄。")
 
     # 1. 請假申請專用 Tab
     with tab_leave:
@@ -148,6 +168,8 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                     st.rerun()
                 else:
                     st.warning(L["warning_fill"])
+
+        render_my_history("請假")
 
     # 2. 採購申請專用 Tab
     with tab_po:
@@ -196,6 +218,8 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                     st.rerun()
                 else:
                     st.warning(L["warning_fill"])
+
+        render_my_history("採購")
 
     # 3. 進度追蹤 Tab
     with tab_track:
