@@ -6,18 +6,17 @@ APPROVAL_I18N = {
     "繁體中文": {
         "title": "✍️ 管理部 - 電子簽核與請款/請假審核中心",
         "caption": "提交採購申請或請假單，系統自動依據規則進行多級簽核，並提供即時進度追蹤。",
-        "tab_submit": "📝 提交新簽核申請 (請假/採購)",
-        "tab_track": "📊 簽核進度即時追蹤 (Flow Tracker)",
+        "tab_leave": "📝 員工請假申請單",
+        "tab_po": "🛒 採購與請款申請單",
+        "tab_track": "📊 簽核進度即時追蹤",
         "tab_review": "🎛️ 主管/經理/副總審核簽章",
         
-        "submit_header": "📝 填寫電子簽核單",
-        "lbl_type": "申請單類型 *",
-        "type_opts": ["請假單 (Leave Request)", "採購申請單 (Purchase Requisition)"],
+        "leave_header": "📝 填寫請假申請單",
+        "po_header": "🛒 填寫採購與請款申請單",
+        
         "lbl_applicant": "申請人 (已鎖定登入帳號)",
         "lbl_dept": "所屬部門 (依帳號自動對應)",
         "lbl_reason": "申請事由與說明 *",
-        "reason_placeholder_leave": "例如: 因家庭事務請假 4 天...",
-        "reason_placeholder_po": "例如: 廠區高壓電纜採購說明...",
         
         "lbl_days": "請假天數 (天) *",
         "lbl_item_name": "採購項目名稱 *",
@@ -39,89 +38,6 @@ APPROVAL_I18N = {
         "btn_reject": "❌ 駁回 (Reject)",
         "success_approve": "✅ 已成功核准單據 `{doc_id}`，流程已流轉至下一關！",
         "success_reject": "❌ 已駁回單據 `{doc_id}`。",
-        
-        "col_id": "單號",
-        "col_type": "類型",
-        "col_applicant": "申請人",
-        "col_dept": "部門",
-        "col_status": "目前簽核關卡",
-        "col_result": "審核結果"
-    },
-    "Tiếng Việt": {
-        "title": "✍️ Trung tâm Phê duyệt Điện tử (Approval Center)",
-        "caption": "Gửi yêu cầu nghỉ phép hoặc mua hàng...",
-        "tab_submit": "📝 Gửi Đơn Mới",
-        "tab_track": "📊 Theo dõi Tiến độ Trực tiếp",
-        "tab_review": "🎛️ Phê duyệt của Quản lý",
-        "submit_header": "📝 Điền đơn điện tử",
-        "lbl_type": "Loại đơn *",
-        "type_opts": ["Đơn nghỉ phép", "Đơn mua hàng"],
-        "lbl_applicant": "Người nộp",
-        "lbl_dept": "Phòng ban",
-        "lbl_reason": "Lý do *",
-        "reason_placeholder_leave": "Ví dụ: Nghỉ phép...",
-        "reason_placeholder_po": "Ví dụ: Mua sắm vật tư...",
-        "lbl_days": "Số ngày nghỉ *",
-        "lbl_item_name": "Tên vật tư / hàng hóa *",
-        "lbl_qty": "Số lượng *",
-        "lbl_amount": "Giá trị mua (VND) *",
-        "lbl_photo": "Tải ảnh đính kèm",
-        "btn_submit": "🚀 Gửi duyệt",
-        "success_submit": "✅ Đã gửi đơn `{doc_id}` thành công!",
-        "warning_fill": "⚠️ Vui lòng điền đầy đủ thông tin!",
-        "track_header": "📊 Theo dõi Tiến độ Phê duyệt",
-        "no_requests": "Chưa có bản ghi nào.",
-        "review_header": "🎛️ Phê duyệt đơn chờ xử lý",
-        "select_file_target": "Chọn đơn cần duyệt *",
-        "lbl_comment": "Ý kiến",
-        "btn_approve": "✅ Phê duyệt",
-        "btn_reject": "❌ Từ chối",
-        "success_approve": "✅ Đã duyệt đơn `{doc_id}`!",
-        "success_reject": "❌ Đã từ chối đơn `{doc_id}`.",
-        "col_id": "Mã đơn",
-        "col_type": "Loại",
-        "col_applicant": "Người nộp",
-        "col_dept": "Phòng ban",
-        "col_status": "Trạng thái",
-        "col_result": "Kết quả"
-    },
-    "English": {
-        "title": "✍️ E-Approval & Request Workflow Center",
-        "caption": "Submit leave or purchase requests...",
-        "tab_submit": "📝 Submit New Request",
-        "tab_track": "📊 Real-time Flow Tracker",
-        "tab_review": "🎛️ Management Review & Sign",
-        "submit_header": "📝 Submit Electronic Request Form",
-        "lbl_type": "Request Type *",
-        "type_opts": ["Leave Request", "Purchase Requisition"],
-        "lbl_applicant": "Applicant (Locked)",
-        "lbl_dept": "Department (Locked)",
-        "lbl_reason": "Reason / Description *",
-        "reason_placeholder_leave": "Example: 4 days personal leave...",
-        "reason_placeholder_po": "Example: Purchase high voltage cables...",
-        "lbl_days": "Leave Days (Days) *",
-        "lbl_item_name": "Item Name *",
-        "lbl_qty": "Quantity *",
-        "lbl_amount": "Purchase Amount (VND) *",
-        "lbl_photo": "Upload Photo / Quotation / Specs",
-        "btn_submit": "🚀 Submit Request",
-        "success_submit": "✅ Request `{doc_id}` successfully submitted!",
-        "warning_fill": "⚠️ Please fill in all required fields!",
-        "track_header": "📊 Real-time Approval Flow & Stage Tracker",
-        "no_requests": "No approval requests found.",
-        "review_header": "🎛️ Pending Approvals Review",
-        "select_review_item": "Select Request to Review *",
-        "lbl_comment": "Review Comments / Instructions",
-        "btn_approve": "✅ Approve / Pass",
-        "btn_reject": "❌ Reject",
-        "success_approve": "✅ Successfully approved `{doc_id}`!",
-        "success_reject": "❌ Rejected `{doc_id}`.",
-        "col_id": "Doc ID",
-        "col_type": "Type",
-        "col_applicant": "Applicant",
-        "col_dept": "Department",
-        "col_status": "Current Stage",
-        "col_result": "Result"
     }
 }
 
@@ -173,74 +89,97 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
             }
         ]
 
-    tab_submit, tab_track, tab_review = st.tabs([
-        L["tab_submit"], L["tab_track"], L["tab_review"]
+    # 上方分頁：明確拆分為請假、採購、追蹤、審核
+    tab_leave, tab_po, tab_track, tab_review = st.tabs([
+        L["tab_leave"], L["tab_po"], L["tab_track"], L["tab_review"]
     ])
 
-    with tab_submit:
-        st.markdown(f"### {L['submit_header']}")
-        with st.form("form_submit_approval"):
-            current_user = st.session_state.get("user_name", "admin")
-            role = st.session_state.get("user_role", "admin")
-            
-            # 自動依據登入者判定預設部門
-            default_dept = "管理部"
-            if role == "admin":
-                default_dept = "營運戰情室"
-            elif "生產" in current_user or role == "staff":
-                default_dept = "生產部"
+    current_user = st.session_state.get("user_name", "admin")
+    role = st.session_state.get("user_role", "admin")
+    
+    default_dept = "管理部"
+    if role == "admin":
+        default_dept = "營運戰情室"
+    elif "生產" in current_user or role == "staff":
+        default_dept = "生產部"
 
+    # 1. 請假申請專用 Tab
+    with tab_leave:
+        st.markdown(f"### {L['leave_header']}")
+        with st.form("form_submit_leave"):
             c1, c2 = st.columns(2)
             with c1:
-                req_type = st.selectbox(L["lbl_type"], L["type_opts"])
-                # 申請人鎖定為登入帳號，無法更改
                 applicant = st.text_input(L["lbl_applicant"], value=current_user, disabled=True)
             with c2:
-                # 所屬部門鎖定為對應部門，無法更改
                 dept = st.text_input(L["lbl_dept"], value=default_dept, disabled=True)
                 
-            days = 0.0
-            item_name = ""
-            qty = 1
-            amount = 0.0
-            uploaded_photo = None
-            
-            is_leave = "請假" in req_type or "Leave" in req_type or "nghỉ" in req_type.lower()
-            
-            if is_leave:
-                days = st.number_input(L["lbl_days"], min_value=0.5, value=3.0, step=0.5)
-                reason = st.text_area(L["lbl_reason"], placeholder=L["reason_placeholder_leave"])
-            else:
-                c_i1, c_i2 = st.columns(2)
-                with c_i1:
-                    item_name = st.text_input(L["lbl_item_name"], placeholder="例如: 高壓電纜 / 斷路器")
-                with c_i2:
-                    qty = st.number_input(L["lbl_qty"], min_value=1, value=1, step=1)
-                
-                amount = st.number_input(L["lbl_amount"], min_value=0.0, value=50000000.0, step=10000000.0)
-                uploaded_photo = st.file_uploader(L["lbl_photo"], type=["jpg", "png", "jpeg", "pdf"])
-                reason = st.text_area(L["lbl_reason"], placeholder=L["reason_placeholder_po"])
+            days = st.number_input(L["lbl_days"], min_value=0.5, value=3.0, step=0.5)
+            reason = st.text_area(L["lbl_reason"], placeholder="例如: 因家庭事務請假 4 天...")
 
             if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
                 if current_user and reason:
                     new_id = f"REQ-2026-{len(st.session_state.approval_db)+1:03d}"
-                    
-                    if is_leave:
-                        stages = ["1. 部門主管簽核", "2. 負責部門負責人"]
-                        if days >= 3:
-                            stages.append("3. 經理簽核 (≧3天)")
-                        if days >= 5:
-                            stages.append("4. 副總簽核 (≧5天)")
-                        stages.append("5. 簽核完成 (Approved)")
-                    else:
-                        stages = ["1. 部門主管簽核", "2. 負責部門負責人", "3. 財務/採購總監簽核", "4. 簽核完成 (Approved)"]
+                    stages = ["1. 部門主管簽核", "2. 負責部門負責人"]
+                    if days >= 3:
+                        stages.append("3. 經理簽核 (≧3天)")
+                    if days >= 5:
+                        stages.append("4. 副總簽核 (≧5天)")
+                    stages.append("5. 簽核完成 (Approved)")
 
                     st.session_state.approval_db.insert(0, {
                         "id": new_id,
-                        "type": req_type,
+                        "type": "請假單 (Leave Request)",
                         "applicant": current_user,
                         "dept": default_dept,
                         "days": days,
+                        "item_name": "",
+                        "qty": 0,
+                        "amount": 0.0,
+                        "reason": reason,
+                        "has_photo": False,
+                        "stage_idx": 0,
+                        "stages": stages,
+                        "status": f"進行中 (等待 {stages[0]})",
+                        "history": [
+                            {"stage": stages[0], "status": "審核中 (等待中)", "by": f"{default_dept} 主管", "time": "未審核"}
+                        ]
+                    })
+                    st.success(L["success_submit"].format(doc_id=new_id))
+                    st.rerun()
+                else:
+                    st.warning(L["warning_fill"])
+
+    # 2. 採購申請專用 Tab
+    with tab_po:
+        st.markdown(f"### {L['po_header']}")
+        with st.form("form_submit_po"):
+            c1, c2 = st.columns(2)
+            with c1:
+                applicant = st.text_input(L["lbl_applicant"] + "_po", value=current_user, disabled=True)
+            with c2:
+                dept = st.text_input(L["lbl_dept"] + "_po", value=default_dept, disabled=True)
+                
+            c_i1, c_i2 = st.columns(2)
+            with c_i1:
+                item_name = st.text_input(L["lbl_item_name"], placeholder="例如: 高壓電纜 / 斷路器")
+            with c_i2:
+                qty = st.number_input(L["lbl_qty"], min_value=1, value=1, step=1)
+            
+            amount = st.number_input(L["lbl_amount"], min_value=0.0, value=50000000.0, step=10000000.0)
+            uploaded_photo = st.file_uploader(L["lbl_photo"], type=["jpg", "png", "jpeg", "pdf"])
+            reason = st.text_area(L["lbl_reason"] + "_po", placeholder="例如: 廠區配電盤銅排與斷路器採購說明...")
+
+            if st.form_submit_button(L["btn_submit"] + "_po", type="primary", use_container_width=True):
+                if current_user and reason and item_name:
+                    new_id = f"REQ-2026-{len(st.session_state.approval_db)+1:03d}"
+                    stages = ["1. 部門主管簽核", "2. 負責部門負責人", "3. 財務/採購總監簽核", "4. 簽核完成 (Approved)"]
+
+                    st.session_state.approval_db.insert(0, {
+                        "id": new_id,
+                        "type": "採購申請單 (Purchase Requisition)",
+                        "applicant": current_user,
+                        "dept": default_dept,
+                        "days": 0,
                         "item_name": item_name,
                         "qty": qty,
                         "amount": amount,
@@ -258,6 +197,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                 else:
                     st.warning(L["warning_fill"])
 
+    # 3. 進度追蹤 Tab
     with tab_track:
         st.markdown(f"### {L['track_header']}")
         if st.session_state.approval_db:
@@ -284,6 +224,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
         else:
             st.info(L["no_requests"])
 
+    # 4. 主管審核 Tab
     with tab_review:
         st.markdown(f"### {L['review_header']}")
         pending_items = [item for item in st.session_state.approval_db if item['stage_idx'] < len(item['stages']) - 1]
