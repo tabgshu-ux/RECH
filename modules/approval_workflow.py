@@ -1,420 +1,303 @@
-import inspect
-import modules.approval_workflow as approval_workflow
-import modules.asset_management as asset_management
-import modules.contract_management as contract_management
-import modules.db_connection as db_conn
-import modules.employee_management as employee_management
-import modules.engineering_department as engineering_department
-import modules.executive_dashboard as executive_dashboard
-import modules.field_attendance as field_attendance
-import modules.invoice_management as invoice_management
-import modules.payroll_management as payroll_management
-import modules.procurement_ap as procurement_ap
-import modules.sales_order_ar as sales_order_ar
-import modules.system_licensing as system_licensing
-import modules.user_management as user_management
-import modules.vehicle_gate_log as vehicle_gate_log
-import modules.vehicle_maintenance as vehicle_maintenance
-import modules.warehouse_management as warehouse_management
-import pandas as pd
-from sqlalchemy import text
 import streamlit as st
+import pandas as pd
+import datetime
 
-st.set_page_config(
-    page_title="裕豐電機工業 REETECH INDUSTRIAL AI ERP",
-    page_icon="⚡",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
-MOBILE_CSS_AND_JS = """
-<style>
-@media only screen and (max-width: 768px) {
-    h1 { font-size: 1.35rem !important; font-weight: 700 !important; }
-    h2 { font-size: 1.15rem !important; }
-    h3, .stSubheader { font-size: 1.05rem !important; }
-    p, div, span, label { font-size: 0.9rem !important; }
-    .block-container { padding: 1rem 0.5rem !important; }
-}
-</style>
-"""
-st.markdown(MOBILE_CSS_AND_JS, unsafe_allow_html=True)
-
-RECH_LOGO_HTML = """
-<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; padding: 6px 8px; background: transparent; border-bottom: 2px solid rgba(15, 23, 42, 0.15);">
-    <div style="font-size: 28px; font-weight: 900; color: #000055; letter-spacing: -1px; line-height: 1;">RECH</div>
-    <div style="border-left: 2px solid #000055; padding-left: 8px; line-height: 1.15;">
-        <div style="font-size: 13px; font-weight: 800; color: #000055;">裕豐電機工業有限公司</div>
-        <div style="font-size: 8.5px; font-weight: 700; color: #1E293B;">REETECH INDUSTRIAL CO., LTD</div>
-        <div style="font-size: 8px; font-weight: 700; color: #334155;">CÔNG TY TNHH CN DŨ PHONG</div>
-    </div>
-</div>
-"""
-
-NAV_STRUCTURE = {
+APPROVAL_I18N = {
     "繁體中文": {
-        "company_name": "裕豐電機工業有限公司",
-        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
-        "login_title": "⚡ 裕豐電機工業 REETECH INDUSTRIAL - 系統登入",
-        "username": "帳號",
-        "password": "密碼",
-        "login_btn": "🔑 登入系統",
-        "logout_btn": "🚪 登出系統",
-        "lang_selector": "🌐 語言設定 / Language",
-        "parent_header": "請選擇一級部門 / 系統：",
-        "sub_header": "選擇子部門與功能：",
-        "departments": {
-            "📈 營運戰情室 (Executive)": {
-                "features": {
-                    "🔴 原料價格與隨時股市物價/匯率": "commodities_fx",
-                    "📊 財務類顯示資料 (AR/AP & P&L)": "financials_pl",
-                    "⚡ 工程專案進度與驗收資料": "project_progress_exec",
-                }
-            },
-            "✍️ 全公司電子簽核中心 (Approval Center)": {
-                "features": {
-                    "✍️ 提交請假/採購與即時進度追蹤 / 審核": "approval_center",
-                }
-            },
-            "👔 管理部 (Management Dept)": {
-                "features": {
-                    "🏢 [行政] 固定資產設備與總務採購": "ga_assets",
-                    "✍️ [行政] 企業合約管理與主管審查": "contract_mgmt",
-                    "👤 [行政] 員工個人檔案與人事管理 (人事)": "hr_employee",
-                    "🚗 [行政] 廠區車輛進出與門禁時間紀錄": "vehicle_gate",
-                    "🛠️ [行政] 車輛維修保養與 Excel 批次匯入": "vehicle_maintenance",
-                    "📍 [外勤] 工程人員 GPS 拍照打卡": "field_attendance",
-                    "🛒 [財務] 採購與應付帳款 (AP)": "procurement_ap",
-                    "📋 [財務] 銷售與應收帳款 (AR)": "sales_order_ar",
-                    "💰 [財務] 員工薪資與保險扣款試算": "payroll_calc",
-                    "📄 [財務] 越南電子發票綜合管理中心": "invoice_management",
-                }
-            },
-            "🛠️ 工程與設計管理中心 (Engineering & Design Center)": {
-                "features": {
-                    "⚡ [工程] 配電盤與工程專案報價": "eng_quote",
-                    "📊 [工程] 水電工程驗收與進度追蹤": "eng_progress",
-                    "🎨 [設計] 配電盤電氣與機構設計圖庫上傳中心": "eng_design",
-                }
-            },
-            "🏭 生產部 (Production Dept)": {
-                "features": {
-                    "📦 [倉儲] 倉庫庫存與資材條碼管理": "wh_management",
-                    "✂️ [板金] 板金加工組工單與條碼": "sheet_metal",
-                    "🎨 [塗料] 粉體塗裝烤漆組品管": "painting",
-                    "⚡ [配盤] 配電盤組裝配線組": "assembly",
-                }
-            },
-        },
+        "title": "✍️ 管理部 - 電子簽核與請款/請假審核中心",
+        "caption": "提交採購申請或請假單，系統自動依據規則（部門主管 ➔ 負責部門負責人 ➔ 請假≧3天經理簽核 ➔ 請假≧5天副總簽核）進行多級簽核，並提供即時進度追蹤。",
+        "tab_submit": "📝 提交新簽核申請 (請假/採購)",
+        "tab_track": "📊 簽核進度即時追蹤 (Flow Tracker)",
+        "tab_review": "🎛️ 主管/經理/副總審核簽章",
+        
+        "submit_header": "📝 填寫電子簽核單",
+        "lbl_type": "申請單類型 *",
+        "type_opts": ["請假單 (Leave Request)", "採購申請單 (Purchase Requisition)"],
+        "lbl_applicant": "申請人姓名 *",
+        "lbl_dept": "所屬部門 *",
+        "dept_opts": ["營運戰情室", "管理部", "工程與設計管理中心", "生產部"],
+        "lbl_reason": "申請事由與說明 *",
+        "reason_placeholder_leave": "例如: 因家庭事務請假 4 天...",
+        "reason_placeholder_po": "例如: 採購廠區高壓電纜一批、斷路器及銅排...",
+        
+        "lbl_days": "請假天數 (天) *",
+        "lbl_amount": "採購金額 (VND) *",
+
+        "btn_submit": "🚀 提交送出簽核",
+        "success_submit": "✅ 簽核單 `{doc_id}` 已成功送出！已進入第一階段簽核。",
+        "warning_fill": "⚠️ 請完整填寫所有必填欄位！",
+
+        "track_header": "📊 目前所有簽核單進度與關卡追蹤",
+        "no_requests": "目前尚無任何簽核申請紀錄。",
+        
+        "review_header": "🎛️ 待簽核案件審查 (主管/經理/副總專用)",
+        "select_review_item": "選擇要審核的單據 *",
+        "lbl_comment": "簽核意見 / 批示內容",
+        "btn_approve": "✅ 同意 / 通過 (Pass)",
+        "btn_reject": "❌ 駁回 (Reject)",
+        "success_approve": "✅ 已成功核准單據 `{doc_id}`，流程已流轉至下一關！",
+        "success_reject": "❌ 已駁回單據 `{doc_id}`。",
+        
+        "col_id": "單號",
+        "col_type": "類型",
+        "col_applicant": "申請人",
+        "col_dept": "部門",
+        "col_status": "目前簽核關卡 (Current Stage)",
+        "col_result": "審核結果"
     },
     "Tiếng Việt": {
-        "company_name": "CÔNG TY TNHH CN DŨ PHONG",
-        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
-        "login_title": "⚡ REETECH INDUSTRIAL - Đăng nhập hệ thống",
-        "username": "Tài khoản",
-        "password": "Mật khẩu",
-        "login_btn": "🔑 Đăng nhập",
-        "logout_btn": "🚪 Đăng xuất",
-        "lang_selector": "🌐 Chọn ngôn ngữ",
-        "parent_header": "Chọn phòng ban chính:",
-        "sub_header": "Chọn bộ phận trực thuộc:",
-        "departments": {
-            "📈 Ban Giám đốc (Executive)": {
-                "features": {
-                    "🔴 Giá Nguyên liệu & Tỷ giá": "commodities_fx",
-                    "📊 Dữ liệu Tài chính": "financials_pl",
-                    "⚡ Tiến độ Dự án Kỹ thuật": "project_progress_exec",
-                }
-            },
-            "✍️ Trung tâm Phê duyệt Điện tử (Approval Center)": {
-                "features": {
-                    "✍️ Gửi đơn nghỉ phép/mua hàng & Theo dõi tiến độ": "approval_center",
-                }
-            },
-            "👔 Phòng Quản lý (Management Dept)": {
-                "features": {
-                    "🏢 [Hành chính] Quản lý Tài sản Cố định": "ga_assets",
-                    "✍️ [Hành chính] Quản lý Hợp đồng & Phê duyệt": "contract_mgmt",
-                    "👤 [Nhân sự] Hồ sơ Nhân sự & Hợp đồng": "hr_employee",
-                    "🚗 [Bảo vệ] Quản lý xe ra vào nhà máy": "vehicle_gate",
-                    "🛠️ [Hành chính] Quản lý bảo trì xe & Nhập Excel": "vehicle_maintenance",
-                    "📍 [Hiện trường] Chấm công GPS kỹ sư": "field_attendance",
-                    "🛒 [Tài chính] Mua hàng & Phải trả (AP)": "procurement_ap",
-                    "📋 [Tài chính] Quản lý Bán hàng (AR)": "sales_order_ar",
-                    "💰 [Tài chính] Tính Lương & Khấu trừ": "payroll_calc",
-                    "📄 [Tài chính] Quản lý Hóa đơn điện tử tổng hợp": "invoice_management",
-                }
-            },
-            "🛠️ Trung tâm Quản lý Kỹ thuật & Thiết kế": {
-                "features": {
-                    "⚡ [Kỹ thuật] Báo giá Dự án & Truyền AR": "eng_quote",
-                    "📊 [Kỹ thuật] Tiến độ nghiệm thu dự án cơ điện": "eng_progress",
-                    "🎨 [Thiết kế] Kho tải lên & Tải về Bản vẽ": "eng_design",
-                }
-            },
-            "🏭 Phòng Sản xuất (Production Dept)": {
-                "features": {
-                    "📦 [Kho] Quản lý Kho & Mã vạch": "wh_management",
-                    "✂️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
-                    "🎨 [Sơn] Tổ Sơn tĩnh điện": "painting",
-                    "⚡ [Lắp ráp] Tổ Lắp ráp Tủ điện": "assembly",
-                }
-            },
-        },
+        "title": "✍️ Trung tâm Phê duyệt Điện tử (Approval Center)",
+        "caption": "Gửi yêu cầu nghỉ phép hoặc mua hàng; hệ thống tự động định tuyến quy trình phê duyệt đa cấp.",
+        "tab_submit": "📝 Gửi Đơn Mới",
+        "tab_track": "📊 Theo dõi Tiến độ Trực tiếp",
+        "tab_review": "🎛️ Phê duyệt của Quản lý",
+        "submit_header": "📝 Điền đơn điện tử",
+        "lbl_type": "Loại đơn *",
+        "type_opts": ["Đơn nghỉ phép", "Đơn mua hàng"],
+        "lbl_applicant": "Người nộp *",
+        "lbl_dept": "Phòng ban *",
+        "dept_opts": ["Ban Giám đốc", "Phòng Quản lý", "Trung tâm Kỹ thuật", "Phòng Sản xuất"],
+        "lbl_reason": "Lý do *",
+        "reason_placeholder_leave": "Ví dụ: Nghỉ phép 4 ngày...",
+        "reason_placeholder_po": "Ví dụ: Mua sắm vật tư...",
+        "lbl_days": "Số ngày nghỉ *",
+        "lbl_amount": "Giá trị mua (VND) *",
+        "btn_submit": "🚀 Gửi duyệt",
+        "success_submit": "✅ Đã gửi đơn `{doc_id}` thành công!",
+        "warning_fill": "⚠️ Vui lòng điền đầy đủ thông tin!",
+        "track_header": "📊 Theo dõi Tiến độ Phê duyệt",
+        "no_requests": "Chưa có bản ghi nào.",
+        "review_header": "🎛️ Phê duyệt đơn chờ xử lý",
+        "select_file_target": "Chọn đơn cần duyệt *",
+        "lbl_comment": "Ý kiến",
+        "btn_approve": "✅ Phê duyệt",
+        "btn_reject": "❌ Từ chối",
+        "success_approve": "✅ Đã duyệt đơn `{doc_id}`!",
+        "success_reject": "❌ Đã từ chối đơn `{doc_id}`.",
+        "col_id": "Mã đơn",
+        "col_type": "Loại",
+        "col_applicant": "Người nộp",
+        "col_dept": "Phòng ban",
+        "col_status": "Trạng thái hiện tại",
+        "col_result": "Kết quả"
     },
     "English": {
-        "company_name": "REETECH INDUSTRIAL CO., LTD",
-        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
-        "login_title": "⚡ REETECH INDUSTRIAL - System Login",
-        "username": "Username",
-        "password": "Password",
-        "login_btn": "🔑 Login",
-        "logout_btn": "🚪 Logout",
-        "lang_selector": "🌐 Select Language",
-        "parent_header": "Select Department:",
-        "sub_header": "Select Unit & Features:",
-        "departments": {
-            "📈 Executive Management": {
-                "features": {
-                    "🔴 Raw Material Prices & FX": "commodities_fx",
-                    "📊 Financial Analytics": "financials_pl",
-                    "⚡ Engineering Project Progress": "project_progress_exec",
-                }
-            },
-            "✍️ E-Approval Center": {
-                "features": {
-                    "✍️ Submit Leave/Purchase & Track Workflow": "approval_center",
-                }
-            },
-            "👔 Management Dept (GA & Finance)": {
-                "features": {
-                    "🏢 [GA] Asset Management": "ga_assets",
-                    "✍️ [GA] Enterprise Contract Management": "contract_mgmt",
-                    "👤 [HR] Employee Records": "hr_employee",
-                    "🚗 [Security] Vehicle Gate Log": "vehicle_gate",
-                    "🛠️ [GA] Vehicle Maintenance & Excel Import": "vehicle_maintenance",
-                    "📍 [Field] Engineer GPS Attendance": "field_attendance",
-                    "🛒 [Finance] Procurement & AP": "procurement_ap",
-                    "📋 [Finance] Sales & AR": "sales_order_ar",
-                    "💰 [Finance] Payroll & Insurance": "payroll_calc",
-                    "📄 [Finance] E-Invoice Comprehensive Center": "invoice_management",
-                }
-            },
-            "🛠️ Engineering & Design Management Center": {
-                "features": {
-                    "⚡ [Engineering] Quotation & AR Transfer": "eng_quote",
-                    "📊 [Engineering] M&E Acceptance & Progress": "eng_progress",
-                    "🎨 [Design] Drawings Storage & Download": "eng_design",
-                }
-            },
-            "🏭 Production Dept": {
-                "features": {
-                    "📦 [Warehouse] Material Barcodes": "wh_management",
-                    "✂️ [Sheet Metal] Processing Dept": "sheet_metal",
-                    "🎨 [Coating] Powder Coating Dept": "painting",
-                    "⚡ [Assembly] Switchgear Assembly": "assembly",
-                }
-            },
-        },
-    },
+        "title": "✍️ E-Approval & Request Workflow Center",
+        "caption": "Submit leave or purchase requests. The system automatically routes through multi-level approvals and tracks progress in real-time.",
+        "tab_submit": "📝 Submit New Request",
+        "tab_track": "📊 Real-time Flow Tracker",
+        "tab_review": "🎛️ Management Review & Sign",
+        "submit_header": "📝 Submit Electronic Request Form",
+        "lbl_type": "Request Type *",
+        "type_opts": ["Leave Request", "Purchase Requisition"],
+        "lbl_applicant": "Applicant Name *",
+        "lbl_dept": "Department *",
+        "dept_opts": ["Executive", "Management Dept", "Engineering & Design", "Production Dept"],
+        "lbl_reason": "Reason / Description *",
+        "reason_placeholder_leave": "Example: 4 days personal leave...",
+        "reason_placeholder_po": "Example: Purchase high voltage cables...",
+        "lbl_days": "Leave Days (Days) *",
+        "lbl_amount": "Purchase Amount (VND) *",
+        "btn_submit": "🚀 Submit Request",
+        "success_submit": "✅ Request `{doc_id}` successfully submitted!",
+        "warning_fill": "⚠️ Please fill in all required fields!",
+        "track_header": "📊 Real-time Approval Flow & Stage Tracker",
+        "no_requests": "No approval requests found.",
+        "review_header": "🎛️ Pending Approvals Review",
+        "select_review_item": "Select Request to Review *",
+        "lbl_comment": "Review Comments / Instructions",
+        "btn_approve": "✅ Approve / Pass",
+        "btn_reject": "❌ Reject",
+        "success_approve": "✅ Successfully approved `{doc_id}`!",
+        "success_reject": "❌ Rejected `{doc_id}`.",
+        "col_id": "Doc ID",
+        "col_type": "Type",
+        "col_applicant": "Applicant",
+        "col_dept": "Department",
+        "col_status": "Current Stage",
+        "col_result": "Result"
+    }
 }
 
-if "current_lang" not in st.session_state:
-    st.session_state.current_lang = "繁體中文"
+def render_approval_center(engine=None, lang="繁體中文", **kwargs):
+    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
+    L = APPROVAL_I18N.get(active_lang, APPROVAL_I18N["繁體中文"])
 
-engine = db_conn.get_db_engine()
+    st.title(L["title"])
+    st.caption(L["caption"])
 
-def safe_call_module(func, *args, **kwargs):
-    if not callable(func):
-        return
-    try:
-        sig = inspect.signature(func)
-        valid_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
-        if "engine" in sig.parameters and "engine" not in valid_kwargs:
-            valid_kwargs["engine"] = engine
-        func(*args, **valid_kwargs)
-    except Exception:
-        try:
-            func()
-        except Exception as e:
-            st.error(f"模組載入異常: {str(e)}")
+    if "approval_db" not in st.session_state:
+        st.session_state.approval_db = [
+            {
+                "id": "REQ-2026-001",
+                "type": "請假單 (Leave Request)",
+                "applicant": "陳裕民 (Staff)",
+                "dept": "工程與設計管理中心",
+                "days": 4,
+                "amount": 0.0,
+                "reason": "家屬婚喪喜慶請假 4 天",
+                "stage_idx": 2, 
+                "stages": ["1. 部門主管簽核", "2. 負責部門負責人", "3. 經理簽核 (≧3天)", "4. 副總簽核 (≧5天)", "5. 簽核完成 (Approved)"],
+                "status": "進行中 (等待經理簽核)",
+                "history": [
+                    {"stage": "1. 部門主管簽核", "status": "已通過", "by": "張課長", "time": "2026-10-06 10:00"},
+                    {"stage": "2. 負責部門負責人", "status": "已通過", "by": "王經理 (代)", "time": "2026-10-06 14:30"},
+                    {"stage": "3. 經理簽核 (≧3天)", "status": "審核中 (等待中)", "by": "林協理/經理", "time": "未審核"}
+                ]
+            },
+            {
+                "id": "REQ-2026-002",
+                "type": "採購申請單 (Purchase Requisition)",
+                "applicant": "阮文強 (Tech)",
+                "dept": "生產部",
+                "days": 0,
+                "amount": 150000000.0,
+                "reason": "廠區配電盤銅排與斷路器採購",
+                "stage_idx": 1,
+                "stages": ["1. 部門主管簽核", "2. 負責部門負責人", "3. 採購總監簽核", "4. 簽核完成 (Approved)"],
+                "status": "進行中 (等待負責部門負責人)",
+                "history": [
+                    {"stage": "1. 部門主管簽核", "status": "已通過", "by": "黎主任", "time": "2026-10-07 09:15"},
+                    {"stage": "2. 負責部門負責人", "status": "審核中 (等待中)", "by": "財務採購主管", "time": "未審核"}
+                ]
+            }
+        ]
 
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-    st.session_state.user_role = ""
-    st.session_state.user_name = ""
+    tab_submit, tab_track, tab_review = st.tabs([
+        L["tab_submit"], L["tab_track"], L["tab_review"]
+    ])
 
-lang_dict = NAV_STRUCTURE.get(
-    st.session_state.current_lang, NAV_STRUCTURE["繁體中文"]
-)
-
-if not st.session_state.logged_in:
-    st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
-    st.title(lang_dict["login_title"])
-    st.caption(lang_dict["company_sub"])
-    st.markdown("---")
-    col1, _ = st.columns([1, 2])
-    with col1:
-        username = st.text_input(
-            f"{lang_dict['username']} (admin / manager / security / staff)"
-        )
-        password = st.text_input(
-            f"{lang_dict['password']} (123)", type="password"
-        )
-        if st.button(lang_dict["login_btn"], use_container_width=True):
-            if password == "123":
-                st.session_state.logged_in = True
-                u_clean = username.strip().lower()
-                if u_clean in ["admin", "executive", "boss"]:
-                    st.session_state.user_role = "admin"
-                elif u_clean in ["manager", "supervisor"]:
-                    st.session_state.user_role = "manager"
-                elif u_clean in ["security", "guard", "門禁保全"]:
-                    st.session_state.user_role = "security"
-                else:
-                    st.session_state.user_role = "staff"
-                st.session_state.user_name = username
-                st.rerun()
+    with tab_submit:
+        st.markdown(f"### {L['submit_header']}")
+        with st.form("form_submit_approval"):
+            c1, c2 = st.columns(2)
+            with c1:
+                req_type = st.selectbox(L["lbl_type"], L["type_opts"])
+                applicant = st.text_input(L["lbl_applicant"], value=st.session_state.get("user_name", "員工"))
+            with c2:
+                dept = st.selectbox(L["lbl_dept"], L["dept_opts"])
+                
+            days = 0.0
+            amount = 0.0
+            
+            # 根據單據類型動態切換輸入欄位
+            is_leave = "請假" in req_type or "Leave" in req_type
+            if is_leave:
+                days = st.number_input(L["lbl_days"], min_value=0.5, value=3.0, step=0.5)
+                reason = st.text_area(L["lbl_reason"], placeholder=L["reason_placeholder_leave"])
             else:
-                st.error("帳號或密碼錯誤 / Incorrect password")
-    st.stop()
+                amount = st.number_input(L["lbl_amount"], min_value=0.0, value=50000000.0, step=10000000.0)
+                reason = st.text_area(L["lbl_reason"], placeholder=L["reason_placeholder_po"])
 
-st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
+            if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
+                if applicant and reason:
+                    new_id = f"REQ-2026-{len(st.session_state.approval_db)+1:03d}"
+                    
+                    if is_leave:
+                        stages = ["1. 部門主管簽核", "2. 負責部門負責人"]
+                        if days >= 3:
+                            stages.append("3. 經理簽核 (≧3天)")
+                        if days >= 5:
+                            stages.append("4. 副總簽核 (≧5天)")
+                        stages.append("5. 簽核完成 (Approved)")
+                    else:
+                        stages = ["1. 部門主管簽核", "2. 負責部門負責人", "3. 財務/採購總監簽核", "4. 簽核完成 (Approved)"]
 
-lang_list = ["繁體中文", "Tiếng Việt", "English"]
-selected_lang = st.sidebar.selectbox(
-    lang_dict["lang_selector"],
-    lang_list,
-    index=(
-        lang_list.index(st.session_state.current_lang)
-        if st.session_state.current_lang in lang_list
-        else 0
-    ),
-)
+                    st.session_state.approval_db.insert(0, {
+                        "id": new_id,
+                        "type": req_type,
+                        "applicant": applicant,
+                        "dept": dept,
+                        "days": days,
+                        "amount": amount,
+                        "reason": reason,
+                        "stage_idx": 0,
+                        "stages": stages,
+                        "status": f"進行中 (等待 {stages[0]})",
+                        "history": [
+                            {"stage": stages[0], "status": "審核中 (等待中)", "by": f"{dept} 主管", "time": "未審核"}
+                        ]
+                    })
+                    st.success(L["success_submit"].format(doc_id=new_id))
+                    st.rerun()
+                else:
+                    st.warning(L["warning_fill"])
 
-if selected_lang != st.session_state.current_lang:
-    st.session_state.current_lang = selected_lang
-    st.rerun()
+    with tab_track:
+        st.markdown(f"### {L['track_header']}")
+        if st.session_state.approval_db:
+            for item in st.session_state.approval_db:
+                with st.expander(f"📌 [{item['id']}] {item['type']} - 申請人: {item['applicant']} ({item['status']})"):
+                    c1, c2, c3 = st.columns(3)
+                    c1.markdown(f"**部門**: {item['dept']}")
+                    c2.markdown(f"**事由**: {item['reason']}")
+                    if item['days'] > 0:
+                        c3.markdown(f"**請假天數**: {item['days']} 天")
+                    else:
+                        c3.markdown(f"**採購金額**: {item['amount']:,.0f} VND")
 
-st.sidebar.markdown(
-    f"**👤 {st.session_state.user_name}** ({st.session_state.user_role.upper()})"
-)
-if st.sidebar.button(lang_dict["logout_btn"], use_container_width=True):
-    st.session_state.logged_in = False
-    st.rerun()
+                    st.markdown("#### 🔄 即時簽核進度與關卡 (Flow Status)")
+                    
+                    total_stages = len(item['stages'])
+                    current_idx = item['stage_idx']
+                    
+                    progress_val = min(float(current_idx) / max(1.0, float(total_stages - 1)), 1.0)
+                    st.progress(progress_val)
+                    
+                    history_df = pd.DataFrame(item['history'])
+                    st.dataframe(history_df, use_container_width=True)
+        else:
+            st.info(L["no_requests"])
 
-st.sidebar.markdown("---")
-
-dept_options = list(lang_dict["departments"].keys())
-current_user_clean = str(st.session_state.user_name).strip().lower()
-current_role_clean = str(st.session_state.user_role).strip().lower()
-
-if current_role_clean == "security":
-    dept_options = ["👔 管理部 (Management Dept)"]
-    selected_parent_dept = dept_options[0]
-    st.sidebar.markdown(f"**{lang_dict['parent_header']}**")
-    
-    if st.session_state.current_lang == "繁體中文":
-        feature_labels = ["🚗 [行政] 廠區車輛進出與門禁時間紀錄"]
-    elif st.session_state.current_lang == "Tiếng Việt":
-        feature_labels = ["🚗 [Bảo vệ] Quản lý xe ra vào nhà máy"]
-    else:
-        feature_labels = ["🚗 [Security] Vehicle Gate Log"]
+    with tab_review:
+        st.markdown(f"### {L['review_header']}")
+        pending_items = [item for item in st.session_state.approval_db if item['stage_idx'] < len(item['stages']) - 1]
         
-    selected_feature_label = feature_labels[0]
-    target_route = "vehicle_gate"
-else:
-    is_executive_access = (
-        current_user_clean in ["admin", "executive", "boss", "ceo", "gm"]
-        or current_role_clean in ["admin", "executive", "manager"]
-    )
+        if pending_items:
+            review_opts = {f"{item['id']} - {item['type']} ({item['applicant']})": item for item in pending_items}
+            selected_rev_key = st.selectbox(L["select_review_item"], list(review_opts.keys()))
+            target_item = review_opts[selected_rev_key]
 
-    # 僅對一般一般員工過濾戰情室，admin / executive / manager 完整保留
-    if not is_executive_access:
-        dept_options = [d for d in dept_options if "營運戰情室" not in d and "Executive" not in d and "Ban Giám đốc" not in d]
+            st.markdown(f"**目前關卡**: `{target_item['stages'][target_item['stage_idx']]}`")
+            st.markdown(f"**申請事由**: {target_item['reason']}")
+            
+            comment = st.text_input(L["lbl_comment"], value="同意辦理")
 
-    selected_parent_dept = st.sidebar.radio(
-        lang_dict["parent_header"], dept_options, index=0
-    )
+            col_a, col_b = st.columns(2)
+            if col_a.button(L["btn_approve"], type="primary", use_container_width=True):
+                curr_idx = target_item['stage_idx']
+                target_item['history'][curr_idx]['status'] = "已通過"
+                target_item['history'][curr_idx]['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                target_item['history'][curr_idx]['by'] = st.session_state.get("user_name", "主管")
 
-    st.sidebar.markdown("---")
-    features_dict = lang_dict["departments"][selected_parent_dept]["features"]
-    feature_labels = list(features_dict.keys())
+                target_item['stage_idx'] += 1
+                if target_item['stage_idx'] >= len(target_item['stages']) - 1:
+                    target_item['stage_idx'] = len(target_item['stages']) - 1
+                    target_item['status'] = "簽核完成 (Approved)"
+                else:
+                    next_stage = target_item['stages'][target_item['stage_idx']]
+                    target_item['status'] = f"進行中 (等待 {next_stage})"
+                    target_item['history'].append({
+                        "stage": next_stage,
+                        "status": "審核中 (等待中)",
+                        "by": "指定簽核人",
+                        "time": "未審核"
+                    })
 
-    st.sidebar.caption(f"**{selected_parent_dept.split('(')[0].strip()}**")
-    selected_feature_label = st.sidebar.radio(
-        lang_dict["sub_header"], feature_labels
-    )
-    target_route = features_dict[selected_feature_label]
+                st.success(L["success_approve"].format(doc_id=target_item['id']))
+                st.rerun()
 
-curr_lang = st.session_state.current_lang
+            if col_b.button(L["btn_reject"], type="secondary", use_container_width=True):
+                target_item['status'] = "已駁回 (Rejected)"
+                target_item['history'][target_item['stage_idx']]['status'] = "已駁回"
+                target_item['history'][target_item['stage_idx']]['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                st.error(L["success_reject"].format(doc_id=target_item['id']))
+                st.rerun()
+        else:
+            st.info("目前沒有需要您簽核的待辦案件。")
 
-# ----------------------------------------------------
-# 模組安全路由分流
-# ----------------------------------------------------
-if target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
-    if hasattr(executive_dashboard, "render_executive_dashboard_page"):
-        safe_call_module(
-            executive_dashboard.render_executive_dashboard_page,
-            sub_route=target_route,
-            lang=curr_lang,
-        )
-    elif hasattr(executive_dashboard, "show"):
-        safe_call_module(
-            executive_dashboard.show, sub_route=target_route, lang=curr_lang
-        )
+def show(*args, **kwargs):
+    render_approval_center(*args, **kwargs)
 
-elif target_route == "approval_center":
-    safe_call_module(approval_workflow.render_approval_center, lang=curr_lang)
-
-elif target_route == "eng_quote":
-    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=0)
-
-elif target_route == "eng_progress":
-    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=2)
-
-elif target_route == "eng_design":
-    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=1)
-
-elif target_route == "procurement_ap":
-    safe_call_module(procurement_ap.render_procurement_ap_page, engine=engine, lang=curr_lang)
-
-elif target_route == "sales_order_ar":
-    safe_call_module(sales_order_ar.render_sales_order_ar_page, engine=engine, lang=curr_lang)
-
-elif target_route == "contract_mgmt":
-    safe_call_module(contract_management.render_contract_management_page, engine=engine, lang=curr_lang)
-
-elif target_route == "payroll_calc":
-    safe_call_module(payroll_management.render_payroll_management_page, engine=engine, lang=curr_lang)
-
-elif target_route == "invoice_management":
-    safe_call_module(invoice_management.render_invoice_management, engine=engine, lang=curr_lang)
-
-elif target_route == "field_attendance":
-    safe_call_module(field_attendance.render_field_attendance_page, engine=engine, lang=curr_lang)
-
-elif target_route == "ga_assets":
-    safe_call_module(asset_management.render_asset_management_page, lang=curr_lang)
-
-elif target_route == "hr_employee":
-    safe_call_module(employee_management.render_employee_management, engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route == "vehicle_gate":
-    safe_call_module(vehicle_gate_log.render_vehicle_gate_log_page, engine=engine, lang=curr_lang)
-
-elif target_route == "vehicle_maintenance":
-    safe_call_module(vehicle_maintenance.render_vehicle_maintenance_page, engine=engine, lang=curr_lang)
-
-elif target_route == "wh_management":
-    safe_call_module(warehouse_management.render_warehouse_management, engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route in ["sheet_metal", "painting", "assembly"]:
-    st.title(selected_feature_label)
-    st.info("Hệ thống đang hoạt động bình thường / 現場工單與生產追蹤模組順利運作中。")
-
-elif target_route == "it_admin":
-    safe_call_module(user_management.render_user_management_page, lang=curr_lang)
-
-elif target_route == "it_licensing":
-    safe_call_module(system_licensing.render_licensing_control_page, lang=curr_lang)
+def main(*args, **kwargs):
+    render_approval_center(*args, **kwargs)
