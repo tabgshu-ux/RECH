@@ -78,14 +78,14 @@ NAV_STRUCTURE = {
             },
             "👔 管理部 (Management Dept)": {
                 "features": {
-                    "👤 1. 員工個人檔案與人事管理": "hr_employee",
-                    "📍 2. 外勤員工打卡資料與出勤統計計算": "field_attendance",
-                    "🚗 3. 廠區車輛進出口門禁紀錄": "vehicle_gate",
-                    "🛠️ 4. 車輛維修保養紀錄": "vehicle_maintenance",
-                    "🛒 5. 採購與應付帳款 (AP)": "procurement_ap",
-                    "📋 6. 應收帳款": "sales_order_ar",
-                    "💰 7. 員工薪資管理": "payroll_calc",
-                    "📄 8. 電子發票綜合管理": "invoice_management",
+                    "👤 員工個人檔案與人事管理": "hr_employee",
+                    "📍 外勤員工打卡資料與出勤統計計算": "field_attendance",
+                    "🚗 廠區車輛進出口門禁紀錄": "vehicle_gate",
+                    "🛠️ 車輛維修保養紀錄": "vehicle_maintenance",
+                    "🛒 採購與應付帳款 (AP)": "procurement_ap",
+                    "📋 應收帳款": "sales_order_ar",
+                    "💰 員工薪資管理": "payroll_calc",
+                    "📄 電子發票綜合管理": "invoice_management",
                 }
             },
             "🛠️ 工程與設計管理中心 (Engineering & Design Center)": {
@@ -137,14 +137,14 @@ NAV_STRUCTURE = {
             },
             "👔 Phòng Quản lý (Management Dept)": {
                 "features": {
-                    "👤 1. Hồ sơ nhân sự": "hr_employee",
-                    "📍 2. Chấm công GPS & Thống kê": "field_attendance",
-                    "🚗 3. Quản lý xe ra vào": "vehicle_gate",
-                    "🛠️ 4. Bảo trì xe": "vehicle_maintenance",
-                    "🛒 5. Mua hàng & Phải trả (AP)": "procurement_ap",
-                    "📋 6. Phải thu": "sales_order_ar",
-                    "💰 7. Quản lý Lương": "payroll_calc",
-                    "📄 8. Quản lý Hóa đơn điện tử": "invoice_management",
+                    "👤 Hồ sơ nhân sự": "hr_employee",
+                    "📍 Chấm công GPS & Thống kê": "field_attendance",
+                    "🚗 Quản lý xe ra vào": "vehicle_gate",
+                    "🛠️ Bảo trì xe": "vehicle_maintenance",
+                    "🛒 Mua hàng & Phải trả (AP)": "procurement_ap",
+                    "📋 Phải thu": "sales_order_ar",
+                    "💰 Quản lý Lương": "payroll_calc",
+                    "📄 Quản lý Hóa đơn điện tử": "invoice_management",
                 }
             },
             "🛠️ Trung tâm Quản lý Kỹ thuật & Thiết kế": {
@@ -196,14 +196,14 @@ NAV_STRUCTURE = {
             },
             "👔 Management Dept (GA & Finance)": {
                 "features": {
-                    "👤 1. HR Records": "hr_employee",
-                    "📍 2. GPS Attendance & Stats": "field_attendance",
-                    "🚗 3. Vehicle Gate Log": "vehicle_gate",
-                    "🛠️ 4. Vehicle Maintenance": "vehicle_maintenance",
-                    "🛒 5. Procurement & AP": "procurement_ap",
-                    "📋 6. Accounts Receivable": "sales_order_ar",
-                    "💰 7. Payroll Management": "payroll_calc",
-                    "📄 8. E-Invoice Management": "invoice_management",
+                    "👤 HR Records": "hr_employee",
+                    "📍 GPS Attendance & Stats": "field_attendance",
+                    "🚗 Vehicle Gate Log": "vehicle_gate",
+                    "🛠️ Vehicle Maintenance": "vehicle_maintenance",
+                    "🛒 Procurement & AP": "procurement_ap",
+                    "📋 Accounts Receivable": "sales_order_ar",
+                    "💰 Payroll Management": "payroll_calc",
+                    "📄 E-Invoice Management": "invoice_management",
                 }
             },
             "🛠️ Engineering & Design Management Center": {
@@ -327,11 +327,11 @@ if current_role_clean == "security":
     st.sidebar.markdown(f"**{lang_dict['parent_header']}**")
     
     if st.session_state.current_lang == "繁體中文":
-        feature_labels = ["🚗 3. 廠區車輛進出口門禁紀錄"]
+        feature_labels = ["🚗 廠區車輛進出口門禁紀錄"]
     elif st.session_state.current_lang == "Tiếng Việt":
-        feature_labels = ["🚗 3. Quản lý xe ra vào"]
+        feature_labels = ["🚗 Quản lý xe ra vào"]
     else:
-        feature_labels = ["🚗 3. Vehicle Gate Log"]
+        feature_labels = ["🚗 Vehicle Gate Log"]
         
     selected_feature_label = feature_labels[0]
     target_route = "vehicle_gate"
