@@ -6,11 +6,14 @@ import os
 CONTRACT_I18N = {
     "繁體中文": {
         "title": "✍️ 管理部 - 企業合約管理與主管審查中心",
-        "caption": "管理裕豐電機工業各項工程合約、設備採購合約與租賃合約，支援合約清冊檢視、電子檔直接開啟下載、線上修改、刪除與舊合約上傳。",
-        "tab_list": "📑 合約清冊與電子檔開啟",
+        "caption": "管理裕豐電機工業各項工程合約、設備採購合約與租賃合約，支援關鍵字搜尋舊合約、電子檔直接開啟下載、線上修改、刪除與上傳。",
+        "tab_list": "📑 合約清冊與關鍵字搜尋/編輯",
         "tab_add": "➕ 新增合約登記",
         "tab_upload": "📤 上傳舊合約檔案",
-        "table_header": "📋 裕豐電機工業現行合約總覽",
+        "table_header": "📋 裕豐電機工業現行合約總覽與關鍵字搜尋",
+        "search_label": "🔍 關鍵字搜尋合約 (可輸入合約編號、名稱、簽約對象或類型)：",
+        "search_placeholder": "例如: 和鼎隆、美順、HD-2025、設備採購...",
+        "no_search_results": "⚠️ 沒有找到符合關鍵字的合約紀錄。",
         "no_records": "目前無合約紀錄。",
         
         # 電子檔檢視與下載部分
@@ -68,16 +71,19 @@ CONTRACT_I18N = {
     },
     "Tiếng Việt": {
         "title": "✍️ Khối Hành chính - Quản lý Hợp đồng & Phê duyệt",
-        "caption": "Quản lý hợp đồng; hỗ trợ xem file, chỉnh sửa, xóa và tải lên.",
-        "tab_list": "📑 Danh sách & Mở file Hợp đồng",
+        "caption": "Quản lý hợp đồng; hỗ trợ tìm kiếm từ khóa, xem file, chỉnh sửa, xóa và tải lên.",
+        "tab_list": "📑 Danh sách & Tìm kiếm",
         "tab_add": "➕ Đăng ký Hợp đồng Mới",
         "tab_upload": "📤 Tải lên Hợp đồng Cũ",
-        "table_header": "📋 Tổng quan Hợp đồng hiện hành",
+        "table_header": "📋 Tổng quan Hợp đồng hiện hành & Tìm kiếm",
+        "search_label": "🔍 Tìm kiếm hợp đồng theo từ khóa:",
+        "search_placeholder": "Nhập mã, tên hoặc đối tác...",
+        "no_search_results": "⚠️ Không tìm thấy hợp đồng phù hợp.",
         "no_records": "Hiện không có bản ghi hợp đồng nào.",
         "file_viewer_header": "📂 Mở và Tải xuống File Hợp đồng",
         "select_file_target": "Chọn hợp đồng cần xem file *",
         "file_found": "✅ Đã tìm thấy file: `{filename}`",
-        "file_not_found": "⚠️ Chưa có file thực tế `{filename}`, hỗ trợ tải file mẫu:",
+        "file_not_found": "⚠️ Chưa có file thực tế `{filename}`:",
         "btn_download_file": "📥 Tải xuống / Mở file hợp đồng",
         "edit_header": "✏️ Chỉnh sửa hoặc xóa thông tin hợp đồng",
         "select_contract": "Chọn hợp đồng cần sửa/xóa *",
@@ -124,16 +130,19 @@ CONTRACT_I18N = {
     },
     "English": {
         "title": "✍️ GA - Enterprise Contract Management & Review Center",
-        "caption": "Manage contracts with file viewing/downloading, editing, deletion, and old contract uploads.",
-        "tab_list": "📑 Contract List & File Viewer",
+        "caption": "Manage contracts with keyword search, file viewing/downloading, editing, deletion, and old contract uploads.",
+        "tab_list": "📑 Contract List & Keyword Search",
         "tab_add": "➕ Register New Contract",
         "tab_upload": "📤 Upload Old Contracts",
-        "table_header": "📋 Active Enterprise Contracts Overview",
+        "table_header": "📋 Active Contracts Overview & Search",
+        "search_label": "🔍 Keyword Search (Contract No., Name, Counterparty, Type):",
+        "search_placeholder": "Enter keyword...",
+        "no_search_results": "⚠️ No matching contract records found.",
         "no_records": "No contract records found.",
         "file_viewer_header": "📂 Open & Download Contract Electronic File",
         "select_file_target": "Select Contract to View/Download File *",
         "file_found": "✅ File found: `{filename}`",
-        "file_not_found": "⚠️ Physical file `{filename}` not found in root directory yet, download simulation available:",
+        "file_not_found": "⚠️ Physical file `{filename}` not found:",
         "btn_download_file": "📥 Download / Open Contract File",
         "edit_header": "✏️ Edit or Delete Contract Details",
         "select_contract": "Select Contract to Edit/Delete *",
@@ -227,9 +236,22 @@ def render_contract_management_page(engine=None, lang="繁體中文", **kwargs):
 
     with tab_list:
         st.markdown(f"### {L['table_header']}")
-        if st.session_state.enterprise_contracts_db:
+        
+        # 新增：關鍵字搜尋輸入框
+        search_query = st.text_input(L["search_label"], placeholder=L["search_placeholder"])
+        
+        # 過濾合約清冊
+        filtered_db = st.session_state.enterprise_contracts_db
+        if search_query:
+            q = search_query.strip().lower()
+            filtered_db = [
+                item for item in st.session_state.enterprise_contracts_db
+                if q in item["code"].lower() or q in item["name"].lower() or q in item["party"].lower() or q in item["type"].lower()
+            ]
+
+        if filtered_db:
             display_data = []
-            for idx, item in enumerate(st.session_state.enterprise_contracts_db, 1):
+            for idx, item in enumerate(filtered_db, 1):
                 display_data.append({
                     L["col_index"]: idx,
                     L["col_code"]: item["code"],
@@ -243,10 +265,10 @@ def render_contract_management_page(engine=None, lang="繁體中文", **kwargs):
                 })
             st.dataframe(pd.DataFrame(display_data), use_container_width=True)
 
-            # 新增：電子檔檢視與開啟下載專區
+            # 電子檔檢視與開啟下載專區
             st.markdown("---")
             st.markdown(f"### {L['file_viewer_header']}")
-            file_opts = {f"{item['code']} - {item['name']} ({item.get('file', '無附件')})": item for item in st.session_state.enterprise_contracts_db}
+            file_opts = {f"{item['code']} - {item['name']} ({item.get('file', '無附件')})": item for item in filtered_db}
             selected_file_key = st.selectbox(L["select_file_target"], list(file_opts.keys()))
             target_file_item = file_opts[selected_file_key]
             filename = target_file_item.get("file", "")
@@ -279,7 +301,7 @@ def render_contract_management_page(engine=None, lang="繁體中文", **kwargs):
 
             st.markdown("---")
             st.markdown(f"### {L['edit_header']}")
-            contract_opts = {f"{item['code']} - {item['name']}": item for item in st.session_state.enterprise_contracts_db}
+            contract_opts = {f"{item['code']} - {item['name']}": item for item in filtered_db}
             selected_key = st.selectbox(L["select_contract"], list(contract_opts.keys()))
             target_contract = contract_opts[selected_key]
 
@@ -312,7 +334,7 @@ def render_contract_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.success(L["success_delete"].format(code=target_contract["code"]))
                     st.rerun()
         else:
-            st.info(L["no_records"])
+            st.info(L["no_search_results"] if search_query else L["no_records"])
 
     with tab_add:
         st.markdown(f"### {L['add_header']}")
