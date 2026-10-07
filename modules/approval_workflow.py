@@ -17,7 +17,8 @@ APPROVAL_I18N = {
         "lbl_dept": "所屬部門 *",
         "dept_opts": ["營運戰情室", "管理部", "工程與設計管理中心", "生產部"],
         "lbl_reason": "申請事由與說明 *",
-        "reason_placeholder": "例如: 因家庭事務請假 4 天 / 採購廠區高壓電纜一批",
+        "reason_placeholder_leave": "例如: 因家庭事務請假 4 天...",
+        "reason_placeholder_po": "例如: 採購廠區高壓電纜一批、斷路器及銅排...",
         
         "lbl_days": "請假天數 (天) *",
         "lbl_amount": "採購金額 (VND) *",
@@ -57,7 +58,8 @@ APPROVAL_I18N = {
         "lbl_dept": "Phòng ban *",
         "dept_opts": ["Ban Giám đốc", "Phòng Quản lý", "Trung tâm Kỹ thuật", "Phòng Sản xuất"],
         "lbl_reason": "Lý do *",
-        "reason_placeholder": "Ví dụ: Nghỉ phép 4 ngày...",
+        "reason_placeholder_leave": "Ví dụ: Nghỉ phép 4 ngày...",
+        "reason_placeholder_po": "Ví dụ: Mua sắm vật tư...",
         "lbl_days": "Số ngày nghỉ *",
         "lbl_amount": "Giá trị mua (VND) *",
         "btn_submit": "🚀 Gửi duyệt",
@@ -92,7 +94,8 @@ APPROVAL_I18N = {
         "lbl_dept": "Department *",
         "dept_opts": ["Executive", "Management Dept", "Engineering & Design", "Production Dept"],
         "lbl_reason": "Reason / Description *",
-        "reason_placeholder": "Example: 4 days personal leave / Purchase cables",
+        "reason_placeholder_leave": "Example: 4 days personal leave...",
+        "reason_placeholder_po": "Example: Purchase high voltage cables...",
         "lbl_days": "Leave Days (Days) *",
         "lbl_amount": "Purchase Amount (VND) *",
         "btn_submit": "🚀 Submit Request",
@@ -176,18 +179,21 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                 
             days = 0.0
             amount = 0.0
-            if "請假" in req_type or "Leave" in req_type:
+            
+            # 根據單據類型動態切換輸入欄位
+            is_leave = "請假" in req_type or "Leave" in req_type
+            if is_leave:
                 days = st.number_input(L["lbl_days"], min_value=0.5, value=3.0, step=0.5)
+                reason = st.text_area(L["lbl_reason"], placeholder=L["reason_placeholder_leave"])
             else:
                 amount = st.number_input(L["lbl_amount"], min_value=0.0, value=50000000.0, step=10000000.0)
-
-            reason = st.text_area(L["lbl_reason"], placeholder=L["reason_placeholder"])
+                reason = st.text_area(L["lbl_reason"], placeholder=L["reason_placeholder_po"])
 
             if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
                 if applicant and reason:
                     new_id = f"REQ-2026-{len(st.session_state.approval_db)+1:03d}"
                     
-                    if "請假" in req_type or "Leave" in req_type:
+                    if is_leave:
                         stages = ["1. 部門主管簽核", "2. 負責部門負責人"]
                         if days >= 3:
                             stages.append("3. 經理簽核 (≧3天)")
