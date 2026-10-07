@@ -4,19 +4,28 @@ import pandas as pd
 def render_employee_management(engine=None, t=None, lang="繁體中文", **kwargs):
     if lang == "Tiếng Việt":
         st.title("👤 Quản lý Nhân sự & Hồ sơ Nhân viên")
-        st.info("Nơi quản lý hồ sơ nhân viên, hợp đồng, khu vực làm việc và dữ liệu nhân sự toàn nhà máy.")
+        st.info("Nơi quản lý hồ sơ nhân viên, bảo hiểm, địa chỉ và thông tin chi tiết toàn nhà máy.")
     elif lang == "English":
         st.title("👤 Management Dept - HR & Employee Records")
-        st.info("Manage employee profiles, contracts, work factories, and personnel records across all plants.")
+        st.info("Manage employee profiles, insurance, addresses, and personnel records across all plants.")
     else:
         st.title("👤 管理部 - 員工個人檔案與人事管理")
-        st.info("在此維護全廠區員工個人檔案、合約記錄、工作廠區與人事資料（支援動態廠區聯動與搜尋）。")
+        st.info("在此維護全廠區員工個人檔案、保險資料、戶籍/暫住地址、保險醫院與人事資料。")
 
     if "employee_db" not in st.session_state:
         st.session_state.employee_db = [
-            {"工號": "EMP-001", "姓名": "張董事長", "國籍": "台灣 (Taiwan)", "工作廠區": "西寧廠 (Tay Ninh)", "部門": "管理部", "職稱": "董事長 (Chairman)", "角色": "Chairman", "電話": "0912345678", "生物辨識代碼": "FACE-BIO-888899"},
-            {"工號": "EMP-002", "姓名": "Nguyễn Văn A", "國籍": "越南 (Vietnam)", "工作廠區": "西寧廠 (Tay Ninh)", "部門": "管理部", "職稱": "總經理 (General Manager)", "角色": "GeneralManager", "電話": "0918999080", "生物辨識代碼": "FACE-BIO-100234"},
-            {"工號": "EMP-003", "姓名": "李元隆", "國籍": "台灣 (Taiwan)", "工作廠區": "海防廠 (Hai Phong)", "部門": "工程與設計管理中心", "職稱": "副總經理 (Vice General Manager)", "角色": "ViceManager", "電話": "", "生物辨識代碼": "FACE-BIO-300451"}
+            {
+                "工號": "EMP-001", "姓名": "張董事長", "國籍": "台灣 (Taiwan)", "工作廠區": "西寧廠 (Tay Ninh)", "部門": "管理部", "職稱": "董事長 (Chairman)", "角色": "Chairman", "電話": "0912345678", 
+                "戶籍地址": "台北市信義區...", "暫住地址": "西寧省廠區宿舍", "保險資料": "TW-INS-888899", "保險醫院": "台北榮民總醫院", "生物辨識代碼": "FACE-BIO-888899"
+            },
+            {
+                "工號": "EMP-002", "姓名": "Nguyễn Văn A", "國籍": "越南 (Vietnam)", "工作廠區": "西寧廠 (Tay Ninh)", "部門": "管理部", "職稱": "總經理 (General Manager)", "角色": "GeneralManager", "電話": "0918999080", 
+                "戶籍地址": "Tỉnh Tây Ninh, Huyện Trảng Bàng", "暫住地址": "Khu công nghiệp Thành Thành Công", "保險資料": "VN-BHXH-0192834", "保險醫院": "Bệnh viện Đa khoa Tây Ninh", "生物辨識代碼": "FACE-BIO-100234"
+            },
+            {
+                "工號": "EMP-003", "姓名": "李元隆", "國籍": "台灣 (Taiwan)", "工作廠區": "海防廠 (Hai Phong)", "部門": "工程與設計管理中心", "職稱": "副總經理 (Vice General Manager)", "角色": "ViceManager", "電話": "", 
+                "戶籍地址": "高雄市左營區...", "暫住地址": "海防市宿舍", "保險資料": "TW-INS-300451", "保險醫院": "高雄醫學大學附設中和紀念醫院", "生物辨識代碼": "FACE-BIO-300451"
+            }
         ]
 
     if "factory_list" not in st.session_state:
@@ -42,12 +51,14 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
 
     with tab_add:
         with st.form("add_employee_form"):
-            st.markdown("### ➕ 新增員工個人檔案")
+            st.markdown("### ➕ 新增員工個人檔案與保險/地址資料")
             c1, c2 = st.columns(2)
             with c1:
                 e_id = st.text_input("員工工號", value=f"EMP-{len(st.session_state.employee_db)+1:03d}")
                 e_name = st.text_input("員工姓名 (Employee Name)")
                 e_nat = st.selectbox("國籍", ["台灣 (Taiwan)", "越南 (Vietnam)", "其他 (Other)"])
+                e_perm_addr = st.text_input("戶籍地址 (Permanent Address / Hộ khẩu thường trú)")
+                e_temp_addr = st.text_input("暫住地址 (Temporary Address / Chỗ ở hiện tại)")
             with c2:
                 fac_choices = [f"{fac['廠區名稱']}" for fac in st.session_state.factory_list]
                 if not fac_choices:
@@ -82,7 +93,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
 
                 e_title = st.text_input("職稱 / 職務", placeholder="例如: 現場工程師 / 技術員")
 
-                # 修改此處：將「門禁保全」簡稱為「保全」
                 if lang == "Tiếng Việt":
                     role_display_map = {
                         "staff": "Nhân viên chung (Staff)",
@@ -110,6 +120,8 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 e_role = role_sel
 
                 e_phone = st.text_input("聯絡電話", placeholder="0912...")
+                e_insurance = st.text_input("保險資料 / 社會保險編號 (Insurance / BHXH)")
+                e_hospital = st.text_input("保險醫院 / 就醫指定醫院 (Insurance Hospital / Bệnh viện KCB)")
 
             if st.form_submit_button("🚀 立即新增員工", type="primary"):
                 if e_name:
@@ -122,6 +134,10 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                         "職稱": e_title,
                         "角色": e_role,
                         "電話": e_phone,
+                        "戶籍地址": e_perm_addr,
+                        "暫住地址": e_temp_addr,
+                        "保險資料": e_insurance,
+                        "保險醫院": e_hospital,
                         "生物辨識代碼": f"FACE-BIO-{len(st.session_state.employee_db)+100000}"
                     })
                     success_msg = "Thêm nhân viên thành công!" if lang == "Tiếng Việt" else ("Employee added successfully!" if lang == "English" else f"✅ 員工 {e_name} 新增成功！")
@@ -138,7 +154,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             target_emp = emp_opts[sel_emp_key]
 
             with st.form("edit_employee_form"):
-                st.markdown("### ✏️ 修改員工檔案")
+                st.markdown("### ✏️ 修改員工檔案與保險/地址資料")
                 ed_name = st.text_input("員工姓名", value=target_emp["姓名"])
                 fac_choices = [f"{fac['廠區名稱']}" for fac in st.session_state.factory_list]
                 if target_emp["工作廠區"] not in fac_choices:
@@ -146,6 +162,10 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 ed_fac = st.selectbox("工作廠區", fac_choices, index=fac_choices.index(target_emp["工作廠區"]) if target_emp["工作廠區"] in fac_choices else 0)
                 ed_title = st.text_input("職稱", value=target_emp["職稱"])
                 ed_phone = st.text_input("電話", value=target_emp["電話"])
+                ed_perm_addr = st.text_input("戶籍地址", value=target_emp.get("戶籍地址", ""))
+                ed_temp_addr = st.text_input("暫住地址", value=target_emp.get("暫住地址", ""))
+                ed_insurance = st.text_input("保險資料 / 社會保險編號", value=target_emp.get("保險資料", ""))
+                ed_hospital = st.text_input("保險醫院", value=target_emp.get("保險醫院", ""))
 
                 if st.form_submit_button("💾 儲存修改", type="primary"):
                     for e in st.session_state.employee_db:
@@ -154,6 +174,10 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                             e["工作廠區"] = ed_fac
                             e["職稱"] = ed_title
                             e["電話"] = ed_phone
+                            e["戶籍地址"] = ed_perm_addr
+                            e["暫住地址"] = ed_temp_addr
+                            e["保險資料"] = ed_insurance
+                            e["保險醫院"] = ed_hospital
                     st.success(f"✅ 員工 {target_emp['工號']} 資料更新成功！")
                     st.rerun()
         else:
