@@ -2,8 +2,16 @@ import streamlit as st
 import pandas as pd
 
 def render_employee_management(engine=None, t=None, lang="繁體中文", **kwargs):
-    st.title("👤 管理部 - 員工個人檔案與人事管理")
-    st.info("在此維護全廠區員工個人檔案、合約記錄、工作廠區與人事資料（支援動態廠區聯動與搜尋）。")
+    # 根據不同語系顯示標題與提示
+    if lang == "Tiếng Việt":
+        st.title("👤 Quản lý Nhân sự & Hồ sơ Nhân viên")
+        st.info("Nơi quản lý hồ sơ nhân viên, hợp đồng, khu vực làm việc và dữ liệu nhân sự toàn nhà máy.")
+    elif lang == "English":
+        st.title("👤 Management Dept - HR & Employee Records")
+        st.info("Manage employee profiles, contracts, work factories, and personnel records across all plants.")
+    else:
+        st.title("👤 管理部 - 員工個人檔案與人事管理")
+        st.info("在此維護全廠區員工個人檔案、合約記錄、工作廠區與人事資料（支援動態廠區聯動與搜尋）。")
 
     if "employee_db" not in st.session_state:
         st.session_state.employee_db = [
@@ -18,16 +26,20 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             {"廠區編號": "FAC-02", "廠區名稱": "海防廠 (Hai Phong)", "負責人": "阮文強", "電話": "0918999080"}
         ]
 
-    search_q = st.text_input("🔍 搜尋員工姓名 / 工號 / 職稱", placeholder="輸入關鍵字搜尋員工...")
+    search_label = "🔍 搜尋員工姓名 / 工號 / 職稱" if lang == "繁體中文" else ("🔍 Tìm kiếm nhân viên..." if lang == "Tiếng Việt" else "🔍 Search Employee...")
+    search_q = st.text_input(search_label, placeholder="輸入關鍵字搜尋員工...")
+    
     filtered_emp = [
         e for e in st.session_state.employee_db 
         if search_q.lower() in e["姓名"].lower() or search_q.lower() in e["工號"].lower() or search_q.lower() in e["職稱"].lower()
     ] if search_q else st.session_state.employee_db
 
-    st.markdown("### 📋 現有在職員工名冊")
+    list_title = "### 📋 現有在職員工名冊" if lang == "繁體中文" else ("### 📋 Danh sách Nhân viên hiện tại" if lang == "Tiếng Việt" else "### 📋 Current Employee Directory")
+    st.markdown(list_title)
     st.dataframe(pd.DataFrame(filtered_emp), use_container_width=True)
 
-    tab_add, tab_edit, tab_del = st.tabs(["➕ 新增員工", "✏️ 修改員工資料", "🗑️ 刪除員工"])
+    tab_names = ["➕ 新增員工", "✏️ 修改員工資料", "🗑️ 刪除員工"] if lang == "繁體中文" else (["➕ Thêm nhân viên", "✏️ Sửa thông tin", "🗑️ Xóa nhân viên"] if lang == "Tiếng Việt" else ["➕ Add Employee", "✏️ Edit Employee", "🗑️ Delete Employee"])
+    tab_add, tab_edit, tab_del = st.tabs(tab_names)
 
     with tab_add:
         with st.form("add_employee_form"):
@@ -38,14 +50,70 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 e_name = st.text_input("員工姓名 (Employee Name)")
                 e_nat = st.selectbox("國籍", ["台灣 (Taiwan)", "越南 (Vietnam)", "其他 (Other)"])
             with c2:
-                # 動態讀取廠區清單！實現跨模組完美聯動
                 fac_choices = [f"{fac['廠區名稱']}" for fac in st.session_state.factory_list]
                 if not fac_choices:
                     fac_choices = ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"]
                 e_fac = st.selectbox("工作廠區 (Factory)", fac_choices)
-                e_dept = st.selectbox("部門", ["管理部", "營運戰情室", "工程與設計管理中心", "生產部", "資訊管理部"])
+                
+                # 根據語系調整部門選項顯示
+                if lang == "Tiếng Việt":
+                    dept_display_map = {
+                        "管理部": "Phòng Quản lý (Management Dept)",
+                        "營運戰情室": "Ban Giám đốc (Executive)",
+                        "工程與設計管理中心": "Trung tâm Kỹ thuật & Thiết kế",
+                        "生產部": "Phòng Sản xuất (Production Dept)",
+                        "資訊管理部": "Phòng IT (IT & System)"
+                    }
+                elif lang == "English":
+                    dept_display_map = {
+                        "管理部": "Management Dept",
+                        "營運戰情室": "Executive Management",
+                        "工程與設計管理中心": "Engineering & Design Center",
+                        "生產部": "Production Dept",
+                        "資訊管理部": "Information Technology (IT)"
+                    }
+                else:
+                    dept_display_map = {
+                        "管理部": "管理部",
+                        "營運戰情室": "營運戰情室",
+                        "工程與設計管理中心": "工程與設計管理中心",
+                        "生產部": "生產部",
+                        "資訊管理部": "資訊管理部"
+                    }
+                
+                dept_keys = list(dept_display_map.keys())
+                dept_sel = st.selectbox("部門", dept_keys, format_func=lambda x: dept_display_map[x])
+                e_dept = dept_sel
+
                 e_title = st.text_input("職稱 / 職務", placeholder="例如: 現場工程師 / 技術員")
-                e_role = st.selectbox("系統權限角色", ["staff", "manager", "security", "admin"])
+
+                # 系統權限角色：依據當前語系顯示對應語系文字
+                if lang == "Tiếng Việt":
+                    role_display_map = {
+                        "staff": "Nhân viên chung (Staff)",
+                        "manager": "Quản lý / Chủ quản (Manager)",
+                        "security": "Bảo vệ / Cổng ra vào (Security)",
+                        "admin": "Quản trị hệ thống (Admin)"
+                    }
+                elif lang == "English":
+                    role_display_map = {
+                        "staff": "General Staff",
+                        "manager": "Department Manager",
+                        "security": "Security Guard",
+                        "admin": "System Administrator"
+                    }
+                else:
+                    role_display_map = {
+                        "staff": "一般員工 (Staff)",
+                        "manager": "部門主管 (Manager)",
+                        "security": "門禁保全 (Security)",
+                        "admin": "系統管理員 (Admin)"
+                    }
+
+                role_keys = list(role_display_map.keys())
+                role_sel = st.selectbox("系統權限角色", role_keys, format_func=lambda x: role_display_map[x])
+                e_role = role_sel
+
                 e_phone = st.text_input("聯絡電話", placeholder="0912...")
 
             if st.form_submit_button("🚀 立即新增員工", type="primary"):
@@ -61,10 +129,12 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                         "電話": e_phone,
                         "生物辨識代碼": f"FACE-BIO-{len(st.session_state.employee_db)+100000}"
                     })
-                    st.success(f"✅ 員工 {e_name} 新增成功！")
+                    success_msg = "Thêm nhân viên thành công!" if lang == "Tiếng Việt" else ("Employee added successfully!" if lang == "English" else f"✅ 員工 {e_name} 新增成功！")
+                    st.success(success_msg)
                     st.rerun()
                 else:
-                    st.warning("⚠️ 請填寫員工姓名！")
+                    warn_msg = "Vui lòng nhập tên nhân viên!" if lang == "Tiếng Việt" else ("Please enter employee name!" if lang == "English" else "⚠️ 請填寫員工姓名！")
+                    st.warning(warn_msg)
 
     with tab_edit:
         if st.session_state.employee_db:
