@@ -16,6 +16,7 @@ import modules.vehicle_gate_log as vehicle_gate_log
 import modules.vehicle_maintenance as vehicle_maintenance
 import modules.warehouse_management as warehouse_management
 import pandas as pd
+import modules.contract_management as contract_management
 from sqlalchemy import text
 import streamlit as st
 
