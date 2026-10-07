@@ -105,12 +105,6 @@ NAV_STRUCTURE = {
                     "⚡ [配盤] 配電盤組裝配線組": "assembly",
                 }
             },
-            "💻 資訊管理部 (IT & System)": {
-                "features": {
-                    "🔒 帳號權限與全系統稽核軌跡": "it_admin",
-                    "🎛️ 客戶 ERP 模組授權與功能開關": "it_licensing",
-                }
-            },
         },
     },
     "Tiếng Việt": {
@@ -166,12 +160,6 @@ NAV_STRUCTURE = {
                     "⚡ [Lắp ráp] Tổ Lắp ráp Tủ điện": "assembly",
                 }
             },
-            "💻 Phòng IT (IT & System)": {
-                "features": {
-                    "🔒 Quản lý Phân quyền": "it_admin",
-                    "🎛️ Phân quyền Bản quyền ERP": "it_licensing",
-                }
-            },
         },
     },
     "English": {
@@ -225,12 +213,6 @@ NAV_STRUCTURE = {
                     "✂️ [Sheet Metal] Processing Dept": "sheet_metal",
                     "🎨 [Coating] Powder Coating Dept": "painting",
                     "⚡ [Assembly] Switchgear Assembly": "assembly",
-                }
-            },
-            "💻 Information Technology (IT)": {
-                "features": {
-                    "🔒 User Permissions": "it_admin",
-                    "🎛️ Client ERP Licensing": "it_licensing",
                 }
             },
         },
@@ -347,8 +329,9 @@ else:
         or current_role_clean in ["admin", "executive", "manager"]
     )
 
+    # 僅對一般一般員工過濾戰情室，admin / executive / manager 完整保留
     if not is_executive_access:
-        dept_options = [d for d in dept_options if "Executive" not in d]
+        dept_options = [d for d in dept_options if "營運戰情室" not in d and "Executive" not in d and "Ban Giám đốc" not in d]
 
     selected_parent_dept = st.sidebar.radio(
         lang_dict["parent_header"], dept_options, index=0
