@@ -9,7 +9,7 @@ APPROVAL_I18N = {
         "tab_leave": "📝 員工請假申請單",
         "tab_po": "🛒 採購與請款申請單",
         "tab_track": "📊 簽核進度即時追蹤",
-        "tab_review": "🎛️ 主管/經理/副總審核簽章",
+        "tab_review": "🎛️ 待簽核案件審查",
         
         "leave_header": "📝 填寫請假申請單",
         "po_header": "🛒 填寫採購與請款申請單",
@@ -32,7 +32,7 @@ APPROVAL_I18N = {
         "track_header": "📊 目前所有簽核單進度與關卡追蹤",
         "no_requests": "目前尚無任何簽核申請紀錄。",
         
-        "review_header": "🎛️ 待簽核案件審查 (主管/經理/副總專用)",
+        "review_header": "🎛️ 待簽核案件審查",
         "select_review_item": "選擇要審核的單據 *",
         "lbl_comment": "簽核意見 / 批示內容",
         "btn_approve": "✅ 同意 / 通過 (Pass)",
@@ -94,8 +94,8 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
         L["tab_leave"], L["tab_po"], L["tab_track"], L["tab_review"]
     ])
 
-    current_user = st.session_state.get("user_name", "admin")
-    role = st.session_state.get("user_role", "admin")
+    current_user = str(st.session_state.get("user_name", "admin"))
+    role = str(st.session_state.get("user_role", "admin")).lower()
     
     default_dept = "管理部"
     if role == "admin":
@@ -103,7 +103,12 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
     elif "生產" in current_user or role == "staff":
         default_dept = "生產部"
 
-    # 共用的歷史紀錄渲染函式
+    # 判斷目前登入者是否具備主管/經理/副總/管理員審核權限
+    is_manager_or_admin = (
+        role in ["admin", "manager", "executive"] 
+        or any(k in current_user.lower() for k in ["admin", "boss", "经理", "經理", "協理", "副總", "主任", "director", "manager", "head"])
+    )
+
     def render_my_history(filter_type_keyword):
         st.markdown("---")
         st.markdown(f"#### {L['history_header']}")
@@ -248,55 +253,59 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
         else:
             st.info(L["no_requests"])
 
-    # 4. 主管審核 Tab
+    # 4. 主管審核 Tab（嚴格依據登入者身分過濾）
     with tab_review:
         st.markdown(f"### {L['review_header']}")
-        pending_items = [item for item in st.session_state.approval_db if item['stage_idx'] < len(item['stages']) - 1]
         
-        if pending_items:
-            review_opts = {f"{item['id']} - {item['type']} ({item['applicant']})": item for item in pending_items}
-            selected_rev_key = st.selectbox(L["select_review_item"], list(review_opts.keys()))
-            target_item = review_opts[selected_rev_key]
-
-            st.markdown(f"**目前關卡**: `{target_item['stages'][target_item['stage_idx']]}`")
-            st.markdown(f"**申請事由**: {target_item['reason']}")
-            if target_item.get('item_name'):
-                st.markdown(f"**採購項目**: {target_item['item_name']} | **數量**: {target_item.get('qty', 1)} | **金額**: {target_item['amount']:,.0f} VND")
+        if is_manager_or_admin:
+            pending_items = [item for item in st.session_state.approval_db if item['stage_idx'] < len(item['stages']) - 1]
             
-            comment = st.text_input(L["lbl_comment"], value="同意辦理")
+            if pending_items:
+                review_opts = {f"{item['id']} - {item['type']} ({item['applicant']})": item for item in pending_items}
+                selected_rev_key = st.selectbox(L["select_review_item"], list(review_opts.keys()))
+                target_item = review_opts[selected_rev_key]
 
-            col_a, col_b = st.columns(2)
-            if col_a.button(L["btn_approve"], type="primary", use_container_width=True):
-                curr_idx = target_item['stage_idx']
-                target_item['history'][curr_idx]['status'] = "已通過"
-                target_item['history'][curr_idx]['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-                target_item['history'][curr_idx]['by'] = st.session_state.get("user_name", "主管")
+                st.markdown(f"**目前關卡**: `{target_item['stages'][target_item['stage_idx']]}`")
+                st.markdown(f"**申請事由**: {target_item['reason']}")
+                if target_item.get('item_name'):
+                    st.markdown(f"**採購項目**: {target_item['item_name']} | **數量**: {target_item.get('qty', 1)} | **金額**: {target_item['amount']:,.0f} VND")
+                
+                comment = st.text_input(L["lbl_comment"], value="同意辦理")
 
-                target_item['stage_idx'] += 1
-                if target_item['stage_idx'] >= len(target_item['stages']) - 1:
-                    target_item['stage_idx'] = len(target_item['stages']) - 1
-                    target_item['status'] = "簽核完成 (Approved)"
-                else:
-                    next_stage = target_item['stages'][target_item['stage_idx']]
-                    target_item['status'] = f"進行中 (等待 {next_stage})"
-                    target_item['history'].append({
-                        "stage": next_stage,
-                        "status": "審核中 (等待中)",
-                        "by": "指定簽核人",
-                        "time": "未審核"
-                    })
+                col_a, col_b = st.columns(2)
+                if col_a.button(L["btn_approve"], type="primary", use_container_width=True):
+                    curr_idx = target_item['stage_idx']
+                    target_item['history'][curr_idx]['status'] = "已通過"
+                    target_item['history'][curr_idx]['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                    target_item['history'][curr_idx]['by'] = current_user
 
-                st.success(L["success_approve"].format(doc_id=target_item['id']))
-                st.rerun()
+                    target_item['stage_idx'] += 1
+                    if target_item['stage_idx'] >= len(target_item['stages']) - 1:
+                        target_item['stage_idx'] = len(target_item['stages']) - 1
+                        target_item['status'] = "簽核完成 (Approved)"
+                    else:
+                        next_stage = target_item['stages'][target_item['stage_idx']]
+                        target_item['status'] = f"進行中 (等待 {next_stage})"
+                        target_item['history'].append({
+                            "stage": next_stage,
+                            "status": "審核中 (等待中)",
+                            "by": "指定簽核人",
+                            "time": "未審核"
+                        })
 
-            if col_b.button(L["btn_reject"], type="secondary", use_container_width=True):
-                target_item['status'] = "已駁回 (Rejected)"
-                target_item['history'][target_item['stage_idx']]['status'] = "已駁回"
-                target_item['history'][target_item['stage_idx']]['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-                st.error(L["success_reject"].format(doc_id=target_item['id']))
-                st.rerun()
+                    st.success(L["success_approve"].format(doc_id=target_item['id']))
+                    st.rerun()
+
+                if col_b.button(L["btn_reject"], type="secondary", use_container_width=True):
+                    target_item['status'] = "已駁回 (Rejected)"
+                    target_item['history'][target_item['stage_idx']]['status'] = "已駁回"
+                    target_item['history'][target_item['stage_idx']]['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                    st.error(L["success_reject"].format(doc_id=target_item['id']))
+                    st.rerun()
+            else:
+                st.info("目前沒有需要您簽核的待辦案件。")
         else:
-            st.info("目前沒有需要您簽核的待辦案件。")
+            st.info("您目前登入的帳號無主管審核權限。")
 
 def show(*args, **kwargs):
     render_approval_center(*args, **kwargs)
