@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 
 def render_employee_management(engine=None, t=None, lang="繁體中文", **kwargs):
-    # 根據不同語系顯示標題與提示
     if lang == "Tiếng Việt":
         st.title("👤 Quản lý Nhân sự & Hồ sơ Nhân viên")
         st.info("Nơi quản lý hồ sơ nhân viên, hợp đồng, khu vực làm việc và dữ liệu nhân sự toàn nhà máy.")
@@ -55,30 +54,27 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                     fac_choices = ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"]
                 e_fac = st.selectbox("工作廠區 (Factory)", fac_choices)
                 
-                # 根據語系調整部門選項顯示
+                # 排除資訊管理部，僅保留一般公司部門
                 if lang == "Tiếng Việt":
                     dept_display_map = {
                         "管理部": "Phòng Quản lý (Management Dept)",
                         "營運戰情室": "Ban Giám đốc (Executive)",
                         "工程與設計管理中心": "Trung tâm Kỹ thuật & Thiết kế",
-                        "生產部": "Phòng Sản xuất (Production Dept)",
-                        "資訊管理部": "Phòng IT (IT & System)"
+                        "生產部": "Phòng Sản xuất (Production Dept)"
                     }
                 elif lang == "English":
                     dept_display_map = {
                         "管理部": "Management Dept",
                         "營運戰情室": "Executive Management",
                         "工程與設計管理中心": "Engineering & Design Center",
-                        "生產部": "Production Dept",
-                        "資訊管理部": "Information Technology (IT)"
+                        "生產部": "Production Dept"
                     }
                 else:
                     dept_display_map = {
                         "管理部": "管理部",
                         "營運戰情室": "營運戰情室",
                         "工程與設計管理中心": "工程與設計管理中心",
-                        "生產部": "生產部",
-                        "資訊管理部": "資訊管理部"
+                        "生產部": "生產部"
                     }
                 
                 dept_keys = list(dept_display_map.keys())
@@ -87,7 +83,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
 
                 e_title = st.text_input("職稱 / 職務", placeholder="例如: 現場工程師 / 技術員")
 
-                # 系統權限角色：依據當前語系顯示對應語系文字
                 if lang == "Tiếng Việt":
                     role_display_map = {
                         "staff": "Nhân viên chung (Staff)",
