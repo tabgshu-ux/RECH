@@ -12,7 +12,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 "戶籍地址": "台北市信義區...", "保險資料": "TW-INS-888899", "保險醫院": "台北榮民總醫院", "生物辨識代碼": "FACE-BIO-888899"
             },
             {
-                "工號": "VN-003", "姓名": "張小華", "國籍": "越南 (Vietnam)", "工作廠區": "西寧廠 (Tay Ninh)", "部門": "生產一課 (射出)", "職稱": "射出工程師", "角色": "staff", "電話": "0912345678", 
+                "工號": "VN-003", "姓名": "張小華", "國籍": "越南 (Vietnam)", "工作廠區": "西寧廠 (Tay Ninh)", "部門": "生產部", "職稱": "生產工程師", "角色": "staff", "電話": "0912345678", 
                 "戶籍地址": "台北市信義區忠孝東路", "身分證字號": "038095009999", "入職日期": "2026/10/07", "醫保指定醫院": "Bệnh viện Quốc tế Hạnh Phúc", "合約原署日期": "2026/10/07", "約定起薪": "9000000.00", "每月社醫保扣繳": "945000.00", "津貼總計": "1530000.00", "生物辨識代碼": "FACE-BIO-100234"
             }
         ]
@@ -43,11 +43,12 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             c1, c2 = st.columns(2)
             with c1:
                 e_id = st.text_input("員工工號 (Emp ID) *", value=f"VN-{len(st.session_state.employee_db)+1:03d}" if "越南" in nat_choice else f"TW-{len(st.session_state.employee_db)+1:03d}", key="add_e_id")
-                e_dept = st.selectbox("所屬部門", ["生產一課 (射出)", "管理部", "營運戰情室", "工程與設計管理中心", "生產部"], key="add_e_dept")
+                # 嚴格使用標準部門，不包含任何自訂或多餘課別
+                e_dept = st.selectbox("所屬部門", ["管理部", "營運戰情室", "工程與設計管理中心", "生產部"], key="add_e_dept")
                 e_phone = st.text_input("聯絡電話 (Phone) *", placeholder="0912345678", key="add_e_phone")
             with c2:
                 e_name = st.text_input("員工全名 (Full Name) *", placeholder="請輸入姓名...", key="add_e_name")
-                e_title = st.text_input("職位名稱", placeholder="例如: 射出工程師", key="add_e_title")
+                e_title = st.text_input("職位名稱", placeholder="例如: 現場工程師 / 技術員", key="add_e_title")
                 e_role = st.selectbox("系統權限角色 (Role)", ["staff (一般員工)", "manager (部門主管)", "security (保全)", "admin (系統管理員)"], key="add_e_role")
 
             e_addr = st.text_input("居住/戶籍地址 (Address) *", placeholder="請輸入完整地址...", key="add_e_addr")
