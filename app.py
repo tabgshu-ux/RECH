@@ -81,7 +81,7 @@ NAV_STRUCTURE = {
                 "features": {
                     "👤 員工個人檔案與人事管理": "hr_employee",
                     "📍 外勤員工打卡資料與出勤統計計算": "field_attendance",
-                    "🏭 廠區與工作廠區管理 (新增/修改/刪除/搜尋)": "factory_mgmt",
+                    "🏭 廠區與工作廠區管理": "factory_mgmt",
                     "🚗 廠區車輛進出口門禁紀錄": "vehicle_gate",
                     "🛠️ 車輛維修保養紀錄": "vehicle_maintenance",
                     "🛒 採購與應付帳款 (AP)": "procurement_ap",
@@ -141,7 +141,7 @@ NAV_STRUCTURE = {
                 "features": {
                     "👤 Hồ sơ nhân sự": "hr_employee",
                     "📍 Chấm công GPS & Thống kê": "field_attendance",
-                    "🏭 Quản lý Nhà máy / Cơ sở": "factory_mgmt",
+                    "🏭 Quản lý Nhà máy": "factory_mgmt",
                     "🚗 Quản lý xe ra vào": "vehicle_gate",
                     "🛠️ Bảo trì xe": "vehicle_maintenance",
                     "🛒 Mua hàng & Phải trả (AP)": "procurement_ap",
@@ -159,4 +159,129 @@ NAV_STRUCTURE = {
             },
             "🏭 Phòng Sản xuất (Production Dept)": {
                 "features": {
-                    "📦 [Kho] Quản lý
+                    "📦 [Kho] Quản lý Kho & Mã vạch": "wh_management",
+                    "✂️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
+                    "🎨 [Sơn] Tổ Sơn tĩnh điện": "painting",
+                    "⚡ [Lắp ráp] Tổ Lắp ráp Tủ điện": "assembly",
+                }
+            },
+            "💻 Phòng IT (IT & System)": {
+                "features": {
+                    "🔒 Quản lý Phân quyền": "it_admin",
+                    "🎛️ Phân quyền Bản quyền ERP": "it_licensing",
+                }
+            },
+        },
+    },
+    "English": {
+        "company_name": "REETECH INDUSTRIAL CO., LTD",
+        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
+        "login_title": "⚡ REETECH INDUSTRIAL - System Login",
+        "username": "Username",
+        "password": "Password",
+        "login_btn": "🔑 Login",
+        "logout_btn": "🚪 Logout",
+        "lang_selector": "🌐 Select Language",
+        "parent_header": "Select Department:",
+        "sub_header": "Select Unit & Features:",
+        "departments": {
+            "📈 Executive Management": {
+                "features": {
+                    "🔴 Raw Material Prices & FX": "commodities_fx",
+                    "📊 Financial Analytics": "financials_pl",
+                    "⚡ Engineering Project Progress": "project_progress_exec",
+                }
+            },
+            "✍️ E-Approval Center": {
+                "features": {
+                    "✍️ Submit Leave/Purchase & Track Workflow": "approval_center",
+                }
+            },
+            "👔 Management Dept (GA & Finance)": {
+                "features": {
+                    "👤 HR Records": "hr_employee",
+                    "📍 GPS Attendance & Stats": "field_attendance",
+                    "🏭 Factory Management": "factory_mgmt",
+                    "🚗 Vehicle Gate Log": "vehicle_gate",
+                    "🛠️ Vehicle Maintenance": "vehicle_maintenance",
+                    "🛒 Procurement & AP": "procurement_ap",
+                    "📋 Accounts Receivable": "sales_order_ar",
+                    "💰 Payroll Management": "payroll_calc",
+                    "📄 E-Invoice Management": "invoice_management",
+                }
+            },
+            "🛠️ Engineering & Design Management Center": {
+                "features": {
+                    "⚡ [Engineering] Quotation & AR Transfer": "eng_quote",
+                    "📊 [Engineering] M&E Acceptance & Progress": "eng_progress",
+                    "🎨 [Design] Drawings Storage & Download": "eng_design",
+                }
+            },
+            "🏭 Production Dept": {
+                "features": {
+                    "📦 [Warehouse] Material Barcodes": "wh_management",
+                    "✂️ [Sheet Metal] Processing Dept": "sheet_metal",
+                    "🎨 [Coating] Powder Coating Dept": "painting",
+                    "⚡ [Assembly] Switchgear Assembly": "assembly",
+                }
+            },
+            "💻 Information Technology (IT)": {
+                "features": {
+                    "🔒 User Permissions": "it_admin",
+                    "🎛️ Client ERP Licensing": "it_licensing",
+                }
+            },
+        },
+    },
+}
+
+if "current_lang" not in st.session_state:
+    st.session_state.current_lang = "繁體中文"
+
+engine = db_conn.get_db_engine()
+
+def safe_call_module(func, *args, **kwargs):
+    if not callable(func):
+        return
+    try:
+        sig = inspect.signature(func)
+        valid_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
+        if "engine" in sig.parameters and "engine" not in valid_kwargs:
+            valid_kwargs["engine"] = engine
+        func(*args, **valid_kwargs)
+    except Exception:
+        try:
+            func()
+        except Exception as e:
+            st.error(f"模組載入異常: {str(e)}")
+
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+    st.session_state.user_role = ""
+    st.session_state.user_name = ""
+
+lang_dict = NAV_STRUCTURE.get(
+    st.session_state.current_lang, NAV_STRUCTURE["繁體中文"]
+)
+
+if not st.session_state.logged_in:
+    st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
+    st.title(lang_dict["login_title"])
+    st.caption(lang_dict["company_sub"])
+    st.markdown("---")
+    col1, _ = st.columns([1, 2])
+    with col1:
+        username = st.text_input(
+            f"{lang_dict['username']} (admin / manager / security / staff)"
+        )
+        password = st.text_input(
+            f"{lang_dict['password']} (123)", type="password"
+        )
+        if st.button(lang_dict["login_btn"], use_container_width=True):
+            if password == "123":
+                st.session_state.logged_in = True
+                u_clean = username.strip().lower()
+                if u_clean in ["admin", "executive", "boss"]:
+                    st.session_state.user_role = "admin"
+                elif u_clean in ["manager", "supervisor"]:
+                    st.
