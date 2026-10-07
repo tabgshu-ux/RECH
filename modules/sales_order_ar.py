@@ -8,12 +8,12 @@ from sqlalchemy import text
 # ----------------------------------------------------
 AR_I18N = {
     "繁體中文": {
-        "title": "📋 管理部 - 客戶應收帳款 (AR) & 工程分期與對帳中心",
+        "title": "📋 管理部 - 客戶應收帳款 (AR) & 專案分期進度管理",
         "caption": "記錄客戶工程合約總額、動態分期付款排程管理、專案說明與進度實時追蹤。",
         "tab_list": "📑 客戶應收款項總表與進度",
         "tab_edit": "✍️ 修改進行進度說明與催收歷程",
         "tab_add": "➕ 登記新應收帳款專案",
-        "table_header": "📋 客戶應收帳款專案清冊 (含工程對帳明細)",
+        "table_header": "📋 客戶應收帳款專案清冊",
         "no_records": "目前無應收帳款紀錄。",
         "read_error": "讀取資料失敗: ",
         "edit_header": "✍️ 修改專案進行進度說明與催收紀錄",
@@ -32,7 +32,7 @@ AR_I18N = {
         "project_name_label": "工程名稱 *",
         "project_placeholder": "西寧廠 2000A 配電櫃新建工程",
         "currency_label": "交易幣別 *",
-        "currency_opts": ["越南盾 (VND)", "美金 (USD)", "台幣 (TWD)", "人民幣 (CNY)"],
+        "currency_opts": ["越南盾", "美金", "台幣", "人民幣"],
         "usd_label": "總帳款 (USD - 精確至小數點後 3 位) *",
         "total_lbl": "總帳款 *",
         "plan_type_label": "付款期數模式 *",
@@ -58,6 +58,7 @@ AR_I18N = {
         "save_new_btn": "💾 儲存並建立應收請款專案",
         "create_success": "專案 `{inv_id}` 建立成功！",
         "fill_warning": "⚠️ 請完整填寫客戶名稱與工程名稱！",
+        # 表格動態標題
         "col_index": "STT",
         "col_inv_id": "請款編號",
         "col_entity": "客戶名稱",
@@ -71,7 +72,7 @@ AR_I18N = {
         "col_reason": "最新催收理由/歷程"
     },
     "Tiếng Việt": {
-        "title": "📋 Khối Quản lý - Phải thu Khách hàng (AR) & Đối soát Công trình",
+        "title": "📋 Khối Quản lý - Phải thu Khách hàng (AR) & Tiến độ Dự án",
         "caption": "Quản lý tổng số tiền hợp đồng, lịch trình thanh toán theo đợt, cập nhật tiến độ.",
         "tab_list": "📑 Danh sách Phải thu & Tiến độ",
         "tab_edit": "✍️ Cập nhật Tiến độ & Lý do thu nợ",
@@ -83,8 +84,8 @@ AR_I18N = {
         "select_project": "Chọn dự án cần cập nhật tiến độ:",
         "current_project": "Dự án hiện tại",
         "total_amount_label": "Tổng tiền",
-        "new_progress_label": "Cập nhật Mô tả tiến độ *",
-        "new_reason_label": "Cập nhật/Bổ sung Lý do thu nợ & phản hồi từ khách hàng",
+        "new_progress_label": "Cập nhật \"Mô tả tiến độ\" *",
+        "new_reason_label": "Cập nhật/Bổ sung \"Lý do thu nợ & phản hồi từ khách hàng\"",
         "modifier_label": "Họ tên người sửa*",
         "save_update_btn": "💾 Lưu và cập nhật tiến độ dự án",
         "update_success": "Đã cập nhật tiến độ và lý do thu nợ cho hóa đơn `{target_id}`!",
@@ -121,6 +122,7 @@ AR_I18N = {
         "save_new_btn": "💾 Lưu và đăng ký dự án phải thu",
         "create_success": "Đã tạo thành công dự án `{inv_id}`!",
         "fill_warning": "⚠️ Vui lòng điền đầy đủ Tên khách hàng và Tên công trình!",
+        # 表格動態標題
         "col_index": "STT",
         "col_inv_id": "Mã hóa đơn",
         "col_entity": "Tên khách hàng",
@@ -184,6 +186,7 @@ AR_I18N = {
         "save_new_btn": "💾 Save & Register AR Project",
         "create_success": "Project `{inv_id}` successfully created!",
         "fill_warning": "⚠️ Please fill in Client Name and Project Name!",
+        # 表格動態標題
         "col_index": "No.",
         "col_inv_id": "Invoice ID",
         "col_entity": "Client Name",
@@ -198,17 +201,67 @@ AR_I18N = {
     }
 }
 
+# ----------------------------------------------------
+# 🔄 智慧模糊語意對照引擎 (支援關鍵字比對與互轉)
+# ----------------------------------------------------
 def smart_translate(text_val, target_lang):
     if not text_val or not isinstance(text_val, str) or text_val.strip() in ["None", "-", ""]:
         if target_lang == "Tiếng Việt": return "Chưa cập nhật"
         elif target_lang == "English": return "N/A"
         return "-"
+
+    val_lower = text_val.lower()
+
+    # 1. 客戶名稱智慧對應 (支援中越互轉)
+    if "樟榜" in text_val or "trảng bàng" in val_lower or "tay ninh" in val_lower or "工業區" in text_val:
+        if target_lang == "Tiếng Việt":
+            return "Nhà máy A KCN Trảng Bàng, Tây Ninh"
+        elif target_lang == "繁體中文":
+            return "越南樟榜工業區A廠"
+        elif target_lang == "English":
+            return "Tay Ninh Plant Client A"
+
+    # 2. 工程名稱智慧對應 (支援中越互轉)
+    if "西寧" in text_val or "2000a" in val_lower or "配電櫃" in text_val or "tủ điện" in val_lower or "新建工程" in text_val:
+        if target_lang == "Tiếng Việt":
+            return "Lắp đặt tủ điện 2000A nhà máy Tây Ninh"
+        elif target_lang == "繁體中文":
+            return "西寧廠 2000A 配電櫃新建工程"
+        elif target_lang == "English":
+            return "Tay Ninh 2000A Switchboard Installation"
+
+    # 3. 進度說明智慧對應
+    if "備料" in text_val or "準備" in text_val or "chuẩn bị" in val_lower or "thi công" in val_lower:
+        if target_lang == "Tiếng Việt":
+            return "Đang chuẩn bị vật tư / Chuẩn bị thi công"
+        elif target_lang == "繁體中文":
+            return "工程備料中 / 準備施工"
+        elif target_lang == "English":
+            return "Material preparation / Preparing construction"
+
+    # 4. 付款期數模式對應
+    if "不分期" in text_val or "1" in text_val and "đợt" in val_lower or "single" in val_lower or "lump" in val_lower:
+        if target_lang == "Tiếng Việt": return "Thanh toán 1 lần"
+        elif target_lang == "繁體中文": return "不分期"
+        return "Single"
+    if "分三期" in text_val or "3" in text_val:
+        if target_lang == "Tiếng Việt": return "Thanh toán 3 đợt"
+        elif target_lang == "繁體中文": return "分三期"
+        return "3 Installments"
+    if "分五期" in text_val or "5" in text_val:
+        if target_lang == "Tiếng Việt": return "Thanh toán 5 đợt"
+        elif target_lang == "繁體中文": return "分五期"
+        return "5 Installments"
+
+    # 若未命中預設對照，直接回傳原字串避免空白
     return text_val
 
 def format_curr(amt, curr):
     if not curr: curr = "越南盾"
     if "VND" in curr or "越南盾" in curr or "Đồng" in curr: return f"₫ {amt:,.0f} VND"
     elif "USD" in curr or "美金" in curr or "Đô la" in curr: return f"$ {amt:,.3f} USD"
+    elif "TWD" in curr or "台幣" in curr or "Đài tệ" in curr: return f"NT$ {amt:,.0f} TWD"
+    elif "CNY" in curr or "人民幣" in curr or "Nhân dân tệ" in curr: return f"¥ {amt:,.2f} CNY"
     return f"{amt:,.3f} {curr}"
 
 def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
@@ -220,34 +273,223 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
 
     tab_list, tab_edit, tab_add = st.tabs([L["tab_list"], L["tab_edit"], L["tab_add"]])
 
-    # 1. 應收帳款總覽清單與工程對帳單明細
+    # 1. 應收帳款總覽清單
     with tab_list:
         st.subheader(L["table_header"])
-        default_ar_records = [
-            {"invoice_id": "HD-2026-01", "entity_name": "和鼎隆建築責任有限公司 (Ho Team)", "project_name": "廠房電力系統與給排水統包工程", "currency": "VND", "quoted_amount": 222171208288.0, "payment_terms": "分五期", "installment_ratios": "20% / 20% / 20% / 20% / 20%", "progress_note": "施工完成 71.4%, 待驗收", "project_desc": "合約總價 222,171,208,288 VND | 已收: 160,661,508,865 VND | AR: 61,509,699,423 VND", "uncollected_reason": "正常履約中"},
-            {"invoice_id": "HD-2026-02", "entity_name": "第一傳動越南責任有限公司 (Timotion)", "project_name": "高低壓配電站與自動化線路", "currency": "VND", "quoted_amount": 50978160000.0, "payment_terms": "分五期", "installment_ratios": "30% / 20% / 30% / 15% / 5%", "progress_note": "變電站與配電盤送電完成", "project_desc": "合約總價 50,978,160,000 VND | 已收: 14,488,848,000 VND | AR: 36,489,312,000 VND", "uncollected_reason": "待驗收合格後請款"},
-            {"invoice_id": "HD-2026-03", "entity_name": "越南佳威實業有限公司 (Jia Wei)", "project_name": "寧平省美順工業區電力及給排水系統", "currency": "VND", "quoted_amount": 21859200000.0, "payment_terms": "分四期", "installment_ratios": "30% / 20% / 30% / 20%", "progress_note": "過路橋架施工完成，電站送電中", "project_desc": "合約總價 21,859,200,000 VND | 已收: 0 VND | AR: 21,859,200,000 VND", "uncollected_reason": "依約定進度請款中"},
-            {"invoice_id": "HD-2026-04", "entity_name": "彥豪智能科技（越南）責任有限公司", "project_name": "智能廠房電力與控制系統", "currency": "VND", "quoted_amount": 40955200000.0, "payment_terms": "分三期", "installment_ratios": "20% / 50% / 30%", "progress_note": "簽定訂金完成，依驗收記錄請款", "project_desc": "合約總價 40,955,200,000 VND | 已收: 13,078,029,218 VND | AR: 27,877,170,782 VND", "uncollected_reason": "等待工程驗收單確認"}
-        ]
-
-        df_ar = pd.DataFrame()
         if engine:
             try:
                 df_ar = pd.read_sql("SELECT * FROM invoices WHERE invoice_type='AR'", engine)
-            except Exception:
-                pass
+                if not df_ar.empty:
+                    display_list = []
+                    for idx, r in df_ar.iterrows():
+                        entity_display = smart_translate(r.get("entity_name"), active_lang)
+                        project_display = smart_translate(r.get("project_name"), active_lang)
+                        progress_display = smart_translate(r.get("progress_note"), active_lang)
+                        terms_display = smart_translate(r.get("payment_terms"), active_lang)
+                        desc_display = smart_translate(r.get("project_desc"), active_lang)
 
-        if df_ar.empty:
-            df_ar = pd.DataFrame(default_ar_records)
+                        display_list.append({
+                            L["col_index"]: idx + 1,
+                            L["col_inv_id"]: r.get("invoice_id"),
+                            L["col_entity"]: entity_display,
+                            L["col_project"]: project_display,
+                            L["col_currency"]: r.get("currency"),
+                            L["col_total"]: format_curr(r.get("quoted_amount", 0.0), r.get("currency")),
+                            L["col_terms"]: terms_display,
+                            L["col_ratios"]: r.get("installment_ratios", "100%"),
+                            L["col_progress"]: progress_display,
+                            L["col_desc"]: desc_display if desc_display != "-" else "-",
+                            L["col_reason"]: r.get("uncollected_reason", "-")
+                        })
+                    st.dataframe(pd.DataFrame(display_list), use_container_width=True)
+                else:
+                    st.info(L["no_records"])
+            except Exception as e:
+                st.error(f"{L['read_error']}{e}")
 
-        if not df_ar.empty:
-            display_list = []
-            for idx, r in df_ar.iterrows():
-                entity_display = smart_translate(str(r.get("entity_name", "")), active_lang)
-                project_display = smart_translate(str(r.get("project_name", "")), active_lang)
-                progress_display = smart_translate(str(r.get("progress_note", "")), active_lang)
-                terms_display = smart_translate(str(r.get("payment_terms", "")), active_lang)
-                desc_display = smart_translate(str(r.get("project_desc", "")), active_lang)
+    # 2. 修改進行進度說明與催收歷程
+    with tab_edit:
+        st.subheader(L["edit_header"])
+        if engine:
+            try:
+                df_ar = pd.read_sql("SELECT * FROM invoices WHERE invoice_type='AR'", engine)
+                if not df_ar.empty:
+                    ar_opts = {f"{r['invoice_id']} - {smart_translate(r['entity_name'], active_lang)} ({smart_translate(r['project_name'], active_lang)})": r['invoice_id'] for _, r in df_ar.iterrows()}
+                    sel_label = st.selectbox(L["select_project"], list(ar_opts.keys()))
+                    target_id = ar_opts[sel_label]
+                    target_row = df_ar[df_ar['invoice_id'] == target_id].iloc[0]
 
-                display_list.append({
-                    L["col_index"]:
+                    proj_name_disp = smart_translate(target_row['project_name'], active_lang)
+                    st.markdown(f"**{L['current_project']}**：`{proj_name_disp}` | **{L['total_amount_label']}**：{format_curr(target_row['quoted_amount'], target_row['currency'])}")
+                    
+                    with st.form("form_update_ar_progress"):
+                        default_prog = smart_translate(target_row.get("progress_note", ""), active_lang)
+                        new_progress = st.text_area(L["new_progress_label"], value=default_prog)
+                        new_reason = st.text_area(L["new_reason_label"], value=target_row.get("uncollected_reason", ""))
+                        modifier = st.text_input(L["modifier_label"], value=st.session_state.get("user_name", "admin"))
+
+                        if st.form_submit_button(L["save_update_btn"], use_container_width=True):
+                            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                            full_reason = f"【{timestamp} 修改人:{modifier}】{new_reason}"
+                            
+                            with engine.connect() as conn:
+                                conn.execute(
+                                    text("""
+                                        UPDATE invoices 
+                                        SET progress_note = :prog,
+                                            uncollected_reason = :reason,
+                                            quoter_name = :quoter
+                                        WHERE invoice_id = :id
+                                    """),
+                                    {"prog": new_progress, "reason": full_reason, "quoter": modifier, "id": target_id}
+                                )
+                                conn.commit()
+                            st.success(L["update_success"].format(target_id=target_id))
+                            st.rerun()
+            except Exception as e:
+                st.error(f"{L['read_error']}{e}")
+
+    # 3. 新增請款專案
+    with tab_add:
+        st.subheader(L["add_header"])
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            inv_id = st.text_input(L["inv_id_label"], value=f"AR-2026-{datetime.datetime.now().strftime('%m%d%H%M')}")
+            entity_name = st.text_input(L["entity_name_label"], placeholder=L["entity_placeholder"])
+            project_name = st.text_input(L["project_name_label"], placeholder=L["project_placeholder"])
+            currency = st.selectbox(L["currency_label"], L["currency_opts"])
+            
+            if "USD" in currency or "美金" in currency or "Đô la" in currency:
+                total_amount = st.number_input(L["usd_label"], min_value=0.0, value=10000.000, format="%.3f", step=0.001)
+            else:
+                total_amount = st.number_input(L["total_lbl"], min_value=0.0, value=100000.0, step=1000.0)
+
+        with c2:
+            plan_type = st.selectbox(L["plan_type_label"], L["plan_opts"])
+            project_desc = st.text_area(L["proj_desc_label"], placeholder=L["proj_desc_placeholder"])
+            progress_note = st.text_input(L["progress_note_label"], value="工程備料中 / 準備施工" if active_lang == "繁體中文" else "Đang chuẩn bị vật tư / Chuẩn bị thi công")
+
+        st.markdown("---")
+        st.markdown(f"##### {L['milestone_header']}")
+
+        ratios_str = "100%"
+        p1_amt, p2_amt, p3_amt, p4_amt, p5_amt = total_amount, 0.0, 0.0, 0.0, 0.0
+        d1, d2, d3, d4, d5 = datetime.date.today(), datetime.date.today(), datetime.date.today(), datetime.date.today(), datetime.date.today()
+
+        is_single = ("不分期" in plan_type) or ("1" in plan_type and "đợt" in plan_type) or ("Single" in plan_type)
+        is_three = ("分三期" in plan_type) or ("3" in plan_type)
+        is_five = ("分五期" in plan_type) or ("5" in plan_type)
+
+        if is_single:
+            d1 = st.date_input(L["payment_date_label"], value=datetime.date.today() + datetime.timedelta(days=30), key="ar_d_single")
+            st.info(f"{L['single_pay_info']} {format_curr(total_amount, currency)}")
+
+        elif is_three:
+            col_r1, col_r2, col_r3 = st.columns(3)
+            with col_r1:
+                r1 = st.number_input("第 1 期比率 (%)" if active_lang=="繁體中文" else "Tỷ lệ đợt 1 (%)", min_value=0.0, max_value=100.0, value=30.0, step=1.0, key="ar_3r1")
+            with col_r2:
+                r2 = st.number_input("第 2 期比率 (%)" if active_lang=="繁體中文" else "Tỷ lệ đợt 2 (%)", min_value=0.0, max_value=100.0, value=40.0, step=1.0, key="ar_3r2")
+            with col_r3:
+                r3 = st.number_input("第 3 期比率 (%)" if active_lang=="繁體中文" else "Tỷ lệ đợt 3 (%)", min_value=0.0, max_value=100.0, value=30.0, step=1.0, key="ar_3r3")
+            
+            total_pct = r1 + r2 + r3
+            if abs(total_pct - 100.0) > 0.01:
+                st.warning(L["ratio_warning"].format(total_pct=total_pct))
+            else:
+                st.success(L["ratio_success"])
+
+            ratios_str = f"{r1}% / {r2}% / {r3}%"
+            p1_amt = total_amount * (r1 / 100.0)
+            p2_amt = total_amount * (r2 / 100.0)
+            p3_amt = total_amount * (r3 / 100.0)
+
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.write(f"• **{L['period_1_amt']}**：`{format_curr(p1_amt, currency)}`")
+                d1 = st.date_input(L["period_1_date"], value=datetime.date.today() + datetime.timedelta(days=7), key="ar_3d1")
+                st.write(f"• **{L['period_2_amt']}**：`{format_curr(p2_amt, currency)}`")
+                d2 = st.date_input(L["period_2_date"], value=datetime.date.today() + datetime.timedelta(days=30), key="ar_3d2")
+            with col_b:
+                st.write(f"• **{L['period_3_amt']}**：`{format_curr(p3_amt, currency)}`")
+                d3 = st.date_input(L["period_3_date"], value=datetime.date.today() + datetime.timedelta(days=60), key="ar_3d3")
+
+        elif is_five:
+            col_r1, col_r2, col_r3, col_r4, col_r5 = st.columns(5)
+            with col_r1:
+                r1 = st.number_input("第 1 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r1")
+            with col_r2:
+                r2 = st.number_input("第 2 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r2")
+            with col_r3:
+                r3 = st.number_input("第 3 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r3")
+            with col_r4:
+                r4 = st.number_input("第 4 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r4")
+            with col_r5:
+                r5 = st.number_input("第 5 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r5")
+
+            total_pct = r1 + r2 + r3 + r4 + r5
+            if abs(total_pct - 100.0) > 0.01:
+                st.warning(L["ratio_warning"].format(total_pct=total_pct))
+            else:
+                st.success(L["ratio_success"])
+
+            ratios_str = f"{r1}% / {r2}% / {r3}% / {r4}% / {r5}%"
+            p1_amt = total_amount * (r1 / 100.0)
+            p2_amt = total_amount * (r2 / 100.0)
+            p3_amt = total_amount * (r3 / 100.0)
+            p4_amt = total_amount * (r4 / 100.0)
+            p5_amt = total_amount * (r5 / 100.0)
+
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.write(f"• **{L['period_1_amt']}**：`{format_curr(p1_amt, currency)}`")
+                d1 = st.date_input(L["period_1_date"], value=datetime.date.today() + datetime.timedelta(days=7), key="ar_5d1")
+                st.write(f"• **{L['period_2_amt']}**：`{format_curr(p2_amt, currency)}`")
+                d2 = st.date_input(L["period_2_date"], value=datetime.date.today() + datetime.timedelta(days=30), key="ar_5d2")
+                st.write(f"• **{L['period_3_amt']}**：`{format_curr(p3_amt, currency)}`")
+                d3 = st.date_input(L["period_3_date"], value=datetime.date.today() + datetime.timedelta(days=60), key="ar_5d3")
+            with col_b:
+                st.write(f"• **{L['period_4_amt']}**：`{format_curr(p4_amt, currency)}`")
+                d4 = st.date_input(L["period_4_date"], value=datetime.date.today() + datetime.timedelta(days=90), key="ar_5d4")
+                st.write(f"• **{L['period_5_amt']}**：`{format_curr(p5_amt, currency)}`")
+                d5 = st.date_input(L["period_5_date"], value=datetime.date.today() + datetime.timedelta(days=120), key="ar_5d5")
+
+        st.markdown("")
+        if st.button(L["save_new_btn"], type="primary", use_container_width=True):
+            if entity_name and project_name:
+                if engine:
+                    with engine.connect() as conn:
+                        conn.execute(
+                            text("""
+                                INSERT INTO invoices (
+                                    invoice_id, entity_name, project_name, currency, amount, quoted_amount, 
+                                    payment_terms, installment_ratios, project_desc, progress_note, 
+                                    due_date, invoice_type, is_paid
+                                ) VALUES (
+                                    :id, :entity, :prj, :curr, :amt, :q_amt, 
+                                    :terms, :ratios, :desc, :prog, 
+                                    :due, 'AR', false
+                                )
+                            """),
+                            {
+                                "id": inv_id, "entity": entity_name, "prj": project_name, "curr": currency,
+                                "amt": p1_amt, "q_amt": total_amount, "terms": plan_type, "ratios": ratios_str,
+                                "desc": project_desc, "prog": progress_note, "due": d1
+                            }
+                        )
+                        conn.commit()
+                st.success(L["create_success"].format(inv_id=inv_id))
+                st.rerun()
+            else:
+                st.warning(L["fill_warning"])
+
+# 💡 確保主程式所有可能的呼叫方式皆能 100% 相容對應
+def show(*args, **kwargs):
+    render_sales_order_ar_page(*args, **kwargs)
+
+def main(*args, **kwargs):
+    render_sales_order_ar_page(*args, **kwargs)
+
+def render_sales_order_ar(*args, **kwargs):
+    render_sales_order_ar_page(*args, **kwargs)
