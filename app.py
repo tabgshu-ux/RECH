@@ -61,7 +61,7 @@ NAV_STRUCTURE = {
         "login_btn": "🔑 登入系統",
         "logout_btn": "🚪 登出系統",
         "lang_selector": "🌐 語言設定 / Language",
-        "parent_header": "請選擇一級部門：",
+        "parent_header": "請選擇一級部門 / 系統：",
         "sub_header": "選擇子部門與功能：",
         "departments": {
             "📈 營運戰情室 (Executive)": {
@@ -71,11 +71,15 @@ NAV_STRUCTURE = {
                     "⚡ 工程專案進度與驗收資料": "project_progress_exec",
                 }
             },
+            "✍️ 全公司電子簽核中心 (Approval Center)": {
+                "features": {
+                    "✍️ 提交請假/採購與即時進度追蹤 / 審核": "approval_center",
+                }
+            },
             "👔 管理部 (Management Dept)": {
                 "features": {
                     "🏢 [行政] 固定資產設備與總務採購": "ga_assets",
-                    "✍️ [行政] 企業合約管理與主管審查中心": "contract_mgmt",
-                    "✍ [行政] 電子簽核與請款審核中心": "approval_center",
+                    "✍️ [行政] 企業合約管理與主管審查": "contract_mgmt",
                     "👤 [行政] 員工個人檔案與人事管理 (人事)": "hr_employee",
                     "🚗 [行政] 廠區車輛進出與門禁時間紀錄": "vehicle_gate",
                     "🛠️ [行政] 車輛維修保養與 Excel 批次匯入": "vehicle_maintenance",
@@ -128,11 +132,15 @@ NAV_STRUCTURE = {
                     "⚡ Tiến độ Dự án Kỹ thuật": "project_progress_exec",
                 }
             },
+            "✍️ Trung tâm Phê duyệt Điện tử (Approval Center)": {
+                "features": {
+                    "✍️ Gửi đơn nghỉ phép/mua hàng & Theo dõi tiến độ": "approval_center",
+                }
+            },
             "👔 Phòng Quản lý (Management Dept)": {
                 "features": {
                     "🏢 [Hành chính] Quản lý Tài sản Cố định": "ga_assets",
                     "✍️ [Hành chính] Quản lý Hợp đồng & Phê duyệt": "contract_mgmt",
-                    "✍️ [Hành chính] Trung tâm Phê duyệt": "approval_center",
                     "👤 [Nhân sự] Hồ sơ Nhân sự & Hợp đồng": "hr_employee",
                     "🚗 [Bảo vệ] Quản lý xe ra vào nhà máy": "vehicle_gate",
                     "🛠️ [Hành chính] Quản lý bảo trì xe & Nhập Excel": "vehicle_maintenance",
@@ -185,11 +193,15 @@ NAV_STRUCTURE = {
                     "⚡ Engineering Project Progress": "project_progress_exec",
                 }
             },
+            "✍️ E-Approval Center": {
+                "features": {
+                    "✍️ Submit Leave/Purchase & Track Workflow": "approval_center",
+                }
+            },
             "👔 Management Dept (GA & Finance)": {
                 "features": {
                     "🏢 [GA] Asset Management": "ga_assets",
                     "✍️ [GA] Enterprise Contract Management": "contract_mgmt",
-                    "✍️ [GA] E-Approval Center": "approval_center",
                     "👤 [HR] Employee Records": "hr_employee",
                     "🚗 [Security] Vehicle Gate Log": "vehicle_gate",
                     "🛠️ [GA] Vehicle Maintenance & Excel Import": "vehicle_maintenance",
@@ -304,117 +316,3 @@ if selected_lang != st.session_state.current_lang:
 
 st.sidebar.markdown(
     f"**👤 {st.session_state.user_name}** ({st.session_state.user_role.upper()})"
-)
-if st.sidebar.button(lang_dict["logout_btn"], use_container_width=True):
-    st.session_state.logged_in = False
-    st.rerun()
-
-st.sidebar.markdown("---")
-
-dept_options = list(lang_dict["departments"].keys())
-current_user_clean = str(st.session_state.user_name).strip().lower()
-current_role_clean = str(st.session_state.user_role).strip().lower()
-
-if current_role_clean == "security":
-    dept_options = ["👔 管理部 (Management Dept)"]
-    selected_parent_dept = dept_options[0]
-    st.sidebar.markdown(f"**{lang_dict['parent_header']}**")
-    feature_labels = ["🚗 [行政] 廠區車輛進出與門禁時間紀錄"] if st.session_state.current_lang == "繁體中文" else (
-        ["🚗 [Bảo vệ] Quản lý xe ra vào nhà máy"] if st.session_state.current_lang == "Tiếng Việt" else ["🚗 [Security] Vehicle Gate Log"]
-    )
-    selected_feature_label = feature_labels[0]
-    target_route = "vehicle_gate"
-else:
-    is_executive_access = (
-        current_user_clean in ["admin", "executive", "boss", "ceo", "gm"]
-        or current_role_clean in ["admin", "executive", "manager"]
-    )
-
-    if not is_executive_access:
-        dept_options = [d for d in dept_options if "Executive" not in d]
-
-    selected_parent_dept = st.sidebar.radio(
-        lang_dict["parent_header"], dept_options, index=0
-    )
-
-    st.sidebar.markdown("---")
-    features_dict = lang_dict["departments"][selected_parent_dept]["features"]
-    feature_labels = list(features_dict.keys())
-
-    st.sidebar.caption(f"**{selected_parent_dept.split('(')[0].strip()}**")
-    selected_feature_label = st.sidebar.radio(
-        lang_dict["sub_header"], feature_labels
-    )
-    target_route = features_dict[selected_feature_label]
-
-curr_lang = st.session_state.current_lang
-
-# ----------------------------------------------------
-# 模組安全路由分流
-# ----------------------------------------------------
-if target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
-    if hasattr(executive_dashboard, "render_executive_dashboard_page"):
-        safe_call_module(
-            executive_dashboard.render_executive_dashboard_page,
-            sub_route=target_route,
-            lang=curr_lang,
-        )
-    elif hasattr(executive_dashboard, "show"):
-        safe_call_module(
-            executive_dashboard.show, sub_route=target_route, lang=curr_lang
-        )
-
-elif target_route == "eng_quote":
-    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=0)
-
-elif target_route == "eng_progress":
-    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=2)
-
-elif target_route == "eng_design":
-    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=1)
-
-elif target_route == "procurement_ap":
-    safe_call_module(procurement_ap.render_procurement_ap_page, engine=engine, lang=curr_lang)
-
-elif target_route == "sales_order_ar":
-    safe_call_module(sales_order_ar.render_sales_order_ar_page, engine=engine, lang=curr_lang)
-
-elif target_route == "contract_mgmt":
-    safe_call_module(contract_management.render_contract_management_page, engine=engine, lang=curr_lang)
-
-elif target_route == "payroll_calc":
-    safe_call_module(payroll_management.render_payroll_management_page, engine=engine, lang=curr_lang)
-
-elif target_route == "invoice_management":
-    safe_call_module(invoice_management.render_invoice_management, engine=engine, lang=curr_lang)
-
-elif target_route == "field_attendance":
-    safe_call_module(field_attendance.render_field_attendance_page, engine=engine, lang=curr_lang)
-
-elif target_route == "ga_assets":
-    safe_call_module(asset_management.render_asset_management_page, lang=curr_lang)
-
-elif target_route == "approval_center":
-    safe_call_module(approval_workflow.render_approval_center, lang=curr_lang)
-
-elif target_route == "hr_employee":
-    safe_call_module(employee_management.render_employee_management, engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route == "vehicle_gate":
-    safe_call_module(vehicle_gate_log.render_vehicle_gate_log_page, engine=engine, lang=curr_lang)
-
-elif target_route == "vehicle_maintenance":
-    safe_call_module(vehicle_maintenance.render_vehicle_maintenance_page, engine=engine, lang=curr_lang)
-
-elif target_route == "wh_management":
-    safe_call_module(warehouse_management.render_warehouse_management, engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route in ["sheet_metal", "painting", "assembly"]:
-    st.title(selected_feature_label)
-    st.info("Hệ thống đang hoạt động bình thường / 現場工單與生產追蹤模組順利運作中。")
-
-elif target_route == "it_admin":
-    safe_call_module(user_management.render_user_management_page, lang=curr_lang)
-
-elif target_route == "it_licensing":
-    safe_call_module(system_licensing.render_licensing_control_page, lang=curr_lang)
