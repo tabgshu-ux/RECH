@@ -1,6 +1,7 @@
 import inspect
 import modules.approval_workflow as approval_workflow
 import modules.asset_management as asset_management
+import modules.contract_management as contract_management
 import modules.db_connection as db_conn
 import modules.employee_management as employee_management
 import modules.engineering_department as engineering_department
@@ -16,7 +17,6 @@ import modules.vehicle_gate_log as vehicle_gate_log
 import modules.vehicle_maintenance as vehicle_maintenance
 import modules.warehouse_management as warehouse_management
 import pandas as pd
-import modules.contract_management as contract_management
 from sqlalchemy import text
 import streamlit as st
 
@@ -74,6 +74,7 @@ NAV_STRUCTURE = {
             "👔 管理部 (Management Dept)": {
                 "features": {
                     "🏢 [行政] 固定資產設備與總務採購": "ga_assets",
+                    "✍️ [行政] 企業合約管理與主管審查中心": "contract_mgmt",
                     "✍ [行政] 電子簽核與請款審核中心": "approval_center",
                     "👤 [行政] 員工個人檔案與人事管理 (人事)": "hr_employee",
                     "🚗 [行政] 廠區車輛進出與門禁時間紀錄": "vehicle_gate",
@@ -134,6 +135,7 @@ NAV_STRUCTURE = {
             "👔 Phòng Quản lý (Management Dept)": {
                 "features": {
                     "🏢 [Hành chính] Quản lý Tài sản Cố định": "ga_assets",
+                    "✍️ [Hành chính] Quản lý Hợp đồng & Phê duyệt": "contract_mgmt",
                     "✍️ [Hành chính] Trung tâm Phê duyệt": "approval_center",
                     "👤 [Nhân sự] Hồ sơ Nhân sự & Hợp đồng": "hr_employee",
                     "🚗 [Bảo vệ] Quản lý xe ra vào nhà máy": "vehicle_gate",
@@ -194,6 +196,7 @@ NAV_STRUCTURE = {
             "👔 Management Dept (GA & Finance)": {
                 "features": {
                     "🏢 [GA] Asset Management": "ga_assets",
+                    "✍️ [GA] Enterprise Contract Management": "contract_mgmt",
                     "✍️ [GA] E-Approval Center": "approval_center",
                     "👤 [HR] Employee Records": "hr_employee",
                     "🚗 [Security] Vehicle Gate Log": "vehicle_gate",
@@ -373,7 +376,6 @@ if target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
             executive_dashboard.show, sub_route=target_route, lang=curr_lang
         )
 
-# 🛠️ 工程管理中心與設計部門路由分流
 elif target_route == "eng_quote":
     safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=0)
 
@@ -388,6 +390,9 @@ elif target_route == "procurement_ap":
 
 elif target_route == "sales_order_ar":
     safe_call_module(sales_order_ar.render_sales_order_ar_page, engine=engine, lang=curr_lang)
+
+elif target_route == "contract_mgmt":
+    safe_call_module(contract_management.render_contract_management_page, engine=engine, lang=curr_lang)
 
 elif target_route == "payroll_calc":
     safe_call_module(payroll_management.render_payroll_management_page, engine=engine, lang=curr_lang)
@@ -424,4 +429,4 @@ elif target_route == "it_admin":
     safe_call_module(user_management.render_user_management_page, lang=curr_lang)
 
 elif target_route == "it_licensing":
-    safe_call_module(system_licensing.render_licensing_control_page, lang=curr_lang)
+    safe_call_module(system_licensing.
