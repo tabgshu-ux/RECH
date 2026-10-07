@@ -58,7 +58,6 @@ AR_I18N = {
         "save_new_btn": "💾 儲存並建立應收請款專案",
         "create_success": "專案 `{inv_id}` 建立成功！",
         "fill_warning": "⚠️ 請完整填寫客戶名稱與工程名稱！",
-        # 表格動態標題
         "col_index": "STT",
         "col_inv_id": "請款編號",
         "col_entity": "客戶名稱",
@@ -122,7 +121,6 @@ AR_I18N = {
         "save_new_btn": "💾 Lưu và đăng ký dự án phải thu",
         "create_success": "Đã tạo thành công dự án `{inv_id}`!",
         "fill_warning": "⚠️ Vui lòng điền đầy đủ Tên khách hàng và Tên công trình!",
-        # 表格動態標題
         "col_index": "STT",
         "col_inv_id": "Mã hóa đơn",
         "col_entity": "Tên khách hàng",
@@ -186,7 +184,6 @@ AR_I18N = {
         "save_new_btn": "💾 Save & Register AR Project",
         "create_success": "Project `{inv_id}` successfully created!",
         "fill_warning": "⚠️ Please fill in Client Name and Project Name!",
-        # 表格動態標題
         "col_index": "No.",
         "col_inv_id": "Invoice ID",
         "col_entity": "Client Name",
@@ -201,47 +198,6 @@ AR_I18N = {
     }
 }
 
-# ----------------------------------------------------
-# 🔄 智慧模糊語意對照引擎 (支援關鍵字比對與互轉)
-# ----------------------------------------------------
 def smart_translate(text_val, target_lang):
     if not text_val or not isinstance(text_val, str) or text_val.strip() in ["None", "-", ""]:
-        if target_lang == "Tiếng Việt": return "Chưa cập nhật"
-        elif target_lang == "English": return "N/A"
-        return "-"
-
-    val_lower = text_val.lower()
-
-    # 1. 客戶名稱智慧對應 (支援中越互轉)
-    if "樟榜" in text_val or "trảng bàng" in val_lower or "tay ninh" in val_lower or "工業區" in text_val:
-        if target_lang == "Tiếng Việt":
-            return "Nhà máy A KCN Trảng Bàng, Tây Ninh"
-        elif target_lang == "繁體中文":
-            return "越南樟榜工業區A廠"
-        elif target_lang == "English":
-            return "Tay Ninh Plant Client A"
-
-    # 2. 工程名稱智慧對應 (支援中越互轉)
-    if "西寧" in text_val or "2000a" in val_lower or "配電櫃" in text_val or "tủ điện" in val_lower or "新建工程" in text_val:
-        if target_lang == "Tiếng Việt":
-            return "Lắp đặt tủ điện 2000A nhà máy Tây Ninh"
-        elif target_lang == "繁體中文":
-            return "西寧廠 2000A 配電櫃新建工程"
-        elif target_lang == "English":
-            return "Tay Ninh 2000A Switchboard Installation"
-
-    # 3. 進度說明智慧對應
-    if "備料" in text_val or "準備" in text_val or "chuẩn bị" in val_lower or "thi công" in val_lower:
-        if target_lang == "Tiếng Việt":
-            return "Đang chuẩn bị vật tư / Chuẩn bị thi công"
-        elif target_lang == "繁體中文":
-            return "工程備料中 / 準備施工"
-        elif target_lang == "English":
-            return "Material preparation / Preparing construction"
-
-    # 4. 付款期數模式對應
-    if "不分期" in text_val or "1" in text_val and "đợt" in val_lower or "single" in val_lower or "lump" in val_lower:
-        if target_lang == "Tiếng Việt": return "Thanh toán 1 lần"
-        elif target_lang == "繁體中文": return "不分期"
-        return "Single"
-    if "分三期" in text_val or "
+        if target_lang == "Ti
