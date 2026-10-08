@@ -8,6 +8,7 @@ import modules.engineering_department as engineering_department
 import modules.executive_dashboard as executive_dashboard
 import modules.factory_management as factory_management
 import modules.field_attendance as field_attendance
+import modules.field_daily_report as field_daily_report  # 新增：工程日報表模組
 import modules.invoice_management as invoice_management
 import modules.payroll_management as payroll_management
 import modules.procurement_ap as procurement_ap
@@ -94,6 +95,7 @@ NAV_STRUCTURE = {
                 "features": {
                     "⚡ [工程] 配電盤與工程專案報價": "eng_quote",
                     "📊 [工程] 水電工程驗收與進度追蹤": "eng_progress",
+                    "📋 [工程] 現場工程日報表與出工統計": "field_daily_report",
                     "🎨 [設計] 配電盤電氣與機構設計圖庫上傳中心": "eng_design",
                 }
             },
@@ -154,6 +156,7 @@ NAV_STRUCTURE = {
                 "features": {
                     "⚡ [Kỹ thuật] Báo giá Dự án & Truyền AR": "eng_quote",
                     "📊 [Kỹ thuật] Tiến độ nghiệm thu dự án cơ điện": "eng_progress",
+                    "📋 [Kỹ thuật] Nhật ký Thi công Công trình": "field_daily_report",
                     "🎨 [Thiết kế] Kho tải lên & Tải về Bản vẽ": "eng_design",
                 }
             },
@@ -214,6 +217,7 @@ NAV_STRUCTURE = {
                 "features": {
                     "⚡ [Engineering] Quotation & AR Transfer": "eng_quote",
                     "📊 [Engineering] M&E Acceptance & Progress": "eng_progress",
+                    "📋 [Engineering] Daily Construction Report": "field_daily_report",
                     "🎨 [Design] Drawings Storage & Download": "eng_design",
                 }
             },
@@ -373,66 +377,4 @@ curr_lang = st.session_state.current_lang
 if target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
     if hasattr(executive_dashboard, "render_executive_dashboard_page"):
         safe_call_module(
-            executive_dashboard.render_executive_dashboard_page,
-            sub_route=target_route,
-            lang=curr_lang,
-        )
-    elif hasattr(executive_dashboard, "show"):
-        safe_call_module(
-            executive_dashboard.show, sub_route=target_route, lang=curr_lang
-        )
-
-elif target_route == "approval_center":
-    safe_call_module(approval_workflow.render_approval_center, lang=curr_lang)
-
-elif target_route == "eng_quote":
-    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=0)
-
-elif target_route == "eng_progress":
-    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=2)
-
-elif target_route == "eng_design":
-    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=1)
-
-elif target_route == "procurement_ap":
-    safe_call_module(procurement_ap.render_procurement_ap_page, engine=engine, lang=curr_lang)
-
-elif target_route == "sales_order_ar":
-    safe_call_module(sales_order_ar.render_sales_order_ar_page, engine=engine, lang=curr_lang)
-
-elif target_route == "contract_mgmt":
-    safe_call_module(contract_management.render_contract_management_page, engine=engine, lang=curr_lang)
-
-elif target_route == "payroll_calc":
-    safe_call_module(payroll_management.render_payroll_management_page, engine=engine, lang=curr_lang)
-
-elif target_route == "invoice_management":
-    safe_call_module(invoice_management.render_invoice_management, engine=engine, lang=curr_lang)
-
-elif target_route == "field_attendance":
-    safe_call_module(field_attendance.render_field_attendance_page, engine=engine, lang=curr_lang)
-
-elif target_route == "factory_mgmt":
-    safe_call_module(factory_management.render_factory_management_page, engine=engine, lang=curr_lang)
-
-elif target_route == "hr_employee":
-    safe_call_module(employee_management.render_employee_management, engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route == "vehicle_gate":
-    safe_call_module(vehicle_gate_log.render_vehicle_gate_log_page, engine=engine, lang=curr_lang)
-
-elif target_route == "vehicle_maintenance":
-    safe_call_module(vehicle_maintenance.render_vehicle_maintenance_page, engine=engine, lang=curr_lang)
-
-elif target_route == "wh_management":
-    safe_call_module(warehouse_management.render_warehouse_management, engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route in ["sheet_metal", "painting", "assembly"]:
-    st.title(selected_feature_label)
-    st.info("Hệ thống đang hoạt động bình thường / 現場工單與生產追蹤模組順利運作中。")
-
-elif target_route == "it_admin":
-    safe_call_module(user_management.render_user_management_page, lang=curr_lang)
-
-elif target_route == "it_licensing":
-    safe_call_module(system_licensing.render_licensing_control_page, lang=curr_lang)
+            executive_dashboard.
