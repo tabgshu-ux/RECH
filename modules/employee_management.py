@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 def render_employee_management(engine=None, t=None, lang="繁體中文", **kwargs):
-    # 依據當前語系定義介面多語言字典
+    # 多語言字典
     texts = {
         "繁體中文": {
             "title": "👤 管理部 - 員工個人檔案與人事管理",
@@ -32,11 +32,20 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             "allow_label": "各類津貼總計 (VND)",
             "contract_label": "合約原署日期",
             "add_btn": "🚀 立即新增員工",
+            # 修改與刪除專用多語言
+            "select_edit_emp": "選擇要修改的員工",
             "edit_tab_title": "### ✏️ 修改員工檔案",
+            "edit_id": "工號 (Emp ID)",
+            "edit_name": "員工姓名 (Name)",
+            "edit_title_label": "職稱 (Title)",
+            "edit_phone": "電話 (Phone)",
+            "edit_perm": "戶籍地址 (Permanent Address)",
+            "edit_temp": "現居地址 (Current Address)",
+            "save_btn": "💾 儲存修改",
             "del_tab_title": "### 🗑️ 刪除員工確認",
+            "select_del_emp": "選擇要刪除的員工",
             "del_warn": "確定要將員工 **{id} - {name}** 自系統中刪除嗎？",
-            "del_btn": "🔥 確認刪除",
-            "save_btn": "💾 儲存修改"
+            "del_btn": "🔥 確認刪除"
         },
         "Tiếng Việt": {
             "title": "👤 Phòng Quản lý - Quản lý Nhân sự & Hồ sơ Nhân viên",
@@ -66,11 +75,20 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             "allow_label": "Tổng phụ cấp (VND)",
             "contract_label": "Ngày ký hợp đồng",
             "add_btn": "🚀 Thêm nhân viên mới",
+            # Sửa & Xóa
+            "select_edit_emp": "Chọn nhân viên cần chỉnh sửa",
             "edit_tab_title": "### ✏️ Chỉnh sửa hồ sơ nhân viên",
+            "edit_id": "Mã nhân viên (Emp ID)",
+            "edit_name": "Họ tên nhân viên (Name)",
+            "edit_title_label": "Chức vụ (Title)",
+            "edit_phone": "Số điện thoại (Phone)",
+            "edit_perm": "Hộ khẩu thường trú (Permanent Address)",
+            "edit_temp": "Chỗ ở hiện tại (Current Address)",
+            "save_btn": "💾 Lưu thay đổi",
             "del_tab_title": "### 🗑️ Xác nhận xóa nhân viên",
+            "select_del_emp": "Chọn nhân viên cần xóa",
             "del_warn": "Bạn có chắc chắn muốn xóa nhân viên **{id} - {name}** khỏi hệ thống không?",
-            "del_btn": "🔥 Xác nhận xóa",
-            "save_btn": "💾 Lưu thay đổi"
+            "del_btn": "🔥 Xác nhận xóa"
         },
         "English": {
             "title": "👤 Management Dept - HR & Employee Records",
@@ -100,11 +118,20 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             "allow_label": "Total Allowances (VND)",
             "contract_label": "Contract Date",
             "add_btn": "🚀 Add Employee",
+            # Edit & Delete
+            "select_edit_emp": "Select employee to edit",
             "edit_tab_title": "### ✏️ Edit Employee Profile",
+            "edit_id": "Employee ID",
+            "edit_name": "Employee Name",
+            "edit_title_label": "Job Title",
+            "edit_phone": "Phone Number",
+            "edit_perm": "Permanent Address",
+            "edit_temp": "Current Address",
+            "save_btn": "💾 Save Changes",
             "del_tab_title": "### 🗑️ Confirm Employee Deletion",
+            "select_del_emp": "Select employee to delete",
             "del_warn": "Are you sure you want to delete employee **{id} - {name}** from the system?",
-            "del_btn": "🔥 Confirm Delete",
-            "save_btn": "💾 Save Changes"
+            "del_btn": "🔥 Confirm Delete"
         }
     }
 
@@ -147,7 +174,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 prefix = "VN" if "越南" in nat_choice else ("TW" if "台灣" in nat_choice else ("CN" if "中國" in nat_choice else "OT"))
                 e_id = st.text_input(t_set["id_label"], value=f"{prefix}-{len(st.session_state.employee_db)+1:03d}", key="add_e_id")
                 
-                # 部門多語系對應顯示
                 if lang == "Tiếng Việt":
                     dept_display_map = {
                         "總經理室": "Ban Giám đốc (Executive Office)",
@@ -178,7 +204,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 e_name = st.text_input(t_set["name_label"], placeholder="請輸入姓名 / Nhập họ tên...", key="add_e_name")
                 e_title = st.text_input(t_set["title_label"], placeholder="例如: 射出工程師 / Kỹ sư", key="add_e_title")
 
-                # 角色多語系對應顯示
                 if lang == "Tiếng Việt":
                     role_display_map = {
                         "staff": "Nhân viên chung (Staff)",
@@ -208,110 +233,4 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             with ac1:
                 e_perm_addr = st.text_input(t_set["perm_addr"], placeholder="請輸入戶籍地址...", key="add_e_perm_addr")
             with ac2:
-                e_temp_addr = st.text_input(t_set["temp_addr"], placeholder="請輸入目前居住地址...", key="add_e_temp_addr")
-
-            if "越南" in nat_choice:
-                st.markdown("---")
-                st.markdown(f"### {t_set['step2']}")
-                
-                sc1, sc2, sc3 = st.columns(3)
-                with sc1:
-                    cccd = st.text_input(t_set["cccd_label"], placeholder="03809500...", key="add_cccd")
-                    base_salary = st.number_input(t_set["salary_label"], value=9000000.0, step=100000.0, key="add_base_salary")
-                with sc2:
-                    hire_date = st.date_input(t_set["hire_label"], key="add_hire_date")
-                    monthly_ins = st.number_input(t_set["ins_label"], value=945000.0, step=10000.0, key="add_monthly_ins")
-                with sc3:
-                    hospital = st.text_input(t_set["hosp_label"], value="Bệnh viện Quốc tế Hạnh Phúc", key="add_hospital")
-                    allowance = st.number_input(t_set["allow_label"], value=1530000.0, step=10000.0, key="add_allowance")
-                
-                contract_date = st.date_input(t_set["contract_label"], key="add_contract_date")
-            else:
-                cccd = ""
-                base_salary = 0.0
-                hire_date = None
-                monthly_ins = 0.0
-                hospital = ""
-                allowance = 0.0
-                contract_date = None
-
-            st.markdown("---")
-            if st.form_submit_button(t_set["add_btn"], type="primary"):
-                if e_name:
-                    st.session_state.employee_db.append({
-                        "工號": e_id,
-                        "姓名": e_name,
-                        "國籍": nat_choice,
-                        "工作廠區": "西寧廠 (Tay Ninh)",
-                        "部門": e_dept,
-                        "職稱": e_title,
-                        "角色": e_role,
-                        "電話": e_phone,
-                        "戶籍地址": e_perm_addr,
-                        "現居地址": e_temp_addr,
-                        "身分證字號": cccd,
-                        "入職日期": str(hire_date) if hire_date else "",
-                        "醫保指定醫院": hospital,
-                        "合約原署日期": str(contract_date) if contract_date else "",
-                        "約定起薪": str(base_salary),
-                        "每月社醫保扣繳": str(monthly_ins),
-                        "津貼總計": str(allowance),
-                        "生物辨識代碼": f"FACE-BIO-{len(st.session_state.employee_db)+100000}"
-                    })
-                    success_msg = "Thêm nhân viên thành công!" if lang == "Tiếng Việt" else ("Employee added successfully!" if lang == "English" else f"✅ 員工 {e_name} 新增成功！")
-                    st.success(success_msg)
-                    st.rerun()
-                else:
-                    warn_msg = "Vui lòng nhập tên nhân viên!" if lang == "Tiếng Việt" else ("Please enter employee name!" if lang == "English" else "⚠️ 請填寫員工全名！")
-                    st.warning(warn_msg)
-
-    with tab_edit:
-        if st.session_state.employee_db:
-            emp_opts = {f"{e['工號']} - {e['姓名']}": e for e in st.session_state.employee_db}
-            sel_emp_key = st.selectbox("選擇要修改的員工 / Select Employee", list(emp_opts.keys()), key="edit_emp_select")
-            target_emp = emp_opts[sel_emp_key]
-
-            with st.form("edit_employee_form"):
-                st.markdown(t_set["edit_tab_title"])
-                ed_id = st.text_input("工號 (Emp ID)", value=target_emp["工號"], key="edit_ed_id")
-                ed_name = st.text_input("員工姓名 (Name)", value=target_emp["姓名"], key="edit_ed_name")
-                ed_title = st.text_input("職稱 (Title)", value=target_emp["職稱"], key="edit_ed_title")
-                ed_phone = st.text_input("電話 (Phone)", value=target_emp["電話"], key="edit_ed_phone")
-                ed_perm_addr = st.text_input("戶籍地址 (Permanent Address)", value=target_emp.get("戶籍地址", ""), key="edit_ed_perm_addr")
-                ed_temp_addr = st.text_input("現居地址 (Current Address)", value=target_emp.get("現居地址", ""), key="edit_ed_temp_addr")
-
-                if st.form_submit_button(t_set["save_btn"], type="primary"):
-                    for e in st.session_state.employee_db:
-                        if e["工號"] == target_emp["工號"] or e["姓名"] == target_emp["姓名"]:
-                            e["工號"] = ed_id
-                            e["姓名"] = ed_name
-                            e["職稱"] = ed_title
-                            e["電話"] = ed_phone
-                            e["戶籍地址"] = ed_perm_addr
-                            e["現居地址"] = ed_temp_addr
-                    st.success("✅ 更新成功 / Updated successfully!")
-                    st.rerun()
-        else:
-            st.info("目前無員工資料可供修改。")
-
-    with tab_del:
-        if st.session_state.employee_db:
-            del_opts = {f"{e['工號']} - {e['姓名']}": e for e in st.session_state.employee_db}
-            sel_del_key = st.selectbox("選擇要刪除的員工", list(del_opts.keys()), key="del_emp_select")
-            target_del = del_opts[sel_del_key]
-
-            with st.form("delete_employee_form"):
-                st.markdown(t_set["del_tab_title"])
-                st.warning(t_set["del_warn"].format(id=target_del['工號'], name=target_del['姓名']))
-                if st.form_submit_button(t_set["del_btn"], type="primary"):
-                    st.session_state.employee_db = [e for e in st.session_state.employee_db if e["工號"] != target_del["工號"]]
-                    st.success("✅ 刪除成功 / Deleted successfully!")
-                    st.rerun()
-        else:
-            st.info("目前無員工資料可供刪除。")
-
-def show(*args, **kwargs):
-    render_employee_management(*args, **kwargs)
-
-def main(*args, **kwargs):
-    render_employee_management(*args, **kwargs)
+                e_temp_addr = st.text_input(t_set["temp_addr"], placeholder="請輸入目前居住地址...", key
