@@ -26,7 +26,7 @@ EMP_I18N = {
         "lbl_pwd": "初始登入密碼 (預設) *",
         "lbl_title": "職稱 / 職務 *",
         "lbl_country": "國籍",
-        "country_opts": ["越南 (Vietnam)", "台灣 (Taiwan)", "中國 (China)"],  # 👈 已新增中國並移除其他
+        "country_opts": ["台灣 (Taiwan)", "越南 (Vietnam)", "中國 (China)"],  # 👈 已移除其他，並列顯示
         "lbl_role": "系統權限角色 *",
         "lbl_addr_perm": "戶籍地址 (Permanent Address)",
         "lbl_addr_temp": "現住地址 (Temporary Address)",
@@ -66,7 +66,7 @@ EMP_I18N = {
         "lbl_pwd": "Mật khẩu ban đầu *",
         "lbl_title": "Chức vụ *",
         "lbl_country": "Quốc tịch",
-        "country_opts": ["Việt Nam", "Đài Loan", "Trung Quốc"],  # 👈 越南文版國籍
+        "country_opts": ["Đài Loan", "Việt Nam", "Trung Quốc"],
         "lbl_role": "Vai trò Phân quyền hệ thống *",
         "lbl_addr_perm": "Hộ khẩu thường trú",
         "lbl_addr_temp": "Chỗ ở hiện tại",
@@ -106,7 +106,7 @@ EMP_I18N = {
         "lbl_pwd": "Initial Password *",
         "lbl_title": "Job Title *",
         "lbl_country": "Nationality",
-        "country_opts": ["Vietnam", "Taiwan", "China"],  # 👈 英文版國籍
+        "country_opts": ["Taiwan", "Vietnam", "China"],
         "lbl_role": "System Access Role *",
         "lbl_addr_perm": "Permanent Address",
         "lbl_addr_temp": "Temporary Address",
@@ -128,23 +128,23 @@ EMP_I18N = {
     }
 }
 
-# 🌐 系統權限角色多語系對應字典
+# 🌐 系統權限角色多語系對應字典（支援管理部經理、財務主管、協理、副協理與跨部門支援廠長皆可掛載 Manager）
 ROLE_I18N = {
     "繁體中文": {
         "admin": "系統管理員 (Admin)",
         "chairman": "董事長 (Chairman)",
         "generalmanager": "總經理 (General Manager)",
-        "vicemanager": "副總經理 (Vice Manager)",
-        "manager": "部門經理 / 小主管 (Manager)",
-        "staff": "一般員工 (Staff)",
+        "vicemanager": "副總經理 / 協理 (Vice Manager)",
+        "manager": "部門經理 / 財務主管 / 廠長 (Manager)",
+        "staff": "一般員工 / 作業員 (Staff)",
         "security": "廠區警衛/門禁 (Security)"
     },
     "Tiếng Việt": {
         "admin": "Quản trị hệ thống (Admin)",
         "chairman": "Chủ tịch (Chairman)",
         "generalmanager": "Tổng Giám đốc (General Manager)",
-        "vicemanager": "Phó Tổng Giám đốc (Vice Manager)",
-        "manager": "Trưởng phòng / Quản lý (Manager)",
+        "vicemanager": "Phó Tổng Giám đốc / Phó Giám đốc (Vice Manager)",
+        "manager": "Trưởng phòng / Quản lý tài chính / Giám đốc nhà máy (Manager)",
         "staff": "Nhân viên (Staff)",
         "security": "Bảo vệ / An ninh (Security)"
     },
@@ -152,8 +152,8 @@ ROLE_I18N = {
         "admin": "System Administrator (Admin)",
         "chairman": "Chairman",
         "generalmanager": "General Manager",
-        "vicemanager": "Vice Manager",
-        "manager": "Department Manager / Supervisor",
+        "vicemanager": "Vice Manager / Associate",
+        "manager": "Department Manager / Finance Head / Plant Director (Manager)",
         "staff": "Staff",
         "security": "Security Guard"
     }
@@ -186,7 +186,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 "姓名": "Nguyễn Văn Quý",
                 "廠區": "海防廠 (Hai Phong)",
                 "部門": "管理部",
-                "職稱": "廠務經理",
+                "職稱": "財務主管",
                 "國籍": "越南 (Vietnam)",
                 "角色": "manager",
                 "密碼": "123456",
@@ -240,7 +240,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             with c2:
                 e_factory = st.selectbox(L["lbl_factory"], L["factory_opts"])
                 e_dept = st.selectbox(L["lbl_dept"], L["dept_opts"])
-                e_title = st.text_input(L["lbl_title"], value="財務主管")
+                e_title = st.text_input(L["lbl_title"], value="財務主管 / 廠長 / 協理")
                 
                 role_keys = list(role_dict.keys())
                 role_display_names = list(role_dict.values())
