@@ -65,7 +65,7 @@ NAV_STRUCTURE = {
         "parent_header": "請選擇一級部門 / 系統：",
         "sub_header": "選擇子部門與功能：",
         "departments": {
-            "📈 總經理室 (Executive)": {
+            "📈 總經理室 (Executive Office)": {
                 "features": {
                     "🔴 原料價格與隨時股市物價/匯率": "commodities_fx",
                     "📊 財務類顯示資料 (AR/AP & P&L)": "financials_pl",
@@ -125,7 +125,7 @@ NAV_STRUCTURE = {
         "parent_header": "Chọn phòng ban chính:",
         "sub_header": "Chọn bộ phận trực thuộc:",
         "departments": {
-            "📈 Ban Giám đốc (Executive)": {
+            "📈 Ban Giám đốc (Executive Office)": {
                 "features": {
                     "🔴 Giá Nguyên liệu & Tỷ giá": "commodities_fx",
                     "📊 Dữ liệu Tài chính": "financials_pl",
@@ -185,7 +185,7 @@ NAV_STRUCTURE = {
         "parent_header": "Select Department:",
         "sub_header": "Select Unit & Features:",
         "departments": {
-            "📈 Executive Management": {
+            "📈 Executive Office": {
                 "features": {
                     "🔴 Raw Material Prices & FX": "commodities_fx",
                     "📊 Financial Analytics": "financials_pl",
@@ -285,7 +285,7 @@ if not st.session_state.logged_in:
                     st.session_state.user_role = "admin"
                 elif u_clean in ["manager", "supervisor"]:
                     st.session_state.user_role = "manager"
-                elif u_clean in ["security", "guard", "門禁保全"]:
+                elif u_clean in ["security", "guard", "保全"]:
                     st.session_state.user_role = "security"
                 else:
                     st.session_state.user_role = "staff"
@@ -346,7 +346,7 @@ else:
     )
 
     if not is_executive_access:
-        dept_options = [d for d in dept_options if "營運戰情室" not in d and "Executive" not in d and "Ban Giám đốc" not in d]
+        dept_options = [d for d in dept_options if "總經理室" not in d and "Executive" not in d and "Ban Giám đốc" not in d]
 
     if current_role_clean != "admin":
         dept_options = [d for d in dept_options if "資訊管理部" not in d and "IT" not in d and "Phòng IT" not in d]
