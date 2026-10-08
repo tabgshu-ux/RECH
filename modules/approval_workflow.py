@@ -29,7 +29,21 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
             "p_success": "✅ 採購申請已送出！",
             "track_title": "### 📊 全公司簽核進度即時追蹤",
             "review_title": "### 🛃 主管待簽核案件審查",
-            "review_info": "主管/高階管理層可在此審核轄下員工之請假與採購申請。"
+            "review_info": "主管/高階管理層可在此審核轄下員工之請假與採購申請。",
+            # 表格欄位名稱
+            "col_no": "單號",
+            "col_type": "類型",
+            "col_applicant": "申請人",
+            "col_dept": "部門",
+            "col_content": "內容",
+            "col_status": "狀態",
+            "col_time": "送出時間",
+            # 狀態與類型
+            "type_leave": "請假單",
+            "type_purchase": "採購請款",
+            "status_pending": "簽核中 (Pending)",
+            "status_approved": "已核准 (Approved)",
+            "status_rejected": "已駁回 (Rejected)"
         },
         "Tiếng Việt": {
             "title": "✍️ Trung tâm Phê duyệt Điện tử & Quản lý Nghỉ phép/Thanh toán",
@@ -56,7 +70,21 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
             "p_success": "✅ Đơn mua hàng đã được gửi thành công!",
             "track_title": "### 📊 Theo dõi tiến độ phê duyệt toàn công ty",
             "review_title": "### 🛃 Xét duyệt đơn chờ xử lý",
-            "review_info": "Quản lý / Ban Giám đốc có thể xét duyệt các đơn của nhân viên cấp dưới tại đây."
+            "review_info": "Quản lý / Ban Giám đốc có thể xét duyệt các đơn của nhân viên cấp dưới tại đây.",
+            # Cột bảng
+            "col_no": "Mã đơn",
+            "col_type": "Loại đơn",
+            "col_applicant": "Người nộp",
+            "col_dept": "Phòng ban",
+            "col_content": "Nội dung",
+            "col_status": "Trạng thái",
+            "col_time": "Thời gian gửi",
+            # Trạng thái
+            "type_leave": "Đơn nghỉ phép",
+            "type_purchase": "Đơn mua hàng",
+            "status_pending": "Đang chờ duyệt (Pending)",
+            "status_approved": "Đã phê duyệt (Approved)",
+            "status_rejected": "Đã từ chối (Rejected)"
         },
         "English": {
             "title": "✍️ E-Approval Center for Leave & Procurement",
@@ -83,7 +111,21 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
             "p_success": "✅ Purchase request submitted successfully!",
             "track_title": "### 📊 Real-time Approval Tracking",
             "review_title": "### 🛃 Pending Approvals Review",
-            "review_info": "Managers and executives can review leave and purchase requests from subordinates here."
+            "review_info": "Managers and executives can review leave and purchase requests from subordinates here.",
+            # Table Columns
+            "col_no": "Doc No.",
+            "col_type": "Type",
+            "col_applicant": "Applicant",
+            "col_dept": "Department",
+            "col_content": "Content",
+            "col_status": "Status",
+            "col_time": "Submitted At",
+            # Status
+            "type_leave": "Leave Request",
+            "type_purchase": "Purchase Order",
+            "status_pending": "Pending",
+            "status_approved": "Approved",
+            "status_rejected": "Rejected"
         }
     }
 
@@ -119,7 +161,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                     new_no = f"APV-2026-{len(st.session_state.approval_db)+1:03d}"
                     st.session_state.approval_db.append({
                         "單號": new_no,
-                        "類型": "請假單 (Leave)",
+                        "類型": "請假單",
                         "申請人": st.session_state.get("user_name", "admin"),
                         "部門": "總經理室",
                         "內容": f"請假 {leave_days} 天: {leave_reason}",
@@ -157,7 +199,21 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
     with tab3:
         st.markdown(t_set["track_title"])
         if st.session_state.approval_db:
-            st.dataframe(pd.DataFrame(st.session_state.approval_db), use_container_width=True)
+            # 建立多語系顯示用的 DataFrame
+            display_data = []
+            for item in st.session_state.approval_db:
+                t_type = t_set["type_leave"] if "請假" in item["類型"] else t_set["type_purchase"]
+                t_status = t_set["status_pending"] if "簽核中" in item["狀態"] or "Pending" in item["狀態"] else (t_set["status_approved"] if "核准" in item["狀態"] or "Approved" in item["狀態"] else t_set["status_rejected"])
+                display_data.append({
+                    t_set["col_no"]: item["單號"],
+                    t_set["col_type"]: t_type,
+                    t_set["col_applicant"]: item["申請人"],
+                    t_set["col_dept"]: item["部門"],
+                    t_set["col_content"]: item["內容"],
+                    t_set["col_status"]: t_status,
+                    t_set["col_time"]: item["送出時間"]
+                })
+            st.dataframe(pd.DataFrame(display_data), use_container_width=True)
         else:
             st.info("目前無任何簽核案件記錄。")
 
@@ -167,7 +223,8 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
         if st.session_state.approval_db:
             for idx, item in enumerate(st.session_state.approval_db):
                 if "簽核中" in item["狀態"] or "Pending" in item["狀態"]:
-                    with st.expander(f"📌 [{item['單號']}] {item['類型']} - 申請人: {item['申請人']} ({item['內容']})"):
+                    t_type = t_set["type_leave"] if "請假" in item["類型"] else t_set["type_purchase"]
+                    with st.expander(f"📌 [{item['單號']}] {t_type} - {t_set['col_applicant']}: {item['申請人']} ({item['內容']})"):
                         col_a, col_b = st.columns(2)
                         with col_a:
                             if st.button(f"✅ 核准 (Approve)", key=f"app_uniq_{idx}"):
