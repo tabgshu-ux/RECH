@@ -167,7 +167,7 @@ ENG_DEPT_I18N = {
         "quote_caption": "Engineering quotation: Linked to warehouse inventory, allows sales discount adjustments, VAT calculation, and direct transfer to Finance AR.",
         "sec1_title": "📋 1. Project Basic Information",
         "lbl_vendor": "Vendor / Client Name *",
-        "vendor_placeholder": "Example: Tan Thuan M&E Engineering Co., Ltd.",
+        "vendor_placeholder": "Example: Tan Shuan Engineering Co., Ltd.",
         "lbl_project": "Project Name / Work Name *",
         "proj_placeholder": "Example: Tay Ninh Textile Plant - 2000A Switchboard",
         "lbl_location": "Project Location / Plant Site *",
@@ -271,7 +271,6 @@ def smart_translate_project_data(text, target_lang):
         text = text.replace("🟡 機架架設與線槽施工", "🟡 Rack Installation & Cable Tray Works")
     return text
 
-# 支援任意額外參數（如 default_tab、engine 等），防止報 Attribute/TypeError
 def render_engineering_department_page(engine=None, lang=None, default_tab=0, **kwargs):
     active_lang = get_active_lang(lang)
     L = ENG_DEPT_I18N.get(active_lang, ENG_DEPT_I18N["Tiếng Việt"])
@@ -430,4 +429,23 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
             display_data.append({
                 L["col_code"]: item["code"],
                 L["col_client"]: smart_translate_project_data(item["client"], active_lang),
-                L["col_item"]: smart_translate_project_data(item["item"], active_
+                L["col_item"]: smart_translate_project_data(item["item"], active_lang),
+                L["col_total"]: f"${item['total']:,.2f}",
+                L["col_paid"]: f"${item['paid']:,.2f}",
+                L["col_ar"]: f"${item['ar']:,.2f}",
+                L["col_progress"]: f"{item['progress']}%",
+                L["col_status"]: smart_translate_project_data(item["status"], active_lang)
+            })
+        st.dataframe(pd.DataFrame(display_data), use_container_width=True)
+
+# ----------------------------------------------------
+# 🔗 相容性進入點定義
+# ----------------------------------------------------
+def show(*args, **kwargs):
+    render_engineering_department_page(*args, **kwargs)
+
+def main(*args, **kwargs):
+    render_engineering_department_page(*args, **kwargs)
+
+def render_engineering_department(*args, **kwargs):
+    render_engineering_department_page(*args, **kwargs)
