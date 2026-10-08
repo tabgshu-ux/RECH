@@ -44,12 +44,12 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             with c1:
                 prefix = "VN" if "越南" in nat_choice else ("TW" if "台灣" in nat_choice else ("CN" if "中國" in nat_choice else "OT"))
                 e_id = st.text_input("員工工號 (Emp ID) *", value=f"{prefix}-{len(st.session_state.employee_db)+1:03d}", key="add_e_id")
-                e_dept = st.selectbox("所屬部門", ["管理部", "營運戰情室", "工程與設計管理中心", "生產部"], key="add_e_dept")
+                e_dept = st.selectbox("所屬部門", ["總經理室", "管理部", "工程與設計管理中心", "生產部"], key="add_e_dept")
                 e_phone = st.text_input("聯絡電話 (Phone) *", placeholder="0912345678", key="add_e_phone")
             with c2:
                 e_name = st.text_input("員工全名 (Full Name) *", placeholder="請輸入姓名...", key="add_e_name")
                 e_title = st.text_input("職位名稱", placeholder="例如: 現場工程師 / 技術員", key="add_e_title")
-                e_role = st.selectbox("系統權限角色 (Role)", ["staff (一般員工)", "manager (部門主管)", "security (保全)", "admin (系統管理員)"], key="add_e_role")
+                e_role = st.selectbox("系統權限角色 (Role)", ["一般員工", "部門主管", "保全", "系統管理員"], key="add_e_role")
 
             ac1, ac2 = st.columns(2)
             with ac1:
@@ -83,7 +83,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 contract_date = None
 
             st.markdown("---")
-            if st.form_submit_button("🚀 立即新增員工", type="primary"):
+            if st.form_submit_button("🚀 新增員工", type="primary"):
                 if e_name:
                     st.session_state.employee_db.append({
                         "工號": e_id,
