@@ -8,14 +8,18 @@ import datetime
 SALES_ORDER_AR_I18N = {
     "繁體中文": {
         "title": "📋 財務部 - 工程專案應收帳款 (AR) 與對帳管理中心",
-        "caption": "依據裕豐電機工業 2026 年工程請款對帳單（和鼎隆、佳威、彥豪、第一傳動 Timotion、聚苯、Superlon 等），管理合約總額、分期請款百分比、已開立發票與未收款追蹤。",
+        "caption": "依據裕豐電機工業工程請款對帳單（和鼎隆、佳威、彥豪、第一傳動 Timotion、SUPERLON 等），管理合約總額、分期請款百分比、已開立發票與未收款追蹤。",
         "tab_list": "📑 專案應收帳款總表與對帳清冊",
         "tab_details": "📊 各大工程合約分項請款與進度",
         "tab_add": "➕ 新增工程合約與應收帳款 (AR)",
-        "table_header": "📋 裕豐電機工業 2026 跨國工程應收帳款總覽",
+        "table_header": "📋 裕豐電機工業跨國工程應收帳款總覽",
         "no_records": "目前無應收帳款紀錄。",
         "details_header": "🔍 選擇工程專案檢視詳細請款條件與對帳進度",
         "select_project": "選擇工程專案合約 *",
+        "metric_total": "合約總金額 (Total Contract)",
+        "metric_collected": "已收款金額 (Collected)",
+        "metric_outstanding": "未收款總計 (Outstanding)",
+        "milestone_header": "📑 分期請款進度與對帳明細 (Milestone Details)",
         "add_header": "➕ 登記全新工程合約與應收帳款項目 (AR)",
         "lbl_code": "合約編號 / 專案代碼 *",
         "lbl_customer": "客戶 / 業主名稱 *",
@@ -34,7 +38,6 @@ SALES_ORDER_AR_I18N = {
         "col_collected": "已收款金額",
         "col_outstanding": "未收款總計",
         "col_status": "對帳狀態",
-        # 表格美化欄位
         "col_phase": "請款階段 / 專案項目",
         "col_pct": "請款比例 (%)",
         "col_amt": "請款金額 (VND)",
@@ -42,14 +45,18 @@ SALES_ORDER_AR_I18N = {
     },
     "Tiếng Việt": {
         "title": "📋 Khối Tài chính - Quản lý Phải thu (AR) & Đối chiếu Hợp đồng",
-        "caption": "Quản lý tổng giá trị hợp đồng, tỷ lệ thanh toán theo giai đoạn, hóa đơn đã mở và theo dõi công nợ cho các dự án 2026.",
+        "caption": "Quản lý tổng giá trị hợp đồng, tỷ lệ thanh toán theo giai đoạn, hóa đơn đã mở và theo dõi công nợ cho các dự án.",
         "tab_list": "📑 Danh sách Phải thu Dự án & Đối chiếu",
         "tab_details": "📊 Chi tiết Thanh toán theo Hợp đồng",
         "tab_add": "➕ Thêm Hợp đồng & Khoản phải thu (AR)",
-        "table_header": "📋 Tổng quan Công nợ Phải thu Dự án 2026",
+        "table_header": "📋 Tổng quan Công nợ Phải thu Dự án",
         "no_records": "Hiện không có bản ghi phải thu nào.",
         "details_header": "🔍 Chọn dự án để xem điều kiện thanh toán chi tiết",
         "select_project": "Chọn dự án hợp đồng *",
+        "metric_total": "Tổng giá trị hợp đồng (Total Contract)",
+        "metric_collected": "Đã thu tiền (Collected)",
+        "metric_outstanding": "Còn lại / Phải thu (Outstanding)",
+        "milestone_header": "📑 Tiến độ thanh toán theo giai đoạn & Chi tiết đối chiếu",
         "add_header": "➕ Đăng ký Hợp đồng Dự án & Khoản phải thu Mới (AR)",
         "lbl_code": "Mã hợp đồng / Dự án *",
         "lbl_customer": "Tên khách hàng / Chủ đầu tư *",
@@ -75,14 +82,18 @@ SALES_ORDER_AR_I18N = {
     },
     "English": {
         "title": "📋 Finance - Engineering AR & Contract Billing Center",
-        "caption": "Manage contract amounts, staging percentages, invoiced amounts, and outstanding receivables for 2026 projects.",
+        "caption": "Manage contract amounts, staging percentages, invoiced amounts, and outstanding receivables for projects.",
         "tab_list": "📑 Project AR & Reconciliation List",
         "tab_details": "📊 Contract Staging & Milestone Details",
         "tab_add": "➕ Register New Engineering Contract (AR)",
-        "table_header": "📋 2026 Engineering Accounts Receivable Overview",
+        "table_header": "📋 Engineering Accounts Receivable Overview",
         "no_records": "No accounts receivable records found.",
         "details_header": "🔍 Select Contract to View Milestone Details & Status",
         "select_project": "Select Contract Project *",
+        "metric_total": "Total Contract Amount",
+        "metric_collected": "Collected Amount",
+        "metric_outstanding": "Outstanding Amount",
+        "milestone_header": "📑 Milestone Payment Progress & Reconciliation Details",
         "add_header": "➕ Register New Contract & AR Record",
         "lbl_code": "Contract / Project Code *",
         "lbl_customer": "Customer / Owner Name *",
@@ -117,11 +128,41 @@ def smart_translate_ar(text_val, target_lang):
         if "已結案" in text_val: return "Đã hoàn thành (Closed)"
         if "已收款" in text_val: return "Đã thu tiền"
         if "審核中" in text_val: return "Đang duyệt"
+        if "未請款" in text_val: return "Chưa yêu cầu thanh toán"
+        if "訂金" in text_val: return "Tiền đặt cọc (Deposit)"
+        if "施工完成" in text_val: return "Hoàn thành thi công"
+        if "合約追加" in text_val: return "Bổ sung hợp đồng"
+        if "過路橋架施工完成" in text_val: return "Hoàn thành lắp đặt máng cáp"
+        if "電站送電完成" in text_val: return "Hoàn thành cấp điện trạm biến áp"
+        if "工程驗收保固保證" in text_val: return "Bảo lãnh nghiệm thu & bảo hành"
+        if "簽定訂金" in text_val: return "Đặt cọc ký kết"
+        if "監工確認數量完成驗收" in text_val: return "Nghiệm thu khối lượng hoàn thành"
+        if "簽定合約" in text_val: return "Ký kết hợp đồng"
+        if "高壓電站送電完成" in text_val: return "Hoàn thành cấp điện trạm cao thế"
+        if "配電盤送電完成" in text_val: return "Hoàn thành cấp điện tủ điện"
+        if "驗收合格並移交" in text_val: return "Nghiệm thu bàn giao"
+        if "簽定" in text_val: return "Ký kết"
+        if "保固金" in text_val: return "Tiền bảo hành (Warranty)"
     elif target_lang == "English":
         if "進行中" in text_val: return "In Progress"
         if "已結案" in text_val: return "Closed"
         if "已收款" in text_val: return "Collected"
         if "審核中" in text_val: return "Reviewing"
+        if "未請款" in text_val: return "Pending"
+        if "訂金" in text_val: return "Deposit"
+        if "施工完成" in text_val: return "Construction Complete"
+        if "合約追加" in text_val: return "Additional Work"
+        if "過路橋架施工完成" in text_val: return "Cable Tray Installation Complete"
+        if "電站送電完成" in text_val: return "Substation Energization Complete"
+        if "工程驗收保固保證" in text_val: return "Acceptance & Warranty Guarantee"
+        if "簽定訂金" in text_val: return "Signing Deposit"
+        if "監工確認數量完成驗收" in text_val: return "Supervision & Quantity Acceptance"
+        if "簽定合約" in text_val: return "Contract Signing"
+        if "高壓電站送電完成" in text_val: return "HV Substation Energization"
+        if "配電盤送電完成" in text_val: return "Switchgear Energization"
+        if "驗收合格並移交" in text_val: return "Inspection & Handover"
+        if "簽定" in text_val: return "Signing"
+        if "保固金" in text_val: return "Warranty Retention"
     return text_val
 
 def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
@@ -131,7 +172,6 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化 2026 工程請款對帳單資料庫
     if "sales_ar_db" not in st.session_state:
         st.session_state.sales_ar_db = [
             {
@@ -231,18 +271,17 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
         selected_contract = contract_opts[selected_contract_key]
 
         col1, col2, col3 = st.columns(3)
-        col1.metric("合約總金額 (Total Contract)", f"{selected_contract['total']:,.0f} VND")
-        col2.metric("已收款金額 (Collected)", f"{selected_contract['collected']:,.0f} VND")
-        col3.metric("未收款總計 (Outstanding)", f"{selected_contract['outstanding']:,.0f} VND")
+        col1.metric(L["metric_total"], f"{selected_contract['total']:,.0f} VND")
+        col2.metric(L["metric_collected"], f"{selected_contract['collected']:,.0f} VND")
+        col3.metric(L["metric_outstanding"], f"{selected_contract['outstanding']:,.0f} VND")
 
         st.markdown("---")
-        st.markdown("#### 📑 分期請款進度與對帳明細 (Milestone Details)")
+        st.markdown(f"#### {L['milestone_header']}")
         
-        # 格式化分期表格數字，加上千分位與單位
         formatted_milestones = []
         for m in selected_contract["milestones"]:
             formatted_milestones.append({
-                L["col_phase"]: m["phase"],
+                L["col_phase"]: smart_translate_ar(m["phase"], active_lang),
                 L["col_pct"]: f"{m['pct']:.2f}%" if m['pct'] > 0 else "0.00%",
                 L["col_amt"]: f"{m['amount']:,.0f} VND",
                 L["col_st"]: smart_translate_ar(m["status"], active_lang)
