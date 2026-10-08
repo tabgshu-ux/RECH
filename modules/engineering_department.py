@@ -6,7 +6,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     st.title("🛠️ 裕豐電機工業 - 工程管理中心與設計部門")
     st.caption("涵蓋工程報價系統、工程驗收與進度追蹤（連動財務應收帳款 AR）、現場日報表與設計圖庫 Storage。")
 
-    # 🎯 嚴格解析選單動作，確保子功能完全獨立切換
+    # 🎯 嚴格讀取左側選單傳入的子功能動作
     sub_action = (
         kwargs.get("sub_action") 
         or st.session_state.get("current_sub_action") 
@@ -17,6 +17,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     
     sub_str = str(sub_action).strip()
     
+    # 嚴格對應四個獨立子功能
     if "驗收" in sub_str or "進度" in sub_str or sub_str in ["2", "工程驗收與進度追蹤"]:
         current_mode = "progress"
     elif "日報" in sub_str or "出工" in sub_str or sub_str in ["3", "現場工程日報表與出工統計"]:
@@ -27,7 +28,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
         current_mode = "quote"
 
     # ====================================================
-    # 1. ⚙️ 配電盤與工程專案報價系統
+    # 子功能 1：配電盤與工程專案報價系統
     # ====================================================
     if current_mode == "quote":
         st.markdown("### ⚙️ 1. 配電盤與工程專案報價系統 (Quotation & AR Transfer)")
@@ -73,7 +74,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
             st.success(f"✅ 成功將專案 [{proj_name}] 報價金額傳動至財務部應收帳款（AR）模組！")
 
     # ====================================================
-    # 2. ⚡ 工程驗收與進度追蹤 (連動 AR)
+    # 子功能 2：工程驗收與進度追蹤
     # ====================================================
     elif current_mode == "progress":
         st.markdown("### ⚡ 2. 工程驗收與進度追蹤與 AR 應收款連動中心")
@@ -91,9 +92,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
 
         st.markdown("---")
         st.markdown("#### 🔍 專案資料搜尋與過濾")
-        if "prog_search" not in st.session_state:
-            st.session_state.prog_search = ""
-        search_query = st.text_input("輸入專案代碼、客戶或項目關鍵字搜尋", value=st.session_state.prog_search, key="prog_search_input")
+        search_query = st.text_input("輸入專案代碼、客戶或項目關鍵字搜尋", key="prog_search_input")
 
         if "projects_data" not in st.session_state:
             st.session_state.projects_data = [
@@ -109,44 +108,40 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
 
         st.dataframe(pd.DataFrame(filtered_proj), use_container_width=True)
 
-        st.markdown("#### 🛠️ 專案資料管理 (新增 / 修改 / 刪除)")
-        with st.expander("➕ 新增或維護工程專案進度"):
-            with st.form("proj_manage_form"):
-                pc1, pc2, pc3 = st.columns(3)
-                with pc1:
-                    new_code = st.text_input("專案代碼", placeholder="例如: PRJ-04")
-                    new_cust = st.text_input("客戶名稱", placeholder="例如: 越南海防科技廠")
-                with pc2:
-                    new_item = st.text_input("工程項目", placeholder="例如: 消防動力系統配電")
-                    new_val = st.text_input("合約總值", value="$500,000")
-                with pc3:
-                    new_ar = st.text_input("未收AR", value="$100,000")
-                    new_date = st.text_input("驗收日", value="2026-12-01 (初驗)")
-                
-                submitted = st.form_submit_button("💾 新增專案進度", type="primary")
-                if submitted and new_code:
-                    st.session_state.projects_data.append({
-                        "代碼": new_code, "客戶": new_cust, "項目": new_item, 
-                        "合約總值": new_val, "已收": "$0", "未收AR": new_ar, 
-                        "進度": "0%", "驗收日": new_date, "狀態": "🟡 籌備中"
-                    })
-                    st.success(f"✅ 專案 [{new_code}] 新增成功！")
-                    st.rerun()
-
-        del_code = st.selectbox("選擇要刪除的專案代碼", [""] + [p["代碼"] for p in st.session_state.projects_data])
-        if st.button("🗑️ 刪除選定專案", type="secondary"):
-            if del_code:
-                st.session_state.projects_data = [p for p in st.session_state.projects_data if p["代碼"] != del_code]
-                st.success(f"✅ 專案 [{del_code}] 已刪除！")
+        st.markdown("#### 🛠️ 專案資料管理 (新增 / 刪除)")
+        with st.form("proj_manage_form"):
+            pc1, pc2, pc3 = st.columns(3)
+            with pc1:
+                new_code = st.text_input("專案代碼", placeholder="例如: PRJ-04")
+                new_cust = st.text_input("客戶名稱", placeholder="例如: 越南海防科技廠")
+            with pc2:
+                new_item = st.text_input("工程項目", placeholder="例如: 消防動力系統配電")
+                new_val = st.text_input("合約總值", value="$500,000")
+            with pc3:
+                new_ar = st.text_input("未收AR", value="$100,000")
+                new_date = st.text_input("驗收日", value="2026-12-01 (初驗)")
+            
+            if st.form_submit_button("💾 新增專案進度", type="primary") and new_code:
+                st.session_state.projects_data.append({
+                    "代碼": new_code, "客戶": new_cust, "項目": new_item, 
+                    "合約總值": new_val, "已收": "$0", "未收AR": new_ar, 
+                    "進度": "0%", "驗收日": new_date, "狀態": "🟡 籌備中"
+                })
+                st.success(f"✅ 專案 [{new_code}] 新增成功！")
                 st.rerun()
 
+        del_code = st.selectbox("選擇要刪除的專案代碼", [""] + [p["代碼"] for p in st.session_state.projects_data])
+        if st.button("🗑️ 刪除選定專案", type="secondary") and del_code:
+            st.session_state.projects_data = [p for p in st.session_state.projects_data if p["代碼"] != del_code]
+            st.success(f"✅ 專案 [{del_code}] 已刪除！")
+            st.rerun()
+
         st.markdown("---")
-        st.info("🔗 **財務 AR 即時連動**：當工程進度達標或完成驗收時，可點擊下方按鈕將資料即時拋轉至財務應收帳款模組進行催收。")
         if st.button("📡 立即同步驗收進度並通知財務 AR 進行請款催收", type="primary"):
             st.success("✅ 已成功向財務部應收帳款（AR）發送即時通知與驗收時間表！")
 
     # ====================================================
-    # 3. 📝 現場工程日報表與出工統計
+    # 子功能 3：現場工程日報表與出工統計
     # ====================================================
     elif current_mode == "daily":
         st.markdown("### 📝 3. 現場工程日報表與出工統計 (Daily Site Reports)")
@@ -157,18 +152,15 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                 {"日期": "2026-10-07", "案場": "越南西寧廠", "負責台幹": "admin", "工人數": 18, "施工摘要": "完成主母線銅排架設與耐壓測試。"}
             ]
         
-        st.markdown("#### 🔍 日報表關鍵字搜尋")
-        d_search = st.text_input("輸入案場、負責台幹或摘要關鍵字", key="daily_search_input")
+        d_search = st.text_input("輸入案場、負責台幹或摘要關鍵字搜尋", key="daily_search_input")
         filtered_daily = [
             r for r in st.session_state.daily_reports 
             if d_search.lower() in r["案場"].lower() or d_search.lower() in r["負責台幹"].lower() or d_search.lower() in r["施工摘要"].lower()
         ] if d_search else st.session_state.daily_reports
 
-        st.markdown("#### 📋 近期現場施工日報紀錄")
         st.dataframe(pd.DataFrame(filtered_daily), use_container_width=True)
 
         st.markdown("---")
-        st.markdown("#### ➕ 填寫今日施工日報表與管理")
         with st.form("daily_form"):
             dc1, dc2 = st.columns(2)
             with dc1:
@@ -180,26 +172,22 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
             
             d_summary = st.text_area("當日施工摘要與異常回報", placeholder="例如: 進行配電盤銅排組裝與穿線作業，無異常。")
             
-            if st.form_submit_button("💾 設為今日施工日報表", type="primary"):
+            if st.form_submit_button("💾 提交現場施工日報表", type="primary"):
                 st.session_state.daily_reports.insert(0, {
-                    "日期": str(d_date), 
-                    "案場": d_plant, 
-                    "負責台幹": d_leader, 
-                    "工人數": d_workers, 
-                    "施工摘要": d_summary
+                    "日期": str(d_date), "案場": d_plant, "負責台幹": d_leader, 
+                    "工人數": d_workers, "施工摘要": d_summary
                 })
                 st.success("✅ 現場施工日報表已成功提交並歸檔！")
                 st.rerun()
 
         del_daily_idx = st.selectbox("選擇要刪除的日報記錄索引", [-1] + list(range(len(st.session_state.daily_reports))), format_func=lambda x: f"索引 {x}: {st.session_state.daily_reports[x]['日期']} - {st.session_state.daily_reports[x]['案場']}" if x >= 0 else "請選擇...")
-        if st.button("🗑️ 刪除選定日報紀錄", type="secondary"):
-            if del_daily_idx >= 0:
-                removed = st.session_state.daily_reports.pop(del_daily_idx)
-                st.success(f"✅ 已成功刪除 {removed['日期']} 的日報紀錄！")
-                st.rerun()
+        if st.button("🗑️ 刪除選定日報紀錄", type="secondary") and del_daily_idx >= 0:
+            removed = st.session_state.daily_reports.pop(del_daily_idx)
+            st.success(f"✅ 已成功刪除該筆日報紀錄！")
+            st.rerun()
 
     # ====================================================
-    # 4. 📐 配電盤電氣與機構設計圖庫 Storage
+    # 子功能 4：配電盤電氣與機構設計圖庫 Storage
     # ====================================================
     elif current_mode == "design":
         st.markdown("### 📐 4. 配電盤電氣與機構設計圖庫 Storage 雲端中心")
@@ -210,12 +198,6 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                 {"圖號": "DWG-01", "專案名稱": "越南新順電子廠", "檔案名稱": "MSB_2000A.pdf", "上傳時間": "2026-10-01", "上傳人": "An"}
             ]
         
-        criteria_col1, criteria_col2 = st.columns([3, 1])
-        with criteria_col1:
-            st.markdown("#### 📂 公司內部 Storage 現有圖庫列表")
-        with criteria_col2:
-            st.info(f"共 {len(st.session_state.storage_drawings)} 套圖檔")
-
         dwg_search = st.text_input("輸入圖號或專案名稱搜尋圖檔", key="dwg_search_input")
         filtered_dwg = [
             d for d in st.session_state.storage_drawings 
@@ -225,7 +207,6 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
         st.dataframe(pd.DataFrame(filtered_dwg), use_container_width=True)
         
         st.markdown("---")
-        st.markdown("#### 📤 上傳或刪除設計圖檔")
         with st.form("upload_form"):
             uc1, uc2 = st.columns(2)
             with uc1:
@@ -238,23 +219,19 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
             if st.form_submit_button("💾 儲存並上傳至 Storage", type="primary"):
                 if dwg_no and dwg_name and up_file:
                     st.session_state.storage_drawings.insert(0, {
-                        "圖號": dwg_no, 
-                        "專案名稱": dwg_name, 
-                        "檔案名稱": up_file.name, 
-                        "上傳時間": str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M")), 
-                        "上傳人": "admin"
+                        "圖號": dwg_no, "專案名稱": dwg_name, "檔案名稱": up_file.name, 
+                        "上傳時間": str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M")), "上傳人": "admin"
                     })
                     st.success("✅ 設計圖檔已成功上傳至 Storage 雲端中心！")
                     st.rerun()
                 else:
                     st.warning("⚠️ 請完整填寫圖號、專案名稱並上傳檔案！")
 
-        del_dwg_no = st.selectbox("選擇要刪除的圖號", [""] + [d.get("圖號", d.get("图號", "")) for d in st.session_state.storage_drawings], key="del_dwg_select")
-        if st.button("🗑️ 刪除選定圖檔", type="secondary"):
-            if del_dwg_no:
-                st.session_state.storage_drawings = [d for d in st.session_state.storage_drawings if d.get("圖號") != del_dwg_no and d.get("图號") != del_dwg_no]
-                st.success(f"✅ 圖號 [{del_dwg_no}] 已從 Storage 移除！")
-                st.rerun()
+        del_dwg_no = st.selectbox("選擇要刪除的圖號", [""] + [d.get("圖號", "") for d in st.session_state.storage_drawings], key="del_dwg_select")
+        if st.button("🗑️ 刪除選定圖檔", type="secondary") and del_dwg_no:
+            st.session_state.storage_drawings = [d for d in st.session_state.storage_drawings if d.get("圖號") != del_dwg_no]
+            st.success(f"✅ 圖號 [{del_dwg_no}] 已從 Storage 移除！")
+            st.rerun()
 
 # ----------------------------------------------------
 # 🔗 相容性進入點定義
