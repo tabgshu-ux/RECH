@@ -8,20 +8,34 @@ import datetime
 ASSET_I18N = {
     "繁體中文": {
         "title": "🏭 裕豐電機工業 - 生產設備與固定資產管理系統",
-        "caption": "管理西寧廠/海防廠生產機械設備、辦公個人電腦、行動式筆電與公務車輛/使用車輛之完整資產生命週期。",
+        "caption": "管理西寧廠/海防廠生產機械設備、辦公設備、車輛、網通、品管儀器與工安設施之完整資產生命週期。",
         "tab_list": "📑 資產總表與分類檢視",
         "tab_add": "➕ 新增固定資產與設備",
         "tab_edit": "✏️ 修改資產資料",
         "tab_delete": "🗑️ 刪除或報廢資產",
         "table_header": "📋 廠區固定資產與設備分類清冊",
-        "cat_all": "🌐 全部資產 (All Assets)",
-        "cat_prod": "🏭 生產部設備 (Machinery)",
-        "cat_car": "🚗 車輛設備 (Vehicles)",
-        "cat_it": "💻 電腦與辦公設備 (IT & Office)",
+        "cat_all": "🌐 全部",
+        "cat_prod": "🏭 生產機具",
+        "cat_car": "🚗 車輛",
+        "cat_it": "💻 電腦",
+        "cat_office": "🖨️ 辦公設備",
+        "cat_net": "📡 網通伺服",
+        "cat_qa": "🔬 品管儀器",
+        "cat_wh": "📦 倉儲物流",
+        "cat_safety": "🧯 消防工安",
         "lbl_code": "資產編號 (Asset Code) *",
         "lbl_name": "資產名稱 (Asset Name) *",
         "lbl_category": "品項分類 (Category) *",
-        "cat_opts": ["生產與加工機具 (Machinery)", "車輛設備 (Vehicle)", "個人電腦 (Desktop PC)", "筆記型電腦 (Laptop)", "辦公家具與設備 (Office)"],
+        "cat_opts": [
+            "生產與加工機具 (Machinery)",
+            "車輛設備 (Vehicle)",
+            "個人電腦與筆電 (PC & Laptop)",
+            "辦公家具與設備 (Office Equipment)",
+            "網通與伺服器 (Network & Servers)",
+            "檢測與品管儀器 (Testing & QA)",
+            "倉儲與物流設備 (Warehouse & Logistics)",
+            "消防與工安設施 (Safety & Firefighting)"
+        ],
         "lbl_factory": "存放廠區 (Plant Location) *",
         "factory_opts": ["越南西寧廠 (Tay Ninh)", "越南海防廠 (Hai Phong)"],
         "lbl_brand": "品牌與型號 (Brand & Model)",
@@ -47,20 +61,34 @@ ASSET_I18N = {
     },
     "Tiếng Việt": {
         "title": "🏭 Quản lý Tài sản Cố định & Thiết bị",
-        "caption": "Quản lý máy móc sản xuất, máy tính, xe ô tô và thiết bị văn phòng.",
+        "caption": "Quản lý toàn diện tài sản nhà máy.",
         "tab_list": "📑 Danh sách & Phân loại tài sản",
         "tab_add": "➕ Thêm tài sản mới",
         "tab_edit": "✏️ Sửa thông tin",
         "tab_delete": "🗑️ Xóa / Thanh lý tài sản",
         "table_header": "📋 Danh mục Tài sản Cố định theo phân loại",
-        "cat_all": "🌐 Tất cả tài sản",
-        "cat_prod": "🏭 Máy móc sản xuất",
+        "cat_all": "🌐 Tất cả",
+        "cat_prod": "🏭 Máy móc",
         "cat_car": "🚗 Xe cộ",
-        "cat_it": "💻 Máy tính & Văn phòng",
+        "cat_it": "💻 Máy tính",
+        "cat_office": "🖨️ Văn phòng",
+        "cat_net": "📡 Mạng",
+        "cat_qa": "🔬 QA/QC",
+        "cat_wh": "📦 Kho",
+        "cat_safety": "🧯 An toàn",
         "lbl_code": "Mã tài sản *",
         "lbl_name": "Tên tài sản *",
         "lbl_category": "Phân loại *",
-        "cat_opts": ["Máy móc sản xuất", "Thiết bị xe", "Máy tính để bàn", "Laptop", "Thiết bị văn phòng"],
+        "cat_opts": [
+            "生產與加工機具 (Machinery)",
+            "車輛設備 (Vehicle)",
+            "個人電腦與筆電 (PC & Laptop)",
+            "辦公家具與設備 (Office Equipment)",
+            "網通與伺服器 (Network & Servers)",
+            "檢測與品管儀器 (Testing & QA)",
+            "倉儲與物流設備 (Warehouse & Logistics)",
+            "消防與工安設施 (Safety & Firefighting)"
+        ],
         "lbl_factory": "Nhà máy lưu trữ *",
         "factory_opts": ["Nhà máy Tây Ninh", "Nhà máy Hải Phòng"],
         "lbl_brand": "Thương hiệu & Model",
@@ -86,21 +114,34 @@ ASSET_I18N = {
     },
     "English": {
         "title": "🏭 Fixed Assets & Equipment Management",
-        "caption": "Manage production machinery, computers, vehicles, and office equipment lifecycle.",
+        "caption": "Comprehensive plant asset lifecycle management.",
         "tab_list": "📑 Asset Directory & Categories",
-        "tab_import": "📥 Batch Import",
         "tab_add": "➕ Add New Asset",
         "tab_edit": "✏️ Edit Asset",
         "tab_delete": "🗑️ Delete / Dispose",
         "table_header": "📋 Fixed Asset Directory by Category",
-        "cat_all": "🌐 All Assets",
+        "cat_all": "🌐 All",
         "cat_prod": "🏭 Machinery",
         "cat_car": "🚗 Vehicles",
-        "cat_it": "💻 IT & Office",
+        "cat_it": "💻 IT & PC",
+        "cat_office": "🖨️ Office",
+        "cat_net": "📡 Network",
+        "cat_qa": "🔬 QA/QC",
+        "cat_wh": "📦 Warehouse",
+        "cat_safety": "🧯 Safety",
         "lbl_code": "Asset Code *",
         "lbl_name": "Asset Name *",
         "lbl_category": "Category *",
-        "cat_opts": ["Machinery & Equipment", "Vehicle", "Desktop PC", "Laptop", "Office Equipment"],
+        "cat_opts": [
+            "生產與加工機具 (Machinery)",
+            "車輛設備 (Vehicle)",
+            "個人電腦與筆電 (PC & Laptop)",
+            "辦公家具與設備 (Office Equipment)",
+            "網通與伺服器 (Network & Servers)",
+            "檢測與品管儀器 (Testing & QA)",
+            "倉儲與物流設備 (Warehouse & Logistics)",
+            "消防與工安設施 (Safety & Firefighting)"
+        ],
         "lbl_factory": "Plant Location *",
         "factory_opts": ["Tay Ninh Plant", "Hai Phong Plant"],
         "lbl_brand": "Brand & Model",
@@ -133,7 +174,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化固定資產資料庫 (若無則建立預設值)
+    # 初始化固定資產資料庫
     if "asset_db" not in st.session_state:
         st.session_state.asset_db = [
             {
@@ -149,7 +190,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
             {
                 "資產編號": "AST-PC-001",
                 "資產名稱": "西寧廠財務主管辦公電腦",
-                "類別": "個人電腦 (Desktop PC)",
+                "類別": "個人電腦與筆電 (PC & Laptop)",
                 "存放廠區": "越南西寧廠 (Tay Ninh)",
                 "品牌型號": "Dell - OptiPlex 7090 i7",
                 "車牌號碼": "-",
@@ -168,7 +209,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
             }
         ]
 
-    # 🛡️ 欄位相容防護：確保現有 session 資料都有標準欄位，避免 KeyError
+    # 🛡️ 欄位相容防護
     for asset in st.session_state.asset_db:
         if "存放廠區" not in asset:
             asset["存放廠區"] = asset.get("廠區", asset.get("位置", "越南西寧廠"))
@@ -193,7 +234,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
     st.markdown("---")
 
-    # 建立頁籤
+    # 建立主頁籤
     tab_list, tab_add, tab_edit, tab_delete = st.tabs([
         L["tab_list"], L["tab_add"], L["tab_edit"], L["tab_delete"]
     ])
@@ -202,8 +243,9 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     with tab_list:
         st.markdown(f"### {L['table_header']}")
         
-        cat_tab_all, cat_tab_prod, cat_tab_car, cat_tab_it = st.tabs([
-            L["cat_all"], L["cat_prod"], L["cat_car"], L["cat_it"]
+        # 完整九大分類子分頁
+        cat_tab_all, cat_tab_prod, cat_tab_car, cat_tab_it, cat_tab_office, cat_tab_net, cat_tab_qa, cat_tab_wh, cat_tab_safety = st.tabs([
+            L["cat_all"], L["cat_prod"], L["cat_car"], L["cat_it"], L["cat_office"], L["cat_net"], L["cat_qa"], L["cat_wh"], L["cat_safety"]
         ])
 
         def display_asset_table(filtered_data):
@@ -229,16 +271,28 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
             display_asset_table(st.session_state.asset_db)
 
         with cat_tab_prod:
-            prod_data = [a for a in st.session_state.asset_db if "生產" in str(a.get("類別", "")) or "Machinery" in str(a.get("類別", "")) or "機具" in str(a.get("類別", ""))]
-            display_asset_table(prod_data)
+            display_asset_table([a for a in st.session_state.asset_db if "生產" in str(a.get("類別", "")) or "Machinery" in str(a.get("類別", ""))])
 
         with cat_tab_car:
-            car_data = [a for a in st.session_state.asset_db if "車輛" in str(a.get("類別", "")) or "Vehicle" in str(a.get("類別", "")) or "車" in str(a.get("類別", ""))]
-            display_asset_table(car_data)
+            display_asset_table([a for a in st.session_state.asset_db if "車輛" in str(a.get("類別", "")) or "Vehicle" in str(a.get("類別", ""))])
 
         with cat_tab_it:
-            it_data = [a for a in st.session_state.asset_db if any(k in str(a.get("類別", "")) for k in ["電腦", "筆電", "PC", "Laptop", "Office", "辦公"])]
-            display_asset_table(it_data)
+            display_asset_table([a for a in st.session_state.asset_db if "電腦" in str(a.get("類別", "")) or "PC" in str(a.get("類別", ""))])
+
+        with cat_tab_office:
+            display_asset_table([a for a in st.session_state.asset_db if "辦公" in str(a.get("類別", "")) or "Office" in str(a.get("類別", ""))])
+
+        with cat_tab_net:
+            display_asset_table([a for a in st.session_state.asset_db if "網通" in str(a.get("類別", "")) or "Network" in str(a.get("類別", ""))])
+
+        with cat_tab_qa:
+            display_asset_table([a for a in st.session_state.asset_db if "品管" in str(a.get("類別", "")) or "Testing" in str(a.get("類別", ""))])
+
+        with cat_tab_wh:
+            display_asset_table([a for a in st.session_state.asset_db if "倉儲" in str(a.get("類別", "")) or "Warehouse" in str(a.get("類別", ""))])
+
+        with cat_tab_safety:
+            display_asset_table([a for a in st.session_state.asset_db if "消防" in str(a.get("類別", "")) or "Safety" in str(a.get("類別", ""))])
 
     # 2. ➕ 新增固定資產
     with tab_add:
@@ -253,7 +307,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 a_cat = st.selectbox(L["lbl_category"], L["cat_opts"])
                 a_factory = st.selectbox(L["lbl_factory"], L["factory_opts"])
             with c2:
-                a_brand = st.text_input(L["lbl_brand"], placeholder="例如: Dell OptiPlex / Amada / Toyota")
+                a_brand = st.text_input(L["lbl_brand"], placeholder="例如: Dell / Amada / Toyota")
                 a_plate = st.text_input(L["lbl_plate"], value="-")
                 a_status = st.selectbox(L["lbl_status"], L["status_opts"])
                 a_cost = st.number_input(L["lbl_cost"], min_value=0.0, value=1500.0, step=100.0)
