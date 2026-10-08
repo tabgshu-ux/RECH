@@ -1,290 +1,330 @@
-import streamlit as st
+import datetime
 import pandas as pd
+import streamlit as st
 
-def render_employee_management(engine=None, t=None, lang="繁體中文", **kwargs):
-    # 多語言字典
-    texts = {
-        "繁體中文": {
-            "title": "👤 管理部 - 員工個人檔案與人事管理",
-            "info": "在此維護全廠區員工個人檔案、合約記錄、工作廠區與人事資料（支援多國籍、雙地址與保險/薪資設定）。",
-            "search": "🔍 搜尋員工姓名 / 工號 / 職稱",
-            "search_ph": "輸入關鍵字搜尋員工...",
-            "list_title": "### 📋 現有在職員工名冊",
-            "tab_add": "➕ 新增員工",
-            "tab_edit": "✏️ 修改員工資料",
-            "tab_del": "🗑️ 刪除員工",
-            "step1": "📌 步驟 1: 選擇員工國籍/廠區 (選擇後即時切換下方欄位)",
-            "nat_label": "員工國籍 / 所屬廠區 *",
-            "id_label": "員工工號 (Emp ID) *",
-            "dept_label": "所屬部門",
-            "phone_label": "聯絡電話 (Phone) *",
-            "name_label": "員工全名 (Full Name) *",
-            "title_label": "職位名稱",
-            "role_label": "系統權限角色 (Role)",
-            "perm_addr": "戶籍地址 (Permanent Address / Hộ khẩu) *",
-            "temp_addr": "現居/暫住地址 (Current Address / Tạm trú) *",
-            "step2": "📌 步驟 2: 輸入【VN 越南 (Vietnam)】專屬身分、起薪與法定保險資訊",
-            "cccd_label": "身份證字號 (Số CCCD)",
-            "salary_label": "約定起薪 / 保險起薪 (VND)",
-            "hire_label": "入職/到職日期",
-            "ins_label": "每月社醫保個人扣繳 (10.5% VND)",
-            "hosp_label": "醫保指定醫院 (Bệnh viện)",
-            "allow_label": "各類津貼總計 (VND)",
-            "contract_label": "合約原署日期",
-            "add_btn": "🚀 立即新增員工",
-            # 修改與刪除專用多語言
-            "select_edit_emp": "選擇要修改的員工",
-            "edit_tab_title": "### ✏️ 修改員工檔案",
-            "edit_id": "工號 (Emp ID)",
-            "edit_name": "員工姓名 (Name)",
-            "edit_title_label": "職稱 (Title)",
-            "edit_phone": "電話 (Phone)",
-            "edit_perm": "戶籍地址 (Permanent Address)",
-            "edit_temp": "現居地址 (Current Address)",
-            "save_btn": "💾 儲存修改",
-            "del_tab_title": "### 🗑️ 刪除員工確認",
-            "select_del_emp": "選擇要刪除的員工",
-            "del_warn": "確定要將員工 **{id} - {name}** 自系統中刪除嗎？",
-            "del_btn": "🔥 確認刪除"
-        },
-        "Tiếng Việt": {
-            "title": "👤 Phòng Quản lý - Quản lý Nhân sự & Hồ sơ Nhân viên",
-            "info": "Nơi quản lý hồ sơ nhân viên, hợp đồng, khu vực làm việc và dữ liệu nhân sự toàn nhà máy (Hỗ trợ đa quốc tịch, đa địa chỉ và bảo hiểm/lương).",
-            "search": "🔍 Tìm kiếm nhân viên (Tên / Mã NV / Chức vụ)",
-            "search_ph": "Nhập từ khóa tìm kiếm...",
-            "list_title": "### 📋 Danh sách Nhân viên hiện tại",
-            "tab_add": "➕ Thêm nhân viên",
-            "tab_edit": "✏️ Sửa thông tin",
-            "tab_del": "🗑️ Xóa nhân viên",
-            "step1": "📌 Bước 1: Chọn Quốc tịch nhân viên / Khu vực làm việc",
-            "nat_label": "Quốc tịch / Khu vực *",
-            "id_label": "Mã nhân viên (Emp ID) *",
-            "dept_label": "Phòng ban",
-            "phone_label": "Số điện thoại (Phone) *",
-            "name_label": "Họ và tên (Full Name) *",
-            "title_label": "Chức vụ",
-            "role_label": "Vai trò hệ thống (Role)",
-            "perm_addr": "Hộ khẩu thường trú (Permanent Address) *",
-            "temp_addr": "Chỗ ở hiện tại / Tạm trú (Current Address) *",
-            "step2": "📌 Bước 2: Nhập Thông tin CCCD, Lương & Bảo hiểm bắt buộc cho nhân viên VN",
-            "cccd_label": "Số CCCD",
-            "salary_label": "Lương thỏa thuận / Lương đóng bảo hiểm (VND)",
-            "hire_label": "Ngày vào làm",
-            "ins_label": "Bảo hiểm xã hội/y tế cá nhân đóng (10.5% VND)",
-            "hosp_label": "Bệnh viện KCB ban đầu (Bệnh viện)",
-            "allow_label": "Tổng phụ cấp (VND)",
-            "contract_label": "Ngày ký hợp đồng",
-            "add_btn": "🚀 Thêm nhân viên mới",
-            # Sửa & Xóa
-            "select_edit_emp": "Chọn nhân viên cần chỉnh sửa",
-            "edit_tab_title": "### ✏️ Chỉnh sửa hồ sơ nhân viên",
-            "edit_id": "Mã nhân viên (Emp ID)",
-            "edit_name": "Họ tên nhân viên (Name)",
-            "edit_title_label": "Chức vụ (Title)",
-            "edit_phone": "Số điện thoại (Phone)",
-            "edit_perm": "Hộ khẩu thường trú (Permanent Address)",
-            "edit_temp": "Chỗ ở hiện tại (Current Address)",
-            "save_btn": "💾 Lưu thay đổi",
-            "del_tab_title": "### 🗑️ Xác nhận xóa nhân viên",
-            "select_del_emp": "Chọn nhân viên cần xóa",
-            "del_warn": "Bạn có chắc chắn muốn xóa nhân viên **{id} - {name}** khỏi hệ thống không?",
-            "del_btn": "🔥 Xác nhận xóa"
-        },
-        "English": {
-            "title": "👤 Management Dept - HR & Employee Records",
-            "info": "Manage employee profiles, contracts, work factories, and personnel records (Supports multi-nationality, dual addresses, and insurance/salary settings).",
-            "search": "🔍 Search Employee (Name / ID / Title)",
-            "search_ph": "Enter keyword to search...",
-            "list_title": "### 📋 Current Employee Directory",
-            "tab_add": "➕ Add Employee",
-            "tab_edit": "✏️ Edit Employee",
-            "tab_del": "🗑️ Delete Employee",
-            "step1": "📌 Step 1: Select Employee Nationality & Factory",
-            "nat_label": "Nationality / Factory *",
-            "id_label": "Employee ID *",
-            "dept_label": "Department",
-            "phone_label": "Phone Number *",
-            "name_label": "Full Name *",
-            "title_label": "Job Title",
-            "role_label": "System Role",
-            "perm_addr": "Permanent Address (Hộ khẩu) *",
-            "temp_addr": "Current / Temporary Address *",
-            "step2": "📌 Step 2: Enter VN National ID, Salary & Statutory Insurance Info",
-            "cccd_label": "Citizen ID (CCCD)",
-            "salary_label": "Base Salary / Insurance Salary (VND)",
-            "hire_label": "Hire Date",
-            "ins_label": "Monthly Personal Insurance Contribution (10.5% VND)",
-            "hosp_label": "Insurance Hospital",
-            "allow_label": "Total Allowances (VND)",
-            "contract_label": "Contract Date",
-            "add_btn": "🚀 Add Employee",
-            # Edit & Delete
-            "select_edit_emp": "Select employee to edit",
-            "edit_tab_title": "### ✏️ Edit Employee Profile",
-            "edit_id": "Employee ID",
-            "edit_name": "Employee Name",
-            "edit_title_label": "Job Title",
-            "edit_phone": "Phone Number",
-            "edit_perm": "Permanent Address",
-            "edit_temp": "Current Address",
-            "save_btn": "💾 Save Changes",
-            "del_tab_title": "### 🗑️ Confirm Employee Deletion",
-            "select_del_emp": "Select employee to delete",
-            "del_warn": "Are you sure you want to delete employee **{id} - {name}** from the system?",
-            "del_btn": "🔥 Confirm Delete"
-        }
+# ----------------------------------------------------
+# 🌐 員工與人事管理模組多語系字典 (i18n)
+# ----------------------------------------------------
+EMPLOYEE_I18N = {
+    "繁體中文": {
+        "title": "👤 管理部 - 員工與人事管理",
+        "caption": "維護全廠區員工個人檔案、合約記錄、工作廠區、離職歸檔、人臉/指紋打卡機資料彙集。",
+        "tab_roster": "📋 員工名冊與詳細編輯",
+        "tab_punch": "⏰ 智慧打卡紀錄",
+        "tab_leave": "📝 請假簽核中心",
+        "roster_header": "📋 現有在職員工名冊",
+        "add_emp_header": "➕ 新增員工個人檔案",
+        "lbl_emp_id": "員工編號",
+        "lbl_name": "員工姓名",
+        "lbl_nationality": "國籍",
+        "lbl_site": "工作廠區",
+        "lbl_title": "職稱",
+        "lbl_role": "系統權限角色",
+        "btn_add_emp": "💾 立即新增員工",
+        "success_add": "✅ 成功新增員工：",
+        "warning_fill": "⚠️ 請填寫員工編號與姓名！",
+        "punch_header": "⏰ 廠區人臉 / 指紋打卡紀錄彙集",
+        "punch_caption": "💡 模擬串接工廠各出入口之生物辨識打卡機資料。",
+        "select_emp": "選擇打卡員工",
+        "punch_type": "打卡類型",
+        "clock_in": "上班簽到 (Clock In)",
+        "clock_out": "下班簽退 (Clock Out)",
+        "btn_punch": "📍 模擬刷臉打卡",
+        "success_punch": "紀錄成功！",
+        "no_punch": "目前尚無今日打卡紀錄。",
+        "leave_header": "📝 請假申請與簽核流程",
+        "lbl_leave_emp": "請假員工",
+        "lbl_leave_type": "假別",
+        "leave_opts": ["特休假 (Annual Leave)", "事假 (Personal Leave)", "病假 (Sick Leave)", "公出 (Official Business)"],
+        "lbl_reason": "請假事由",
+        "btn_submit_leave": "📤 送出請假申請",
+        "success_leave": "✅ 請假申請已送出，等待主管審核。",
+        "leave_list_header": "📋 目前請假單列表",
+        "col_id": "工號",
+        "col_name": "姓名",
+        "col_nation": "國籍",
+        "col_site": "廠區",
+        "col_dept": "部門",
+        "col_title": "職稱",
+        "col_role": "角色",
+        "col_phone": "電話",
+        "col_face": "生物辨識代碼",
+        "site_opts": ["西寧廠", "🇻🇳 越南西寧廠 (Tay Ninh Plant)", "平陽廠"],
+        "nat_opts": ["🇹🇼 台灣 (Taiwan)", "🇻🇳 越南 (Vietnamese)", "🇨🇳 中國 (Chinese)"]
+    },
+    "Tiếng Việt": {
+        "title": "👤 Khối Quản lý - Quản lý Nhân sự & Nhân viên",
+        "caption": "Quản lý hồ sơ nhân viên, hợp đồng lao động, nhà máy làm việc, chấm công sinh trắc học.",
+        "tab_roster": "📋 Danh sách Nhân viên",
+        "tab_punch": "⏰ Nhật ký Chấm công thông minh",
+        "tab_leave": "📝 Trung tâm Đơn nghỉ phép",
+        "roster_header": "📋 Danh sách nhân viên đang làm việc",
+        "add_emp_header": "➕ Thêm hồ sơ nhân viên mới",
+        "lbl_emp_id": "Mã nhân viên",
+        "lbl_name": "Họ tên nhân viên",
+        "lbl_nationality": "Quốc tịch",
+        "lbl_site": "Nhà máy làm việc",
+        "lbl_title": "Chức vụ",
+        "lbl_role": "Quyền hệ thống",
+        "btn_add_emp": "💾 Thêm nhân viên ngay",
+        "success_add": "✅ Thêm nhân viên thành công: ",
+        "warning_fill": "⚠️ Vui lòng điền mã nhân viên và họ tên!",
+        "punch_header": "⏰ Tổng hợp dữ liệu chấm công khuôn mặt / vân tay",
+        "punch_caption": "💡 Mô phỏng kết nối máy chấm công sinh trắc học tại các cổng nhà máy.",
+        "select_emp": "Chọn nhân viên chấm công",
+        "punch_type": "Loại chấm công",
+        "clock_in": "Vào ca (Clock In)",
+        "clock_out": "Tan ca (Clock Out)",
+        "btn_punch": "📍 Mô phỏng chấm công",
+        "success_punch": "Ghi nhận thành công!",
+        "no_punch": "Hiện chưa có bản ghi chấm công trong ngày.",
+        "leave_header": "📝 Đăng ký & Quy trình xét duyệt nghỉ phép",
+        "lbl_leave_emp": "Nhân viên nghỉ phép",
+        "lbl_leave_type": "Loại nghỉ phép",
+        "leave_opts": ["Phép năm (Annual Leave)", "Việc riêng (Personal Leave)", "Nghỉ bệnh (Sick Leave)", "Công tác (Official Business)"],
+        "lbl_reason": "Lý do xin nghỉ",
+        "btn_submit_leave": "📤 Gửi đơn xin nghỉ",
+        "success_leave": "✅ Đơn xin nghỉ đã được gửi, chờ quản lý duyệt.",
+        "leave_list_header": "📋 Danh sách đơn nghỉ phép hiện tại",
+        "col_id": "Mã NV",
+        "col_name": "Họ tên",
+        "col_nation": "Quốc tịch",
+        "col_site": "Nhà máy",
+        "col_dept": "Bộ phận",
+        "col_title": "Chức vụ",
+        "col_role": "Quyền",
+        "col_phone": "Điện thoại",
+        "col_face": "Mã sinh trắc",
+        "site_opts": ["Nhà máy Tây Ninh", "Nhà máy Tây Ninh (Tay Ninh Plant)", "Nhà máy Bình Dương"],
+        "nat_opts": ["🇹🇼 Đài Loan (Taiwan)", "🇻🇳 Việt Nam (Vietnamese)", "🇨🇳 Trung Quốc (Chinese)"]
+    },
+    "English": {
+        "title": "👤 Admin - Employee & HR Management",
+        "caption": "Manage employee profiles, contracts, work plants, and biometric attendance records.",
+        "tab_roster": "📋 Employee Roster",
+        "tab_punch": "⏰ Smart Attendance Log",
+        "tab_leave": "📝 Leave Request Center",
+        "roster_header": "📋 Active Employee Roster",
+        "add_emp_header": "➕ Register New Employee Profile",
+        "lbl_emp_id": "Employee ID",
+        "lbl_name": "Full Name",
+        "lbl_nationality": "Nationality",
+        "lbl_site": "Work Plant",
+        "lbl_title": "Job Title",
+        "lbl_role": "System Role",
+        "btn_add_emp": "💾 Save Employee",
+        "success_add": "✅ Successfully added employee: ",
+        "warning_fill": "⚠️ Please fill in Employee ID and Name!",
+        "punch_header": "📦 Biometric Attendance Records",
+        "punch_caption": "💡 Simulate face/fingerprint attendance terminals at plant gates.",
+        "select_emp": "Select Employee",
+        "punch_type": "Attendance Type",
+        "clock_in": "Clock In",
+        "clock_out": "Clock Out",
+        "btn_punch": "📍 Simulate Clock-In",
+        "success_punch": "Recorded successfully!",
+        "no_punch": "No attendance records for today.",
+        "leave_header": "📝 Leave Request & Approval Flow",
+        "lbl_leave_emp": "Employee",
+        "lbl_leave_type": "Leave Type",
+        "leave_opts": ["Annual Leave", "Personal Leave", "Sick Leave", "Official Business"],
+        "lbl_reason": "Reason for Leave",
+        "btn_submit_leave": "📤 Submit Leave Request",
+        "success_leave": "✅ Leave request submitted, pending approval.",
+        "leave_list_header": "📋 Current Leave Requests",
+        "col_id": "Emp ID",
+        "col_name": "Name",
+        "col_nation": "Nationality",
+        "col_site": "Plant",
+        "col_dept": "Department",
+        "col_title": "Job Title",
+        "col_role": "Role",
+        "col_phone": "Phone",
+        "col_face": "Biometric Token",
+        "site_opts": ["Tay Ninh Plant", "Tay Ninh Plant (Tay Ninh)", "Binh Duong Plant"],
+        "nat_opts": ["🇹🇼 Taiwan", "🇻🇳 Vietnamese", "🇨🇳 Chinese"]
     }
+}
 
-    t_set = texts.get(lang, texts["繁體中文"])
+# ----------------------------------------------------
+# 🔄 智慧語意對照引擎 (處理員工姓名、職稱與部門)
+# ----------------------------------------------------
+def smart_translate_emp(text_val, target_lang):
+    if not text_val or not isinstance(text_val, str):
+        return text_val
+    
+    if target_lang == "Tiếng Việt":
+        if "張董事長" in text_val: return "Chủ tịch Trương (Chairman)"
+        if "李元隆" in text_val: return "Lý Nguyên Long (Vice GM)"
+        if "董事長" in text_val: return "Chủ tịch HĐQT (Chairman)"
+        if "總經理" in text_val: return "Tổng Giám đốc (General Manager)"
+        if "副總經理" in text_val: return "Phó Tổng Giám đốc (Vice GM)"
+        if "專員" in text_val: return "Chuyên viên (Specialist)"
+        if "管理部" in text_val: return "Ban Quản lý"
+        if "營運管理中心" in text_val: return "Trung tâm Quản lý Vận hành"
+        if "西寧廠" in text_val: return "Nhà máy Tây Ninh"
+    elif target_lang == "English":
+        if "張董事長" in text_val: return "Chairman Chang"
+        if "李元隆" in text_val: return "Lee Yuan-Lung (Vice GM)"
+        if "董事長" in text_val: return "Chairman"
+        if "總經理" in text_val: return "General Manager"
+        if "副總經理" in text_val: return "Vice General Manager"
+        if "專員" in text_val: return "Specialist"
+        if "管理部" in text_val: return "Management Dept"
+        if "營運管理中心" in text_val: return "Operations Management Center"
+        if "西寧廠" in text_val: return "Tay Ninh Plant"
 
-    st.title(t_set["title"])
-    st.info(t_set["info"])
+    return text_val
 
-    if "employee_db" not in st.session_state:
-        st.session_state.employee_db = [
+def render_employee_management(engine=None, t=None, lang="繁體中文"):
+    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
+    L = EMPLOYEE_I18N.get(active_lang, EMPLOYEE_I18N["繁體中文"])
+
+    st.title(L["title"])
+    st.caption(L["caption"])
+
+    if "employees_db" not in st.session_state:
+        st.session_state.employees_db = [
             {
-                "工號": "EMP-001", "姓名": "張董事長", "國籍": "台灣 (Taiwan)", "工作廠區": "西寧廠 (Tay Ninh)", "部門": "管理部", "職稱": "董事長 (Chairman)", "角色": "admin", "電話": "0912345678", 
-                "戶籍地址": "台北市信義區...", "現居地址": "台北市信義區...", "保險資料": "TW-INS-888899", "保險醫院": "台北榮民總醫院", "生物辨識代碼": "FACE-BIO-888899"
+                "id": "EMP-001",
+                "name": "張董事長",
+                "nationality": "🇹🇼 台灣 (Taiwan)",
+                "site": "西寧廠",
+                "dept": "管理部",
+                "title": "董事長 (Chairman)",
+                "role": "Chairman",
+                "phone": "0912345678",
+                "address": "-",
+                "face_token": "FACE-BIO-888899",
             },
             {
-                "工號": "VN-003", "姓名": "張小華", "國籍": "越南 (Vietnam)", "工作廠區": "西寧廠 (Tay Ninh)", "部門": "生產部", "職稱": "射出工程師", "角色": "staff", "電話": "0912345678", 
-                "戶籍地址": "Tỉnh Tây Ninh, Huyện Trảng Bàng", "現居地址": "台北市信義區忠孝東路", "身分證字號": "038095009999", "入職日期": "2026/10/07", "醫保指定醫院": "Bệnh viện Quốc tế Hạnh Phúc", "合約原署日期": "2026/10/07", "約定起薪": "9000000.00", "每月社醫保扣繳": "945000.00", "津貼總計": "1530000.00", "生物辨識代碼": "FACE-BIO-100234"
-            }
+                "id": "EMP-002",
+                "name": "Nguyễn Văn A",
+                "nationality": "🇻🇳 越南 (Vietnamese)",
+                "site": "西寧廠",
+                "dept": "管理部",
+                "title": "總經理 (General Manager)",
+                "role": "GeneralManager",
+                "phone": "0918999080",
+                "address": "-",
+                "face_token": "FACE-BIO-100234",
+            },
+            {
+                "id": "EMP-003",
+                "name": "李元隆",
+                "nationality": "🇹🇼 台灣 (Taiwanese)",
+                "site": "西寧廠",
+                "dept": "👑 經營主管 / 營運管理中心 (Management & Operations)",
+                "title": "副總經理 (Vice General Manager)",
+                "role": "ViceManager",
+                "phone": "-",
+                "address": "-",
+                "face_token": "FACE-BIO-300451",
+            },
         ]
 
-    search_q = st.text_input(t_set["search"], placeholder=t_set["search_ph"], key="emp_search_input")
-    filtered_emp = [
-        e for e in st.session_state.employee_db 
-        if search_q.lower() in e["姓名"].lower() or search_q.lower() in e["工號"].lower() or search_q.lower() in e["職稱"].lower()
-    ] if search_q else st.session_state.employee_db
+    if "attendance_db" not in st.session_state:
+        st.session_state.attendance_db = []
+    if "leave_requests_db" not in st.session_state:
+        st.session_state.leave_requests_db = []
 
-    st.markdown(t_set["list_title"])
-    st.dataframe(pd.DataFrame(filtered_emp), use_container_width=True)
+    tab1, tab2, tab3 = st.tabs([L["tab_roster"], L["tab_punch"], L["tab_leave"]])
 
-    tab_add, tab_edit, tab_del = st.tabs([t_set["tab_add"], t_set["tab_edit"], t_set["tab_del"]])
+    with tab1:
+        st.markdown(f"### {L['roster_header']}")
+        
+        display_list = []
+        for emp in st.session_state.employees_db:
+            display_list.append({
+                L["col_id"]: emp["id"],
+                L["col_name"]: smart_translate_emp(emp["name"], active_lang),
+                L["col_nation"]: smart_translate_emp(emp["nationality"], active_lang),
+                L["col_site"]: smart_translate_emp(emp["site"], active_lang),
+                L["col_dept"]: smart_translate_emp(emp["dept"], active_lang),
+                L["col_title"]: smart_translate_emp(emp["title"], active_lang),
+                L["col_role"]: emp["role"],
+                L["col_phone"]: emp["phone"],
+                L["col_face"]: emp["face_token"]
+            })
+        st.dataframe(pd.DataFrame(display_list), use_container_width=True)
 
-    with tab_add:
-        with st.form("add_employee_form"):
-            st.markdown(f"### {t_set['step1']}")
-            nat_choice = st.selectbox(t_set["nat_label"], ["越南 (Vietnam)", "台灣 (Taiwan)", "中國 (China)", "其他 (Other)"], key="add_nat_choice")
-            
-            st.markdown("---")
+        st.markdown("---")
+        st.markdown(f"### {L['add_emp_header']}")
+        with st.form("add_emp_form"):
             c1, c2 = st.columns(2)
             with c1:
-                prefix = "VN" if "越南" in nat_choice else ("TW" if "台灣" in nat_choice else ("CN" if "中國" in nat_choice else "OT"))
-                e_id = st.text_input(t_set["id_label"], value=f"{prefix}-{len(st.session_state.employee_db)+1:03d}", key="add_e_id")
-                
-                if lang == "Tiếng Việt":
-                    dept_display_map = {
-                        "總經理室": "Ban Giám đốc (Executive Office)",
-                        "管理部": "Phòng Quản lý (Management Dept)",
-                        "工程與設計管理中心": "Trung tâm Kỹ thuật & Thiết kế",
-                        "生產部": "Phòng Sản xuất (Production Dept)"
-                    }
-                elif lang == "English":
-                    dept_display_map = {
-                        "總經理室": "Executive Office",
-                        "管理部": "Management Dept",
-                        "工程與設計管理中心": "Engineering & Design Center",
-                        "生產部": "Production Dept"
-                    }
-                else:
-                    dept_display_map = {
-                        "總經理室": "總經理室 (Executive Office)",
-                        "管理部": "管理部",
-                        "工程與設計管理中心": "工程與設計管理中心",
-                        "生產部": "生產部"
-                    }
-                dept_keys = list(dept_display_map.keys())
-                e_dept_sel = st.selectbox(t_set["dept_label"], dept_keys, format_func=lambda x: dept_display_map[x], key="add_e_dept")
-                e_dept = e_dept_sel
-
-                e_phone = st.text_input(t_set["phone_label"], placeholder="0912345678", key="add_e_phone")
+                new_id = st.text_input(L["lbl_emp_id"], value="EMP-104")
+                new_name = st.text_input(L["lbl_name"])
+                new_nationality = st.selectbox(L["lbl_nationality"], L["nat_opts"])
             with c2:
-                e_name = st.text_input(t_set["name_label"], placeholder="請輸入姓名 / Nhập họ tên...", key="add_e_name")
-                e_title = st.text_input(t_set["title_label"], placeholder="例如: 射出工程師 / Kỹ sư", key="add_e_title")
-
-                if lang == "Tiếng Việt":
-                    role_display_map = {
-                        "staff": "Nhân viên chung (Staff)",
-                        "manager": "Quản lý / Chủ quản (Manager)",
-                        "security": "Bảo vệ (Security)",
-                        "admin": "Quản trị hệ thống (Admin)"
-                    }
-                elif lang == "English":
-                    role_display_map = {
-                        "staff": "General Staff",
-                        "manager": "Department Manager",
-                        "security": "Security Guard",
-                        "admin": "System Administrator"
-                    }
+                new_site = st.selectbox(L["lbl_site"], L["site_opts"])
+                new_title = st.text_input(L["lbl_title"], value="專員" if active_lang == "繁體中文" else ("Chuyên viên" if active_lang == "Tiếng Việt" else "Specialist"))
+                new_role = st.selectbox(L["lbl_role"], ["Chairman", "GeneralManager", "ViceManager", "Director", "Manager", "Supervisor", "Staff", "Admin"])
+            
+            if st.form_submit_button(L["btn_add_emp"], type="primary"):
+                if new_name and new_id:
+                    st.session_state.employees_db.append({
+                        "id": new_id,
+                        "name": new_name,
+                        "nationality": new_nationality,
+                        "site": new_site,
+                        "dept": "管理部",
+                        "title": new_title,
+                        "role": new_role,
+                        "phone": "-",
+                        "address": "-",
+                        "face_token": f"FACE-{new_id}"
+                    })
+                    st.success(f"{L['success_add']}{new_name}")
+                    st.rerun()
                 else:
-                    role_display_map = {
-                        "staff": "一般員工 (Staff)",
-                        "manager": "部門主管 (Manager)",
-                        "security": "保全 (Security)",
-                        "admin": "系統管理員 (Admin)"
-                    }
-                role_keys = list(role_display_map.keys())
-                e_role_sel = st.selectbox(t_set["role_label"], role_keys, format_func=lambda x: role_display_map[x], key="add_e_role")
-                e_role = e_role_sel
+                    st.warning(L["warning_fill"])
 
-            ac1, ac2 = st.columns(2)
-            with ac1:
-                e_perm_addr = st.text_input(t_set["perm_addr"], placeholder="請輸入戶籍地址...", key="add_e_perm_addr")
-            with ac2:
-                e_temp_addr = st.text_input(t_set["temp_addr"], placeholder="請輸入目前居住地址...", key="add_e_temp_addr")
+    with tab2:
+        st.markdown(f"### {L['punch_header']}")
+        st.info(L["punch_caption"])
+        
+        with st.form("mock_punch"):
+            p_id = st.selectbox(L["select_emp"], [e["id"] + " - " + smart_translate_emp(e["name"], active_lang) for e in st.session_state.employees_db])
+            p_type = st.radio(L["punch_type"], [L["clock_in"], L["clock_out"]])
+            
+            if st.form_submit_button(L["btn_punch"], type="primary"):
+                now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                st.session_state.attendance_db.insert(0, {
+                    "時間": now_str,
+                    "員工": p_id,
+                    "類型": p_type
+                })
+                st.success(f"{L['success_punch']} ({now_str})")
+        
+        st.markdown("---")
+        if st.session_state.attendance_db:
+            st.dataframe(pd.DataFrame(st.session_state.attendance_db), use_container_width=True)
+        else:
+            st.info(L["no_punch"])
 
-            # 步驟 2: 若為越南籍，顯示專屬欄位
-            e_cccd = ""
-            e_salary = 0.0
-            e_hire_date = ""
-            e_ins_deduct = 0.0
-            e_hospital = ""
-            e_allowance = 0.0
-            e_contract_date = ""
+    with tab3:
+        st.markdown(f"### {L['leave_header']}")
+        
+        with st.form("leave_form"):
+            l_emp = st.selectbox(L["lbl_leave_emp"], [e["id"] + " - " + smart_translate_emp(e["name"], active_lang) for e in st.session_state.employees_db])
+            l_type = st.selectbox(L["lbl_leave_type"], L["leave_opts"])
+            l_reason = st.text_area(L["lbl_reason"])
+            
+            if st.form_submit_button(L["btn_submit_leave"], type="primary"):
+                st.session_state.leave_requests_db.insert(0, {
+                    "申請時間": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "員工": l_emp,
+                    "假別": l_type,
+                    "事由": l_reason,
+                    "狀態": "⏳ 待審核 (Pending)"
+                })
+                st.success(L["success_leave"])
+                st.rerun()
 
-            if "越南" in nat_choice:
-                st.markdown("---")
-                st.markdown(f"### {t_set['step2']}")
-                sc1, sc2, sc3 = st.columns(3)
-                with sc1:
-                    e_cccd = st.text_input(t_set["cccd_label"], placeholder="例如: 03809500xxxx", key="add_e_cccd")
-                    e_salary = st.number_input(t_set["salary_label"], min_value=0.0, value=5000000.0, step=500000.0, key="add_e_salary")
-                with sc2:
-                    e_hire_date = st.text_input(t_set["hire_label"], value="2026/10/08", key="add_e_hire_date")
-                    e_ins_deduct = st.number_input(t_set["ins_label"], min_value=0.0, value=525000.0, step=10000.0, key="add_e_ins")
-                with sc3:
-                    e_hospital = st.text_input(t_set["hosp_label"], value="Bệnh viện Đa khoa Tây Ninh", key="add_e_hosp")
-                    e_allowance = st.number_input(t_set["allow_label"], min_value=0.0, value=1000000.0, step=50000.0, key="add_e_allow")
-                e_contract_date = st.text_input(t_set["contract_label"], value="2026/10/08", key="add_e_contract")
-
-            submit_add = st.form_submit_button(t_set["add_btn"])
-            if submit_add:
-                if not e_name or not e_id or not e_phone:
-                    st.error("請填寫所有必填欄位 (*)")
-                else:
-                    new_emp = {
-                        "工號": e_id,
-                        "姓名": e_name,
-                        "國籍": nat_choice,
-                        "工作廠區": "西寧廠 (Tay Ninh)",
-                        "部門": e_dept,
-                        "職稱": e_title,
-                        "角色": e_role,
-                        "電話": e_phone,
-                        "戶籍地址": e_perm_addr,
-                        "現居地址": e_temp_addr
-                    }
-                    if "越南" in nat_choice:
-                        new_emp.update({
-                            "身分證字號": e_cccd,
-                            "入職日期": e_hire_date,
-                            "醫保指定醫院": e_hospital,
-                            "合約原署日期": e_contract_date,
-                            "約定起薪": str(e_salary),
-                            "每月社醫保扣繳": str(e_ins_deduct),
-                            "津貼總計": str(e_allowance)
-                        })
-                    st.session_state.employee_db.append(new_emp)
-                    st.success("已成功新增員工！請重新整理頁面查看。")
+        st.markdown("---")
+        st.markdown(f"### {L['leave_list_header']}")
+        if st.session_state.leave_requests_db:
+            st.dataframe(pd.DataFrame(st.session_state.leave_requests_db), use_container_width=True)
+        else:
+            st.info("目前尚無請假單紀錄。")
