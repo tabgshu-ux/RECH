@@ -30,7 +30,7 @@ EMP_I18N = {
         "lbl_role": "系統權限角色 *",
         "lbl_addr_perm": "戶籍地址 (Permanent Address)",
         "lbl_addr_temp": "現住地址 (Temporary Address)",
-        "btn_add": "🚀 立即新增員工並建立立帳號",
+        "btn_add": "🚀 立即新增員工並建立帳號",
         "success_add": "✅ 成功新增員工 `{name}` (工號: `{code}`)！系統已自動勾選『首次登入強制修改密碼』。",
         "btn_update": "💾 儲存修改後員工資料",
         "success_update": "✅ 員工 `{code}` 資料已成功更新！",
@@ -128,7 +128,7 @@ EMP_I18N = {
     }
 }
 
-# 🌐 系統權限角色多語系對應字典（解決全英文代碼問題）
+# 🌐 系統權限角色多語系對應字典
 ROLE_I18N = {
     "繁體中文": {
         "admin": "系統管理員 (Admin)",
@@ -167,7 +167,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化員工資料庫
     if "employee_db" not in st.session_state:
         st.session_state.employee_db = [
             {
@@ -200,7 +199,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         L["tab_list"], L["tab_add"], L["tab_edit"], L["tab_delete"]
     ])
 
-    # 1. 員工名冊與資料檢視
     with tab_list:
         st.markdown(f"### {L['header_list']}")
         search_q = st.text_input(L["search_ph"], key="emp_search_box")
@@ -230,7 +228,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         else:
             st.info("目前尚無員工資料。")
 
-    # 2. 新增員工與初始帳密設定
     with tab_add:
         st.markdown(f"### {L['header_add']}")
         with st.form("form_add_employee"):
@@ -245,7 +242,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 e_dept = st.selectbox(L["lbl_dept"], L["dept_opts"])
                 e_title = st.text_input(L["lbl_title"], value="資深工程師")
                 
-                # 🌐 角色下拉選單（依目前語系動態顯示友好名稱）
                 role_keys = list(role_dict.keys())
                 role_display_names = list(role_dict.values())
                 sel_role_display = st.selectbox(L["lbl_role"], role_display_names)
@@ -265,14 +261,13 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                         "國籍": e_country,
                         "角色": e_role,
                         "密碼": e_pwd,
-                        "must_change_password": True, # 👈 預設勾選首次登入強制修改密碼
+                        "must_change_password": True,
                         "狀態": "🟢 在職 (Active)"
                     })
                     st.success(L["success_add"].format(name=e_name, code=e_code))
                 else:
                     st.warning("⚠️ 請填寫員工工號與姓名！")
 
-    # 3. 修改員工資料與重設密碼
     with tab_edit:
         st.markdown(f"### {L['header_edit']}")
         if st.session_state.employee_db:
@@ -280,4 +275,48 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             sel_target = st.selectbox("選擇要修改的員工 (Select Employee)", emp_codes, key="edit_emp_select")
             target_code = sel_target.split(" - ")[0]
             
-            target_emp = next((e for e in st.session_state.employee_db if
+            target_emp = next((e for e in st.session_state.employee_db if e["工號"] == target_code), None)
+            
+            if target_emp:
+                with st.form("form_edit_employee"):
+                    ed_name = st.text_input(L["lbl_name"], value=target_emp["姓名"])
+                    ed_factory = st.selectbox(L["lbl_factory"], L["factory_opts"], index=0 if "西寧" in target_emp["廠區"] else 1)
+                    ed_title = st.text_input(L["lbl_title"], value=target_emp["職稱"])
+                    
+                    role_keys = list(role_dict.keys())
+                    role_display_names = list(role_dict.values())
+                    current_role_idx = role_keys.index(target_emp["角色"]) if target_emp["角色"] in role_keys else 0
+                    sel_ed_role_display = st.selectbox(L["lbl_role"], role_display_names, index=current_role_idx)
+                    ed_role = role_keys[role_display_names.index(sel_ed_role_display)]
+                    
+                    ed_pwd = st.text_input("重設新密碼 (Reset Password)", value=target_emp.get("密碼", "123456"))
+
+                    if st.form_submit_button(L["btn_update"], type="primary", use_container_width=True):
+                        target_emp["姓名"] = ed_name
+                        target_emp["廠區"] = ed_factory
+                        target_emp["職稱"] = ed_title
+                        target_emp["角色"] = ed_role
+                        target_emp["密碼"] = ed_pwd
+                        st.success(L["success_update"].format(code=target_code))
+        else:
+            st.info("尚無員工可供修改。")
+
+    with tab_delete:
+        st.markdown(f"### {L['header_delete']}")
+        if st.session_state.employee_db:
+            del_codes = [e["工號"] + " - " + e["姓名"] for e in st.session_state.employee_db]
+            sel_del = st.selectbox("選擇要停用的員工", del_codes, key="del_emp_select")
+            del_code = sel_del.split(" - ")[0]
+
+            if st.button(L["btn_delete"], type="secondary"):
+                st.session_state.employee_db = [e for e in st.session_state.employee_db if e["工號"] != del_code]
+                st.success(L["success_delete"].format(code=del_code))
+                st.rerun()
+        else:
+            st.info("尚無員工可供停用。")
+
+def show(*args, **kwargs):
+    render_employee_management(*args, **kwargs)
+
+def main(*args, **kwargs):
+    render_employee_management(*args, **kwargs)
