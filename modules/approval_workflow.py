@@ -18,7 +18,18 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
             "reason": "申請事由與說明 *",
             "reason_ph": "例如: 因家庭事務請假 4 天...",
             "submit_btn": "🚀 提交送出簽核",
-            "success_msg": "✅ 請假申請已成功提交並進入電子簽核流程！"
+            "success_msg": "✅ 請假申請已成功提交並進入電子簽核流程！",
+            "form2_title": "### 🛒 採購與請款申請單",
+            "p_item": "採購項目 / 品名 (Item Name) *",
+            "p_item_ph": "例如: 變壓器 / 零件...",
+            "p_amt": "預估金額 (Estimated Amount VND)",
+            "p_desc": "採購用途與必要性說明",
+            "p_desc_ph": "請說明採購原因...",
+            "p_submit": "🚀 提交採購請款簽核",
+            "p_success": "✅ 採購申請已送出！",
+            "track_title": "### 📊 全公司簽核進度即時追蹤",
+            "review_title": "### 🛃 主管待簽核案件審查",
+            "review_info": "主管/高階管理層可在此審核轄下員工之請假與採購申請。"
         },
         "Tiếng Việt": {
             "title": "✍️ Trung tâm Phê duyệt Điện tử & Quản lý Nghỉ phép/Thanh toán",
@@ -34,7 +45,18 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
             "reason": "Lý do & Mô tả chi tiết *",
             "reason_ph": "Ví dụ: Nghỉ việc gia đình 4 ngày...",
             "submit_btn": "🚀 Gửi yêu cầu phê duyệt",
-            "success_msg": "✅ Đơn xin nghỉ phép đã được gửi thành công vào hệ thống phê duyệt!"
+            "success_msg": "✅ Đơn xin nghỉ phép đã được gửi thành công vào hệ thống phê duyệt!",
+            "form2_title": "### 🛒 Đơn mua hàng & Thanh toán",
+            "p_item": "Tên vật tư / Hạng mục mua hàng *",
+            "p_item_ph": "Ví dụ: Biến áp / Linh kiện...",
+            "p_amt": "Số tiền dự kiến (VND)",
+            "p_desc": "Mô tả mục đích & Tính cấp thiết",
+            "p_desc_ph": "Vui lòng nêu lý do mua hàng...",
+            "p_submit": "🚀 Gửi đơn mua hàng",
+            "p_success": "✅ Đơn mua hàng đã được gửi thành công!",
+            "track_title": "### 📊 Theo dõi tiến độ phê duyệt toàn công ty",
+            "review_title": "### 🛃 Xét duyệt đơn chờ xử lý",
+            "review_info": "Quản lý / Ban Giám đốc có thể xét duyệt các đơn của nhân viên cấp dưới tại đây."
         },
         "English": {
             "title": "✍️ E-Approval Center for Leave & Procurement",
@@ -50,7 +72,18 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
             "reason": "Reason & Description *",
             "reason_ph": "e.g., Family affairs for 4 days...",
             "submit_btn": "🚀 Submit for Approval",
-            "success_msg": "✅ Leave application submitted successfully and entered the approval workflow!"
+            "success_msg": "✅ Leave application submitted successfully and entered the approval workflow!",
+            "form2_title": "### 🛒 Purchase & Payment Request",
+            "p_item": "Item Name *",
+            "p_item_ph": "e.g., Transformer / Parts...",
+            "p_amt": "Estimated Amount (VND)",
+            "p_desc": "Purpose & Necessity Description",
+            "p_desc_ph": "Please explain the purchase reason...",
+            "p_submit": "🚀 Submit Purchase Request",
+            "p_success": "✅ Purchase request submitted successfully!",
+            "track_title": "### 📊 Real-time Approval Tracking",
+            "review_title": "### 🛃 Pending Approvals Review",
+            "review_info": "Managers and executives can review leave and purchase requests from subordinates here."
         }
     }
 
@@ -70,16 +103,16 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
     tab1, tab2, tab3, tab4 = st.tabs([t_set["tab1"], t_set["tab2"], t_set["tab3"], t_set["tab4"]])
 
     with tab1:
-        with st.form("leave_application_form"):
+        with st.form("leave_application_form_unique"):
             st.markdown(t_set["form1_title"])
             c1, c2 = st.columns(2)
             with c1:
-                st.text_input(t_set["applicant"], value=st.session_state.get("user_name", "admin"), disabled=True, key="lev_user")
+                st.text_input(t_set["applicant"], value=st.session_state.get("user_name", "admin"), disabled=True, key="lev_user_uniq")
             with c2:
-                st.text_input(t_set["dept"], value="總經理室 / Executive Office", disabled=True, key="lev_dept")
+                st.text_input(t_set["dept"], value="總經理室 / Executive Office", disabled=True, key="lev_dept_uniq")
 
-            leave_days = st.number_input(t_set["days"], min_value=0.5, value=3.0, step=0.5, key="lev_days")
-            leave_reason = st.text_area(t_set["reason"], placeholder=t_set["reason_ph"], key="lev_reason")
+            leave_days = st.number_input(t_set["days"], min_value=0.5, value=3.0, step=0.5, key="lev_days_uniq")
+            leave_reason = st.text_area(t_set["reason"], placeholder=t_set["reason_ph"], key="lev_reason_uniq")
 
             if st.form_submit_button(t_set["submit_btn"], type="primary"):
                 if leave_reason:
@@ -99,12 +132,12 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                     st.warning("⚠️ 請填寫申請事由！")
 
     with tab2:
-        st.markdown("### 🛒 採購與請款申請單 (Purchase & Payment Request)")
-        with st.form("purchase_approval_form"):
-            p_item = st.text_input("採購項目 / 品名 (Item Name) *", placeholder="例如: 變壓器 / 零件...")
-            p_amt = st.number_input("預估金額 (Estimated Amount VND)", value=5000000.0, step=100000.0)
-            p_desc = st.text_area("採購用途與必要性說明", placeholder="請說明採購原因...")
-            if st.form_submit_button("🚀 提交採購請款簽核", type="primary"):
+        with st.form("purchase_approval_form_unique"):
+            st.markdown(t_set["form2_title"])
+            p_item = st.text_input(t_set["p_item"], placeholder=t_set["p_item_ph"], key="p_item_uniq")
+            p_amt = st.number_input(t_set["p_amt"], value=5000000.0, step=100000.0, key="p_amt_uniq")
+            p_desc = st.text_area(t_set["p_desc"], placeholder=t_set["p_desc_ph"], key="p_desc_uniq")
+            if st.form_submit_button(t_set["p_submit"], type="primary"):
                 if p_item:
                     new_no = f"APV-2026-{len(st.session_state.approval_db)+1:03d}"
                     st.session_state.approval_db.append({
@@ -116,33 +149,33 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                         "狀態": "簽核中 (Pending)",
                         "送出時間": "2026-10-08"
                     })
-                    st.success("✅ 採購申請已送出！")
+                    st.success(t_set["p_success"])
                     st.rerun()
                 else:
                     st.warning("⚠️ 請填寫採購品名！")
 
     with tab3:
-        st.markdown("### 📊 全公司簽核進度即時追蹤 (Real-time Tracking)")
+        st.markdown(t_set["track_title"])
         if st.session_state.approval_db:
             st.dataframe(pd.DataFrame(st.session_state.approval_db), use_container_width=True)
         else:
             st.info("目前無任何簽核案件記錄。")
 
     with tab4:
-        st.markdown("### 🛃 主管待簽核案件審查 (Pending Review)")
-        st.info("主管/高階管理層可在此審核轄下員工之請假與採購申請。")
+        st.markdown(t_set["review_title"])
+        st.info(t_set["review_info"])
         if st.session_state.approval_db:
             for idx, item in enumerate(st.session_state.approval_db):
-                if "簽核中" in item["狀態"]:
+                if "簽核中" in item["狀態"] or "Pending" in item["狀態"]:
                     with st.expander(f"📌 [{item['單號']}] {item['類型']} - 申請人: {item['申請人']} ({item['內容']})"):
                         col_a, col_b = st.columns(2)
                         with col_a:
-                            if st.button(f"✅ 核准 (Approve)", key=f"app_{idx}"):
+                            if st.button(f"✅ 核准 (Approve)", key=f"app_uniq_{idx}"):
                                 item["狀態"] = "已核准 (Approved)"
                                 st.success(f"✅ 已核准單號 {item['單號']}")
                                 st.rerun()
                         with col_b:
-                            if st.button(f"❌ 駁回 (Reject)", key=f"rej_{idx}"):
+                            if st.button(f"❌ 駁回 (Reject)", key=f"rej_uniq_{idx}"):
                                 item["狀態"] = "已駁回 (Rejected)"
                                 st.warning(f"❌ 已駁回單號 {item['單號']}")
                                 st.rerun()
