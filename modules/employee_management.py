@@ -45,7 +45,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 prefix = "VN" if "越南" in nat_choice else ("TW" if "台灣" in nat_choice else ("CN" if "中國" in nat_choice else "OT"))
                 e_id = st.text_input("員工工號 (Emp ID) *", value=f"{prefix}-{len(st.session_state.employee_db)+1:03d}", key="add_e_id")
                 # 已將營運戰情室更名為總經理室
-                e_dept = st.selectbox("所屬部門", ["管理部", "總經理室", "工程與設計管理中心", "生產部"], key="add_e_dept")
+                e_dept = st.selectbox("所屬部門", ["總經理室", "管理部", "工程與設計管理中心", "生產部"], key="add_e_dept")
                 e_phone = st.text_input("聯絡電話 (Phone) *", placeholder="0912345678", key="add_e_phone")
             with c2:
                 e_name = st.text_input("員工全名 (Full Name) *", placeholder="請輸入姓名...", key="add_e_name")
