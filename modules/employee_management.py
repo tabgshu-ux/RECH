@@ -233,4 +233,5 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             with ac1:
                 e_perm_addr = st.text_input(t_set["perm_addr"], placeholder="請輸入戶籍地址...", key="add_e_perm_addr")
             with ac2:
-                e_temp_addr = st.text_input(t_set["temp_addr"], placeholder="請輸入目前居住地址...", key
+                e_temp_addr = st.text_input(t_set["temp_addr"], placeholder="請輸入目前居住地址...", key"add_e_temp_addr")
+                
