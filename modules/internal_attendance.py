@@ -101,7 +101,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
             {
                 "code": "EMP-001",
                 "name": "張董事長",
-                "dept": "台灣總部",
+                "dept": "西寧廠 (Tay Ninh)",
                 "type": "上班簽到",
                 "time": "2026-10-08 07:55:00",
                 "status": "🟢 正常 (Normal)",
@@ -110,7 +110,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
             {
                 "code": "EMP-002",
                 "name": "Nguyễn Văn Quý",
-                "dept": "西寧廠 (Tay Ninh)",
+                "dept": "海防廠 (Hai Phong)",
                 "type": "上班簽到",
                 "time": "2026-10-08 08:12:00",
                 "status": "🟡 遲到 12 分鐘 (超出每日 5 分鐘緩衝)",
@@ -124,7 +124,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
 
     with tab_rules:
         st.markdown(f"### {L['header_rules']}")
-        st.info("⚙️ 在此可依各廠區（西寧廠、海防廠）規範手動調整考勤緩衝與扣款門檻：")
+        st.info("⚙️ 在此可依各越南廠區（西寧廠、海防廠）規範手動調整考勤緩衝與扣款門檻：")
         
         with st.form("form_attendance_rules"):
             col_r1, col_r2 = st.columns(2)
@@ -168,7 +168,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown(f"### {L['header_simulate']}")
         
         with st.form("form_biometric_simulate_rule"):
-            emp_choices = ["EMP-001 - 張董事長", "EMP-002 - Nguyễn Văn Quý", "EMP-003 - 阮文強"]
+            emp_choices = ["EMP-001 - 張董事長 (西寧廠)", "EMP-002 - Nguyễn Văn Quý (海防廠)", "EMP-003 - 阮文強 (西寧廠)"]
             sel_emp = st.selectbox(L["lbl_emp"], emp_choices)
             clock_type = st.selectbox(L["lbl_type"], L["type_opts"])
             
@@ -180,7 +180,8 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
 
             if st.form_submit_button(L["btn_process"], type="primary", use_container_width=True):
                 emp_code = sel_emp.split(" - ")[0]
-                emp_name = sel_emp.split(" - ")[1]
+                emp_name = sel_emp.split(" - ")[1].split(" (")[0]
+                emp_factory = "西寧廠 (Tay Ninh)" if "西寧廠" in sel_emp else "海防廠 (Hai Phong)"
                 timestamp_str = f"{sim_date} {sim_time}"
                 
                 rules = st.session_state.attendance_rules
@@ -194,7 +195,6 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                     t2 = datetime.datetime.combine(sim_date, sim_time)
                     diff_mins = (t2 - t1).total_seconds() / 60.0
                     
-                    # 判斷是否超過每日容許緩衝時間
                     if diff_mins > rules["daily_grace_mins"]:
                         net_late_mins = diff_mins - rules["daily_grace_mins"]
                         deduct = round(net_late_mins / 60.0, 2)
@@ -207,14 +207,13 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                 st.session_state.internal_attendance_db.insert(0, {
                     "code": emp_code,
                     "name": emp_name,
-                    "dept": "西寧廠內勤作業",
+                    "dept": emp_factory,
                     "type": clock_type,
                     "time": timestamp_str,
                     "status": status,
                     "deduct_hours": deduct
                 })
                 
-                # 同步更新薪資模組
                 if "payroll_db" in st.session_state:
                     for p in st.session_state.payroll_db:
                         if p["code"] == emp_code:
