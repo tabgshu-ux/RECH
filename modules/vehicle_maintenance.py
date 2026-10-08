@@ -8,14 +8,15 @@ import datetime
 VEHICLE_MAINT_I18N = {
     "繁體中文": {
         "title": "🛠️ 管理部 - 車輛維修保養與 Excel 批次匯入管理",
-        "caption": "記錄廠區公務車與貨車之定期保養、維修項目、零件更換成本，支援依車號分組篩選，並自動同步至固定資產模組。",
+        "caption": "記錄廠區公務車與貨車之定期保養、維修項目、零件更換成本，支援依車號分組篩選，並內建動態語言資料庫自動翻譯。",
         "tab_list": "📑 依車號分組之維修保養總表",
         "tab_import": "📥 Excel 批次匯入與自動資產建檔",
         "tab_add": "➕ 登記單筆維修保養",
+        "tab_dict": "📖 維修越中語言資料庫維護",
         "table_header": "📋 各車號專屬維修與保養履歷清冊",
         "no_records": "目前無車輛維修保養紀錄。",
         "import_header": "📥 Excel 多車輛維修明細智慧批次匯入",
-        "import_caption": "上傳 Excel 後，系統將自動解析各車牌與維修明細，進行完整專業中文化翻譯，並自動同步新增至固定資產中的車輛資產。",
+        "import_caption": "上傳 Excel 後，系統將自動套用「動態語言資料庫」將所有越文維修項目精準翻譯為中文。",
         "btn_upload": "選擇 Excel 檔案 (.xlsx / .xls)",
         "success_import": "✅ 成功匯入共 `{count}` 筆維修明細，並已自動同步車輛至固定資產清單！",
         "add_header": "➕ 登記新車輛維修與保養項目",
@@ -38,26 +39,27 @@ VEHICLE_MAINT_I18N = {
     },
     "Tiếng Việt": {
         "title": "🛠️ Quản lý Bảo trì Xe & Nhập Excel",
-        "caption": "Quản lý bảo dưỡng, lịch sử sửa chữa theo biển số xe, tự động đồng bộ sang Tài sản cố định.",
+        "caption": "Quản lý bảo dưỡng, lịch sử sửa chữa theo biển số xe.",
         "tab_list": "📑 Danh sách theo Biển số xe",
         "tab_import": "📥 Nhập Excel & Đồng bộ tài sản",
         "tab_add": "➕ Thêm Bản ghi Mới",
+        "tab_dict": "📖 Từ điển bảo trì",
         "table_header": "📋 Sổ chi tiết Lịch sử Bảo dưỡng theo xe",
         "no_records": "Hiện không có bản ghi nào.",
         "import_header": "📥 Nhập Excel hàng loạt",
-        "import_caption": "Hệ thống sẽ tự động thêm xe vào Tài sản cố định nếu chưa có.",
+        "import_caption": "Hệ thống tự động đồng bộ.",
         "btn_upload": "Chọn file Excel (.xlsx)",
-        "success_import": "✅ Đã nhập thành công `{count}` bản ghi và đồng bộ tài sản!",
+        "success_import": "✅ Đã nhập thành công `{count}` bản ghi!",
         "add_header": "➕ Đăng ký bảo dưỡng mới",
         "lbl_plate": "Biển số xe *",
         "lbl_type": "Loại bảo dưỡng *",
         "type_opts": ["Bảo dưỡng định kỳ", "Thay lốp xe", "Sửa chữa động cơ", "Sửa chữa điện", "Đồng sơn"],
         "lbl_cost": "Chi phí (VND) *",
         "lbl_desc": "Chi tiết sửa chữa *",
-        "desc_placeholder": "Ví dụ: Thay nhớt, lọc nhớt",
+        "desc_placeholder": "Ví dụ: Thay nhớt",
         "lbl_date": "Ngày vào xưởng *",
         "btn_save": "💾 Lưu bản ghi",
-        "success_save": "✅ Đã lưu lịch sử cho xe `{plate}` và đồng bộ tài sản!",
+        "success_save": "✅ Đã lưu lịch sử cho xe `{plate}`!",
         "fill_warning": "⚠️ Vui lòng điền đầy đủ thông tin!",
         "col_index": "STT",
         "col_plate": "Biển số xe",
@@ -68,16 +70,17 @@ VEHICLE_MAINT_I18N = {
     },
     "English": {
         "title": "🛠️ Vehicle Maintenance & Excel Batch Import",
-        "caption": "Track vehicle maintenance grouped by license plate, with automatic Fixed Asset synchronization.",
+        "caption": "Track vehicle maintenance grouped by license plate.",
         "tab_list": "📑 Maintenance by Plate",
         "tab_import": "📥 Excel Import & Asset Sync",
         "tab_add": "➕ Register Maintenance",
+        "tab_dict": "📖 Maintenance Dictionary",
         "table_header": "📋 Vehicle Maintenance Log by Plate",
         "no_records": "No records found.",
         "import_header": "📥 Excel Batch Import",
-        "import_caption": "Automatically syncs vehicles to Fixed Assets module upon import.",
+        "import_caption": "Automatically syncs vehicles upon import.",
         "btn_upload": "Choose Excel File (.xlsx)",
-        "success_import": "✅ Successfully imported `{count}` records and synced to assets!",
+        "success_import": "✅ Successfully imported `{count}` records!",
         "add_header": "➕ Register New Maintenance",
         "lbl_plate": "License Plate *",
         "lbl_type": "Maintenance Type *",
@@ -87,7 +90,7 @@ VEHICLE_MAINT_I18N = {
         "desc_placeholder": "Example: Engine oil change",
         "lbl_date": "Maintenance Date *",
         "btn_save": "💾 Save Record",
-        "success_save": "✅ Maintenance record for `{plate}` saved & synced to assets!",
+        "success_save": "✅ Maintenance record for `{plate}` saved!",
         "fill_warning": "⚠️ Please fill in all required fields!",
         "col_index": "No.",
         "col_plate": "License Plate",
@@ -99,161 +102,127 @@ VEHICLE_MAINT_I18N = {
 }
 
 # ----------------------------------------------------
-# 🔄 全方位車輛維修與零件專用對照翻譯庫
+# 📖 初始化動態語言資料庫 (st.session_state 永久記憶)
 # ----------------------------------------------------
-MAINT_TRANSLATIONS = {
-    # 類別與服務項目
-    "bão dưỡng cấp 2": "二級定期保養",
-    "bão dưỡng cấp nhỏ": "小型定期保養",
-    "bão dưỡng cấp trung bình": "中型定期保養",
-    "bão dưỡng cấp lớn": "大型定期保養",
-    "bão dưỡng": "定期保養維護",
-    "thay vỏ": "更換輪胎/外胎",
-    "thay vỏ xe": "更換輪胎",
-    "sửa chữa, bảo dưỡng": "綜合維修與保養",
-    "sửa chữa bảo dưỡng": "綜合維修與保養",
-    "sửa chữa": "綜合維修與零件更換",
-    "sữa chữa": "綜合維修與零件更換",
-    "thay kính lái": "更換汽車前擋風玻璃",
-    "dán phim 3m r70": "貼 3M R70 隔熱膜",
-    "bảo dưỡng thay dàn nóng": "更換並保養冷凝器(散熱排)",
-    "mua bảo hiểm": "購買車輛保險",
-    "thay công tắc mở cốp": "更換後車箱開關",
-    "thay gạt mưa": "更換雨刷",
-    "thay pin chìa khóa": "更換遙控鑰匙電池",
-    "thay sim": "更換通訊SIM卡",
-    "thay đèn": "更換車燈總成",
-    "đánh bóng": "車身拋光美容",
-    "đăng kiểm": "車輛定期檢驗 (驗車)",
-    "may bạt xe": "訂製/更換貨車帆布雨蓬",
-    "kiểm tra tiếng kêu": "底盤/異音檢修",
-    "gia hạn": "合約/服務延期",
-    "ok": "一般檢修確認完畢",
-
-    # 常見零件與工項細節
-    "công bão dưỡng": "保養人工工資",
-    "thay dây curoa": "更換發電機/冷氣皮帶",
-    "dây cua roa": "傳動皮帶",
-    "dây curoa": "傳動皮帶",
-    "bơm nước": "水箱幫浦",
-    "máy phát": "發電機",
-    "lóc lạnh": "冷氣壓縮機",
-    "lọc nhớt": "機油濾清器 (濾心)",
-    "thay lọc nhớt": "更換機油濾清器",
-    "lọc dầu tinh": "精細柴油濾清器",
-    "lọc dầu": "柴油/機油濾清器",
-    "lọc gió": "空氣濾清器",
-    "lọc nhiên liệu": "燃料濾清器",
-    "lọc khí": "冷氣/空氣濾網",
-    "nhớt máy dầu cao cấp": "高級柴油機油",
-    "nhớt máy": "引擎機油",
-    "dầu động cơ": "引擎潤滑油",
-    "nhớt cầu": "差速器油 (齒輪油)",
-    "nhớt hộp số": "變速箱油",
-    "dầu castrol": "嘉實多潤滑油 (Castrol)",
-    "nước rửa kính": "擋風玻璃清洗液",
-    "dung dịch vệ sinh buồng dốt động cơ": "柴油引擎燃燒室清洗劑",
-    "dung dịch súc rửa động cơ": "引擎內部清洗劑",
-    "mỡ bò": "潤滑黃油",
-    "mỡ sắt xi": "底盤黃油潤滑",
-    "nhân công bảo dưỡng": "定期保養人工工資",
-    "thay thế dinamo": "更換發電機總成",
-    "dinamo": "汽車發電機",
-    "công và vật tư": "人工與更換材料費",
-    "nước làm mát": "引擎水箱冷卻液",
-    "bugi": "火星塞",
-    "bạc đạn": "軸承 (培林)",
-    "phanh": "煞車系統",
-    "má phanh": "煞車來令片",
-    "thay nước làm mát": "更換水箱冷卻液",
-    "ktra động cơ": "檢修引擎",
-    "vỏ yokohama": "橫濱輪胎 (Yokohama)",
-    "gia hạn định vị": "延長GPS定位服務",
-    "công tháo lắp bánh xì dầu phanh": "拆裝煞車分泵/碟盤工資",
-    "cuppen bánh sau": "後輪煞車皮碗/油封",
-    "chất tẩy bố thắng": "煞車來令片清潔劑",
-    "công tháo tap lô thay giàn lạnh": "拆裝儀錶板更換蒸發器(冷氣排)",
-    "dàn lạnh": "冷氣蒸發器 (冷排)",
-    "dầu lạnh": "冷氣冷凍油",
-    "ga lạnh": "冷氣冷媒",
-    "chất rửa bề mặt kim loại": "金屬表面清洗劑",
-    "phụ gia dầu động cơ": "引擎機油添加劑",
-    "phụ gia xăng": "汽油精/燃油添加劑",
-    "gioang": "汽缸床墊片/油封",
-    "vòng lót": "墊圈/華司",
-    "phuy dầu động cơ": "桶裝引擎機油",
-    "thay kính lái": "更換前擋風玻璃",
-    "vệ sinh kim phun": "清洗噴油嘴",
-    "chất tẩy bec phun xăng": "噴油嘴清洗劑",
-    "gioang làm kín ốc xả dầu": "油底殼螺絲華司/墊片",
-    "bánh xì dầu phanh": "煞車分泵",
-    "thay thế bugi": "更換火星塞",
-    "thay roong nắp dàn cò": "更換汽門室蓋墊片",
-    "cân chỉnh góc đặt bánh xe": "四輪定位",
-    "cao su che bụi": "防塵套",
-    "bạc đạn trước": "前輪軸承",
-    "piston thắng": "煞車分泵活塞",
-    "lốp dunlop": "登祿普輪胎 (Dunlop)",
-    "van lốp xe": "輪胎氣嘴",
-    "bộ cupen phanh": "煞車修理包",
-    "thay thế dinamo": "更換發電機",
-    "lọc nhiên liệu thành phần": "柴油濾芯組件",
-    "bạc đạn tăng đơ cuaroa": "皮帶調整器軸承",
-    "puly dẫn hướng": "導向滑輪",
-    "ống thông hơi": "曲軸箱通風管",
-    "công xả gió": "煞車/冷氣管路排氣工資",
-    "chất vệ sinh phanh": "煞車清潔劑",
-    "chất vệ sinh họng ga": "節氣門清洗劑",
-    "công tắc mở cốp": "後車廂開關",
-    "đèn sương mù": "霧燈",
-    "chất vệ sinh thắng": "煞車清洗劑",
-    "lõi柴油/機油濾清器": "濾心",
-    "công tác mở cốp": "後車廂開關工資",
-    "thay đèn cản trước": "更換前保桿燈",
-    "bảo dưỡng cấp trung bình": "中級定期保養",
-    "mỡ bôi trơn bảo dưỡng": "保養潤滑黃油",
-    "chất vệ sinh thắng": "煞車清潔劑",
-    "gioang làm kín ốc xả": "油底殼螺絲墊片",
-    "lõi 柴油/機油濾清器": "柴油/機油濾芯",
-    "lõi lọc nhớt": "機油濾芯",
-    "bình ắc quy": "汽車電瓶",
-    "công tác mở": "開關",
-    "công thay cáp xooán": "更換方向盤游絲(安全氣囊游絲)工資",
-    "cao su gạt mưa": "雨刷膠條",
-    "dung dịch súc rửa động cơ xăng": "汽油引擎內部清洗劑",
-    "hướng dẫn nhân công": "技術工資",
-    "phốt pto": "動力輸出軸油封 (PTO油封)",
-    "nước làm mát động cơ màu vàng": "長效黃色水箱精",
-    "long đền óc xả nhớt": "油底殼螺絲華司",
-    "nhân công thay thế dây cáp cẩu": "吊桿鋼索更換工資",
-    "phụ gia nhiên liệu": "燃油添加劑",
-    "chỉnh đèn cos bị cao": "調整近光燈照射高度",
-    "công thay lọc bụi máy lạnh": "更換冷氣濾網工資",
-    "công và vật tư": "工資與材料費",
-    "phủ ceramic": "車身陶瓷鍍膜",
-    "công kiểm tra đăng kiểm": "代驗車檢修工資",
-    "Puly tăng đưa máy lạnh": "冷氣調整滑輪",
-    "Đèn led biển số": "車牌LED燈",
-    "đảo vỏ cân bằng động": "輪胎對調與動平衡",
-    "cao su gạt mưa phải": "右側雨刷膠條",
-    "yokohama": "橫濱輪胎",
-    "dịch vụ nhân công": "維修工資",
-    "Nước làm mát": "水箱冷卻液"
-}
+def init_maint_dictionary():
+    if "maint_dict_db" not in st.session_state:
+        st.session_state.maint_dict_db = {
+            "bão dưỡng cấp 2": "二級定期保養",
+            "bão dưỡng cấp nhỏ": "小型定期保養",
+            "bão dưỡng cấp trung bình": "中型定期保養",
+            "bão dưỡng cấp lớn": "大型定期保養",
+            "bão dưỡng": "定期保養維護",
+            "thay vỏ": "更換輪胎/外胎",
+            "thay vỏ xe": "更換輪胎",
+            "sửa chữa, bảo dưỡng": "綜合維修與保養",
+            "sửa chữa bảo dưỡng": "綜合維修與保養",
+            "sửa chữa": "綜合維修與零件更換",
+            "sữa chữa": "綜合維修與零件更換",
+            "thay kính lái": "更換汽車前擋風玻璃",
+            "dán phim 3m r70": "貼 3M R70 隔熱膜",
+            "bảo dưỡng thay dàn nóng": "更換並保養冷凝器",
+            "mua bảo hiểm": "購買車輛保險",
+            "thay công tắc mở cốp": "更換後車箱開關",
+            "thay gạt mưa": "更換雨刷",
+            "thay pin chìa khóa": "更換遙控鑰匙電池",
+            "thay sim": "更換通訊SIM卡",
+            "thay đèn": "更換車燈總成",
+            "đánh bóng": "車身拋光美容",
+            "đăng kiểm": "車輛定期檢驗 (驗車)",
+            "may bạt xe": "訂製/更換貨車帆布雨蓬",
+            "kiểm tra tiếng kêu": "底盤/異音檢修",
+            "gia hạn": "合約/服務延期",
+            "ok": "一般檢修確認完畢",
+            "công bão dưỡng": "保養人工工資",
+            "thay dây curoa": "更換發電機/冷氣皮帶",
+            "dây cua roa": "傳動皮帶",
+            "dây curoa": "傳動皮帶",
+            "bơm nước": "水箱幫浦",
+            "máy phát": "發電機",
+            "lóc lạnh": "冷氣壓縮機",
+            "lọc nhớt": "機油濾清器 (濾心)",
+            "thay lọc nhớt": "更換機油濾清器",
+            "lọc dầu tinh": "精細柴油濾清器",
+            "lọc dầu": "柴油/機油濾清器",
+            "lọc gió": "空氣濾清器",
+            "lọc nhiên liệu": "燃料濾清器",
+            "lọc khí": "冷氣/空氣濾網",
+            "nhớt máy dầu cao cấp": "高級柴油機油",
+            "nhớt máy": "引擎機油",
+            "dầu động cơ": "引擎潤滑油",
+            "nhớt cầu": "差速器油 (齒輪油)",
+            "nhớt hộp số": "變速箱油",
+            "dầu castrol": "嘉實多潤滑油",
+            "nước rửa kính": "擋風玻璃清洗液",
+            "dung dịch vệ sinh buồng dốt động cơ": "柴油引擎燃燒室清洗劑",
+            "dung dịch súc rửa động cơ": "引擎內部清洗劑",
+            "mỡ bò": "潤滑黃油",
+            "mỡ sắt xi": "底盤黃油潤滑",
+            "nhân công bảo dưỡng": "定期保養人工工資",
+            "thay thế dinamo": "更換發電機總成",
+            "dinamo": "汽車發電機",
+            "công và vật tư": "人工與更換材料費",
+            "nước làm mát": "引擎水箱冷卻液",
+            "bugi": "火星塞",
+            "bạc đạn": "軸承 (培林)",
+            "phanh": "煞車系統",
+            "má phanh": "煞車來令片",
+            "thay nước làm mát": "更換水箱冷卻液",
+            "ktra động cơ": "檢修引擎",
+            "vỏ yokohama": "橫濱輪胎",
+            "gia hạn định vị": "延長GPS定位服務",
+            "công tháo lắp bánh xì dầu phanh": "拆裝煞車分泵/碟盤工資",
+            "cuppen bánh sau": "後輪煞車皮碗/油封",
+            "chất tẩy bố thắng": "煞車來令片清潔劑",
+            "công tháo tap lô thay giàn lạnh": "拆裝儀錶板更換蒸發器",
+            "dàn lạnh": "冷氣蒸發器",
+            "dầu lạnh": "冷氣冷凍油",
+            "ga lạnh": "冷氣冷媒",
+            "chất rửa bề mặt kim loại": "金屬表面清洗劑",
+            "phụ gia dầu động cơ": "引擎機油添加劑",
+            "phụ gia xăng": "汽油精",
+            "gioang": "油封/墊片",
+            "vòng lót": "墊圈",
+            "thay kính lái": "更換前擋風玻璃",
+            "vệ sinh kim phun": "清洗噴油嘴",
+            "chất tẩy bec phun xăng": "噴油嘴清洗劑",
+            "gioang làm kín ốc xả dầu": "油底殼螺絲墊片",
+            "bạc đạn trước": "前輪軸承",
+            "piston thắng": "煞車分泵活塞",
+            "lốp dunlop": "登祿普輪胎",
+            "van lốp xe": "輪胎氣嘴",
+            "bộ cupen phanh": "煞車修理包",
+            "lọc nhiên liệu thành phần": "柴油濾芯組件",
+            "bạc đạn tăng đơ cuaroa": "皮帶調整器軸承",
+            "puly dẫn hướng": "導向滑輪",
+            "ống thông hơi": "曲軸箱通風管",
+            "công xả gió": "管路排氣工資",
+            "chất vệ sinh phanh": "煞車清潔劑",
+            "chất vệ sinh họng ga": "節氣門清洗劑",
+            "đèn sương mù": "霧燈",
+            "bình ắc quy": "汽車電瓶",
+            "cao su gạt mưa": "雨刷膠條",
+            "puly tăng đưa máy lạnh": "冷氣調整滑輪",
+            "đèn led biển số": "車牌LED燈",
+            "đảo vỏ cân bằng động": "輪胎對調與動平衡"
+        }
 
 def smart_translate(text, target_lang):
     if not text or not isinstance(text, str):
         return text
     
+    init_maint_dictionary()
+    dict_db = st.session_state.maint_dict_db
+    
     if target_lang == "繁體中文":
         translated = text
-        # 依照詞彙長度排序（優先替換較長的複合詞）
-        sorted_keys = sorted(MAINT_TRANSLATIONS.keys(), key=len, reverse=True)
+        # 依照詞彙長度排序，優先替換較長詞彙
+        sorted_keys = sorted(dict_db.keys(), key=len, reverse=True)
         for key in sorted_keys:
             if key in translated.lower():
                 import re
                 pattern = re.compile(re.escape(key), re.IGNORECASE)
-                translated = pattern.sub(MAINT_TRANSLATIONS[key], translated)
+                translated = pattern.sub(dict_db[key], translated)
         return translated
     
     return text
@@ -278,6 +247,7 @@ def auto_sync_to_fixed_assets(plate_no):
         })
 
 def render_vehicle_maintenance_page(engine=None, lang="繁體中文", **kwargs):
+    init_maint_dictionary()
     active_lang = lang or st.session_state.get("current_lang", "繁體中文")
     L = VEHICLE_MAINT_I18N.get(active_lang, VEHICLE_MAINT_I18N["繁體中文"])
 
@@ -290,8 +260,8 @@ def render_vehicle_maintenance_page(engine=None, lang="繁體中文", **kwargs):
             {"plate": "70LD-00670", "type": "bão dưỡng", "cost": 178200.0, "desc": "công bão dưỡng (Honda Bình Dương)", "date": "2025-11-14"}
         ]
 
-    tab_list, tab_import, tab_add = st.tabs([
-        L["tab_list"], L["tab_import"], L["tab_add"]
+    tab_list, tab_import, tab_add, tab_dict = st.tabs([
+        L["tab_list"], L["tab_import"], L["tab_add"], L["tab_dict"]
     ])
 
     # 1. 依車號分組篩選之總表
@@ -424,6 +394,31 @@ def render_vehicle_maintenance_page(engine=None, lang="繁體中文", **kwargs):
                     st.rerun()
                 else:
                     st.warning(L["fill_warning"])
+
+    # 4. 動態維修越中語言資料庫維護 (使用者可隨時新增/修改翻譯詞彙)
+    with tab_dict:
+        st.markdown("### 📖 維修越中語言資料庫維護 (Maintenance Dictionary)")
+        st.info("在此您可以隨時新增或維護越文與繁體中文的對照詞彙。系統在翻譯維修履歷時會自動即時套用。")
+        
+        with st.form("form_add_dict"):
+            c_vn, c_tw = st.columns(2)
+            with c_vn:
+                new_vn_term = st.text_input("越文原文詞彙 (Vietnamese Term)", placeholder="例如: thay nhớt hộp số")
+            with c_tw:
+                new_tw_term = st.text_input("繁體中文對照 (Traditional Chinese)", placeholder="例如: 更換變速箱油")
+            
+            if st.form_submit_button("➕ 新增/更新翻譯詞彙", type="primary"):
+                if new_vn_term and new_tw_term:
+                    st.session_state.maint_dict_db[new_vn_term.strip().lower()] = new_tw_term.strip()
+                    st.success(f"✅ 成功新增翻譯詞彙：`{new_vn_term}` ➡️ `{new_tw_term}`")
+                    st.rerun()
+                else:
+                    st.warning("⚠️ 請完整填寫越文與中文詞彙！")
+        
+        st.markdown("---")
+        st.markdown("#### 📋 目前資料庫中的詞彙總覽")
+        dict_df = pd.DataFrame(list(st.session_state.maint_dict_db.items()), columns=["越文原文 (Vietnamese)", "繁體中文對照 (Traditional Chinese)"])
+        st.dataframe(dict_df, use_container_width=True)
 
 def show(*args, **kwargs):
     render_vehicle_maintenance_page(*args, **kwargs)
