@@ -10,10 +10,6 @@ ENG_DEPT_I18N = {
     "繁體中文": {
         "title": "🛠️ 裕豐電機工業 - 工程管理中心與設計部門",
         "caption": "涵蓋工程報價系統（含倉庫連動、業務議價與一鍵傳動 AR）、設計圖庫 Storage 上傳中心、及工程驗收追蹤。",
-        "sub_quote": "[工程] 配電盤與工程專案報價",
-        "sub_progress": "[工程] 水電工程驗收與進度追蹤",
-        "sub_daily": "[工程] 現場工程日報表與出工統計",
-        "sub_design": "[設計] 配電盤電氣與機構設計圖庫 Storage",
         
         # 報價系統
         "quote_title": "⚙️ 配電盤與工程專案報價系統 (Quotation, Discount & AR Transfer)",
@@ -81,11 +77,6 @@ ENG_DEPT_I18N = {
     "Tiếng Việt": {
         "title": "🛠️ REETECH INDUSTRIAL - Trung tâm Quản lý & Phòng Thiết kế",
         "caption": "Bao gồm báo giá, kho lưu trữ Storage bản vẽ thiết kế, và theo dõi tiến độ nghiệm thu.",
-        "sub_quote": "[Kỹ thuật] Báo giá dự án",
-        "sub_progress": "[Kỹ thuật] Tiến độ thi công",
-        "sub_daily": "[Kỹ thuật] Báo cáo công trường",
-        "sub_design": "[Thiết kế] Kho Storage bản vẽ",
-        
         "quote_title": "⚙️ Hệ thống Báo giá & Chiết khấu Thương mại (Chuyển dữ liệu AR)",
         "quote_caption": "Hệ thống báo giá: Liên kết kho, cho phép kinh doanh chiết khấu/giảm giá, tính thuế VAT và chuyển sang tài chính.",
         "sec1_title": "📋 1. Thông tin Dự án",
@@ -96,10 +87,8 @@ ENG_DEPT_I18N = {
         "lbl_location": "Địa điểm công trình / Nhà máy *",
         "loc_placeholder": "Ví dụ: KCN Trảng Bàng, Tây Ninh, Việt Nam",
         "lbl_currency": "Loại tiền tệ",
-        
         "sec2_title": "📦 2. Chi tiết Nội dung Báo giá (Liên kết Tồn kho & Đơn giá)",
         "sec2_caption": "Chọn vật tư thiết bị, hệ thống tự động đọc số lượng tồn kho và đơn giá:",
-        
         "sec3_title": "💰 3. Tổng hợp, Thuế VAT & Chiết khấu Kinh doanh",
         "lbl_subtotal_sum": "Tổng giá trị chưa thuế (Subtotal):",
         "lbl_vat_rate": "Thuế suất VAT (%)",
@@ -108,7 +97,6 @@ ENG_DEPT_I18N = {
         "lbl_final_override": "✍️ Tổng giá trị báo giá cuối cùng sau chiết khấu:",
         "btn_transfer_ar": "🚀 Truyền dữ liệu sang Phải thu Tài chính (AR)",
         "success_ar": "✅ Thành công! Báo giá đã được truyền sang hệ thống Quản lý Phải thu (AR) của Tài chính!",
-        
         "design_title": "📐 Kho Lưu trữ Storage Bản vẽ Thiết kế Điện & Cơ khí",
         "design_caption": "Kỹ sư thiết kế tải lên bản vẽ CAD/PDF lên Storage công ty để bộ phận quản lý tải về.",
         "upload_header": "📤 Tải lên bản vẽ mới vào Storage công ty",
@@ -124,7 +112,6 @@ ENG_DEPT_I18N = {
         "col_version": "Thời gian",
         "col_designer": "Người tải lên",
         "col_action": "Tải xuống",
-        
         "prog_title": "⚡ Theo dõi Tiến độ & Nghiệm thu Dự án Cơ điện",
         "prog_caption": "Chuyên dụng kỹ thuật: Tập trung giám sát phần trăm tiến độ thi công, trạng thái nghiệm thu.",
         "kpi1_title": "Tổng số dự án cơ điện",
@@ -149,11 +136,6 @@ ENG_DEPT_I18N = {
     "English": {
         "title": "🛠️ REETECH INDUSTRIAL - Engineering Center & Design Dept",
         "caption": "Quotation system, design storage center for uploading/downloading drawings, and acceptance tracking.",
-        "sub_quote": "[Engineering] Project Quotation",
-        "sub_progress": "[Engineering] Progress & Inspection",
-        "sub_daily": "[Engineering] Daily Site Reports",
-        "sub_design": "[Design] Panel Design Storage",
-        
         "quote_title": "⚙️ Switchgear & Engineering Project Quotation System (AR Integration)",
         "quote_caption": "Engineering quotation: Linked to warehouse inventory, allows sales discount adjustments, VAT calculation, and direct transfer to Finance AR.",
         "sec1_title": "📋 1. Project Basic Information",
@@ -164,10 +146,8 @@ ENG_DEPT_I18N = {
         "lbl_location": "Project Location / Plant Site *",
         "loc_placeholder": "Example: Trang Bang Industrial Zone, Tay Ninh, Vietnam",
         "lbl_currency": "Currency",
-        
         "sec2_title": "📦 2. Quotation Item Details (Linked to Warehouse Stock & Pricing)",
         "sec2_caption": "Select required electrical materials, system auto-retrieves warehouse remaining stock and unit price:",
-        
         "sec3_title": "💰 3. Subtotal, VAT & Sales Discount Override",
         "lbl_subtotal_sum": "Subtotal (Excluding Tax):",
         "lbl_vat_rate": "VAT Rate (%)",
@@ -176,7 +156,6 @@ ENG_DEPT_I18N = {
         "lbl_final_override": "✍️ Final Quoted Amount after Sales Discount:",
         "btn_transfer_ar": "🚀 Transfer to Finance Accounts Receivable (AR)",
         "success_ar": "✅ Success! Engineering quotation successfully transferred to Finance AR module!",
-        
         "design_title": "📐 Switchgear & Mechanical Design Drawings Storage Center",
         "design_caption": "Design engineers can upload CAD/PDF/image drawings to corporate storage for management download.",
         "upload_header": "📤 Upload New Design Drawing to Storage",
@@ -192,7 +171,6 @@ ENG_DEPT_I18N = {
         "col_version": "Upload Time",
         "col_designer": "Uploader",
         "col_action": "Download",
-        
         "prog_title": "⚡ M&E Engineering Progress & Acceptance Tracking",
         "prog_caption": "Engineering focused: Dedicated monitoring of site construction progress, acceptance status, and contract control.",
         "kpi1_title": "Total M&E Projects",
@@ -256,20 +234,37 @@ def smart_translate_project_data(text, target_lang):
         text = text.replace("🟡 機架架設與線槽施工", "🟡 Rack Installation & Cable Tray Works")
     return text
 
-def render_engineering_department_page(engine=None, lang=None, default_tab=0, **kwargs):
+def render_engineering_department_page(engine=None, lang=None, **kwargs):
     active_lang = get_active_lang(lang)
     L = ENG_DEPT_I18N.get(active_lang, ENG_DEPT_I18N["Tiếng Việt"])
 
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 🎯 偵測目前左側選單點選的子功能 (透過 st.session_state 或傳入參數)
-    sub_action = kwargs.get("sub_action") or st.session_state.get("current_sub_action", "quote")
+    # 🎯 智慧偵測左側選單點選的子功能（自動同時相容多種主程式傳參方式）
+    sub_action = (
+        kwargs.get("sub_action") 
+        or st.session_state.get("current_sub_action") 
+        or st.session_state.get("selected_sub_menu")
+        or st.session_state.get("sub_menu")
+        or "quote"
+    )
+    
+    # 如果主程式傳進來的參數包含中文或越文關鍵字，自動轉換為對應識別碼
+    sub_str = str(sub_action)
+    if "進度" in sub_str or "Progress" in sub_str or "Nghiệm thu" in sub_str:
+        current_mode = "progress"
+    elif "日報" in sub_str or "Daily" in sub_str or "Báo cáo" in sub_str:
+        current_mode = "daily"
+    elif "設計" in sub_str or "Storage" in sub_str or "Thiết kế" in sub_str or "圖庫" in sub_str:
+        current_mode = "design"
+    else:
+        current_mode = "quote"
 
     # ----------------------------------------------------
     # 1. 📋 [工程] 配電盤與工程專案報價
     # ----------------------------------------------------
-    if sub_action == "quote" or default_tab == 0:
+    if current_mode == "quote":
         st.markdown(f"### {L['quote_title']}")
         st.caption(L['quote_caption'])
         
@@ -340,7 +335,7 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
     # ----------------------------------------------------
     # 2. 📊 [工程] 水電工程驗收與進度追蹤
     # ----------------------------------------------------
-    elif sub_action == "progress" or default_tab == 2:
+    elif current_mode == "progress":
         st.markdown(f"### {L['prog_title']}")
         st.caption(L['prog_caption'])
 
@@ -381,7 +376,7 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
     # ----------------------------------------------------
     # 3. 📝 [工程] 現場工程日報表與出工統計
     # ----------------------------------------------------
-    elif sub_action == "daily":
+    elif current_mode == "daily":
         st.markdown("### 📝 現場工程日報表與出工統計 (Daily Construction Reports)")
         st.caption("記錄每日台幹與越籍工人出工數、施工進度摘要與工地異常狀況回報。")
         
@@ -418,7 +413,7 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
     # ----------------------------------------------------
     # 4. 📐 [設計] 配電盤電氣與機構設計圖庫 Storage
     # ----------------------------------------------------
-    elif sub_action == "design" or default_tab == 1:
+    elif current_mode == "design":
         st.markdown(f"### {L['design_title']}")
         st.caption(L['design_caption'])
         
