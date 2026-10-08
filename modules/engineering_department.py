@@ -10,9 +10,10 @@ ENG_DEPT_I18N = {
     "繁體中文": {
         "title": "🛠️ 裕豐電機工業 - 工程管理中心與設計部門",
         "caption": "涵蓋工程報價系統（含倉庫連動、業務議價與一鍵傳動 AR）、設計圖庫 Storage 上傳中心、及工程驗收追蹤。",
-        "tab_quote": "⚙ 1. 工程報價",
-        "tab_design": "📐 2. 設計圖庫 Storage 上傳與下載",
-        "tab_progress": "📊 3. 工程驗收與進度追蹤",
+        "sub_quote": "[工程] 配電盤與工程專案報價",
+        "sub_progress": "[工程] 水電工程驗收與進度追蹤",
+        "sub_daily": "[工程] 現場工程日報表與出工統計",
+        "sub_design": "[設計] 配電盤電氣與機構設計圖庫 Storage",
         
         # 報價系統
         "quote_title": "⚙️ 配電盤與工程專案報價系統 (Quotation, Discount & AR Transfer)",
@@ -28,12 +29,6 @@ ENG_DEPT_I18N = {
         
         "sec2_title": "📦 2. 報價內容明細 (連動倉庫庫存與金額)",
         "sec2_caption": "選取所需配電資材，系統將自動讀取倉庫剩餘數量、單價並計算小計：",
-        "col_item_code": "物料編號",
-        "col_item_name": "報價內容 / 資材品項",
-        "col_warehouse_stock": "倉庫剩餘數量",
-        "col_qty": "報價數量 (Qty)",
-        "col_unit_price": "倉庫單價 (USD)",
-        "col_subtotal": "金額小計 (USD)",
         
         "sec3_title": "💰 3. 金額加總、發票稅 (VAT) 與業務議價減免",
         "lbl_subtotal_sum": "未稅金額總計 (Subtotal):",
@@ -86,9 +81,10 @@ ENG_DEPT_I18N = {
     "Tiếng Việt": {
         "title": "🛠️ REETECH INDUSTRIAL - Trung tâm Quản lý & Phòng Thiết kế",
         "caption": "Bao gồm báo giá, kho lưu trữ Storage bản vẽ thiết kế, và theo dõi tiến độ nghiệm thu.",
-        "tab_quote": "⚙️ 1. Báo giá & Chuyển AR",
-        "tab_design": "📐 2. Kho Storage Bản vẽ Thiết kế",
-        "tab_progress": "📊 3. Theo dõi Tiến độ & Nghiệm thu",
+        "sub_quote": "[Kỹ thuật] Báo giá dự án",
+        "sub_progress": "[Kỹ thuật] Tiến độ thi công",
+        "sub_daily": "[Kỹ thuật] Báo cáo công trường",
+        "sub_design": "[Thiết kế] Kho Storage bản vẽ",
         
         "quote_title": "⚙️ Hệ thống Báo giá & Chiết khấu Thương mại (Chuyển dữ liệu AR)",
         "quote_caption": "Hệ thống báo giá: Liên kết kho, cho phép kinh doanh chiết khấu/giảm giá, tính thuế VAT và chuyển sang tài chính.",
@@ -103,12 +99,6 @@ ENG_DEPT_I18N = {
         
         "sec2_title": "📦 2. Chi tiết Nội dung Báo giá (Liên kết Tồn kho & Đơn giá)",
         "sec2_caption": "Chọn vật tư thiết bị, hệ thống tự động đọc số lượng tồn kho và đơn giá:",
-        "col_item_code": "Mã vật tư",
-        "col_item_name": "Nội dung báo giá / Tên vật tư",
-        "col_warehouse_stock": "Tồn kho hiện tại",
-        "col_qty": "Số lượng báo giá (Qty)",
-        "col_unit_price": "Đơn giá kho (USD)",
-        "col_subtotal": "Thành tiền (USD)",
         
         "sec3_title": "💰 3. Tổng hợp, Thuế VAT & Chiết khấu Kinh doanh",
         "lbl_subtotal_sum": "Tổng giá trị chưa thuế (Subtotal):",
@@ -159,9 +149,10 @@ ENG_DEPT_I18N = {
     "English": {
         "title": "🛠️ REETECH INDUSTRIAL - Engineering Center & Design Dept",
         "caption": "Quotation system, design storage center for uploading/downloading drawings, and acceptance tracking.",
-        "tab_quote": "⚙️ 1. Quotation & AR Transfer",
-        "tab_design": "📐 2. Design Storage (Upload & Download)",
-        "tab_progress": "📊 3. M&E Acceptance & Progress Tracking",
+        "sub_quote": "[Engineering] Project Quotation",
+        "sub_progress": "[Engineering] Progress & Inspection",
+        "sub_daily": "[Engineering] Daily Site Reports",
+        "sub_design": "[Design] Panel Design Storage",
         
         "quote_title": "⚙️ Switchgear & Engineering Project Quotation System (AR Integration)",
         "quote_caption": "Engineering quotation: Linked to warehouse inventory, allows sales discount adjustments, VAT calculation, and direct transfer to Finance AR.",
@@ -176,12 +167,6 @@ ENG_DEPT_I18N = {
         
         "sec2_title": "📦 2. Quotation Item Details (Linked to Warehouse Stock & Pricing)",
         "sec2_caption": "Select required electrical materials, system auto-retrieves warehouse remaining stock and unit price:",
-        "col_item_code": "Item Code",
-        "col_item_name": "Quotation Content / Material Name",
-        "col_warehouse_stock": "Warehouse Stock",
-        "col_qty": "Quoted Qty",
-        "col_unit_price": "Warehouse Unit Price (USD)",
-        "col_subtotal": "Subtotal (USD)",
         
         "sec3_title": "💰 3. Subtotal, VAT & Sales Discount Override",
         "lbl_subtotal_sum": "Subtotal (Excluding Tax):",
@@ -278,14 +263,13 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
     st.title(L["title"])
     st.caption(L["caption"])
 
-    tab_quote, tab_design, tab_progress = st.tabs([
-        L["tab_quote"], L["tab_design"], L["tab_progress"]
-    ])
+    # 🎯 偵測目前左側選單點選的子功能 (透過 st.session_state 或傳入參數)
+    sub_action = kwargs.get("sub_action") or st.session_state.get("current_sub_action", "quote")
 
     # ----------------------------------------------------
-    # Tab 1: 工程報價系統 (含倉庫連動、業務議價折讓、發票稅與 AR 傳動)
+    # 1. 📋 [工程] 配電盤與工程專案報價
     # ----------------------------------------------------
-    with tab_quote:
+    if sub_action == "quote" or default_tab == 0:
         st.markdown(f"### {L['quote_title']}")
         st.caption(L['quote_caption'])
         
@@ -354,9 +338,87 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
             st.info(f"📌 **傳動詳情 (Transferred to AR)**: {vendor_name} | {proj_name} | 最終報價金額: **${final_quoted_amount:,.2f} {currency}** (含 VAT {vat_rate}%)")
 
     # ----------------------------------------------------
-    # Tab 2: 設計圖庫 Storage 上傳與下載中心
+    # 2. 📊 [工程] 水電工程驗收與進度追蹤
     # ----------------------------------------------------
-    with tab_design:
+    elif sub_action == "progress" or default_tab == 2:
+        st.markdown(f"### {L['prog_title']}")
+        st.caption(L['prog_caption'])
+
+        kc1, kc2, kc3, kc4 = st.columns(4)
+        with kc1:
+            st.metric(label=L["kpi1_title"], value=L["kpi1_val"], delta=L["kpi1_sub"])
+        with kc2:
+            st.metric(label=L["kpi2_title"], value="$1,850,000", delta=L["kpi2_sub"])
+        with kc3:
+            st.metric(label=L["kpi3_title"], value="$600,000", delta=L["kpi3_sub"])
+        with kc4:
+            st.metric(label=L["kpi4_title"], value="76.5%", delta=L["kpi4_sub"])
+
+        st.markdown("---")
+        st.markdown(f"### {L['table_header']}")
+
+        raw_data = [
+            {"code": "PRJ-2026-01", "client": "越南新順楠梓電子廠 (XinShun Electronics)", "item": "無塵室高低壓配電安裝與強弱電配管", "total": 450000, "paid": 315000, "ar": 135000, "progress": 90, "status": "🟢 設備安裝完成，待驗收"},
+            {"code": "PRJ-2026-02", "client": "平陽美德金屬加工廠 (Meide Metal)", "item": "廠房動力配電、給排水系統與照明工程", "total": 380000, "paid": 228000, "ar": 152000, "progress": 75, "status": "🟡 正在進行主幹管配線"},
+            {"code": "PRJ-2026-03", "client": "隆安宏遠精密機械廠 (HongYuan Precision)", "item": "變電站統包工程、銅排配置與空調系統配電", "total": 620000, "paid": 434000, "ar": 186000, "progress": 85, "status": "🟢 變電站主體完工"},
+            {"code": "PRJ-2026-04", "client": "北寧富泰光電科技 (FuTai Optoelectronics)", "item": "廠房大樓消防警報系統與機房不間斷電源(UPS)配電", "total": 400000, "paid": 273000, "ar": 127000, "progress": 55, "status": "🟡 機架架設與線槽施工"}
+        ]
+
+        display_data = []
+        for item in raw_data:
+            display_data.append({
+                L["col_code"]: item["code"],
+                L["col_client"]: smart_translate_project_data(item["client"], active_lang),
+                L["col_item"]: smart_translate_project_data(item["item"], active_lang),
+                L["col_total"]: f"${item['total']:,.2f}",
+                L["col_paid"]: f"${item['paid']:,.2f}",
+                L["col_ar"]: f"${item['ar']:,.2f}",
+                L["col_progress"]: f"{item['progress']}%",
+                L["col_status"]: smart_translate_project_data(item["status"], active_lang)
+            })
+        st.dataframe(pd.DataFrame(display_data), use_container_width=True)
+
+    # ----------------------------------------------------
+    # 3. 📝 [工程] 現場工程日報表與出工統計
+    # ----------------------------------------------------
+    elif sub_action == "daily":
+        st.markdown("### 📝 現場工程日報表與出工統計 (Daily Construction Reports)")
+        st.caption("記錄每日台幹與越籍工人出工數、施工進度摘要與工地異常狀況回報。")
+        
+        if "daily_reports" not in st.session_state:
+            st.session_state.daily_reports = [
+                {"日期": "2026-10-07", "案場": "越南西寧廠", "出工台幹": "admin", "越籍工人數": 18, "當日施工摘要": "完成 A 棟車間主母線銅排架設與耐壓測試。", "異常狀況": "無"}
+            ]
+        
+        st.dataframe(pd.DataFrame(st.session_state.daily_reports), use_container_width=True)
+
+        with st.form("form_add_daily_site"):
+            dc1, dc2 = st.columns(2)
+            with dc1:
+                d_date = st.date_input("施工日期 (Date)", value=datetime.date.today())
+                d_plant = st.selectbox("案場廠區", ["越南西寧廠 (Tay Ninh)", "越南海防廠 (Hai Phong)", "外部工程工地"])
+            with dc2:
+                d_leader = st.text_input("負責台幹", value=st.session_state.get("current_user", "admin"))
+                d_workers = st.number_input("越籍工人數 (Workers Count)", min_value=1, value=12, step=1)
+            
+            d_summary = st.text_area("當日施工摘要 (Work Summary)", placeholder="例如: 進行配電盤銅排組裝與穿線作業")
+            
+            if st.form_submit_button("💾 提交現場施工日報表", type="primary", use_container_width=True):
+                st.session_state.daily_reports.insert(0, {
+                    "日期": d_date.strftime("%Y-%m-%d"),
+                    "案場": d_plant,
+                    "出工台幹": d_leader,
+                    "越籍工人數": d_workers,
+                    "當日施工摘要": d_summary,
+                    "異常狀況": "無"
+                })
+                st.success("✅ 現場施工日報表已成功送出與歸檔！")
+                st.rerun()
+
+    # ----------------------------------------------------
+    # 4. 📐 [設計] 配電盤電氣與機構設計圖庫 Storage
+    # ----------------------------------------------------
+    elif sub_action == "design" or default_tab == 1:
         st.markdown(f"### {L['design_title']}")
         st.caption(L['design_caption'])
         
@@ -396,47 +458,6 @@ def render_engineering_department_page(engine=None, lang=None, default_tab=0, **
         st.markdown("---")
         st.markdown(f"#### {L['storage_header']}")
         st.dataframe(pd.DataFrame(st.session_state.storage_drawings), use_container_width=True)
-
-    # ----------------------------------------------------
-    # Tab 3: 工程驗收與進度追蹤
-    # ----------------------------------------------------
-    with tab_progress:
-        st.markdown(f"### {L['prog_title']}")
-        st.caption(L['prog_caption'])
-
-        kc1, kc2, kc3, kc4 = st.columns(4)
-        with kc1:
-            st.metric(label=L["kpi1_title"], value=L["kpi1_val"], delta=L["kpi1_sub"])
-        with kc2:
-            st.metric(label=L["kpi2_title"], value="$1,850,000", delta=L["kpi2_sub"])
-        with kc3:
-            st.metric(label=L["kpi3_title"], value="$600,000", delta=L["kpi3_sub"])
-        with kc4:
-            st.metric(label=L["kpi4_title"], value="76.5%", delta=L["kpi4_sub"])
-
-        st.markdown("---")
-        st.markdown(f"### {L['table_header']}")
-
-        raw_data = [
-            {"code": "PRJ-2026-01", "client": "越南新順楠梓電子廠 (XinShun Electronics)", "item": "無塵室高低壓配電安裝與強弱電配管", "total": 450000, "paid": 315000, "ar": 135000, "progress": 90, "status": "🟢 設備安裝完成，待驗收"},
-            {"code": "PRJ-2026-02", "client": "平陽美德金屬加工廠 (Meide Metal)", "item": "廠房動力配電、給排水系統與照明工程", "total": 380000, "paid": 228000, "ar": 152000, "progress": 75, "status": "🟡 正在進行主幹管配線"},
-            {"code": "PRJ-2026-03", "client": "隆安宏遠精密機械廠 (HongYuan Precision)", "item": "變電站統包工程、銅排配置與空調系統配電", "total": 620000, "paid": 434000, "ar": 186000, "progress": 85, "status": "🟢 變電站主體完工"},
-            {"code": "PRJ-2026-04", "client": "北寧富泰光電科技 (FuTai Optoelectronics)", "item": "廠房大樓消防警報系統與機房不間斷電源(UPS)配電", "total": 400000, "paid": 273000, "ar": 127000, "progress": 55, "status": "🟡 機架架設與線槽施工"}
-        ]
-
-        display_data = []
-        for item in raw_data:
-            display_data.append({
-                L["col_code"]: item["code"],
-                L["col_client"]: smart_translate_project_data(item["client"], active_lang),
-                L["col_item"]: smart_translate_project_data(item["item"], active_lang),
-                L["col_total"]: f"${item['total']:,.2f}",
-                L["col_paid"]: f"${item['paid']:,.2f}",
-                L["col_ar"]: f"${item['ar']:,.2f}",
-                L["col_progress"]: f"{item['progress']}%",
-                L["col_status"]: smart_translate_project_data(item["status"], active_lang)
-            })
-        st.dataframe(pd.DataFrame(display_data), use_container_width=True)
 
 # ----------------------------------------------------
 # 🔗 相容性進入點定義
