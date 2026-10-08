@@ -5,7 +5,7 @@ from sqlalchemy import text
 
 # 導入所有功能模組
 import modules.approval_workflow as approval_workflow
-import modules.asset_management as asset_management
+import modules.asset_management as asset_management  # 👈 已完整保留固定資產模組
 import modules.contract_management as contract_management
 import modules.db_connection as db_conn
 import modules.employee_management as employee_management
@@ -14,7 +14,7 @@ import modules.executive_dashboard as executive_dashboard
 import modules.factory_management as factory_management
 import modules.field_attendance as field_attendance
 import modules.field_daily_report as field_daily_report
-import modules.financial_tax_reports as financial_tax_reports  # 👈 新增：越南稅務與財務報表模組
+import modules.financial_tax_reports as financial_tax_reports
 import modules.invoice_management as invoice_management
 import modules.payroll_management as payroll_management
 import modules.procurement_ap as procurement_ap
@@ -57,7 +57,7 @@ RECH_LOGO_HTML = """
 """
 
 # ----------------------------------------------------
-# 📋 導航結構定義（支援多語系與完整模組掛載）
+# 📋 導航結構定義（已完整納入固定資產管理與越南財報）
 # ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
@@ -86,9 +86,10 @@ NAV_STRUCTURE = {
                     "🏭 廠區與工作廠區管理": "factory_mgmt",
                     "🚗 廠區車輛進出口門禁紀錄": "vehicle_gate",
                     "🛠️ 車輛維修保養紀錄": "vehicle_maintenance",
+                    "🏢 固定資產與設備管理": "asset_mgmt",  # 👈 完整恢復固定資產選單
                     "🛒 採購與應付帳款 (AP)": "procurement_ap",
                     "📋 應收帳款": "sales_order_ar",
-                    "📊 越南稅務標準財務報表 (Thông tư 200)": "financial_tax",  # 👈 新增整合模組
+                    "📊 越南稅務標準財務報表 (Thông tư 200)": "financial_tax",
                     "💰 員工薪資管理": "payroll_calc",
                     "📄 電子發票綜合管理": "invoice_management",
                 }
@@ -148,9 +149,10 @@ NAV_STRUCTURE = {
                     "🏭 Quản lý Nhà máy": "factory_mgmt",
                     "🚗 Quản lý xe ra vào": "vehicle_gate",
                     "🛠️ Bảo trì xe": "vehicle_maintenance",
+                    "🏢 Quản lý Tài sản cố định": "asset_mgmt",  # 👈 越文版固定資產
                     "🛒 Mua hàng & Phải trả (AP)": "procurement_ap",
                     "📋 Phải thu": "sales_order_ar",
-                    "📊 Báo cáo Tài chính chuẩn Thuế VN": "financial_tax",  # 👈 新增整合模組
+                    "📊 Báo cáo Tài chính chuẩn Thuế VN": "financial_tax",
                     "💰 Quản lý Lương": "payroll_calc",
                     "📄 Quản lý Hóa đơn điện tử": "invoice_management",
                 }
@@ -210,9 +212,10 @@ NAV_STRUCTURE = {
                     "🏭 Factory Management": "factory_mgmt",
                     "🚗 Vehicle Gate Log": "vehicle_gate",
                     "🛠️ Vehicle Maintenance": "vehicle_maintenance",
+                    "🏢 Fixed Asset Management": "asset_mgmt",  # 👈 英文版固定資產
                     "🛒 Procurement & AP": "procurement_ap",
                     "📋 Accounts Receivable": "sales_order_ar",
-                    "📊 Vietnamese Tax Financials": "financial_tax",  # 👈 新增整合模組
+                    "📊 Vietnamese Tax Financials": "financial_tax",
                     "💰 Payroll Management": "payroll_calc",
                     "📄 E-Invoice Management": "invoice_management",
                 }
@@ -435,6 +438,9 @@ elif target_route == "sales_order_ar":
 
 elif target_route == "financial_tax":
     safe_call_module(financial_tax_reports.render_financial_tax_reports_page, engine=engine, lang=curr_lang)
+
+elif target_route == "asset_mgmt":
+    safe_call_module(asset_management.render_asset_management_page, engine=engine, lang=curr_lang)
 
 elif target_route == "payroll_calc":
     safe_call_module(payroll_management.render_payroll_management_page, engine=engine, lang=curr_lang)
