@@ -6,26 +6,22 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     st.title("🛠️ 裕豐電機工業 - 工程管理中心與設計部門")
     st.caption("涵蓋工程報價系統、水電工程驗收與進度追蹤（連動財務應收帳款 AR）、現場日報表與設計圖庫 Storage。")
 
-    sub_action = (
-        kwargs.get("sub_action") 
-        or st.session_state.get("current_sub_action") 
-        or st.session_state.get("selected_sub_menu")
-        or st.session_state.get("sub_menu")
-        or "quote"
+    # 🛠️ 為了避免主程式參數對不上，我們在畫面上方提供一個乾淨的頁籤切換，確保點哪裡就到哪裡！
+    selected_sub = st.radio(
+        "📂 請選擇工程管理子功能：",
+        [
+            "1. 配電盤與工程專案報價",
+            "2. 水電工程驗收與進度追蹤 (連動 AR)",
+            "3. 現場工程日報表與出工統計",
+            "4. 配電盤電氣與機構設計圖庫 Storage"
+        ],
+        horizontal=True
     )
-    
-    sub_str = str(sub_action)
-    if "進度" in sub_str or "Progress" in sub_str or "驗收" in sub_str:
-        current_mode = "progress"
-    elif "日報" in sub_str or "Daily" in sub_str:
-        current_mode = "daily"
-    elif "設計" in sub_str or "Storage" in sub_str or "圖庫" in sub_str:
-        current_mode = "design"
-    else:
-        current_mode = "quote"
+
+    st.markdown("---")
 
     # 1. 工程報價系統
-    if current_mode == "quote":
+    if "報價" in selected_sub:
         st.markdown("### ⚙️ 配電盤與工程專案報價系統 (Quotation & AR Transfer)")
         st.markdown("#### 📋 1. 工程專案基本資訊")
         
@@ -69,7 +65,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
             st.success(f"✅ 成功將專案 [{proj_name}] 報價金額傳動至財務部應收帳款（AR）模組！")
 
     # 2. 水電工程驗收與進度追蹤 (連動 AR)
-    elif current_mode == "progress":
+    elif "驗收" in selected_sub:
         st.markdown("### ⚡ 水電工程驗收、進度追蹤與 AR 應收款連動中心")
         st.caption("即時監控工程施工進度、預定驗收時間，並與財務部應收帳款（AR）即時通訊連動進行請款催收。")
 
@@ -99,7 +95,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
             st.success("✅ 已成功向財務部應收帳款（AR）發送即時通知與驗收時間表！")
 
     # 3. 現場工程日報表
-    elif current_mode == "daily":
+    elif "日報" in selected_sub:
         st.markdown("### 📝 現場工程日報表與出工統計")
         if "daily_reports" not in st.session_state:
             st.session_state.daily_reports = [
@@ -117,7 +113,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                 st.rerun()
 
     # 4. 設計圖庫 Storage
-    elif current_mode == "design":
+    elif "設計" in selected_sub:
         st.markdown("### 📐 配電盤電氣與機構設計圖庫 Storage 雲端中心")
         if "storage_drawings" not in st.session_state:
             st.session_state.storage_drawings = [
