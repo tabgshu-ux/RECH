@@ -213,4 +213,99 @@ NAV_STRUCTURE = {
             },
             "🏭 Production Dept": {
                 "features": {
-                    "📦
+                    "📦 [Warehouse] Material Barcodes": "wh_management",
+                    "✂️ [Sheet Metal] Processing Dept": "sheet_metal",
+                    "🎨 [Coating] Powder Coating Dept": "painting",
+                    "⚡ [Assembly] Switchgear Assembly": "assembly",
+                }
+            },
+            "💻 Information Technology (IT)": {
+                "features": {
+                    "🔒 User Permissions": "it_admin",
+                    "🎛️ Client ERP Licensing": "it_licensing",
+                }
+            },
+        },
+    },
+}
+
+if "current_lang" not in st.session_state:
+    st.session_state.current_lang = "繁體中文"
+
+try:
+    db_conn = importlib.import_module("modules.db_connection")
+    engine = db_conn.get_db_engine()
+except Exception:
+    engine = None
+
+def load_module_safely(mod_name, func_name, *args, **kwargs):
+    try:
+        mod = importlib.import_module(mod_name)
+        func = getattr(mod, func_name, None)
+        if callable(func):
+            func(*args, **kwargs)
+        else:
+            st.error(f"模組 {mod_name} 中找不到方法 {func_name}")
+    except Exception as e:
+        st.error(f"載入模組 {mod_name} 發生異常: {str(e)}")
+
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+    st.session_state.user_role = ""
+    st.session_state.user_name = ""
+    st.session_state.must_change_pwd = False
+
+lang_dict = NAV_STRUCTURE.get(
+    st.session_state.current_lang, NAV_STRUCTURE["繁體中文"]
+)
+
+if not st.session_state.logged_in:
+    st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
+    st.title(lang_dict["login_title"])
+    st.caption(lang_dict["company_sub"])
+    st.markdown("---")
+    
+    col1, _ = st.columns([1, 2])
+    with col1:
+        username_input = st.text_input(lang_dict["username"])
+        password_input = st.text_input(lang_dict["password"], type="password")
+        
+        if st.button(lang_dict["login_btn"], use_container_width=True):
+            u_clean = username_input.strip()
+            
+            if u_clean.lower() == "admin" and password_input == "123":
+                st.session_state.logged_in = True
+                st.session_state.user_role = "admin"
+                st.session_state.user_name = "admin"
+                st.session_state.must_change_pwd = False
+                st.rerun()
+            else:
+                matched_emp = None
+                if "employee_db" in st.session_state:
+                    matched_emp = next((e for e in st.session_state.employee_db if e["工號"].lower() == u_clean.lower()), None)
+                
+                stored_pwd = matched_emp.get("密碼", "123456") if matched_emp else "123456"
+                
+                if matched_emp and password_input == stored_pwd:
+                    st.session_state.logged_in = True
+                    st.session_state.user_name = matched_emp["姓名"]
+                    st.session_state.user_role = matched_emp.get("角色", "Staff")
+                    st.session_state.must_change_pwd = matched_emp.get("must_change_password", False)
+                    st.session_state.current_emp_code = matched_emp["工號"]
+                    st.rerun()
+                else:
+                    st.error("⚠️ 帳號或初始密碼錯誤 / Incorrect username or password")
+    st.stop()
+
+if st.session_state.get("must_change_pwd", False):
+    st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
+    st.warning("⚠️ **首次登入安全設定 / Lần đầu đăng nhập - Đổi mật khẩu**：為符合企業資安規範，請您立即變更由人事分派的初始密碼。")
+    
+    with st.form("force_change_pwd_form"):
+        new_pwd = st.text_input("請輸入您的新密碼 (Mật khẩu mới) *", type="password")
+        confirm_pwd = st.text_input("再次確認新密碼 (Nhập lại mật khẩu mới) *", type="password")
+        
+        if st.form_submit_button("💾 確認修改密碼並進入系統", type="primary", use_container_width=True):
+            if new_pwd and new_pwd == confirm_pwd:
+                if "employee_db" in st.session_state:
+                    for e in st.
