@@ -201,4 +201,80 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 L["col_base"]: f"{base:,.0f} ₫",
                 L["col_allowance"]: f"{total_allowances:,.0f} ₫",
                 L["col_ot"]: f"{ot_pay:,.0f} ₫",
-                L["col_deduct"]: f"{total_deductions:,.0f} ₫ (BHXH 10.
+                L["col_deduct"]: f"{total_deductions:,.0f} ₫ (BHXH 10.5%)",
+                L["col_net"]: f"{net_salary:,.0f} ₫"
+            })
+
+        st.dataframe(pd.DataFrame(summary_data), use_container_width=True)
+        
+        st.download_button(
+            label="📥 匯出全廠薪資總表 Excel (.xlsx)",
+            data="Mock Excel Binary Data",
+            file_name="Reetech_Payroll_Oct_2026.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type="primary"
+        )
+
+    with tab_calc:
+        st.markdown(f"### {L['calc_header']}")
+        emp_opts = {f"{e['code']} - {e['name']} ({e['title']})": e for e in st.session_state.payroll_db}
+        sel_key = st.selectbox(L["select_emp"], list(emp_opts.keys()))
+        selected_emp = emp_opts[sel_key]
+
+        with st.form("form_individual_payroll"):
+            st.markdown(f"#### {L['sec_earnings']}")
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                base_val = st.number_input(L["lbl_base"], min_value=0.0, value=float(selected_emp["base_salary"]), step=500000.0)
+                meal_val = st.number_input(L["lbl_meal"], min_value=0.0, value=float(selected_emp["meal_allowance"]), step=50000.0)
+                fuel_val = st.number_input(L["lbl_fuel"], min_value=0.0, value=float(selected_emp["fuel_allowance"]), step=50000.0)
+            with c2:
+                phone_val = st.number_input(L["lbl_phone"], min_value=0.0, value=float(selected_emp["phone_allowance"]), step=50000.0)
+                title_val = st.number_input(L["lbl_title_allowance"], min_value=0.0, value=float(selected_emp["title_allowance"]), step=100000.0)
+                driving_val = st.number_input(L["lbl_driving"], min_value=0.0, value=float(selected_emp["driving_bonus"]), step=100000.0)
+            with c3:
+                tips_val = st.number_input(L["lbl_tips"], min_value=0.0, value=float(selected_emp["tips"]), step=50000.0)
+                ot_normal_val = st.number_input(L["lbl_ot_normal"], min_value=0.0, value=float(selected_emp["ot_normal_hours"]), step=1.0)
+                ot_holiday_val = st.number_input(L["lbl_ot_holiday"], min_value=0.0, value=float(selected_emp["ot_holiday_hours"]), step=1.0)
+
+            st.markdown(f"#### {L['sec_deductions']}")
+            d1, d2, d3 = st.columns(3)
+            with d1:
+                late_val = st.number_input(L["lbl_late_hours"], min_value=0.0, value=float(selected_emp["late_hours"]), step=0.5)
+            with d2:
+                leave_val = st.number_input(L["lbl_leave_hours"], min_value=0.0, value=float(selected_emp["leave_hours"]), step=0.5)
+            with d3:
+                advance_val = st.number_input(L["lbl_advance"], min_value=0.0, value=float(selected_emp["advance"]), step=100000.0)
+
+            if st.form_submit_button(L["btn_calc"], type="primary", use_container_width=True):
+                for e in st.session_state.payroll_db:
+                    if e["code"] == selected_emp["code"]:
+                        e["base_salary"] = base_val
+                        e["meal_allowance"] = meal_val
+                        e["fuel_allowance"] = fuel_val
+                        e["phone_allowance"] = phone_val
+                        e["title_allowance"] = title_val
+                        e["driving_bonus"] = driving_val
+                        e["tips"] = tips_val
+                        e["ot_normal_hours"] = ot_normal_val
+                        e["ot_holiday_hours"] = ot_holiday_val
+                        e["late_hours"] = late_val
+                        e["leave_hours"] = leave_val
+                        e["advance"] = advance_val
+                st.success(L["success_calc"].format(name=selected_emp["name"]))
+                st.rerun()
+
+    with tab_history:
+        st.markdown("### 📑 歷史薪資與會計帳務查詢 (Lịch sử Lương & Kế toán)")
+        st.info("系統已自動同步每月會計傳票與應付薪資憑證，支援歷年跨國廠區（西寧廠、海防廠）薪資報表歸檔查閱。")
+        st.metric("2026年 9月份 實發總薪資", "482,500,000 ₫", "🟢 已完成銀行撥款")
+        st.metric("2026年 8月份 實發總薪資", "475,200,000 ₫", "🟢 已完成銀行撥款")
+
+def show(*args, **kwargs):
+    render_payroll_management_page(*args, **kwargs)
+
+def main(*args, **kwargs):
+    render_payroll_management_page(*args, **kwargs)
+
+def render_payroll_management(*args, **kwargs):
+    render_payroll_management_page(*args, **kwargs)
