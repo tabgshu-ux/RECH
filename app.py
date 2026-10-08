@@ -3,19 +3,19 @@ import streamlit as st
 import pandas as pd
 from sqlalchemy import text
 
-# 導入所有功能模組（完整保留所有模組，一個都沒有少）
+# 導入所有功能模組（完整保留所有模組，絕不簡化或刪除）
 import modules.approval_workflow as approval_workflow
 import modules.asset_management as asset_management
 import modules.contract_management as contract_management
 import modules.db_connection as db_conn
 import modules.employee_management as employee_management
-import modules.engineering_department as engineering_department
+import modules.engineering_department as engineering_department  # 三合一工程與設計中心
 import modules.executive_dashboard as executive_dashboard
 import modules.factory_management as factory_management
 import modules.field_attendance as field_attendance
 import modules.field_daily_report as field_daily_report
 import modules.financial_tax_reports as financial_tax_reports
-import modules.internal_attendance as internal_attendance  # 👈 新增：廠內員工打卡與出勤模組
+import modules.internal_attendance as internal_attendance
 import modules.invoice_management as invoice_management
 import modules.payroll_management as payroll_management
 import modules.procurement_ap as procurement_ap
@@ -80,8 +80,8 @@ NAV_STRUCTURE = {
             "👔 管理部 (Management Dept)": {
                 "features": {
                     "👤 員工個人檔案與人事管理": "hr_employee",
-                    "🏢 廠內員工固定打卡與出勤管理": "internal_attendance",  # 👈 內勤打卡
-                    "📍 外勤員工打卡資料與出勤統計計算": "field_attendance",    # 👈 外勤GPS打卡
+                    "🏢 廠內員工固定打卡與出勤紀錄": "internal_attendance",
+                    "📍 外勤 GPS 打卡與工地即時人數": "field_attendance",
                     "🏭 廠區與工作廠區管理": "factory_mgmt",
                     "🚗 廠區車輛進出口門禁與派車審核": "vehicle_gate",
                     "🛠️ 車輛維修保養紀錄": "vehicle_maintenance",
@@ -103,7 +103,7 @@ NAV_STRUCTURE = {
                     "⚡ [工程] 配電盤與工程專案報價": "eng_quote",
                     "📊 [工程] 水電工程驗收與進度追蹤": "eng_progress",
                     "📋 [工程] 現場工程日報表與出工統計": "field_daily_report",
-                    "🎨 [設計] 配電盤電氣與機構設計圖庫上傳中心": "eng_design",
+                    "🎨 [設計] 配電盤電氣與機構設計圖庫 Storage": "eng_design",
                 }
             },
             "🏭 生產部 (Production Dept)": {
@@ -144,8 +144,8 @@ NAV_STRUCTURE = {
             "👔 Phòng Quản lý (Management Dept)": {
                 "features": {
                     "👤 Hồ sơ nhân sự": "hr_employee",
-                    "🏢 Chấm công nhân viên nội bộ": "internal_attendance",
-                    "📍 Chấm công GPS & Thống kê": "field_attendance",
+                    "🏢 Chấm công nội bộ": "internal_attendance",
+                    "📍 Chấm công GPS công trường": "field_attendance",
                     "🏭 Quản lý Nhà máy": "factory_mgmt",
                     "🚗 Quản lý xe ra vào & Phê duyệt": "vehicle_gate",
                     "🛠️ Bảo trì xe": "vehicle_maintenance",
@@ -167,7 +167,7 @@ NAV_STRUCTURE = {
                     "⚡ [Kỹ thuật] Báo giá Dự án & Truyền AR": "eng_quote",
                     "📊 [Kỹ thuật] Tiến độ nghiệm thu dự án cơ điện": "eng_progress",
                     "📋 [Kỹ thuật] Nhật ký Thi công Công trình": "field_daily_report",
-                    "🎨 [Thiết kế] Kho tải lên & Tải về Bản vẽ": "eng_design",
+                    "🎨 [Thiết kế] Kho Storage Bản vẽ": "eng_design",
                 }
             },
             "🏭 Phòng Sản xuất (Production Dept)": {
@@ -208,8 +208,8 @@ NAV_STRUCTURE = {
             "👔 Management Dept (GA & Finance)": {
                 "features": {
                     "👤 HR Records": "hr_employee",
-                    "🏢 Internal Time Clock": "internal_attendance",
-                    "📍 GPS Attendance & Stats": "field_attendance",
+                    "🏢 Internal Attendance": "internal_attendance",
+                    "📍 Field GPS Attendance": "field_attendance",
                     "🏭 Factory Management": "factory_mgmt",
                     "🚗 Vehicle Gate & Dispatch Log": "vehicle_gate",
                     "🛠️ Vehicle Maintenance": "vehicle_maintenance",
@@ -231,7 +231,7 @@ NAV_STRUCTURE = {
                     "⚡ [Engineering] Quotation & AR Transfer": "eng_quote",
                     "📊 [Engineering] M&E Acceptance & Progress": "eng_progress",
                     "📋 [Engineering] Daily Construction Report": "field_daily_report",
-                    "🎨 [Design] Drawings Storage & Download": "eng_design",
+                    "🎨 [Design] Drawing Storage Center": "eng_design",
                 }
             },
             "🏭 Production Dept": {
@@ -443,7 +443,7 @@ elif target_route == "payroll_calc":
     safe_call_module(payroll_management.render_payroll_management_page, engine=engine, lang=curr_lang)
 
 elif target_route == "invoice_management":
-    safe_call_module(invoice_management.render_invoice_management, engine=engine, lang=curr_lang)
+    safe_call_module(invoice_management.render_invoice_management_page, engine=engine, lang=curr_lang)
 
 elif target_route == "internal_attendance":
     safe_call_module(internal_attendance.render_internal_attendance_page, engine=engine, lang=curr_lang)
