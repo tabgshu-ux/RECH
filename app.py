@@ -1,4 +1,9 @@
 import inspect
+import streamlit as st
+import pandas as pd
+from sqlalchemy import text
+
+# 導入所有功能模組
 import modules.approval_workflow as approval_workflow
 import modules.asset_management as asset_management
 import modules.contract_management as contract_management
@@ -9,6 +14,7 @@ import modules.executive_dashboard as executive_dashboard
 import modules.factory_management as factory_management
 import modules.field_attendance as field_attendance
 import modules.field_daily_report as field_daily_report
+import modules.financial_tax_reports as financial_tax_reports  # 👈 新增：越南稅務與財務報表模組
 import modules.invoice_management as invoice_management
 import modules.payroll_management as payroll_management
 import modules.procurement_ap as procurement_ap
@@ -18,9 +24,6 @@ import modules.user_management as user_management
 import modules.vehicle_gate_log as vehicle_gate_log
 import modules.vehicle_maintenance as vehicle_maintenance
 import modules.warehouse_management as warehouse_management
-import pandas as pd
-from sqlalchemy import text
-import streamlit as st
 
 st.set_page_config(
     page_title="裕豐電機工業 REETECH INDUSTRIAL AI ERP",
@@ -54,7 +57,7 @@ RECH_LOGO_HTML = """
 """
 
 # ----------------------------------------------------
-# 📋 導航結構定義（已將總經理室排在管理部上方，並劃分各級職務權限）
+# 📋 導航結構定義（支援多語系與完整模組掛載）
 # ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
@@ -85,6 +88,7 @@ NAV_STRUCTURE = {
                     "🛠️ 車輛維修保養紀錄": "vehicle_maintenance",
                     "🛒 採購與應付帳款 (AP)": "procurement_ap",
                     "📋 應收帳款": "sales_order_ar",
+                    "📊 越南稅務標準財務報表 (Thông tư 200)": "financial_tax",  # 👈 新增整合模組
                     "💰 員工薪資管理": "payroll_calc",
                     "📄 電子發票綜合管理": "invoice_management",
                 }
@@ -146,6 +150,7 @@ NAV_STRUCTURE = {
                     "🛠️ Bảo trì xe": "vehicle_maintenance",
                     "🛒 Mua hàng & Phải trả (AP)": "procurement_ap",
                     "📋 Phải thu": "sales_order_ar",
+                    "📊 Báo cáo Tài chính chuẩn Thuế VN": "financial_tax",  # 👈 新增整合模組
                     "💰 Quản lý Lương": "payroll_calc",
                     "📄 Quản lý Hóa đơn điện tử": "invoice_management",
                 }
@@ -207,6 +212,7 @@ NAV_STRUCTURE = {
                     "🛠️ Vehicle Maintenance": "vehicle_maintenance",
                     "🛒 Procurement & AP": "procurement_ap",
                     "📋 Accounts Receivable": "sales_order_ar",
+                    "📊 Vietnamese Tax Financials": "financial_tax",  # 👈 新增整合模組
                     "💰 Payroll Management": "payroll_calc",
                     "📄 E-Invoice Management": "invoice_management",
                 }
@@ -292,9 +298,8 @@ if not st.session_state.logged_in:
                 st.session_state.logged_in = True
                 u_clean = username.strip().lower()
                 
-                # 職務與系統權限角色劃分邏輯
                 if u_clean == "admin":
-                    st.session_state.user_role = "admin"  # 唯一能看到「資訊管理部」的最高權限
+                    st.session_state.user_role = "admin"
                 elif u_clean in ["chairman", "董事长", "董事長"]:
                     st.session_state.user_role = "chairman"
                 elif u_clean in ["generalmanager", "gm", "總經理", "总经理"]:
@@ -350,7 +355,6 @@ dept_options = list(lang_dict["departments"].keys())
 current_user_clean = str(st.session_state.user_name).strip().lower()
 current_role_clean = str(st.session_state.user_role).strip().lower()
 
-# 🛡️ 保全人員專屬路由限制
 if current_role_clean == "security":
     dept_options = ["👔 管理部 (Management Dept)"]
     selected_parent_dept = dept_options[0]
@@ -366,7 +370,6 @@ if current_role_clean == "security":
     selected_feature_label = feature_labels[0]
     target_route = "vehicle_gate"
 else:
-    # 判斷是否具備高階主管權限（可看總經理室）
     is_executive_access = (
         current_role_clean in ["admin", "chairman", "generalmanager", "vicemanager", "executive", "manager", "finance_manager"]
         or current_user_clean in ["admin", "executive", "boss", "ceo", "gm", "chairman"]
@@ -375,7 +378,6 @@ else:
     if not is_executive_access:
         dept_options = [d for d in dept_options if "總經理室" not in d and "Executive" not in d and "Ban Giám đốc" not in d]
 
-    # 🛡️ 鐵律檢查：本公司無資訊管理部，嚴格限定只有 `admin` 帳號才能看到「資訊管理部」
     if current_role_clean != "admin":
         dept_options = [d for d in dept_options if "資訊管理部" not in d and "IT" not in d and "Phòng IT" not in d]
 
@@ -431,8 +433,8 @@ elif target_route == "procurement_ap":
 elif target_route == "sales_order_ar":
     safe_call_module(sales_order_ar.render_sales_order_ar_page, engine=engine, lang=curr_lang)
 
-elif target_route == "contract_mgmt":
-    safe_call_module(contract_management.render_contract_management_page, engine=engine, lang=curr_lang)
+elif target_route == "financial_tax":
+    safe_call_module(financial_tax_reports.render_financial_tax_reports_page, engine=engine, lang=curr_lang)
 
 elif target_route == "payroll_calc":
     safe_call_module(payroll_management.render_payroll_management_page, engine=engine, lang=curr_lang)
@@ -463,7 +465,6 @@ elif target_route in ["sheet_metal", "painting", "assembly"]:
     st.info("Hệ thống đang hoạt động bình thường / 現場工單與生產追蹤模組順利運作中。")
 
 elif target_route == "it_admin":
-    # 🛡️ 雙重保險驗證：只有 admin 可以呼叫資訊管理部模組
     if current_role_clean == "admin":
         safe_call_module(user_management.render_user_management_page, lang=curr_lang)
     else:
