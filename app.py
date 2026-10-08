@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 from sqlalchemy import text
 
+# 導入所有功能模組（完整保留所有模組，一個都沒有少）
 import modules.approval_workflow as approval_workflow
 import modules.asset_management as asset_management
 import modules.contract_management as contract_management
@@ -14,6 +15,7 @@ import modules.factory_management as factory_management
 import modules.field_attendance as field_attendance
 import modules.field_daily_report as field_daily_report
 import modules.financial_tax_reports as financial_tax_reports
+import modules.internal_attendance as internal_attendance  # 👈 新增：廠內員工打卡與出勤模組
 import modules.invoice_management as invoice_management
 import modules.payroll_management as payroll_management
 import modules.procurement_ap as procurement_ap
@@ -70,15 +72,16 @@ NAV_STRUCTURE = {
         "departments": {
             "📈 總經理室 (Executive Office)": {
                 "features": {
-                    "🔴 原料價格與隨時股市物價/匯率": "commodities_fx",
+                    "🔴 原料價格與 Gemini 智慧採購顧問": "commodities_fx",
                     "📊 財務類顯示資料 (AR/AP & P&L)": "financials_pl",
-                    "⚡ 工程專案進度與驗收資料": "project_progress_exec",
+                    "⚡ 工程專案進度與現場異常監控": "project_progress_exec",
                 }
             },
             "👔 管理部 (Management Dept)": {
                 "features": {
                     "👤 員工個人檔案與人事管理": "hr_employee",
-                    "📍 外勤員工打卡資料與出勤統計計算": "field_attendance",
+                    "🏢 廠內員工固定打卡與出勤管理": "internal_attendance",  # 👈 內勤打卡
+                    "📍 外勤員工打卡資料與出勤統計計算": "field_attendance",    # 👈 外勤GPS打卡
                     "🏭 廠區與工作廠區管理": "factory_mgmt",
                     "🚗 廠區車輛進出口門禁與派車審核": "vehicle_gate",
                     "🛠️ 車輛維修保養紀錄": "vehicle_maintenance",
@@ -133,7 +136,7 @@ NAV_STRUCTURE = {
         "departments": {
             "📈 Ban Giám đốc (Executive Office)": {
                 "features": {
-                    "🔴 Giá Nguyên liệu & Tỷ giá": "commodities_fx",
+                    "🔴 Giá Nguyên liệu & Cố vấn Gemini": "commodities_fx",
                     "📊 Dữ liệu Tài chính": "financials_pl",
                     "⚡ Tiến độ Dự án Kỹ thuật": "project_progress_exec",
                 }
@@ -141,6 +144,7 @@ NAV_STRUCTURE = {
             "👔 Phòng Quản lý (Management Dept)": {
                 "features": {
                     "👤 Hồ sơ nhân sự": "hr_employee",
+                    "🏢 Chấm công nhân viên nội bộ": "internal_attendance",
                     "📍 Chấm công GPS & Thống kê": "field_attendance",
                     "🏭 Quản lý Nhà máy": "factory_mgmt",
                     "🚗 Quản lý xe ra vào & Phê duyệt": "vehicle_gate",
@@ -196,7 +200,7 @@ NAV_STRUCTURE = {
         "departments": {
             "📈 Executive Office": {
                 "features": {
-                    "🔴 Raw Material Prices & FX": "commodities_fx",
+                    "🔴 Raw Materials & Gemini Advisor": "commodities_fx",
                     "📊 Financial Analytics": "financials_pl",
                     "⚡ Engineering Project Progress": "project_progress_exec",
                 }
@@ -204,6 +208,7 @@ NAV_STRUCTURE = {
             "👔 Management Dept (GA & Finance)": {
                 "features": {
                     "👤 HR Records": "hr_employee",
+                    "🏢 Internal Time Clock": "internal_attendance",
                     "📍 GPS Attendance & Stats": "field_attendance",
                     "🏭 Factory Management": "factory_mgmt",
                     "🚗 Vehicle Gate & Dispatch Log": "vehicle_gate",
@@ -294,7 +299,6 @@ if not st.session_state.logged_in:
         if st.button(lang_dict["login_btn"], use_container_width=True):
             u_clean = username_input.strip()
             
-            # 預設管理員或特殊測試帳號
             if u_clean.lower() == "admin" and password_input == "123":
                 st.session_state.logged_in = True
                 st.session_state.user_role = "admin"
@@ -302,7 +306,6 @@ if not st.session_state.logged_in:
                 st.session_state.must_change_pwd = False
                 st.rerun()
             else:
-                # 從員工資料庫中比對帳號密碼
                 matched_emp = None
                 if "employee_db" in st.session_state:
                     matched_emp = next((e for e in st.session_state.employee_db if e["工號"].lower() == u_clean.lower()), None)
@@ -313,7 +316,6 @@ if not st.session_state.logged_in:
                     st.session_state.logged_in = True
                     st.session_state.user_name = matched_emp["姓名"]
                     st.session_state.user_role = matched_emp.get("角色", "Staff")
-                    # 檢查是否為首次登入需修改密碼
                     st.session_state.must_change_pwd = matched_emp.get("must_change_password", False)
                     st.session_state.current_emp_code = matched_emp["工號"]
                     st.rerun()
@@ -334,7 +336,6 @@ if st.session_state.get("must_change_pwd", False):
         
         if st.form_submit_button("💾 確認修改密碼並進入系統", type="primary", use_container_width=True):
             if new_pwd and new_pwd == confirm_pwd:
-                # 更新員工資料庫中的密碼並解除強制修改旗標
                 if "employee_db" in st.session_state:
                     for e in st.session_state.employee_db:
                         if e["工號"] == st.session_state.get("current_emp_code"):
@@ -442,7 +443,10 @@ elif target_route == "payroll_calc":
     safe_call_module(payroll_management.render_payroll_management_page, engine=engine, lang=curr_lang)
 
 elif target_route == "invoice_management":
-    safe_call_module(invoice_management.render_invoice_management_page, engine=engine, lang=curr_lang)
+    safe_call_module(invoice_management.render_invoice_management, engine=engine, lang=curr_lang)
+
+elif target_route == "internal_attendance":
+    safe_call_module(internal_attendance.render_internal_attendance_page, engine=engine, lang=curr_lang)
 
 elif target_route == "field_attendance":
     safe_call_module(field_attendance.render_field_attendance_page, engine=engine, lang=curr_lang)
