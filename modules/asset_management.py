@@ -133,7 +133,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化固定資產資料庫 (包含分類欄位)
+    # 初始化固定資產資料庫 (若無則建立預設值)
     if "asset_db" not in st.session_state:
         st.session_state.asset_db = [
             {
@@ -168,6 +168,17 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
             }
         ]
 
+    # 🛡️ 欄位相容防護：確保現有 session 資料都有標準欄位，避免 KeyError
+    for asset in st.session_state.asset_db:
+        if "存放廠區" not in asset:
+            asset["存放廠區"] = asset.get("廠區", asset.get("位置", "越南西寧廠"))
+        if "類別" not in asset:
+            asset["類別"] = asset.get("資產類別", "生產與加工機具 (Machinery)")
+        if "目前狀態" not in asset:
+            asset["目前狀態"] = asset.get("狀態", "🟢 在用 (Active)")
+        if "取得成本" not in asset:
+            asset["取得成本"] = asset.get("成本", 0.0)
+
     # 頂部統計指標
     total_assets = len(st.session_state.asset_db)
     total_cost = sum([float(a.get("取得成本", 0)) for a in st.session_state.asset_db])
@@ -182,7 +193,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
     st.markdown("---")
 
-    # 建立頁籤 (總表/分類檢視、新增、修改、刪除)
+    # 建立頁籤
     tab_list, tab_add, tab_edit, tab_delete = st.tabs([
         L["tab_list"], L["tab_add"], L["tab_edit"], L["tab_delete"]
     ])
@@ -191,7 +202,6 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     with tab_list:
         st.markdown(f"### {L['table_header']}")
         
-        # 品項分類子分頁 (Tabs)
         cat_tab_all, cat_tab_prod, cat_tab_car, cat_tab_it = st.tabs([
             L["cat_all"], L["cat_prod"], L["cat_car"], L["cat_it"]
         ])
@@ -202,14 +212,14 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 for idx, asset in enumerate(filtered_data, 1):
                     display_list.append({
                         L["col_index"]: idx,
-                        L["col_code"]: asset["資產編號"],
-                        L["col_name"]: asset["資產名稱"],
-                        L["col_category"]: asset["類別"],
-                        L["col_factory"]: asset["存放廠區"],
+                        L["col_code"]: asset.get("資產編號", "-"),
+                        L["col_name"]: asset.get("資產名稱", "-"),
+                        L["col_category"]: asset.get("類別", "-"),
+                        L["col_factory"]: asset.get("存放廠區", "-"),
                         L["col_brand"]: asset.get("品牌型號", "-"),
                         L["col_plate"]: asset.get("車牌號碼", "-"),
-                        L["col_status"]: asset["目前狀態"],
-                        L["col_cost"]: f"${float(asset['取得成本']):,.2f} USD"
+                        L["col_status"]: asset.get("目前狀態", "-"),
+                        L["col_cost"]: f"${float(asset.get('取得成本', 0)):,.2f} USD"
                     })
                 st.dataframe(pd.DataFrame(display_list), use_container_width=True)
             else:
@@ -219,15 +229,15 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
             display_asset_table(st.session_state.asset_db)
 
         with cat_tab_prod:
-            prod_data = [a for a in st.session_state.asset_db if "生產" in a["類別"] or "Machinery" in a["類別"]]
+            prod_data = [a for a in st.session_state.asset_db if "生產" in str(a.get("類別", "")) or "Machinery" in str(a.get("類別", "")) or "機具" in str(a.get("類別", ""))]
             display_asset_table(prod_data)
 
         with cat_tab_car:
-            car_data = [a for a in st.session_state.asset_db if "車輛" in a["類別"] or "Vehicle" in a["類別"]]
+            car_data = [a for a in st.session_state.asset_db if "車輛" in str(a.get("類別", "")) or "Vehicle" in str(a.get("類別", "")) or "車" in str(a.get("類別", ""))]
             display_asset_table(car_data)
 
         with cat_tab_it:
-            it_data = [a for a in st.session_state.asset_db if "電腦" in a["類別"] or "筆電" in a["類別"] or "PC" in a["類別"] or "Laptop" in a["類別"] or "Office" in a["類別"]]
+            it_data = [a for a in st.session_state.asset_db if any(k in str(a.get("類別", "")) for k in ["電腦", "筆電", "PC", "Laptop", "Office", "辦公"])]
             display_asset_table(it_data)
 
     # 2. ➕ 新增固定資產
@@ -274,23 +284,25 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     with tab_edit:
         st.markdown(f"### {L['tab_edit']}")
         if st.session_state.asset_db:
-            asset_options = {f"{a['資產編號']} - {a['資產名稱']} ({a['類別']})": a for a in st.session_state.asset_db}
+            asset_options = {f"{a.get('資產編號', '')} - {a.get('資產名稱', '')} ({a.get('類別', '')})": a for a in st.session_state.asset_db}
             sel_edit_key = st.selectbox("選擇要修改的資產 (Select Asset to Edit)", list(asset_options.keys()))
             target_asset = asset_options[sel_edit_key]
 
             with st.form("form_edit_asset"):
-                ed_name = st.text_input(L["lbl_name"], value=target_asset["資產名稱"])
+                ed_name = st.text_input(L["lbl_name"], value=target_asset.get("資產名稱", ""))
                 
-                cat_idx = L["cat_opts"].index(target_asset["類別"]) if target_asset["類別"] in L["cat_opts"] else 0
+                curr_cat = target_asset.get("類別", L["cat_opts"][0])
+                cat_idx = L["cat_opts"].index(curr_cat) if curr_cat in L["cat_opts"] else 0
                 ed_cat = st.selectbox(L["lbl_category"], L["cat_opts"], index=cat_idx)
                 
                 ed_brand = st.text_input(L["lbl_brand"], value=target_asset.get("品牌型號", "-"))
                 ed_plate = st.text_input(L["lbl_plate"], value=target_asset.get("車牌號碼", "-"))
                 
-                status_idx = L["status_opts"].index(target_asset["目前狀態"]) if target_asset["目前狀態"] in L["status_opts"] else 0
+                curr_status = target_asset.get("目前狀態", L["status_opts"][0])
+                status_idx = L["status_opts"].index(curr_status) if curr_status in L["status_opts"] else 0
                 ed_status = st.selectbox(L["lbl_status"], L["status_opts"], index=status_idx)
                 
-                ed_cost = st.number_input(L["lbl_cost"], min_value=0.0, value=float(target_asset["取得成本"]), step=100.0)
+                ed_cost = st.number_input(L["lbl_cost"], min_value=0.0, value=float(target_asset.get("取得成本", 0)), step=100.0)
 
                 if st.form_submit_button(L["btn_save_edit"], type="primary", use_container_width=True):
                     target_asset["資產名稱"] = ed_name
@@ -299,7 +311,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                     target_asset["車牌號碼"] = ed_plate
                     target_asset["目前狀態"] = ed_status
                     target_asset["取得成本"] = ed_cost
-                    st.success(L["success_edit"].format(code=target_asset["資產編號"]))
+                    st.success(L["success_edit"].format(code=target_asset.get("資產編號", "")))
                     st.rerun()
         else:
             st.info("目前無固定資產可供修改。")
@@ -308,14 +320,15 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     with tab_delete:
         st.markdown(f"### {L['tab_delete']}")
         if st.session_state.asset_db:
-            del_options = {f"{a['資產編號']} - {a['資產名稱']} ({a['存放廠區']})": a for a in st.session_state.asset_db}
+            del_options = {f"{a.get('資產編號', '')} - {a.get('資產名稱', '')} ({a.get('存放廠區', '')})": a for a in st.session_state.asset_db}
             sel_del_key = st.selectbox("選擇要刪除或報廢的資產", list(del_options.keys()))
             target_del = del_options[sel_del_key]
 
-            st.warning(f"⚠️ 您確定要刪除或報廢資產 **{target_del['資產編號']} - {target_del['資產名稱']}** 嗎？此動作無法復原。")
+            st.warning(f"⚠️ 您確定要刪除或報廢資產 **{target_del.get('資產編號', '')} - {target_del.get('資產名稱', '')}** 嗎？此動作無法復原。")
             
             if st.button(L["btn_delete"], type="primary"):
-                st.session_state.asset_db = [a for a in st.session_state.asset_db if a["資產編號"] != target_del["資產編號"]]
+                target_code = target_del.get("資產編號", "")
+                st.session_state.asset_db = [a for a in st.session_state.asset_db if a.get("資產編號", "") != target_code]
                 st.success(L["success_delete"])
                 st.rerun()
         else:
