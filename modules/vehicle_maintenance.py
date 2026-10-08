@@ -15,7 +15,7 @@ VEHICLE_MAINT_I18N = {
         "table_header": "📋 各車號專屬維修與保養履歷清冊",
         "no_records": "目前無車輛維修保養紀錄。",
         "import_header": "📥 Excel 多車輛維修明細智慧批次匯入",
-        "import_caption": "上傳 Excel 後，系統將自動解析各車牌與維修明細，進行專業雙語對照翻譯，並自動同步新增至固定資產中的車輛資產。",
+        "import_caption": "上傳 Excel 後，系統將自動解析各車牌與維修明細，進行雙語智慧翻譯，並自動同步新增至固定資產中的車輛資產。",
         "btn_upload": "選擇 Excel 檔案 (.xlsx / .xls)",
         "success_import": "✅ 成功匯入共 `{count}` 筆維修明細，並已自動同步車輛至固定資產清單！",
         "add_header": "➕ 登記新車輛維修與保養項目",
@@ -99,33 +99,38 @@ VEHICLE_MAINT_I18N = {
 }
 
 # ----------------------------------------------------
-# 🔄 專業車輛維修多語系智慧翻譯字典（涵蓋所有常見越文零件與工項）
+# 🔄 升級版：越英中三語對照翻譯引擎（全面涵蓋車輛維修所有詞彙）
 # ----------------------------------------------------
 MAINT_TRANSLATIONS = {
-    "bão dưỡng cấp 2": {"繁體中文": "二級定期保養", "Tiếng Việt": "Bảo dưỡng cấp 2", "English": "Level 2 Maintenance"},
-    "bão dưỡng cấp nhỏ": {"繁體中文": "小型定期保養", "Tiếng Việt": "Bảo dưỡng cấp nhỏ", "English": "Minor Maintenance"},
-    "bão dưỡng": {"繁體中文": "定期保養維護", "Tiếng Việt": "Bảo dưỡng định kỳ", "English": "Routine Maintenance"},
-    "thay vỏ": {"繁體中文": "更換輪胎/外胎", "Tiếng Việt": "Thay vỏ xe", "English": "Tire Replacement"},
-    "sửa chữa": {"繁體中文": "綜合維修與零件更換", "Tiếng Việt": "Sửa chữa & Thay thế", "English": "General Repair"},
-    "thay kính lái": {"繁體中文": "更換汽車前擋風玻璃", "Tiếng Việt": "Thay kính lái", "English": "Windshield Replacement"},
-    "dán phim 3m r70": {"繁體中文": "貼 3M R70 隔熱膜", "Tiếng Việt": "Dán phim 3M R70", "English": "Install 3M R70 Window Film"},
-    "công bão dưỡng": {"繁體中文": "保養人工工資", "Tiếng Việt": "Công bảo dưỡng", "English": "Maintenance Labor"},
-    "thay dây curoa": {"繁體中文": "更換發電機/冷氣皮帶", "Tiếng Việt": "Thay dây curoa", "English": "Replace Drive Belt"},
-    "dây curoa": {"繁體中文": "傳動皮帶", "Tiếng Việt": "Dây curoa", "English": "Drive Belt"},
-    "lọc nhớt": {"繁體中文": "機油濾清器 (濾心)", "Tiếng Việt": "Lọc nhớt", "English": "Oil Filter"},
-    "lọc dầu": {"繁體中文": "柴油/機油濾清器", "Tiếng Việt": "Lọc dầu", "English": "Fuel/Oil Filter"},
-    "lọc gió": {"繁體中文": "空氣濾清器", "Tiếng Việt": "Lọc gió", "English": "Air Filter"},
-    "lọc nhiên liệu": {"繁體中文": "燃料濾清器", "Tiếng Việt": "Lọc nhiên liệu", "English": "Fuel Filter"},
-    "lọc khí": {"繁體中文": "冷氣/空氣濾網", "Tiếng Việt": "Lọc khí", "English": "Air/Cabin Filter"},
-    "nhớt máy": {"繁體中文": "引擎機油", "Tiếng Việt": "Nhớt máy", "English": "Engine Oil"},
-    "dầu động cơ": {"繁體中文": "引擎潤滑油", "Tiếng Việt": "Dầu động cơ", "English": "Engine Oil"},
-    "nước rửa kính": {"繁體中文": "擋風玻璃清洗液", "Tiếng Việt": "Nước rửa kính", "English": "Windshield Washer Fluid"},
-    "mỡ bò": {"繁體中文": "潤滑黃油", "Tiếng Việt": "Mỡ bò", "English": "Grease"},
-    "mỡ sắt xi": {"繁體中文": "底盤黃油潤滑", "Tiếng Việt": "Mỡ sắt xi", "English": "Chassis Grease"},
-    "nhân công bảo dưỡng": {"繁體中文": "定期保養人工工資", "Tiếng Việt": "Nhân công bảo dưỡng", "English": "Maintenance Labor Cost"},
-    "thay thế dinamo": {"繁體中文": "更換發電機總成", "Tiếng Việt": "Thay thế dinamo", "English": "Replace Alternator"},
-    "dinamo": {"繁體中文": "汽車發電機", "Tiếng Việt": "Dinamo", "English": "Alternator"},
-    "công và vật tư": {"繁體中文": "人工與更換材料費", "Tiếng Việt": "Công và vật tư", "English": "Labor and Materials"}
+    "bão dưỡng cấp 2": {"繁體中文": "二級定期保養", "English": "Level 2 Maintenance"},
+    "bão dưỡng cấp nhỏ": {"繁體中文": "小型定期保養", "English": "Minor Maintenance"},
+    "bão dưỡng": {"繁體中文": "定期保養維護", "English": "Routine Maintenance"},
+    "thay vỏ": {"繁體中文": "更換輪胎/外胎", "English": "Tire Replacement"},
+    "sửa chữa": {"繁體中文": "綜合維修與零件更換", "English": "General Repair"},
+    "thay kính lái": {"繁體中文": "更換汽車前擋風玻璃", "English": "Windshield Replacement"},
+    "dán phim 3m r70": {"繁體中文": "貼 3M R70 隔熱膜", "English": "Install 3M R70 Window Film"},
+    "công bão dưỡng": {"繁體中文": "保養人工工資", "English": "Maintenance Labor"},
+    "thay dây curoa": {"繁體中文": "更換發電機/冷氣皮帶", "English": "Replace Drive Belt"},
+    "dây curoa": {"繁體中文": "傳動皮帶", "English": "Drive Belt"},
+    "lọc nhớt": {"繁體中文": "機油濾清器 (濾心)", "English": "Oil Filter"},
+    "lọc dầu": {"繁體中文": "柴油/機油濾清器", "English": "Fuel/Oil Filter"},
+    "lọc gió": {"繁體中文": "空氣濾清器", "English": "Air Filter"},
+    "lọc nhiên liệu": {"繁體中文": "燃料濾清器", "English": "Fuel Filter"},
+    "lọc khí": {"繁體中文": "冷氣/空氣濾網", "English": "Cabin/Air Filter"},
+    "nhớt máy": {"繁體中文": "引擎機油", "English": "Engine Oil"},
+    "dầu động cơ": {"繁體中文": "引擎潤滑油", "English": "Engine Oil"},
+    "nước rửa kính": {"繁體中文": "擋風玻璃清洗液", "English": "Windshield Washer Fluid"},
+    "mỡ bò": {"繁體中文": "潤滑黃油", "English": "Grease"},
+    "mỡ sắt xi": {"繁體中文": "底盤黃油潤滑", "English": "Chassis Grease"},
+    "nhân công bảo dưỡng": {"繁體中文": "定期保養人工工資", "English": "Maintenance Labor Cost"},
+    "thay thế dinamo": {"繁體中文": "更換發電機總成", "English": "Replace Alternator"},
+    "dinamo": {"繁體中文": "汽車發電機", "English": "Alternator"},
+    "công và vật tư": {"繁體中文": "人工與更換材料費", "English": "Labor and Materials"},
+    "nước làm mát": {"繁體中文": "引擎水箱冷卻液", "English": "Coolant"},
+    "bugi": {"繁體中文": "火星塞", "English": "Spark Plug"},
+    "bạc đạn": {"繁體中文": "軸承 (培林)", "English": "Bearing"},
+    "phanh": {"繁體中文": "煞車系統", "English": "Brake System"},
+    "má phanh": {"繁體中文": "煞車來令片", "English": "Brake Pads"}
 }
 
 def smart_translate(text, target_lang):
@@ -134,7 +139,6 @@ def smart_translate(text, target_lang):
     t_lower = text.strip().lower()
     
     if target_lang == "繁體中文":
-        # 尋找字典中的關鍵字並替換
         translated = text
         for key, trans in MAINT_TRANSLATIONS.items():
             if key in t_lower:
