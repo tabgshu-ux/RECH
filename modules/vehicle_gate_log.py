@@ -3,16 +3,20 @@ import pandas as pd
 import datetime
 
 # ----------------------------------------------------
-# 🌐 車輛門禁與進出紀錄模組多語系字典 (i18n)
+# 🌐 車輛門禁與派車審核模組多語系字典 (i18n)
 # ----------------------------------------------------
 GATE_LOG_I18N = {
     "繁體中文": {
-        "title": "🚗 警衛室/管理部 - 廠區車輛進出與門禁時間紀錄",
-        "caption": "記錄跨國廠區（西寧廠/海防廠）大門口公務車、貨車及訪客車輛進出時間、駕駛與載貨內容。",
+        "title": "🚗 警衛室/管理部 - 廠區車輛進出與派車審核放行中心",
+        "caption": "記錄西寧廠與海防廠大門口公務車、貨車及訪客車輛進出時間，並即時查核由【全公司電子簽核中心】主管審核通過之派車放行單。",
         "tab_list": "📑 今日車輛進出門禁總表",
+        "tab_approval": "🛡️ 派車審核放行表 (保全專用核對)",
         "tab_record": "➕ 登記車輛進出廠區",
         "table_header": "📋 廠區大門車輛進出即時紀錄清冊",
+        "approval_header": "🛡️ 主管已簽核之派車放行與車輛管制清冊",
+        "approval_caption": "保全人員請於車輛離廠或入廠時，核對下方由系統主管簽核通過之派車單與車牌號碼。",
         "no_records": "目前無車輛進出紀錄。",
+        "no_approvals": "目前無已核准的派車單。",
         "record_header": "➕ 登記車輛進出廠區門禁",
         "lbl_plate": "車牌號碼 *",
         "lbl_driver": "駕駛姓名與所屬單位 *",
@@ -32,15 +36,21 @@ GATE_LOG_I18N = {
         "col_type": "車輛類型",
         "col_dir": "進出方向",
         "col_purpose": "載貨與事由",
-        "col_time": "登記時間"
+        "col_time": "登記時間",
+        "col_requester": "申請部門/人員",
+        "col_status": "放行狀態"
     },
     "Tiếng Việt": {
-        "title": "🚗 Phòng Bảo vệ - Quản lý Xe ra vào Nhà máy",
-        "caption": "Ghi nhận thời gian ra vào cổng của xe công ty, xe tải hàng hóa và xe khách tại Tây Ninh và Hải Phòng.",
+        "title": "🚗 Phòng Bảo vệ - Quản lý Xe ra vào & Phê duyệt Điều xe",
+        "caption": "Ghi nhận xe ra vào cổng nhà máy Tây Ninh và Hải Phòng, kết nối trực tiếp với Trung tâm Phê duyệt điện tử để kiểm tra lệnh điều xe.",
         "tab_list": "📑 Danh sách Xe ra vào trong ngày",
+        "tab_approval": "🛡️ Danh sách Xe được phép điều động (Dành cho Bảo vệ)",
         "tab_record": "➕ Đăng ký Xe ra/vào cổng",
         "table_header": "📋 Sổ nhật ký xe ra vào cổng nhà máy",
+        "approval_header": "🛡️ Danh sách lệnh điều xe đã được cấp trên phê duyệt",
+        "approval_caption": "Bảo vệ vui lòng kiểm tra biển số và lệnh điều xe được phê duyệt dưới đây trước khi cho xe qua cổng.",
         "no_records": "Hiện không có bản ghi ra vào nào.",
+        "no_approvals": "Hiện chưa có lệnh điều xe nào được duyệt.",
         "record_header": "➕ Đăng ký xe ra vào cổng nhà máy",
         "lbl_plate": "Biển số xe *",
         "lbl_driver": "Tên tài xế & Đơn vị *",
@@ -60,15 +70,21 @@ GATE_LOG_I18N = {
         "col_type": "Loại xe",
         "col_dir": "Hướng",
         "col_purpose": "Nội dung / Sự việc",
-        "col_time": "Thời gian"
+        "col_time": "Thời gian",
+        "col_requester": "Người yêu cầu",
+        "col_status": "Trạng thái"
     },
     "English": {
-        "title": "🚗 Security - Plant Vehicle Gate & Access Log",
-        "caption": "Track entry and exit times, drivers, and cargo details for company trucks, cars, and visitors.",
+        "title": "🚗 Security - Plant Vehicle Gate & Dispatch Approval Center",
+        "caption": "Track entry/exit times and verify vehicle dispatch orders approved via the E-Approval Center.",
         "tab_list": "📑 Today's Gate Access Log",
+        "tab_approval": "🛡️ Approved Dispatch Orders (Security Verification)",
         "tab_record": "➕ Register Vehicle Entry/Exit",
         "table_header": "📋 Plant Gate Vehicle Access Registry",
+        "approval_header": "🛡️ Manager-Approved Vehicle Dispatch Registry",
+        "approval_caption": "Security guards must verify approved dispatch orders and license plates before granting entry/exit.",
         "no_records": "No vehicle gate logs found.",
+        "no_approvals": "No approved dispatch orders found.",
         "record_header": "➕ Register Vehicle Access at Gate",
         "lbl_plate": "License Plate *",
         "lbl_driver": "Driver Name & Unit *",
@@ -88,17 +104,15 @@ GATE_LOG_I18N = {
         "col_type": "Vehicle Type",
         "col_dir": "Direction",
         "col_purpose": "Cargo & Purpose",
-        "col_time": "Timestamp"
+        "col_time": "Timestamp",
+        "col_requester": "Requester",
+        "col_status": "Status"
     }
 }
 
-# ----------------------------------------------------
-# 🔄 智慧語意動態轉換引擎
-# ----------------------------------------------------
 def smart_translate_gate(text_val, target_lang):
     if not text_val or not isinstance(text_val, str):
         return text_val
-    
     val_lower = text_val.lower()
 
     if "車輛入廠" in text_val or "check-in" in val_lower or "vào cổng" in val_lower:
@@ -110,20 +124,6 @@ def smart_translate_gate(text_val, target_lang):
         if target_lang == "Tiếng Việt": return "🔴 Xe ra cổng (Check-Out)"
         elif target_lang == "English": return "🔴 Check-Out (Exit)"
         return "🔴 車輛出廠 (Check-Out)"
-
-    # 車輛類型轉譯
-    if target_lang == "Tiếng Việt":
-        if "公務車" in text_val: return "Xe công ty (Company Car)"
-        if "貨車" in text_val: return "Xe tải (Truck)"
-        if "載送總經理赴胡志明市開會" in text_val: return "Đưa Tổng Giám đốc đi họp tại TP. Hồ Chí Minh"
-        if "運送 2000A 銅排母線原料 500kg" in text_val: return "Vận chuyển 500kg nguyên liệu đồng thanh cái 2000A"
-        if "鋼鐵供應商" in text_val: return "Nhà cung cấp Thép"
-    elif target_lang == "English":
-        if "公務車" in text_val: return "Company Car"
-        if "貨車" in text_val: return "Truck"
-        if "載送總經理赴胡志明市開會" in text_val: return "Transporting General Manager to meeting in HCMC"
-        if "運送 2000A 銅排母線原料 500kg" in text_val: return "Delivering 500kg of 2000A copper busbar raw materials"
-        if "鋼鐵供應商" in text_val: return "Steel Supplier"
 
     return text_val
 
@@ -154,7 +154,15 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
             }
         ]
 
-    tab_list, tab_record = st.tabs([L["tab_list"], L["tab_record"]])
+    # 模擬從電子簽核中心 (Approval Center) 審核通過之派車放行清單
+    approved_dispatches = [
+        {"工單編號": "APP-DISPATCH-2026-001", "申請部門": "管理部", "申請人": "陳經理", "車牌號碼": "61A-888.66", "用途說明": "載送總經理赴胡志明市開會", "主管簽核狀態": "🟢 總經理已核准 (Approved)"},
+        {"工單編號": "APP-DISPATCH-2026-002", "申請部門": "生產部", "申請人": "阮文強", "車牌號碼": "51D-456.78", "用途說明": "運送 2000A 銅排母線原料 500kg", "主管簽核狀態": "🟢 生產主管已核准 (Approved)"}
+    ]
+
+    tab_list, tab_approval, tab_record = st.tabs([
+        L["tab_list"], L["tab_approval"], L["tab_record"]
+    ])
 
     with tab_list:
         st.markdown(f"### {L['table_header']}")
@@ -173,6 +181,14 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
             st.dataframe(pd.DataFrame(display_data), use_container_width=True)
         else:
             st.info(L["no_records"])
+
+    with tab_approval:
+        st.markdown(f"### {L['approval_header']}")
+        st.caption(L["approval_caption"])
+        if approved_dispatches:
+            st.dataframe(pd.DataFrame(approved_dispatches), use_container_width=True)
+        else:
+            st.info(L["no_approvals"])
 
     with tab_record:
         st.markdown(f"### {L['record_header']}")
