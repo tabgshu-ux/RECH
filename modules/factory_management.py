@@ -6,7 +6,7 @@ def render_factory_management_page(engine=None, lang="繁體中文", **kwargs):
     FAC_I18N = {
         "繁體中文": {
             "title": "🏭 廠區與工作廠區管理 (Factory Management)",
-            "info": "在此您可以搜尋、新增、修改與刪除公司廠區資料（包含負責人與職位欄位同步顯示與修改）。",
+            "info": "在此您可以搜尋、新增、修改與刪除公司廠區資料（負責人與職位已與人事員工名冊自動連動同步）。",
             "search_label": "🔍 搜尋廠區名稱或編號",
             "search_ph": "輸入廠區名稱或編號搜尋...",
             "table_header": "📋 廠區與負責人名冊總覽",
@@ -14,8 +14,7 @@ def render_factory_management_page(engine=None, lang="繁體中文", **kwargs):
             "add_header": "### ➕ 新增廠區與負責人",
             "lbl_id": "廠區編號",
             "lbl_name": "廠區名稱 (Factory Name)",
-            "lbl_mgr": "負責人與職位 (Manager & Title)",
-            "mgr_placeholder": "例如: 李佑銘 (廠長) 或 張董事長 (董事長)",
+            "lbl_mgr": "選擇負責人與自動帶入職稱",
             "lbl_tel": "聯絡電話 (Phone)",
             "btn_add": "🚀 確認新增廠區",
             "success_add": "✅ 廠區 {name} 新增成功！",
@@ -34,7 +33,7 @@ def render_factory_management_page(engine=None, lang="繁體中文", **kwargs):
         },
         "Tiếng Việt": {
             "title": "🏭 Quản lý Nhà máy & Khu vực sản xuất",
-            "info": "Nơi quản lý thông tin nhà máy, người đại diện và chức vụ kèm theo.",
+            "info": "Nơi quản lý thông tin nhà máy, người đại diện (đồng bộ tự động từ danh sách nhân sự).",
             "search_label": "🔍 Tìm kiếm tên nhà máy hoặc mã số",
             "search_ph": "Nhập tên hoặc mã nhà máy...",
             "table_header": "📋 Danh sách Nhà máy & Người quản lý",
@@ -42,8 +41,7 @@ def render_factory_management_page(engine=None, lang="繁體中文", **kwargs):
             "add_header": "### ➕ Thêm Nhà máy & Người quản lý",
             "lbl_id": "Mã nhà máy",
             "lbl_name": "Tên nhà máy (Factory Name)",
-            "lbl_mgr": "Người quản lý & Chức vụ (Manager & Title)",
-            "mgr_placeholder": "Ví dụ: Nguyễn Văn A (Giám đốc nhà máy)",
+            "lbl_mgr": "Chọn người quản lý",
             "lbl_tel": "Số điện thoại liên hệ (Phone)",
             "btn_add": "🚀 Xác nhận thêm nhà máy",
             "success_add": "✅ Đã thêm nhà máy {name} thành công!",
@@ -51,18 +49,19 @@ def render_factory_management_page(engine=None, lang="繁體中文", **kwargs):
             "edit_header": "### ✏️ Chỉnh sửa thông tin nhà máy",
             "select_edit": "Chọn nhà máy cần sửa",
             "btn_save_edit": "💾 Lưu thay đổi",
+            "success_save_edit": "✅ Đã cập nhật thành công!",
             "success_edit": "✅ Đã cập nhật nhà máy {id} thành công!",
             "no_fac_edit": "Hiện không có nhà máy nào để chỉnh sửa.",
             "del_header": "### 🗑️ Xác nhận xóa nhà máy",
             "select_del": "Chọn nhà máy cần xóa",
-            "del_warn": "Bạn có chắc chắn muốn xóa nhà máy **{id} - {name}** không? Thao tác này không thể hoàn tác.",
+            "del_warn": "Bạn có chắc chắn muốn xóa nhà máy **{id} - {name}** không?",
             "btn_del": "🔥 Xác nhận xóa",
-            "success_del": "✅ Đã xóa nhà máy {id} thành công!",
-            "no_fac_del": "Hiện không có nhà máy nào để xóa."
+            "success_del": "✅ Đã xóa thành công!",
+            "no_fac_del": "Hiện không có nhà máy nào."
         },
         "English": {
             "title": "🏭 Factory & Plant Management",
-            "info": "Manage plant profiles, responsible persons, and job titles.",
+            "info": "Manage plant profiles and responsible persons (synced with employee directory).",
             "search_label": "🔍 Search Factory Name or Code",
             "search_ph": "Enter factory name or code...",
             "table_header": "📋 Factory & Manager Directory",
@@ -70,8 +69,7 @@ def render_factory_management_page(engine=None, lang="繁體中文", **kwargs):
             "add_header": "### ➕ Add New Factory & Manager",
             "lbl_id": "Factory Code",
             "lbl_name": "Factory Name",
-            "lbl_mgr": "Manager & Title",
-            "mgr_placeholder": "Example: John Doe (Plant Director)",
+            "lbl_mgr": "Select Manager & Title",
             "lbl_tel": "Contact Phone",
             "btn_add": "🚀 Confirm Add Factory",
             "success_add": "✅ Factory {name} added successfully!",
@@ -80,13 +78,13 @@ def render_factory_management_page(engine=None, lang="繁體中文", **kwargs):
             "select_edit": "Select Factory to Edit",
             "btn_save_edit": "💾 Save Changes",
             "success_edit": "✅ Factory {id} updated successfully!",
-            "no_fac_edit": "No factory records available for editing.",
+            "no_fac_edit": "No factory records available.",
             "del_header": "### 🗑️ Confirm Factory Deletion",
             "select_del": "Select Factory to Delete",
-            "del_warn": "Are you sure you want to delete factory **{id} - {name}**? This action cannot be undone.",
+            "del_warn": "Are you sure you want to delete **{id} - {name}**?",
             "btn_del": "🔥 Confirm Delete",
-            "success_del": "✅ Factory {id} successfully deleted!",
-            "no_fac_del": "No factory records available for deletion."
+            "success_del": "✅ Factory successfully deleted!",
+            "no_fac_del": "No factory records available."
         }
     }
 
@@ -96,22 +94,19 @@ def render_factory_management_page(engine=None, lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.info(L["info"])
     
+    # 初始化廠區資料
     if "factory_list" not in st.session_state:
         st.session_state.factory_list = [
-            {"廠區編號": "FAC-01", "廠區名稱": "西寧廠 (Tay Ninh)", "負責人與職位": "李佑銘 (廠長)", "聯絡電話": "0912345678"},
-            {"廠區編號": "FAC-02", "廠區名稱": "海防廠 (Hai Phong)", "負責人與職位": "阮文強 (總經理)", "聯絡電話": "0918999080"}
+            {"廠區編號": "FAC-01", "廠區名稱": "西寧廠 (Tay Ninh)", "負責人與職位": "李佑銘 (董事長)", "聯絡電話": "0912345678"},
+            {"廠區編號": "FAC-02", "廠區名稱": "海防廠 (Hai Phong)", "負責人與職位": "Nguyễn Văn Quý (財務主管)", "聯絡電話": "0918999080"}
         ]
-    else:
-        # 相容舊鍵名，確保統一顯示「負責人與職位」與「聯絡電話」
-        for f in st.session_state.factory_list:
-            if "負責人" in f and "負責人與職位" not in f:
-                f["負責人與職位"] = f.pop("負責人")
-            if "電話" in f and "聯絡電話" not in f:
-                f["聯絡電話"] = f.pop("電話")
-            if "負責人與職位" not in f:
-                f["負責人與職位"] = "-"
-            if "聯絡電話" not in f:
-                f["聯絡電話"] = "-"
+
+    # 取得人事系統員工清單（若無則給預設對應）
+    employee_options = []
+    if "employee_db" in st.session_state and st.session_state.employee_db:
+        employee_options = [f"{e['姓名']} ({e['職稱']})" for e in st.session_state.employee_db if "在職" in e.get("狀態", "在職")]
+    if not employee_options:
+        employee_options = ["李佑銘 (董事長)", "Nguyễn Văn Quý (財務主管)"]
 
     search_q = st.text_input(L["search_label"], placeholder=L["search_ph"], key="fac_search_input_unique")
     filtered_fac = [
@@ -129,14 +124,17 @@ def render_factory_management_page(engine=None, lang="繁體中文", **kwargs):
             st.markdown(L["add_header"])
             fn_id = st.text_input(L["lbl_id"], value=f"FAC-{len(st.session_state.factory_list)+1:02d}", key="add_fn_id_u")
             fn_name = st.text_input(L["lbl_name"], key="add_fn_name_u")
-            fn_mgr = st.text_input(L["lbl_mgr"], placeholder=L["mgr_placeholder"], key="add_fn_mgr_u")
+            
+            # 從員工名冊動態選取負責人與職位
+            fn_mgr = st.selectbox(L["lbl_mgr"], employee_options, key="add_fn_mgr_select_u")
+            
             fn_tel = st.text_input(L["lbl_tel"], key="add_fn_tel_u")
             if st.form_submit_button(L["btn_add"], type="primary"):
                 if fn_name:
                     st.session_state.factory_list.append({
                         "廠區編號": fn_id,
                         "廠區名稱": fn_name,
-                        "負責人與職位": fn_mgr if fn_mgr else "-",
+                        "負責人與職位": fn_mgr,
                         "聯絡電話": fn_tel if fn_tel else "-"
                     })
                     st.success(L["success_add"].format(name=fn_name))
@@ -153,7 +151,12 @@ def render_factory_management_page(engine=None, lang="繁體中文", **kwargs):
             with st.form("edit_factory_form_unique"):
                 st.markdown(L["edit_header"])
                 e_name = st.text_input(L["lbl_name"], value=target_fac["廠區名稱"], key="edit_e_name_u")
-                e_mgr = st.text_input(L["lbl_mgr"], value=target_fac["負責人與職位"], placeholder=L["mgr_placeholder"], key="edit_e_mgr_u")
+                
+                # 下拉選單自動帶入當前負責人
+                current_mgr = target_fac["負責人與職位"]
+                mgr_index = employee_options.index(current_mgr) if current_mgr in employee_options else 0
+                e_mgr = st.selectbox(L["lbl_mgr"], employee_options, index=mgr_index, key="edit_e_mgr_select_u")
+                
                 e_tel = st.text_input(L["lbl_tel"], value=target_fac["聯絡電話"], key="edit_e_tel_u")
                 
                 if st.form_submit_button(L["btn_save_edit"], type="primary"):
