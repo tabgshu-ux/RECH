@@ -15,7 +15,7 @@ VEHICLE_MAINT_I18N = {
         "table_header": "📋 各車號專屬維修與保養履歷清冊",
         "no_records": "目前無車輛維修保養紀錄。",
         "import_header": "📥 Excel 多車輛維修明細智慧批次匯入",
-        "import_caption": "上傳 Excel 後，系統將自動解析各車牌與維修明細，進行雙語智慧翻譯，並自動同步新增至固定資產中的車輛資產。",
+        "import_caption": "上傳 Excel 後，系統將自動解析各車牌與維修明細，進行全面雙語智慧翻譯，並自動同步新增至固定資產中的車輛資產。",
         "btn_upload": "選擇 Excel 檔案 (.xlsx / .xls)",
         "success_import": "✅ 成功匯入共 `{count}` 筆維修明細，並已自動同步車輛至固定資產清單！",
         "add_header": "➕ 登記新車輛維修與保養項目",
@@ -99,55 +99,74 @@ VEHICLE_MAINT_I18N = {
 }
 
 # ----------------------------------------------------
-# 🔄 升級版：越英中三語對照翻譯引擎（全面涵蓋車輛維修所有詞彙）
+# 🔄 深度全字串模糊替換翻譯引擎（涵蓋所有維修細節與零件）
 # ----------------------------------------------------
 MAINT_TRANSLATIONS = {
-    "bão dưỡng cấp 2": {"繁體中文": "二級定期保養", "English": "Level 2 Maintenance"},
-    "bão dưỡng cấp nhỏ": {"繁體中文": "小型定期保養", "English": "Minor Maintenance"},
-    "bão dưỡng": {"繁體中文": "定期保養維護", "English": "Routine Maintenance"},
-    "thay vỏ": {"繁體中文": "更換輪胎/外胎", "English": "Tire Replacement"},
-    "sửa chữa": {"繁體中文": "綜合維修與零件更換", "English": "General Repair"},
-    "thay kính lái": {"繁體中文": "更換汽車前擋風玻璃", "English": "Windshield Replacement"},
-    "dán phim 3m r70": {"繁體中文": "貼 3M R70 隔熱膜", "English": "Install 3M R70 Window Film"},
-    "công bão dưỡng": {"繁體中文": "保養人工工資", "English": "Maintenance Labor"},
-    "thay dây curoa": {"繁體中文": "更換發電機/冷氣皮帶", "English": "Replace Drive Belt"},
-    "dây curoa": {"繁體中文": "傳動皮帶", "English": "Drive Belt"},
-    "lọc nhớt": {"繁體中文": "機油濾清器 (濾心)", "English": "Oil Filter"},
-    "lọc dầu": {"繁體中文": "柴油/機油濾清器", "English": "Fuel/Oil Filter"},
-    "lọc gió": {"繁體中文": "空氣濾清器", "English": "Air Filter"},
-    "lọc nhiên liệu": {"繁體中文": "燃料濾清器", "English": "Fuel Filter"},
-    "lọc khí": {"繁體中文": "冷氣/空氣濾網", "English": "Cabin/Air Filter"},
-    "nhớt máy": {"繁體中文": "引擎機油", "English": "Engine Oil"},
-    "dầu động cơ": {"繁體中文": "引擎潤滑油", "English": "Engine Oil"},
-    "nước rửa kính": {"繁體中文": "擋風玻璃清洗液", "English": "Windshield Washer Fluid"},
-    "mỡ bò": {"繁體中文": "潤滑黃油", "English": "Grease"},
-    "mỡ sắt xi": {"繁體中文": "底盤黃油潤滑", "English": "Chassis Grease"},
-    "nhân công bảo dưỡng": {"繁體中文": "定期保養人工工資", "English": "Maintenance Labor Cost"},
-    "thay thế dinamo": {"繁體中文": "更換發電機總成", "English": "Replace Alternator"},
-    "dinamo": {"繁體中文": "汽車發電機", "English": "Alternator"},
-    "công và vật tư": {"繁體中文": "人工與更換材料費", "English": "Labor and Materials"},
-    "nước làm mát": {"繁體中文": "引擎水箱冷卻液", "English": "Coolant"},
-    "bugi": {"繁體中文": "火星塞", "English": "Spark Plug"},
-    "bạc đạn": {"繁體中文": "軸承 (培林)", "English": "Bearing"},
-    "phanh": {"繁體中文": "煞車系統", "English": "Brake System"},
-    "má phanh": {"繁體中文": "煞車來令片", "English": "Brake Pads"}
+    "bão dưỡng cấp 2": "二級定期保養",
+    "bão dưỡng cấp nhỏ": "小型定期保養",
+    "bão dưỡng": "定期保養維護",
+    "thay vỏ": "更換輪胎/外胎",
+    "sửa chữa": "綜合維修與零件更換",
+    "thay kính lái": "更換汽車前擋風玻璃",
+    "dán phim 3m r70": "貼 3M R70 隔熱膜",
+    "công bão dưỡng": "保養人工工資",
+    "thay dây curoa": "更換發電機/冷氣皮帶",
+    "dây cua roa": "傳動皮帶",
+    "dây curoa": "傳動皮帶",
+    "bơm nước": "水箱幫浦",
+    "máy phát": "發電機",
+    "lóc lạnh": "冷氣壓縮機",
+    "lọc nhớt": "機油濾清器 (濾心)",
+    "lọc dầu": "柴油/機油濾清器",
+    "lọc gió": "空氣濾清器",
+    "lọc nhiên liệu": "燃料濾清器",
+    "lọc khí": "冷氣/空氣濾網",
+    "nhớt máy dầu cao cấp": "高級柴油機油",
+    "nhớt máy": "引擎機油",
+    "dầu động cơ": "引擎潤滑油",
+    "nước rửa kính": "擋風玻璃清洗液",
+    "dung dịch vệ sinh buồng dốt động cơ": "柴油引擎燃燒室清洗劑",
+    "dung dịch súc rửa động cơ": "引擎內部清洗劑",
+    "mỡ bò": "潤滑黃油",
+    "mỡ sắt xi": "底盤黃油潤滑",
+    "nhân công bảo dưỡng": "定期保養人工工資",
+    "thay thế dinamo": "更換發電機總成",
+    "dinamo": "汽車發電機",
+    "công và vật tư": "人工與更換材料費",
+    "nước làm mát": "引擎水箱冷卻液",
+    "bugi": "火星塞",
+    "bạc đạn": "軸承 (培林)",
+    "phanh": "煞車系統",
+    "má phanh": "煞車來令片",
+    "thay nước làm mát": "更換水箱冷卻液",
+    "ktra động cơ": "檢修引擎",
+    "vỏ yokohama": "橫濱輪胎 (Yokohama)",
+    "gia hạn định vị": "延長GPS定位服務",
+    "công tháo lắp bánh xì dầu phanh": "拆裝煞車分泵/碟盤工資",
+    "cuppen bánh sau": "後輪煞車皮碗/油封",
+    "chất tẩy bố thắng": "煞車來令片清潔劑",
+    "công tháo tap lô thay giàn lạnh": "拆裝儀錶板更換蒸發器(冷氣排)",
+    "dàn lạnh": "冷氣蒸發器 (冷排)",
+    "dầu lạnh": "冷氣冷凍油",
+    "ga lạnh": "冷氣冷媒"
 }
 
 def smart_translate(text, target_lang):
     if not text or not isinstance(text, str):
         return text
-    t_lower = text.strip().lower()
     
     if target_lang == "繁體中文":
         translated = text
-        for key, trans in MAINT_TRANSLATIONS.items():
-            if key in t_lower:
-                translated = translated.lower().replace(key, trans.get("繁體中文", key))
+        # 依照詞彙長度排序（優先替換較長的複合詞）
+        sorted_keys = sorted(MAINT_TRANSLATIONS.keys(), key=len, reverse=True)
+        for key in sorted_keys:
+            if key in translated.lower():
+                # 忽略大小寫進行替換
+                import re
+                pattern = re.compile(re.escape(key), re.IGNORECASE)
+                translated = pattern.sub(MAINT_TRANSLATIONS[key], translated)
         return translated
-    elif target_lang == "English":
-        for key, trans in MAINT_TRANSLATIONS.items():
-            if key in t_lower:
-                return trans.get("English", text)
+    
     return text
 
 def auto_sync_to_fixed_assets(plate_no):
