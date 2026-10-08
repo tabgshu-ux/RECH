@@ -3,11 +3,11 @@ import pandas as pd
 
 def render_factory_management_page(engine=None, lang="繁體中文", **kwargs):
     st.title("🏭 廠區與工作廠區管理 (Factory Management)")
-    st.info("在此您可以搜尋、新增、修改與刪除公司廠區資料（負責人欄位支援姓名與職位同步顯示，便於識別職級與權責）。")
+    st.info("在此您可以搜尋、新增、修改與刪除公司廠區資料（負責人與職位欄位支援同步顯示與修改）。")
     
     if "factory_list" not in st.session_state:
         st.session_state.factory_list = [
-            {"廠區編號": "FAC-01", "廠區名稱": "西寧廠 (Tay Ninh)", "負責人": "張董事長 (董事長)", "電話": "0912345678"},
+            {"廠區編號": "FAC-01", "廠區名稱": "西寧廠 (Tay Ninh)", "負責人": "李佑銘 (廠長)", "電話": "0912345678"},
             {"廠區編號": "FAC-02", "廠區名稱": "海防廠 (Hai Phong)", "負責人": "阮文強 (總經理)", "電話": "0918999080"}
         ]
     
@@ -42,8 +42,8 @@ def render_factory_management_page(engine=None, lang="繁體中文", **kwargs):
             with st.form("edit_factory_form"):
                 st.markdown("### ✏️ 修改廠區資料")
                 e_name = st.text_input("廠區名稱", value=target_fac["廠區名稱"], key="edit_e_name")
-                # 負責人欄位同時包含姓名與職位
-                e_mgr = st.text_input("負責人與職位", value=target_fac["負責人"], placeholder="例如: 李佑銘 (廠長)", key="edit_e_mgr")
+                # 確保修改時明確包含職位提示
+                e_mgr = st.text_input("負責人與職位 (Manager & Title)", value=target_fac["負責人"], placeholder="例如: 李佑銘 (廠長)", key="edit_e_mgr")
                 e_tel = st.text_input("聯絡電話", value=target_fac["電話"], key="edit_e_tel")
                 
                 if st.form_submit_button("💾 儲存修改", type="primary"):
