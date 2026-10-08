@@ -28,6 +28,10 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             }
         ]
 
+    # 初始化離職人員資料庫
+    if "resigned_employee_db" not in st.session_state:
+        st.session_state.resigned_employee_db = []
+
     if "factory_list" not in st.session_state:
         st.session_state.factory_list = [
             {"廠區編號": "FAC-01", "廠區名稱": "西寧廠 (Tay Ninh)", "負責人": "張董事長", "電話": "0912345678"},
@@ -46,7 +50,13 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     st.markdown(list_title)
     st.dataframe(pd.DataFrame(filtered_emp), use_container_width=True)
 
-    tab_names = ["➕ 新增員工", "✏️ 修改員工資料", "🗑️ 刪除員工"] if lang == "繁體中文" else (["➕ Thêm nhân viên", "✏️ Sửa thông tin", "🗑️ Xóa nhân viên"] if lang == "Tiếng Việt" else ["➕ Add Employee", "✏️ Edit Employee", "🗑️ Delete Employee"])
+    # 顯示離職人員名冊
+    if st.session_state.resigned_employee_db:
+        resigned_title = "### 🚪 離職人員歸檔名冊" if lang == "繁體中文" else ("### 🚪 Danh sách Nhân viên đã nghỉ việc" if lang == "Tiếng Việt" else "### 🚪 Resigned Employee Archive")
+        st.markdown(resigned_title)
+        st.dataframe(pd.DataFrame(st.session_state.resigned_employee_db), use_container_width=True)
+
+    tab_names = ["➕ 新增員工", "✏️ 修改員工資料", "🗑️ 刪除或離職"] if lang == "繁體中文" else (["➕ Thêm nhân viên", "✏️ Sửa thông tin", "🗑️ Xóa hoặc Nghỉ việc"] if lang == "Tiếng Việt" else ["➕ Add Employee", "✏️ Edit Employee", "🗑️ Delete or Resign"])
     tab_add, tab_edit, tab_del = st.tabs(tab_names)
 
     with tab_add:
@@ -186,18 +196,31 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     with tab_del:
         if st.session_state.employee_db:
             del_opts = {f"{e['工號']} - {e['姓名']}": e for e in st.session_state.employee_db}
-            sel_del_key = st.selectbox("選擇要刪除的員工", list(del_opts.keys()))
+            sel_del_key = st.selectbox("選擇要處理的員工", list(del_opts.keys()))
             target_del = del_opts[sel_del_key]
 
             with st.form("delete_employee_form"):
-                st.markdown("### 🗑️ 刪除員工確認")
-                st.warning(f"確定要將員工 **{target_del['工號']} - {target_del['姓名']}** 自系統中刪除嗎？")
-                if st.form_submit_button("🔥 確認刪除", type="primary"):
+                st.markdown("### 🗑️ 刪除重複或辦理離職歸檔")
+                st.warning(f"您正在處理員工：**{target_del['工號']} - {target_del['姓名']}**")
+                
+                col_btn1, col_btn2 = st.columns(2)
+                do_delete = col_btn1.form_submit_button("🔥 完全刪除 (移除重複建檔)")
+                do_resign = col_btn2.form_submit_button("🚪 辦理離職 (移至離職歸檔表)")
+
+                if do_delete:
                     st.session_state.employee_db = [e for e in st.session_state.employee_db if e["工號"] != target_del["工號"]]
-                    st.success(f"✅ 員工 {target_del['工號']} 已成功刪除！")
+                    st.success(f"✅ 員工 {target_del['工號']} 已自系統完全刪除！")
+                    st.rerun()
+
+                if do_resign:
+                    resigned_record = target_del.copy()
+                    resigned_record["離職時間"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+                    st.session_state.resigned_employee_db.append(resigned_record)
+                    st.session_state.employee_db = [e for e in st.session_state.employee_db if e["工號"] != target_del["工號"]]
+                    st.success(f"🚪 員工 {target_del['工號']} 已成功移至離職歸檔表！")
                     st.rerun()
         else:
-            st.info("目前無員工資料可供刪除。")
+            st.info("目前無員工資料可供處理。")
 
 def show(*args, **kwargs):
     render_employee_management(*args, **kwargs)
