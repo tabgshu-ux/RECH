@@ -81,6 +81,9 @@ def render_approval_center_page(engine=None, lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
+    # 🔒 抓取目前登入者的真實身份（防止冒名頂替）
+    current_user = st.session_state.get("current_user", "admin (ADMIN)")
+
     # 初始化全公司電子簽核資料庫
     if "approval_db" not in st.session_state:
         st.session_state.approval_db = [
@@ -113,7 +116,7 @@ def render_approval_center_page(engine=None, lang="繁體中文", **kwargs):
             }
         ]
 
-    # 計算待主管審核的數量（用於紅點提示）
+    # 計算待主管審核的數量（紅點提示）
     pending_count = len([r for r in st.session_state.approval_db if "待主管" in r["簽核狀態"]])
     manager_tab_label = f"🔔 主管待辦審核 ({pending_count} 🔴)" if pending_count > 0 else "🔔 主管待辦審核"
 
@@ -135,7 +138,8 @@ def render_approval_center_page(engine=None, lang="繁體中文", **kwargs):
         with st.form("form_submit_request"):
             c1, c2 = st.columns(2)
             with c1:
-                applicant_name = st.text_input("申請人姓名 (Applicant Name) *", value="admin (ADMIN)")
+                # 🔒 申請人欄位設為 disabled=True，強制綁定目前登入帳號，無法手動修改！
+                applicant_name = st.text_input("申請人姓名 (Applicant Name - 系統自動綁定)", value=current_user, disabled=True)
                 applicant_dept = st.selectbox("申請部門 (Department)", ["總經理室 (Executive Office)", "管理部 (Management Dept)", "工程與設計管理中心", "生產部 (Production Dept)", "資訊管理部"])
             with c2:
                 auto_req_no = f"REQ-{datetime.date.today().year}-{len(st.session_state.approval_db)+1:03d}"
@@ -168,7 +172,7 @@ def render_approval_center_page(engine=None, lang="繁體中文", **kwargs):
                     st.session_state.approval_db.append({
                         "單號": auto_req_no,
                         "表單類型": req_type,
-                        "申請人": applicant_name,
+                        "申請人": current_user,  # 確保寫入的是真實登入者
                         "部門": applicant_dept,
                         "申請內容摘要": summary_content,
                         "提交日期": str(datetime.date.today()),
@@ -229,7 +233,6 @@ def render_approval_center_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown("### 🛡️ 保全門禁放行驗證中心 (Security Gate Verification)")
         st.caption("保全人員於廠區門口執勤時，可在此輸入或掃描「派車單」或「物品攜出單」編號，核對無誤後執行放行。")
 
-        # 篩選出已經主管核准的派車單與物品攜出單
         gate_passes = [r for r in st.session_state.approval_db if ("派車" in r["表單類型"] or "物品攜出" in r["表單類型"]) and "已核准" in r["簽核狀態"]]
 
         if gate_passes:
