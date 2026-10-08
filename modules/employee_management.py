@@ -147,4 +147,190 @@ EMPLOYEE_I18N = {
 }
 
 # ----------------------------------------------------
-# 🔄 智慧語意對照引擎 (處理員工姓名、職
+# 🔄 智慧語意對照引擎 (處理員工姓名、職稱與部門)
+# ----------------------------------------------------
+def smart_translate_emp(text_val, target_lang):
+    if not text_val or not isinstance(text_val, str):
+        return text_val
+    
+    if target_lang == "Tiếng Việt":
+        if "張董事長" in text_val: return "Chủ tịch Trương (Chairman)"
+        if "李元隆" in text_val: return "Lý Nguyên Long (Vice GM)"
+        if "董事長" in text_val: return "Chủ tịch HĐQT (Chairman)"
+        if "總經理" in text_val: return "Tổng Giám đốc (General Manager)"
+        if "副總經理" in text_val: return "Phó Tổng Giám đốc (Vice GM)"
+        if "專員" in text_val: return "Chuyên viên (Specialist)"
+        if "管理部" in text_val: return "Ban Quản lý"
+        if "營運管理中心" in text_val: return "Trung tâm Quản lý Vận hành"
+        if "西寧廠" in text_val: return "Nhà máy Tây Ninh"
+    elif target_lang == "English":
+        if "張董事長" in text_val: return "Chairman Chang"
+        if "李元隆" in text_val: return "Lee Yuan-Lung (Vice GM)"
+        if "董事長" in text_val: return "Chairman"
+        if "總經理" in text_val: return "General Manager"
+        if "副總經理" in text_val: return "Vice General Manager"
+        if "專員" in text_val: return "Specialist"
+        if "管理部" in text_val: return "Management Dept"
+        if "營運管理中心" in text_val: return "Operations Management Center"
+        if "西寧廠" in text_val: return "Tay Ninh Plant"
+
+    return text_val
+
+# 注意這裡加入了 **kwargs 來接收主程式傳入的 engine, t 等參數，避免報錯
+def render_employee_management(engine=None, t=None, lang="繁體中文", **kwargs):
+    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
+    L = EMPLOYEE_I18N.get(active_lang, EMPLOYEE_I18N["繁體中文"])
+
+    st.title(L["title"])
+    st.caption(L["caption"])
+
+    if "employees_db" not in st.session_state:
+        st.session_state.employees_db = [
+            {
+                "id": "EMP-001",
+                "name": "張董事長",
+                "nationality": "🇹🇼 台灣 (Taiwan)",
+                "site": "西寧廠",
+                "dept": "管理部",
+                "title": "董事長 (Chairman)",
+                "role": "Chairman",
+                "phone": "0912345678",
+                "address": "-",
+                "face_token": "FACE-BIO-888899",
+            },
+            {
+                "id": "EMP-002",
+                "name": "Nguyễn Văn A",
+                "nationality": "🇻🇳 越南 (Vietnamese)",
+                "site": "西寧廠",
+                "dept": "管理部",
+                "title": "總經理 (General Manager)",
+                "role": "GeneralManager",
+                "phone": "0918999080",
+                "address": "-",
+                "face_token": "FACE-BIO-100234",
+            },
+            {
+                "id": "EMP-003",
+                "name": "李元隆",
+                "nationality": "🇹🇼 台灣 (Taiwanese)",
+                "site": "西寧廠",
+                "dept": "👑 經營主管 / 營運管理中心 (Management & Operations)",
+                "title": "副總經理 (Vice General Manager)",
+                "role": "ViceManager",
+                "phone": "-",
+                "address": "-",
+                "face_token": "FACE-BIO-300451",
+            },
+        ]
+
+    if "attendance_db" not in st.session_state:
+        st.session_state.attendance_db = []
+    if "leave_requests_db" not in st.session_state:
+        st.session_state.leave_requests_db = []
+
+    tab1, tab2, tab3 = st.tabs([L["tab_roster"], L["tab_punch"], L["tab_leave"]])
+
+    with tab1:
+        st.markdown(f"### {L['roster_header']}")
+        
+        display_list = []
+        for emp in st.session_state.employees_db:
+            display_list.append({
+                L["col_id"]: emp["id"],
+                L["col_name"]: smart_translate_emp(emp["name"], active_lang),
+                L["col_nation"]: smart_translate_emp(emp["nationality"], active_lang),
+                L["col_site"]: smart_translate_emp(emp["site"], active_lang),
+                L["col_dept"]: smart_translate_emp(emp["dept"], active_lang),
+                L["col_title"]: smart_translate_emp(emp["title"], active_lang),
+                L["col_role"]: emp["role"],
+                L["col_phone"]: emp["phone"],
+                L["col_face"]: emp["face_token"]
+            })
+        st.dataframe(pd.DataFrame(display_list), use_container_width=True)
+
+        st.markdown("---")
+        st.markdown(f"### {L['add_emp_header']}")
+        with st.form("add_emp_form"):
+            c1, c2 = st.columns(2)
+            with c1:
+                new_id = st.text_input(L["lbl_emp_id"], value="EMP-104")
+                new_name = st.text_input(L["lbl_name"])
+                new_nationality = st.selectbox(L["lbl_nationality"], L["nat_opts"])
+            with c2:
+                new_site = st.selectbox(L["lbl_site"], L["site_opts"])
+                new_title = st.text_input(L["lbl_title"], value="專員" if active_lang == "繁體中文" else ("Chuyên viên" if active_lang == "Tiếng Việt" else "Specialist"))
+                new_role = st.selectbox(L["lbl_role"], ["Chairman", "GeneralManager", "ViceManager", "Director", "Manager", "Supervisor", "Staff", "Admin"])
+            
+            if st.form_submit_button(L["btn_add_emp"], type="primary"):
+                if new_name and new_id:
+                    st.session_state.employees_db.append({
+                        "id": new_id,
+                        "name": new_name,
+                        "nationality": new_nationality,
+                        "site": new_site,
+                        "dept": "管理部",
+                        "title": new_title,
+                        "role": new_role,
+                        "phone": "-",
+                        "address": "-",
+                        "face_token": f"FACE-{new_id}"
+                    })
+                    st.success(f"{L['success_add']}{new_name}")
+                    st.rerun()
+                else:
+                    st.warning(L["warning_fill"])
+
+    with tab2:
+        st.markdown(f"### {L['punch_header']}")
+        st.info(L["punch_caption"])
+        
+        with st.form("mock_punch"):
+            p_id = st.selectbox(L["select_emp"], [e["id"] + " - " + smart_translate_emp(e["name"], active_lang) for e in st.session_state.employees_db])
+            p_type = st.radio(L["punch_type"], [L["clock_in"], L["clock_out"]])
+            
+            if st.form_submit_button(L["btn_punch"], type="primary"):
+                # 強制轉換為越南西寧廠當地時間 (UTC+7)
+                vn_time = datetime.datetime.utcnow() + datetime.timedelta(hours=7)
+                now_str = vn_time.strftime("%Y-%m-%d %H:%M:%S")
+                
+                st.session_state.attendance_db.insert(0, {
+                    "時間": now_str,
+                    "員工": p_id,
+                    "類型": p_type
+                })
+                st.success(f"{L['success_punch']} ({now_str})")
+        
+        st.markdown("---")
+        if st.session_state.attendance_db:
+            st.dataframe(pd.DataFrame(st.session_state.attendance_db), use_container_width=True)
+        else:
+            st.info(L["no_punch"])
+
+    with tab3:
+        st.markdown(f"### {L['leave_header']}")
+        
+        with st.form("leave_form"):
+            l_emp = st.selectbox(L["lbl_leave_emp"], [e["id"] + " - " + smart_translate_emp(e["name"], active_lang) for e in st.session_state.employees_db])
+            l_type = st.selectbox(L["lbl_leave_type"], L["leave_opts"])
+            l_reason = st.text_area(L["lbl_reason"])
+            
+            if st.form_submit_button(L["btn_submit_leave"], type="primary"):
+                # 請假申請時間同步轉換為越南當地時間 (UTC+7)
+                vn_leave_time = datetime.datetime.utcnow() + datetime.timedelta(hours=7)
+                st.session_state.leave_requests_db.insert(0, {
+                    "申請時間": vn_leave_time.strftime("%Y-%m-%d %H:%M"),
+                    "員工": l_emp,
+                    "假別": l_type,
+                    "事由": l_reason,
+                    "狀態": "⏳ 待審核 (Pending)"
+                })
+                st.success(L["success_leave"])
+                st.rerun()
+
+        st.markdown("---")
+        st.markdown(f"### {L['leave_list_header']}")
+        if st.session_state.leave_requests_db:
+            st.dataframe(pd.DataFrame(st.session_state.leave_requests_db), use_container_width=True)
+        else:
+            st.info("目前尚無請假單紀錄。")
