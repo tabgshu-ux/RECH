@@ -65,7 +65,7 @@ NAV_STRUCTURE = {
         "parent_header": "請選擇一級部門 / 系統：",
         "sub_header": "選擇子部門與功能：",
         "departments": {
-            "📈 營運戰情室 (Executive)": {
+            "📈 總經理室 (Executive)": {
                 "features": {
                     "🔴 原料價格與隨時股市物價/匯率": "commodities_fx",
                     "📊 財務類顯示資料 (AR/AP & P&L)": "financials_pl",
