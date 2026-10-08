@@ -146,14 +146,14 @@ PURCHASING_AP_I18N = {
     }
 }
 
-def render_purchasing_ap_page(engine=None, lang="繁體中文", **kwargs):
+def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
     active_lang = lang or st.session_state.get("current_lang", "繁體中文")
     L = PURCHASING_AP_I18N.get(active_lang, PURCHASING_AP_I18N["繁體中文"])
 
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化供應商資料庫 (含分類與越南稅號)
+    # 初始化供應商資料庫
     if "supplier_db" not in st.session_state:
         st.session_state.supplier_db = [
             {
@@ -217,7 +217,6 @@ def render_purchasing_ap_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown(f"### {L['vendor_header']}")
         st.caption("您可以依採購種類檢視所有供應商，並可隨時新增或維護廠商資料與越南稅號。")
 
-        # 供應商分類快速篩選
         all_cats = ["🌐 全部供應商 (All Categories)"] + L["cat_opts"]
         selected_v_cat_filter = st.selectbox("🔍 依採購與供應種類篩選 (Filter by Category)", all_cats)
 
@@ -348,11 +347,14 @@ def render_purchasing_ap_page(engine=None, lang="繁體中文", **kwargs):
         else:
             st.info("目前無任何 AP 紀錄可供更新。")
 
+# ----------------------------------------------------
+# 🔗 相容性進入點定義（確保主程式呼叫不報錯）
+# ----------------------------------------------------
 def show(*args, **kwargs):
-    render_purchasing_ap_page(*args, **kwargs)
+    render_procurement_ap_page(*args, **kwargs)
 
 def main(*args, **kwargs):
-    render_purchasing_ap_page(*args, **kwargs)
+    render_procurement_ap_page(*args, **kwargs)
 
-def render_purchasing_ap_page(*args, **kwargs):
-    render_purchasing_ap_page(*args, **kwargs)
+def render_procurement_ap(*args, **kwargs):
+    render_procurement_ap_page(*args, **kwargs)
