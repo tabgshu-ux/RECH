@@ -12,10 +12,10 @@ VEHICLE_MAINT_I18N = {
         "tab_list": "📑 依車號分組之維修保養總表",
         "tab_import": "📥 Excel 批次匯入與自動資產建檔",
         "tab_add": "➕ 登記單筆維修保養",
-        "table_header": "📋 各車號專屬維修與保養履歷清冊 (已自動翻譯)",
+        "table_header": "📋 各車號專屬維修與保養履歷清冊",
         "no_records": "目前無車輛維修保養紀錄。",
         "import_header": "📥 Excel 多車輛維修明細智慧批次匯入",
-        "import_caption": "上傳 Excel 後，系統將自動解析各車牌與維修明細，進行雙語智慧翻譯，並自動同步新增至固定資產中的車輛資產。",
+        "import_caption": "上傳 Excel 後，系統將自動解析各車牌與維修明細，進行專業雙語對照翻譯，並自動同步新增至固定資產中的車輛資產。",
         "btn_upload": "選擇 Excel 檔案 (.xlsx / .xls)",
         "success_import": "✅ 成功匯入共 `{count}` 筆維修明細，並已自動同步車輛至固定資產清單！",
         "add_header": "➕ 登記新車輛維修與保養項目",
@@ -33,7 +33,7 @@ VEHICLE_MAINT_I18N = {
         "col_plate": "車牌號碼",
         "col_type": "維修類別",
         "col_cost": "維修費用",
-        "col_desc": "維修細節說明",
+        "col_desc": "維修細節與零件說明",
         "col_date": "進廠日期"
     },
     "Tiếng Việt": {
@@ -99,7 +99,7 @@ VEHICLE_MAINT_I18N = {
 }
 
 # ----------------------------------------------------
-# 🔄 車輛維修專用多語系智慧翻譯字典
+# 🔄 專業車輛維修多語系智慧翻譯字典（涵蓋所有常見越文零件與工項）
 # ----------------------------------------------------
 MAINT_TRANSLATIONS = {
     "bão dưỡng cấp 2": {"繁體中文": "二級定期保養", "Tiếng Việt": "Bảo dưỡng cấp 2", "English": "Level 2 Maintenance"},
@@ -110,13 +110,22 @@ MAINT_TRANSLATIONS = {
     "thay kính lái": {"繁體中文": "更換汽車前擋風玻璃", "Tiếng Việt": "Thay kính lái", "English": "Windshield Replacement"},
     "dán phim 3m r70": {"繁體中文": "貼 3M R70 隔熱膜", "Tiếng Việt": "Dán phim 3M R70", "English": "Install 3M R70 Window Film"},
     "công bão dưỡng": {"繁體中文": "保養人工工資", "Tiếng Việt": "Công bảo dưỡng", "English": "Maintenance Labor"},
-    "thay dây cua roa": {"繁體中文": "更換正時/發電機皮帶", "Tiếng Việt": "Thay dây curoa", "English": "Replace Belt"},
+    "thay dây curoa": {"繁體中文": "更換發電機/冷氣皮帶", "Tiếng Việt": "Thay dây curoa", "English": "Replace Drive Belt"},
+    "dây curoa": {"繁體中文": "傳動皮帶", "Tiếng Việt": "Dây curoa", "English": "Drive Belt"},
     "lọc nhớt": {"繁體中文": "機油濾清器 (濾心)", "Tiếng Việt": "Lọc nhớt", "English": "Oil Filter"},
     "lọc dầu": {"繁體中文": "柴油/機油濾清器", "Tiếng Việt": "Lọc dầu", "English": "Fuel/Oil Filter"},
     "lọc gió": {"繁體中文": "空氣濾清器", "Tiếng Việt": "Lọc gió", "English": "Air Filter"},
+    "lọc nhiên liệu": {"繁體中文": "燃料濾清器", "Tiếng Việt": "Lọc nhiên liệu", "English": "Fuel Filter"},
+    "lọc khí": {"繁體中文": "冷氣/空氣濾網", "Tiếng Việt": "Lọc khí", "English": "Air/Cabin Filter"},
     "nhớt máy": {"繁體中文": "引擎機油", "Tiếng Việt": "Nhớt máy", "English": "Engine Oil"},
+    "dầu động cơ": {"繁體中文": "引擎潤滑油", "Tiếng Việt": "Dầu động cơ", "English": "Engine Oil"},
     "nước rửa kính": {"繁體中文": "擋風玻璃清洗液", "Tiếng Việt": "Nước rửa kính", "English": "Windshield Washer Fluid"},
-    "mỡ bò": {"繁體中文": "潤滑黃油", "Tiếng Việt": "Mỡ bò", "English": "Grease"}
+    "mỡ bò": {"繁體中文": "潤滑黃油", "Tiếng Việt": "Mỡ bò", "English": "Grease"},
+    "mỡ sắt xi": {"繁體中文": "底盤黃油潤滑", "Tiếng Việt": "Mỡ sắt xi", "English": "Chassis Grease"},
+    "nhân công bảo dưỡng": {"繁體中文": "定期保養人工工資", "Tiếng Việt": "Nhân công bảo dưỡng", "English": "Maintenance Labor Cost"},
+    "thay thế dinamo": {"繁體中文": "更換發電機總成", "Tiếng Việt": "Thay thế dinamo", "English": "Replace Alternator"},
+    "dinamo": {"繁體中文": "汽車發電機", "Tiếng Việt": "Dinamo", "English": "Alternator"},
+    "công và vật tư": {"繁體中文": "人工與更換材料費", "Tiếng Việt": "Công và vật tư", "English": "Labor and Materials"}
 }
 
 def smart_translate(text, target_lang):
@@ -124,16 +133,17 @@ def smart_translate(text, target_lang):
         return text
     t_lower = text.strip().lower()
     
-    # 精確或部分比對翻譯字典
-    for key, trans in MAINT_TRANSLATIONS.items():
-        if key in t_lower:
-            # 如果是繁體中文，把越文專有名詞替換掉
-            if target_lang == "繁體中文":
-                translated_prefix = trans.get("繁體中文", key)
-                # 保留括號內的廠商名稱或細節
-                return text.lower().replace(key, translated_prefix)
-            else:
-                return trans.get(target_lang, text)
+    if target_lang == "繁體中文":
+        # 尋找字典中的關鍵字並替換
+        translated = text
+        for key, trans in MAINT_TRANSLATIONS.items():
+            if key in t_lower:
+                translated = translated.lower().replace(key, trans.get("繁體中文", key))
+        return translated
+    elif target_lang == "English":
+        for key, trans in MAINT_TRANSLATIONS.items():
+            if key in t_lower:
+                return trans.get("English", text)
     return text
 
 def auto_sync_to_fixed_assets(plate_no):
