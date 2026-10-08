@@ -1,311 +1,156 @@
 import streamlit as st
 import pandas as pd
-import datetime
-
-APPROVAL_I18N = {
-    "繁體中文": {
-        "title": "✍️ 管理部 - 電子簽核與請款/請假審核中心",
-        "caption": "提交採購申請或請假單，系統自動依據規則進行多級簽核，並提供即時進度追蹤。",
-        "tab_leave": "📝 員工請假申請單",
-        "tab_po": "🛒 採購與請款申請單",
-        "tab_track": "📊 簽核進度即時追蹤",
-        "tab_review": "🎛️ 待簽核案件審查",
-        
-        "leave_header": "📝 填寫請假申請單",
-        "po_header": "🛒 填寫採購與請款申請單",
-        "history_header": "📋 我提交的歷史申請紀錄",
-        
-        "lbl_applicant": "申請人 (已鎖定登入帳號)",
-        "lbl_dept": "所屬部門 (依帳號自動對應)",
-        "lbl_reason": "申請事由與說明 *",
-        
-        "lbl_days": "請假天數 (天) *",
-        "lbl_item_name": "採購項目名稱 *",
-        "lbl_qty": "採購數量 *",
-        "lbl_amount": "採購金額 (VND) *",
-        "lbl_photo": "上傳參考照片 / 報價單 / 規格圖檔",
-
-        "btn_submit": "🚀 提交送出簽核",
-        "success_submit": "✅ 簽核單 `{doc_id}` 已成功送出！已進入第一階段簽核。",
-        "warning_fill": "⚠️ 請完整填寫所有必填欄位！",
-
-        "track_header": "📊 目前所有簽核單進度與關卡追蹤",
-        "no_requests": "目前尚無任何簽核申請紀錄。",
-        
-        "review_header": "🎛️ 待簽核案件審查",
-        "select_review_item": "選擇要審核的單據 *",
-        "lbl_comment": "簽核意見 / 批示內容",
-        "btn_approve": "✅ 同意 / 通過 (Pass)",
-        "btn_reject": "❌ 駁回 (Reject)",
-        "success_approve": "✅ 已成功核准單據 `{doc_id}`，流程已流轉至下一關！",
-        "success_reject": "❌ 已駁回單據 `{doc_id}`。",
-    }
-}
 
 def render_approval_center(engine=None, lang="繁體中文", **kwargs):
-    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
-    L = APPROVAL_I18N.get(active_lang, APPROVAL_I18N["繁體中文"])
+    # 多語言字典
+    texts = {
+        "繁體中文": {
+            "title": "✍️ 全公司電子簽核與請款/請假審核中心",
+            "info": "提交採購申請或請假單，系統自動依據規則進行多級簽核，並提供即時進度追蹤。",
+            "tab1": "✍️ 員工請假申請單",
+            "tab2": "🛒 採購與請款申請單",
+            "tab3": "📊 簽核進度即時追蹤",
+            "tab4": "🛃 待簽核案件審查",
+            "form1_title": "### 📝 填寫請假申請單",
+            "applicant": "申請人 (已鎖定登入帳號)",
+            "dept": "所屬部門 (依帳號自動對應)",
+            "days": "請假天數 (天) *",
+            "reason": "申請事由與說明 *",
+            "reason_ph": "例如: 因家庭事務請假 4 天...",
+            "submit_btn": "🚀 提交送出簽核",
+            "success_msg": "✅ 請假申請已成功提交並進入電子簽核流程！"
+        },
+        "Tiếng Việt": {
+            "title": "✍️ Trung tâm Phê duyệt Điện tử & Quản lý Nghỉ phép/Thanh toán",
+            "info": "Gửi đơn mua hàng hoặc xin nghỉ phép, hệ thống tự động phê duyệt đa cấp và theo dõi tiến độ thời gian thực.",
+            "tab1": "✍️ Đơn xin nghỉ phép",
+            "tab2": "🛒 Đơn mua hàng & Thanh toán",
+            "tab3": "📊 Theo dõi tiến độ phê duyệt",
+            "tab4": "🛃 Xét duyệt chờ xử lý",
+            "form1_title": "### 📝 Điền đơn xin nghỉ phép",
+            "applicant": "Người nộp đơn (Tài khoản đăng nhập)",
+            "dept": "Phòng ban trực thuộc",
+            "days": "Số ngày nghỉ (ngày) *",
+            "reason": "Lý do & Mô tả chi tiết *",
+            "reason_ph": "Ví dụ: Nghỉ việc gia đình 4 ngày...",
+            "submit_btn": "🚀 Gửi yêu cầu phê duyệt",
+            "success_msg": "✅ Đơn xin nghỉ phép đã được gửi thành công vào hệ thống phê duyệt!"
+        },
+        "English": {
+            "title": "✍️ E-Approval Center for Leave & Procurement",
+            "info": "Submit leave requests or purchase orders with automated multi-level approval workflows and real-time tracking.",
+            "tab1": "✍️ Submit Leave Request",
+            "tab2": "🛒 Purchase & Payment Request",
+            "tab3": "📊 Real-time Approval Tracking",
+            "tab4": "🛃 Pending Approvals Review",
+            "form1_title": "### 📝 Leave Application Form",
+            "applicant": "Applicant (Logged-in Account)",
+            "dept": "Department",
+            "days": "Leave Days *",
+            "reason": "Reason & Description *",
+            "reason_ph": "e.g., Family affairs for 4 days...",
+            "submit_btn": "🚀 Submit for Approval",
+            "success_msg": "✅ Leave application submitted successfully and entered the approval workflow!"
+        }
+    }
 
-    st.title(L["title"])
-    st.caption(L["caption"])
+    t_set = texts.get(lang, texts["繁體中文"])
+
+    st.title(t_set["title"])
+    st.info(t_set["info"])
 
     if "approval_db" not in st.session_state:
         st.session_state.approval_db = [
             {
-                "id": "REQ-2026-001",
-                "type": "請假單 (Leave Request)",
-                "applicant": "陳裕民 (Staff)",
-                "dept": "工程與設計管理中心",
-                "days": 4,
-                "item_name": "",
-                "qty": 0,
-                "amount": 0.0,
-                "reason": "家屬婚喪喜慶請假 4 天",
-                "stage_idx": 2, 
-                "stages": ["1. 部門主管簽核", "2. 負責部門負責人", "3. 經理簽核 (≧3天)", "4. 副總簽核 (≧5天)", "5. 簽核完成 (Approved)"],
-                "status": "進行中 (等待經理簽核)",
-                "history": [
-                    {"stage": "1. 部門主管簽核", "status": "已通過", "by": "張課長", "time": "2026-10-06 10:00"},
-                    {"stage": "2. 負責部門負責人", "status": "已通過", "by": "王經理 (代)", "time": "2026-10-06 14:30"},
-                    {"stage": "3. 經理簽核 (≧3天)", "status": "審核中 (等待中)", "by": "林協理/經理", "time": "未審核"}
-                ]
-            },
-            {
-                "id": "REQ-2026-002",
-                "type": "採購申請單 (Purchase Requisition)",
-                "applicant": "阮文強 (Tech)",
-                "dept": "生產部",
-                "days": 0,
-                "item_name": "高壓電纜一批與銅排",
-                "qty": 5,
-                "amount": 150000000.0,
-                "reason": "廠區配電盤銅排與斷路器採購",
-                "stage_idx": 1,
-                "stages": ["1. 部門主管簽核", "2. 負責部門負責人", "3. 採購總監簽核", "4. 簽核完成 (Approved)"],
-                "status": "進行中 (等待負責部門負責人)",
-                "history": [
-                    {"stage": "1. 部門主管簽核", "status": "已通過", "by": "黎主任", "time": "2026-10-07 09:15"},
-                    {"stage": "2. 負責部門負責人", "status": "審核中 (等待中)", "by": "財務採購主管", "time": "未審核"}
-                ]
+                "單號": "APV-2026-001", "類型": "請假單", "申請人": "admin", "部門": "總經理室", 
+                "內容": "家庭事務請假 3 天", "狀態": "簽核中 (Pending)", "送出時間": "2026-10-07"
             }
         ]
 
-    tab_leave, tab_po, tab_track, tab_review = st.tabs([
-        L["tab_leave"], L["tab_po"], L["tab_track"], L["tab_review"]
-    ])
+    tab1, tab2, tab3, tab4 = st.tabs([t_set["tab1"], t_set["tab2"], t_set["tab3"], t_set["tab4"]])
 
-    current_user = str(st.session_state.get("user_name", "admin"))
-    role = str(st.session_state.get("user_role", "admin")).lower()
-    
-    default_dept = "管理部"
-    if role == "admin":
-        default_dept = "營運戰情室"
-    elif "生產" in current_user or role == "staff":
-        default_dept = "生產部"
-
-    # 判斷目前登入者是否具備主管/經理/副總/管理員審核權限
-    is_manager_or_admin = (
-        role in ["admin", "manager", "executive"] 
-        or any(k in current_user.lower() for k in ["admin", "boss", "经理", "經理", "協理", "副總", "主任", "director", "manager", "head"])
-    )
-
-    def render_my_history(filter_type_keyword):
-        st.markdown("---")
-        st.markdown(f"#### {L['history_header']}")
-        user_items = [item for item in st.session_state.approval_db if filter_type_keyword in item['type']]
-        if user_items:
-            history_data = []
-            for it in user_items:
-                history_data.append({
-                    "單號": it["id"],
-                    "類型": it["type"],
-                    "申請人": it["applicant"],
-                    "部門": it["dept"],
-                    "內容說明": it["reason"],
-                    "目前狀態": it["status"]
-                })
-            st.dataframe(pd.DataFrame(history_data), use_container_width=True)
-        else:
-            st.info("目前尚無相關的歷史申請紀錄。")
-
-    # 1. 請假申請專用 Tab
-    with tab_leave:
-        st.markdown(f"### {L['leave_header']}")
-        with st.form("form_submit_leave"):
+    with tab1:
+        with st.form("leave_application_form"):
+            st.markdown(t_set["form1_title"])
             c1, c2 = st.columns(2)
             with c1:
-                applicant = st.text_input(L["lbl_applicant"], value=current_user, disabled=True)
+                st.text_input(t_set["applicant"], value=st.session_state.get("user_name", "admin"), disabled=True, key="lev_user")
             with c2:
-                dept = st.text_input(L["lbl_dept"], value=default_dept, disabled=True)
-                
-            days = st.number_input(L["lbl_days"], min_value=0.5, value=3.0, step=0.5)
-            reason = st.text_area(L["lbl_reason"], placeholder="例如: 因家庭事務請假 4 天...")
+                st.text_input(t_set["dept"], value="總經理室 / Executive Office", disabled=True, key="lev_dept")
 
-            if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
-                if current_user and reason:
-                    new_id = f"REQ-2026-{len(st.session_state.approval_db)+1:03d}"
-                    stages = ["1. 部門主管簽核", "2. 負責部門負責人"]
-                    if days >= 3:
-                        stages.append("3. 經理簽核 (≧3天)")
-                    if days >= 5:
-                        stages.append("4. 副總簽核 (≧5天)")
-                    stages.append("5. 簽核完成 (Approved)")
+            leave_days = st.number_input(t_set["days"], min_value=0.5, value=3.0, step=0.5, key="lev_days")
+            leave_reason = st.text_area(t_set["reason"], placeholder=t_set["reason_ph"], key="lev_reason")
 
-                    st.session_state.approval_db.insert(0, {
-                        "id": new_id,
-                        "type": "請假單 (Leave Request)",
-                        "applicant": current_user,
-                        "dept": default_dept,
-                        "days": days,
-                        "item_name": "",
-                        "qty": 0,
-                        "amount": 0.0,
-                        "reason": reason,
-                        "has_photo": False,
-                        "stage_idx": 0,
-                        "stages": stages,
-                        "status": f"進行中 (等待 {stages[0]})",
-                        "history": [
-                            {"stage": stages[0], "status": "審核中 (等待中)", "by": f"{default_dept} 主管", "time": "未審核"}
-                        ]
+            if st.form_submit_button(t_set["submit_btn"], type="primary"):
+                if leave_reason:
+                    new_no = f"APV-2026-{len(st.session_state.approval_db)+1:03d}"
+                    st.session_state.approval_db.append({
+                        "單號": new_no,
+                        "類型": "請假單 (Leave)",
+                        "申請人": st.session_state.get("user_name", "admin"),
+                        "部門": "總經理室",
+                        "內容": f"請假 {leave_days} 天: {leave_reason}",
+                        "狀態": "簽核中 (Pending)",
+                        "送出時間": "2026-10-08"
                     })
-                    st.success(L["success_submit"].format(doc_id=new_id))
+                    st.success(t_set["success_msg"])
                     st.rerun()
                 else:
-                    st.warning(L["warning_fill"])
+                    st.warning("⚠️ 請填寫申請事由！")
 
-        render_my_history("請假")
-
-    # 2. 採購申請專用 Tab
-    with tab_po:
-        st.markdown(f"### {L['po_header']}")
-        with st.form("form_submit_po"):
-            c1, c2 = st.columns(2)
-            with c1:
-                applicant = st.text_input(L["lbl_applicant"] + "_po", value=current_user, disabled=True)
-            with c2:
-                dept = st.text_input(L["lbl_dept"] + "_po", value=default_dept, disabled=True)
-                
-            c_i1, c_i2 = st.columns(2)
-            with c_i1:
-                item_name = st.text_input(L["lbl_item_name"], placeholder="例如: 高壓電纜 / 斷路器")
-            with c_i2:
-                qty = st.number_input(L["lbl_qty"], min_value=1, value=1, step=1)
-            
-            amount = st.number_input(L["lbl_amount"], min_value=0.0, value=50000000.0, step=10000000.0)
-            uploaded_photo = st.file_uploader(L["lbl_photo"], type=["jpg", "png", "jpeg", "pdf"])
-            reason = st.text_area(L["lbl_reason"] + "_po", placeholder="例如: 廠區配電盤銅排與斷路器採購說明...")
-
-            if st.form_submit_button(L["btn_submit"] + "_po", type="primary", use_container_width=True):
-                if current_user and reason and item_name:
-                    new_id = f"REQ-2026-{len(st.session_state.approval_db)+1:03d}"
-                    stages = ["1. 部門主管簽核", "2. 負責部門負責人", "3. 財務/採購總監簽核", "4. 簽核完成 (Approved)"]
-
-                    st.session_state.approval_db.insert(0, {
-                        "id": new_id,
-                        "type": "採購申請單 (Purchase Requisition)",
-                        "applicant": current_user,
-                        "dept": default_dept,
-                        "days": 0,
-                        "item_name": item_name,
-                        "qty": qty,
-                        "amount": amount,
-                        "reason": reason,
-                        "has_photo": uploaded_photo is not None,
-                        "stage_idx": 0,
-                        "stages": stages,
-                        "status": f"進行中 (等待 {stages[0]})",
-                        "history": [
-                            {"stage": stages[0], "status": "審核中 (等待中)", "by": f"{default_dept} 主管", "time": "未審核"}
-                        ]
+    with tab2:
+        st.markdown("### 🛒 採購與請款申請單 (Purchase & Payment Request)")
+        with st.form("purchase_approval_form"):
+            p_item = st.text_input("採購項目 / 品名 (Item Name) *", placeholder="例如: 變壓器 / 零件...")
+            p_amt = st.number_input("預估金額 (Estimated Amount VND)", value=5000000.0, step=100000.0)
+            p_desc = st.text_area("採購用途與必要性說明", placeholder="請說明採購原因...")
+            if st.form_submit_button("🚀 提交採購請款簽核", type="primary"):
+                if p_item:
+                    new_no = f"APV-2026-{len(st.session_state.approval_db)+1:03d}"
+                    st.session_state.approval_db.append({
+                        "單號": new_no,
+                        "類型": "採購請款",
+                        "申請人": st.session_state.get("user_name", "admin"),
+                        "部門": "工程與設計管理中心",
+                        "內容": f"採購 {p_item}, 金額: {p_amt:,.0f} VND",
+                        "狀態": "簽核中 (Pending)",
+                        "送出時間": "2026-10-08"
                     })
-                    st.success(L["success_submit"].format(doc_id=new_id))
+                    st.success("✅ 採購申請已送出！")
                     st.rerun()
                 else:
-                    st.warning(L["warning_fill"])
+                    st.warning("⚠️ 請填寫採購品名！")
 
-        render_my_history("採購")
-
-    # 3. 進度追蹤 Tab
-    with tab_track:
-        st.markdown(f"### {L['track_header']}")
+    with tab3:
+        st.markdown("### 📊 全公司簽核進度即時追蹤 (Real-time Tracking)")
         if st.session_state.approval_db:
-            for item in st.session_state.approval_db:
-                with st.expander(f"📌 [{item['id']}] {item['type']} - 申請人: {item['applicant']} ({item['status']})"):
-                    c1, c2, c3 = st.columns(3)
-                    c1.markdown(f"**部門**: {item['dept']}")
-                    c2.markdown(f"**事由**: {item['reason']}")
-                    if item['days'] > 0:
-                        c3.markdown(f"**請假天數**: {item['days']} 天")
-                    else:
-                        c3.markdown(f"**採購項目**: {item.get('item_name', 'N/A')} (數量: {item.get('qty', 1)})<br>**採購金額**: {item['amount']:,.0f} VND", unsafe_allow_html=True)
-
-                    st.markdown("#### 🔄 即時簽核進度與關卡 (Flow Status)")
-                    
-                    total_stages = len(item['stages'])
-                    current_idx = item['stage_idx']
-                    
-                    progress_val = min(float(current_idx) / max(1.0, float(total_stages - 1)), 1.0)
-                    st.progress(progress_val)
-                    
-                    history_df = pd.DataFrame(item['history'])
-                    st.dataframe(history_df, use_container_width=True)
+            st.dataframe(pd.DataFrame(st.session_state.approval_db), use_container_width=True)
         else:
-            st.info(L["no_requests"])
+            st.info("目前無任何簽核案件記錄。")
 
-    # 4. 主管審核 Tab（嚴格依據登入者身分過濾）
-    with tab_review:
-        st.markdown(f"### {L['review_header']}")
-        
-        if is_manager_or_admin:
-            pending_items = [item for item in st.session_state.approval_db if item['stage_idx'] < len(item['stages']) - 1]
-            
-            if pending_items:
-                review_opts = {f"{item['id']} - {item['type']} ({item['applicant']})": item for item in pending_items}
-                selected_rev_key = st.selectbox(L["select_review_item"], list(review_opts.keys()))
-                target_item = review_opts[selected_rev_key]
-
-                st.markdown(f"**目前關卡**: `{target_item['stages'][target_item['stage_idx']]}`")
-                st.markdown(f"**申請事由**: {target_item['reason']}")
-                if target_item.get('item_name'):
-                    st.markdown(f"**採購項目**: {target_item['item_name']} | **數量**: {target_item.get('qty', 1)} | **金額**: {target_item['amount']:,.0f} VND")
-                
-                comment = st.text_input(L["lbl_comment"], value="同意辦理")
-
-                col_a, col_b = st.columns(2)
-                if col_a.button(L["btn_approve"], type="primary", use_container_width=True):
-                    curr_idx = target_item['stage_idx']
-                    target_item['history'][curr_idx]['status'] = "已通過"
-                    target_item['history'][curr_idx]['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-                    target_item['history'][curr_idx]['by'] = current_user
-
-                    target_item['stage_idx'] += 1
-                    if target_item['stage_idx'] >= len(target_item['stages']) - 1:
-                        target_item['stage_idx'] = len(target_item['stages']) - 1
-                        target_item['status'] = "簽核完成 (Approved)"
-                    else:
-                        next_stage = target_item['stages'][target_item['stage_idx']]
-                        target_item['status'] = f"進行中 (等待 {next_stage})"
-                        target_item['history'].append({
-                            "stage": next_stage,
-                            "status": "審核中 (等待中)",
-                            "by": "指定簽核人",
-                            "time": "未審核"
-                        })
-
-                    st.success(L["success_approve"].format(doc_id=target_item['id']))
-                    st.rerun()
-
-                if col_b.button(L["btn_reject"], type="secondary", use_container_width=True):
-                    target_item['status'] = "已駁回 (Rejected)"
-                    target_item['history'][target_item['stage_idx']]['status'] = "已駁回"
-                    target_item['history'][target_item['stage_idx']]['time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-                    st.error(L["success_reject"].format(doc_id=target_item['id']))
-                    st.rerun()
-            else:
-                st.info("目前沒有需要您簽核的待辦案件。")
+    with tab4:
+        st.markdown("### 🛃 主管待簽核案件審查 (Pending Review)")
+        st.info("主管/高階管理層可在此審核轄下員工之請假與採購申請。")
+        if st.session_state.approval_db:
+            for idx, item in enumerate(st.session_state.approval_db):
+                if "簽核中" in item["狀態"]:
+                    with st.expander(f"📌 [{item['單號']}] {item['類型']} - 申請人: {item['申請人']} ({item['內容']})"):
+                        col_a, col_b = st.columns(2)
+                        with col_a:
+                            if st.button(f"✅ 核准 (Approve)", key=f"app_{idx}"):
+                                item["狀態"] = "已核准 (Approved)"
+                                st.success(f"✅ 已核准單號 {item['單號']}")
+                                st.rerun()
+                        with col_b:
+                            if st.button(f"❌ 駁回 (Reject)", key=f"rej_{idx}"):
+                                item["狀態"] = "已駁回 (Rejected)"
+                                st.warning(f"❌ 已駁回單號 {item['單號']}")
+                                st.rerun()
         else:
-            st.info("您目前登入的帳號無主管審核權限。")
+            st.info("目前沒有需要您審核的待辦案件。")
+
+def render_approval_center_page(*args, **kwargs):
+    render_approval_center(*args, **kwargs)
 
 def show(*args, **kwargs):
     render_approval_center(*args, **kwargs)
