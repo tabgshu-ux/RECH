@@ -9,7 +9,7 @@ import os
 ENG_DEPT_I18N = {
     "繁體中文": {
         "title": "🛠️ 裕豐電機工業 - 工程管理中心與設計部門",
-        "caption": "涵蓋工程報價系統（含倉庫連動、業務議價與一鍵傳動 AR）、設計圖庫 Storage 上傳中心、及工程驗收追蹤。",
+        "caption": "涵蓋工程報價系統、水電工程驗收與進度追蹤（連動財務應收帳款 AR）、現場日報表與設計圖庫 Storage。",
         
         # 報價系統
         "quote_title": "⚙️ 配電盤與工程專案報價系統 (Quotation, Discount & AR Transfer)",
@@ -22,10 +22,8 @@ ENG_DEPT_I18N = {
         "lbl_location": "工程位置 / 廠區地點 *",
         "loc_placeholder": "例如: 越南 Tây Ninh 省張幫工業區 A2 廠房",
         "lbl_currency": "計價幣別",
-        
         "sec2_title": "📦 2. 報價內容明細 (連動倉庫庫存與金額)",
         "sec2_caption": "選取所需配電資材，系統將自動讀取倉庫剩餘數量、單價並計算小計：",
-        
         "sec3_title": "💰 3. 金額加總、發票稅 (VAT) 與業務議價減免",
         "lbl_subtotal_sum": "未稅金額總計 (Subtotal):",
         "lbl_vat_rate": "發票稅率 (VAT %)",
@@ -53,30 +51,31 @@ ENG_DEPT_I18N = {
         "col_action": "圖檔下載",
         
         # 工程驗收進度
-        "prog_title": "⚡ 全球廠區水電工程驗收與進度追蹤",
-        "prog_caption": "純工程導向：專注監控工程現場施工進度百分比、驗收狀態與合約管控。",
+        "prog_title": "⚡ 全球廠區水電工程驗收、進度追蹤與 AR 應收款連動中心",
+        "prog_caption": "即時監控工程施工進度、預定驗收時間，並與財務部應收帳款（AR）即時通訊連動進行請款催收。",
         "kpi1_title": "在手水電專案總數",
-        "kpi1_val": "8 件",
-        "kpi1_sub": "↑ 執行中 6 件 / 驗收 2 件",
+        "kpi1_val": "4 件",
+        "kpi1_sub": "↑ 執行中 3 件 / 待驗收 1 件",
         "kpi2_title": "合約總金額 (USD)",
-        "kpi2_sub": "↑ 累計已收: $1,250,000",
+        "kpi2_sub": "↑ 累計合約總值",
         "kpi3_title": "總未收款/應收尾款 (AR)",
-        "kpi3_sub": "↑ 需加強催收",
+        "kpi3_sub": "🔴 需與財務部連動催收",
         "kpi4_title": "平均工程進度",
-        "kpi4_sub": "● 進度正常",
-        "table_header": "📋 專案明細、工程進度與驗收狀態管控表",
+        "kpi4_sub": "● 進度正常執行中",
+        "table_header": "📋 水電工程進度、驗收時間表與 AR 應收款即時連動管控表",
         "col_code": "專案代碼",
         "col_client": "客戶名稱 / 廠區",
         "col_item": "水電工程項目",
         "col_total": "合約總值 (USD)",
-        "col_paid": "已收款金額 (USD)",
-        "col_ar": "未收款/尾款 (USD)",
+        "col_paid": "已收款 (USD)",
+        "col_ar": "未收尾款 (AR)",
         "col_progress": "工程進度 (%)",
+        "col_inspect_date": "預定驗收日",
         "col_status": "工程與驗收狀態"
     },
     "Tiếng Việt": {
         "title": "🛠️ REETECH INDUSTRIAL - Trung tâm Quản lý & Phòng Thiết kế",
-        "caption": "Bao gồm báo giá, kho lưu trữ Storage bản vẽ thiết kế, và theo dõi tiến độ nghiệm thu.",
+        "caption": "Quản lý báo giá, theo dõi tiến độ nghiệm thu (liên kết AR Tài chính), báo cáo nhật ký và kho bản vẽ Storage.",
         "quote_title": "⚙️ Hệ thống Báo giá & Chiết khấu Thương mại (Chuyển dữ liệu AR)",
         "quote_caption": "Hệ thống báo giá: Liên kết kho, cho phép kinh doanh chiết khấu/giảm giá, tính thuế VAT và chuyển sang tài chính.",
         "sec1_title": "📋 1. Thông tin Dự án",
@@ -112,30 +111,31 @@ ENG_DEPT_I18N = {
         "col_version": "Thời gian",
         "col_designer": "Người tải lên",
         "col_action": "Tải xuống",
-        "prog_title": "⚡ Theo dõi Tiến độ & Nghiệm thu Dự án Cơ điện",
-        "prog_caption": "Chuyên dụng kỹ thuật: Tập trung giám sát phần trăm tiến độ thi công, trạng thái nghiệm thu.",
+        "prog_title": "⚡ Theo dõi Tiến độ, Nghiệm thu & Liên kết Công nợ Phải thu (AR)",
+        "prog_caption": "Giám sát tiến độ thi công, lịch trình nghiệm thu và liên kết trực tiếp với hệ thống kế toán AR.",
         "kpi1_title": "Tổng số dự án cơ điện",
-        "kpi1_val": "8 dự án",
-        "kpi1_sub": "↑ Đang thực hiện 6 / Nghiệm thu 2",
+        "kpi1_val": "4 dự án",
+        "kpi1_sub": "↑ Thực hiện 3 / Nghiệm thu 1",
         "kpi2_title": "Tổng giá trị hợp đồng (USD)",
-        "kpi2_sub": "↑ Đã thu lũy kế: $1,250,000",
+        "kpi2_sub": "↑ Tổng giá trị",
         "kpi3_title": "Tổng công nợ phải thu (AR)",
-        "kpi3_sub": "↑ Cần đẩy mạnh thu hồi",
+        "kpi3_sub": "🔴 Cần phối hợp Tài chính thu hồi",
         "kpi4_title": "Tiến độ thi công trung bình",
-        "kpi4_sub": "● Tiến độ bình thường",
-        "table_header": "📋 Bảng chi tiết dự án, tiến độ thi công và trạng thái nghiệm thu",
+        "kpi4_sub": "● Bình thường",
+        "table_header": "📋 Bảng chi tiết tiến độ, lịch nghiệm thu và liên kết AR tài chính",
         "col_code": "Mã dự án",
         "col_client": "Tên khách hàng / Nhà máy",
         "col_item": "Hạng mục cơ điện",
         "col_total": "Giá trị HĐ (USD)",
         "col_paid": "Đã thu (USD)",
-        "col_ar": "Còn lại/Phải thu (USD)",
+        "col_ar": "Phải thu AR (USD)",
         "col_progress": "Tiến độ (%)",
-        "col_status": "Trạng thái thi công & Nghiệm thu"
+        "col_inspect_date": "Ngày nghiệm thu",
+        "col_status": "Trạng thái & Nghiệm thu"
     },
     "English": {
         "title": "🛠️ REETECH INDUSTRIAL - Engineering Center & Design Dept",
-        "caption": "Quotation system, design storage center for uploading/downloading drawings, and acceptance tracking.",
+        "caption": "Quotation system, M&E progress tracking linked with Finance AR, daily reports & storage.",
         "quote_title": "⚙️ Switchgear & Engineering Project Quotation System (AR Integration)",
         "quote_caption": "Engineering quotation: Linked to warehouse inventory, allows sales discount adjustments, VAT calculation, and direct transfer to Finance AR.",
         "sec1_title": "📋 1. Project Basic Information",
@@ -171,25 +171,26 @@ ENG_DEPT_I18N = {
         "col_version": "Upload Time",
         "col_designer": "Uploader",
         "col_action": "Download",
-        "prog_title": "⚡ M&E Engineering Progress & Acceptance Tracking",
-        "prog_caption": "Engineering focused: Dedicated monitoring of site construction progress, acceptance status, and contract control.",
+        "prog_title": "⚡ M&E Engineering Progress, Inspection & Finance AR Integration",
+        "prog_caption": "Monitor construction progress, scheduled inspection dates, and real-time communication with Finance AR.",
         "kpi1_title": "Total M&E Projects",
-        "kpi1_val": "8 projects",
-        "kpi1_sub": "↑ Active: 6 / Acceptance: 2",
+        "kpi1_val": "4 projects",
+        "kpi1_sub": "↑ Active 3 / Inspection 1",
         "kpi2_title": "Total Contract Value (USD)",
-        "kpi2_sub": "↑ Cumulative Collected: $1,250,000",
+        "kpi2_sub": "↑ Total Contract",
         "kpi3_title": "Total Accounts Receivable (AR)",
-        "kpi3_sub": "↑ Follow-up Required",
-        "kpi4_title": "Average Engineering Progress",
-        "kpi4_sub": "● Progress Normal",
-        "table_header": "📋 Project Details, Progress & Acceptance Status Table",
+        "kpi3_sub": "🔴 Follow-up with Finance",
+        "kpi4_title": "Average Progress",
+        "kpi4_sub": "● Normal",
+        "table_header": "📋 Project Progress, Inspection Schedule & AR Real-time Link Table",
         "col_code": "Project Code",
         "col_client": "Client / Plant",
         "col_item": "M&E Item",
-        "col_total": "Contract Value (USD)",
+        "col_total": "Contract (USD)",
         "col_paid": "Collected (USD)",
-        "col_ar": "Receivable (USD)",
+        "col_ar": "AR Balance (USD)",
         "col_progress": "Progress (%)",
+        "col_inspect_date": "Inspection Date",
         "col_status": "Status & Acceptance"
     }
 }
@@ -241,7 +242,7 @@ def render_engineering_department_page(engine=None, lang=None, **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 🎯 智慧偵測左側選單點選的子功能（自動同時相容多種主程式傳參方式）
+    # 🎯 智慧解析左側點選的子功能
     sub_action = (
         kwargs.get("sub_action") 
         or st.session_state.get("current_sub_action") 
@@ -250,9 +251,8 @@ def render_engineering_department_page(engine=None, lang=None, **kwargs):
         or "quote"
     )
     
-    # 如果主程式傳進來的參數包含中文或越文關鍵字，自動轉換為對應識別碼
     sub_str = str(sub_action)
-    if "進度" in sub_str or "Progress" in sub_str or "Nghiệm thu" in sub_str:
+    if "進度" in sub_str or "Progress" in sub_str or "Nghiệm thu" in sub_str or "驗收" in sub_str:
         current_mode = "progress"
     elif "日報" in sub_str or "Daily" in sub_str or "Báo cáo" in sub_str:
         current_mode = "daily"
@@ -333,7 +333,7 @@ def render_engineering_department_page(engine=None, lang=None, **kwargs):
             st.info(f"📌 **傳動詳情 (Transferred to AR)**: {vendor_name} | {proj_name} | 最終報價金額: **${final_quoted_amount:,.2f} {currency}** (含 VAT {vat_rate}%)")
 
     # ----------------------------------------------------
-    # 2. 📊 [工程] 水電工程驗收與進度追蹤
+    # 2. 📊 [工程] 水電工程驗收與進度追蹤 (連動財務 AR)
     # ----------------------------------------------------
     elif current_mode == "progress":
         st.markdown(f"### {L['prog_title']}")
@@ -353,10 +353,10 @@ def render_engineering_department_page(engine=None, lang=None, **kwargs):
         st.markdown(f"### {L['table_header']}")
 
         raw_data = [
-            {"code": "PRJ-2026-01", "client": "越南新順楠梓電子廠 (XinShun Electronics)", "item": "無塵室高低壓配電安裝與強弱電配管", "total": 450000, "paid": 315000, "ar": 135000, "progress": 90, "status": "🟢 設備安裝完成，待驗收"},
-            {"code": "PRJ-2026-02", "client": "平陽美德金屬加工廠 (Meide Metal)", "item": "廠房動力配電、給排水系統與照明工程", "total": 380000, "paid": 228000, "ar": 152000, "progress": 75, "status": "🟡 正在進行主幹管配線"},
-            {"code": "PRJ-2026-03", "client": "隆安宏遠精密機械廠 (HongYuan Precision)", "item": "變電站統包工程、銅排配置與空調系統配電", "total": 620000, "paid": 434000, "ar": 186000, "progress": 85, "status": "🟢 變電站主體完工"},
-            {"code": "PRJ-2026-04", "client": "北寧富泰光電科技 (FuTai Optoelectronics)", "item": "廠房大樓消防警報系統與機房不間斷電源(UPS)配電", "total": 400000, "paid": 273000, "ar": 127000, "progress": 55, "status": "🟡 機架架設與線槽施工"}
+            {"code": "PRJ-2026-01", "client": "越南新順楠梓電子廠 (XinShun Electronics)", "item": "無塵室高低壓配電安裝與強弱電配管", "total": 450000, "paid": 315000, "ar": 135000, "progress": 90, "inspect": "2026-10-15 (初驗)", "status": "🟢 設備安裝完成，待驗收"},
+            {"code": "PRJ-2026-02", "client": "平陽美德金屬加工廠 (Meide Metal)", "item": "廠房動力配電、給排水系統與照明工程", "total": 380000, "paid": 228000, "ar": 152000, "progress": 75, "inspect": "2026-10-28 (複驗)", "status": "🟡 正在進行主幹管配線"},
+            {"code": "PRJ-2026-03", "client": "隆安宏遠精密機械廠 (HongYuan Precision)", "item": "變電站統包工程、銅排配置與空調系統配電", "total": 620000, "paid": 434000, "ar": 186000, "progress": 85, "inspect": "2026-11-05 (正式驗收)", "status": "🟢 變電站主體完工"},
+            {"code": "PRJ-2026-04", "client": "北寧富泰光電科技 (FuTai Optoelectronics)", "item": "廠房大樓消防警報系統與機房不間斷電源(UPS)配電", "total": 400000, "paid": 273000, "ar": 127000, "progress": 55, "inspect": "2026-11-20 (進度查核)", "status": "🟡 機架架設與線槽施工"}
         ]
 
         display_data = []
@@ -369,9 +369,15 @@ def render_engineering_department_page(engine=None, lang=None, **kwargs):
                 L["col_paid"]: f"${item['paid']:,.2f}",
                 L["col_ar"]: f"${item['ar']:,.2f}",
                 L["col_progress"]: f"{item['progress']}%",
+                L["col_inspect_date"]: item["inspect"],
                 L["col_status"]: smart_translate_project_data(item["status"], active_lang)
             })
         st.dataframe(pd.DataFrame(display_data), use_container_width=True)
+
+        st.markdown("---")
+        st.info("🔗 **財務 AR 即時通訊連動說明**：當專案進度達 100% 或完成驗收時，工程主管可點擊下方按鈕，系統將自動發送「驗收完成與尾款請款通知」至財務部應收帳款（AR）模組，加速會計開立發票與收款程序。")
+        if st.button("📡 立即同步驗收進度並通知財務 AR 進行請款催收", type="primary"):
+            st.success("✅ 已成功向財務部應收帳款（AR）模組發送即時通知！財務人員已同步收到各專案未收款與驗收時間點。")
 
     # ----------------------------------------------------
     # 3. 📝 [工程] 現場工程日報表與出工統計
@@ -420,48 +426,4 @@ def render_engineering_department_page(engine=None, lang=None, **kwargs):
         if "storage_drawings" not in st.session_state:
             st.session_state.storage_drawings = [
                 {L["col_drawing_no"]: "DWG-2026-MBD-01", L["col_project_name"]: "越南新順楠梓電子廠 (M&E)", L["col_spec"]: "MSB_2000A_Schematic.pdf", L["col_version"]: "2026-10-01 10:30", L["col_designer"]: "Nguyễn Văn An", L["col_action"]: "📥 Download"},
-                {L["col_drawing_no"]: "DWG-2026-MBD-02", L["col_project_name"]: "平陽美德金屬加工廠", L["col_spec"]: "Sub_DB_Layout.dwg", L["col_version"]: "2026-10-03 14:15", L["col_designer"]: "Trần Minh Quân", L["col_action"]: "📥 Download"},
-                {L["col_drawing_no"]: "DWG-2026-MBD-03", L["col_project_name"]: "隆安宏遠精密機械廠", L["col_spec"]: "Substation_Busbar.png", L["col_version"]: "2026-10-05 09:00", L["col_designer"]: "Lê Hoàng Phúc", L["col_action"]: "📥 Download"},
-            ]
-
-        with st.form("upload_storage_form"):
-            st.markdown(f"#### {L['upload_header']}")
-            u_col1, u_col2 = st.columns(2)
-            with u_col1:
-                new_dwg_no = st.text_input(L["lbl_dwg_no"], placeholder="例如: DWG-2026-04")
-            with u_col2:
-                new_proj_name = st.text_input(L["lbl_dwg_name"], placeholder="例如: 北寧富泰光電廠配電盤圖")
-            
-            uploaded_file = st.file_uploader(L["lbl_file_uploader"], type=["pdf", "dwg", "png", "jpg", "zip"])
-            
-            submitted_upload = st.form_submit_button(L["btn_upload"], use_container_width=True)
-            if submitted_upload:
-                if new_dwg_no and new_proj_name and uploaded_file:
-                    file_info = {
-                        L["col_drawing_no"]: new_dwg_no,
-                        L["col_project_name"]: new_proj_name,
-                        L["col_spec"]: uploaded_file.name,
-                        L["col_version"]: datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-                        L["col_designer"]: st.session_state.get("user_name", "Designer"),
-                        L["col_action"]: "📥 Download"
-                    }
-                    st.session_state.storage_drawings.insert(0, file_info)
-                    st.success(L["success_upload"])
-                else:
-                    st.warning("⚠️ 請完整填寫圖號編碼、專案名稱並選擇要上傳的圖檔檔案！")
-
-        st.markdown("---")
-        st.markdown(f"#### {L['storage_header']}")
-        st.dataframe(pd.DataFrame(st.session_state.storage_drawings), use_container_width=True)
-
-# ----------------------------------------------------
-# 🔗 相容性進入點定義
-# ----------------------------------------------------
-def show(*args, **kwargs):
-    render_engineering_department_page(*args, **kwargs)
-
-def main(*args, **kwargs):
-    render_engineering_department_page(*args, **kwargs)
-
-def render_engineering_department(*args, **kwargs):
-    render_engineering_department_page(*args, **kwargs)
+                {L["col_drawing_no"]: "DWG-2026-MBD-02", L["col_project_name"]: "平陽美德金屬加工廠", L["col_spec"]: "Sub_DB_Layout.dwg", L["col_version"]: "2026-10-03 14:1
