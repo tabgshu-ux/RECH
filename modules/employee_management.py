@@ -9,11 +9,14 @@ EMPLOYEE_I18N = {
     "繁體中文": {
         "title": "👤 管理部 - 員工與人事管理",
         "caption": "維護全廠區員工個人檔案、合約記錄、工作廠區、離職歸檔、人臉/指紋打卡機資料彙集。",
-        "tab_roster": "📋 員工名冊與詳細編輯",
+        "tab_roster": "📋 員工名冊與管理 (增修刪離)",
         "tab_punch": "⏰ 智慧打卡紀錄",
         "tab_leave": "📝 請假簽核中心",
         "roster_header": "📋 現有在職員工名冊",
+        "search_ph": "🔍 搜尋員工姓名 / 工號 / 職稱...",
         "add_emp_header": "➕ 新增員工個人檔案",
+        "edit_emp_header": "✏️ 修改或刪除員工資料",
+        "leave_archive_header": "🚪 離職人員歸檔名冊",
         "lbl_emp_id": "員工編號",
         "lbl_name": "員工姓名",
         "lbl_nationality": "國籍",
@@ -21,7 +24,13 @@ EMPLOYEE_I18N = {
         "lbl_title": "職稱",
         "lbl_role": "系統權限角色",
         "btn_add_emp": "💾 立即新增員工",
+        "btn_save_edit": "💾 儲存修改",
+        "btn_delete_emp": "🔥 刪除此員工 (移除重複)",
+        "btn_resign_emp": "🚪 辦理離職歸檔",
         "success_add": "✅ 成功新增員工：",
+        "success_edit": "✅ 員工資料已更新！",
+        "success_del": "🗑️ 已將重複或錯誤員工刪除！",
+        "success_resign": "🚪 已成功將員工移至離職歸檔表！",
         "warning_fill": "⚠️ 請填寫員工編號與姓名！",
         "punch_header": "⏰ 廠區人臉 / 指紋打卡紀錄彙集",
         "punch_caption": "💡 模擬串接工廠各出入口之生物辨識打卡機資料。",
@@ -55,11 +64,14 @@ EMPLOYEE_I18N = {
     "Tiếng Việt": {
         "title": "👤 Khối Quản lý - Quản lý Nhân sự & Nhân viên",
         "caption": "Quản lý hồ sơ nhân viên, hợp đồng lao động, nhà máy làm việc, chấm công sinh trắc học.",
-        "tab_roster": "📋 Danh sách Nhân viên",
+        "tab_roster": "📋 Danh sách & Quản lý Nhân viên",
         "tab_punch": "⏰ Nhật ký Chấm công thông minh",
         "tab_leave": "📝 Trung tâm Đơn nghỉ phép",
         "roster_header": "📋 Danh sách nhân viên đang làm việc",
+        "search_ph": "🔍 Tìm kiếm theo Tên / Mã NV / Chức vụ...",
         "add_emp_header": "➕ Thêm hồ sơ nhân viên mới",
+        "edit_emp_header": "✏️ Sửa hoặc Xóa thông tin nhân viên",
+        "leave_archive_header": "🚪 Danh sách nhân viên đã nghỉ việc",
         "lbl_emp_id": "Mã nhân viên",
         "lbl_name": "Họ tên nhân viên",
         "lbl_nationality": "Quốc tịch",
@@ -67,7 +79,13 @@ EMPLOYEE_I18N = {
         "lbl_title": "Chức vụ",
         "lbl_role": "Quyền hệ thống",
         "btn_add_emp": "💾 Thêm nhân viên ngay",
+        "btn_save_edit": "💾 Lưu thay đổi",
+        "btn_delete_emp": "🔥 Xóa nhân viên này",
+        "btn_resign_emp": "🚪 Chuyển sang danh sách nghỉ việc",
         "success_add": "✅ Thêm nhân viên thành công: ",
+        "success_edit": "✅ Đã cập nhật thông tin nhân viên!",
+        "success_del": "🗑️ Đã xóa nhân viên trùng lặp/lỗi!",
+        "success_resign": "🚪 Đã chuyển nhân viên vào danh sách lưu trữ nghỉ việc!",
         "warning_fill": "⚠️ Vui lòng điền mã nhân viên và họ tên!",
         "punch_header": "⏰ Tổng hợp dữ liệu chấm công khuôn mặt / vân tay",
         "punch_caption": "💡 Mô phỏng kết nối máy chấm công sinh trắc học tại các cổng nhà máy.",
@@ -101,11 +119,14 @@ EMPLOYEE_I18N = {
     "English": {
         "title": "👤 Admin - Employee & HR Management",
         "caption": "Manage employee profiles, contracts, work plants, and biometric attendance records.",
-        "tab_roster": "📋 Employee Roster",
+        "tab_roster": "📋 Employee Roster & Management",
         "tab_punch": "⏰ Smart Attendance Log",
         "tab_leave": "📝 Leave Request Center",
         "roster_header": "📋 Active Employee Roster",
+        "search_ph": "🔍 Search Employee Name / ID / Title...",
         "add_emp_header": "➕ Register New Employee Profile",
+        "edit_emp_header": "✏️ Edit or Delete Employee Info",
+        "leave_archive_header": "🚪 Resigned Staff Archive",
         "lbl_emp_id": "Employee ID",
         "lbl_name": "Full Name",
         "lbl_nationality": "Nationality",
@@ -113,7 +134,13 @@ EMPLOYEE_I18N = {
         "lbl_title": "Job Title",
         "lbl_role": "System Role",
         "btn_add_emp": "💾 Save Employee",
+        "btn_save_edit": "💾 Save Changes",
+        "btn_delete_emp": "🔥 Delete Employee",
+        "btn_resign_emp": "🚪 Archive as Resigned",
         "success_add": "✅ Successfully added employee: ",
+        "success_edit": "✅ Employee info updated!",
+        "success_del": "🗑️ Employee deleted successfully!",
+        "success_resign": "🚪 Employee moved to resigned archive!",
         "warning_fill": "⚠️ Please fill in Employee ID and Name!",
         "punch_header": "📦 Biometric Attendance Records",
         "punch_caption": "💡 Simulate face/fingerprint attendance terminals at plant gates.",
@@ -176,7 +203,6 @@ def smart_translate_emp(text_val, target_lang):
 
     return text_val
 
-# 注意這裡加入了 **kwargs 來接收主程式傳入的 engine, t 等參數，避免報錯
 def render_employee_management(engine=None, t=None, lang="繁體中文", **kwargs):
     active_lang = lang or st.session_state.get("current_lang", "繁體中文")
     L = EMPLOYEE_I18N.get(active_lang, EMPLOYEE_I18N["繁體中文"])
@@ -184,6 +210,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     st.title(L["title"])
     st.caption(L["caption"])
 
+    # 初始化員工資料庫
     if "employees_db" not in st.session_state:
         st.session_state.employees_db = [
             {
@@ -224,6 +251,10 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             },
         ]
 
+    # 初始化離職人員資料庫
+    if "resigned_employees_db" not in st.session_state:
+        st.session_state.resigned_employees_db = []
+
     if "attendance_db" not in st.session_state:
         st.session_state.attendance_db = []
     if "leave_requests_db" not in st.session_state:
@@ -234,8 +265,18 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     with tab1:
         st.markdown(f"### {L['roster_header']}")
         
+        # 搜尋與過濾功能
+        search_query = st.text_input("🔍", placeholder=L["search_ph"], label_visibility="collapsed")
+        
+        filtered_employees = st.session_state.employees_db
+        if search_query:
+            filtered_employees = [
+                e for e in st.session_state.employees_db
+                if search_query.lower() in e["name"].lower() or search_query.lower() in e["id"].lower() or search_query.lower() in e["title"].lower()
+            ]
+
         display_list = []
-        for emp in st.session_state.employees_db:
+        for emp in filtered_employees:
             display_list.append({
                 L["col_id"]: emp["id"],
                 L["col_name"]: smart_translate_emp(emp["name"], active_lang),
@@ -250,16 +291,71 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         st.dataframe(pd.DataFrame(display_list), use_container_width=True)
 
         st.markdown("---")
+        
+        # 區塊：修改或刪除現有員工資料
+        st.markdown(f"### {L['edit_emp_header']}")
+        if st.session_state.employees_db:
+            emp_options = {f"{e['id']} - {e['name']}": e for e in st.session_state.employees_db}
+            selected_emp_key = st.selectbox("選擇要修改/刪除的員工", list(emp_options.keys()), key="select_edit_target")
+            selected_emp = emp_options[selected_emp_key]
+
+            with st.form("edit_emp_form"):
+                ec1, ec2 = st.columns(2)
+                with ec1:
+                    edit_name = st.text_input(L["lbl_name"], value=selected_emp["name"])
+                    edit_nationality = st.selectbox(L["lbl_nationality"], L["nat_opts"], index=0 if "台灣" in selected_emp["nationality"] else 1)
+                    edit_phone = st.text_input("聯絡電話", value=selected_emp.get("phone", ""))
+                with ec2:
+                    edit_title = st.text_input(L["lbl_title"], value=selected_emp["title"])
+                    edit_role = st.selectbox(L["lbl_role"], ["Chairman", "GeneralManager", "ViceManager", "Director", "Manager", "Supervisor", "Staff", "Admin"])
+                    edit_site = st.selectbox(L["lbl_site"], L["site_opts"])
+
+                btn_col1, btn_col2, btn_col3 = st.columns(3)
+                submit_edit = btn_col1.form_submit_button(L["btn_save_edit"], type="primary")
+                submit_delete = btn_col2.form_submit_button(L["btn_delete_emp"])
+                submit_resign = btn_col3.form_submit_button(L["btn_resign_emp"])
+
+                if submit_edit:
+                    selected_emp["name"] = edit_name
+                    selected_emp["nationality"] = edit_nationality
+                    selected_emp["title"] = edit_title
+                    selected_emp["role"] = edit_role
+                    selected_emp["site"] = edit_site
+                    selected_emp["phone"] = edit_phone
+                    st.success(L["success_edit"])
+                    st.rerun()
+
+                if submit_delete:
+                    st.session_state.employees_db = [e for e in st.session_state.employees_db if e["id"] != selected_emp["id"]]
+                    st.success(L["success_del"])
+                    st.rerun()
+
+                if submit_resign:
+                    # 移至離職表
+                    resigned_record = selected_emp.copy()
+                    vn_time = datetime.datetime.utcnow() + datetime.timedelta(hours=7)
+                    resigned_record["離職時間"] = vn_time.strftime("%Y-%m-%d %H:%M:%S")
+                    st.session_state.resigned_employees_db.append(resigned_record)
+                    # 從在職名冊移除
+                    st.session_state.employees_db = [e for e in st.session_state.employees_db if e["id"] != selected_emp["id"]]
+                    st.success(L["success_resign"])
+                    st.rerun()
+        else:
+            st.info("目前尚無員工可供修改。")
+
+        st.markdown("---")
+
+        # 區塊：新增員工
         st.markdown(f"### {L['add_emp_header']}")
         with st.form("add_emp_form"):
             c1, c2 = st.columns(2)
             with c1:
-                new_id = st.text_input(L["lbl_emp_id"], value="EMP-104")
+                new_id = st.text_input(L["lbl_emp_id"], value=f"EMP-{len(st.session_state.employees_db)+101:03d}")
                 new_name = st.text_input(L["lbl_name"])
                 new_nationality = st.selectbox(L["lbl_nationality"], L["nat_opts"])
             with c2:
                 new_site = st.selectbox(L["lbl_site"], L["site_opts"])
-                new_title = st.text_input(L["lbl_title"], value="專員" if active_lang == "繁體中文" else ("Chuyên viên" if active_lang == "Tiếng Việt" else "Specialist"))
+                new_title = st.text_input(L["lbl_title"], value="專員")
                 new_role = st.selectbox(L["lbl_role"], ["Chairman", "GeneralManager", "ViceManager", "Director", "Manager", "Supervisor", "Staff", "Admin"])
             
             if st.form_submit_button(L["btn_add_emp"], type="primary"):
@@ -280,6 +376,12 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                     st.rerun()
                 else:
                     st.warning(L["warning_fill"])
+
+        # 區塊：離職人員歸檔名冊
+        if st.session_state.resigned_employees_db:
+            st.markdown("---")
+            st.markdown(f"### {L['leave_archive_header']}")
+            st.dataframe(pd.DataFrame(st.session_state.resigned_employees_db), use_container_width=True)
 
     with tab2:
         st.markdown(f"### {L['punch_header']}")
@@ -316,7 +418,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             l_reason = st.text_area(L["lbl_reason"])
             
             if st.form_submit_button(L["btn_submit_leave"], type="primary"):
-                # 請假申請時間同步轉換為越南當地時間 (UTC+7)
                 vn_leave_time = datetime.datetime.utcnow() + datetime.timedelta(hours=7)
                 st.session_state.leave_requests_db.insert(0, {
                     "申請時間": vn_leave_time.strftime("%Y-%m-%d %H:%M"),
