@@ -26,7 +26,7 @@ EMP_I18N = {
         "lbl_pwd": "初始登入密碼 (預設) *",
         "lbl_title": "職稱 / 職務 *",
         "lbl_country": "國籍",
-        "country_opts": ["台灣 (Taiwan)", "越南 (Vietnam)", "中國 (China)"],  # 👈 已移除其他，並列顯示
+        "country_opts": ["台灣 (Taiwan)", "越南 (Vietnam)", "中國 (China)"],
         "lbl_role": "系統權限角色 *",
         "lbl_addr_perm": "戶籍地址 (Permanent Address)",
         "lbl_addr_temp": "現住地址 (Temporary Address)",
@@ -128,7 +128,7 @@ EMP_I18N = {
     }
 }
 
-# 🌐 系統權限角色多語系對應字典（支援管理部經理、財務主管、協理、副協理與跨部門支援廠長皆可掛載 Manager）
+# 🌐 系統權限角色多語系對應字典
 ROLE_I18N = {
     "繁體中文": {
         "admin": "系統管理員 (Admin)",
@@ -199,6 +199,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         L["tab_list"], L["tab_add"], L["tab_edit"], L["tab_delete"]
     ])
 
+    # 1. 員工名冊
     with tab_list:
         st.markdown(f"### {L['header_list']}")
         search_q = st.text_input(L["search_ph"], key="emp_search_box")
@@ -228,19 +229,23 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         else:
             st.info("目前尚無員工資料。")
 
+    # 2. 新增員工
     with tab_add:
         st.markdown(f"### {L['header_add']}")
+        
+        auto_emp_id = f"VN-00{len(st.session_state.employee_db) + 1}"
+
         with st.form("form_add_employee"):
             c1, c2 = st.columns(2)
             with c1:
-                e_code = st.text_input(L["lbl_code"], value="VN-003")
+                e_code = st.text_input(L["lbl_code"], value=auto_emp_id)
                 e_name = st.text_input(L["lbl_name"])
                 e_pwd = st.text_input(L["lbl_pwd"], value="123456")
                 e_country = st.selectbox(L["lbl_country"], L["country_opts"])
             with c2:
                 e_factory = st.selectbox(L["lbl_factory"], L["factory_opts"])
                 e_dept = st.selectbox(L["lbl_dept"], L["dept_opts"])
-                e_title = st.text_input(L["lbl_title"], value="財務主管 / 廠長 / 協理")
+                e_title = st.text_input(L["lbl_title"], value="財務主管")
                 
                 role_keys = list(role_dict.keys())
                 role_display_names = list(role_dict.values())
@@ -250,24 +255,31 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             e_addr_perm = st.text_input(L["lbl_addr_perm"])
             e_addr_temp = st.text_input(L["lbl_addr_temp"])
 
-            if st.form_submit_button(L["btn_add"], type="primary", use_container_width=True):
+            submitted = st.form_submit_button(L["btn_add"], type="primary", use_container_width=True)
+            if submitted:
                 if e_code and e_name:
-                    st.session_state.employee_db.append({
-                        "工號": e_code,
-                        "姓名": e_name,
-                        "廠區": e_factory,
-                        "部門": e_dept,
-                        "職稱": e_title,
-                        "國籍": e_country,
-                        "角色": e_role,
-                        "密碼": e_pwd,
-                        "must_change_password": True,
-                        "狀態": "🟢 在職 (Active)"
-                    })
-                    st.success(L["success_add"].format(name=e_name, code=e_code))
+                    existing_codes = [e["工號"] for e in st.session_state.employee_db]
+                    if e_code in existing_codes:
+                        st.error(f"⚠️ 錯誤：工號 `{e_code}` 已經存在，請使用不同的工號代碼！")
+                    else:
+                        st.session_state.employee_db.append({
+                            "工號": e_code,
+                            "姓名": e_name,
+                            "廠區": e_factory,
+                            "部門": e_dept,
+                            "職稱": e_title,
+                            "國籍": e_country,
+                            "角色": e_role,
+                            "密碼": e_pwd,
+                            "must_change_password": True,
+                            "狀態": "🟢 在職 (Active)"
+                        })
+                        st.success(L["success_add"].format(name=e_name, code=e_code))
+                        st.rerun() # 👈 新增成功後立即強制重新整理頁面，同步顯示在名冊中
                 else:
                     st.warning("⚠️ 請填寫員工工號與姓名！")
 
+    # 3. 修改員工
     with tab_edit:
         st.markdown(f"### {L['header_edit']}")
         if st.session_state.employee_db:
@@ -298,9 +310,11 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                         target_emp["角色"] = ed_role
                         target_emp["密碼"] = ed_pwd
                         st.success(L["success_update"].format(code=target_code))
+                        st.rerun()
         else:
             st.info("尚無員工可供修改。")
 
+    # 4. 刪除員工
     with tab_delete:
         st.markdown(f"### {L['header_delete']}")
         if st.session_state.employee_db:
