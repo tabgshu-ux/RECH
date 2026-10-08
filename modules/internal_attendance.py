@@ -7,12 +7,14 @@ import datetime
 # ----------------------------------------------------
 INT_ATT_I18N = {
     "繁體中文": {
-        "title": "🏢 管理部 - 廠內智慧考勤與彈性緩衝扣款設定中心",
-        "caption": "設定每日打卡容許緩衝時間與每月累計免扣款額度，自動化判定遲到並精準連動薪資扣款。",
-        "tab_records": "📑 即時刷卡紀錄與出勤判定",
+        "title": "🏢 管理部 - 廠內智慧考勤與出勤紀錄管理",
+        "caption": "依據各廠區獨立管理刷卡紀錄、設定彈性緩衝時間與自動化薪資扣款連動。",
+        "tab_records": "📑 廠內出勤紀錄與搜尋",
         "tab_simulate": "⏱️ 模擬打卡機 / 人臉指紋資料進站",
         "tab_rules": "⚙️ 彈性緩衝時間與扣款規則設定",
-        "header_records": "📋 西寧廠與海防廠出勤判定清冊",
+        "header_tayninh": "🏭 西寧廠 (Tay Ninh) 出勤紀錄與異常清冊",
+        "header_haiphong": "🏭 海防廠 (Hai Phong) 出勤紀錄與異常清冊",
+        "search_label": "🔍 搜尋員工姓名或工號...",
         "header_simulate": "⚡ 模擬硬體打卡資料寫入與即時比對",
         "header_rules": "⚙️ 考勤緩衝與扣薪參數設定",
         "lbl_emp": "選擇員工 (Select Employee) *",
@@ -24,21 +26,22 @@ INT_ATT_I18N = {
         "col_index": "STT",
         "col_code": "工號",
         "col_name": "姓名",
-        "col_dept": "廠區與部門",
         "col_type": "類型",
         "col_time": "刷卡時間",
         "col_status": "出勤判定狀態",
         "col_deduct": "實質扣款時數"
     },
     "Tiếng Việt": {
-        "title": "🏢 Quản lý Chấm công & Cài đặt Thời gian Ân hạn linh hoạt",
-        "caption": "Cài đặt thời gian ân hạn hàng ngày và tổng phút miễn trừ hàng tháng, tự động tính toán trừ lương.",
-        "tab_records": "📑 Sổ kiểm tra chấm công",
-        "tab_simulate": "⏱️ Mô phỏng dữ liệu máy chấm công",
-        "tab_rules": "⚙️ Cài đặt thời gian ân hạn & Quy tắc trừ lương",
-        "header_records": "📋 Nhật ký chấm công nhà máy",
+        "title": "🏢 Quản lý Chấm công & Sổ điểm danh nội bộ",
+        "caption": "Quản lý chấm công độc lập theo từng nhà máy, cài đặt thời gian ân hạn và trừ lương tự động.",
+        "tab_records": "📑 Sổ điểm danh & Tìm kiếm",
+        "tab_simulate": "⏱️ Mô phỏng máy chấm công",
+        "tab_rules": "⚙️ Cài đặt ân hạn & Trừ lương",
+        "header_tayninh": "🏭 Nhật ký chấm công Nhà máy Tây Ninh",
+        "header_haiphong": "🏭 Nhật ký chấm công Nhà máy Hải Phòng",
+        "search_label": "🔍 Tìm kiếm theo tên hoặc mã NV...",
         "header_simulate": "⚡ Giả lập quẹt thẻ",
-        "header_rules": "⚙️ Thiết lập tham số ân hạn",
+        "header_rules": "⚙️ Thiết lập tham số",
         "lbl_emp": "Chọn nhân viên *",
         "lbl_clock_time": "Thời gian quẹt thẻ *",
         "lbl_type": "Loại chấm công *",
@@ -48,19 +51,20 @@ INT_ATT_I18N = {
         "col_index": "STT",
         "col_code": "Mã NV",
         "col_name": "Họ tên",
-        "col_dept": "Phòng ban",
         "col_type": "Loại",
         "col_time": "Thời gian",
         "col_status": "Trạng thái",
         "col_deduct": "Giờ trừ"
     },
     "English": {
-        "title": "🏢 Management - Smart Attendance & Flexible Grace Period Settings",
-        "caption": "Configure daily grace periods and monthly cumulative exemptions for automated payroll deductions.",
-        "tab_records": "📑 Attendance Log",
+        "title": "🏢 Management - Internal Attendance & Time Records",
+        "caption": "Independent plant-wise attendance tracking, grace period configuration, and payroll synchronization.",
+        "tab_records": "📑 Attendance Records & Search",
         "tab_simulate": "⏱️ Simulate Biometric Input",
         "tab_rules": "⚙️ Grace Period & Deduction Settings",
-        "header_records": "📋 Attendance Verification Log",
+        "header_tayninh": "🏭 Tay Ninh Plant Attendance Log",
+        "header_haiphong": "🏭 Hai Phong Plant Attendance Log",
+        "search_label": "🔍 Search by Employee Name or ID...",
         "header_simulate": "⚡ Simulate Device Sync",
         "header_rules": "⚙️ Grace Period Parameters",
         "lbl_emp": "Select Employee *",
@@ -72,7 +76,6 @@ INT_ATT_I18N = {
         "col_index": "No.",
         "col_code": "Emp ID",
         "col_name": "Name",
-        "col_dept": "Department",
         "col_type": "Type",
         "col_time": "Timestamp",
         "col_status": "Status",
@@ -87,13 +90,13 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化考勤全域設定（含緩衝時間）
+    # 初始化考勤全域設定
     if "attendance_rules" not in st.session_state:
         st.session_state.attendance_rules = {
             "standard_in": "08:00:00",
             "standard_out": "17:00:00",
-            "daily_grace_mins": 5,      # 預設每日容許緩衝 5 分鐘
-            "monthly_exemption_mins": 30 # 預設每月累計免扣款緩衝 30 分鐘
+            "daily_grace_mins": 5,      
+            "monthly_exemption_mins": 30 
         }
 
     if "internal_attendance_db" not in st.session_state:
@@ -101,7 +104,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
             {
                 "code": "EMP-001",
                 "name": "張董事長",
-                "dept": "西寧廠 (Tay Ninh)",
+                "factory": "西寧廠 (Tay Ninh)",
                 "type": "上班簽到",
                 "time": "2026-10-08 07:55:00",
                 "status": "🟢 正常 (Normal)",
@@ -110,10 +113,10 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
             {
                 "code": "EMP-002",
                 "name": "Nguyễn Văn Quý",
-                "dept": "海防廠 (Hai Phong)",
+                "factory": "海防廠 (Hai Phong)",
                 "type": "上班簽到",
                 "time": "2026-10-08 08:12:00",
-                "status": "🟡 遲到 12 分鐘 (超出每日 5 分鐘緩衝)",
+                "status": "🟡 遲到 12 分鐘 (超過 5m 緩衝)",
                 "deduct_hours": 0.12
             }
         ]
@@ -124,51 +127,101 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
 
     with tab_rules:
         st.markdown(f"### {L['header_rules']}")
-        st.info("⚙️ 在此可依各越南廠區（西寧廠、海防廠）規範手動調整考勤緩衝與扣款門檻：")
-        
         with st.form("form_attendance_rules"):
             col_r1, col_r2 = st.columns(2)
             with col_r1:
                 std_in_input = st.text_input("標準上班時間 (Standard Start Time)", value=st.session_state.attendance_rules["standard_in"])
-                daily_grace_input = st.number_input("每日容許緩衝時間 (分鐘) [Daily Grace Period]", min_value=0, max_value=30, value=st.session_state.attendance_rules["daily_grace_mins"])
+                daily_grace_input = st.number_input("每日容許緩衝時間 (分鐘)", min_value=0, max_value=30, value=st.session_state.attendance_rules["daily_grace_mins"])
             with col_r2:
                 std_out_input = st.text_input("標準下班時間 (Standard End Time)", value=st.session_state.attendance_rules["standard_out"])
-                monthly_ex_input = st.number_input("每月累計免扣款緩衝額度 (分鐘) [Monthly Cumulative Exemption]", min_value=0, max_value=180, value=st.session_state.attendance_rules["monthly_exemption_mins"])
+                monthly_ex_input = st.number_input("每月累計免扣款緩衝額度 (分鐘)", min_value=0, max_value=180, value=st.session_state.attendance_rules["monthly_exemption_mins"])
 
             if st.form_submit_button("💾 儲存考勤與緩衝規則設定", type="primary", use_container_width=True):
                 st.session_state.attendance_rules["standard_in"] = std_in_input
                 st.session_state.attendance_rules["standard_out"] = std_out_input
                 st.session_state.attendance_rules["daily_grace_mins"] = int(daily_grace_input)
                 st.session_state.attendance_rules["monthly_exemption_mins"] = int(monthly_ex_input)
-                st.success("✅ 考勤與緩衝扣款規則已成功更新！系統將依此標準自動判定遲到。")
+                st.success("✅ 考勤與緩衝扣款規則已成功更新！")
 
     with tab_records:
-        st.markdown(f"### {L['header_records']}")
         rules = st.session_state.attendance_rules
-        st.markdown(f"📌 **目前生效考勤標準**：上班 `{rules['standard_in']}` | 每日緩衝 `{rules['daily_grace_mins']} 分鐘` | 每月累計緩衝 `{rules['monthly_exemption_mins']} 分鐘`")
+        st.markdown(f"📌 **目前生效考勤標準**：上班 `{rules['standard_in']}` | 每日緩衝 `{rules['daily_grace_mins']} 分鐘`")
         
-        if st.session_state.internal_attendance_db:
-            display_data = []
-            for idx, item in enumerate(st.session_state.internal_attendance_db, 1):
-                display_data.append({
+        # 全域搜尋框
+        search_query = st.text_input(L["search_label"], key="att_search_input")
+
+        st.markdown("---")
+
+        # ----------------------------------------------------
+        # 🏭 1. 西寧廠 (Tay Ninh) 出勤紀錄表
+        # ----------------------------------------------------
+        st.markdown(f"### {L['header_tayninh']}")
+        tay_ninh_data = [
+            item for item in st.session_state.internal_attendance_db 
+            if "西寧" in item["factory"] or "Tay Ninh" in item["factory"]
+        ]
+        if search_query:
+            tay_ninh_data = [
+                item for item in tay_ninh_data 
+                if search_query.lower() in item["name"].lower() or search_query.lower() in item["code"].lower()
+            ]
+
+        if tay_ninh_data:
+            display_tn = []
+            for idx, item in enumerate(tay_ninh_data, 1):
+                display_tn.append({
                     L["col_index"]: idx,
                     L["col_code"]: item["code"],
                     L["col_name"]: item["name"],
-                    L["col_dept"]: item["dept"],
                     L["col_type"]: item["type"],
                     L["col_time"]: item["time"],
                     L["col_status"]: item["status"],
                     L["col_deduct"]: f"{item['deduct_hours']} 小時"
                 })
-            st.dataframe(pd.DataFrame(display_data), use_container_width=True)
+            st.dataframe(pd.DataFrame(display_tn), use_container_width=True)
         else:
-            st.info("目前尚無刷卡紀錄。")
+            st.info("西寧廠目前無符合條件的出勤紀錄。")
+
+        st.markdown("---")
+
+        # ----------------------------------------------------
+        # 🏭 2. 海防廠 (Hai Phong) 出勤紀錄表
+        # ----------------------------------------------------
+        st.markdown(f"### {L['header_haiphong']}")
+        hai_phong_data = [
+            item for item in st.session_state.internal_attendance_db 
+            if "海防" in item["factory"] or "Hai Phong" in item["factory"]
+        ]
+        if search_query:
+            hai_phong_data = [
+                item for item in hai_phong_data 
+                if search_query.lower() in item["name"].lower() or search_query.lower() in item["code"].lower()
+            ]
+
+        if hai_phong_data:
+            display_hp = []
+            for idx, item in enumerate(hai_phong_data, 1):
+                display_hp.append({
+                    L["col_index"]: idx,
+                    L["col_code"]: item["code"],
+                    L["col_name"]: item["name"],
+                    L["col_type"]: item["type"],
+                    L["col_time"]: item["time"],
+                    L["col_status"]: item["status"],
+                    L["col_deduct"]: f"{item['deduct_hours']} 小時"
+                })
+            st.dataframe(pd.DataFrame(display_hp), use_container_width=True)
+        else:
+            st.info("海防廠目前無符合條件的出勤紀錄。")
 
     with tab_simulate:
         st.markdown(f"### {L['header_simulate']}")
-        
         with st.form("form_biometric_simulate_rule"):
-            emp_choices = ["EMP-001 - 張董事長 (西寧廠)", "EMP-002 - Nguyễn Văn Quý (海防廠)", "EMP-003 - 阮文強 (西寧廠)"]
+            emp_choices = [
+                "EMP-001 - 張董事長 (西寧廠)", 
+                "EMP-002 - Nguyễn Văn Quý (海防廠)", 
+                "EMP-003 - 阮文強 (西寧廠)"
+            ]
             sel_emp = st.selectbox(L["lbl_emp"], emp_choices)
             clock_type = st.selectbox(L["lbl_type"], L["type_opts"])
             
@@ -198,16 +251,16 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                     if diff_mins > rules["daily_grace_mins"]:
                         net_late_mins = diff_mins - rules["daily_grace_mins"]
                         deduct = round(net_late_mins / 60.0, 2)
-                        status = f"🔴 遲到 {int(diff_mins)} 分鐘 (扣除每日 {rules['daily_grace_mins']}m 緩衝，計 {int(net_late_mins)}m 遲到)"
+                        status = f"🔴 遲到 {int(diff_mins)} 分鐘 (扣除每日 {rules['daily_grace_mins']}m 緩衝)"
                     elif diff_mins > 0:
-                        status = f"🟢 雖遲到 {int(diff_mins)} 分鐘，但在每日 {rules['daily_grace_mins']} 分鐘緩衝內 (免扣)"
+                        status = f"🟢 雖遲到 {int(diff_mins)} 分鐘，但在緩衝內 (免扣)"
                     else:
                         status = "🟢 準時簽到 (Normal)"
 
                 st.session_state.internal_attendance_db.insert(0, {
                     "code": emp_code,
                     "name": emp_name,
-                    "dept": emp_factory,
+                    "factory": emp_factory,
                     "type": clock_type,
                     "time": timestamp_str,
                     "status": status,
