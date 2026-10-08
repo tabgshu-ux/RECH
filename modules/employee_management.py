@@ -8,15 +8,15 @@ import datetime
 EMP_I18N = {
     "繁體中文": {
         "title": "👤 管理部 - 員工個人檔案與人事管理中心",
-        "caption": "管理全公司員工基本資料、分派廠區（西寧廠/海防廠）、初始密碼設定、權限角色與離職歸檔管理。",
-        "tab_list": "👥 員工名冊與資料檢視",
+        "caption": "管理全公司員工基本資料、分派廠區（西寧廠/海防廠）、初始密碼設定、權限角色、離職歸檔與帳號刪除。",
+        "tab_list": "👥 員工名冊與歷史歸檔",
         "tab_add": "➕ 新增員工與初始帳密設定",
         "tab_edit": "✏️ 修改員工資料與重設密碼",
-        "tab_delete": "🗑️ 離職人員歸檔與狀態管理",
-        "header_list": "📋 全公司在職與離職員工歷史名冊總覽",
+        "tab_delete": "🗑️ 離職歸檔與重複帳號刪除",
+        "header_list": "📋 全公司在職與離職員工名冊總覽",
         "header_add": "➕ 新增員工個人檔案與初始帳密設定",
         "header_edit": "✏️ 修改員工基本資料與權限",
-        "header_delete": "🗑️ 員工離職歸檔與停用帳號管理",
+        "header_delete": "🗑️ 離職人員狀態標記與重複帳號徹底刪除",
         "lbl_code": "員工工號 (登入帳號) *",
         "lbl_name": "員工姓名 (Employee Name) *",
         "lbl_factory": "工作廠區 (Factory) *",
@@ -34,8 +34,10 @@ EMP_I18N = {
         "success_add": "✅ 成功新增員工 `{name}` (工號: `{code}`)！系統已自動勾選『首次登入強制修改密碼』。",
         "btn_update": "💾 儲存修改後員工資料",
         "success_update": "✅ 員工 `{code}` 資料已成功更新！",
-        "btn_archive": "📂 確認將此員工歸檔為「離職人員」並停用帳號",
-        "success_archive": "✅ 員工 `{code}` 已成功歸檔為離職狀態，並保留於歷史名冊中。",
+        "btn_archive": "📂 將此員工標記為「🔴 離職 (Resigned)」並保留於歷史名冊",
+        "success_archive": "✅ 員工 `{code}` 已成功歸檔為離職狀態。",
+        "btn_hard_delete": "🔥 徹底刪除此帳號 (適用於建錯或重複建檔)",
+        "success_hard_delete": "🔥 帳號 `{code}` 已自系統中徹底刪除。",
         "search_ph": "🔍 搜尋員工姓名或工號...",
         "col_index": "STT",
         "col_code": "工號",
@@ -48,15 +50,15 @@ EMP_I18N = {
     },
     "Tiếng Việt": {
         "title": "🏢 Quản lý Nhân sự & Hồ sơ Nhân viên",
-        "caption": "Quản lý thông tin nhân viên, phân bổ nhà máy, phân quyền và lưu trữ hồ sơ nhân viên nghỉ việc.",
+        "caption": "Quản lý thông tin nhân viên, phân bổ nhà máy, phân quyền, lưu trữ nhân viên nghỉ việc và xóa tài khoản trùng lặp.",
         "tab_list": "👥 Danh sách Nhân viên",
         "tab_add": "➕ Thêm Nhân viên mới",
         "tab_edit": "✏️ Chỉnh sửa Thông tin",
-        "tab_delete": "🗑️ Quản lý nhân viên nghỉ việc",
-        "header_list": "📋 Danh sách nhân viên toàn công ty (Bao gồm lịch sử)",
+        "tab_delete": "🗑️ Nghỉ việc & Xóa tài khoản",
+        "header_list": "📋 Danh sách nhân viên toàn công ty",
         "header_add": "➕ Thêm hồ sơ nhân viên và mật khẩu ban đầu",
         "header_edit": "✏️ Cập nhật thông tin nhân viên",
-        "header_delete": "🗑️ Lưu trữ và quản lý nhân viên thôi việc",
+        "header_delete": "🗑️ Đánh dấu nghỉ việc hoặc Xóa vĩnh viễn tài khoản",
         "lbl_code": "Mã nhân viên (Tên đăng nhập) *",
         "lbl_name": "Họ tên nhân viên *",
         "lbl_factory": "Nhà máy làm việc *",
@@ -74,8 +76,10 @@ EMP_I18N = {
         "success_add": "✅ Đã thêm nhân viên `{name}` (Mã: `{code}`) thành công!",
         "btn_update": "💾 Lưu thay đổi",
         "success_update": "✅ Đã cập nhật thông tin nhân viên `{code}`!",
-        "btn_archive": "📂 Xác nhận lưu trữ nhân viên nghỉ việc",
-        "success_archive": "✅ Đã chuyển nhân viên `{code}` sang trạng thái nghỉ việc và lưu vào lịch sử.",
+        "btn_archive": "📂 Chuyển sang trạng thái nghỉ việc (Lưu lịch sử)",
+        "success_archive": "✅ Đã chuyển nhân viên `{code}` sang trạng thái nghỉ việc.",
+        "btn_hard_delete": "🔥 Xóa vĩnh viễn tài khoản (Dùng cho dữ liệu nhập sai/trùng)",
+        "success_hard_delete": "🔥 Đã xóa vĩnh viễn tài khoản `{code}`.",
         "search_ph": "🔍 Tìm kiếm theo tên hoặc mã NV...",
         "col_index": "STT",
         "col_code": "Mã NV",
@@ -88,15 +92,15 @@ EMP_I18N = {
     },
     "English": {
         "title": "👤 Management - Employee Profile & HR Center",
-        "caption": "Manage employee records, plant allocation, roles, and resigned employee archival.",
+        "caption": "Manage employee records, plant allocation, roles, resigned archives, and duplicate deletion.",
         "tab_list": "👥 Employee Directory",
         "tab_add": "➕ Add New Employee",
         "tab_edit": "✏️ Edit Employee Profile",
-        "tab_delete": "🗑️ Resigned Employee Archive",
-        "header_list": "📋 Company Employee Directory & Resigned History",
+        "tab_delete": "🗑️ Resigned Archive & Account Deletion",
+        "header_list": "📋 Company Employee Directory & History",
         "header_add": "➕ Add Employee Profile & Initial Credentials",
         "header_edit": "✏️ Update Employee Information",
-        "header_delete": "🗑️ Archive Resigned Employee Accounts",
+        "header_delete": "🗑️ Mark as Resigned or Permanently Delete Duplicate Accounts",
         "lbl_code": "Employee ID (Login Username) *",
         "lbl_name": "Employee Name *",
         "lbl_factory": "Work Plant *",
@@ -114,8 +118,10 @@ EMP_I18N = {
         "success_add": "✅ Successfully added employee `{name}` (ID: `{code}`)!",
         "btn_update": "💾 Save Changes",
         "success_update": "✅ Employee `{code}` updated successfully!",
-        "btn_archive": "📂 Confirm Archival as Resigned",
-        "success_archive": "✅ Employee `{code}` has been archived as resigned.",
+        "btn_archive": "📂 Mark as Resigned (Keep in History)",
+        "success_archive": "✅ Employee `{code}` archived as resigned.",
+        "btn_hard_delete": "🔥 Permanently Delete Account (For Duplicates/Mistakes)",
+        "success_hard_delete": "🔥 Account `{code}` permanently deleted.",
         "search_ph": "🔍 Search by name or ID...",
         "col_index": "No.",
         "col_code": "Emp ID",
@@ -199,7 +205,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         L["tab_list"], L["tab_add"], L["tab_edit"], L["tab_delete"]
     ])
 
-    # 1. 員工名冊（含在職與離職歷史名冊）
+    # 1. 員工名冊（含在職與離職歷史過濾）
     with tab_list:
         st.markdown(f"### {L['header_list']}")
         
@@ -324,24 +330,32 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         else:
             st.info("尚無員工可供修改。")
 
-    # 4. 離職人員歸檔與狀態管理（保留歷史名冊，不直接刪除）
+    # 4. 離職歸檔與重複帳號徹底刪除（明確區分兩種操作）
     with tab_delete:
         st.markdown(f"### {L['header_delete']}")
-        active_emps = [e for e in st.session_state.employee_db if "在職" in e["狀態"]]
         
-        if active_emps:
-            del_codes = [e["工號"] + " - " + e["姓名"] for e in active_emps]
-            sel_del = st.selectbox("選擇要辦理離職歸檔的員工", del_codes, key="archive_emp_select")
-            target_code = sel_del.split(" - ")[0]
+        if st.session_state.employee_db:
+            all_emp_codes = [e["工號"] + " - " + e["姓名"] + " (" + e["狀態"] + ")" for e in st.session_state.employee_db]
+            sel_target_del = st.selectbox("選擇要處理的員工帳號", all_emp_codes, key="manage_emp_select")
+            target_code = sel_target_del.split(" - ")[0]
 
-            if st.button(L["btn_archive"], type="secondary"):
-                for e in st.session_state.employee_db:
-                    if e["工號"] == target_code:
-                        e["狀態"] = "🔴 離職 (Resigned)"
-                st.success(L["success_archive"].format(code=target_code))
-                st.rerun()
+            col_btn1, col_btn2 = st.columns(2)
+            
+            with col_btn1:
+                if st.button(L["btn_archive"], type="secondary", use_container_width=True):
+                    for e in st.session_state.employee_db:
+                        if e["工號"] == target_code:
+                            e["狀態"] = "🔴 離職 (Resigned)"
+                    st.success(L["success_archive"].format(code=target_code))
+                    st.rerun()
+
+            with col_btn2:
+                if st.button(L["btn_hard_delete"], type="primary", use_container_width=True):
+                    st.session_state.employee_db = [e for e in st.session_state.employee_db if e["工號"] != target_code]
+                    st.success(L["success_hard_delete"].format(code=target_code))
+                    st.rerun()
         else:
-            st.info("目前沒有在職員工可供辦理離職歸檔。")
+            st.info("目前系統中無任何員工記錄。")
 
 def show(*args, **kwargs):
     render_employee_management(*args, **kwargs)
