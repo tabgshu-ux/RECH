@@ -53,6 +53,9 @@ RECH_LOGO_HTML = """
 </div>
 """
 
+# ----------------------------------------------------
+# 📋 導航結構定義（已將總經理室排在管理部上方，並劃分各級職務權限）
+# ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
         "company_name": "裕豐電機工業有限公司",
@@ -73,11 +76,6 @@ NAV_STRUCTURE = {
                     "⚡ 工程專案進度與驗收資料": "project_progress_exec",
                 }
             },
-            "✍️ 全公司電子簽核中心 (Approval Center)": {
-                "features": {
-                    "✍️ 提交請假/採購與即時進度追蹤 / 審核": "approval_center",
-                }
-            },
             "👔 管理部 (Management Dept)": {
                 "features": {
                     "👤 員工個人檔案與人事管理": "hr_employee",
@@ -89,6 +87,11 @@ NAV_STRUCTURE = {
                     "📋 應收帳款": "sales_order_ar",
                     "💰 員工薪資管理": "payroll_calc",
                     "📄 電子發票綜合管理": "invoice_management",
+                }
+            },
+            "✍️ 全公司電子簽核中心 (Approval Center)": {
+                "features": {
+                    "✍️ 提交請假/採購與即時進度追蹤 / 審核": "approval_center",
                 }
             },
             "🛠️ 工程與設計管理中心 (Engineering & Design Center)": {
@@ -134,11 +137,6 @@ NAV_STRUCTURE = {
                     "⚡ Tiến độ Dự án Kỹ thuật": "project_progress_exec",
                 }
             },
-            "✍️ Trung tâm Phê duyệt Điện tử (Approval Center)": {
-                "features": {
-                    "✍️ Gửi đơn nghỉ phép/mua hàng & Theo dõi tiến độ": "approval_center",
-                }
-            },
             "👔 Phòng Quản lý (Management Dept)": {
                 "features": {
                     "👤 Hồ sơ nhân sự": "hr_employee",
@@ -150,6 +148,11 @@ NAV_STRUCTURE = {
                     "📋 Phải thu": "sales_order_ar",
                     "💰 Quản lý Lương": "payroll_calc",
                     "📄 Quản lý Hóa đơn điện tử": "invoice_management",
+                }
+            },
+            "✍️ Trung tâm Phê duyệt Điện tử (Approval Center)": {
+                "features": {
+                    "✍️ Gửi đơn nghỉ phép/mua hàng & Theo dõi tiến độ": "approval_center",
                 }
             },
             "🛠️ Trung tâm Quản lý Kỹ thuật & Thiết kế": {
@@ -195,11 +198,6 @@ NAV_STRUCTURE = {
                     "⚡ Engineering Project Progress": "project_progress_exec",
                 }
             },
-            "✍️ E-Approval Center": {
-                "features": {
-                    "✍️ Submit Leave/Purchase & Track Workflow": "approval_center",
-                }
-            },
             "👔 Management Dept (GA & Finance)": {
                 "features": {
                     "👤 HR Records": "hr_employee",
@@ -211,6 +209,11 @@ NAV_STRUCTURE = {
                     "📋 Accounts Receivable": "sales_order_ar",
                     "💰 Payroll Management": "payroll_calc",
                     "📄 E-Invoice Management": "invoice_management",
+                }
+            },
+            "✍️ E-Approval Center": {
+                "features": {
+                    "✍️ Submit Leave/Purchase & Track Workflow": "approval_center",
                 }
             },
             "🛠️ Engineering & Design Management Center": {
@@ -268,6 +271,9 @@ lang_dict = NAV_STRUCTURE.get(
     st.session_state.current_lang, NAV_STRUCTURE["繁體中文"]
 )
 
+# ----------------------------------------------------
+# 🔐 系統登入與權限識別機制
+# ----------------------------------------------------
 if not st.session_state.logged_in:
     st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
     st.title(lang_dict["login_title"])
@@ -276,7 +282,7 @@ if not st.session_state.logged_in:
     col1, _ = st.columns([1, 2])
     with col1:
         username = st.text_input(
-            f"{lang_dict['username']} (admin / manager / security / staff)"
+            f"{lang_dict['username']} (admin / chairman / gm / manager / security / staff)"
         )
         password = st.text_input(
             f"{lang_dict['password']} (123)", type="password"
@@ -285,14 +291,29 @@ if not st.session_state.logged_in:
             if password == "123":
                 st.session_state.logged_in = True
                 u_clean = username.strip().lower()
-                if u_clean in ["admin", "executive", "boss"]:
-                    st.session_state.user_role = "admin"
-                elif u_clean in ["manager", "supervisor"]:
+                
+                # 職務與系統權限角色劃分邏輯
+                if u_clean == "admin":
+                    st.session_state.user_role = "admin"  # 唯一能看到「資訊管理部」的最高權限
+                elif u_clean in ["chairman", "董事长", "董事長"]:
+                    st.session_state.user_role = "chairman"
+                elif u_clean in ["generalmanager", "gm", "總經理", "总经理"]:
+                    st.session_state.user_role = "generalmanager"
+                elif u_clean in ["vice", "vicemanager", "副總經理", "副总经理"]:
+                    st.session_state.user_role = "vicemanager"
+                elif u_clean in ["executive", "boss", "ceo"]:
+                    st.session_state.user_role = "executive"
+                elif u_clean in ["manager", "supervisor", "經理", "经理"]:
                     st.session_state.user_role = "manager"
+                elif u_clean in ["admin_manager", "行政主管"]:
+                    st.session_state.user_role = "admin_manager"
+                elif u_clean in ["finance_manager", "財務主管", "财务主管"]:
+                    st.session_state.user_role = "finance_manager"
                 elif u_clean in ["security", "guard", "保全"]:
                     st.session_state.user_role = "security"
                 else:
                     st.session_state.user_role = "staff"
+                    
                 st.session_state.user_name = username
                 st.rerun()
             else:
@@ -329,6 +350,7 @@ dept_options = list(lang_dict["departments"].keys())
 current_user_clean = str(st.session_state.user_name).strip().lower()
 current_role_clean = str(st.session_state.user_role).strip().lower()
 
+# 🛡️ 保全人員專屬路由限制
 if current_role_clean == "security":
     dept_options = ["👔 管理部 (Management Dept)"]
     selected_parent_dept = dept_options[0]
@@ -344,14 +366,16 @@ if current_role_clean == "security":
     selected_feature_label = feature_labels[0]
     target_route = "vehicle_gate"
 else:
+    # 判斷是否具備高階主管權限（可看總經理室）
     is_executive_access = (
-        current_user_clean in ["admin", "executive", "boss", "ceo", "gm"]
-        or current_role_clean in ["admin", "executive", "manager"]
+        current_role_clean in ["admin", "chairman", "generalmanager", "vicemanager", "executive", "manager", "finance_manager"]
+        or current_user_clean in ["admin", "executive", "boss", "ceo", "gm", "chairman"]
     )
 
     if not is_executive_access:
         dept_options = [d for d in dept_options if "總經理室" not in d and "Executive" not in d and "Ban Giám đốc" not in d]
 
+    # 🛡️ 鐵律檢查：本公司無資訊管理部，嚴格限定只有 `admin` 帳號才能看到「資訊管理部」
     if current_role_clean != "admin":
         dept_options = [d for d in dept_options if "資訊管理部" not in d and "IT" not in d and "Phòng IT" not in d]
 
@@ -439,7 +463,14 @@ elif target_route in ["sheet_metal", "painting", "assembly"]:
     st.info("Hệ thống đang hoạt động bình thường / 現場工單與生產追蹤模組順利運作中。")
 
 elif target_route == "it_admin":
-    safe_call_module(user_management.render_user_management_page, lang=curr_lang)
+    # 🛡️ 雙重保險驗證：只有 admin 可以呼叫資訊管理部模組
+    if current_role_clean == "admin":
+        safe_call_module(user_management.render_user_management_page, lang=curr_lang)
+    else:
+        st.error("⚠️ 權限不足：本系統無資訊管理部，僅限系統管理員 (admin) 登入檢視。")
 
 elif target_route == "it_licensing":
-    safe_call_module(system_licensing.render_licensing_control_page, lang=curr_lang)
+    if current_role_clean == "admin":
+        safe_call_module(system_licensing.render_licensing_control_page, lang=curr_lang)
+    else:
+        st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
