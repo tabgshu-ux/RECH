@@ -12,8 +12,10 @@ ASSET_I18N = {
         "tab_list": "📑 廠區資產總表與分類檢視",
         "tab_add": "➕ 新增固定資產與租賃合約",
         "tab_edit": "✏️ 修改資產與租約資料",
-        "tab_delete": "🗑️ 刪除或報廢資產",
+        "tab_delete": "🗑️ 辦理資產報廢或合約終止",
+        "tab_archive": "📦 歷史報廢與停用資產歸檔",
         "table_header": "📋 廠區固定資產與租賃合約清冊",
+        "archive_header": "📦 已報廢、退租與停用資產歷史封存總表（永久保存供查帳）",
         "plant_all": "🌐 全部廠區 (All Plants)",
         "plant_tn": "🏭 越南西寧廠 (Tay Ninh)",
         "plant_hp": "⚓ 越南海防廠 (Hai Phong)",
@@ -54,8 +56,8 @@ ASSET_I18N = {
         "success_add": "✅ 成功新增記錄 `{name}` (編號: `{code}`)！",
         "btn_save_edit": "💾 儲存修改後資料",
         "success_edit": "✅ 記錄 `{code}` 資料已成功更新！",
-        "btn_delete": "🔥 確認刪除或報廢選定記錄",
-        "success_delete": "✅ 已成功刪除選定的記錄。",
+        "btn_delete": "🔥 確認辦理報廢並移至歷史封存",
+        "success_delete": "✅ 資產已成功辦理報廢，並已歸檔至歷史報廢資料庫！",
         "col_index": "STT",
         "col_code": "編號",
         "col_name": "名稱/合約",
@@ -64,7 +66,8 @@ ASSET_I18N = {
         "col_brand": "品牌/房東",
         "col_lease_period": "租約期限 (起 ~ 訖)",
         "col_status": "狀態",
-        "col_cost": "成本/租金"
+        "col_cost": "成本/租金",
+        "col_archive_date": "報廢/歸檔日期"
     },
     "Tiếng Việt": {
         "title": "🏭 Quản lý Tài sản Cố định & Hợp đồng thuê",
@@ -72,8 +75,10 @@ ASSET_I18N = {
         "tab_list": "📑 Danh sách tài sản & Hợp đồng",
         "tab_add": "➕ Thêm mới",
         "tab_edit": "✏️ Sửa thông tin",
-        "tab_delete": "🗑️ Xóa / Thanh lý",
+        "tab_delete": "🗑️ Thanh lý / Hủy hợp đồng",
+        "tab_archive": "📦 Lưu trữ tài sản đã thanh lý",
         "table_header": "📋 Danh mục Tài sản & Hợp đồng thuê",
+        "archive_header": "📦 Sổ lưu trữ tài sản thanh lý",
         "plant_all": "🌐 Tất cả nhà máy",
         "plant_tn": "🏭 Tây Ninh",
         "plant_hp": "⚓ Hải Phòng",
@@ -108,14 +113,14 @@ ASSET_I18N = {
         "lbl_status": "Trạng thái *",
         "status_opts": ["🟢 Đang sử dụng", "🟡 Sắp hết hạn", "🔴 Đã thanh lý"],
         "lbl_cost": "Chi phí / Tiền thuê (USD) *",
-        "lbl_start_date": "Ngày bắt đầu thuê",
-        "lbl_end_date": "Ngày hết hạn hợp đồng",
+        "lbl_start_date": "Ngày bắt đầu",
+        "lbl_end_date": "Ngày kết thúc",
         "btn_add": "🚀 Thêm",
         "success_add": "✅ Thành công!",
         "btn_save_edit": "💾 Lưu",
         "success_edit": "✅ Cập nhật thành công!",
-        "btn_delete": "🔥 Xóa",
-        "success_delete": "✅ Đã xóa.",
+        "btn_delete": "🔥 Thanh lý",
+        "success_delete": "✅ Đã chuyển vào sổ lưu trữ.",
         "col_index": "STT",
         "col_code": "Mã",
         "col_name": "Tên",
@@ -124,7 +129,8 @@ ASSET_I18N = {
         "col_brand": "Brand/Chủ nhà",
         "col_lease_period": "Thời hạn thuê",
         "col_status": "Trạng thái",
-        "col_cost": "Chi phí"
+        "col_cost": "Chi phí",
+        "col_archive_date": "Ngày thanh lý"
     },
     "English": {
         "title": "🏭 Fixed Assets & Lease Management",
@@ -132,8 +138,10 @@ ASSET_I18N = {
         "tab_list": "📑 Asset & Lease Directory",
         "tab_add": "➕ Add Asset/Lease",
         "tab_edit": "✏️ Edit Record",
-        "tab_delete": "🗑️ Delete / Dispose",
+        "tab_delete": "🗑️ Dispose / Terminate",
+        "tab_archive": "📦 Disposed / Archived Assets",
         "table_header": "📋 Asset & Lease Directory",
+        "archive_header": "📋 Archived & Disposed Assets Log",
         "plant_all": "🌐 All Plants",
         "plant_tn": "🏭 Tay Ninh",
         "plant_hp": "⚓ Hai Phong",
@@ -174,8 +182,8 @@ ASSET_I18N = {
         "success_add": "✅ Added successfully!",
         "btn_save_edit": "💾 Save Changes",
         "success_edit": "✅ Updated successfully!",
-        "btn_delete": "🔥 Delete",
-        "success_delete": "✅ Record deleted.",
+        "btn_delete": "🔥 Dispose & Archive",
+        "success_delete": "✅ Disposed and moved to archive log.",
         "col_index": "No.",
         "col_code": "Code",
         "col_name": "Name",
@@ -184,7 +192,8 @@ ASSET_I18N = {
         "col_brand": "Brand/Landlord",
         "col_lease_period": "Lease Term",
         "col_status": "Status",
-        "col_cost": "Cost"
+        "col_cost": "Cost",
+        "col_archive_date": "Disposal Date"
     }
 }
 
@@ -228,7 +237,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 "類別": "車輛設備 (Vehicle)",
                 "存放廠區": "越南西寧廠 (Tay Ninh)",
                 "品牌型號": "Toyota - Fortuner 2.8L",
-                "车牌号": "61A-888.66",
+                "車牌號碼": "61A-888.66",
                 "目前狀態": "🟢 在用 (Active)",
                 "取得成本": 28000.0,
                 "租約起始日期": "-",
@@ -245,6 +254,21 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 "取得成本": 5500.0,
                 "租約起始日期": "2024-05-01",
                 "租約到期日期": "2026-12-31"
+            }
+        ]
+
+    # 初始化歷史報廢與封存資料庫
+    if "disposed_asset_db" not in st.session_state:
+        st.session_state.disposed_asset_db = [
+            {
+                "資產編號": "AST-OLD-999",
+                "資產名稱": "舊款倉儲手動堆高機 (已報廢)",
+                "類別": "倉儲與物流設備 (Warehouse & Logistics)",
+                "存放廠區": "越南西寧廠 (Tay Ninh)",
+                "品牌型號": "Noblift 2T",
+                "目前狀態": "🔴 報廢/停用 (Disposed)",
+                "取得成本": 1500.0,
+                "報廢歸檔日期": "2025-06-15"
             }
         ]
 
@@ -265,28 +289,28 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
     # 頂部統計指標
     total_assets = len(st.session_state.asset_db)
+    total_disposed = len(st.session_state.disposed_asset_db)
     total_cost = sum([float(a.get("取得成本", 0)) for a in st.session_state.asset_db])
     
     col_m1, col_m2, col_m3 = st.columns(3)
     with col_m1:
-        st.metric("總登記項目數", f"{total_assets} 項")
+        st.metric("在用總項目數", f"{total_assets} 項")
     with col_m2:
-        st.metric("總金額 / 總租金", f"${total_cost:,.2f} USD")
+        st.metric("歷史報廢/封存數", f"{total_disposed} 項")
     with col_m3:
         st.metric("廠區分布", "西寧廠 ｜ 海防廠")
 
     st.markdown("---")
 
-    # 建立主頁籤
-    tab_list, tab_add, tab_edit, tab_delete = st.tabs([
-        L["tab_list"], L["tab_add"], L["tab_edit"], L["tab_delete"]
+    # 建立五大頁籤 (總表、新增、修改、報廢刪除、歷史封存查詢)
+    tab_list, tab_add, tab_edit, tab_delete, tab_archive = st.tabs([
+        L["tab_list"], L["tab_add"], L["tab_edit"], L["tab_delete"], L["tab_archive"]
     ])
 
     # 1. 📑 廠區資產與合約總表與分類檢視
     with tab_list:
         st.markdown(f"### {L['table_header']}")
         
-        # 第一層：廠區大分類 (Tab)
         plant_tab_all, plant_tab_tn, plant_tab_hp = st.tabs([
             L["plant_all"], L["plant_tn"], L["plant_hp"]
         ])
@@ -297,7 +321,6 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
             else:
                 plant_data = [a for a in st.session_state.asset_db if plant_filter_name in str(a.get("存放廠區", ""))]
 
-            # 第二層：品項分類子分頁 (加入土地房屋租賃)
             cat_all, cat_lease, cat_prod, cat_car, cat_it, cat_office, cat_net, cat_qa, cat_wh, cat_safety = st.tabs([
                 L["cat_all"], L["cat_lease"], L["cat_prod"], L["cat_car"], L["cat_it"], L["cat_office"], L["cat_net"], L["cat_qa"], L["cat_wh"], L["cat_safety"]
             ])
@@ -464,23 +487,52 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
         else:
             st.info("目前無記錄可供修改。")
 
-    # 4. 🗑️ 刪除或報廢資產
+    # 4. 🗑️ 辦理資產報廢或合約終止 (自動歸檔)
     with tab_delete:
         st.markdown(f"### {L['tab_delete']}")
         if st.session_state.asset_db:
             del_options = {f"[{a.get('存放廠區', '')[:2]}] {a.get('資產編號', '')} - {a.get('資產名稱', '')}": a for a in st.session_state.asset_db}
-            sel_del_key = st.selectbox("選擇要刪除或報廢的記錄", list(del_options.keys()))
+            sel_del_key = st.selectbox("選擇要辦理報廢或終止的記錄", list(del_options.keys()))
             target_del = del_options[sel_del_key]
 
-            st.warning(f"⚠️ 您確定要刪除或報廢記錄 **{target_del.get('資產編號', '')} - {target_del.get('資產名稱', '')}** 嗎？此動作無法復原。")
+            st.warning(f"⚠️ 您確定要將 **{target_del.get('資產編號', '')} - {target_del.get('資產名稱', '')}** 辦理報廢/終止嗎？系統將會自動將其移至「歷史報廢封存資料庫」永久保存，以供未來查帳。")
             
             if st.button(L["btn_delete"], type="primary"):
                 target_code = target_del.get("資產編號", "")
+                # 1. 從在用資料庫移除
                 st.session_state.asset_db = [a for a in st.session_state.asset_db if a.get("資產編號", "") != target_code]
+                # 2. 標記狀態並加入歷史報廢資料庫
+                target_del["目前狀態"] = "🔴 報廢/停用 (Disposed)"
+                target_del["報廢歸檔日期"] = datetime.date.today().strftime("%Y-%m-%d")
+                st.session_state.disposed_asset_db.append(target_del)
+                
                 st.success(L["success_delete"])
                 st.rerun()
         else:
-            st.info("目前系統中無任何記錄可供刪除。")
+            st.info("目前系統中無任何在用資產可供報廢。")
+
+    # 5. 📦 歷史報廢與停用資產歸檔查詢
+    with tab_archive:
+        st.markdown(f"### {L['archive_header']}")
+        st.caption("在此可隨時調閱歷年來所有已報廢、退租或停用的設備與合約紀錄，確保稽核與查帳合規。")
+        
+        if st.session_state.disposed_asset_db:
+            archive_list = []
+            for idx, item in enumerate(st.session_state.disposed_asset_db, 1):
+                archive_list.append({
+                    L["col_index"]: idx,
+                    L["col_code"]: item.get("資產編號", "-"),
+                    L["col_name"]: item.get("資產名稱", "-"),
+                    L["col_category"]: item.get("類別", "-"),
+                    L["col_factory"]: item.get("存放廠區", "-"),
+                    L["col_brand"]: item.get("品牌型號", "-"),
+                    L["col_status"]: item.get("目前狀態", "-"),
+                    L["col_cost"]: f"${float(item.get('取得成本', 0)):,.2f} USD",
+                    L["col_archive_date"]: item.get("報廢歸檔日期", "-")
+                })
+            st.dataframe(pd.DataFrame(archive_list), use_container_width=True)
+        else:
+            st.info("目前歷史歸檔資料庫中尚無報廢或停用記錄。")
 
 def show(*args, **kwargs):
     render_asset_management_page(*args, **kwargs)
