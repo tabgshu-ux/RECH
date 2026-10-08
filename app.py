@@ -354,4 +354,68 @@ if selected_lang != st.session_state.current_lang:
     st.session_state.current_lang = selected_lang
     st.rerun()
 
-st.sidebar.markdown(f"**👤 {st.session_state.user_name}**
+st.sidebar.markdown(f"**👤 {st.session_state.user_name}** ({st.session_state.user_role.upper()})")
+if st.sidebar.button(lang_dict["logout_btn"], use_container_width=True):
+    st.session_state.logged_in = False
+    st.session_state.must_change_pwd = False
+    st.rerun()
+
+st.sidebar.markdown("---")
+
+dept_options = list(lang_dict["departments"].keys())
+current_role_clean = str(st.session_state.user_role).strip().lower()
+
+if current_role_clean == "security":
+    dept_options = ["👔 管理部 (Management Dept)"]
+    selected_parent_dept = dept_options[0]
+    st.sidebar.markdown(f"**{lang_dict['parent_header']}**")
+    feature_labels = ["🚗 廠區車輛進出口門禁與派車審核"] if st.session_state.current_lang == "繁體中文" else ["🚗 Quản lý xe ra vào & Phê duyệt"]
+    selected_feature_label = feature_labels[0]
+    target_route = "vehicle_gate"
+else:
+    is_executive_access = (
+        current_role_clean in ["admin", "chairman", "generalmanager", "vicemanager", "executive", "manager", "finance_manager"]
+    )
+
+    if not is_executive_access:
+        dept_options = [d for d in dept_options if "總經理室" not in d and "Executive" not in d and "Ban Giám đốc" not in d]
+
+    if current_role_clean != "admin":
+        dept_options = [d for d in dept_options if "資訊管理部" not in d and "IT" not in d and "Phòng IT" not in d]
+
+    selected_parent_dept = st.sidebar.radio(lang_dict["parent_header"], dept_options, index=0)
+
+    st.sidebar.markdown("---")
+    features_dict = lang_dict["departments"][selected_parent_dept]["features"]
+    feature_labels = list(features_dict.keys())
+
+    st.sidebar.caption(f"**{selected_parent_dept.split('(')[0].strip()}**")
+    selected_feature_label = st.sidebar.radio(lang_dict["sub_header"], feature_labels)
+    target_route = features_dict[selected_feature_label]
+
+curr_lang = st.session_state.current_lang
+
+if target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
+    if hasattr(executive_dashboard, "render_executive_dashboard_page"):
+        safe_call_module(executive_dashboard.render_executive_dashboard_page, sub_route=target_route, lang=curr_lang)
+
+elif target_route == "approval_center":
+    safe_call_module(approval_workflow.render_approval_center, lang=curr_lang)
+
+elif target_route == "eng_quote":
+    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=0)
+
+elif target_route == "eng_progress":
+    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=2)
+
+elif target_route == "field_daily_report":
+    safe_call_module(field_daily_report.render_field_daily_report, engine=engine, lang=curr_lang)
+
+elif target_route == "eng_design":
+    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=1)
+
+elif target_route == "procurement_ap":
+    safe_call_module(procurement_ap.render_procurement_ap_page, engine=engine, lang=curr_lang)
+
+elif target_route == "sales_order_ar":
+    safe_
