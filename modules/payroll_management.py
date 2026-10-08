@@ -22,7 +22,7 @@ PAYROLL_I18N = {
         "lbl_fuel": "油費補助 (Phụ cấp xăng) *",
         "lbl_phone": "電話補助 (Phụ cấp điện thoại) *",
         "lbl_title_allowance": "職務加給 (Phụ cấp chức vụ) *",
-        "lbl_driving": "汽車駕照獎金 (Tiền thưởng giấy phép xe hơi) *",
+        "lbl_driving": "執照獎金 (Tiền thưởng giấy phép xe hơi) *",
         "lbl_tips": "小費 / 其他獎金 (Tiền tips) *",
         "lbl_ot_normal": "平日加班時數 (1.5倍薪資) *",
         "lbl_ot_holiday": "國定假日加班時數 (3倍薪資 / 300%) *",
