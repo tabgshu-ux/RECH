@@ -8,15 +8,15 @@ import datetime
 EMP_I18N = {
     "繁體中文": {
         "title": "👤 管理部 - 員工個人檔案與人事管理中心",
-        "caption": "管理全公司員工基本資料、分派廠區（西寧廠/海防廠）、初始密碼設定與系統權限角色。",
+        "caption": "管理全公司員工基本資料、分派廠區（西寧廠/海防廠）、初始密碼設定、權限角色與離職歸檔管理。",
         "tab_list": "👥 員工名冊與資料檢視",
         "tab_add": "➕ 新增員工與初始帳密設定",
         "tab_edit": "✏️ 修改員工資料與重設密碼",
-        "tab_delete": "🗑️ 停用 / 刪除員工帳號",
-        "header_list": "📋 全公司在職員工名冊與權限總覽",
+        "tab_delete": "🗑️ 離職人員歸檔與狀態管理",
+        "header_list": "📋 全公司在職與離職員工歷史名冊總覽",
         "header_add": "➕ 新增員工個人檔案與初始帳密設定",
         "header_edit": "✏️ 修改員工基本資料與權限",
-        "header_delete": "🗑️ 停用或刪除離職員工帳號",
+        "header_delete": "🗑️ 員工離職歸檔與停用帳號管理",
         "lbl_code": "員工工號 (登入帳號) *",
         "lbl_name": "員工姓名 (Employee Name) *",
         "lbl_factory": "工作廠區 (Factory) *",
@@ -34,8 +34,8 @@ EMP_I18N = {
         "success_add": "✅ 成功新增員工 `{name}` (工號: `{code}`)！系統已自動勾選『首次登入強制修改密碼』。",
         "btn_update": "💾 儲存修改後員工資料",
         "success_update": "✅ 員工 `{code}` 資料已成功更新！",
-        "btn_delete": "⚠️ 確認停用/刪除此員工帳號",
-        "success_delete": "✅ 員工 `{code}` 已自系統中停用。",
+        "btn_archive": "📂 確認將此員工歸檔為「離職人員」並停用帳號",
+        "success_archive": "✅ 員工 `{code}` 已成功歸檔為離職狀態，並保留於歷史名冊中。",
         "search_ph": "🔍 搜尋員工姓名或工號...",
         "col_index": "STT",
         "col_code": "工號",
@@ -48,15 +48,15 @@ EMP_I18N = {
     },
     "Tiếng Việt": {
         "title": "🏢 Quản lý Nhân sự & Hồ sơ Nhân viên",
-        "caption": "Quản lý thông tin nhân viên, phân bổ nhà máy (Tây Ninh/Hải Phòng), mật khẩu ban đầu và phân quyền hệ thống.",
+        "caption": "Quản lý thông tin nhân viên, phân bổ nhà máy, phân quyền và lưu trữ hồ sơ nhân viên nghỉ việc.",
         "tab_list": "👥 Danh sách Nhân viên",
         "tab_add": "➕ Thêm Nhân viên mới",
         "tab_edit": "✏️ Chỉnh sửa Thông tin",
-        "tab_delete": "🗑️ Vô hiệu hóa Tài khoản",
-        "header_list": "📋 Danh sách nhân viên toàn công ty",
+        "tab_delete": "🗑️ Quản lý nhân viên nghỉ việc",
+        "header_list": "📋 Danh sách nhân viên toàn công ty (Bao gồm lịch sử)",
         "header_add": "➕ Thêm hồ sơ nhân viên và mật khẩu ban đầu",
         "header_edit": "✏️ Cập nhật thông tin nhân viên",
-        "header_delete": "🗑️ Xóa hoặc vô hiệu hóa tài khoản nhân viên",
+        "header_delete": "🗑️ Lưu trữ và quản lý nhân viên thôi việc",
         "lbl_code": "Mã nhân viên (Tên đăng nhập) *",
         "lbl_name": "Họ tên nhân viên *",
         "lbl_factory": "Nhà máy làm việc *",
@@ -74,8 +74,8 @@ EMP_I18N = {
         "success_add": "✅ Đã thêm nhân viên `{name}` (Mã: `{code}`) thành công!",
         "btn_update": "💾 Lưu thay đổi",
         "success_update": "✅ Đã cập nhật thông tin nhân viên `{code}`!",
-        "btn_delete": "⚠️ Xác nhận vô hiệu hóa tài khoản",
-        "success_delete": "✅ Đã vô hiệu hóa nhân viên `{code}`.",
+        "btn_archive": "📂 Xác nhận lưu trữ nhân viên nghỉ việc",
+        "success_archive": "✅ Đã chuyển nhân viên `{code}` sang trạng thái nghỉ việc và lưu vào lịch sử.",
         "search_ph": "🔍 Tìm kiếm theo tên hoặc mã NV...",
         "col_index": "STT",
         "col_code": "Mã NV",
@@ -88,15 +88,15 @@ EMP_I18N = {
     },
     "English": {
         "title": "👤 Management - Employee Profile & HR Center",
-        "caption": "Manage employee records, plant allocation (Tay Ninh/Hai Phong), initial passwords, and system roles.",
+        "caption": "Manage employee records, plant allocation, roles, and resigned employee archival.",
         "tab_list": "👥 Employee Directory",
         "tab_add": "➕ Add New Employee",
         "tab_edit": "✏️ Edit Employee Profile",
-        "tab_delete": "🗑️ Disable / Delete Account",
-        "header_list": "📋 Company Employee Directory & Role Overview",
+        "tab_delete": "🗑️ Resigned Employee Archive",
+        "header_list": "📋 Company Employee Directory & Resigned History",
         "header_add": "➕ Add Employee Profile & Initial Credentials",
         "header_edit": "✏️ Update Employee Information",
-        "header_delete": "🗑️ Deactivate Employee Account",
+        "header_delete": "🗑️ Archive Resigned Employee Accounts",
         "lbl_code": "Employee ID (Login Username) *",
         "lbl_name": "Employee Name *",
         "lbl_factory": "Work Plant *",
@@ -114,8 +114,8 @@ EMP_I18N = {
         "success_add": "✅ Successfully added employee `{name}` (ID: `{code}`)!",
         "btn_update": "💾 Save Changes",
         "success_update": "✅ Employee `{code}` updated successfully!",
-        "btn_delete": "⚠️ Confirm Deactivation",
-        "success_delete": "✅ Employee `{code}` deactivated.",
+        "btn_archive": "📂 Confirm Archival as Resigned",
+        "success_archive": "✅ Employee `{code}` has been archived as resigned.",
         "search_ph": "🔍 Search by name or ID...",
         "col_index": "No.",
         "col_code": "Emp ID",
@@ -199,12 +199,22 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         L["tab_list"], L["tab_add"], L["tab_edit"], L["tab_delete"]
     ])
 
-    # 1. 員工名冊
+    # 1. 員工名冊（含在職與離職歷史名冊）
     with tab_list:
         st.markdown(f"### {L['header_list']}")
-        search_q = st.text_input(L["search_ph"], key="emp_search_box")
+        
+        col_f1, col_f2 = st.columns([2, 1])
+        with col_f1:
+            search_q = st.text_input(L["search_ph"], key="emp_search_box")
+        with col_f2:
+            status_filter = st.selectbox("狀態篩選 (Status Filter)", ["全部 (All)", "🟢 在職 (Active)", "🔴 離職 (Resigned)"])
 
         data = st.session_state.employee_db
+        if status_filter == "🟢 在職 (Active)":
+            data = [e for e in data if "在職" in e["狀態"]]
+        elif status_filter == "🔴 離職 (Resigned)":
+            data = [e for e in data if "離職" in e["狀態"]]
+
         if search_q:
             data = [
                 e for e in data 
@@ -227,7 +237,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 })
             st.dataframe(pd.DataFrame(display_list), use_container_width=True)
         else:
-            st.info("目前尚無員工資料。")
+            st.info("目前尚無符合條件的員工記錄。")
 
     # 2. 新增員工
     with tab_add:
@@ -275,7 +285,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                             "狀態": "🟢 在職 (Active)"
                         })
                         st.success(L["success_add"].format(name=e_name, code=e_code))
-                        st.rerun() # 👈 新增成功後立即強制重新整理頁面，同步顯示在名冊中
+                        st.rerun()
                 else:
                     st.warning("⚠️ 請填寫員工工號與姓名！")
 
@@ -314,20 +324,24 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         else:
             st.info("尚無員工可供修改。")
 
-    # 4. 刪除員工
+    # 4. 離職人員歸檔與狀態管理（保留歷史名冊，不直接刪除）
     with tab_delete:
         st.markdown(f"### {L['header_delete']}")
-        if st.session_state.employee_db:
-            del_codes = [e["工號"] + " - " + e["姓名"] for e in st.session_state.employee_db]
-            sel_del = st.selectbox("選擇要停用的員工", del_codes, key="del_emp_select")
-            del_code = sel_del.split(" - ")[0]
+        active_emps = [e for e in st.session_state.employee_db if "在職" in e["狀態"]]
+        
+        if active_emps:
+            del_codes = [e["工號"] + " - " + e["姓名"] for e in active_emps]
+            sel_del = st.selectbox("選擇要辦理離職歸檔的員工", del_codes, key="archive_emp_select")
+            target_code = sel_del.split(" - ")[0]
 
-            if st.button(L["btn_delete"], type="secondary"):
-                st.session_state.employee_db = [e for e in st.session_state.employee_db if e["工號"] != del_code]
-                st.success(L["success_delete"].format(code=del_code))
+            if st.button(L["btn_archive"], type="secondary"):
+                for e in st.session_state.employee_db:
+                    if e["工號"] == target_code:
+                        e["狀態"] = "🔴 離職 (Resigned)"
+                st.success(L["success_archive"].format(code=target_code))
                 st.rerun()
         else:
-            st.info("尚無員工可供停用。")
+            st.info("目前沒有在職員工可供辦理離職歸檔。")
 
 def show(*args, **kwargs):
     render_employee_management(*args, **kwargs)
