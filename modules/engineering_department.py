@@ -10,8 +10,6 @@ ENG_DEPT_I18N = {
     "繁體中文": {
         "title": "🛠️ 裕豐電機工業 - 工程管理中心與設計部門",
         "caption": "涵蓋工程報價系統、水電工程驗收與進度追蹤（連動財務應收帳款 AR）、現場日報表與設計圖庫 Storage。",
-        
-        # 報價系統
         "quote_title": "⚙️ 配電盤與工程專案報價系統 (Quotation, Discount & AR Transfer)",
         "quote_caption": "工程管理專用報價：填入專案資訊、連動倉庫庫存與單價，支援業務折讓議價，並一鍵傳動至財務應收帳款。",
         "sec1_title": "📋 1. 工程專案基本資訊",
@@ -32,8 +30,6 @@ ENG_DEPT_I18N = {
         "lbl_final_override": "✍️ 業務最終議價/折讓後報價總金額 (可手動修改減免):",
         "btn_transfer_ar": "🚀 一鍵傳動至財務應收帳款 (AR) 系統",
         "success_ar": "✅ 成功！工程報價已成功傳動至財務部應收帳款（AR）模組！",
-        
-        # 設計圖庫 Storage
         "design_title": "📐 配電盤電氣與機構設計圖庫 Storage 雲端中心",
         "design_caption": "設計工程師可在此上傳 CAD/PDF/圖片圖檔至公司內部 Storage，供管理中心與各廠區直接下載。",
         "upload_header": "📤 上傳新設計圖檔至公司 Storage",
@@ -49,8 +45,6 @@ ENG_DEPT_I18N = {
         "col_version": "上傳時間",
         "col_designer": "上傳人員",
         "col_action": "圖檔下載",
-        
-        # 工程驗收進度
         "prog_title": "⚡ 全球廠區水電工程驗收、進度追蹤與 AR 應收款連動中心",
         "prog_caption": "即時監控工程施工進度、預定驗收時間，並與財務部應收帳款（AR）即時通訊連動進行請款催收。",
         "kpi1_title": "在手水電專案總數",
@@ -242,7 +236,6 @@ def render_engineering_department_page(engine=None, lang=None, **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 🎯 智慧解析左側點選的子功能
     sub_action = (
         kwargs.get("sub_action") 
         or st.session_state.get("current_sub_action") 
@@ -261,9 +254,6 @@ def render_engineering_department_page(engine=None, lang=None, **kwargs):
     else:
         current_mode = "quote"
 
-    # ----------------------------------------------------
-    # 1. 📋 [工程] 配電盤與工程專案報價
-    # ----------------------------------------------------
     if current_mode == "quote":
         st.markdown(f"### {L['quote_title']}")
         st.caption(L['quote_caption'])
@@ -332,9 +322,6 @@ def render_engineering_department_page(engine=None, lang=None, **kwargs):
             st.success(L["success_ar"])
             st.info(f"📌 **傳動詳情 (Transferred to AR)**: {vendor_name} | {proj_name} | 最終報價金額: **${final_quoted_amount:,.2f} {currency}** (含 VAT {vat_rate}%)")
 
-    # ----------------------------------------------------
-    # 2. 📊 [工程] 水電工程驗收與進度追蹤 (連動財務 AR)
-    # ----------------------------------------------------
     elif current_mode == "progress":
         st.markdown(f"### {L['prog_title']}")
         st.caption(L['prog_caption'])
@@ -379,9 +366,6 @@ def render_engineering_department_page(engine=None, lang=None, **kwargs):
         if st.button("📡 立即同步驗收進度並通知財務 AR 進行請款催收", type="primary"):
             st.success("✅ 已成功向財務部應收帳款（AR）模組發送即時通知！財務人員已同步收到各專案未收款與驗收時間點。")
 
-    # ----------------------------------------------------
-    # 3. 📝 [工程] 現場工程日報表與出工統計
-    # ----------------------------------------------------
     elif current_mode == "daily":
         st.markdown("### 📝 現場工程日報表與出工統計 (Daily Construction Reports)")
         st.caption("記錄每日台幹與越籍工人出工數、施工進度摘要與工地異常狀況回報。")
@@ -416,9 +400,6 @@ def render_engineering_department_page(engine=None, lang=None, **kwargs):
                 st.success("✅ 現場施工日報表已成功送出與歸檔！")
                 st.rerun()
 
-    # ----------------------------------------------------
-    # 4. 📐 [設計] 配電盤電氣與機構設計圖庫 Storage
-    # ----------------------------------------------------
     elif current_mode == "design":
         st.markdown(f"### {L['design_title']}")
         st.caption(L['design_caption'])
@@ -426,4 +407,25 @@ def render_engineering_department_page(engine=None, lang=None, **kwargs):
         if "storage_drawings" not in st.session_state:
             st.session_state.storage_drawings = [
                 {L["col_drawing_no"]: "DWG-2026-MBD-01", L["col_project_name"]: "越南新順楠梓電子廠 (M&E)", L["col_spec"]: "MSB_2000A_Schematic.pdf", L["col_version"]: "2026-10-01 10:30", L["col_designer"]: "Nguyễn Văn An", L["col_action"]: "📥 Download"},
-                {L["col_drawing_no"]: "DWG-2026-MBD-02", L["col_project_name"]: "平陽美德金屬加工廠", L["col_spec"]: "Sub_DB_Layout.dwg", L["col_version"]: "2026-10-03 14:1
+                {L["col_drawing_no"]: "DWG-2026-MBD-02", L["col_project_name"]: "平陽美德金屬加工廠", L["col_spec"]: "Sub_DB_Layout.dwg", L["col_version"]: "2026-10-03 14:15", L["col_designer"]: "Trần Minh Quân", L["col_action"]: "📥 Download"},
+                {L["col_drawing_no"]: "DWG-2026-MBD-03", L["col_project_name"]: "隆安宏遠精密機械廠", L["col_spec"]: "Substation_Busbar.png", L["col_version"]: "2026-10-05 09:00", L["col_designer"]: "Lê Hoàng Phúc", L["col_action"]: "📥 Download"},
+            ]
+
+        with st.form("upload_storage_form"):
+            st.markdown(f"#### {L['upload_header']}")
+            u_col1, u_col2 = st.columns(2)
+            with u_col1:
+                new_dwg_no = st.text_input(L["lbl_dwg_no"], placeholder="例如: DWG-2026-04")
+            with u_col2:
+                new_proj_name = st.text_input(L["lbl_dwg_name"], placeholder="例如: 北寧富泰光電廠配電盤圖")
+            
+            uploaded_file = st.file_uploader(L["lbl_file_uploader"], type=["pdf", "dwg", "png", "jpg", "zip"])
+            
+            submitted_upload = st.form_submit_button(L["btn_upload"], use_container_width=True)
+            if submitted_upload:
+                if new_dwg_no and new_proj_name and uploaded_file:
+                    file_info = {
+                        L["col_drawing_no"]: new_dwg_no,
+                        L["col_project_name"]: new_proj_name,
+                        L["col_spec"]: uploaded_file.name,
+                        L["col_version"]: datetime.datetime.now().strftime("%Y-%m-%d %H:%
