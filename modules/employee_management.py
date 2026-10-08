@@ -37,7 +37,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     with tab_add:
         with st.form("add_employee_form"):
             st.markdown("### 📌 步驟 1: 選擇員工國籍/廠區 (選擇後即時切換下方欄位)")
-            # 國籍擴充：包含越南、台灣、中國與其他
             nat_choice = st.selectbox("員工國籍 / 所屬廠區 *", ["越南 (Vietnam)", "台灣 (Taiwan)", "中國 (China)", "其他 (Other)"], key="add_nat_choice")
             
             st.markdown("---")
@@ -52,7 +51,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 e_title = st.text_input("職位名稱", placeholder="例如: 現場工程師 / 技術員", key="add_e_title")
                 e_role = st.selectbox("系統權限角色 (Role)", ["staff (一般員工)", "manager (部門主管)", "security (保全)", "admin (系統管理員)"], key="add_e_role")
 
-            # 雙地址欄位：戶籍地址與現居/暫住地址分開
             ac1, ac2 = st.columns(2)
             with ac1:
                 e_perm_addr = st.text_input("戶籍地址 (Permanent Address / Hộ khẩu) *", placeholder="請輸入戶籍地址...", key="add_e_perm_addr")
@@ -120,6 +118,8 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
 
             with st.form("edit_employee_form"):
                 st.markdown("### ✏️ 修改員工檔案")
+                # 補上工號欄位，讓尚未確定的工號可以自由修改調整
+                ed_id = st.text_input("工號 (Emp ID)", value=target_emp["工號"], key="edit_ed_id")
                 ed_name = st.text_input("員工姓名", value=target_emp["姓名"], key="edit_ed_name")
                 ed_title = st.text_input("職稱", value=target_emp["職稱"], key="edit_ed_title")
                 ed_phone = st.text_input("電話", value=target_emp["電話"], key="edit_ed_phone")
@@ -128,13 +128,14 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
 
                 if st.form_submit_button("💾 儲存修改", type="primary"):
                     for e in st.session_state.employee_db:
-                        if e["工號"] == target_emp["工號"]:
+                        if e["工號"] == target_emp["工號"] or e["姓名"] == target_emp["姓名"]:
+                            e["工號"] = ed_id
                             e["姓名"] = ed_name
                             e["職稱"] = ed_title
                             e["電話"] = ed_phone
                             e["戶籍地址"] = ed_perm_addr
                             e["現居地址"] = ed_temp_addr
-                    st.success(f"✅ 員工 {target_emp['工號']} 資料更新成功！")
+                    st.success(f"✅ 員工資料更新成功！")
                     st.rerun()
         else:
             st.info("目前無員工資料可供修改。")
