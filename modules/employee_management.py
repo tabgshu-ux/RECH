@@ -2,19 +2,19 @@ import streamlit as st
 import pandas as pd
 
 def render_employee_management(engine=None, t=None, lang="繁體中文", **kwargs):
-    # 🌐 人事管理模組多語系字典 (i18n)
     EMP_I18N = {
         "繁體中文": {
             "title": "👤 管理部 - 員工個人檔案與人事管理",
-            "info": "在此維護全廠區員工個人檔案、保險資料、戶籍/暫住地址、保險醫院與人事資料。",
+            "info": "在此維護全廠區員工個人檔案、保險資料、戶籍/暫住地址、保險醫院與初始登入密碼設定。",
             "search_label": "🔍 搜尋員工姓名 / 工號 / 職稱",
             "search_ph": "輸入關鍵字搜尋員工...",
             "list_title": "### 📋 現有在職員工名冊",
             "resigned_title": "### 🚪 離職人員歸檔名冊",
             "tabs": ["➕ 新增員工", "✏️ 修改員工資料", "🗑️ 刪除或離職"],
-            "add_header": "### ➕ 新增員工個人檔案與保險/地址資料",
-            "lbl_id": "員工工號",
+            "add_header": "### ➕ 新增員工個人檔案與初始帳密設定",
+            "lbl_id": "員工工號 (登入帳號)",
             "lbl_name": "員工姓名 (Employee Name)",
+            "lbl_pwd": "初始登入密碼 (預設)",
             "lbl_nat": "國籍",
             "nat_opts": ["台灣 (Taiwan)", "越南 (Vietnam)", "其他 (Other)"],
             "lbl_perm": "戶籍地址 (Permanent Address / Hộ khẩu thường trú)",
@@ -28,10 +28,10 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             "phone_ph": "0912...",
             "lbl_insurance": "保險資料 / 社會保險編號 (Insurance / BHXH)",
             "lbl_hospital": "保險醫院 / 就醫指定醫院 (Insurance Hospital)",
-            "btn_add": "🚀 立即新增員工",
-            "success_add": "✅ 員工 {name} 新增成功！",
-            "warn_name": "⚠️ 請填寫員工姓名！",
-            "edit_header": "### ✏️ 修改員工檔案與保險/地址資料",
+            "btn_add": "🚀 立即新增員工並建立帳號",
+            "success_add": "✅ 員工 {name} 新增成功！初始密碼已設定，首次登入將強制要求修改。",
+            "warn_name": "⚠️ 請填寫員工姓名與工號！",
+            "edit_header": "### ✏️ 修改員工檔案與重設密碼",
             "select_edit": "選擇要修改的員工",
             "btn_save_edit": "💾 儲存修改",
             "success_edit": "✅ 員工 {id} 資料更新成功！",
@@ -47,15 +47,16 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         },
         "Tiếng Việt": {
             "title": "👤 Quản lý Nhân sự & Hồ sơ Nhân viên",
-            "info": "Nơi quản lý hồ sơ nhân viên, bảo hiểm, địa chỉ và thông tin chi tiết toàn nhà máy.",
+            "info": "Quản lý hồ sơ nhân viên, bảo hiểm, địa chỉ và mật khẩu đăng nhập ban đầu.",
             "search_label": "🔍 Tìm kiếm nhân viên theo tên / Mã NV / Chức vụ",
             "search_ph": "Nhập từ khóa tìm kiếm...",
             "list_title": "### 📋 Danh sách Nhân viên hiện tại",
             "resigned_title": "### 🚪 Danh sách Nhân viên đã nghỉ việc",
             "tabs": ["➕ Thêm nhân viên", "✏️ Sửa thông tin", "🗑️ Xóa hoặc Nghỉ việc"],
-            "add_header": "### ➕ Thêm hồ sơ nhân sự, bảo hiểm & địa chỉ mới",
-            "lbl_id": "Mã nhân viên (Employee ID)",
+            "add_header": "### ➕ Thêm nhân sự & Cấp mật khẩu ban đầu",
+            "lbl_id": "Mã nhân viên (Tài khoản đăng nhập)",
             "lbl_name": "Họ tên nhân viên (Employee Name)",
+            "lbl_pwd": "Mật khẩu ban đầu",
             "lbl_nat": "Quốc tịch (Nationality)",
             "nat_opts": ["Việt Nam (Vietnam)", "Đài Loan (Taiwan)", "Khác (Other)"],
             "lbl_perm": "Hộ khẩu thường trú (Permanent Address)",
@@ -63,16 +64,16 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             "lbl_fac": "Khu vực nhà máy (Factory)",
             "lbl_dept": "Phòng ban (Department)",
             "lbl_title": "Chức vụ / Vị trí (Job Title)",
-            "title_ph": "Ví dụ: Chủ tịch / Tổng Giám đốc / Kỹ sư hiện trường...",
+            "title_ph": "Ví dụ: Chủ tịch / Tổng Giám đốc / Kỹ sư...",
             "lbl_role": "Vai trò phân quyền hệ thống (System Role)",
             "lbl_phone": "Số điện thoại liên hệ",
             "phone_ph": "0912...",
             "lbl_insurance": "Số bảo hiểm xã hội (Insurance / BHXH)",
             "lbl_hospital": "Bệnh viện khám chữa bệnh BHYT (Hospital)",
-            "btn_add": "🚀 Thêm nhân viên mới",
-            "success_add": "✅ Thêm nhân viên {name} thành công!",
-            "warn_name": "⚠️ Vui lòng nhập tên nhân viên!",
-            "edit_header": "### ✏️ Chỉnh sửa hồ sơ nhân sự & bảo hiểm",
+            "btn_add": "🚀 Thêm nhân viên và tạo tài khoản",
+            "success_add": "✅ Thêm nhân viên {name} thành công! Mật khẩu ban đầu đã được cấp.",
+            "warn_name": "⚠️ Vui lòng nhập tên và mã nhân viên!",
+            "edit_header": "### ✏️ Chỉnh sửa hồ sơ & Đặt lại mật khẩu",
             "select_edit": "Chọn nhân viên cần sửa",
             "btn_save_edit": "💾 Lưu thay đổi",
             "success_edit": "✅ Cập nhật thông tin nhân viên {id} thành công!",
@@ -80,23 +81,24 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             "del_header": "### 🗑️ Xóa trùng lặp hoặc Thủ tục nghỉ việc",
             "select_del": "Chọn nhân viên cần xử lý",
             "warn_del_title": "Bạn đang xử lý nhân viên:",
-            "btn_del_hard": "🔥 Xóa hoàn toàn (Xóa bản ghi trùng)",
-            "btn_del_resign": "🚪 Làm thủ tục nghỉ việc (Chuyển sang lưu trữ)",
-            "success_hard": "✅ Đã xóa hoàn toàn nhân viên {id} khỏi hệ thống!",
+            "btn_del_hard": "🔥 Xóa hoàn toàn",
+            "btn_del_resign": "🚪 Làm thủ tục nghỉ việc",
+            "success_hard": "✅ Đã xóa hoàn toàn nhân viên {id}!",
             "success_resign": "🚪 Đã chuyển nhân viên {id} vào danh sách nghỉ việc!",
             "no_emp_del": "Hiện không có nhân viên nào để xử lý."
         },
         "English": {
             "title": "👤 Management Dept - HR & Employee Records",
-            "info": "Manage employee profiles, insurance, addresses, and personnel records across all plants.",
+            "info": "Manage employee profiles, initial passwords, insurance, and addresses.",
             "search_label": "🔍 Search Employee Name / ID / Title",
             "search_ph": "Enter keyword to search...",
             "list_title": "### 📋 Current Employee Directory",
             "resigned_title": "### 🚪 Resigned Employee Archive",
             "tabs": ["➕ Add Employee", "✏️ Edit Employee", "🗑️ Delete or Resign"],
-            "add_header": "### ➕ Add New Employee Profile & Insurance/Address",
-            "lbl_id": "Employee ID",
+            "add_header": "### ➕ Add New Employee & Initial Password",
+            "lbl_id": "Employee ID (Username)",
             "lbl_name": "Employee Name",
+            "lbl_pwd": "Initial Password",
             "lbl_nat": "Nationality",
             "nat_opts": ["Taiwan (Taiwan)", "Vietnam (Vietnam)", "Other (Other)"],
             "lbl_perm": "Permanent Address",
@@ -111,9 +113,9 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             "lbl_insurance": "Insurance / Social Security No. (BHXH)",
             "lbl_hospital": "Designated Hospital (Bệnh viện KCB)",
             "btn_add": "🚀 Add New Employee",
-            "success_add": "✅ Employee {name} added successfully!",
-            "warn_name": "⚠️ Please enter employee name!",
-            "edit_header": "### ✏️ Edit Employee Profile & Details",
+            "success_add": "✅ Employee {name} added successfully! Must change password on first login.",
+            "warn_name": "⚠️ Please enter employee name and ID!",
+            "edit_header": "### ✏️ Edit Employee Profile & Password Reset",
             "select_edit": "Select Employee to Edit",
             "btn_save_edit": "💾 Save Changes",
             "success_edit": "✅ Employee {id} updated successfully!",
@@ -121,9 +123,9 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             "del_header": "### 🗑️ Delete Duplicate or Process Resignation",
             "select_del": "Select Employee to Process",
             "warn_del_title": "You are processing employee:",
-            "btn_del_hard": "🔥 Completely Delete (Remove Duplicate)",
-            "btn_del_resign": "🚪 Process Resignation (Move to Archive)",
-            "success_hard": "✅ Employee {id} completely deleted from system!",
+            "btn_del_hard": "🔥 Completely Delete",
+            "btn_del_resign": "🚪 Process Resignation",
+            "success_hard": "✅ Employee {id} completely deleted!",
             "success_resign": "🚪 Employee {id} successfully moved to resignation archive!",
             "no_emp_del": "No employee records available for processing."
         }
@@ -138,12 +140,14 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     if "employee_db" not in st.session_state:
         st.session_state.employee_db = [
             {
-                "工號": "EMP-001", "姓名": "張董事長", "國籍": "台灣 (Taiwan)", "工作廠區": "西寧廠 (Tay Ninh)", "部門": "總經理室", "職稱": "董事長 (Chairman)", "角色": "Chairman", "電話": "0912345678", 
-                "戶籍地址": "台北市信義區...", "暫住地址": "西寧省廠區宿舍", "保險資料": "TW-INS-888899", "保險醫院": "台北榮民總醫院", "生物辨識代碼": "FACE-BIO-888899"
+                "工號": "admin", "姓名": "系統管理員", "國籍": "台灣 (Taiwan)", "工作廠區": "台灣總部", "部門": "資訊管理部", "職稱": "Admin", "角色": "admin", "電話": "0912345678", 
+                "密碼": "123", "must_change_password": False,
+                "戶籍地址": "台北市...", "暫住地址": "台北市...", "保險資料": "TW-INS-01", "保險醫院": "台大醫院"
             },
             {
                 "工號": "EMP-002", "姓名": "Nguyễn Văn A", "國籍": "越南 (Vietnam)", "工作廠區": "西寧廠 (Tay Ninh)", "部門": "總經理室", "職稱": "總經理 (General Manager)", "角色": "GeneralManager", "電話": "0918999080", 
-                "戶籍地址": "Tỉnh Tây Ninh, Huyện Trảng Bàng", "暫住地址": "Khu công nghiệp Thành Thành Công", "保險資料": "VN-BHXH-0192834", "保險醫院": "Bệnh viện Đa khoa Tây Ninh", "生物辨識代碼": "FACE-BIO-100234"
+                "密碼": "123456", "must_change_password": True,  # 👈 標記首次登入必須修改密碼
+                "戶籍地址": "Tỉnh Tây Ninh", "暫住地址": "Khu công nghiệp", "保險資料": "VN-BHXH-01", "保險醫院": "Bệnh viện Tây Ninh"
             }
         ]
 
@@ -152,11 +156,11 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
 
     if "factory_list" not in st.session_state:
         st.session_state.factory_list = [
-            {"廠區編號": "FAC-01", "廠區名稱": "西寧廠 (Tay Ninh)", "負責人": "張董事長", "電話": "0912345678"},
-            {"廠區編號": "FAC-02", "廠區名稱": "海防廠 (Hai Phong)", "負責人": "阮文強", "電話": "0918999080"}
+            {"廠區編號": "FAC-01", "廠區名稱": "西寧廠 (Tay Ninh)", "負責人與職位": "張董事長", "聯絡電話": "0912345678"},
+            {"廠區編號": "FAC-02", "廠區名稱": "海防廠 (Hai Phong)", "負責人與職位": "阮文強", "聯絡電話": "0918999080"}
         ]
 
-    search_q = st.text_input(L["search_label"], placeholder=L["search_ph"])
+    search_q = st.text_input(L["search_label"], placeholder=L["search_ph"], key="emp_search_u")
     
     filtered_emp = [
         e for e in st.session_state.employee_db 
@@ -164,110 +168,35 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     ] if search_q else st.session_state.employee_db
 
     st.markdown(L["list_title"])
-    st.dataframe(pd.DataFrame(filtered_emp), use_container_width=True)
-
-    if st.session_state.resigned_employee_db:
-        st.markdown(L["resigned_title"])
-        st.dataframe(pd.DataFrame(st.session_state.resigned_employee_db), use_container_width=True)
+    st.dataframe(pd.DataFrame([{k: v for k, v in e.items() if k != "密碼"} for e in filtered_emp]), use_container_width=True)
 
     tab_add, tab_edit, tab_del = st.tabs(L["tabs"])
 
     with tab_add:
-        with st.form("add_employee_form"):
+        with st.form("add_employee_form_u"):
             st.markdown(L["add_header"])
             c1, c2 = st.columns(2)
             with c1:
                 e_id = st.text_input(L["lbl_id"], value=f"EMP-{len(st.session_state.employee_db)+1:03d}")
                 e_name = st.text_input(L["lbl_name"])
+                e_pwd = st.text_input(L["lbl_pwd"], value="123456", type="password") # 預設初始密碼
                 e_nat = st.selectbox(L["lbl_nat"], L["nat_opts"])
                 e_perm_addr = st.text_input(L["lbl_perm"])
                 e_temp_addr = st.text_input(L["lbl_temp"])
             with c2:
                 fac_choices = [f"{fac['廠區名稱']}" for fac in st.session_state.factory_list]
-                if not fac_choices:
-                    fac_choices = ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"]
                 e_fac = st.selectbox(L["lbl_fac"], fac_choices)
                 
-                # 部門多語系對應
-                if active_lang == "Tiếng Việt":
-                    dept_display_map = {
-                        "總經理室": "Ban Giám đốc (Executive Office)",
-                        "管理部": "Phòng Quản lý (Management Dept)",
-                        "工程與設計管理中心": "Trung tâm Kỹ thuật & Thiết kế",
-                        "生產部": "Phòng Sản xuất (Production Dept)"
-                    }
-                elif active_lang == "English":
-                    dept_display_map = {
-                        "總經理室": "Executive Office",
-                        "管理部": "Management Dept",
-                        "工程與設計管理中心": "Engineering & Design Center",
-                        "生產部": "Production Dept"
-                    }
-                else:
-                    dept_display_map = {
-                        "總經理室": "總經理室 (Executive Office)",
-                        "管理部": "管理部",
-                        "工程與設計管理中心": "工程與設計管理中心",
-                        "生產部": "生產部"
-                    }
-                
-                dept_keys = list(dept_display_map.keys())
-                dept_sel = st.selectbox(L["lbl_dept"], dept_keys, format_func=lambda x: dept_display_map[x])
-                e_dept = dept_sel
-
+                e_dept = st.selectbox(L["lbl_dept"], ["總經理室", "管理部", "工程與設計管理中心", "生產部"])
                 e_title = st.text_input(L["lbl_title"], placeholder=L["title_ph"])
-
-                # 角色多語系對應
-                if active_lang == "Tiếng Việt":
-                    role_display_map = {
-                        "Chairman": "Chủ tịch HĐQT (Chairman)",
-                        "GeneralManager": "Tổng Giám đốc (General Manager)",
-                        "ViceManager": "Phó Tổng Giám đốc (Vice GM)",
-                        "AVP": "Phó Giám đốc / Trợ lý cấp cao (AVP)",
-                        "DeputyAVP": "Phó Trợ lý cấp cao (Deputy AVP)",
-                        "Manager": "Quản lý / Trưởng phòng (Manager)",
-                        "AdminManager": "Quản lý Hành chính (Admin Manager)",
-                        "FinanceManager": "Quản lý Tài chính (Finance Manager)",
-                        "Staff": "Nhân viên chung (Staff)",
-                        "admin": "Quản trị hệ thống (Admin)"
-                    }
-                elif active_lang == "English":
-                    role_display_map = {
-                        "Chairman": "Chairman",
-                        "GeneralManager": "General Manager",
-                        "ViceManager": "Vice General Manager",
-                        "AVP": "Assistant Vice President (AVP)",
-                        "DeputyAVP": "Deputy AVP",
-                        "Manager": "Manager",
-                        "AdminManager": "Administrative Manager",
-                        "FinanceManager": "Finance Manager",
-                        "Staff": "General Staff",
-                        "admin": "System Administrator (Admin)"
-                    }
-                else:
-                    role_display_map = {
-                        "Chairman": "董事長 (Chairman)",
-                        "GeneralManager": "總經理 (General Manager)",
-                        "ViceManager": "副總經理 (Vice General Manager)",
-                        "AVP": "協理 (AVP)",
-                        "DeputyAVP": "副協理 (Deputy AVP)",
-                        "經理": "經理 (Manager)",
-                        "AdminManager": "行政主管 (Admin Manager)",
-                        "FinanceManager": "財務主管 (Finance Manager)",
-                        "Staff": "一般員工 (Staff)",
-                        "admin": "系統管理員 (Admin)"
-                    }
-
-                role_keys = list(role_display_map.keys())
-                role_sel = st.selectbox(L["lbl_role"], role_keys, format_func=lambda x: role_display_map[x])
-                e_role = role_sel
+                e_role = st.selectbox(L["lbl_role"], ["admin", "Chairman", "GeneralManager", "ViceManager", "Manager", "Staff", "security"])
 
                 e_phone = st.text_input(L["lbl_phone"], placeholder=L["phone_ph"])
                 e_insurance = st.text_input(L["lbl_insurance"])
                 e_hospital = st.text_input(L["lbl_hospital"])
 
             if st.form_submit_button(L["btn_add"], type="primary"):
-                if e_name:
+                if e_name and e_id:
                     st.session_state.employee_db.append({
                         "工號": e_id,
                         "姓名": e_name,
@@ -277,11 +206,12 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                         "職稱": e_title,
                         "角色": e_role,
                         "電話": e_phone,
+                        "密碼": e_pwd,
+                        "must_change_password": True,  # 👈 關鍵：設定為首次登入必須改密碼
                         "戶籍地址": e_perm_addr,
                         "暫住地址": e_temp_addr,
                         "保險資料": e_insurance,
-                        "保險醫院": e_hospital,
-                        "生物辨識代碼": f"FACE-BIO-{len(st.session_state.employee_db)+100000}"
+                        "保險醫院": e_hospital
                     })
                     st.success(L["success_add"].format(name=e_name))
                     st.rerun()
@@ -291,34 +221,23 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     with tab_edit:
         if st.session_state.employee_db:
             emp_opts = {f"{e['工號']} - {e['姓名']}": e for e in st.session_state.employee_db}
-            sel_emp_key = st.selectbox(L["select_edit"], list(emp_opts.keys()))
+            sel_emp_key = st.selectbox(L["select_edit"], list(emp_opts.keys()), key="edit_emp_sel_u")
             target_emp = emp_opts[sel_emp_key]
 
-            with st.form("edit_employee_form"):
+            with st.form("edit_employee_form_u"):
                 st.markdown(L["edit_header"])
                 ed_name = st.text_input(L["lbl_name"], value=target_emp["姓名"])
-                fac_choices = [f"{fac['廠區名稱']}" for fac in st.session_state.factory_list]
-                if target_emp["工作廠區"] not in fac_choices:
-                    fac_choices.append(target_emp["工作廠區"])
-                ed_fac = st.selectbox(L["lbl_fac"], fac_choices, index=fac_choices.index(target_emp["工作廠區"]) if target_emp["工作廠區"] in fac_choices else 0)
-                ed_title = st.text_input(L["lbl_title"], value=target_emp["職稱"])
+                ed_pwd = st.text_input("重設新密碼 (Reset Password)", value="", type="password", placeholder="若不修改請留空")
                 ed_phone = st.text_input(L["lbl_phone"], value=target_emp["電話"])
-                ed_perm_addr = st.text_input(L["lbl_perm"], value=target_emp.get("戶籍地址", ""))
-                ed_temp_addr = st.text_input(L["lbl_temp"], value=target_emp.get("暫住地址", ""))
-                ed_insurance = st.text_input(L["lbl_insurance"], value=target_emp.get("保險資料", ""))
-                ed_hospital = st.text_input(L["lbl_hospital"], value=target_emp.get("Bệnh viện khám chữa bệnh BHYT" if active_lang=="Tiếng Việt" else "保險醫院", ""))
 
                 if st.form_submit_button(L["btn_save_edit"], type="primary"):
                     for e in st.session_state.employee_db:
                         if e["工號"] == target_emp["工號"]:
                             e["姓名"] = ed_name
-                            e["工作廠區"] = ed_fac
-                            e["職稱"] = ed_title
                             e["電話"] = ed_phone
-                            e["戶籍地址"] = ed_perm_addr
-                            e["暫住地址"] = ed_temp_addr
-                            e["保險資料"] = ed_insurance
-                            e["保險醫院"] = ed_hospital
+                            if ed_pwd:
+                                e["密碼"] = ed_pwd
+                                e["must_change_password"] = True  # 管理員重設後也須重新修改
                     st.success(L["success_edit"].format(id=target_emp["工號"]))
                     st.rerun()
         else:
@@ -327,25 +246,20 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     with tab_del:
         if st.session_state.employee_db:
             del_opts = {f"{e['工號']} - {e['姓名']}": e for e in st.session_state.employee_db}
-            sel_del_key = st.selectbox(L["select_del"], list(del_opts.keys()))
+            sel_del_key = st.selectbox(L["select_del"], list(del_opts.keys()), key="del_emp_sel_u")
             target_del = del_opts[sel_del_key]
 
-            with st.form("delete_employee_form"):
+            with st.form("delete_employee_form_u"):
                 st.markdown(L["del_header"])
                 st.warning(f"{L['warn_del_title']} **{target_del['工號']} - {target_del['姓名']}**")
                 
-                col_btn1, col_btn2 = st.columns(2)
-                do_delete = col_btn1.form_submit_button(L["btn_del_hard"])
-                do_resign = col_btn2.form_submit_button(L["btn_del_resign"])
-
-                if do_delete:
+                c_d1, c_d2 = st.columns(2)
+                if c_d1.form_submit_button(L["btn_del_hard"]):
                     st.session_state.employee_db = [e for e in st.session_state.employee_db if e["工號"] != target_del["工號"]]
                     st.success(L["success_hard"].format(id=target_del['工號']))
                     st.rerun()
-
-                if do_resign:
+                if c_d2.form_submit_button(L["btn_del_resign"]):
                     resigned_record = target_del.copy()
-                    resigned_record["離職時間"] = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
                     st.session_state.resigned_employee_db.append(resigned_record)
                     st.session_state.employee_db = [e for e in st.session_state.employee_db if e["工號"] != target_del["工號"]]
                     st.success(L["success_resign"].format(id=target_del['工號']))
