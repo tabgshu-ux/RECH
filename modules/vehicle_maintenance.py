@@ -12,10 +12,10 @@ VEHICLE_MAINT_I18N = {
         "tab_list": "📑 依車號分組之維修保養總表",
         "tab_import": "📥 Excel 批次匯入與自動資產建檔",
         "tab_add": "➕ 登記單筆維修保養",
-        "table_header": "📋 各車號專屬維修與保養履歷清冊",
+        "table_header": "📋 各車號專屬維修與保養履歷清冊 (已自動翻譯)",
         "no_records": "目前無車輛維修保養紀錄。",
         "import_header": "📥 Excel 多車輛維修明細智慧批次匯入",
-        "import_caption": "上傳 Excel 後，系統將自動解析各車牌與維修明細，並**自動同步新增至固定資產中的車輛資產**。",
+        "import_caption": "上傳 Excel 後，系統將自動解析各車牌與維修明細，進行雙語智慧翻譯，並自動同步新增至固定資產中的車輛資產。",
         "btn_upload": "選擇 Excel 檔案 (.xlsx / .xls)",
         "success_import": "✅ 成功匯入共 `{count}` 筆維修明細，並已自動同步車輛至固定資產清單！",
         "add_header": "➕ 登記新車輛維修與保養項目",
@@ -98,30 +98,50 @@ VEHICLE_MAINT_I18N = {
     }
 }
 
+# ----------------------------------------------------
+# 🔄 車輛維修專用多語系智慧翻譯字典
+# ----------------------------------------------------
 MAINT_TRANSLATIONS = {
     "bão dưỡng cấp 2": {"繁體中文": "二級定期保養", "Tiếng Việt": "Bảo dưỡng cấp 2", "English": "Level 2 Maintenance"},
+    "bão dưỡng cấp nhỏ": {"繁體中文": "小型定期保養", "Tiếng Việt": "Bảo dưỡng cấp nhỏ", "English": "Minor Maintenance"},
     "bão dưỡng": {"繁體中文": "定期保養維護", "Tiếng Việt": "Bảo dưỡng định kỳ", "English": "Routine Maintenance"},
     "thay vỏ": {"繁體中文": "更換輪胎/外胎", "Tiếng Việt": "Thay vỏ xe", "English": "Tire Replacement"},
-    "sửa chữa": {"繁體中文": "綜合維修與零件更換", "Tiếng Việt": "Sửa chữa & Thay thế", "English": "General Repair"}
+    "sửa chữa": {"繁體中文": "綜合維修與零件更換", "Tiếng Việt": "Sửa chữa & Thay thế", "English": "General Repair"},
+    "thay kính lái": {"繁體中文": "更換汽車前擋風玻璃", "Tiếng Việt": "Thay kính lái", "English": "Windshield Replacement"},
+    "dán phim 3m r70": {"繁體中文": "貼 3M R70 隔熱膜", "Tiếng Việt": "Dán phim 3M R70", "English": "Install 3M R70 Window Film"},
+    "công bão dưỡng": {"繁體中文": "保養人工工資", "Tiếng Việt": "Công bảo dưỡng", "English": "Maintenance Labor"},
+    "thay dây cua roa": {"繁體中文": "更換正時/發電機皮帶", "Tiếng Việt": "Thay dây curoa", "English": "Replace Belt"},
+    "lọc nhớt": {"繁體中文": "機油濾清器 (濾心)", "Tiếng Việt": "Lọc nhớt", "English": "Oil Filter"},
+    "lọc dầu": {"繁體中文": "柴油/機油濾清器", "Tiếng Việt": "Lọc dầu", "English": "Fuel/Oil Filter"},
+    "lọc gió": {"繁體中文": "空氣濾清器", "Tiếng Việt": "Lọc gió", "English": "Air Filter"},
+    "nhớt máy": {"繁體中文": "引擎機油", "Tiếng Việt": "Nhớt máy", "English": "Engine Oil"},
+    "nước rửa kính": {"繁體中文": "擋風玻璃清洗液", "Tiếng Việt": "Nước rửa kính", "English": "Windshield Washer Fluid"},
+    "mỡ bò": {"繁體中文": "潤滑黃油", "Tiếng Việt": "Mỡ bò", "English": "Grease"}
 }
 
 def smart_translate(text, target_lang):
     if not text or not isinstance(text, str):
         return text
     t_lower = text.strip().lower()
+    
+    # 精確或部分比對翻譯字典
     for key, trans in MAINT_TRANSLATIONS.items():
         if key in t_lower:
-            return trans.get(target_lang, text)
+            # 如果是繁體中文，把越文專有名詞替換掉
+            if target_lang == "繁體中文":
+                translated_prefix = trans.get("繁體中文", key)
+                # 保留括號內的廠商名稱或細節
+                return text.lower().replace(key, translated_prefix)
+            else:
+                return trans.get(target_lang, text)
     return text
 
 def auto_sync_to_fixed_assets(plate_no):
-    """自動將車輛同步新增至固定資產與設備管理模組中"""
     if "asset_db" not in st.session_state:
         st.session_state.asset_db = [
             {"資產編號": "AST-001", "資產名稱": "主管公務車 (Toyota Camry)", "類別": "車輛設備 (Vehicles)", "保管廠區": "西寧廠", "狀態": "使用中"}
         ]
     
-    # 檢查固定資產中是否已有該車號
     existing_plates = [str(a.get("資產編號", "")) + str(a.get("資產名稱", "")) for a in st.session_state.asset_db]
     is_exists = any(plate_no in p for p in existing_plates)
     
@@ -156,7 +176,6 @@ def render_vehicle_maintenance_page(engine=None, lang="繁體中文", **kwargs):
     with tab_list:
         st.markdown(f"### {L['table_header']}")
         if st.session_state.vehicle_maint_db:
-            # 取得所有出現過的車牌清單供快速篩選
             all_plates = sorted(list(set([item["plate"] for item in st.session_state.vehicle_maint_db])))
             selected_plate_filter = st.selectbox("🚗 快速篩選車牌號碼 (Filter by License Plate)", ["全部車輛 (All Vehicles)"] + all_plates)
 
@@ -215,7 +234,6 @@ def render_vehicle_maintenance_page(engine=None, lang="繁體中文", **kwargs):
                         if not plate_no.startswith("70"):
                             plate_no = f"70LD-{plate_no}"
                         
-                        # 自動同步至固定資產模組
                         auto_sync_to_fixed_assets(plate_no)
                         synced_plates.add(plate_no)
                         
@@ -256,7 +274,7 @@ def render_vehicle_maintenance_page(engine=None, lang="繁體中文", **kwargs):
             except Exception as e:
                 st.error(f"❌ 檔案解析發生錯誤: {e}")
 
-    # 3. 單筆登記（含自動同步固定資產）
+    # 3. 單筆登記
     with tab_add:
         st.markdown(f"### {L['add_header']}")
         with st.form("form_add_maint"):
@@ -272,9 +290,7 @@ def render_vehicle_maintenance_page(engine=None, lang="繁體中文", **kwargs):
 
             if st.form_submit_button(L["btn_save"], type="primary", use_container_width=True):
                 if plate and desc:
-                    # 自動同步至固定資產
                     auto_sync_to_fixed_assets(plate)
-                    
                     st.session_state.vehicle_maint_db.insert(0, {
                         "plate": plate,
                         "type": maint_type,
