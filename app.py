@@ -3,13 +3,12 @@ import streamlit as st
 import pandas as pd
 from sqlalchemy import text
 
-# 導入所有功能模組（完整保留所有模組，絕不簡化或刪除）
 import modules.approval_workflow as approval_workflow
 import modules.asset_management as asset_management
 import modules.contract_management as contract_management
 import modules.db_connection as db_conn
 import modules.employee_management as employee_management
-import modules.engineering_department as engineering_department  # 三合一工程與設計中心
+import modules.engineering_department as engineering_department
 import modules.executive_dashboard as executive_dashboard
 import modules.factory_management as factory_management
 import modules.field_attendance as field_attendance
@@ -282,9 +281,6 @@ lang_dict = NAV_STRUCTURE.get(
     st.session_state.current_lang, NAV_STRUCTURE["繁體中文"]
 )
 
-# ----------------------------------------------------
-# 🔐 系統登入與「首次登入強制修改密碼」機制
-# ----------------------------------------------------
 if not st.session_state.logged_in:
     st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
     st.title(lang_dict["login_title"])
@@ -323,9 +319,6 @@ if not st.session_state.logged_in:
                     st.error("⚠️ 帳號或初始密碼錯誤 / Incorrect username or password")
     st.stop()
 
-# ----------------------------------------------------
-# 🔑 首次登入強制修改密碼畫面攔截器
-# ----------------------------------------------------
 if st.session_state.get("must_change_pwd", False):
     st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
     st.warning("⚠️ **首次登入安全設定 / Lần đầu đăng nhập - Đổi mật khẩu**：為符合企業資安規範，請您立即變更由人事分派的初始密碼。")
@@ -348,9 +341,6 @@ if st.session_state.get("must_change_pwd", False):
                 st.error("⚠️ 兩次輸入的新密碼不相符或未填寫，請重新檢查！")
     st.stop()
 
-# ----------------------------------------------------
-# 🖥️ 主系統導航與側邊欄
-# ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
 lang_list = ["繁體中文", "Tiếng Việt", "English"]
@@ -405,9 +395,6 @@ else:
 
 curr_lang = st.session_state.current_lang
 
-# ----------------------------------------------------
-# 模組安全路由分流
-# ----------------------------------------------------
 if target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
     if hasattr(executive_dashboard, "render_executive_dashboard_page"):
         safe_call_module(executive_dashboard.render_executive_dashboard_page, sub_route=target_route, lang=curr_lang)
