@@ -15,15 +15,15 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     if "employee_db" not in st.session_state:
         st.session_state.employee_db = [
             {
-                "工號": "EMP-001", "姓名": "張董事長", "國籍": "台灣 (Taiwan)", "工作廠區": "西寧廠 (Tay Ninh)", "部門": "管理部", "職稱": "董事長 (Chairman)", "角色": "Chairman", "電話": "0912345678", 
+                "工號": "EMP-001", "姓名": "張董事長", "國籍": "台灣 (Taiwan)", "工作廠區": "西寧廠 (Tay Ninh)", "部門": "總經理室", "職稱": "董事長 (Chairman)", "角色": "Chairman", "電話": "0912345678", 
                 "戶籍地址": "台北市信義區...", "暫住地址": "西寧省廠區宿舍", "保險資料": "TW-INS-888899", "保險醫院": "台北榮民總醫院", "生物辨識代碼": "FACE-BIO-888899"
             },
             {
-                "工號": "EMP-002", "姓名": "Nguyễn Văn A", "國籍": "越南 (Vietnam)", "工作廠區": "西寧廠 (Tay Ninh)", "部門": "管理部", "職稱": "總經理 (General Manager)", "角色": "GeneralManager", "電話": "0918999080", 
+                "工號": "EMP-002", "姓名": "Nguyễn Văn A", "國籍": "越南 (Vietnam)", "工作廠區": "西寧廠 (Tay Ninh)", "部門": "總經理室", "職稱": "總經理 (General Manager)", "角色": "GeneralManager", "電話": "0918999080", 
                 "戶籍地址": "Tỉnh Tây Ninh, Huyện Trảng Bàng", "暫住地址": "Khu công nghiệp Thành Thành Công", "保險資料": "VN-BHXH-0192834", "保險醫院": "Bệnh viện Đa khoa Tây Ninh", "生物辨識代碼": "FACE-BIO-100234"
             },
             {
-                "工號": "EMP-003", "姓名": "李元隆", "國籍": "台灣 (Taiwan)", "工作廠區": "海防廠 (Hai Phong)", "部門": "工程與設計管理中心", "職稱": "副總經理 (Vice General Manager)", "角色": "ViceManager", "電話": "", 
+                "工號": "EMP-003", "姓名": "李元隆", "國籍": "台灣 (Taiwan)", "工作廠區": "海防廠 (Hai Phong)", "部門": "管理部", "職稱": "經理 (Manager)", "角色": "Manager", "電話": "0912000111", 
                 "戶籍地址": "高雄市左營區...", "暫住地址": "海防市宿舍", "保險資料": "TW-INS-300451", "保險醫院": "高雄醫學大學附設中和紀念醫院", "生物辨識代碼": "FACE-BIO-300451"
             }
         ]
@@ -75,24 +75,25 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                     fac_choices = ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"]
                 e_fac = st.selectbox("工作廠區 (Factory)", fac_choices)
                 
+                # 依照職階排列：總經理室在管理部上方
                 if lang == "Tiếng Việt":
                     dept_display_map = {
+                        "總經理室": "Ban Giám đốc (Executive Office)",
                         "管理部": "Phòng Quản lý (Management Dept)",
-                        "營運戰情室": "Ban Giám đốc (Executive)",
                         "工程與設計管理中心": "Trung tâm Kỹ thuật & Thiết kế",
                         "生產部": "Phòng Sản xuất (Production Dept)"
                     }
                 elif lang == "English":
                     dept_display_map = {
+                        "總經理室": "Executive Office",
                         "管理部": "Management Dept",
-                        "營運戰情室": "Executive Management",
                         "工程與設計管理中心": "Engineering & Design Center",
                         "生產部": "Production Dept"
                     }
                 else:
                     dept_display_map = {
+                        "總經理室": "總經理室 (Executive Office)",
                         "管理部": "管理部",
-                        "營運戰情室": "營運戰情室",
                         "工程與設計管理中心": "工程與設計管理中心",
                         "生產部": "生產部"
                     }
@@ -101,27 +102,46 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 dept_sel = st.selectbox("部門", dept_keys, format_func=lambda x: dept_display_map[x])
                 e_dept = dept_sel
 
-                e_title = st.text_input("職稱 / 職務", placeholder="例如: 現場工程師 / 技術員")
+                e_title = st.text_input("職稱 / 職務", placeholder="例如: 董事長 / 總經理 / 經理 / 行政主管...")
 
+                # 職務與權限角色對應劃分
                 if lang == "Tiếng Việt":
                     role_display_map = {
-                        "staff": "Nhân viên chung (Staff)",
-                        "manager": "Quản lý / Chủ quản (Manager)",
-                        "security": "Bảo vệ (Security)",
+                        "Chairman": "Chủ tịch HĐQT (Chairman)",
+                        "GeneralManager": "Tổng Giám đốc (General Manager)",
+                        "ViceManager": "Phó Tổng Giám đốc (Vice GM)",
+                        "AVP": "Phó Giám đốc / Trợ lý cấp cao (AVP)",
+                        "DeputyAVP": "Phó Trợ lý cấp cao (Deputy AVP)",
+                        "Manager": "Quản lý / Trưởng phòng (Manager)",
+                        "AdminManager": "Quản lý Hành chính (Admin Manager)",
+                        "FinanceManager": "Quản lý Tài chính (Finance Manager)",
+                        "Staff": "Nhân viên chung (Staff)",
                         "admin": "Quản trị hệ thống (Admin)"
                     }
                 elif lang == "English":
                     role_display_map = {
-                        "staff": "General Staff",
-                        "manager": "Department Manager",
-                        "security": "Security Guard",
-                        "admin": "System Administrator"
+                        "Chairman": "Chairman",
+                        "GeneralManager": "General Manager",
+                        "ViceManager": "Vice General Manager",
+                        "AVP": "Assistant Vice President (AVP)",
+                        "DeputyAVP": "Deputy AVP",
+                        "Manager": "Manager",
+                        "AdminManager": "Administrative Manager",
+                        "FinanceManager": "Finance Manager",
+                        "Staff": "General Staff",
+                        "admin": "System Administrator (Admin)"
                     }
                 else:
                     role_display_map = {
-                        "staff": "一般員工 (Staff)",
-                        "manager": "部門主管 (Manager)",
-                        "security": "保全 (Security)",
+                        "Chairman": "董事長 (Chairman)",
+                        "GeneralManager": "總經理 (General Manager)",
+                        "ViceManager": "副總經理 (Vice General Manager)",
+                        "AVP": "協理 (AVP)",
+                        "DeputyAVP": "副協理 (Deputy AVP)",
+                        "Manager": "經理 (Manager)",
+                        "AdminManager": "行政主管 (Admin Manager)",
+                        "FinanceManager": "財務主管 (Finance Manager)",
+                        "Staff": "一般員工 (Staff)",
                         "admin": "系統管理員 (Admin)"
                     }
 
