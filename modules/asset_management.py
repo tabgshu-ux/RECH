@@ -8,13 +8,16 @@ import datetime
 ASSET_I18N = {
     "繁體中文": {
         "title": "🏭 裕豐電機工業 - 生產設備與固定資產管理系統",
-        "caption": "管理西寧廠/海防廠生產機械設備、辦公設備、車輛、網通、品管儀器與工安設施之完整資產生命週期。",
-        "tab_list": "📑 資產總表與分類檢視",
+        "caption": "管理西寧廠與海防廠生產機械、辦公設備、車輛、網通、品管儀器與工安設施之完整資產生命週期。",
+        "tab_list": "📑 廠區資產總表與分類檢視",
         "tab_add": "➕ 新增固定資產與設備",
         "tab_edit": "✏️ 修改資產資料",
         "tab_delete": "🗑️ 刪除或報廢資產",
-        "table_header": "📋 廠區固定資產與設備分類清冊",
-        "cat_all": "🌐 全部",
+        "table_header": "📋 廠區固定資產與設備清冊",
+        "plant_all": "🌐 全部廠區 (All Plants)",
+        "plant_tn": "🏭 越南西寧廠 (Tay Ninh)",
+        "plant_hp": "⚓ 越南海防廠 (Hai Phong)",
+        "cat_all": "🌐 全部類別",
         "cat_prod": "🏭 生產機具",
         "cat_car": "🚗 車輛",
         "cat_it": "💻 電腦",
@@ -61,12 +64,15 @@ ASSET_I18N = {
     },
     "Tiếng Việt": {
         "title": "🏭 Quản lý Tài sản Cố định & Thiết bị",
-        "caption": "Quản lý toàn diện tài sản nhà máy.",
-        "tab_list": "📑 Danh sách & Phân loại tài sản",
+        "caption": "Quản lý toàn diện tài sản theo nhà máy Tây Ninh và Hải Phòng.",
+        "tab_list": "📑 Danh sách theo Nhà máy",
         "tab_add": "➕ Thêm tài sản mới",
         "tab_edit": "✏️ Sửa thông tin",
         "tab_delete": "🗑️ Xóa / Thanh lý tài sản",
-        "table_header": "📋 Danh mục Tài sản Cố định theo phân loại",
+        "table_header": "📋 Danh mục Tài sản Cố định",
+        "plant_all": "🌐 Tất cả nhà máy",
+        "plant_tn": "🏭 Nhà máy Tây Ninh",
+        "plant_hp": "⚓ Nhà máy Hải Phòng",
         "cat_all": "🌐 Tất cả",
         "cat_prod": "🏭 Máy móc",
         "cat_car": "🚗 Xe cộ",
@@ -90,7 +96,7 @@ ASSET_I18N = {
             "消防與工安設施 (Safety & Firefighting)"
         ],
         "lbl_factory": "Nhà máy lưu trữ *",
-        "factory_opts": ["Nhà máy Tây Ninh", "Nhà máy Hải Phòng"],
+        "factory_opts": ["越南西寧廠 (Tay Ninh)", "越南海防廠 (Hai Phong)"],
         "lbl_brand": "Thương hiệu & Model",
         "lbl_plate": "Biển số xe",
         "lbl_status": "Trạng thái *",
@@ -114,12 +120,15 @@ ASSET_I18N = {
     },
     "English": {
         "title": "🏭 Fixed Assets & Equipment Management",
-        "caption": "Comprehensive plant asset lifecycle management.",
-        "tab_list": "📑 Asset Directory & Categories",
+        "caption": "Plant asset lifecycle management by Tay Ninh and Hai Phong facilities.",
+        "tab_list": "📑 Asset Directory by Plant",
         "tab_add": "➕ Add New Asset",
         "tab_edit": "✏️ Edit Asset",
         "tab_delete": "🗑️ Delete / Dispose",
-        "table_header": "📋 Fixed Asset Directory by Category",
+        "table_header": "📋 Fixed Asset Directory",
+        "plant_all": "🌐 All Plants",
+        "plant_tn": "🏭 Tay Ninh Plant",
+        "plant_hp": "⚓ Hai Phong Plant",
         "cat_all": "🌐 All",
         "cat_prod": "🏭 Machinery",
         "cat_car": "🚗 Vehicles",
@@ -143,7 +152,7 @@ ASSET_I18N = {
             "消防與工安設施 (Safety & Firefighting)"
         ],
         "lbl_factory": "Plant Location *",
-        "factory_opts": ["Tay Ninh Plant", "Hai Phong Plant"],
+        "factory_opts": ["越南西寧廠 (Tay Ninh)", "越南海防廠 (Hai Phong)"],
         "lbl_brand": "Brand & Model",
         "lbl_plate": "License Plate (If vehicle)",
         "lbl_status": "Status *",
@@ -174,7 +183,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化固定資產資料庫
+    # 初始化固定資產資料庫 (包含兩廠區示範資料)
     if "asset_db" not in st.session_state:
         st.session_state.asset_db = [
             {
@@ -206,13 +215,33 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 "車牌號碼": "61A-888.66",
                 "目前狀態": "🟢 在用 (Active)",
                 "取得成本": 28000.0
+            },
+            {
+                "資產編號": "EQ-HP-001",
+                "資產名稱": "海防廠自動化雷射切管機",
+                "類別": "生產與加工機具 (Machinery)",
+                "存放廠區": "越南海防廠 (Hai Phong)",
+                "品牌型號": "Bystronic Fiber Laser",
+                "車牌號碼": "-",
+                "目前狀態": "🟢 在用 (Active)",
+                "取得成本": 68000.0
+            },
+            {
+                "資產編號": "AST-HP-002",
+                "資產名稱": "海防廠品管三次元測量儀",
+                "類別": "檢測與品管儀器 (Testing & QA)",
+                "存放廠區": "越南海防廠 (Hai Phong)",
+                "品牌型號": "Hexagon CMM",
+                "車牌號碼": "-",
+                "目前狀態": "🟢 在用 (Active)",
+                "取得成本": 32000.0
             }
         ]
 
     # 🛡️ 欄位相容防護
     for asset in st.session_state.asset_db:
         if "存放廠區" not in asset:
-            asset["存放廠區"] = asset.get("廠區", asset.get("位置", "越南西寧廠"))
+            asset["存放廠區"] = asset.get("廠區", asset.get("位置", "越南西寧廠 (Tay Ninh)"))
         if "類別" not in asset:
             asset["類別"] = asset.get("資產類別", "生產與加工機具 (Machinery)")
         if "目前狀態" not in asset:
@@ -230,7 +259,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     with col_m2:
         st.metric("總取得成本 (Total Cost)", f"${total_cost:,.2f} USD")
     with col_m3:
-        st.metric("覆蓋廠區據點 (Plants)", "越南西寧廠、越南海防廠")
+        st.metric("廠區分布", "西寧廠 ｜ 海防廠")
 
     st.markdown("---")
 
@@ -239,60 +268,71 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
         L["tab_list"], L["tab_add"], L["tab_edit"], L["tab_delete"]
     ])
 
-    # 1. 📑 資產總表與分類檢視
+    # 1. 📑 廠區資產總表與分類檢視
     with tab_list:
         st.markdown(f"### {L['table_header']}")
         
-        # 完整九大分類子分頁
-        cat_tab_all, cat_tab_prod, cat_tab_car, cat_tab_it, cat_tab_office, cat_tab_net, cat_tab_qa, cat_tab_wh, cat_tab_safety = st.tabs([
-            L["cat_all"], L["cat_prod"], L["cat_car"], L["cat_it"], L["cat_office"], L["cat_net"], L["cat_qa"], L["cat_wh"], L["cat_safety"]
+        # 第一層：廠區大分類 (Tab)
+        plant_tab_all, plant_tab_tn, plant_tab_hp = st.tabs([
+            L["plant_all"], L["plant_tn"], L["plant_hp"]
         ])
 
-        def display_asset_table(filtered_data):
-            if filtered_data:
-                display_list = []
-                for idx, asset in enumerate(filtered_data, 1):
-                    display_list.append({
-                        L["col_index"]: idx,
-                        L["col_code"]: asset.get("資產編號", "-"),
-                        L["col_name"]: asset.get("資產名稱", "-"),
-                        L["col_category"]: asset.get("類別", "-"),
-                        L["col_factory"]: asset.get("存放廠區", "-"),
-                        L["col_brand"]: asset.get("品牌型號", "-"),
-                        L["col_plate"]: asset.get("車牌號碼", "-"),
-                        L["col_status"]: asset.get("目前狀態", "-"),
-                        L["col_cost"]: f"${float(asset.get('取得成本', 0)):,.2f} USD"
-                    })
-                st.dataframe(pd.DataFrame(display_list), use_container_width=True)
+        def render_category_subtabs(plant_filter_name):
+            # 根據廠區篩選資料
+            if plant_filter_name == "all":
+                plant_data = st.session_state.asset_db
             else:
-                st.info("目前此分類中尚無固定資產記錄。")
+                plant_data = [a for a in st.session_state.asset_db if plant_filter_name in str(a.get("存放廠區", ""))]
 
-        with cat_tab_all:
-            display_asset_table(st.session_state.asset_db)
+            # 第二層：品項分類子分頁
+            cat_all, cat_prod, cat_car, cat_it, cat_office, cat_net, cat_qa, cat_wh, cat_safety = st.tabs([
+                L["cat_all"], L["cat_prod"], L["cat_car"], L["cat_it"], L["cat_office"], L["cat_net"], L["cat_qa"], L["cat_wh"], L["cat_safety"]
+            ])
 
-        with cat_tab_prod:
-            display_asset_table([a for a in st.session_state.asset_db if "生產" in str(a.get("類別", "")) or "Machinery" in str(a.get("類別", ""))])
+            def display_table(data_list):
+                if data_list:
+                    display_list = []
+                    for idx, asset in enumerate(data_list, 1):
+                        display_list.append({
+                            L["col_index"]: idx,
+                            L["col_code"]: asset.get("資產編號", "-"),
+                            L["col_name"]: asset.get("資產名稱", "-"),
+                            L["col_category"]: asset.get("類別", "-"),
+                            L["col_factory"]: asset.get("存放廠區", "-"),
+                            L["col_brand"]: asset.get("品牌型號", "-"),
+                            L["col_plate"]: asset.get("車牌號碼", "-"),
+                            L["col_status"]: asset.get("目前狀態", "-"),
+                            L["col_cost"]: f"${float(asset.get('取得成本', 0)):,.2f} USD"
+                        })
+                    st.dataframe(pd.DataFrame(display_list), use_container_width=True)
+                else:
+                    st.info("目前此分類與廠區中尚無固定資產記錄。")
 
-        with cat_tab_car:
-            display_asset_table([a for a in st.session_state.asset_db if "車輛" in str(a.get("類別", "")) or "Vehicle" in str(a.get("類別", ""))])
+            with cat_all:
+                display_table(plant_data)
+            with cat_prod:
+                display_table([a for a in plant_data if "生產" in str(a.get("類別", "")) or "Machinery" in str(a.get("類別", ""))])
+            with cat_car:
+                display_table([a for a in plant_data if "車輛" in str(a.get("類別", "")) or "Vehicle" in str(a.get("類別", ""))])
+            with cat_it:
+                display_table([a for a in plant_data if "電腦" in str(a.get("類別", "")) or "PC" in str(a.get("類別", ""))])
+            with cat_office:
+                display_table([a for a in plant_data if "辦公" in str(a.get("類別", "")) or "Office" in str(a.get("類別", ""))])
+            with cat_net:
+                display_table([a for a in plant_data if "網通" in str(a.get("類別", "")) or "Network" in str(a.get("類別", ""))])
+            with cat_qa:
+                display_table([a for a in plant_data if "品管" in str(a.get("類別", "")) or "Testing" in str(a.get("類別", ""))])
+            with cat_wh:
+                display_table([a for a in plant_data if "倉儲" in str(a.get("類別", "")) or "Warehouse" in str(a.get("類別", ""))])
+            with cat_safety:
+                display_table([a for a in plant_data if "消防" in str(a.get("類別", "")) or "Safety" in str(a.get("類別", ""))])
 
-        with cat_tab_it:
-            display_asset_table([a for a in st.session_state.asset_db if "電腦" in str(a.get("類別", "")) or "PC" in str(a.get("類別", ""))])
-
-        with cat_tab_office:
-            display_asset_table([a for a in st.session_state.asset_db if "辦公" in str(a.get("類別", "")) or "Office" in str(a.get("類別", ""))])
-
-        with cat_tab_net:
-            display_asset_table([a for a in st.session_state.asset_db if "網通" in str(a.get("類別", "")) or "Network" in str(a.get("類別", ""))])
-
-        with cat_tab_qa:
-            display_asset_table([a for a in st.session_state.asset_db if "品管" in str(a.get("類別", "")) or "Testing" in str(a.get("類別", ""))])
-
-        with cat_tab_wh:
-            display_asset_table([a for a in st.session_state.asset_db if "倉儲" in str(a.get("類別", "")) or "Warehouse" in str(a.get("類別", ""))])
-
-        with cat_tab_safety:
-            display_asset_table([a for a in st.session_state.asset_db if "消防" in str(a.get("類別", "")) or "Safety" in str(a.get("類別", ""))])
+        with plant_tab_all:
+            render_category_subtabs("all")
+        with plant_tab_tn:
+            render_category_subtabs("西寧")
+        with plant_tab_hp:
+            render_category_subtabs("海防")
 
     # 2. ➕ 新增固定資產
     with tab_add:
@@ -304,8 +344,8 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
             with c1:
                 a_code = st.text_input(L["lbl_code"], value=auto_code)
                 a_name = st.text_input(L["lbl_name"])
-                a_cat = st.selectbox(L["lbl_category"], L["cat_opts"])
                 a_factory = st.selectbox(L["lbl_factory"], L["factory_opts"])
+                a_cat = st.selectbox(L["lbl_category"], L["cat_opts"])
             with c2:
                 a_brand = st.text_input(L["lbl_brand"], placeholder="例如: Dell / Amada / Toyota")
                 a_plate = st.text_input(L["lbl_plate"], value="-")
@@ -338,13 +378,17 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     with tab_edit:
         st.markdown(f"### {L['tab_edit']}")
         if st.session_state.asset_db:
-            asset_options = {f"{a.get('資產編號', '')} - {a.get('資產名稱', '')} ({a.get('類別', '')})": a for a in st.session_state.asset_db}
+            asset_options = {f"[{a.get('存放廠區', '')[:2]}] {a.get('資產編號', '')} - {a.get('資產名稱', '')}": a for a in st.session_state.asset_db}
             sel_edit_key = st.selectbox("選擇要修改的資產 (Select Asset to Edit)", list(asset_options.keys()))
             target_asset = asset_options[sel_edit_key]
 
             with st.form("form_edit_asset"):
                 ed_name = st.text_input(L["lbl_name"], value=target_asset.get("資產名稱", ""))
                 
+                curr_factory = target_asset.get("存放廠區", L["factory_opts"][0])
+                factory_idx = L["factory_opts"].index(curr_factory) if curr_factory in L["factory_opts"] else 0
+                ed_factory = st.selectbox(L["lbl_factory"], L["factory_opts"], index=factory_idx)
+
                 curr_cat = target_asset.get("類別", L["cat_opts"][0])
                 cat_idx = L["cat_opts"].index(curr_cat) if curr_cat in L["cat_opts"] else 0
                 ed_cat = st.selectbox(L["lbl_category"], L["cat_opts"], index=cat_idx)
@@ -360,6 +404,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
                 if st.form_submit_button(L["btn_save_edit"], type="primary", use_container_width=True):
                     target_asset["資產名稱"] = ed_name
+                    target_asset["存放廠區"] = ed_factory
                     target_asset["類別"] = ed_cat
                     target_asset["品牌型號"] = ed_brand
                     target_asset["車牌號碼"] = ed_plate
@@ -374,7 +419,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     with tab_delete:
         st.markdown(f"### {L['tab_delete']}")
         if st.session_state.asset_db:
-            del_options = {f"{a.get('資產編號', '')} - {a.get('資產名稱', '')} ({a.get('存放廠區', '')})": a for a in st.session_state.asset_db}
+            del_options = {f"[{a.get('存放廠區', '')[:2]}] {a.get('資產編號', '')} - {a.get('資產名稱', '')}": a for a in st.session_state.asset_db}
             sel_del_key = st.selectbox("選擇要刪除或報廢的資產", list(del_options.keys()))
             target_del = del_options[sel_del_key]
 
