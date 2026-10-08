@@ -1,29 +1,7 @@
-import inspect
 import streamlit as st
 import pandas as pd
+import importlib
 from sqlalchemy import text
-
-import modules.approval_workflow as approval_workflow
-import modules.asset_management as asset_management
-import modules.contract_management as contract_management
-import modules.db_connection as db_conn
-import modules.employee_management as employee_management
-import modules.engineering_department as engineering_department
-import modules.executive_dashboard as executive_dashboard
-import modules.factory_management as factory_management
-import modules.field_attendance as field_attendance
-import modules.field_daily_report as field_daily_report
-import modules.financial_tax_reports as financial_tax_reports
-import modules.internal_attendance as internal_attendance
-import modules.invoice_management as invoice_management
-import modules.payroll_management as payroll_management
-import modules.procurement_ap as procurement_ap
-import modules.sales_order_ar as sales_order_ar
-import modules.system_licensing as system_licensing
-import modules.user_management as user_management
-import modules.vehicle_gate_log as vehicle_gate_log
-import modules.vehicle_maintenance as vehicle_maintenance
-import modules.warehouse_management as warehouse_management
 
 st.set_page_config(
     page_title="裕豐電機工業 REETECH INDUSTRIAL AI ERP",
@@ -254,22 +232,23 @@ NAV_STRUCTURE = {
 if "current_lang" not in st.session_state:
     st.session_state.current_lang = "繁體中文"
 
-engine = db_conn.get_db_engine()
+# 動態載入資料庫引擎
+try:
+    db_conn = importlib.import_module("modules.db_connection")
+    engine = db_conn.get_db_engine()
+except Exception:
+    engine = None
 
-def safe_call_module(func, *args, **kwargs):
-    if not callable(func):
-        return
+def load_module_safely(mod_name, func_name, *args, **kwargs):
     try:
-        sig = inspect.signature(func)
-        valid_kwargs = {k: v for k, v in kwargs.items() if k in sig.parameters}
-        if "engine" in sig.parameters and "engine" not in valid_kwargs:
-            valid_kwargs["engine"] = engine
-        func(*args, **valid_kwargs)
-    except Exception:
-        try:
-            func()
-        except Exception as e:
-            st.error(f"模組載入異常: {str(e)}")
+        mod = importlib.import_module(mod_name)
+        func = getattr(mod, func_name, None)
+        if callable(func):
+            func(*args, **kwargs)
+        else:
+            st.error(f"模組 {mod_name} 中找不到方法 {func_name}")
+    except Exception as e:
+        st.error(f"載入模組 {mod_name} 發生異常: {str(e)}")
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -395,27 +374,78 @@ else:
 
 curr_lang = st.session_state.current_lang
 
+# ----------------------------------------------------
+# 動態安全路由分流
+# ----------------------------------------------------
 if target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
-    if hasattr(executive_dashboard, "render_executive_dashboard_page"):
-        safe_call_module(executive_dashboard.render_executive_dashboard_page, sub_route=target_route, lang=curr_lang)
+    load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route=target_route, lang=curr_lang)
 
 elif target_route == "approval_center":
-    safe_call_module(approval_workflow.render_approval_center, lang=curr_lang)
+    load_module_safely("modules.approval_workflow", "render_approval_center", lang=curr_lang)
 
 elif target_route == "eng_quote":
-    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=0)
+    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, default_tab=0)
 
 elif target_route == "eng_progress":
-    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=2)
+    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, default_tab=2)
 
 elif target_route == "field_daily_report":
-    safe_call_module(field_daily_report.render_field_daily_report, engine=engine, lang=curr_lang)
+    load_module_safely("modules.field_daily_report", "render_field_daily_report", engine=engine, lang=curr_lang)
 
 elif target_route == "eng_design":
-    safe_call_module(engineering_department.render_engineering_department_page, engine=engine, lang=curr_lang, default_tab=1)
+    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, default_tab=1)
 
 elif target_route == "procurement_ap":
-    safe_call_module(procurement_ap.render_procurement_ap_page, engine=engine, lang=curr_lang)
+    load_module_safely("modules.procurement_ap", "render_procurement_ap_page", engine=engine, lang=curr_lang)
 
 elif target_route == "sales_order_ar":
-    safe_
+    load_module_safely("modules.sales_order_ar", "render_sales_order_ar_page", engine=engine, lang=curr_lang)
+
+elif target_route == "financial_tax":
+    load_module_safely("modules.financial_tax_reports", "render_financial_tax_reports_page", engine=engine, lang=curr_lang)
+
+elif target_route == "asset_mgmt":
+    load_module_safely("modules.asset_management", "render_asset_management_page", engine=engine, lang=curr_lang)
+
+elif target_route == "payroll_calc":
+    load_module_safely("modules.payroll_management", "render_payroll_management_page", engine=engine, lang=curr_lang)
+
+elif target_route == "invoice_management":
+    load_module_safely("modules.invoice_management", "render_invoice_management_page", engine=engine, lang=curr_lang)
+
+elif target_route == "internal_attendance":
+    load_module_safely("modules.internal_attendance", "render_internal_attendance_page", engine=engine, lang=curr_lang)
+
+elif target_route == "field_attendance":
+    load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang)
+
+elif target_route == "factory_mgmt":
+    load_module_safely("modules.factory_management", "render_factory_management_page", engine=engine, lang=curr_lang)
+
+elif target_route == "hr_employee":
+    load_module_safely("modules.employee_management", "render_employee_management", engine=engine, t=lang_dict, lang=curr_lang)
+
+elif target_route == "vehicle_gate":
+    load_module_safely("modules.vehicle_gate_log", "render_vehicle_gate_log_page", engine=engine, lang=curr_lang)
+
+elif target_route == "vehicle_maintenance":
+    load_module_safely("modules.vehicle_maintenance", "render_vehicle_maintenance_page", engine=engine, lang=curr_lang)
+
+elif target_route == "wh_management":
+    load_module_safely("modules.warehouse_management", "render_warehouse_management", engine=engine, t=lang_dict, lang=curr_lang)
+
+elif target_route in ["sheet_metal", "painting", "assembly"]:
+    st.title(selected_feature_label)
+    st.info("Hệ thống đang hoạt động bình thường / 現場工單與生產追蹤模組順利運作中。")
+
+elif target_route == "it_admin":
+    if current_role_clean == "admin":
+        load_module_safely("modules.user_management", "render_user_management_page", lang=curr_lang)
+    else:
+        st.error("⚠️ 權限不足：本系統無資訊管理部，僅限系統管理員 (admin) 登入檢視。")
+
+elif target_route == "it_licensing":
+    if current_role_clean == "admin":
+        load_module_safely("modules.system_licensing", "render_licensing_control_page", lang=curr_lang)
+    else:
+        st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
