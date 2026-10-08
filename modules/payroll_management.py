@@ -23,7 +23,6 @@ PAYROLL_I18N = {
         "lbl_phone": "電話補助 (Phụ cấp điện thoại) *",
         "lbl_title_allowance": "職務加給 (Phụ cấp chức vụ) *",
         "lbl_driving": "執照補助 (Trợ cấp giấy phép) *",
-        "lbl_tips": "小費 / 其他獎金 (Tiền tips) *",
         "lbl_ot_normal": "平日加班時數 (1.5倍薪資) *",
         "lbl_ot_holiday": "國定假日加班時數 (3倍薪資 / 300%) *",
         # 扣款欄位
@@ -59,7 +58,6 @@ PAYROLL_I18N = {
         "lbl_phone": "Phụ cấp điện thoại (VND) *",
         "lbl_title_allowance": "Phụ cấp chức vụ (VND) *",
         "lbl_driving": "Trợ cấp giấy phép (VND) *",
-        "lbl_tips": "Tiền tips / Thưởng khác (VND) *",
         "lbl_ot_normal": "Số giờ tăng ca ngày thường (1.5x) *",
         "lbl_ot_holiday": "Số giờ tăng ca ngày lễ (3x / 300%) *",
         "sec_deductions": "➖ Các khoản khấu trừ & Bảo hiểm bắt buộc",
@@ -94,7 +92,6 @@ PAYROLL_I18N = {
         "lbl_phone": "Phone Allowance (VND) *",
         "lbl_title_allowance": "Job Title Allowance (VND) *",
         "lbl_driving": "License Allowance (VND) *",
-        "lbl_tips": "Tips / Other Bonus (VND) *",
         "lbl_ot_normal": "Normal Overtime Hours (1.5x) *",
         "lbl_ot_holiday": "Holiday Overtime Hours (3x / 300%) *",
         "sec_deductions": "➖ Deductions & Statutory Insurance",
@@ -134,7 +131,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 "phone_allowance": 1000000.0,
                 "title_allowance": 5000000.0,
                 "driving_bonus": 1000000.0,
-                "tips": 0.0,
                 "ot_normal_hours": 0.0,
                 "ot_holiday_hours": 0.0,
                 "late_hours": 0.0,
@@ -151,7 +147,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 "phone_allowance": 0.0,
                 "title_allowance": 2000000.0,
                 "driving_bonus": 1000000.0,
-                "tips": 871000.0,
                 "ot_normal_hours": 15.0,
                 "ot_holiday_hours": 4.0,
                 "late_hours": 1.5,
@@ -177,7 +172,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             total_allowances = (
                 item["meal_allowance"] + item["fuel_allowance"] + 
                 item["phone_allowance"] + item["title_allowance"] + 
-                item["driving_bonus"] + item["tips"]
+                item["driving_bonus"]
             )
             
             gross_total = base + total_allowances + ot_pay
@@ -233,7 +228,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 title_val = st.number_input(L["lbl_title_allowance"], min_value=0.0, value=float(selected_emp["title_allowance"]), step=100000.0)
                 driving_val = st.number_input(L["lbl_driving"], min_value=0.0, value=float(selected_emp["driving_bonus"]), step=100000.0)
             with c3:
-                tips_val = st.number_input(L["lbl_tips"], min_value=0.0, value=float(selected_emp["tips"]), step=50000.0)
                 ot_normal_val = st.number_input(L["lbl_ot_normal"], min_value=0.0, value=float(selected_emp["ot_normal_hours"]), step=1.0)
                 ot_holiday_val = st.number_input(L["lbl_ot_holiday"], min_value=0.0, value=float(selected_emp["ot_holiday_hours"]), step=1.0)
 
@@ -255,7 +249,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                         e["phone_allowance"] = phone_val
                         e["title_allowance"] = title_val
                         e["driving_bonus"] = driving_val
-                        e["tips"] = tips_val
                         e["ot_normal_hours"] = ot_normal_val
                         e["ot_holiday_hours"] = ot_holiday_val
                         e["late_hours"] = late_val
