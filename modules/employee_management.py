@@ -235,6 +235,56 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             with ac2:
                 e_temp_addr = st.text_input(t_set["temp_addr"], placeholder="請輸入目前居住地址...", key="add_e_temp_addr")
 
+            # 步驟 2: 若為越南籍，顯示專屬欄位
+            e_cccd = ""
+            e_salary = 0.0
+            e_hire_date = ""
+            e_ins_deduct = 0.0
+            e_hospital = ""
+            e_allowance = 0.0
+            e_contract_date = ""
+
+            if "越南" in nat_choice:
+                st.markdown("---")
+                st.markdown(f"### {t_set['step2']}")
+                sc1, sc2, sc3 = st.columns(3)
+                with sc1:
+                    e_cccd = st.text_input(t_set["cccd_label"], placeholder="例如: 03809500xxxx", key="add_e_cccd")
+                    e_salary = st.number_input(t_set["salary_label"], min_value=0.0, value=5000000.0, step=500000.0, key="add_e_salary")
+                with sc2:
+                    e_hire_date = st.text_input(t_set["hire_label"], value="2026/10/08", key="add_e_hire_date")
+                    e_ins_deduct = st.number_input(t_set["ins_label"], min_value=0.0, value=525000.0, step=10000.0, key="add_e_ins")
+                with sc3:
+                    e_hospital = st.text_input(t_set["hosp_label"], value="Bệnh viện Đa khoa Tây Ninh", key="add_e_hosp")
+                    e_allowance = st.number_input(t_set["allow_label"], min_value=0.0, value=1000000.0, step=50000.0, key="add_e_allow")
+                e_contract_date = st.text_input(t_set["contract_label"], value="2026/10/08", key="add_e_contract")
+
             submit_add = st.form_submit_button(t_set["add_btn"])
             if submit_add:
-                st.success("已成功新增員工！")
+                if not e_name or not e_id or not e_phone:
+                    st.error("請填寫所有必填欄位 (*)")
+                else:
+                    new_emp = {
+                        "工號": e_id,
+                        "姓名": e_name,
+                        "國籍": nat_choice,
+                        "工作廠區": "西寧廠 (Tay Ninh)",
+                        "部門": e_dept,
+                        "職稱": e_title,
+                        "角色": e_role,
+                        "電話": e_phone,
+                        "戶籍地址": e_perm_addr,
+                        "現居地址": e_temp_addr
+                    }
+                    if "越南" in nat_choice:
+                        new_emp.update({
+                            "身分證字號": e_cccd,
+                            "入職日期": e_hire_date,
+                            "醫保指定醫院": e_hospital,
+                            "合約原署日期": e_contract_date,
+                            "約定起薪": str(e_salary),
+                            "每月社醫保扣繳": str(e_ins_deduct),
+                            "津貼總計": str(e_allowance)
+                        })
+                    st.session_state.employee_db.append(new_emp)
+                    st.success("已成功新增員工！請重新整理頁面查看。")
