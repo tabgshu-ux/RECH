@@ -9,11 +9,9 @@ PAYROLL_I18N = {
     "繁體中文": {
         "title": "💰 財務部 - 員工薪資計算、津貼與保險扣除中心",
         "caption": "依據越南勞動法與裕豐電機工薪資結構，自動同步「員工個人檔案」資料，計算基礎薪資、各項津貼、保險扣款（BHXH 8%、BHYT 1.5%、BHTN 1%）。",
-        "tab_list": "📑 2026年10月全廠員工薪資總表 (同步自人事模組)",
+        "tab_list": "📑 全廠員工薪資總表 (同步自人事模組)",
         "tab_individual": "🔍 個別員工薪資、津貼與扣款調整",
         "tab_history": "📊 歷史薪資與會計帳務查詢",
-        "table_header": "📋 2026年 10月全廠員工薪資總表 (Lương Tháng 10/2026)",
-        "no_records": "目前無員工薪資記錄，請先至「員工個人檔案與人事管理」建立員工。",
         "btn_export": "📥 匯出全廠薪資報表 Excel (.xlsx)",
         "col_index": "STT",
         "col_no": "工號",
@@ -29,11 +27,9 @@ PAYROLL_I18N = {
     "Tiếng Việt": {
         "title": "💰 Quản lý Lương, Phụ cấp & Khấu trừ Bảo hiểm",
         "caption": "Đồng bộ tự động từ Hồ sơ nhân sự.",
-        "tab_list": "📑 Bảng lương Tháng 10/2026",
+        "tab_list": "📑 Bảng lương",
         "tab_individual": "🔍 Điều chỉnh lương cá nhân",
         "tab_history": "📊 Lịch sử lương",
-        "table_header": "📋 Bảng lương toàn nhà máy",
-        "no_records": "Không có dữ liệu nhân viên.",
         "btn_export": "📥 Xuất Excel",
         "col_index": "STT",
         "col_no": "Mã NV",
@@ -49,11 +45,9 @@ PAYROLL_I18N = {
     "English": {
         "title": "💰 Employee Payroll, Allowance & Insurance Deduction",
         "caption": "Synchronized with Employee Directory for automated payroll processing.",
-        "tab_list": "📑 Payroll Master Log (Oct 2026)",
+        "tab_list": "📑 Payroll Master Log",
         "tab_individual": "🔍 Individual Adjustment",
         "tab_history": "📊 Payroll History",
-        "table_header": "📋 Plant Payroll Summary",
-        "no_records": "No employee records found. Please check Employee Directory.",
         "btn_export": "📥 Export Payroll Excel",
         "col_index": "No.",
         "col_no": "Emp ID",
@@ -75,15 +69,25 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
+    # 📅 動態年月選擇器（讓使用者可自由切換不同月份來計算薪資）
+    st.markdown("---")
+    col_y, col_m, col_spacer = st.columns([2, 2, 4])
+    with col_y:
+        selected_year = st.selectbox("📅 選擇薪資年度 (Year)", [2026, 2027, 2025], index=0)
+    with col_m:
+        selected_month = st.selectbox("📅 選擇薪資月份 (Month)", list(range(1, 13)), index=datetime.date.today().month - 1 if datetime.date.today().month <= 12 else 0)
+
+    # 動態組合標題（支援動態年月與越文連動）
+    dynamic_title_zh = f"📋 {selected_year} 年 {selected_month} 月全廠員工薪資總表"
+    dynamic_title_vn = f"Lương Tháng {selected_month}/{selected_year}"
+
     # 🔗 強制串聯：從 session_state 讀取「員工個人檔案模組」的真實員工清單
     if "employee_db" not in st.session_state or not st.session_state.employee_db:
-        # 如果人事模組尚未建立資料，給予預設值並與人事模組格式一致
         st.session_state.employee_db = [
             {"工號": "EMP-001", "姓名": "張董事長 (Chairman)", "部門": "總經理室", "職稱": "董事長 (Chairman)", "底薪": 25000000.0, "津貼": 9500000.0},
             {"工號": "EMP-002", "姓名": "Nguyễn Văn Quý", "部門": "管理部", "職稱": "副店長/副經理 (Vice Manager)", "底薪": 6000000.0, "津貼": 3500000.0}
         ]
 
-    # 初始化薪資調整與額外資料庫
     if "payroll_adjustments" not in st.session_state:
         st.session_state.payroll_adjustments = {}
 
@@ -91,9 +95,9 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
         L["tab_list"], L["tab_individual"], L["tab_history"]
     ])
 
-    # 1. 📑 全廠員工薪資總表 (實時動態連動員工檔案)
+    # 1. 📑 全廠員工薪資總表 (動態年月)
     with tab_list:
-        st.markdown(f"### {L['table_header']}")
+        st.markdown(f"### {dynamic_title_zh} `({dynamic_title_vn})`")
         
         employees = st.session_state.employee_db
         if employees:
@@ -104,20 +108,18 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 emp_dept = emp.get("部門", "管理部")
                 emp_title = emp.get("職稱", "一般員工")
                 
-                # 讀取基本薪資與津貼（支援從人事模組帶入，若無則預設）
                 base_sal = float(emp.get("底薪", 6000000.0))
                 allowance = float(emp.get("津貼", 1500000.0))
                 
-                # 檢查是否有個別調整記錄
-                adj = st.session_state.payroll_adjustments.get(emp_id, {})
+                # 依據年月與工號讀取調整紀錄
+                adj_key = f"{selected_year}-{selected_month:02d}-{emp_id}"
+                adj = st.session_state.payroll_adjustments.get(adj_key, {})
                 ot_pay = adj.get("ot", 0.0)
                 extra_deduct = adj.get("deduct", 0.0)
                 
                 # 越南保險扣除計算 (BHXH 8% + BHYT 1.5% + BHTN 1% = 10.5%)
                 insurance_deduct = base_sal * 0.105
                 total_deduct = insurance_deduct + extra_deduct
-                
-                # 實領金額 = 底薪 + 津貼 + 加班費 - 扣款合計
                 net_pay = base_sal + allowance + ot_pay - total_deduct
 
                 payroll_rows.append({
@@ -136,14 +138,14 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             st.dataframe(pd.DataFrame(payroll_rows), use_container_width=True)
             
             if st.button(L["btn_export"]):
-                st.success("✅ 薪資總表已成功匯出為 Excel 檔案！")
+                st.success(f"✅ {selected_year}年{selected_month}月全廠薪資總表已成功匯出為 Excel 檔案！")
         else:
-            st.warning(L["no_records"])
+            st.warning("目前無員工薪資記錄，請先至「員工個人檔案與人事管理」建立員工。")
 
-    # 2. 🔍 個別員工薪資、津貼與扣款調整
+    # 2. 🔍 個別員工薪資微調 (動態年月)
     with tab_individual:
-        st.markdown("### 🔍 個別員工薪資與津貼微調 (Individual Salary & Allowance Adjustment)")
-        st.caption("您可以選擇特定員工，調整其當月加班費、額外扣款或津貼，系統將自動重新計算越南法定保險與實領金額。")
+        st.markdown(f"### 🔍 個別員工薪資與津貼微調 (`{selected_year} 年 {selected_month} 月`)")
+        st.caption("您可以選擇特定員工與月份，調整其當月加班費或額外扣款。")
         
         if st.session_state.employee_db:
             emp_options = {f"{e.get('工號')} - {e.get('姓名')} ({e.get('職稱')})": e for e in st.session_state.employee_db}
@@ -151,10 +153,11 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             target_emp = emp_options[sel_emp_key]
             t_id = target_emp.get("工號")
 
-            curr_adj = st.session_state.payroll_adjustments.get(t_id, {"ot": 0.0, "deduct": 0.0})
+            adj_key = f"{selected_year}-{selected_month:02d}-{t_id}"
+            curr_adj = st.session_state.payroll_adjustments.get(adj_key, {"ot": 0.0, "deduct": 0.0})
 
             with st.form("form_adjust_payroll"):
-                st.info(f"正在調整員工：**{target_emp.get('姓名')}** (工號: `{t_id}`, 部門: {target_emp.get('部門')})")
+                st.info(f"正在調整 **{selected_year}年{selected_month}月** 員工：**{target_emp.get('姓名')}** (工號: `{t_id}`)")
                 
                 c1, c2 = st.columns(2)
                 with c1:
@@ -162,12 +165,12 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 with c2:
                     adj_deduct = st.number_input("額外扣款/預支扣除 (Extra Deductions in VND)", min_value=0.0, value=float(curr_adj.get("deduct", 0.0)), step=50000.0)
 
-                if st.form_submit_button("💾 儲存薪資調整紀錄", type="primary", use_container_width=True):
-                    st.session_state.payroll_adjustments[t_id] = {
+                if st.form_submit_button("💾 儲存該月份薪資調整紀錄", type="primary", use_container_width=True):
+                    st.session_state.payroll_adjustments[adj_key] = {
                         "ot": adj_ot,
                         "deduct": adj_deduct
                     }
-                    st.success(f"✅ 員工 `{target_emp.get('姓名')}` 的薪資調整已成功更新！")
+                    st.success(f"✅ {selected_year}年{selected_month}月員工 `{target_emp.get('姓名')}` 薪資調整已儲存！")
                     st.rerun()
         else:
             st.info("目前無員工資料可供調整。")
