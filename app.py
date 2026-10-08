@@ -3,9 +3,8 @@ import streamlit as st
 import pandas as pd
 from sqlalchemy import text
 
-# 導入所有功能模組
 import modules.approval_workflow as approval_workflow
-import modules.asset_management as asset_management  # 👈 已完整保留固定資產模組
+import modules.asset_management as asset_management
 import modules.contract_management as contract_management
 import modules.db_connection as db_conn
 import modules.employee_management as employee_management
@@ -56,15 +55,12 @@ RECH_LOGO_HTML = """
 </div>
 """
 
-# ----------------------------------------------------
-# 📋 導航結構定義（已完整納入固定資產管理與越南財報）
-# ----------------------------------------------------
 NAV_STRUCTURE = {
     "繁體中文": {
         "company_name": "裕豐電機工業有限公司",
         "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
         "login_title": "⚡ 裕豐電機工業 REETECH INDUSTRIAL - 系統登入",
-        "username": "帳號",
+        "username": "帳號 (工號)",
         "password": "密碼",
         "login_btn": "🔑 登入系統",
         "logout_btn": "🚪 登出系統",
@@ -84,13 +80,13 @@ NAV_STRUCTURE = {
                     "👤 員工個人檔案與人事管理": "hr_employee",
                     "📍 外勤員工打卡資料與出勤統計計算": "field_attendance",
                     "🏭 廠區與工作廠區管理": "factory_mgmt",
-                    "🚗 廠區車輛進出口門禁紀錄": "vehicle_gate",
+                    "🚗 廠區車輛進出口門禁與派車審核": "vehicle_gate",
                     "🛠️ 車輛維修保養紀錄": "vehicle_maintenance",
-                    "🏢 固定資產與設備管理": "asset_mgmt",  # 👈 完整恢復固定資產選單
+                    "🏢 固定資產與設備管理": "asset_mgmt",
                     "🛒 採購與應付帳款 (AP)": "procurement_ap",
                     "📋 應收帳款": "sales_order_ar",
                     "📊 越南稅務標準財務報表 (Thông tư 200)": "financial_tax",
-                    "💰 員工薪資管理": "payroll_calc",
+                    "💰 員工薪資計算與保險扣除": "payroll_calc",
                     "📄 電子發票綜合管理": "invoice_management",
                 }
             },
@@ -127,7 +123,7 @@ NAV_STRUCTURE = {
         "company_name": "CÔNG TY TNHH CN DŨ PHONG",
         "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
         "login_title": "⚡ REETECH INDUSTRIAL - Đăng nhập hệ thống",
-        "username": "Tài khoản",
+        "username": "Tài khoản (Mã NV)",
         "password": "Mật khẩu",
         "login_btn": "🔑 Đăng nhập",
         "logout_btn": "🚪 Đăng xuất",
@@ -147,13 +143,13 @@ NAV_STRUCTURE = {
                     "👤 Hồ sơ nhân sự": "hr_employee",
                     "📍 Chấm công GPS & Thống kê": "field_attendance",
                     "🏭 Quản lý Nhà máy": "factory_mgmt",
-                    "🚗 Quản lý xe ra vào": "vehicle_gate",
+                    "🚗 Quản lý xe ra vào & Phê duyệt": "vehicle_gate",
                     "🛠️ Bảo trì xe": "vehicle_maintenance",
-                    "🏢 Quản lý Tài sản cố định": "asset_mgmt",  # 👈 越文版固定資產
+                    "🏢 Quản lý Tài sản cố định": "asset_mgmt",
                     "🛒 Mua hàng & Phải trả (AP)": "procurement_ap",
                     "📋 Phải thu": "sales_order_ar",
                     "📊 Báo cáo Tài chính chuẩn Thuế VN": "financial_tax",
-                    "💰 Quản lý Lương": "payroll_calc",
+                    "💰 Tính lương & Khấu trừ bảo hiểm": "payroll_calc",
                     "📄 Quản lý Hóa đơn điện tử": "invoice_management",
                 }
             },
@@ -190,7 +186,7 @@ NAV_STRUCTURE = {
         "company_name": "REETECH INDUSTRIAL CO., LTD",
         "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
         "login_title": "⚡ REETECH INDUSTRIAL - System Login",
-        "username": "Username",
+        "username": "Username (Emp ID)",
         "password": "Password",
         "login_btn": "🔑 Login",
         "logout_btn": "🚪 Logout",
@@ -210,13 +206,13 @@ NAV_STRUCTURE = {
                     "👤 HR Records": "hr_employee",
                     "📍 GPS Attendance & Stats": "field_attendance",
                     "🏭 Factory Management": "factory_mgmt",
-                    "🚗 Vehicle Gate Log": "vehicle_gate",
+                    "🚗 Vehicle Gate & Dispatch Log": "vehicle_gate",
                     "🛠️ Vehicle Maintenance": "vehicle_maintenance",
-                    "🏢 Fixed Asset Management": "asset_mgmt",  # 👈 英文版固定資產
+                    "🏢 Fixed Asset Management": "asset_mgmt",
                     "🛒 Procurement & AP": "procurement_ap",
                     "📋 Accounts Receivable": "sales_order_ar",
                     "📊 Vietnamese Tax Financials": "financial_tax",
-                    "💰 Payroll Management": "payroll_calc",
+                    "💰 Payroll & Insurance Calculation": "payroll_calc",
                     "📄 E-Invoice Management": "invoice_management",
                 }
             },
@@ -275,107 +271,119 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.user_role = ""
     st.session_state.user_name = ""
+    st.session_state.must_change_pwd = False
 
 lang_dict = NAV_STRUCTURE.get(
     st.session_state.current_lang, NAV_STRUCTURE["繁體中文"]
 )
 
 # ----------------------------------------------------
-# 🔐 系統登入與權限識別機制
+# 🔐 系統登入與「首次登入強制修改密碼」機制
 # ----------------------------------------------------
 if not st.session_state.logged_in:
     st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
     st.title(lang_dict["login_title"])
     st.caption(lang_dict["company_sub"])
     st.markdown("---")
+    
     col1, _ = st.columns([1, 2])
     with col1:
-        username = st.text_input(
-            f"{lang_dict['username']} (admin / chairman / gm / manager / security / staff)"
-        )
-        password = st.text_input(
-            f"{lang_dict['password']} (123)", type="password"
-        )
+        username_input = st.text_input(lang_dict["username"])
+        password_input = st.text_input(lang_dict["password"], type="password")
+        
         if st.button(lang_dict["login_btn"], use_container_width=True):
-            if password == "123":
+            u_clean = username_input.strip()
+            
+            # 預設管理員或特殊測試帳號
+            if u_clean.lower() == "admin" and password_input == "123":
                 st.session_state.logged_in = True
-                u_clean = username.strip().lower()
-                
-                if u_clean == "admin":
-                    st.session_state.user_role = "admin"
-                elif u_clean in ["chairman", "董事长", "董事長"]:
-                    st.session_state.user_role = "chairman"
-                elif u_clean in ["generalmanager", "gm", "總經理", "总经理"]:
-                    st.session_state.user_role = "generalmanager"
-                elif u_clean in ["vice", "vicemanager", "副總經理", "副总经理"]:
-                    st.session_state.user_role = "vicemanager"
-                elif u_clean in ["executive", "boss", "ceo"]:
-                    st.session_state.user_role = "executive"
-                elif u_clean in ["manager", "supervisor", "經理", "经理"]:
-                    st.session_state.user_role = "manager"
-                elif u_clean in ["admin_manager", "行政主管"]:
-                    st.session_state.user_role = "admin_manager"
-                elif u_clean in ["finance_manager", "財務主管", "财务主管"]:
-                    st.session_state.user_role = "finance_manager"
-                elif u_clean in ["security", "guard", "保全"]:
-                    st.session_state.user_role = "security"
-                else:
-                    st.session_state.user_role = "staff"
-                    
-                st.session_state.user_name = username
+                st.session_state.user_role = "admin"
+                st.session_state.user_name = "admin"
+                st.session_state.must_change_pwd = False
                 st.rerun()
             else:
-                st.error("帳號或密碼錯誤 / Incorrect password")
+                # 從員工資料庫中比對帳號密碼
+                matched_emp = None
+                if "employee_db" in st.session_state:
+                    matched_emp = next((e for e in st.session_state.employee_db if e["工號"].lower() == u_clean.lower()), None)
+                
+                stored_pwd = matched_emp.get("密碼", "123456") if matched_emp else "123456"
+                
+                if matched_emp and password_input == stored_pwd:
+                    st.session_state.logged_in = True
+                    st.session_state.user_name = matched_emp["姓名"]
+                    st.session_state.user_role = matched_emp.get("角色", "Staff")
+                    # 檢查是否為首次登入需修改密碼
+                    st.session_state.must_change_pwd = matched_emp.get("must_change_password", False)
+                    st.session_state.current_emp_code = matched_emp["工號"]
+                    st.rerun()
+                else:
+                    st.error("⚠️ 帳號或初始密碼錯誤 / Incorrect username or password")
     st.stop()
 
+# ----------------------------------------------------
+# 🔑 首次登入強制修改密碼畫面攔截器
+# ----------------------------------------------------
+if st.session_state.get("must_change_pwd", False):
+    st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
+    st.warning("⚠️ **首次登入安全設定 / Lần đầu đăng nhập - Đổi mật khẩu**：為符合企業資安規範，請您立即變更由人事分派的初始密碼。")
+    
+    with st.form("force_change_pwd_form"):
+        new_pwd = st.text_input("請輸入您的新密碼 (Mật khẩu mới) *", type="password")
+        confirm_pwd = st.text_input("再次確認新密碼 (Nhập lại mật khẩu mới) *", type="password")
+        
+        if st.form_submit_button("💾 確認修改密碼並進入系統", type="primary", use_container_width=True):
+            if new_pwd and new_pwd == confirm_pwd:
+                # 更新員工資料庫中的密碼並解除強制修改旗標
+                if "employee_db" in st.session_state:
+                    for e in st.session_state.employee_db:
+                        if e["工號"] == st.session_state.get("current_emp_code"):
+                            e["密碼"] = new_pwd
+                            e["must_change_password"] = False
+                st.session_state.must_change_pwd = False
+                st.success("🎉 密碼修改成功！正在進入系統...")
+                st.rerun()
+            else:
+                st.error("⚠️ 兩次輸入的新密碼不相符或未填寫，請重新檢查！")
+    st.stop()
+
+# ----------------------------------------------------
+# 🖥️ 主系統導航與側邊欄
+# ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
 lang_list = ["繁體中文", "Tiếng Việt", "English"]
 selected_lang = st.sidebar.selectbox(
     lang_dict["lang_selector"],
     lang_list,
-    index=(
-        lang_list.index(st.session_state.current_lang)
-        if st.session_state.current_lang in lang_list
-        else 0
-    ),
+    index=(lang_list.index(st.session_state.current_lang) if st.session_state.current_lang in lang_list else 0),
 )
 
 if selected_lang != st.session_state.current_lang:
     st.session_state.current_lang = selected_lang
     st.rerun()
 
-st.sidebar.markdown(
-    f"**👤 {st.session_state.user_name}** ({st.session_state.user_role.upper()})"
-)
+st.sidebar.markdown(f"**👤 {st.session_state.user_name}** ({st.session_state.user_role.upper()})")
 if st.sidebar.button(lang_dict["logout_btn"], use_container_width=True):
     st.session_state.logged_in = False
+    st.session_state.must_change_pwd = False
     st.rerun()
 
 st.sidebar.markdown("---")
 
 dept_options = list(lang_dict["departments"].keys())
-current_user_clean = str(st.session_state.user_name).strip().lower()
 current_role_clean = str(st.session_state.user_role).strip().lower()
 
 if current_role_clean == "security":
     dept_options = ["👔 管理部 (Management Dept)"]
     selected_parent_dept = dept_options[0]
     st.sidebar.markdown(f"**{lang_dict['parent_header']}**")
-    
-    if st.session_state.current_lang == "繁體中文":
-        feature_labels = ["🚗 廠區車輛進出口門禁紀錄"]
-    elif st.session_state.current_lang == "Tiếng Việt":
-        feature_labels = ["🚗 Quản lý xe ra vào"]
-    else:
-        feature_labels = ["🚗 Vehicle Gate Log"]
-        
+    feature_labels = ["🚗 廠區車輛進出口門禁與派車審核"] if st.session_state.current_lang == "繁體中文" else ["🚗 Quản lý xe ra vào & Phê duyệt"]
     selected_feature_label = feature_labels[0]
     target_route = "vehicle_gate"
 else:
     is_executive_access = (
         current_role_clean in ["admin", "chairman", "generalmanager", "vicemanager", "executive", "manager", "finance_manager"]
-        or current_user_clean in ["admin", "executive", "boss", "ceo", "gm", "chairman"]
     )
 
     if not is_executive_access:
@@ -384,18 +392,14 @@ else:
     if current_role_clean != "admin":
         dept_options = [d for d in dept_options if "資訊管理部" not in d and "IT" not in d and "Phòng IT" not in d]
 
-    selected_parent_dept = st.sidebar.radio(
-        lang_dict["parent_header"], dept_options, index=0
-    )
+    selected_parent_dept = st.sidebar.radio(lang_dict["parent_header"], dept_options, index=0)
 
     st.sidebar.markdown("---")
     features_dict = lang_dict["departments"][selected_parent_dept]["features"]
     feature_labels = list(features_dict.keys())
 
     st.sidebar.caption(f"**{selected_parent_dept.split('(')[0].strip()}**")
-    selected_feature_label = st.sidebar.radio(
-        lang_dict["sub_header"], feature_labels
-    )
+    selected_feature_label = st.sidebar.radio(lang_dict["sub_header"], feature_labels)
     target_route = features_dict[selected_feature_label]
 
 curr_lang = st.session_state.current_lang
@@ -405,15 +409,7 @@ curr_lang = st.session_state.current_lang
 # ----------------------------------------------------
 if target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
     if hasattr(executive_dashboard, "render_executive_dashboard_page"):
-        safe_call_module(
-            executive_dashboard.render_executive_dashboard_page,
-            sub_route=target_route,
-            lang=curr_lang,
-        )
-    elif hasattr(executive_dashboard, "show"):
-        safe_call_module(
-            executive_dashboard.show, sub_route=target_route, lang=curr_lang
-        )
+        safe_call_module(executive_dashboard.render_executive_dashboard_page, sub_route=target_route, lang=curr_lang)
 
 elif target_route == "approval_center":
     safe_call_module(approval_workflow.render_approval_center, lang=curr_lang)
@@ -446,7 +442,7 @@ elif target_route == "payroll_calc":
     safe_call_module(payroll_management.render_payroll_management_page, engine=engine, lang=curr_lang)
 
 elif target_route == "invoice_management":
-    safe_call_module(invoice_management.render_invoice_management, engine=engine, lang=curr_lang)
+    safe_call_module(invoice_management.render_invoice_management_page, engine=engine, lang=curr_lang)
 
 elif target_route == "field_attendance":
     safe_call_module(field_attendance.render_field_attendance_page, engine=engine, lang=curr_lang)
