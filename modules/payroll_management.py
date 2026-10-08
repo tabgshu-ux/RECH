@@ -22,7 +22,7 @@ PAYROLL_I18N = {
         "lbl_fuel": "油費補助 (Phụ cấp xăng) *",
         "lbl_phone": "電話補助 (Phụ cấp điện thoại) *",
         "lbl_title_allowance": "職務加給 (Phụ cấp chức vụ) *",
-        "lbl_driving": "執照獎金 (Tiền thưởng giấy phép xe hơi) *",
+        "lbl_driving": "執照補助 (Trợ cấp giấy phép) *",
         "lbl_tips": "小費 / 其他獎金 (Tiền tips) *",
         "lbl_ot_normal": "平日加班時數 (1.5倍薪資) *",
         "lbl_ot_holiday": "國定假日加班時數 (3倍薪資 / 300%) *",
@@ -58,7 +58,7 @@ PAYROLL_I18N = {
         "lbl_fuel": "Phụ cấp xăng (VND) *",
         "lbl_phone": "Phụ cấp điện thoại (VND) *",
         "lbl_title_allowance": "Phụ cấp chức vụ (VND) *",
-        "lbl_driving": "Tiền thưởng giấy phép xe hơi (VND) *",
+        "lbl_driving": "Trợ cấp giấy phép (VND) *",
         "lbl_tips": "Tiền tips / Thưởng khác (VND) *",
         "lbl_ot_normal": "Số giờ tăng ca ngày thường (1.5x) *",
         "lbl_ot_holiday": "Số giờ tăng ca ngày lễ (3x / 300%) *",
@@ -93,7 +93,7 @@ PAYROLL_I18N = {
         "lbl_fuel": "Fuel Allowance (VND) *",
         "lbl_phone": "Phone Allowance (VND) *",
         "lbl_title_allowance": "Job Title Allowance (VND) *",
-        "lbl_driving": "Driving License Bonus (VND) *",
+        "lbl_driving": "License Allowance (VND) *",
         "lbl_tips": "Tips / Other Bonus (VND) *",
         "lbl_ot_normal": "Normal Overtime Hours (1.5x) *",
         "lbl_ot_holiday": "Holiday Overtime Hours (3x / 300%) *",
@@ -122,7 +122,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化薪資資料庫（對應 Excel 的完整欄位結構）
     if "payroll_db" not in st.session_state:
         st.session_state.payroll_db = [
             {
@@ -153,11 +152,11 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 "title_allowance": 2000000.0,
                 "driving_bonus": 1000000.0,
                 "tips": 871000.0,
-                "ot_normal_hours": 15.0,  # 平日加班 1.5 倍
-                "ot_holiday_hours": 4.0,  # 國定假日 3 倍 (300%)
-                "late_hours": 1.5,        # 遲到時數
-                "leave_hours": 0.0,       # 請假扣薪時數
-                "advance": 0.0            # 預支薪資
+                "ot_normal_hours": 15.0,
+                "ot_holiday_hours": 4.0,
+                "late_hours": 1.5,
+                "leave_hours": 0.0,
+                "advance": 0.0
             }
         ]
 
@@ -171,13 +170,10 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
         summary_data = []
         for idx, item in enumerate(st.session_state.payroll_db, 1):
             base = item["base_salary"]
-            # 計算時薪 (假設每月工作 26 天，每天 8 小時 = 208 小時)
             hourly_rate = base / 208.0
             
-            # 加班費計算：平日 1.5 倍，國定假日 3 倍 (300%) 依據越南勞動法
             ot_pay = (item["ot_normal_hours"] * hourly_rate * 1.5) + (item["ot_holiday_hours"] * hourly_rate * 3.0)
             
-            # 各項津貼合計
             total_allowances = (
                 item["meal_allowance"] + item["fuel_allowance"] + 
                 item["phone_allowance"] + item["title_allowance"] + 
@@ -186,13 +182,11 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             
             gross_total = base + total_allowances + ot_pay
             
-            # 越南法定保險扣款比例：BHXH 8%, BHYT 1.5%, BHTN 1% 共計 10.5%
             bhxh = base * 0.08
             bhyt = base * 0.015
             bhtn = base * 0.01
             insurance_total = bhxh + bhyt + bhtn
             
-            # 遲到與請假扣款 (以時薪計算扣款)
             late_deduct = item["late_hours"] * hourly_rate
             leave_deduct = item["leave_hours"] * hourly_rate
             
@@ -207,80 +201,4 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 L["col_base"]: f"{base:,.0f} ₫",
                 L["col_allowance"]: f"{total_allowances:,.0f} ₫",
                 L["col_ot"]: f"{ot_pay:,.0f} ₫",
-                L["col_deduct"]: f"{total_deductions:,.0f} ₫ (BHXH 10.5%)",
-                L["col_net"]: f"{net_salary:,.0f} ₫"
-            })
-
-        st.dataframe(pd.DataFrame(summary_data), use_container_width=True)
-        
-        st.download_button(
-            label="📥 匯出全廠薪資總表 Excel (.xlsx)",
-            data="Mock Excel Binary Data",
-            file_name="Reetech_Payroll_Oct_2026.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            type="primary"
-        )
-
-    with tab_calc:
-        st.markdown(f"### {L['calc_header']}")
-        emp_opts = {f"{e['code']} - {e['name']} ({e['title']})": e for e in st.session_state.payroll_db}
-        sel_key = st.selectbox(L["select_emp"], list(emp_opts.keys()))
-        selected_emp = emp_opts[sel_key]
-
-        with st.form("form_individual_payroll"):
-            st.markdown(f"#### {L['sec_earnings']}")
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                base_val = st.number_input(L["lbl_base"], min_value=0.0, value=float(selected_emp["base_salary"]), step=500000.0)
-                meal_val = st.number_input(L["lbl_meal"], min_value=0.0, value=float(selected_emp["meal_allowance"]), step=50000.0)
-                fuel_val = st.number_input(L["lbl_fuel"], min_value=0.0, value=float(selected_emp["fuel_allowance"]), step=50000.0)
-            with c2:
-                phone_val = st.number_input(L["lbl_phone"], min_value=0.0, value=float(selected_emp["phone_allowance"]), step=50000.0)
-                title_val = st.number_input(L["lbl_title_allowance"], min_value=0.0, value=float(selected_emp["title_allowance"]), step=100000.0)
-                driving_val = st.number_input(L["lbl_driving"], min_value=0.0, value=float(selected_emp["driving_bonus"]), step=100000.0)
-            with c3:
-                tips_val = st.number_input(L["lbl_tips"], min_value=0.0, value=float(selected_emp["tips"]), step=50000.0)
-                ot_normal_val = st.number_input(L["lbl_ot_normal"], min_value=0.0, value=float(selected_emp["ot_normal_hours"]), step=1.0)
-                ot_holiday_val = st.number_input(L["lbl_ot_holiday"], min_value=0.0, value=float(selected_emp["ot_holiday_hours"]), step=1.0)
-
-            st.markdown(f"#### {L['sec_deductions']}")
-            d1, d2, d3 = st.columns(3)
-            with d1:
-                late_val = st.number_input(L["lbl_late_hours"], min_value=0.0, value=float(selected_emp["late_hours"]), step=0.5)
-            with d2:
-                leave_val = st.number_input(L["lbl_leave_hours"], min_value=0.0, value=float(selected_emp["leave_hours"]), step=0.5)
-            with d3:
-                advance_val = st.number_input(L["lbl_advance"], min_value=0.0, value=float(selected_emp["advance"]), step=100000.0)
-
-            if st.form_submit_button(L["btn_calc"], type="primary", use_container_width=True):
-                for e in st.session_state.payroll_db:
-                    if e["code"] == selected_emp["code"]:
-                        e["base_salary"] = base_val
-                        e["meal_allowance"] = meal_val
-                        e["fuel_allowance"] = fuel_val
-                        e["phone_allowance"] = phone_val
-                        e["title_allowance"] = title_val
-                        e["driving_bonus"] = driving_val
-                        e["tips"] = tips_val
-                        e["ot_normal_hours"] = ot_normal_val
-                        e["ot_holiday_hours"] = ot_holiday_val
-                        e["late_hours"] = late_val
-                        e["leave_hours"] = leave_val
-                        e["advance"] = advance_val
-                st.success(L["success_calc"].format(name=selected_emp["name"]))
-                st.rerun()
-
-    with tab_history:
-        st.markdown("### 📑 歷史薪資與會計帳務查詢 (Lịch sử Lương & Kế toán)")
-        st.info("系統已自動同步每月會計傳票與應付薪資憑證，支援歷年跨國廠區（西寧廠、海防廠）薪資報表歸檔查閱。")
-        st.metric("2026年 9月份 實發總薪資", "482,500,000 ₫", "🟢 已完成銀行撥款")
-        st.metric("2026年 8月份 實發總薪資", "475,200,000 ₫", "🟢 已完成銀行撥款")
-
-def show(*args, **kwargs):
-    render_payroll_management_page(*args, **kwargs)
-
-def main(*args, **kwargs):
-    render_payroll_management_page(*args, **kwargs)
-
-def render_payroll_management(*args, **kwargs):
-    render_payroll_management_page(*args, **kwargs)
+                L["col_deduct"]: f"{total_deductions:,.0f} ₫ (BHXH 10.
