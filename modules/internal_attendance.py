@@ -8,13 +8,14 @@ import datetime
 INT_ATT_I18N = {
     "繁體中文": {
         "title": "🏢 管理部 - 廠內智慧考勤與硬體 API 聯動管理",
-        "caption": "依據各廠區獨立管理刷卡紀錄、設定彈性緩衝時間、自動化薪資扣款連動，以及硬體打卡機 API 介面設定。",
-        "tab_records": "📑 廠內出勤紀錄與搜尋",
+        "caption": "依據各廠區獨立管理完整出勤紀錄、支援月份與員工整月考勤追溯、彈性緩衝時間與自動化薪資扣款連動。",
+        "tab_records": "📑 廠內完整出勤日誌與月度查詢",
         "tab_simulate": "⏱️ 模擬打卡機 / 人臉指紋資料進站",
         "tab_api_config": "🔌 硬體打卡機 API 介面設定 (SaaS)",
         "tab_rules": "⚙️ 彈性緩衝時間與扣款規則設定",
-        "header_tayninh": "🏭 西寧廠 (Tay Ninh) 出勤紀錄與異常清冊",
-        "header_haiphong": "🏭 海防廠 (Hai Phong) 出勤紀錄與異常清冊",
+        "header_tayninh": "🏭 西寧廠 (Tay Ninh) 完整出勤與刷卡日誌",
+        "header_haiphong": "🏭 海防廠 (Hai Phong) 完整出勤與刷卡日誌",
+        "filter_month": "📅 選擇結算月份 (Month Filter)",
         "search_label": "🔍 搜尋員工姓名或工號...",
         "header_simulate": "⚡ 模擬硬體打卡資料寫入與即時比對",
         "header_api": "🔌 智慧人臉/指紋打卡機硬體 API 整合設定中心",
@@ -44,13 +45,14 @@ INT_ATT_I18N = {
     },
     "Tiếng Việt": {
         "title": "🏢 Quản lý Chấm công nội bộ & Cấu hình API",
-        "caption": "Quản lý chấm công độc lập theo từng nhà máy, cài đặt ân hạn, trừ lương và cấu hình API máy chấm công.",
-        "tab_records": "📑 Sổ điểm danh & Tìm kiếm",
+        "caption": "Quản lý toàn bộ nhật ký chấm công theo nhà máy, tra cứu theo tháng, ân hạn và trừ lương.",
+        "tab_records": "📑 Nhật ký chấm công & Tra cứu tháng",
         "tab_simulate": "⏱️ Mô phỏng máy chấm công",
         "tab_api_config": "🔌 Cài đặt API Máy chấm công",
         "tab_rules": "⚙️ Cài đặt ân hạn & Trừ lương",
         "header_tayninh": "🏭 Nhật ký chấm công Nhà máy Tây Ninh",
         "header_haiphong": "🏭 Nhật ký chấm công Nhà máy Hải Phòng",
+        "filter_month": "📅 Chọn tháng quyết toán",
         "search_label": "🔍 Tìm kiếm theo tên hoặc mã NV...",
         "header_simulate": "⚡ Giả lập quẹt thẻ",
         "header_api": "🔌 Cấu hình API thiết bị phần cứng",
@@ -80,13 +82,14 @@ INT_ATT_I18N = {
     },
     "English": {
         "title": "🏢 Management - Internal Attendance & Biometric API Hub",
-        "caption": "Independent plant-wise attendance tracking, grace period, payroll sync, and biometric API configuration.",
-        "tab_records": "📑 Attendance Records & Search",
+        "caption": "Full plant attendance logs, monthly search, grace period, payroll sync, and biometric configuration.",
+        "tab_records": "📑 Attendance Logs & Monthly Search",
         "tab_simulate": "⏱️ Simulate Biometric Input",
         "tab_api_config": "🔌 Biometric Device API Settings",
         "tab_rules": "⚙️ Grace Period & Deduction Settings",
         "header_tayninh": "🏭 Tay Ninh Plant Attendance Log",
         "header_haiphong": "🏭 Hai Phong Plant Attendance Log",
+        "filter_month": "📅 Select Settlement Month",
         "search_label": "🔍 Search by Employee Name or ID...",
         "header_simulate": "⚡ Simulate Device Sync",
         "header_api": "🔌 Biometric Hardware API Integration Center",
@@ -153,27 +156,60 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                 "deduct_hours": 0.0
             },
             {
-                "code": "EMP-002",
+                "code": "EMP-001",
+                "name": "張董事長",
+                "factory": "西寧廠 (Tay Ninh)",
+                "type": "下班簽退",
+                "time": "2026-10-08 17:10:00",
+                "status": "🟢 正常 (Normal)",
+                "deduct_hours": 0.0
+            },
+            {
+                "code": "VN-002",
                 "name": "Nguyễn Văn Quý",
                 "factory": "海防廠 (Hai Phong)",
                 "type": "上班簽到",
                 "time": "2026-10-08 08:12:00",
                 "status": "🟡 遲到 12 分鐘 (超過 5m 緩衝)",
                 "deduct_hours": 0.12
+            },
+            {
+                "code": "VN-002",
+                "name": "Nguyễn Văn Quý",
+                "factory": "海防廠 (Hai Phong)",
+                "type": "下班簽退",
+                "time": "2026-10-08 17:02:00",
+                "status": "🟢 正常 (Normal)",
+                "deduct_hours": 0.0
+            },
+            {
+                "code": "VN-003",
+                "name": "Trần Văn Nam",
+                "factory": "西寧廠 (Tay Ninh)",
+                "type": "上班簽到",
+                "time": "2026-10-09 07:58:00",
+                "status": "🟢 正常 (Normal)",
+                "deduct_hours": 0.0
             }
         ]
 
-    # 🎯 擴充頁籤：新增硬體打卡機 API 設定分頁
+    # 🎯 擴充頁籤：記錄、模擬、API設定、緩衝規則
     tab_records, tab_simulate, tab_api_config, tab_rules = st.tabs([
         L["tab_records"], L["tab_simulate"], L["tab_api_config"], L["tab_rules"]
     ])
 
-    # 1. 📑 出勤紀錄與搜尋
+    # 1. 📑 廠內完整出勤日誌與月度查詢
     with tab_records:
         rules = st.session_state.attendance_rules
         st.markdown(f"📌 **目前生效考勤標準**：上班 `{rules['standard_in']}` | 每日緩衝 `{rules['daily_grace_mins']} 分鐘`")
         
-        search_query = st.text_input(L["search_label"], key="att_search_input")
+        # 💡 新增月份過濾與關鍵字搜尋列
+        rc1, rc2 = st.columns([1, 2])
+        with rc1:
+            selected_month = st.selectbox(L["filter_month"], ["全部月份 (All)", "2026-10", "2026-09", "2026-08"], key="att_month_filter")
+        with rc2:
+            search_query = st.text_input(L["search_label"], key="att_search_input")
+
         st.markdown("---")
 
         # 西寧廠
@@ -182,6 +218,10 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
             item for item in st.session_state.internal_attendance_db 
             if "西寧" in item["factory"] or "Tay Ninh" in item["factory"]
         ]
+        
+        if selected_month != "全部月份 (All)":
+            tay_ninh_data = [item for item in tay_ninh_data if selected_month in item["time"]]
+
         if search_query:
             tay_ninh_data = [
                 item for item in tay_ninh_data 
@@ -202,7 +242,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                 })
             st.dataframe(pd.DataFrame(display_tn), use_container_width=True)
         else:
-            st.info("西寧廠目前無符合條件的出勤紀錄。")
+            st.info("西寧廠在此月份無符合條件的出勤紀錄。")
 
         st.markdown("---")
 
@@ -212,6 +252,10 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
             item for item in st.session_state.internal_attendance_db 
             if "海防" in item["factory"] or "Hai Phong" in item["factory"]
         ]
+
+        if selected_month != "全部月份 (All)":
+            hai_phong_data = [item for item in hai_phong_data if selected_month in item["time"]]
+
         if search_query:
             hai_phong_data = [
                 item for item in hai_phong_data 
@@ -232,7 +276,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                 })
             st.dataframe(pd.DataFrame(display_hp), use_container_width=True)
         else:
-            st.info("海防廠目前無符合條件的出勤紀錄。")
+            st.info("海防廠在此月份無符合條件的出勤紀錄。")
 
     # 2. ⏱️ 模擬打卡機 / 人臉指紋資料進站
     with tab_simulate:
@@ -240,17 +284,17 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
         with st.form("form_biometric_simulate_rule"):
             emp_choices = [
                 "EMP-001 - 張董事長 (西寧廠)", 
-                "EMP-002 - Nguyễn Văn Quý (海防廠)", 
-                "EMP-003 - 阮文強 (西寧廠)"
+                "VN-002 - Nguyễn Văn Quý (海防廠)", 
+                "VN-003 - Trần Văn Nam (西寧廠)"
             ]
             sel_emp = st.selectbox(L["lbl_emp"], emp_choices)
             clock_type = st.selectbox(L["lbl_type"], L["type_opts"])
             
             col_t1, col_t2 = st.columns(2)
             with col_t1:
-                sim_date = st.date_input("刷卡日期", datetime.date(2026, 10, 8))
+                sim_date = st.date_input("刷卡日期", datetime.date(2026, 10, 9))
             with col_t2:
-                sim_time = st.time_input("刷卡時間 (Time)", datetime.time(8, 12))
+                sim_time = st.time_input("刷卡時間 (Time)", datetime.time(8, 0))
 
             if st.form_submit_button(L["btn_process"], type="primary", use_container_width=True):
                 emp_code = sel_emp.split(" - ")[0]
@@ -277,6 +321,8 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                         status = f"🟢 雖遲到 {int(diff_mins)} 分鐘，但在緩衝內 (免扣)"
                     else:
                         status = "🟢 準時簽到 (Normal)"
+                else:
+                    status = "🟢 正常下班簽退 (Normal)"
 
                 st.session_state.internal_attendance_db.insert(0, {
                     "code": emp_code,
