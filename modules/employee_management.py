@@ -11,19 +11,21 @@ EMP_I18N = {
         "caption": "管理全公司在職員工名冊、離職歷史檔案、越南勞動法合規與外籍幹部護照/暫住證證件管理。",
         "tab_list": "👥 現職員工名冊",
         "tab_resigned": "📂 離職與歷史名冊 (Archive)",
-        "tab_add": "➕ 新增員工與初始帳密設定",
+        "tab_add_vn": "🇻🇳 新增越南籍員工 (含社保與CCCD)",
+        "tab_add_foreign": "🇹🇼🇨🇳 新增台/陸籍幹部 (含護照與暫住證)",
         "tab_edit": "✏️ 修改員工資料與重設密碼",
         "tab_delete": "🗑️ 離職歸檔與帳號刪除",
         "header_list": "📋 全公司現職員工名冊與權限總覽",
         "header_resigned": "📂 離職歷史人員名冊與復職管理",
-        "header_add": "➕ 新增員工個人檔案（含越南本地員工與台/陸籍幹部護照暫住證登錄）",
+        "header_add_vn": "🇻🇳 新增越南本地員工個人檔案與社會保險設定",
+        "header_add_foreign": "🇹🇼🇨🇳 新增台籍與中國籍外派幹部護照及暫住證檔案",
         "header_edit": "✏️ 修改員工基本資料與證件管理",
         "header_delete": "🗑️ 辦理離職歸檔或徹底刪除重複帳號",
         "lbl_code": "員工工號 (登入帳號) *",
         "lbl_name": "員工姓名 (Employee Name) *",
         "lbl_phone": "聯絡電話 (Phone No.) *",
-        "lbl_id_card": "公民身分證號 (CCCD / 越南籍) *",
-        "lbl_passport": "護照號碼 (Passport No. / 台陸籍) *",
+        "lbl_id_card": "公民身分證號 (CCCD / 12碼) *",
+        "lbl_passport": "護照號碼 (Passport No.) *",
         "lbl_trc": "暫住證號 (TRC / Giấy tạm trú) *",
         "lbl_bhxh": "社會保險證號 (Mã số BHXH)",
         "lbl_hospital": "投保指定醫療院所 (Bệnh viện KCB BHYT)",
@@ -35,8 +37,6 @@ EMP_I18N = {
         "lbl_title": "職稱 / 職務 *",
         "lbl_attendance": "出勤性質歸屬 (Attendance Type) *",
         "attendance_opts": ["廠內固定員工 (Plant Fixed Staff)", "外勤工程師 (Field Engineer)"],
-        "lbl_country": "國籍 (Nationality) *",
-        "country_opts": ["越南 (Vietnam)", "台灣 (Taiwan)", "中國 (China)"],
         "lbl_role": "系統權限角色 *",
         "lbl_addr_perm": "戶籍地址 / 原籍地址",
         "lbl_addr_temp": "越南現住地址 (Temporary Address)",
@@ -50,7 +50,7 @@ EMP_I18N = {
         "col_code": "工號",
         "col_name": "姓名",
         "col_phone": "電話",
-        "col_id_doc": "身分證 / 護照 / 暫住證",
+        "col_id_doc": "身分證 / 護照與暫住證",
         "col_factory": "廠區",
         "col_dept": "部門",
         "col_title": "職稱",
@@ -63,12 +63,14 @@ EMP_I18N = {
         "caption": "Quản lý nhân viên, hộ chiếu, thẻ tạm trú và phân quyền.",
         "tab_list": "👥 Nhân viên hiện tại",
         "tab_resigned": "📂 Lịch sử nghỉ việc",
-        "tab_add": "➕ Thêm Nhân viên mới",
+        "tab_add_vn": "🇻🇳 Thêm NV Việt Nam",
+        "tab_add_foreign": "🇹🇼🇨🇳 Thêm Cán bộ Đài/Trung",
         "tab_edit": "✏️ Chỉnh sửa Thông tin",
         "tab_delete": "🗑️ Lưu trữ & Xóa",
         "header_list": "📋 Danh sách nhân viên đang làm việc",
         "header_resigned": "📂 Hồ sơ nhân viên đã nghỉ việc",
-        "header_add": "➕ Thêm hồ sơ nhân viên (Bao gồm Hộ chiếu & Thẻ tạm trú)",
+        "header_add_vn": "🇻🇳 Thêm hồ sơ nhân viên Việt Nam (BHXH & CCCD)",
+        "header_add_foreign": "🇹🇼🇨🇳 Thêm hồ sơ Cán bộ Nước ngoài (Hộ chiếu & Thẻ tạm trú)",
         "header_edit": "✏️ Cập nhật thông tin",
         "header_delete": "🗑️ Xử lý nghỉ việc hoặc Xóa vĩnh viễn",
         "lbl_code": "Mã nhân viên *",
@@ -87,8 +89,6 @@ EMP_I18N = {
         "lbl_title": "Chức vụ *",
         "lbl_attendance": "Tính chất chấm công *",
         "attendance_opts": ["Nhân viên làm việc tại nhà máy", "Kỹ sư hiện trường (Field Engineer)"],
-        "lbl_country": "Quốc tịch *",
-        "country_opts": ["Việt Nam", "Đài Loan", "Trung Quốc"],
         "lbl_role": "Vai trò hệ thống *",
         "lbl_addr_perm": "Địa chỉ thường trú",
         "lbl_addr_temp": "Chỗ ở hiện tại tại VN",
@@ -115,12 +115,14 @@ EMP_I18N = {
         "caption": "Manage active employees, passports, TRC cards, and roles.",
         "tab_list": "👥 Active Employees",
         "tab_resigned": "📂 Resigned Archives",
-        "tab_add": "➕ Add Employee",
+        "tab_add_vn": "🇻🇳 Add VN Employee",
+        "tab_add_foreign": "🇹🇼🇨🇳 Add Foreign Staff",
         "tab_edit": "✏️ Edit Profile",
         "tab_delete": "🗑️ Archive / Delete",
         "header_list": "📋 Active Employee Directory",
         "header_resigned": "📂 Resigned Employee History & Rehiring",
-        "header_add": "➕ Add Employee Profile (With Passport & TRC)",
+        "header_add_vn": "🇻🇳 Add Vietnamese Employee Profile",
+        "header_add_foreign": "🇹🇼🇨🇳 Add Foreign Staff Profile (Passport & TRC)",
         "header_edit": "✏️ Update Employee Info",
         "header_delete": "🗑️ Archive Resigned or Delete Duplicates",
         "lbl_code": "Employee ID *",
@@ -139,8 +141,6 @@ EMP_I18N = {
         "lbl_title": "Job Title *",
         "lbl_attendance": "Attendance Nature *",
         "attendance_opts": ["Plant Fixed Staff", "Field Engineer"],
-        "lbl_country": "Nationality *",
-        "country_opts": ["Vietnam", "Taiwan", "China"],
         "lbl_role": "System Role *",
         "lbl_addr_perm": "Permanent Address",
         "lbl_addr_temp": "Temporary Address in VN",
@@ -262,8 +262,9 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             if "戶籍地址" not in e: e["戶籍地址"] = ""
             if "現住地址" not in e: e["現住地址"] = ""
 
-    tab_list, tab_resigned, tab_add, tab_edit, tab_delete = st.tabs([
-        L["tab_list"], L["tab_resigned"], L["tab_add"], L["tab_edit"], L["tab_delete"]
+    # 建立 5 個獨立分頁（現職、離職、新增越南籍、新增外派幹部、修改、刪除管理）
+    tab_list, tab_resigned, tab_add_vn, tab_add_foreign, tab_edit, tab_delete = st.tabs([
+        L["tab_list"], L["tab_resigned"], L["tab_add_vn"], L["tab_add_foreign"], L["tab_edit"], L["tab_delete"]
     ])
 
     # 1. 👥 現職員工名冊
@@ -282,7 +283,11 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             display_list = []
             for idx, emp in enumerate(active_data, 1):
                 role_display = role_dict.get(emp["角色"], emp["角色"])
-                doc_no = emp.get("身分證號") if emp.get("國籍") == "越南 (Vietnam)" else ("護照: " + str(emp.get('護照號碼')) + " / 暫住證: " + str(emp.get('暫住證號')))
+                if emp.get("國籍") == "越南 (Vietnam)":
+                    doc_no = "CCCD: " + str(emp.get('身分證號', ''))
+                else:
+                    doc_no = "護照: " + str(emp.get('護照號碼', '')) + " / 暫住證: " + str(emp.get('暫住證號', ''))
+                
                 display_list.append({
                     L["col_index"]: idx,
                     L["col_code"]: emp["工號"],
@@ -316,7 +321,11 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             res_display_list = []
             for idx, emp in enumerate(resigned_data, 1):
                 role_display = role_dict.get(emp["角色"], emp["角色"])
-                doc_no = emp.get("身分證號") if emp.get("國籍") == "越南 (Vietnam)" else ("護照: " + str(emp.get('護照號碼')))
+                if emp.get("國籍") == "越南 (Vietnam)":
+                    doc_no = "CCCD: " + str(emp.get('身分證號', ''))
+                else:
+                    doc_no = "護照: " + str(emp.get('護照號碼', ''))
+                
                 res_display_list.append({
                     L["col_index"]: idx,
                     L["col_code"]: emp["工號"],
@@ -347,78 +356,50 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         else:
             st.info("📂 目前歷史檔案中無離職員工記錄。")
 
-    # 3. ➕ 新增員工
-    with tab_add:
-        st.markdown("### " + L['header_add'])
-        auto_emp_id = "VN-00" + str(len(st.session_state.employee_db) + 1)
+    # 3. 🇻🇳 新增越南籍員工
+    with tab_add_vn:
+        st.markdown("### " + L['header_add_vn'])
+        auto_emp_id_vn = "VN-00" + str(len(st.session_state.employee_db) + 1)
 
-        with st.form("form_add_employee"):
+        with st.form("form_add_vn_employee"):
             c1, c2 = st.columns(2)
             with c1:
-                e_code = st.text_input(L["lbl_code"], value=auto_emp_id)
-                e_name = st.text_input(L["lbl_name"], placeholder="例如: Nguyễn Văn An 或 姓名")
-                e_phone = st.text_input(L["lbl_phone"], placeholder="例如: +84-901-234-567")
-                
-                e_country = st.selectbox(L["lbl_country"], L["country_opts"])
-
-                if e_country == "越南 (Vietnam)":
-                    e_id_card = st.text_input(L["lbl_id_card"], placeholder="例如: 079095012345 (CCCD 12碼)")
-                    e_bhxh = st.text_input(L["lbl_bhxh"], placeholder="例如: 7912345678 (社保卡號)")
-                    e_passport, e_trc = "", ""
-                else:
-                    e_passport = st.text_input(L["lbl_passport"], placeholder="例如: 312345678 (護照號碼)")
-                    e_trc = st.text_input(L["lbl_trc"], placeholder="例如: TRC-VN-123456 (暫住證號)")
-                    e_id_card, e_bhxh = "", ""
-
-                e_attendance = st.selectbox(L["lbl_attendance"], L["attendance_opts"])
-
+                e_code = st.text_input(L["lbl_code"], value=auto_emp_id_vn, key="vn_code")
+                e_name = st.text_input(L["lbl_name"], placeholder="例如: Nguyễn Văn An", key="vn_name")
+                e_phone = st.text_input(L["lbl_phone"], placeholder="例如: +84-901-234-567", key="vn_phone")
+                e_id_card = st.text_input(L["lbl_id_card"], placeholder="例如: 079095012345 (CCCD 12碼)", key="vn_id")
+                e_bhxh = st.text_input(L["lbl_bhxh"], placeholder="例如: 7912345678 (社保卡號)", key="vn_bhxh")
+                e_attendance = st.selectbox(L["lbl_attendance"], L["attendance_opts"], key="vn_att")
             with c2:
-                e_factory = st.selectbox(L["lbl_factory"], L["factory_opts"])
-                e_dept = st.selectbox(L["lbl_dept"], L["dept_opts"])
-                e_title = st.text_input(L["lbl_title"], value="工程師 / 主管")
-                
-                if e_country == "越南 (Vietnam)":
-                    e_hospital = st.text_input(L["lbl_hospital"], value="Bệnh viện Đa khoa Tây Ninh")
-                else:
-                    e_hospital = "國際醫療/商務保險"
-                    st.text_input("外籍幹部醫療保障", value=e_hospital, disabled=True)
-
-                e_pwd = st.text_input(L["lbl_pwd"], value="123456")
+                e_factory = st.selectbox(L["lbl_factory"], L["factory_opts"], key="vn_fact")
+                e_dept = st.selectbox(L["lbl_dept"], L["dept_opts"], key="vn_dept")
+                e_title = st.text_input(L["lbl_title"], value="技術員 / 作業員", key="vn_title")
+                e_hospital = st.text_input(L["lbl_hospital"], value="Bệnh viện Đa khoa Tây Ninh", key="vn_hosp")
+                e_pwd = st.text_input(L["lbl_pwd"], value="123456", key="vn_pwd")
                 
                 role_keys = list(role_dict.keys())
                 role_display_names = list(role_dict.values())
-                sel_role_display = st.selectbox(L["lbl_role"], role_display_names)
+                sel_role_display = st.selectbox(L["lbl_role"], role_display_names, key="vn_role")
                 e_role = role_keys[role_display_names.index(sel_role_display)]
 
-            e_addr_perm = st.text_input(L["lbl_addr_perm"], placeholder="原籍戶籍地址")
-            e_addr_temp = st.text_input(L["lbl_addr_temp"], placeholder="越南暫住地址 / 宿舍地址")
+            e_addr_perm = st.text_input(L["lbl_addr_perm"], placeholder="戶籍地址 (Hộ khẩu thường trú)", key="vn_perm")
+            e_addr_temp = st.text_input(L["lbl_addr_temp"], placeholder="現住地址 (Chỗ ở hiện tại)", key="vn_temp")
 
-            st.markdown("---")
-            st.markdown("##### 📤 證件與官方證照照片上傳區 (護照正面、暫住證正反面等)")
-            uploaded_id_docs = st.file_uploader(
-                "請上傳護照影本、暫住證正反面或身分證照片（可多張同時上傳）", 
-                type=["png", "jpg", "jpeg", "pdf"], 
-                accept_multiple_files=True,
-                help="台陸籍幹部請上傳護照與暫住證；越南籍請上傳 CCCD 正反面。"
-            )
-
-            submitted = st.form_submit_button(L["btn_add"], type="primary", use_container_width=True)
-            if submitted:
-                doc_check = e_id_card if e_country == "越南 (Vietnam)" else e_passport
-                if e_code and e_name and e_phone and doc_check:
+            submitted_vn = st.form_submit_button(L["btn_add"], type="primary", use_container_width=True)
+            if submitted_vn:
+                if e_code and e_name and e_phone and e_id_card:
                     existing_codes = [e["工號"] for e in st.session_state.employee_db]
                     if e_code in existing_codes:
                         st.error("⚠️ 錯誤：工號 " + e_code + " 已經存在！")
                     else:
-                        doc_status = "已上傳 " + str(len(uploaded_id_docs)) + " 張證件照" if uploaded_id_docs else "⚠️ 未上傳證件照"
                         st.session_state.employee_db.append({
                             "工號": e_code,
                             "姓名": e_name,
                             "電話": e_phone,
-                            "國籍": e_country,
+                            "國籍": "越南 (Vietnam)",
                             "身分證號": e_id_card,
-                            "護照號碼": e_passport,
-                            "暫住證號": e_trc,
+                            "護照號碼": "",
+                            "暫住證號": "",
                             "社保證號": e_bhxh,
                             "投保醫院": e_hospital,
                             "廠區": e_factory,
@@ -427,18 +408,90 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                             "出勤性質": e_attendance,
                             "戶籍地址": e_addr_perm,
                             "現住地址": e_addr_temp,
-                            "證件照狀態": doc_status,
                             "角色": e_role,
                             "密碼": e_pwd,
                             "must_change_password": True,
                             "狀態": "🟢 在職 (Active)"
                         })
-                        st.success("✅ 成功新增員工 " + e_name + " (工號: " + e_code + ")！(" + doc_status + ")")
+                        st.success("🇻🇳 成功新增越南籍員工 " + e_name + " (工號: " + e_code + ")！")
                         st.rerun()
                 else:
-                    st.warning("⚠️ 請完整填寫必填欄位：工號、姓名、聯絡電話以及身分證號/護照號碼！")
+                    st.warning("⚠️ 請完整填寫必填欄位：工號、姓名、聯絡電話與公民身分證號 (CCCD)！")
 
-    # 4. ✏️ 修改員工
+    # 4. 🇹🇼🇨🇳 新增台/陸籍幹部
+    with tab_add_foreign:
+        st.markdown("### " + L['header_add_foreign'])
+        auto_emp_id_fo = "TW-00" + str(len(st.session_state.employee_db) + 1)
+
+        with st.form("form_add_foreign_employee"):
+            c1, c2 = st.columns(2)
+            with c1:
+                e_code_fo = st.text_input(L["lbl_code"], value=auto_emp_id_fo, key="fo_code")
+                e_name_fo = st.text_input(L["lbl_name"], placeholder="例如: 王大明 / 張偉", key="fo_name")
+                e_phone_fo = st.text_input(L["lbl_phone"], placeholder="例如: +886-912-345-678", key="fo_phone")
+                e_country_fo = st.selectbox(L["lbl_country"], ["台灣 (Taiwan)", "中國 (China)"], key="fo_country")
+                e_passport = st.text_input(L["lbl_passport"], placeholder="例如: 312345678 (護照號碼)", key="fo_pass")
+                e_trc = st.text_input(L["lbl_trc"], placeholder="例如: TRC-VN-123456 (暫住證號)", key="fo_trc")
+                e_attendance_fo = st.selectbox(L["lbl_attendance"], L["attendance_opts"], key="fo_att")
+            with c2:
+                e_factory_fo = st.selectbox(L["lbl_factory"], L["factory_opts"], key="fo_fact")
+                e_dept_fo = st.selectbox(L["lbl_dept"], L["dept_opts"], key="fo_dept")
+                e_title_fo = st.text_input(L["lbl_title"], value="外派專案經理 / 工程師", key="fo_title")
+                e_pwd_fo = st.text_input(L["lbl_pwd"], value="123456", key="fo_pwd")
+                
+                role_keys = list(role_dict.keys())
+                role_display_names = list(role_dict.values())
+                sel_role_display_fo = st.selectbox(L["lbl_role"], role_display_names, key="fo_role")
+                e_role_fo = role_keys[role_display_names.index(sel_role_display_fo)]
+
+            e_addr_perm_fo = st.text_input(L["lbl_addr_perm"], placeholder="台灣或中國原籍地址", key="fo_perm")
+            e_addr_temp_fo = st.text_input(L["lbl_addr_temp"], placeholder="越南公司宿舍 / 租屋地址", key="fo_temp")
+
+            st.markdown("---")
+            st.markdown("##### 📤 外派幹部官方證照照片上傳 (護照影本、暫住證正反面)")
+            uploaded_docs_fo = st.file_uploader(
+                "請上傳護照正面與暫住證正反面照片/PDF (可多張)", 
+                type=["png", "jpg", "jpeg", "pdf"], 
+                accept_multiple_files=True,
+                key="fo_uploader"
+            )
+
+            submitted_fo = st.form_submit_button(L["btn_add"], type="primary", use_container_width=True)
+            if submitted_fo:
+                if e_code_fo and e_name_fo and e_phone_fo and e_passport and e_trc:
+                    existing_codes = [e["工號"] for e in st.session_state.employee_db]
+                    if e_code_fo in existing_codes:
+                        st.error("⚠️ 錯誤：工號 " + e_code_fo + " 已經存在！")
+                    else:
+                        doc_status_fo = "已上傳 " + str(len(uploaded_docs_fo)) + " 張證件照" if uploaded_docs_fo else "⚠️ 未上傳證件照"
+                        st.session_state.employee_db.append({
+                            "工號": e_code_fo,
+                            "姓名": e_name_fo,
+                            "電話": e_phone_fo,
+                            "國籍": e_country_fo,
+                            "身分證號": "",
+                            "護照號碼": e_passport,
+                            "暫住證號": e_trc,
+                            "社保證號": "N/A",
+                            "投保醫院": "國際商務醫療險",
+                            "廠區": e_factory_fo,
+                            "部門": e_dept_fo,
+                            "職稱": e_title_fo,
+                            "出勤性質": e_attendance_fo,
+                            "戶籍地址": e_addr_perm_fo,
+                            "現住地址": e_addr_temp_fo,
+                            "證件照狀態": doc_status_fo,
+                            "角色": e_role_fo,
+                            "密碼": e_pwd_fo,
+                            "must_change_password": True,
+                            "狀態": "🟢 在職 (Active)"
+                        })
+                        st.success("🇹🇼🇨🇳 成功新增外派幹部 " + e_name_fo + " (護照: " + e_passport + ")！(" + doc_status_fo + ")")
+                        st.rerun()
+                else:
+                    st.warning("⚠️ 請完整填寫外派幹部必填欄位：工號、姓名、電話、護照號碼與暫住證號！")
+
+    # 5. ✏️ 修改員工
     with tab_edit:
         st.markdown("### " + L['header_edit'])
         if st.session_state.employee_db:
@@ -526,7 +579,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         else:
             st.info("尚無員工可供修改。")
 
-    # 5. 🗑️ 離職歸檔與刪除
+    # 6. 🗑️ 離職歸檔與刪除
     with tab_delete:
         st.markdown("### " + L['header_delete'])
         
