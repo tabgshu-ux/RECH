@@ -410,20 +410,12 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
             else:
                 st.info("目前尚無證照紀錄可供修改。")
 
-    # ----------------------------------------------------
-    # 6. 配電盤電氣與機構設計圖庫 Storage (含安全 Storage 路徑與完整 CRUD)
+   # ----------------------------------------------------
+    # 6. 配電盤電氣與機構設計圖庫 Storage (簡潔介面與完整圖檔管理)
     # ----------------------------------------------------
     elif sub_str == "6" or "圖庫" in sub_str or "Storage" in sub_str:
         st.markdown(f"### 🎨 6. {t['sub6']}")
-        
-        # 🔒 檢查目前登入者的權限，提示 Storage 設定由資訊管理部掌控
-        current_user_role = str(st.session_state.get("user_role", "Staff")).strip().lower()
-        is_it_admin = current_user_role in ["admin", "it", "system", "information_manager"]
-
-        if is_it_admin:
-            st.success("🔒 【資訊管理部權限解鎖】目前 Storage 實體路徑：`s3://reetech-erp-storage/engineering/drawings/` (可由 IT 管理員於系統後台調整)")
-        else:
-            st.info("🔒 **Storage 雲端存放路徑安全提示**：系統藍圖與機構圖檔儲存庫已由【資訊管理部 (IT & System)】統一掛載與防護，一般人員僅具備上傳與檢視權限。")
+        st.info("💡 管理所有配電盤 2D/3D 設計圖檔、CAD 藍圖與機構規格書（Storage 儲存庫路徑由資訊管理部統一維護）。")
 
         # 初始化圖庫預設範例資料（如果空的）
         if not st.session_state.drawing_storage_db:
@@ -455,7 +447,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
         with tab_drw_list:
             dc1, dc2 = st.columns([1, 2])
             with dc1:
-                drw_type_filter = st.selectbox("依圖面類型篩選", ["全部類型", "2D 電氣單線圖 (SLD)", "3D 機構配置圖 (STEP)", "控制邏輯電路圖 (CAD)"])
+                drw_type_filter = st.selectbox("依圖面類型篩選", ["全部類型", "2D 電氣單線圖 (SLD)", "3D 機構配置圖 (STEP)", "控制邏輯電路圖 (CAD)", "銅排加工與折彎圖"])
             with dc2:
                 drw_search = st.text_input("🔍 搜尋專案名稱、圖面標題或檔名...", key="drw_search_box")
 
@@ -548,7 +540,6 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                             st.rerun()
             else:
                 st.info("目前尚無圖檔紀錄可供修改。")
-
     # ----------------------------------------------------
     # 7. BOM 零件自動展開與採購連動
     # ----------------------------------------------------
