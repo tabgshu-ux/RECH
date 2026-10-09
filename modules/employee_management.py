@@ -214,7 +214,8 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     st.title(L["title"])
     st.caption(L["caption"])
 
-    if "employee_db" not in st.session_state:
+    # 🛡️ 確保 employee_db 存在且不會在每次程式碼重整時被洗掉
+    if "employee_db" not in st.session_state or not isinstance(st.session_state.employee_db, list):
         st.session_state.employee_db = [
             {
                 "工號": "TW-001",
@@ -259,20 +260,21 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 "狀態": "🟢 在職 (Active)"
             }
         ]
-    else:
-        for e in st.session_state.employee_db:
-            if "狀態" not in e: e["狀態"] = "🟢 在職 (Active)"
-            if "出勤性質" not in e: e["出勤性質"] = "廠內固定員工"
-            if "職稱" not in e: e["職稱"] = "一般員工"
-            if "電話" not in e: e["電話"] = "+84-900-000-000"
-            if "國籍" not in e: e["國籍"] = "越南 (Vietnam)"
-            if "身分證號" not in e: e["身分證號"] = ""
-            if "護照號碼" not in e: e["護照號碼"] = ""
-            if "暫住證號" not in e: e["暫住證號"] = ""
-            if "社保證號" not in e: e["社保證號"] = ""
-            if "投保醫院" not in e: e["投保醫院"] = ""
-            if "戶籍地址" not in e: e["戶籍地址"] = ""
-            if "現住地址" not in e: e["現住地址"] = ""
+    
+    # 確保現有資料結構完整
+    for e in st.session_state.employee_db:
+        if "狀態" not in e: e["狀態"] = "🟢 在職 (Active)"
+        if "出勤性質" not in e: e["出勤性質"] = "廠內固定員工"
+        if "職稱" not in e: e["職稱"] = "一般員工"
+        if "電話" not in e: e["電話"] = "+84-900-000-000"
+        if "國籍" not in e: e["國籍"] = "越南 (Vietnam)"
+        if "身分證號" not in e: e["身分證號"] = ""
+        if "護照號碼" not in e: e["護照號碼"] = ""
+        if "暫住證號" not in e: e["暫住證號"] = ""
+        if "社保證號" not in e: e["社保證號"] = ""
+        if "投保醫院" not in e: e["投保醫院"] = ""
+        if "戶籍地址" not in e: e["戶籍地址"] = ""
+        if "現住地址" not in e: e["現住地址"] = ""
 
     tab_add_vn, tab_add_foreign, tab_edit, tab_list, tab_delete, tab_resigned = st.tabs([
         L["tab_add_vn"], L["tab_add_foreign"], L["tab_edit"], L["tab_list"], L["tab_delete"], L["tab_resigned"]
