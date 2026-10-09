@@ -15,10 +15,10 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     texts = {
         "繁體中文": {
             "title": "⚡ 裕豐電機工業 - 工程管理中心與設計部門",
-            "caption": "水電工程與面板製造 ERP 系統（涵蓋雙層報價、簽核中心串接、BOM 採購連動、外包點工計薪、FAT/SAT 驗收與越南電子發票）。",
+            "caption": "水電工程與面板製造 ERP 系統（雙層報價、簽核連動、進度追蹤、日報表、BOM採購、外包計薪、FAT/SAT、越南電子發票）。",
             "sub1": "⚡ [工程] 配電盤與工程專案雙層報價系統",
-            "sub2": "⚡ [工程] 工程驗收與進度追蹤",
-            "sub3": "⚡ [工程] 現場工程日報表與出工統計",
+            "sub2": "📊 [工程] 工程驗收與進度追蹤",
+            "sub3": "📋 [工程] 現場工程日報表與出工統計",
             "sub4": "🤖 [工程] AI 施工照片智慧辨識與歸檔",
             "sub5": "⚠️ [工程] 分包商與專業證照到期預警",
             "sub6": "🎨 [設計] 配電盤電氣與機構設計圖庫 Storage",
@@ -31,8 +31,8 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
             "title": "⚡ Công ty TNHH Kỹ thuật Điện Reetech - Trung tâm Kỹ thuật",
             "caption": "Hệ thống quản lý kỹ thuật toàn diện.",
             "sub1": "⚡ [KT] Báo giá tủ điện 2 lớp & Phê duyệt",
-            "sub2": "⚡ [KT] Theo dõi tiến độ & Nghiệm thu",
-            "sub3": "⚡ [KT] Nhật ký công trình & Nhân công",
+            "sub2": "📊 [KT] Theo dõi tiến độ & Nghiệm thu",
+            "sub3": "📋 [KT] Nhật ký công trình & Nhân công",
             "sub4": "🤖 [KT] AI Nhận diện & Lưu trữ ảnh thi công",
             "sub5": "⚠️ [KT] Cảnh báo hết hạn chứng chỉ",
             "sub6": "🎨 [TK] Kho bản vẽ thiết kế tủ điện Storage",
@@ -45,8 +45,8 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
             "title": "⚡ Reetech Industrial - Engineering Management Center",
             "caption": "Comprehensive MEP engineering and panel manufacturing management system.",
             "sub1": "⚡ [Eng] Two-Tier Quotation & Approval",
-            "sub2": "⚡ [Eng] Acceptance & Progress Tracking",
-            "sub3": "⚡ [Eng] Daily Site Reports & Labor",
+            "sub2": "📊 [Eng] Acceptance & Progress Tracking",
+            "sub3": "📋 [Eng] Daily Site Reports & Labor",
             "sub4": "🤖 [Eng] AI Field Photo Recognition & Archiving",
             "sub5": "⚠️ [Eng] Subcontractor & License Expiry Alerts",
             "sub6": "🎨 [Design] Electrical & Mechanical Drawing Storage",
@@ -90,8 +90,27 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
             }
         ]
 
+    if "engineering_projects_db" not in st.session_state:
+        st.session_state.engineering_projects_db = [
+            {"proj_code": "PRJ-TN-2026-01", "proj_name": "西寧廠高壓配電盤擴建", "factory": "西寧廠", "budget": 1200000000, "status": "進行中"},
+            {"proj_code": "PRJ-HP-2026-02", "proj_name": "海防廠動力盤統包工程", "factory": "海防廠", "budget": 850000000, "status": "進行中"}
+        ]
+
     if "license_db" not in st.session_state:
-        st.session_state.license_db = [{"emp_id": "EMP-001", "name": "張董事長", "license_name": "甲種電匠", "status": "🔴 30天內即將到期"}]
+        st.session_state.license_db = [
+            {"emp_id": "EMP-001", "name": "張董事長", "license_name": "甲種電匠", "status": "🔴 30天內即將到期"},
+            {"emp_id": "EMP-005", "name": "Nguyễn Văn B", "license_name": "高壓電氣操作證", "status": "🟢 正常"}
+        ]
+
+    if "ai_photo_archive_db" not in st.session_state:
+        st.session_state.ai_photo_archive_db = [
+            {"photo_id": "IMG-001", "project": "西寧廠高壓配電盤擴建", "category": "配電盤銅排安裝", "ai_tag": "合格 (Pass)", "timestamp": "2026-10-08"}
+        ]
+
+    if "drawing_storage_db" not in st.session_state:
+        st.session_state.drawing_storage_db = [
+            {"dwg_id": "DWG-2000A-01", "project": "西寧廠主配電盤 2000A", "type": "單線圖 (Single Line Diagram)", "version": "Rev.2", "file_url": "CAD_2000A_Main.dwg"}
+        ]
 
     if "bom_procurement_db" not in st.session_state:
         st.session_state.bom_procurement_db = [
@@ -134,7 +153,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     # ----------------------------------------------------
     # 1. 配電盤與工程專案雙層報價系統
     # ----------------------------------------------------
-    if "1" in sub_str or "報價" in sub_str or "Quotation" in sub_str or "配電盤與工程專案" in sub_str:
+    if sub_str == "1" or "報價" in sub_str or "Quotation" in sub_str or "配電盤與工程專案" in sub_str:
         st.markdown(f"### ⚙️ 1. {t['sub1']}")
         tab_prop, tab_review = st.tabs(["✍️ 建立報價提案 (協理填寫)", "🔒 主管審核中心 (簽核中心連動)"])
 
@@ -213,44 +232,54 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     # ----------------------------------------------------
     # 2. 工程驗收與進度追蹤
     # ----------------------------------------------------
-    elif "2" in sub_str or "驗收" in sub_str or "Acceptance" in sub_str:
+    elif sub_str == "2" or "驗收" in sub_str or "Acceptance" in sub_str:
         st.markdown(f"### 📊 2. {t['sub2']}")
-        st.info("即時監控工程進度與預定驗收時間。")
+        st.info("💡 即時監控各專案工程進度、預定驗收時間，並與財務部應收帳款 (AR) 連動。")
+        st.dataframe(pd.DataFrame(st.session_state.engineering_projects_db), use_container_width=True)
 
     # ----------------------------------------------------
-    # 3. 現場工程日報表
+    # 3. 現場工程日報表與出工統計
     # ----------------------------------------------------
-    elif "3" in sub_str or "日報" in sub_str or "Daily" in sub_str:
-        st.markdown(f"### 📝 3. {t['sub3']}")
-        st.info("記錄每日台幹與越籍工人人數及施工進度。")
+    elif sub_str == "3" in sub_str or "日報" in sub_str or "Daily" in sub_str or sub_str == "3":
+        st.markdown(f"### 📋 3. {t['sub3']}")
+        st.info("💡 記錄每日台幹與越籍工人出工人數、施工進度摘要與工地異常狀況回報。")
+        with st.form("daily_rep_form"):
+            r_proj = st.text_input("專案名稱", value="西寧廠高壓配電盤擴建")
+            r_workers = st.number_input("當日出工總人數", value=15)
+            r_desc = st.text_area("今日施工進度與工作紀要", value="完成主配電盤銅排安裝與絕緣測試。")
+            if st.form_submit_button("🚀 提交今日工程日報表", type="primary"):
+                st.success("✅ 現場工程日報表已成功提交並歸檔！")
 
     # ----------------------------------------------------
-    # 4. AI 施工照片辨識
+    # 4. AI 施工照片智慧辨識與歸檔
     # ----------------------------------------------------
-    elif "4" in sub_str or "AI" in sub_str or "照片" in sub_str:
+    elif sub_str == "4" or "AI" in sub_str or "照片" in sub_str:
         st.markdown(f"### 🤖 4. {t['sub4']}")
-        st.info("上傳施工現場照片進行 AI 辨識與歸檔。")
+        st.info("💡 上傳施工現場照片，系統 AI 自動辨識施工品質與項目並進行智慧歸檔。")
+        st.dataframe(pd.DataFrame(st.session_state.ai_photo_archive_db), use_container_width=True)
 
     # ----------------------------------------------------
-    # 5. 證照到期預警
+    # 5. 分包商與專業證照到期預警
     # ----------------------------------------------------
-    elif "5" in sub_str or "證照" in sub_str or "License" in sub_str:
+    elif sub_str == "5" or "證照" in sub_str or "License" in sub_str:
         st.markdown(f"### ⚠️ 5. {t['sub5']}")
+        st.info("💡 系統主動監控技師與外包商專業證照到期日，自動發出合規警報。")
         st.dataframe(pd.DataFrame(st.session_state.license_db), use_container_width=True)
 
     # ----------------------------------------------------
-    # 6. 設計圖庫 Storage
+    # 6. 配電盤電氣與機構設計圖庫 Storage
     # ----------------------------------------------------
-    elif "6" in sub_str or "圖庫" in sub_str or "Storage" in sub_str:
+    elif sub_str == "6" or "圖庫" in sub_str or "Storage" in sub_str:
         st.markdown(f"### 🎨 6. {t['sub6']}")
-        st.info("管理 2D/3D 設計圖檔與 CAD 藍圖。")
+        st.info("💡 管理所有配電盤 2D/3D 設計圖檔、CAD 藍圖與機構規格書。")
+        st.dataframe(pd.DataFrame(st.session_state.drawing_storage_db), use_container_width=True)
 
     # ----------------------------------------------------
     # 7. BOM 零件自動展開與採購連動 (強悍功能一)
     # ----------------------------------------------------
-    elif "7" in sub_str or "BOM" in sub_str or "採購" in sub_str:
+    elif sub_str == "7" or "BOM" in sub_str or "採購" in sub_str:
         st.markdown(f"### 🔌 7. {t['sub7']}")
-        st.info("當工程報價拍板後，自動展開 BOM 物料清單、比對倉庫庫存，並生成採購請購單 (PR)。")
+        st.info("💡 當工程報價拍板後，自動展開 BOM 物料清單、比對倉庫庫存，並生成採購請購單 (PR)。")
         if st.session_state.bom_procurement_db:
             for item in st.session_state.bom_procurement_db:
                 with st.expander(f"📌 專案單號：{item['quot_id']} | 專案：{item['project_name']}"):
@@ -263,9 +292,9 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     # ----------------------------------------------------
     # 8. 外包商點工計價與越南勞動法計薪 (強悍功能二)
     # ----------------------------------------------------
-    elif "8" in sub_str or "外包商" in sub_str or "點工" in sub_str:
+    elif sub_str == "8" or "外包商" in sub_str or "點工" in sub_str:
         st.markdown(f"### 👷 8. {t['sub8']}")
-        st.info("精準記錄西寧/海防廠外包點工出勤，自動套用越南勞動法加班（150%）與夜班加給（30%）。")
+        st.info("💡 精準記錄西寧/海防廠外包點工出勤，自動套用越南勞動法加班（150%）與夜班加給（30%）。")
         with st.form("labor_log_form"):
             lc1, lc2 = st.columns(2)
             with lc1:
@@ -282,9 +311,9 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     # ----------------------------------------------------
     # 9. FAT/SAT 試驗報告與 QR Code 驗收 (強悍功能三)
     # ----------------------------------------------------
-    elif "9" in sub_str or "FAT" in sub_str or "SAT" in sub_str:
+    elif sub_str == "9" or "FAT" in sub_str or "SAT" in sub_str:
         st.markdown(f"### 🧪 9. {t['sub9']}")
-        st.info("符合 ISO 9001 規範，自動生成 FAT/SAT 試驗報告與防偽 QR Code 供業主掃描驗收。")
+        st.info("💡 符合 ISO 9001 規範，自動生成 FAT/SAT 試驗報告與防偽 QR Code 供業主掃描驗收。")
         with st.form("fat_form"):
             st.text_input("關聯專案名稱 / 盤體編號", value="西寧廠主配電盤 2000A")
             if st.form_submit_button("🚀 生成 FAT 試驗報告與 QR Code", type="primary"):
@@ -295,9 +324,9 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     # ----------------------------------------------------
     # 10. 越南營建電子發票與稅務管家 (強悍功能四)
     # ----------------------------------------------------
-    elif "10" in sub_str or "發票" in sub_str or "Invoice" in sub_str or "越南營建" in sub_str:
+    elif sub_str == "10" or "發票" in sub_str or "Invoice" in sub_str or "越南營建" in sub_str:
         st.markdown(f"### 📊 10. {t['sub10']}")
-        st.info("符合越南稅務總局 (GDT) 規範，管理電子發票 (Hóa đơn điện tử) 與加值稅 (VAT 8%/10%) 合規申報。")
+        st.info("💡 符合越南稅務總局 (GDT) 規範，管理電子發票 (Hóa đơn điện tử) 與加值稅 (VAT 8%/10%) 合規申報。")
         with st.form("inv_form"):
             st.text_input("客戶 / 業主名稱 (Client)", value="Công ty TNHH Xây lắp Tân Thuận")
             st.number_input("未稅銷售額 (USD)", value=11500.0, step=100.0)
