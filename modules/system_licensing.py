@@ -10,7 +10,9 @@ LICENSING_I18N = {
         "title": "🔑 IT 管理中心 - 跨國 ERP 模組授權與訂閱控制",
         "caption": "管理裕豐電機工業（Reetech Industrial）各海外廠區（西寧廠、海防廠）與台灣總部之 ERP 模組授權狀態。",
         "tab_status": "📊 授權狀態總覽與有效期限",
-        "tab_config": "⚙️️ 模組授權開關與配額調整",
+        "tab_config": "⚙ 模組授權開關與期限調整",
+        "tab_add_mod": "➕ 新增系統模組授權",
+        "tab_manage_mod": "✏️ 修改與刪除模組授權",
         "status_header": "📋 系統核心模組授權清冊",
         "no_records": "目前無授權模組資料。",
         "config_header": "⚙️ 調整模組授權與使用期限",
@@ -20,7 +22,6 @@ LICENSING_I18N = {
         "lbl_expiry": "授權到期日 *",
         "btn_save": "💾 儲存並更新授權設定",
         "success_save": "✅ 模組 `{module_name}` 授權設定已成功更新！",
-        # 表格欄位
         "col_index": "STT",
         "col_code": "模組代碼",
         "col_name": "模組名稱",
@@ -33,6 +34,8 @@ LICENSING_I18N = {
         "caption": "Quản lý trạng thái bản quyền các module ERP cho nhà máy Tây Ninh, Hải Phòng và Trụ sở chính Đài Loan.",
         "tab_status": "📊 Tổng quan Bản quyền & Thời hạn",
         "tab_config": "⚙️ Cấu hình Kích hoạt & Hạn mức",
+        "tab_add_mod": "➕ Thêm Module mới",
+        "tab_manage_mod": "✏️ Sửa & Xóa Module",
         "status_header": "📋 Danh sách Bản quyền Module Hệ thống",
         "no_records": "Hiện không có bản ghi bản quyền nào.",
         "config_header": "⚙️ Điều chỉnh trạng thái bản quyền module",
@@ -42,7 +45,6 @@ LICENSING_I18N = {
         "lbl_expiry": "Ngày hết hạn *",
         "btn_save": "💾 Lưu và cập nhật bản quyền",
         "success_save": "✅ Đã cập nhật thành công bản quyền cho module `{module_name}`!",
-        # Tiêu đề bảng
         "col_index": "STT",
         "col_code": "Mã module",
         "col_name": "Tên module",
@@ -55,6 +57,8 @@ LICENSING_I18N = {
         "caption": "Manage ERP module licensing status for overseas plants (Tay Ninh, Hai Phong) and Taiwan HQ.",
         "tab_status": "📊 Licensing Overview & Expiry",
         "tab_config": "⚙️ Module Switches & Quota Adjustments",
+        "tab_add_mod": "➕ Add New Module",
+        "tab_manage_mod": "✏️ Edit & Delete Module",
         "status_header": "📋 System Core Module Licenses",
         "no_records": "No license records found.",
         "config_header": "⚙️ Adjust Module License & Expiry Date",
@@ -64,7 +68,6 @@ LICENSING_I18N = {
         "lbl_expiry": "License Expiry Date *",
         "btn_save": "💾 Save & Update License",
         "success_save": "✅ License for module `{module_name}` updated successfully!",
-        # Table headers
         "col_index": "No.",
         "col_code": "Module Code",
         "col_name": "Module Name",
@@ -82,11 +85,18 @@ def smart_translate_license(text_val, target_lang):
         return text_val
     
     val_lower = text_val.lower()
-
     if "啟用" in text_val or "active" in val_lower or "kích hoạt" in val_lower:
         if target_lang == "Tiếng Việt": return "🟢 Đã kích hoạt (Active)"
         elif target_lang == "English": return "🟢 Active"
         return "🟢 授權啟用 (Active)"
+    elif "停用" in text_val or "suspended" in val_lower:
+        if target_lang == "Tiếng Việt": return "🔴 Tạm ngưng (Suspended)"
+        elif target_lang == "English": return "🔴 Suspended"
+        return "🔴 授權停用 (Suspended)"
+    elif "試用" in text_val or "trial" in val_lower:
+        if target_lang == "Tiếng Việt": return "🟡 Dùng thử (Trial)"
+        elif target_lang == "English": return "🟡 Trial"
+        return "🟡 試用期 (Trial)"
 
     return text_val
 
@@ -98,7 +108,7 @@ def render_system_licensing_page(lang="繁體中文", **kwargs):
     st.caption(L["caption"])
 
     # 初始化模組授權資料庫
-    if "system_licenses_db" not in st.session_state:
+    if "system_licenses_db" not in st.session_state or not isinstance(st.session_state.system_licenses_db, list):
         st.session_state.system_licenses_db = [
             {"code": "MOD-HR", "name": "人事薪資與打卡考勤管理", "version": "v3.5", "expiry": "2027-12-31", "status": "啟用"},
             {"code": "MOD-FIN", "name": "財務 AP 應付帳款與電子發票", "version": "v4.0", "expiry": "2027-12-31", "status": "啟用"},
@@ -107,7 +117,9 @@ def render_system_licensing_page(lang="繁體中文", **kwargs):
             {"code": "MOD-APP", "name": "跨部門電子簽核中心", "version": "v4.2", "expiry": "2027-12-31", "status": "啟用"},
         ]
 
-    tab_status, tab_config = st.tabs([L["tab_status"], L["tab_config"]])
+    tab_status, tab_config, tab_add_mod, tab_manage_mod = st.tabs([
+        L["tab_status"], L["tab_config"], L["tab_add_mod"], L["tab_manage_mod"]
+    ])
 
     with tab_status:
         st.markdown(f"### {L['status_header']}")
@@ -138,10 +150,87 @@ def render_system_licensing_page(lang="繁體中文", **kwargs):
                 target_code = module_opts[selected_mod_name]
                 for item in st.session_state.system_licenses_db:
                     if item["code"] == target_code:
-                        item["status"] = "啟用" if "啟用" in new_status or "Active" in new_status else "停用"
+                        if "啟用" in new_status or "Active" in new_status or "kích hoạt" in new_status:
+                            item["status"] = "啟用"
+                        elif "停用" in new_status or "Suspended" in new_status or "Tạm ngưng" in new_status:
+                            item["status"] = "停用"
+                        else:
+                            item["status"] = "試用期"
                         item["expiry"] = new_expiry.strftime("%Y-%m-%d")
                 st.success(L["success_save"].format(module_name=selected_mod_name))
                 st.rerun()
+
+    with tab_add_mod:
+        st.markdown("### ➕ 註冊與新增系統 ERP 模組授權")
+        with st.form("form_add_new_module"):
+            ac1, ac2 = st.columns(2)
+            with ac1:
+                new_code = st.text_input("模組代碼 (例如: MOD-ENG) *", value="MOD-ENG")
+                new_name = st.text_input("模組名稱 *", value="工程與專案管理模組")
+            with ac2:
+                new_ver = st.text_input("版本號", value="v1.0")
+                new_exp = st.date_input("授權到期日", value=datetime.date(2027, 12, 31))
+            
+            add_status = st.selectbox("初始授權狀態", ["啟用", "停用", "試用期"])
+
+            if st.form_submit_button("🚀 建立新模組授權", type="primary", use_container_width=True):
+                if new_code and new_name:
+                    existing_codes = [m["code"] for m in st.session_state.system_licenses_db]
+                    if new_code in existing_codes:
+                        st.error(f"⚠️ 錯誤：模組代碼 `{new_code}` 已經存在！")
+                    else:
+                        st.session_state.system_licenses_db.append({
+                            "code": new_code,
+                            "name": new_name,
+                            "version": new_ver,
+                            "expiry": str(new_exp),
+                            "status": add_status
+                        })
+                        st.success(f"✅ 成功新增模組授權 [{new_name}] ({new_code})！")
+                        st.rerun()
+                else:
+                    st.warning("⚠️ 請完整填寫模組代碼與模組名稱！")
+
+    with tab_manage_mod:
+        st.markdown("### ✏️ 修改與刪除現有模組授權")
+        if st.session_state.system_licenses_db:
+            mod_options = [f"{m['code']} - {m['name']}" for m in st.session_state.system_licenses_db]
+            sel_mod_target = st.selectbox("選擇要修改或刪除的模組授權", mod_options)
+            target_mcode = sel_mod_target.split(" - ")[0]
+            target_mod_obj = next((m for m in st.session_state.system_licenses_db if m["code"] == target_mcode), None)
+
+            if target_mod_obj:
+                with st.form("form_edit_module_license"):
+                    ec1, ec2 = st.columns(2)
+                    with ec1:
+                        ed_m_name = st.text_input("模組名稱", value=target_mod_obj["name"])
+                        ed_m_ver = st.text_input("版本", value=target_mod_obj["version"])
+                    with ec2:
+                        status_list = ["啟用", "停用", "試用期"]
+                        current_status_idx = status_list.index(target_mod_obj["status"]) if target_mod_obj["status"] in status_list else 0
+                        ed_m_status = st.selectbox("授權狀態", status_list, index=current_status_idx)
+                        ed_m_expiry = st.text_input("到期日 (YYYY-MM-DD)", value=target_mod_obj["expiry"])
+
+                    col_b1, col_b2 = st.columns(2)
+                    with col_b1:
+                        update_mod_btn = st.form_submit_button("💾 儲存模組變更", type="primary", use_container_width=True)
+                    with col_b2:
+                        delete_mod_btn = st.form_submit_button("🔥 刪除此模組授權", type="secondary", use_container_width=True)
+
+                    if update_mod_btn:
+                        target_mod_obj["name"] = ed_m_name
+                        target_mod_obj["version"] = ed_m_ver
+                        target_mod_obj["status"] = ed_m_status
+                        target_mod_obj["expiry"] = ed_m_expiry
+                        st.success(f"🎉 模組 [{target_mcode}] 授權資料已成功更新！")
+                        st.rerun()
+
+                    if delete_mod_btn:
+                        st.session_state.system_licenses_db = [m for m in st.session_state.system_licenses_db if m["code"] != target_mcode]
+                        st.success(f"🗑️ 模組 [{target_mcode}] 已從系統授權清單中移除！")
+                        st.rerun()
+        else:
+            st.info("目前尚無模組授權可供修改。")
 
 def show(lang="繁體中文", **kwargs):
     render_system_licensing_page(lang, **kwargs)
