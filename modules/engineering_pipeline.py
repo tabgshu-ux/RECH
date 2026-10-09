@@ -100,7 +100,6 @@ def render_engineering_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown(f"### ⚙️ 1. {t['sub1']}")
         st.info("💡 說明：各協理/副協理可在此填寫完整工程專案名稱，並**動態自由新增多筆水電零件/材料明細**。送出後將明確記錄『提案人』，並呈報給副總經理進行第一次價格審核與鎖定，防止重複報價與資訊混亂！")
 
-        # 頁籤切換：1. 提出新報價與動態明細 | 2. 高階主管（副總經理）審核鎖定控制台
         tab_create, tab_review = st.tabs(["✍️ 協理/副協理建立報價提案 (可自由增刪零件)", "🔒 副總經理 / 董事長價格審核與鎖定中心"])
 
         with tab_create:
@@ -119,7 +118,6 @@ def render_engineering_page(engine=None, lang="繁體中文", **kwargs):
                 st.markdown("---")
                 st.markdown("##### 📦 步驟二：動態加入水電零組件與材料明細 (可自由調整項目)")
                 
-                # 模擬動態輸入 4 個零件項目（解決只有三個且被鎖住的問題）
                 item_rows = []
                 calc_total = 0.0
                 for i in range(1, 5):
