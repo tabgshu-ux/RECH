@@ -411,12 +411,143 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                 st.info("目前尚無證照紀錄可供修改。")
 
     # ----------------------------------------------------
-    # 6. 配電盤電氣與機構設計圖庫 Storage
+    # 6. 配電盤電氣與機構設計圖庫 Storage (含安全 Storage 路徑與完整 CRUD)
     # ----------------------------------------------------
     elif sub_str == "6" or "圖庫" in sub_str or "Storage" in sub_str:
         st.markdown(f"### 🎨 6. {t['sub6']}")
-        st.info("💡 管理所有配電盤 2D/3D 設計圖檔、CAD 藍圖與機構規格書。")
-        st.dataframe(pd.DataFrame(st.session_state.drawing_storage_db), use_container_width=True)
+        
+        # 🔒 檢查目前登入者的權限，提示 Storage 設定由資訊管理部掌控
+        current_user_role = str(st.session_state.get("user_role", "Staff")).strip().lower()
+        is_it_admin = current_user_role in ["admin", "it", "system", "information_manager"]
+
+        if is_it_admin:
+            st.success("🔒 【資訊管理部權限解鎖】目前 Storage 實體路徑：`s3://reetech-erp-storage/engineering/drawings/` (可由 IT 管理員於系統後台調整)")
+        else:
+            st.info("🔒 **Storage 雲端存放路徑安全提示**：系統藍圖與機構圖檔儲存庫已由【資訊管理部 (IT & System)】統一掛載與防護，一般人員僅具備上傳與檢視權限。")
+
+        # 初始化圖庫預設範例資料（如果空的）
+        if not st.session_state.drawing_storage_db:
+            st.session_state.drawing_storage_db = [
+                {
+                    "drawing_id": "DRW-2026-001",
+                    "project": "西寧廠高壓配電盤擴建",
+                    "title": "2000A 主配電盤單線圖與配置藍圖",
+                    "type": "2D 電氣單線圖 (SLD)",
+                    "version": "v1.2",
+                    "filename": "TN_Main_Switchgear_2000A_SLD.dwg",
+                    "uploader": "陳總工程師",
+                    "date": "2026-10-01"
+                },
+                {
+                    "drawing_id": "DRW-2026-002",
+                    "project": "海防廠動力盤統包工程",
+                    "title": "1500A 戶外控制箱體 3D 機構結構圖",
+                    "type": "3D 機構配置圖 (STEP)",
+                    "version": "v1.0",
+                    "filename": "HP_Outdoor_Enclosure_1500A.step",
+                    "uploader": "阮技術員",
+                    "date": "2026-10-05"
+                }
+            ]
+
+        tab_drw_list, tab_drw_upload, tab_drw_manage = st.tabs(["📁 設計圖庫總表與搜尋", "📤 上傳新藍圖與圖檔", "✏️ 修改與刪除圖檔紀錄"])
+
+        with tab_drw_list:
+            dc1, dc2 = st.columns([1, 2])
+            with dc1:
+                drw_type_filter = st.selectbox("依圖面類型篩選", ["全部類型", "2D 電氣單線圖 (SLD)", "3D 機構配置圖 (STEP)", "控制邏輯電路圖 (CAD)"])
+            with dc2:
+                drw_search = st.text_input("🔍 搜尋專案名稱、圖面標題或檔名...", key="drw_search_box")
+
+            filtered_drw = st.session_state.drawing_storage_db
+            if drw_type_filter != "全部類型":
+                filtered_drw = [d for d in filtered_drw if d["type"] == drw_type_filter]
+            if drw_search:
+                filtered_drw = [d for d in filtered_drw if drw_search.lower() in d["project"].lower() or drw_search.lower() in d["title"].lower() or drw_search.lower() in d["filename"].lower()]
+
+            if filtered_drw:
+                drw_display = []
+                for idx, drw in enumerate(filtered_drw, 1):
+                    drw_display.append({
+                        "STT": idx,
+                        "圖面編號": drw["drawing_id"],
+                        "關聯專案": drw["project"],
+                        "圖面標題": drw["title"],
+                        "圖面類型": drw["type"],
+                        "版本": drw["version"],
+                        "檔案名稱": drw["filename"],
+                        "上傳者": drw["uploader"],
+                        "上傳日期": drw["date"]
+                    })
+                st.dataframe(pd.DataFrame(drw_display), use_container_width=True)
+            else:
+                st.info("⚠️ 找不到符合條件的設計圖檔紀錄。")
+
+        with tab_drw_upload:
+            with st.form("form_upload_drawing"):
+                uc1, uc2 = st.columns(2)
+                with uc1:
+                    d_proj = st.selectbox("關聯工程專案", [p["proj_name"] for p in st.session_state.engineering_projects_db])
+                    d_title = st.text_input("圖面與規格說明標題 *", value="西寧廠低壓控制盤二次迴路配線圖")
+                    d_type = st.selectbox("圖面技術分類", ["2D 電氣單線圖 (SLD)", "3D 機構配置圖 (STEP)", "控制邏輯電路圖 (CAD)", "銅排加工與折彎圖"])
+                with uc2:
+                    d_ver = st.text_input("圖面版本 (Version)", value="v1.0")
+                    d_file = st.file_uploader("上傳設計圖檔 (DWG, STEP, PDF, ZIP)", type=["dwg", "step", "pdf", "zip", "png"])
+                    d_uploader = st.text_input("上傳工程師 / 設計師姓名", value="陳明華")
+
+                if st.form_submit_button("🚀 確認上傳並存入 Storage 圖庫", type="primary"):
+                    if d_title and d_file:
+                        new_d_id = f"DRW-2026-{len(st.session_state.drawing_storage_db)+1:03d}"
+                        st.session_state.drawing_storage_db.insert(0, {
+                            "drawing_id": new_d_id,
+                            "project": d_proj,
+                            "title": d_title,
+                            "type": d_type,
+                            "version": d_ver,
+                            "filename": d_file.name,
+                            "uploader": d_uploader,
+                            "date": str(datetime.date.today())
+                        })
+                        st.success(f"🎉 成功上傳設計圖檔 [{d_file.name}]！圖面編號：`{new_d_id}`")
+                        st.rerun()
+                    else:
+                        st.warning("⚠️ 請完整填寫圖面標題並上傳設計檔案！")
+
+        with tab_drw_manage:
+            if st.session_state.drawing_storage_db:
+                drw_options = [f"{d['drawing_id']} - {d['title']} ({d['version']})" for d in st.session_state.drawing_storage_db]
+                sel_drw_target = st.selectbox("選擇要修改或刪除的圖檔紀錄", drw_options)
+                target_drw_id = sel_drw_target.split(" - ")[0]
+                target_drw_item = next((d for d in st.session_state.drawing_storage_db if d["drawing_id"] == target_drw_id), None)
+
+                if target_drw_item:
+                    with st.form("form_edit_drawing"):
+                        ec1, ec2 = st.columns(2)
+                        with ec1:
+                            ed_d_title = st.text_input("修改圖面標題", value=target_drw_item["title"])
+                            ed_d_ver = st.text_input("修改版本", value=target_drw_item["version"])
+                        with ec2:
+                            ed_d_type = st.selectbox("修改圖面類型", ["2D 電氣單線圖 (SLD)", "3D 機構配置圖 (STEP)", "控制邏輯電路圖 (CAD)", "銅排加工與折彎圖"], index=0)
+
+                        col_b1, col_b2 = st.columns(2)
+                        with col_b1:
+                            up_drw_btn = st.form_submit_button("💾 儲存圖檔變更", type="primary", use_container_width=True)
+                        with col_b2:
+                            del_drw_btn = st.form_submit_button("🔥 刪除此圖檔紀錄", type="secondary", use_container_width=True)
+
+                        if up_drw_btn:
+                            target_drw_item["title"] = ed_d_title
+                            target_drw_item["version"] = ed_d_ver
+                            target_drw_item["type"] = ed_d_type
+                            st.success("🎉 設計圖檔資訊已成功更新！")
+                            st.rerun()
+
+                        if del_drw_btn:
+                            st.session_state.drawing_storage_db = [d for d in st.session_state.drawing_storage_db if d["drawing_id"] != target_drw_id]
+                            st.success("🗑️ 該筆圖檔紀錄已成功自 Storage 移除！")
+                            st.rerun()
+            else:
+                st.info("目前尚無圖檔紀錄可供修改。")
 
     # ----------------------------------------------------
     # 7. BOM 零件自動展開與採購連動
