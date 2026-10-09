@@ -3,12 +3,12 @@ import pandas as pd
 import datetime
 
 # ----------------------------------------------------
-# 🌐 員工與人事管理模組多語系字典 (i18n)
+# 🌐 員工與人事管理模組多語系字典 (i18n) - 已修正用詞
 # ----------------------------------------------------
 EMP_I18N = {
     "繁體中文": {
         "title": "👤 管理部 - 員工個人檔案與人事管理中心",
-        "caption": "管理全公司在職員工名冊、離職歷史檔案、回鍋復職、新增員工與權限角色（含廠內與外勤GPS出勤性質分流）。",
+        "caption": "管理全公司在職員工名冊、離職歷史檔案、回鍋復職、新增員工與權限角色（含廠內與外勤工程師出勤性質分流）。",
         "tab_list": "👥 現職員工名冊",
         "tab_resigned": "📂 離職與歷史名冊 (Archive)",
         "tab_add": "➕ 新增員工與初始帳密設定",
@@ -28,7 +28,7 @@ EMP_I18N = {
         "lbl_pwd": "初始登入密碼 (預設) *",
         "lbl_title": "職稱 / 職務 *",
         "lbl_attendance": "出勤性質歸屬 (Attendance Type) *",
-        "attendance_opts": ["廠內固定員工 (Plant Fixed Attendance)", "外勤GPS工地人員 (Field GPS Site Staff)"],
+        "attendance_opts": ["廠內固定員工 (Plant Fixed Staff)", "外勤工程師 / 外勤同仁 (Field Engineer)"],
         "lbl_country": "國籍",
         "country_opts": ["台灣 (Taiwan)", "越南 (Vietnam)", "中國 (China)"],
         "lbl_role": "系統權限角色 *",
@@ -77,7 +77,7 @@ EMP_I18N = {
         "lbl_pwd": "Mật khẩu ban đầu *",
         "lbl_title": "Chức vụ *",
         "lbl_attendance": "Tính chất chấm công *",
-        "attendance_opts": ["Nhân viên làm việc tại nhà máy", "Nhân viên ngoại tuyến GPS công trường"],
+        "attendance_opts": ["Nhân viên làm việc tại nhà máy", "Kỹ sư hiện trường / Kỹ sư ngoại tuyến"],
         "lbl_country": "Quốc tịch",
         "country_opts": ["Đài Loan", "Việt Nam", "Trung Quốc"],
         "lbl_role": "Vai trò hệ thống *",
@@ -126,7 +126,7 @@ EMP_I18N = {
         "lbl_pwd": "Initial Password *",
         "lbl_title": "Job Title *",
         "lbl_attendance": "Attendance Nature *",
-        "attendance_opts": ["Plant Fixed Attendance", "Field GPS Site Staff"],
+        "attendance_opts": ["Plant Fixed Staff", "Field Engineer"],
         "lbl_country": "Nationality",
         "country_opts": ["Taiwan", "Vietnam", "China"],
         "lbl_role": "System Role *",
@@ -227,7 +227,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 "廠區": "西寧廠 (Tay Ninh)",
                 "部門": "工程部",
                 "職稱": "外勤工程師",
-                "出勤性質": "外勤GPS工地人員",
+                "出勤性質": "外勤工程師 / 外勤同仁",
                 "國籍": "越南 (Vietnam)",
                 "角色": "staff",
                 "密碼": "123456",
@@ -236,21 +236,20 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             }
         ]
     else:
-        # 🛡️ 防呆機制：確保現有 session 裡的舊資料都有「狀態」與「出勤性質」欄位，防止崩潰
         for e in st.session_state.employee_db:
             if "狀態" not in e:
                 e["狀態"] = "🟢 在職 (Active)"
             if "出勤性質" not in e:
                 e["出勤性質"] = "廠內固定員工"
+            elif "工地工人" in e["出勤性質"]:
+                e["出勤性質"] = "外勤工程師 / 外勤同仁"
             if "職稱" not in e:
                 e["職稱"] = "一般員工"
 
-    # 建立 5 個獨立分頁
     tab_list, tab_resigned, tab_add, tab_edit, tab_delete = st.tabs([
         L["tab_list"], L["tab_resigned"], L["tab_add"], L["tab_edit"], L["tab_delete"]
     ])
 
-    # 1. 👥 現職員工名冊
     with tab_list:
         st.markdown(f"### {L['header_list']}")
         search_q = st.text_input(L["search_ph"], key="emp_search_box_active")
@@ -281,7 +280,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         else:
             st.info("目前尚無在職員工記錄。")
 
-    # 2. 📂 離職與歷史名冊 (Archive)
     with tab_resigned:
         st.markdown(f"### {L['header_resigned']}")
         resigned_search = st.text_input("🔍 搜尋離職人員姓名或工號...", key="emp_search_box_resigned")
@@ -325,7 +323,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         else:
             st.info("📂 目前歷史檔案中無離職員工記錄。")
 
-    # 3. ➕ 新增員工
     with tab_add:
         st.markdown(f"### {L['header_add']}")
         auto_emp_id = f"VN-00{len(st.session_state.employee_db) + 1}"
@@ -341,7 +338,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             with c2:
                 e_factory = st.selectbox(L["lbl_factory"], L["factory_opts"])
                 e_dept = st.selectbox(L["lbl_dept"], L["dept_opts"])
-                e_title = st.text_input(L["lbl_title"], value="工程師 / 技術員")
+                e_title = st.text_input(L["lbl_title"], value="外勤工程師")
                 
                 role_keys = list(role_dict.keys())
                 role_display_names = list(role_dict.values())
@@ -376,7 +373,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 else:
                     st.warning("⚠️ 請填寫員工工號與姓名！")
 
-    # 4. ✏️ 修改員工
     with tab_edit:
         st.markdown(f"### {L['header_edit']}")
         if st.session_state.employee_db:
@@ -416,7 +412,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         else:
             st.info("尚無員工可供修改。")
 
-    # 5. 🗑️ 離職歸檔與重複帳號徹底刪除
     with tab_delete:
         st.markdown(f"### {L['header_delete']}")
         
