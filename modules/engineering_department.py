@@ -15,8 +15,8 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     texts = {
         "繁體中文": {
             "title": "⚡ 裕豐電機工業 - 工程管理中心與設計部門",
-            "caption": "水電工程雙層報價系統（內部成本明細與對外業主報價）、協理提案與副總/總經理多級核決。",
-            "sub1": "⚡ [工程] 配電盤與工程專案雙層報價系統",
+            "caption": "水電工程雙層報價系統（內部成本明細與對外業主報價），重大採購與報價自動串接至全公司電子簽核中心。",
+            "sub1": "⚡ [工程] 配電盤與工程專案雙層報價系統 (自動串接簽核中心)",
             "sub2": "⚡ [工程] 工程驗收與進度追蹤",
             "sub3": "⚡ [工程] 現場工程日報表與出工統計",
             "sub4": "🤖 [工程] AI 施工照片智慧辨識與歸檔",
@@ -25,8 +25,8 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
         },
         "Tiếng Việt": {
             "title": "⚡ Công ty TNHH Kỹ thuật Điện Reetech - Trung tâm Kỹ thuật",
-            "caption": "Hệ thống báo giá 2 lớp, phê duyệt đa cấp.",
-            "sub1": "⚡ [KT] Báo giá tủ điện 2 lớp & Phê duyệt",
+            "caption": "Hệ thống báo giá 2 lớp, tích hợp tự động vào trung tâm phê duyệt doanh nghiệp.",
+            "sub1": "⚡ [KT] Báo giá tủ điện 2 lớp & Tích hợp Phê duyệt",
             "sub2": "⚡ [KT] Theo dõi tiến độ & Nghiệm thu",
             "sub3": "⚡ [KT] Nhật ký công trình & Nhân công",
             "sub4": "🤖 [KT] AI Nhận diện & Lưu trữ ảnh thi công",
@@ -35,8 +35,8 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
         },
         "English": {
             "title": "⚡ Reetech Industrial - Engineering Management Center",
-            "caption": "Two-tier quotation system, multi-level approval workflow.",
-            "sub1": "⚡ [Eng] Two-Tier Quotation & Approval",
+            "caption": "Two-tier quotation system integrated directly with the Enterprise Approval Center.",
+            "sub1": "⚡ [Eng] Two-Tier Quotation (Approval Center Linked)",
             "sub2": "⚡ [Eng] Acceptance & Progress Tracking",
             "sub3": "⚡ [Eng] Daily Site Reports & Labor",
             "sub4": "🤖 [Eng] AI Field Photo Recognition & Archiving",
@@ -64,6 +64,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
             "端子排與五金配件組": 85.0
         }
 
+    # 🔗 初始化工程雙層報價資料庫
     if "two_tier_quotations_db" not in st.session_state:
         st.session_state.two_tier_quotations_db = [
             {
@@ -79,7 +80,21 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                 "total_internal_cost": 8125.0,
                 "customer_facing_summary": "1. 西寧廠 2000A 主配電盤及箱體統包工程",
                 "customer_price": 11500.0,
-                "status": "🟢 副總已核准，待總經理/董事長確認"
+                "status": "⏳ 待副總經理審核 (已同步至電子簽核中心)"
+            }
+        ]
+
+    # 🔗 同步連動全公司電子簽核中心共用佇列 (Approval Center Queue)
+    if "company_approval_queue" not in st.session_state:
+        st.session_state.company_approval_queue = [
+            {
+                "doc_id": "QT-2026-001",
+                "type": "工程部雙層報價與採購核決",
+                "title": "西寧廠主配電盤 2000A 統包工程報價",
+                "applicant": "協理 - 陳明華",
+                "amount": "$ 11,500.00 USD",
+                "current_level": "副總經理審核中 (VP Review)",
+                "status": "Pending"
             }
         ]
 
@@ -104,8 +119,9 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     # ----------------------------------------------------
     if "1" in sub_str or "報價" in sub_str or "Quotation" in sub_str:
         st.markdown(f"### ⚙️ 1. {t['sub1']}")
+        st.info("💡 說明：協理與副協理於此填寫內部成本與對外業主報價。送出後將**自動同步呈報至左側選單的【全公司電子簽核中心】**，供副總經理、總經理與董事長進行多級核決與價格拍板。")
 
-        tab_prop, tab_review = st.tabs(["✍️ 建立報價提案 (內部成本與對外報價)", "🔒 主管審核與價格核定中心"])
+        tab_prop, tab_track = st.tabs(["✍️ 建立工程報價提案 (協理填寫)", "📋 報價單執行進度與同步狀態追蹤"])
 
         with tab_prop:
             with st.form("tier_quotation_form"):
@@ -122,7 +138,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                 st.markdown("---")
                 st.markdown("##### 📦 內部成本明細清單 (自動對應倉庫標準單價)")
                 
-                num_items = st.number_input("項目數量 (可自由增減格數)", min_value=1, max_value=30, value=5, step=1)
+                num_items = st.number_input("項目數量 (可自由增減格數)", min_value=1, max_value=30, value=4, step=1)
 
                 internal_rows = []
                 total_cost = 0.0
@@ -161,9 +177,11 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                 cust_summary = st.text_area("對外合約摘要 (顯示給業主看的工程內容)", value="1. 專案機櫃訂製與組裝工程\n2. 廠房高低壓配電盤安裝與測試")
                 cust_suggested_price = st.number_input("建議對外報價金額 (Customer Price)", min_value=0.0, value=total_cost * 1.35, step=100.0)
 
-                if st.form_submit_button("🚀 提交報價提案", type="primary"):
+                if st.form_submit_button("🚀 提交報價提案並同步至全公司電子簽核中心", type="primary"):
                     if p_client and p_proj and internal_rows:
                         new_id = f"QT-2026-{len(st.session_state.two_tier_quotations_db)+1:03d}"
+                        
+                        # 1. 儲存至工程部雙層報價庫
                         st.session_state.two_tier_quotations_db.append({
                             "quot_id": new_id,
                             "client": p_client,
@@ -174,55 +192,37 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                             "total_internal_cost": total_cost,
                             "customer_facing_summary": cust_summary,
                             "customer_price": cust_suggested_price,
-                            "status": "⏳ 待副總經理審核與價格核定"
+                            "status": "⏳ 待副總經理審核 (已同步至電子簽核中心)"
                         })
-                        st.success(f"✅ 報價提案 [{new_id}] 已成功提交！")
+
+                        # 2. 自動同步建立記錄至【全公司電子簽核中心】供高階主管審核
+                        st.session_state.company_approval_queue.insert(0, {
+                            "doc_id": new_id,
+                            "type": "工程部雙層報價與採購核決",
+                            "title": f"{p_proj} ({p_client})",
+                            "applicant": p_prop,
+                            "amount": f"$ {cust_suggested_price:,.2f} {p_curr}",
+                            "current_level": "副總經理審核中 (VP Review)",
+                            "status": "Pending"
+                        })
+
+                        st.success(f"✅ 報價提案 [{new_id}] 已成功提交，並已自動連動至左側【全公司電子簽核中心】！副總經理與總經理可直接前往該中心進行審核。")
                         st.rerun()
                     else:
                         st.warning("⚠️ 請完整填寫客戶、專案名稱及至少一筆有效的數量明細！")
 
-        with tab_review:
+        with tab_track:
+            st.markdown("##### 📋 在手工程報價單與簽核進度總覽")
+            st.info("💡 提示：您隨時可以在左側選單點選 **【全公司電子簽核中心】** 進行跨部門的統一審核與拍板。")
             if st.session_state.two_tier_quotations_db:
                 for q in st.session_state.two_tier_quotations_db:
                     with st.expander(f"📌 單號：{q['quot_id']} | 專案：{q['project_name']} | 提案人：{q['proposer']} | 狀態：{q['status']}"):
                         st.write(f"**客戶名稱**：{q['client']} | **幣別**：{q.get('currency', 'USD')}")
-                        st.write(f"**內部成本總和**：`$ {q['total_internal_cost']:,.2f}`")
-                        
-                        st.markdown("**📦 內部成本明細表：**")
+                        st.write(f"**內部成本總和**：`$ {q['total_internal_cost']:,.2f}` | **對外報價金額**：`$ {q['customer_price']:,.2f}`")
+                        st.markdown("**📦 內部成本明細摘要：**")
                         st.dataframe(pd.DataFrame(q["internal_items"]), use_container_width=True)
-
-                        st.markdown("---")
-                        st.markdown(f"**對外業主報價金額**：`$ {q['customer_price']:,.2f}`")
-                        st.text_area(f"對外業主合約摘要預覽 ({q['quot_id']})", value=q["customer_facing_summary"], disabled=True)
-
-                        if "待副總經理審核" in q["status"]:
-                            rc1, rc2 = st.columns(2)
-                            with rc1:
-                                if st.button(f"🔒 副總已核准，呈報總經理/董事長確認 {q['quot_id']}", key=f"vp_pass_{q['quot_id']}"):
-                                    q["status"] = "🟢 副總已核准，待總經理/董事長最終確認"
-                                    st.success(f"✅ 單號 {q['quot_id']} 已通過副總審核，已呈報總經理與董事長！")
-                                    st.rerun()
-                            with rc2:
-                                if st.button(f"❌ 駁回並退回修改 {q['quot_id']}", key=f"vp_rej_{q['quot_id']}"):
-                                    q["status"] = "🔴 已被副總退回修改"
-                                    st.warning("已退回。")
-                                    st.rerun()
-                        elif "待總經理" in q["status"] or "待總經理/董事長" in q["status"]:
-                            bc1, bc2 = st.columns(2)
-                            with bc1:
-                                if st.button(f"👑 總經理/董事長最終確認並拍板發行 {q['quot_id']}", key=f"board_pass_{q['quot_id']}"):
-                                    q["status"] = "🎉 董事長/總經理已最終拍板發行"
-                                    st.success(f"🎉 報價單 {q['quot_id']} 已獲董事長與總經理確認，可發行給業主！")
-                                    st.rerun()
-                            with bc2:
-                                if st.button(f"❌ 退回複查 {q['quot_id']}", key=f"board_rej_{q['quot_id']}"):
-                                    q["status"] = "🔴 要求重新評估成本"
-                                    st.warning("已退回複查。")
-                                    st.rerun()
-                        else:
-                            st.info(f"目前狀態：{q['status']}")
             else:
-                st.info("目前尚無雙層報價紀錄。")
+                st.info("目前尚無報價單據紀錄。")
 
     # ----------------------------------------------------
     # 2. 工程驗收與進度追蹤
