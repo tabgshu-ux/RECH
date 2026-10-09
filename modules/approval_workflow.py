@@ -4,21 +4,30 @@ import datetime
 
 def render_approval_center(engine=None, lang="繁體中文", **kwargs):
     st.title("✍️ 裕豐電機工業 - 全公司電子簽核與進度追蹤中心")
-    st.caption("提供請假、採購、車輛調派與物品攜出之跨部門電子簽核，支援以 0.5 小時（半小時）為單位的精確請假計算。")
+    st.caption("提供請假、採購、車輛調派與物品攜出之跨部門電子簽核，支援以 0.5 小時（半小時）為單位的請假計算及保全門禁放行。")
 
-    # 初始化簽核資料庫
+    # 初始化簽核與門禁資料庫
     if "approval_requests" not in st.session_state:
         st.session_state.approval_requests = [
             {"單號": "REQ-2026-001", "類型": "請假申請", "申請人": "Nguyễn Văn An", "部門": "資訊管理部", "內容": "類別: 事假 | 時數: 4.0 小時", "事由": "前往銀行辦理公務與私事處理", "狀態": "🟢 主管已核准"},
             {"單號": "REQ-2026-002", "類型": "採購請購單", "申請人": "Trần Thị Mai", "部門": "管理部", "內容": "品名: 辦公室印表機碳粉匣 2 支", "事由": "會計部日常行政耗材補充", "狀態": "🟡 待主管審核"},
-            {"單號": "REQ-2026-003", "類型": "車輛調派單", "申請人": "admin", "部門": "總經理室", "內容": "車號: 61A-888.88 (7人座商務車)", "事由": "載送台幹前往西寧廠進行高壓配電盤驗收", "狀態": "🟢 保全門禁已放行"}
+            {"單號": "REQ-2026-003", "類型": "車輛調派單", "申請人": "admin", "部門": "總經理室", "內容": "車號: 61A-888.88 (7人座商務車) | 目的地: 西寧廠", "事由": "載送台幹前往西寧廠進行高壓配電盤驗收", "狀態": "🟢 主管已核准"}
         ]
 
+    if "gate_pass_records" not in st.session_state:
+        st.session_state.gate_pass_records = [
+            {"放行單號": "GATE-2026-001", "單據類型": "車輛調派單", "車號/品名": "61A-888.88 (商務車)", "申請人": "admin", "核准狀態": "🟢 主管已核准", "門禁放行狀態": "🔒 待保全驗收放行"}
+        ]
+
+    current_user = st.session_state.get('user_name', 'admin')
+    current_role = str(st.session_state.get('user_role', 'admin')).strip().lower()
+
     # 上方 Tab 分頁
-    tab1, tab2, tab3 = st.tabs([
-        "✍️ 提交各類電子簽核表單 (Leave, PO, Dispatch)", 
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "✍️ 提交各類電子簽核表單", 
         "📊 我的申請進度追蹤", 
-        "🛡️ 主管待辦審核與保全放行中心"
+        "🛡️ 主管待辦審核中心",
+        "🔒 保全門禁放行驗證與查核 (Security Gate)"
     ])
 
     # ====================================================
@@ -36,23 +45,20 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
             ]
         )
 
-        current_user = st.session_state.get('user_name', 'admin')
-        current_role = str(st.session_state.get('user_role', 'admin')).upper()
-
         if "請假" in req_type:
             st.markdown("---")
             st.markdown("#### 🍃 請假申請單 (Leave Request)")
             with st.form("leave_request_form"):
                 lc1, lc2 = st.columns(2)
                 with lc1:
-                    applicant_name = st.text_input("申請人姓名 (Applicant Name - 系統自動綁定)", value=f"{current_user} ({current_role})", disabled=True)
+                    applicant_name = st.text_input("申請人姓名 (Applicant Name)", value=f"{current_user} ({current_role.upper()})", disabled=True)
                     leave_type = st.selectbox("請假類別 (Leave Type)", ["事假 (Personal Leave)", "病假 (Sick Leave)", "特休假 (Annual Leave)", "產假/婚喪假 (Maternity/Bereavement)"])
                 with lc2:
                     request_no = f"REQ-{datetime.datetime.now().strftime('%Y%m%d%H%M')}"
                     request_no_input = st.text_input("申請單編號 (Request No.)", value=request_no, disabled=True)
                     department = st.text_input("申請部門 (Department)", value="工程與設計管理中心", disabled=True)
 
-                # ⏱️ 關鍵功能：支援 0.5 小時（半小時）為單位的精確請假時數
+                # ⏱️ 支援 0.5 小時（半小時）為單位的請假時數
                 leave_hours = st.number_input(
                     "請假時數 (Hours) * 支援以 0.5 小時（半小時）為單位遞增", 
                     min_value=0.5, 
@@ -67,13 +73,9 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                 if st.form_submit_button("🚀 送出電子簽核申請", type="primary", use_container_width=True):
                     if leave_reason.strip():
                         st.session_state.approval_requests.insert(0, {
-                            "單號": request_no,
-                            "類型": "請假申請",
-                            "申請人": current_user,
-                            "部門": "工程與設計管理中心",
-                            "內容": f"類別: {leave_type} | 時數: {leave_hours} 小時",
-                            "事由": leave_reason,
-                            "狀態": "🟡 待主管審核"
+                            "單號": request_no, "類型": "請假申請", "申請人": current_user,
+                            "部門": "工程與設計管理中心", "內容": f"類別: {leave_type} | 時數: {leave_hours} 小時",
+                            "事由": leave_reason, "狀態": "🟡 待主管審核"
                         })
                         st.success(f"✅ 成功提交請假申請！總計時數：{leave_hours} 小時（含半小時精確計算），已送交主管審核。")
                         st.rerun()
@@ -123,7 +125,12 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                         "部門": "總務管理部", "內容": f"車輛: {v_car} | 目的地: {v_dest}",
                         "事由": v_reason, "狀態": "🟡 待主管審核"
                     })
-                    st.success("✅ 車輛調派申請已送出！")
+                    # 同步新增至保全待驗收清單
+                    st.session_state.gate_pass_records.insert(0, {
+                        "放行單號": v_no, "單據類型": "車輛調派單", "車號/品名": v_car,
+                        "申請人": current_user, "核准狀態": "🟡 待主管審核", "門禁放行狀態": "🔒 待審核與放行"
+                    })
+                    st.success("✅ 車輛調派申請已送出，並已連動同步至保全門禁端！")
                     st.rerun()
 
     # ====================================================
@@ -134,9 +141,50 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
         st.dataframe(pd.DataFrame(st.session_state.approval_requests), use_container_width=True)
 
     # ====================================================
-    # Tab 3：主管待辦審核與保全放行中心
+    # Tab 3：主管待辦審核中心
     # ====================================================
     with tab3:
-        st.markdown("#### 🛡️ 主管待辦審核與保全門禁放行中心")
-        st.info("💡 **權限提示**：此區專供部門主管進行一鍵審核，或供廠區保全（Security）進行門禁放行驗收。")
-        st.dataframe(pd.DataFrame(st.session_state.approval_requests), use_container_width=True)
+        st.markdown("#### 🛡️ 主管待辦審核中心 (Manager Approval Center)")
+        st.info("💡 主管可在此檢視所有待審核之請假、採購與派車單，並進行一鍵審核。")
+        
+        for idx, req in enumerate(st.session_state.approval_requests):
+            col_a, col_b, col_c = st.columns([3, 2, 1])
+            with col_a:
+                st.text(f"[{req['單號']}] {req['類型']} - 申請人: {req['申請人']} ({req['部門']})")
+                st.caption(f"內容: {req['內容']} | 事由: {req['事由']}")
+            with col_b:
+                st.text(f"目前狀態: {req['狀態']}")
+            with col_c:
+                if "待主管審核" in req['狀態']:
+                    if st.button(f"✅ 核准_{idx}", key=f"approve_{idx}"):
+                        req['狀態'] = "🟢 主管已核准"
+                        st.success(f"已核准單號 {req['單號']}")
+                        st.rerun()
+
+    # ====================================================
+    # Tab 4：保全門禁放行驗證與查核 (Security Gate)
+    # ====================================================
+    with tab4:
+        st.markdown("#### 🔒 保全門禁放行驗證與查核中心 (Security Gate & Pass Release)")
+        st.caption("專供廠區保全人員（Security）核對經主管核准的車輛派車單與物品攜出單，進行實物與車牌驗收放行。")
+
+        st.markdown("##### 📋 廠區門禁放行管制清單")
+        st.dataframe(pd.DataFrame(st.session_state.gate_pass_records), use_container_width=True)
+
+        st.markdown("---")
+        st.markdown("##### 🚗 門禁實物與車牌驗收放行作業")
+        with st.form("security_gate_form"):
+            g_no = st.text_input("輸入放行單號或車牌號碼 (Scan / Enter Gate Pass No.)", placeholder="例如: CAR-202610090925 或 61A-888.88")
+            g_remark = st.text_area("保全查核備註 (Security Inspection Note)", placeholder="例如: 確認車上載運配電盤零件無誤，車牌相符，准予放行出廠。")
+            
+            if st.form_submit_button("🚪 確認實物與車牌無誤，一鍵放行 (Gate Release)", type="primary", use_container_width=True):
+                if g_no.strip():
+                    found = False
+                    for rec in st.session_state.gate_pass_records:
+                        if g_no.strip().lower() in rec["放行單號"].lower() or g_no.strip().lower() in rec["車號/品名"].lower():
+                            rec["門禁放行狀態"] = "🟢 保全已驗收放行"
+                            found = True
+                    st.success(f"✅ 成功完成門禁查核！單號 [{g_no}] 已正式放行出廠，系統已同步記錄放行時間。")
+                    st.rerun()
+                else:
+                    st.warning("⚠️ 請輸入要放行的單號或車牌！")
