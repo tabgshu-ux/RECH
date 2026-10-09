@@ -61,9 +61,9 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                 "proposer": "協理 - 陳明華",
                 "currency": "USD",
                 "internal_items": [
-                    {"type": "訂製機櫃", "desc": "2000A 户外型防水不銹鋼機櫃", "qty": 2.0, "unit_price": 3500.0, "subtotal": 7000.0},
-                    {"type": "水電材料", "desc": "銅排 Busbar 10x100mm", "qty": 450.0, "unit_price": 2.5, "subtotal": 1125.0},
-                    {"type": "水電材料", "desc": "空氣斷路器 ACB 2000A", "qty": 8.0, "unit_price": 1850.0, "subtotal": 14800.0}
+                    {"type": "訂製機櫃", "desc": "2000A 户外型防水不銹鋼機櫃", "note": "訂製規格", "qty": 2.0, "unit_price": 3500.0, "subtotal": 7000.0},
+                    {"type": "水電材料", "desc": "銅排 Busbar 10x100mm", "note": "標準料", "qty": 450.0, "unit_price": 2.5, "subtotal": 1125.0},
+                    {"type": "水電材料", "desc": "空氣斷路器 ACB 2000A", "note": "Schneider", "qty": 8.0, "unit_price": 1850.0, "subtotal": 14800.0}
                 ],
                 "total_internal_cost": 22925.0,
                 "customer_facing_summary": "1. 西寧廠 2000A 主配電盤及箱體統包工程\n2. 現場高低壓配線與耐壓測試服務",
@@ -93,7 +93,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     # ----------------------------------------------------
     if "1" in sub_str or "報價" in sub_str or "Quotation" in sub_str:
         st.markdown(f"### ⚙️ 1. {t['sub1']}")
-        st.info("💡 說明：\n1. **協理層級**：填寫內部成本明細（包含訂製機櫃、各項水電材料、數量、單價與內部總成本）。\n2. **副總經理層級**：檢視內部成本後，擬定『對外業主報價摘要與金額』並進行第一次價格鎖定。\n3. **董事長/總經理層級**：最終政策確認與拍板發行。")
+        st.info("💡 說明：\n1. **協理層級**：可自由調整『內部成本項目格數』，填寫詳細的訂製機櫃、各項水電材料、數量、單價與總成本。\n2. **副總經理層級**：檢視內部成本後，擬定『對外業主報價摘要與金額』並鎖定。\n3. **董事長/總經理層級**：最終政策確認與拍板發行。")
 
         tab_prop, tab_review = st.tabs(["✍️ 協理/副協理填寫內部成本與業主報價提案", "🔒 副總審核與總經理/董事長最終確認中心"])
 
@@ -113,14 +113,13 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                 st.markdown("---")
                 st.markdown("##### 📦 步驟二：內部成本明細（包含訂製機櫃、水電材料費用與總和 —— **僅供內部主管檢視**）")
                 
-                # 使用 Session State 動態控制新增幾列零件
-                if "num_items_count" not in st.session_state:
-                    st.session_state.num_items_count = 3
+                # 🎛️ 讓使用者可以自由調整要幾格材料/機櫃項目！
+                num_items = st.number_input("➕ 調整內部成本項目格數 (可自由增加或減少項目數量)", min_value=1, max_value=30, value=5, step=1)
 
                 internal_rows = []
                 total_cost = 0.0
 
-                for i in range(1, st.session_state.num_items_count + 1):
+                for i in range(1, int(num_items) + 1):
                     st.markdown(f"**內部成本項目 #{i}**")
                     ic1, ic2, ic3, ic4, ic5 = st.columns([1.5, 2.5, 2, 1, 1])
                     with ic1:
@@ -175,7 +174,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                         st.write(f"**客戶名稱**：{q['client']} | **幣別**：{q.get('currency', 'USD')}")
                         st.write(f"**🔒 【內部機密】總成本總和**：`$ {q['total_internal_cost']:,.2f}`")
                         
-                        st.markdown("**📦 內部成本明細表 (機櫃、材料、人工 —— 僅內部可見)：**")
+                        st.markdown("**📦 內部成本明細表 (機櫃, 材料, 人工 —— 僅內部可見)：**")
                         st.dataframe(pd.DataFrame(q["internal_items"]), use_container_width=True)
 
                         st.markdown("---")
