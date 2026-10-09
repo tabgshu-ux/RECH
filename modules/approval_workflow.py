@@ -4,20 +4,20 @@ import datetime
 
 def render_approval_center(engine=None, lang="繁體中文", **kwargs):
     st.title("✍️ 裕豐電機工業 - 全公司電子簽核與進度追蹤中心")
-    st.caption("提供請假（含 0.5 小時半小時精確計算）、採購請購、車輛調派與物品攜出之跨部門電子簽核，並與廠區保全門禁連動放行。")
+    st.caption("提供請假（含 0.5 小時半小時精確計算）、採購請購、車輛調派（含出發廠區與目的地）與物品攜出之跨部門電子簽核，並與廠區保全門禁連動放行。")
 
     # 初始化全公司簽核與門禁資料庫 (Mock Data & State)
     if "approval_requests" not in st.session_state:
         st.session_state.approval_requests = [
             {"單號": "REQ-2026-001", "類型": "請假申請", "申請人": "Nguyễn Văn An", "部門": "資訊管理部", "內容": "類別: 事假 | 時數: 4.0 小時", "事由": "前往銀行辦理公務與私事處理", "狀態": "🟢 主管已核准"},
             {"單號": "PO-2026-002", "類型": "採購請購單", "申請人": "Trần Thị Mai", "部門": "管理部", "內容": "品名: 辦公室印表機碳粉匣 2 支 | 金額: 2,500,000 ₫", "事由": "會計部日常行政耗材補充", "狀態": "🟡 待主管審核"},
-            {"單號": "CAR-2026-003", "類型": "車輛調派單", "申請人": "admin", "部門": "總經理室", "內容": "車號: 61A-888.88 (7人座商務車) | 目的地: 西寧廠", "事由": "載送台幹前往西寧廠進行高壓配電盤驗收", "狀態": "🟢 主管已核准"},
+            {"單號": "CAR-2026-003", "類型": "車輛調派單", "申請人": "admin", "部門": "總經理室", "內容": "車號: 61A-888.88 | 出發: 越南西寧廠 ➔ 目的地: 客戶工程工地", "事由": "載送台幹前往西寧廠進行高壓配電盤驗收", "狀態": "🟢 主管已核准"},
             {"單號": "OUT-2026-004", "類型": "物品攜出單", "申請人": "阮文強", "部門": "工程與設計管理中心", "內容": "物品: 測試儀器與手工具箱 1 批", "事由": "攜至外部工程工地進行現場檢測", "狀態": "🟢 保全已驗收放行"}
         ]
 
     if "gate_pass_records" not in st.session_state:
         st.session_state.gate_pass_records = [
-            {"放行單號": "CAR-2026-003", "單據類型": "車輛調派單", "車號/品名": "61A-888.88 (商務車)", "申請人": "admin", "核准狀態": "🟢 主管已核准", "門禁放行狀態": "🟢 保全已驗收放行"},
+            {"放行單號": "CAR-2026-003", "單據類型": "車輛調派單", "車號/品名": "61A-888.88 (西寧廠出發)", "申請人": "admin", "核准狀態": "🟢 主管已核准", "門禁放行狀態": "🟢 保全已驗收放行"},
             {"放行單號": "OUT-2026-004", "單據類型": "物品攜出單", "車號/品名": "測試儀器與手工具箱", "申請人": "阮文強", "核准狀態": "🟢 主管已核准", "門禁放行狀態": "🟢 保全已驗收放行"}
         ]
 
@@ -33,7 +33,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
     ])
 
     # ====================================================
-    # Tab 1：提交各類電子簽核表單 (完整表單)
+    # Tab 1：提交各類電子簽核表單
     # ====================================================
     with tab1:
         st.markdown("#### ✍️ 填寫並提交電子簽核表單 (Quy trình nộp đơn điện tử)")
@@ -43,7 +43,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
             [
                 "🍃 請假申請單 (Leave Request - 支援半小時計算)", 
                 "🛒 採購請購單 (Purchase Requisition)", 
-                "🚗 車輛調派與門禁申請單 (Vehicle Dispatch)",
+                "🚗 車輛調派與門禁申請單 (Vehicle Dispatch - 含出發廠區與目的地)",
                 "📦 物品攜出放行單 (Item Carry-Out Pass)"
             ]
         )
@@ -62,7 +62,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                     request_no_input = st.text_input("申請單編號 (Request No.)", value=request_no, disabled=True)
                     department = st.text_input("申請部門 (Department)", value="工程與設計管理中心", disabled=True)
 
-                # ⏱️ 關鍵核心：支援 0.5 小時（半小時）為單位的精確請假時數
+                # ⏱️ 支援 0.5 小時（半小時）為單位的精確請假時數
                 leave_hours = st.number_input(
                     "請假時數 (Hours) * 支援以 0.5 小時（半小時）為單位遞增", 
                     min_value=0.5, 
@@ -110,7 +110,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                     st.success("✅ 採購請購單已成功送出！")
                     st.rerun()
 
-        # 3. 車輛調派與門禁申請單
+        # 3. 車輛調派與門禁申請單 (修正：增加出發廠區 / 派車廠區)
         elif "車輛" in req_type:
             st.markdown("---")
             st.markdown("#### 🚗 車輛調派與門禁申請單 (Đơn điều phối xe)")
@@ -119,21 +119,22 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                 with v1:
                     st.text_input("申請人", value=f"{current_user}", disabled=True)
                     v_car = st.selectbox("申請車輛", ["61A-888.88 (7人座商務車)", "61C-123.45 (貨車)"])
+                    v_origin = st.selectbox("出發廠區 / 派車廠區 (Origin Plant)", ["越南西寧廠", "越南海防廠", "總公司辦公室"])
                 with v2:
                     v_no = f"CAR-{datetime.datetime.now().strftime('%Y%m%d%H%M')}"
                     st.text_input("派車單號", value=v_no, disabled=True)
-                    v_dest = st.text_input("目的地", value="越南西寧廠")
+                    v_dest = st.text_input("目的地 (Destination)", value="客戶端 / 外部工程工地")
                 
                 v_reason = st.text_area("派車事由", placeholder="載送工程人員與設備前往案場安裝。")
                 if st.form_submit_button("🚀 送出車輛調派申請", type="primary", use_container_width=True):
                     st.session_state.approval_requests.insert(0, {
                         "單號": v_no, "類型": "車輛調派單", "申請人": current_user,
-                        "部門": "總務管理部", "內容": f"車輛: {v_car} | 目的地: {v_dest}",
+                        "部門": "總務管理部", "內容": f"車輛: {v_car} | 出發: {v_origin} ➔ 目的: {v_dest}",
                         "事由": v_reason, "狀態": "🟡 待主管審核"
                     })
                     # 同步新增至保全待驗收清單
                     st.session_state.gate_pass_records.insert(0, {
-                        "放行單號": v_no, "單據類型": "車輛調派單", "車號/品名": v_car,
+                        "放行單號": v_no, "單據類型": "車輛調派單", "車號/品名": f"{v_car} ({v_origin} ➔ {v_dest})",
                         "申請人": current_user, "核准狀態": "🟡 待主管審核", "門禁放行狀態": "🔒 待審核與放行"
                     })
                     st.success("✅ 車輛調派申請已送出，並已連動同步至保全門禁端！")
@@ -147,6 +148,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                 co1, co2 = st.columns(2)
                 with co1:
                     st.text_input("申請人", value=f"{current_user}", disabled=True)
+                    co_origin = st.selectbox("出發廠區 / 物品所在地 (Origin Plant)", ["越南西寧廠", "越南海防廠", "總公司辦公室"])
                     co_items = st.text_input("攜出物品名稱與數量", placeholder="例如: 筆電、測試儀器 2 台")
                 with co2:
                     co_no = f"OUT-{datetime.datetime.now().strftime('%Y%m%d%H%M')}"
@@ -157,11 +159,11 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                 if st.form_submit_button("🚀 送出物品攜出申請", type="primary", use_container_width=True):
                     st.session_state.approval_requests.insert(0, {
                         "單號": co_no, "類型": "物品攜出單", "申請人": current_user,
-                        "部門": "工程部", "內容": f"物品: {co_items} | 目的地: {co_dest}",
+                        "部門": "工程部", "內容": f"物品: {co_items} | 出發: {co_origin} ➔ 目的: {co_dest}",
                         "事由": co_reason, "狀態": "🟡 待主管審核"
                     })
                     st.session_state.gate_pass_records.insert(0, {
-                        "放行單號": co_no, "單據類型": "物品攜出單", "車號/品名": co_items,
+                        "放行單號": co_no, "單據類型": "物品攜出單", "車號/品名": f"{co_items} ({co_origin}發)",
                         "申請人": current_user, "核准狀態": "🟡 待主管審核", "門禁放行狀態": "🔒 待審核與放行"
                     })
                     st.success("✅ 物品攜出申請已送出，並已同步至保全門禁清單！")
