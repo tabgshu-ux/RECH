@@ -415,7 +415,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     # ----------------------------------------------------
     elif sub_str == "6" or "圖庫" in sub_str or "Storage" in sub_str:
         st.markdown(f"### 🎨 6. {t['sub6']}")
-        st.info("💡 管理所有配電盤 2D/3D 設計圖檔、CAD 藍圖與機構規格書（Storage 儲存庫路徑由資訊管理部統一維護）。")
+        st.info("💡 管理所有配電盤 2D/3D 設計圖檔、CAD 藍圖與機構規格書。")
 
         # 初始化圖庫預設範例資料（如果空的）
         if not st.session_state.drawing_storage_db:
