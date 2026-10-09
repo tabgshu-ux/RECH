@@ -3,7 +3,7 @@ import pandas as pd
 import datetime
 
 # ----------------------------------------------------
-# 🌐 員工與人事管理模組多語系字典 (i18n)
+# 🌐 員工與人事管理模組多語系字典 (i18n) - 已補齊所有完整鍵值
 # ----------------------------------------------------
 EMP_I18N = {
     "繁體中文": {
@@ -18,7 +18,7 @@ EMP_I18N = {
         "header_list": "📋 全公司現職員工名冊與權限總覽",
         "header_resigned": "📂 離職歷史人員名冊與復職管理",
         "header_add_vn": "🇻🇳 新增越南本地員工個人檔案與社會保險設定",
-        "header_add_foreign": "🇹🇼🇨🇳 新增台籍與中國籍外派幹部護照及暫住證檔案",
+        "header_add_foreign": "🇹🇼🇨🇳 新增台灣籍與中國籍外派幹部護照及暫住證檔案",
         "header_edit": "✏️ 修改員工基本資料與證件管理",
         "header_delete": "🗑️ 辦理離職歸檔或徹底刪除重複帳號",
         "lbl_code": "員工工號 (登入帳號) *",
@@ -37,6 +37,8 @@ EMP_I18N = {
         "lbl_title": "職稱 / 職務 *",
         "lbl_attendance": "出勤性質歸屬 (Attendance Type) *",
         "attendance_opts": ["廠內固定員工 (Plant Fixed Staff)", "外勤工程師 (Field Engineer)"],
+        "lbl_country": "國籍 (Nationality) *",
+        "country_opts": ["越南 (Vietnam)", "台灣 (Taiwan)", "中國 (China)"],
         "lbl_role": "系統權限角色 *",
         "lbl_addr_perm": "戶籍地址 / 原籍地址",
         "lbl_addr_temp": "越南現住地址 (Temporary Address)",
@@ -89,6 +91,8 @@ EMP_I18N = {
         "lbl_title": "Chức vụ *",
         "lbl_attendance": "Tính chất chấm công *",
         "attendance_opts": ["Nhân viên làm việc tại nhà máy", "Kỹ sư hiện trường (Field Engineer)"],
+        "lbl_country": "Quốc tịch *",
+        "country_opts": ["Việt Nam", "Đài Loan", "Trung Quốc"],
         "lbl_role": "Vai trò hệ thống *",
         "lbl_addr_perm": "Địa chỉ thường trú",
         "lbl_addr_temp": "Chỗ ở hiện tại tại VN",
@@ -141,6 +145,8 @@ EMP_I18N = {
         "lbl_title": "Job Title *",
         "lbl_attendance": "Attendance Nature *",
         "attendance_opts": ["Plant Fixed Staff", "Field Engineer"],
+        "lbl_country": "Nationality *",
+        "country_opts": ["Vietnam", "Taiwan", "China"],
         "lbl_role": "System Role *",
         "lbl_addr_perm": "Permanent Address",
         "lbl_addr_temp": "Temporary Address in VN",
@@ -262,7 +268,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             if "戶籍地址" not in e: e["戶籍地址"] = ""
             if "現住地址" not in e: e["現住地址"] = ""
 
-    # 建立 5 個獨立分頁（現職、離職、新增越南籍、新增外派幹部、修改、刪除管理）
+    # 建立 6 個獨立分頁
     tab_list, tab_resigned, tab_add_vn, tab_add_foreign, tab_edit, tab_delete = st.tabs([
         L["tab_list"], L["tab_resigned"], L["tab_add_vn"], L["tab_add_foreign"], L["tab_edit"], L["tab_delete"]
     ])
@@ -465,149 +471,4 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                     else:
                         doc_status_fo = "已上傳 " + str(len(uploaded_docs_fo)) + " 張證件照" if uploaded_docs_fo else "⚠️ 未上傳證件照"
                         st.session_state.employee_db.append({
-                            "工號": e_code_fo,
-                            "姓名": e_name_fo,
-                            "電話": e_phone_fo,
-                            "國籍": e_country_fo,
-                            "身分證號": "",
-                            "護照號碼": e_passport,
-                            "暫住證號": e_trc,
-                            "社保證號": "N/A",
-                            "投保醫院": "國際商務醫療險",
-                            "廠區": e_factory_fo,
-                            "部門": e_dept_fo,
-                            "職稱": e_title_fo,
-                            "出勤性質": e_attendance_fo,
-                            "戶籍地址": e_addr_perm_fo,
-                            "現住地址": e_addr_temp_fo,
-                            "證件照狀態": doc_status_fo,
-                            "角色": e_role_fo,
-                            "密碼": e_pwd_fo,
-                            "must_change_password": True,
-                            "狀態": "🟢 在職 (Active)"
-                        })
-                        st.success("🇹🇼🇨🇳 成功新增外派幹部 " + e_name_fo + " (護照: " + e_passport + ")！(" + doc_status_fo + ")")
-                        st.rerun()
-                else:
-                    st.warning("⚠️ 請完整填寫外派幹部必填欄位：工號、姓名、電話、護照號碼與暫住證號！")
-
-    # 5. ✏️ 修改員工
-    with tab_edit:
-        st.markdown("### " + L['header_edit'])
-        if st.session_state.employee_db:
-            emp_codes = [e["工號"] + " - " + e["姓名"] + " (" + e.get("狀態", "在職") + ")" for e in st.session_state.employee_db]
-            sel_target = st.selectbox("選擇要修改的員工 (Select Employee)", emp_codes, key="edit_emp_select")
-            target_code = sel_target.split(" - ")[0]
-            
-            target_emp = next((e for e in st.session_state.employee_db if e["工號"] == target_code), None)
-            
-            if target_emp:
-                with st.form("form_edit_employee"):
-                    ed1, ed2 = st.columns(2)
-                    with ed1:
-                        ed_name = st.text_input(L["lbl_name"], value=target_emp["姓名"])
-                        ed_phone = st.text_input(L["lbl_phone"], value=target_emp.get("電話", ""))
-                        ed_country = st.selectbox(
-                            L["lbl_country"], 
-                            L["country_opts"], 
-                            index=0 if target_emp.get("國籍") == "越南 (Vietnam)" else (1 if target_emp.get("國籍") == "台灣 (Taiwan)" else 2),
-                            key="edit_country_sel"
-                        )
-                        
-                        if ed_country == "越南 (Vietnam)":
-                            ed_id_card = st.text_input(L["lbl_id_card"], value=target_emp.get("身分證號", ""))
-                            ed_bhxh = st.text_input(L["lbl_bhxh"], value=target_emp.get("社保證號", ""))
-                            ed_passport, ed_trc = "", ""
-                        else:
-                            ed_passport = st.text_input(L["lbl_passport"], value=target_emp.get("護照號碼", ""))
-                            ed_trc = st.text_input(L["lbl_trc"], value=target_emp.get("暫住證號", ""))
-                            ed_id_card, ed_bhxh = "", ""
-
-                        ed_factory = st.selectbox(
-                            L["lbl_factory"], 
-                            L["factory_opts"], 
-                            index=0 if "西寧" in target_emp["廠區"] else 1,
-                            key="edit_factory_sel"
-                        )
-                    with ed2:
-                        ed_title = st.text_input(L["lbl_title"], value=target_emp.get("職稱", ""))
-                        ed_hospital = st.text_input(L["lbl_hospital"], value=target_emp.get("投保醫院", ""))
-                        
-                        current_att = target_emp.get("出勤性質", L["attendance_opts"][0])
-                        att_index = L["attendance_opts"].index(current_att) if current_att in L["attendance_opts"] else 0
-                        ed_attendance = st.selectbox(
-                            L["lbl_attendance"], 
-                            L["attendance_opts"], 
-                            index=att_index,
-                            key="edit_attendance_sel"
-                        )
-                        
-                        role_keys = list(role_dict.keys())
-                        role_display_names = list(role_dict.values())
-                        current_role_idx = role_keys.index(target_emp["角色"]) if target_emp["角色"] in role_keys else 0
-                        sel_ed_role_display = st.selectbox(
-                            L["lbl_role"], 
-                            role_display_names, 
-                            index=current_role_idx,
-                            key="edit_role_sel"
-                        )
-                        ed_role = role_keys[role_display_names.index(sel_ed_role_display)]
-                        
-                        ed_pwd = st.text_input("重設新密碼 (Reset Password)", value=target_emp.get("密碼", "123456"))
-
-                    ed_addr_perm = st.text_input(L["lbl_addr_perm"], value=target_emp.get("戶籍地址", ""))
-                    ed_addr_temp = st.text_input(L["lbl_addr_temp"], value=target_emp.get("現住地址", ""))
-
-                    if st.form_submit_button(L["btn_update"], type="primary", use_container_width=True):
-                        target_emp["姓名"] = ed_name
-                        target_emp["電話"] = ed_phone
-                        target_emp["國籍"] = ed_country
-                        target_emp["身分證號"] = ed_id_card
-                        target_emp["護照號碼"] = ed_passport
-                        target_emp["暫住證號"] = ed_trc
-                        target_emp["社保證號"] = ed_bhxh
-                        target_emp["投保醫院"] = ed_hospital
-                        target_emp["廠區"] = ed_factory
-                        target_emp["職稱"] = ed_title
-                        target_emp["出勤性質"] = ed_attendance
-                        target_emp["角色"] = ed_role
-                        target_emp["密碼"] = ed_pwd
-                        target_emp["戶籍地址"] = ed_addr_perm
-                        target_emp["現住地址"] = ed_addr_temp
-                        st.success("✅ 員工 " + target_code + " 資料已成功更新！")
-                        st.rerun()
-        else:
-            st.info("尚無員工可供修改。")
-
-    # 6. 🗑️ 離職歸檔與刪除
-    with tab_delete:
-        st.markdown("### " + L['header_delete'])
-        
-        if st.session_state.employee_db:
-            all_emp_codes = [e["工號"] + " - " + e["姓名"] + " (" + e.get("狀態", "在職") + ")" for e in st.session_state.employee_db]
-            sel_target_del = st.selectbox("選擇要處理的員工帳號", all_emp_codes, key="manage_emp_select")
-            target_code = sel_target_del.split(" - ")[0]
-
-            col_btn1, col_btn2 = st.columns(2)
-            
-            with col_btn1:
-                if st.button(L["btn_archive"], type="secondary", use_container_width=True):
-                    for e in st.session_state.employee_db:
-                        if e["工號"] == target_code:
-                            e["狀態"] = "🔴 離職 (Resigned)"
-                    st.success("✅ 員工 " + target_code + " 已移至離職歷史名冊。")
-                    st.rerun()
-
-            with col_btn2:
-                if st.button(L["btn_hard_delete"], type="primary", use_container_width=True):
-                    st.session_state.employee_db = [e for e in st.session_state.employee_db if e["工號"] != target_code]
-                    st.success("🔥 帳號 " + target_code + " 已自系統中徹底刪除。")
-                    st.rerun()
-        else:
-            st.info("目前系統中無任何員工記錄。")
-
-def show(*args, **kwargs):
-    render_employee_management(*args, **kwargs)
-
-def main(*args, **kwargs):
-    render_employee_management(*args, **kwargs)
+                            "工號
