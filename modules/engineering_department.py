@@ -25,7 +25,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
         },
         "Tiếng Việt": {
             "title": "⚡ Công ty TNHH Kỹ thuật Điện Reetech - Trung tâm Kỹ thuật",
-            "caption": "Hệ thống báo giá 2 lớp (Chi phí nội bộ & Báo giá khách hàng), phê duyệt đa cấp.",
+            "caption": "Hệ thống báo giá 2 lớp, phê duyệt đa cấp.",
             "sub1": "⚡ [KT] Báo giá tủ điện 2 lớp & Phê duyệt",
             "sub2": "⚡ [KT] Theo dõi tiến độ & Nghiệm thu",
             "sub3": "⚡ [KT] Nhật ký công trình & Nhân công",
@@ -35,8 +35,8 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
         },
         "English": {
             "title": "⚡ Reetech Industrial - Engineering Management Center",
-            "caption": "Two-tier quotation system (Internal cost details vs. Customer-facing proposal), multi-level approval.",
-            "sub1": "⚡ [Eng] Two-Tier Quotation & Multi-Level Approval",
+            "caption": "Two-tier quotation system, multi-level approval workflow.",
+            "sub1": "⚡ [Eng] Two-Tier Quotation & Approval",
             "sub2": "⚡ [Eng] Acceptance & Progress Tracking",
             "sub3": "⚡ [Eng] Daily Site Reports & Labor",
             "sub4": "🤖 [Eng] AI Field Photo Recognition & Archiving",
@@ -51,7 +51,19 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     st.title(t["title"])
     st.caption(t["caption"])
 
-    # 初始化雙層報價資料庫
+    # 🏭 倉庫標準零件與單價成本資料庫
+    if "warehouse_master_parts" not in st.session_state:
+        st.session_state.warehouse_master_parts = {
+            "銅排 Busbar 10x100mm": 2.5,
+            "空氣斷路器 ACB 2000A": 1850.0,
+            "塑殼斷路器 MCCB 250A": 145.0,
+            "2000A 防水不銹鋼機櫃": 3500.0,
+            "1500A 戶外控制箱體": 2800.0,
+            "PVC 管 2寸 (50米)": 45.0,
+            "控制電纜 3.5mm² (100m)": 120.0,
+            "端子排與五金配件組": 85.0
+        }
+
     if "two_tier_quotations_db" not in st.session_state:
         st.session_state.two_tier_quotations_db = [
             {
@@ -61,14 +73,13 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                 "proposer": "協理 - 陳明華",
                 "currency": "USD",
                 "internal_items": [
-                    {"type": "訂製機櫃", "desc": "2000A 户外型防水不銹鋼機櫃", "note": "訂製規格", "qty": 2.0, "unit_price": 3500.0, "subtotal": 7000.0},
-                    {"type": "水電材料", "desc": "銅排 Busbar 10x100mm", "note": "標準料", "qty": 450.0, "unit_price": 2.5, "subtotal": 1125.0},
-                    {"type": "水電材料", "desc": "空氣斷路器 ACB 2000A", "note": "Schneider", "qty": 8.0, "unit_price": 1850.0, "subtotal": 14800.0}
+                    {"type": "訂製機櫃", "desc": "2000A 防水不銹鋼機櫃", "qty": 2.0, "unit_price": 3500.0, "subtotal": 7000.0},
+                    {"type": "水電材料", "desc": "銅排 Busbar 10x100mm", "qty": 450.0, "unit_price": 2.5, "subtotal": 1125.0}
                 ],
-                "total_internal_cost": 22925.0,
-                "customer_facing_summary": "1. 西寧廠 2000A 主配電盤及箱體統包工程\n2. 現場高低壓配線與耐壓測試服務",
-                "customer_price": 31500.0,
-                "status": "🟢 副總已核准，呈報總經理/董事長確認 (Waiting Board Final Sign-off)"
+                "total_internal_cost": 8125.0,
+                "customer_facing_summary": "1. 西寧廠 2000A 主配電盤及箱體統包工程",
+                "customer_price": 11500.0,
+                "status": "🟢 副總已核准，待總經理/董事長確認"
             }
         ]
 
@@ -93,12 +104,10 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     # ----------------------------------------------------
     if "1" in sub_str or "報價" in sub_str or "Quotation" in sub_str:
         st.markdown(f"### ⚙️ 1. {t['sub1']}")
-        st.info("💡 說明：\n1. **協理層級**：可自由調整『內部成本項目格數』，填寫詳細的訂製機櫃、各項水電材料、數量、單價與總成本。\n2. **副總經理層級**：檢視內部成本後，擬定『對外業主報價摘要與金額』並鎖定。\n3. **董事長/總經理層級**：最終政策確認與拍板發行。")
 
-        tab_prop, tab_review = st.tabs(["✍️ 協理/副協理填寫內部成本與業主報價提案", "🔒 副總審核與總經理/董事長最終確認中心"])
+        tab_prop, tab_review = st.tabs(["✍️ 建立報價提案 (內部成本與對外報價)", "🔒 主管審核與價格核定中心"])
 
         with tab_prop:
-            st.markdown("##### 📝 步驟一：填寫專案基本資料與提案人")
             with st.form("tier_quotation_form"):
                 c1, c2, c3, c4 = st.columns(4)
                 with c1:
@@ -106,45 +115,53 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                 with c2:
                     p_proj = st.text_input("整體工程名稱 / 專案名稱 *", value="海防廠動力盤擴建 1500A 統包工程")
                 with c3:
-                    p_prop = st.text_input("提案人 (協理/副協理姓名) *", value="協理 - 陳明華")
+                    p_prop = st.text_input("提案人 (職稱與姓名) *", value="協理 - 陳明華")
                 with c4:
                     p_curr = st.selectbox("計價幣別", ["USD", "VND", "NTD"])
 
                 st.markdown("---")
-                st.markdown("##### 📦 步驟二：內部成本明細（包含訂製機櫃、水電材料費用與總和 —— **僅供內部主管檢視**）")
+                st.markdown("##### 📦 內部成本明細清單 (自動對應倉庫標準單價)")
                 
-                # 🎛️ 讓使用者可以自由調整要幾格材料/機櫃項目！
-                num_items = st.number_input("➕ 調整內部成本項目格數 (可自由增加或減少項目數量)", min_value=1, max_value=30, value=5, step=1)
+                num_items = st.number_input("項目數量 (可自由增減格數)", min_value=1, max_value=30, value=5, step=1)
 
                 internal_rows = []
                 total_cost = 0.0
+                available_parts = list(st.session_state.warehouse_master_parts.keys())
 
                 for i in range(1, int(num_items) + 1):
-                    st.markdown(f"**內部成本項目 #{i}**")
-                    ic1, ic2, ic3, ic4, ic5 = st.columns([1.5, 2.5, 2, 1, 1])
+                    ic1, ic2, ic3, ic4, ic5 = st.columns([2.5, 2, 1.5, 1.5, 1.5])
                     with ic1:
-                        itype = st.selectbox(f"類別 #{i}", ["水電材料", "訂製機櫃", "五金配件", "人工安裝費用"], key=f"itype_{i}")
+                        selected_part = st.selectbox(f"材料/機櫃 #{i}", available_parts, key=f"part_sel_{i}")
+                        auto_unit_price = st.session_state.warehouse_master_parts[selected_part]
                     with ic2:
-                        idesc = st.text_input(f"說明 #{i}", value=f"水電零件/機櫃規格 {i}" if i <= 3 else "", key=f"idesc_{i}")
+                        note_extra = st.text_input(f"規格備註 #{i}", value="", key=f"inote_{i}")
                     with ic3:
-                        note_extra = st.text_input(f"備註/規格 #{i}", value="", key=f"inote_{i}")
-                    with ic4:
                         iqty = st.number_input(f"數量 #{i}", min_value=0.0, value=10.0 if i <= 3 else 0.0, key=f"iqty_{i}")
+                    with ic4:
+                        st.text_input(f"單價 #{i}", value=f"$ {auto_unit_price:,.2f}", disabled=True, key=f"price_display_{i}")
                     with ic5:
-                        iprice = st.number_input(f"單價 #{i}", min_value=0.0, value=150.0 if i <= 3 else 0.0, key=f"iprice_{i}")
+                        sub = iqty * auto_unit_price
+                        st.text_input(f"小計 #{i}", value=f"$ {sub:,.2f}", disabled=True, key=f"sub_display_{i}")
 
-                    sub = iqty * iprice
-                    total_cost += sub
-                    internal_rows.append({"type": itype, "desc": idesc, "note": note_extra, "qty": iqty, "unit_price": iprice, "subtotal": sub})
+                    if iqty > 0:
+                        total_cost += sub
+                        internal_rows.append({
+                            "type": "訂製機櫃" if "機櫃" in selected_part or "箱體" in selected_part else "水電材料",
+                            "desc": selected_part,
+                            "note": note_extra,
+                            "qty": iqty,
+                            "unit_price": auto_unit_price,
+                            "subtotal": sub
+                        })
 
-                st.markdown(f"### 💰 內部總成本計算總和：`$ {total_cost:,.2f} {p_curr}`")
+                st.markdown(f"### 💰 內部總成本總和：`$ {total_cost:,.2f} {p_curr}`")
                 
                 st.markdown("---")
-                st.markdown("##### 📄 步驟三：擬定【對外報價給業主】的精簡工程項目摘要與建議報價金額（副總審查用）")
-                cust_summary = st.text_area("對外業主合約摘要 (僅顯示幾行工程項目給業主看)", value="1. 專案機櫃訂製與組裝工程\n2. 廠房高低壓配電盤安裝與測試")
+                st.markdown("##### 📄 對外業主報價摘要與金額")
+                cust_summary = st.text_area("對外合約摘要 (顯示給業主看的工程內容)", value="1. 專案機櫃訂製與組裝工程\n2. 廠房高低壓配電盤安裝與測試")
                 cust_suggested_price = st.number_input("建議對外報價金額 (Customer Price)", min_value=0.0, value=total_cost * 1.35, step=100.0)
 
-                if st.form_submit_button("🚀 提交雙層報價提案給副總經理審核", type="primary"):
+                if st.form_submit_button("🚀 提交報價提案", type="primary"):
                     if p_client and p_proj and internal_rows:
                         new_id = f"QT-2026-{len(st.session_state.two_tier_quotations_db)+1:03d}"
                         st.session_state.two_tier_quotations_db.append({
@@ -157,52 +174,49 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                             "total_internal_cost": total_cost,
                             "customer_facing_summary": cust_summary,
                             "customer_price": cust_suggested_price,
-                            "status": "⏳ 待副總經理審核與價格核定 (Pending VP Approval)"
+                            "status": "⏳ 待副總經理審核與價格核定"
                         })
-                        st.success(f"✅ 雙層報價提案 [{new_id}] 已送出！內部成本與對外報價已同時建立，等待副總經理核定。")
+                        st.success(f"✅ 報價提案 [{new_id}] 已成功提交！")
                         st.rerun()
                     else:
-                        st.warning("⚠️ 請完整填寫客戶、專案名稱及至少一筆內部成本明細！")
+                        st.warning("⚠️ 請完整填寫客戶、專案名稱及至少一筆有效的數量明細！")
 
         with tab_review:
-            st.markdown("##### 🔒 副總經理與總經理/董事長決策控制台")
-            st.info("💡 說明：副總經理可在此點開查看『內部成本總和與機櫃/材料明細』，並確認『對外業主報價金額』；確認無誤後點擊核准，呈報董事長與總經理最終確認。")
-
             if st.session_state.two_tier_quotations_db:
                 for q in st.session_state.two_tier_quotations_db:
                     with st.expander(f"📌 單號：{q['quot_id']} | 專案：{q['project_name']} | 提案人：{q['proposer']} | 狀態：{q['status']}"):
                         st.write(f"**客戶名稱**：{q['client']} | **幣別**：{q.get('currency', 'USD')}")
-                        st.write(f"**🔒 【內部機密】總成本總和**：`$ {q['total_internal_cost']:,.2f}`")
+                        st.write(f"**內部成本總和**：`$ {q['total_internal_cost']:,.2f}`")
                         
-                        st.markdown("**📦 內部成本明細表 (機櫃, 材料, 人工 —— 僅內部可見)：**")
+                        st.markdown("**📦 內部成本明細表：**")
                         st.dataframe(pd.DataFrame(q["internal_items"]), use_container_width=True)
 
                         st.markdown("---")
-                        st.markdown(f"**📄 【對外業主報價金額】**：`$ {q['customer_price']:,.2f}`")
+                        st.markdown(f"**對外業主報價金額**：`$ {q['customer_price']:,.2f}`")
                         st.text_area(f"對外業主合約摘要預覽 ({q['quot_id']})", value=q["customer_facing_summary"], disabled=True)
 
                         if "待副總經理審核" in q["status"]:
                             rc1, rc2 = st.columns(2)
                             with rc1:
-                                if st.button(f"🔒 副總已核准，呈報董事長/總經理確認 {q['quot_id']}", key=f"vp_pass_{q['quot_id']}"):
-                                    q["status"] = "🟢 副總已核准，待總經理/董事長最終確認 (Waiting Board Sign-off)"
-                                    st.success(f"✅ 單號 {q['quot_id']} 已通過副總審核，已呈報給總經理與董事長！")
+                                if st.button(f"🔒 副總已核准，呈報總經理/董事長確認 {q['quot_id']}", key=f"vp_pass_{q['quot_id']}"):
+                                    q["status"] = "🟢 副總已核准，待總經理/董事長最終確認"
+                                    st.success(f"✅ 單號 {q['quot_id']} 已通過副總審核，已呈報總經理與董事長！")
                                     st.rerun()
                             with rc2:
-                                if st.button(f"❌ 駁回並退回協理修改 {q['quot_id']}", key=f"vp_rej_{q['quot_id']}"):
-                                    q["status"] = "🔴 已被副總退回修改 (Rejected)"
-                                    st.warning("已退回給提案協理。")
+                                if st.button(f"❌ 駁回並退回修改 {q['quot_id']}", key=f"vp_rej_{q['quot_id']}"):
+                                    q["status"] = "🔴 已被副總退回修改"
+                                    st.warning("已退回。")
                                     st.rerun()
-                        elif "待總經理" in q["status"]:
+                        elif "待總經理" in q["status"] or "待總經理/董事長" in q["status"]:
                             bc1, bc2 = st.columns(2)
                             with bc1:
                                 if st.button(f"👑 總經理/董事長最終確認並拍板發行 {q['quot_id']}", key=f"board_pass_{q['quot_id']}"):
-                                    q["status"] = "🎉 董事長/總經理已最終拍板發行 (Official & Issued)"
-                                    st.success(f"🎉 報價單 {q['quot_id']} 已正式獲董事長與總經理確認，可正式發行給業主！")
+                                    q["status"] = "🎉 董事長/總經理已最終拍板發行"
+                                    st.success(f"🎉 報價單 {q['quot_id']} 已獲董事長與總經理確認，可發行給業主！")
                                     st.rerun()
                             with bc2:
-                                if st.button(f"❌ 董事長退回複查 {q['quot_id']}", key=f"board_rej_{q['quot_id']}"):
-                                    q["status"] = "🔴 董事長要求重新評估成本"
+                                if st.button(f"❌ 退回複查 {q['quot_id']}", key=f"board_rej_{q['quot_id']}"):
+                                    q["status"] = "🔴 要求重新評估成本"
                                     st.warning("已退回複查。")
                                     st.rerun()
                         else:
@@ -215,35 +229,35 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     # ----------------------------------------------------
     elif "2" in sub_str or "驗收" in sub_str or "Acceptance" in sub_str:
         st.markdown(f"### 📊 2. {t['sub2']}")
-        st.info("💡 即時監控工程進度、預定驗收時間，並與財務部應收帳款 (AR) 即時通訊連動進行請款催收。")
+        st.info("即時監控工程進度與預定驗收時間。")
 
     # ----------------------------------------------------
     # 3. 現場工程日報表與出工統計
     # ----------------------------------------------------
     elif "3" in sub_str or "日報" in sub_str or "Daily" in sub_str:
         st.markdown(f"### 📝 3. {t['sub3']}")
-        st.info("💡 記錄每日台幹與越籍工人人數、施工進度摘要與地工異常狀況回報。")
+        st.info("記錄每日台幹與越籍工人人數及施工進度。")
 
     # ----------------------------------------------------
     # 4. 🤖 AI 施工照片智慧辨識與歸檔
     # ----------------------------------------------------
     elif "4" in sub_str or "AI" in sub_str or "照片" in sub_str:
         st.markdown(f"### 🤖 4. {t['sub4']}")
-        st.info("💡 說明：現場工程師上傳施工照片後，系統 AI 會自動辨識內容並歸檔。")
+        st.info("上傳施工現場照片進行 AI 辨識與歸檔。")
 
     # ----------------------------------------------------
     # 5. ⚠️ 分包商與專業證照到期主動預警
     # ----------------------------------------------------
     elif "5" in sub_str or "證照" in sub_str or "License" in sub_str:
         st.markdown(f"### ⚠️ 5. {t['sub5']}")
-        st.info("💡 說明：系統主動比對技師與外包商專業證照到期日，自動跳出預警。")
+        st.info("技師與外包商專業證照到期監控。")
 
     # ----------------------------------------------------
     # 6. 配電盤電氣與機構設計圖庫 Storage
     # ----------------------------------------------------
     elif "6" in sub_str or "圖庫" in sub_str or "Storage" in sub_str:
         st.markdown(f"### 🎨 6. {t['sub6']}")
-        st.info("💡 管理所有配電盤 2D/3D 設計圖檔、CAD 藍圖與機構規格書。")
+        st.info("管理 2D/3D 設計圖檔與 CAD 藍圖。")
 
     else:
         st.markdown(f"### ⚙️ 1. {t['sub1']}")
