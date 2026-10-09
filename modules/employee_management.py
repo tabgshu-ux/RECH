@@ -3,7 +3,7 @@ import pandas as pd
 import datetime
 
 # ----------------------------------------------------
-# 🌐 員工與人事管理模組多語系字典 (i18n) - 含外籍護照與暫住證管理
+# 🌐 員工與人事管理模組多語系字典 (i18n)
 # ----------------------------------------------------
 EMP_I18N = {
     "繁體中文": {
@@ -41,15 +41,10 @@ EMP_I18N = {
         "lbl_addr_perm": "戶籍地址 / 原籍地址",
         "lbl_addr_temp": "越南現住地址 (Temporary Address)",
         "btn_add": "🚀 立即新增員工並建立檔案",
-        "success_add": "✅ 成功新增員工 `{name}` (工號: `{code}`)！已完成人事與證件合規建檔。",
         "btn_update": "💾 儲存修改後員工資料",
-        "success_update": "✅ 員工 `{code}` 資料已成功更新！",
         "btn_archive": "📂 將此員工辦理離職歸檔",
-        "success_archive": "✅ 員工 `{code}` 已移至離職歷史名冊。",
         "btn_reactivate": "🔄 辦理回鍋復職 (Reactivate)",
-        "success_reactivate": "🎉 員工 `{code}` 已成功復職並轉為現職員工！",
         "btn_hard_delete": "🔥 徹底刪除帳號 (僅適用於重複建檔錯誤)",
-        "success_hard_delete": "🔥 帳號 `{code}` 已自系統中徹底刪除。",
         "search_ph": "🔍 搜尋員工姓名、工號或證件號...",
         "col_index": "STT",
         "col_code": "工號",
@@ -98,15 +93,10 @@ EMP_I18N = {
         "lbl_addr_perm": "Địa chỉ thường trú",
         "lbl_addr_temp": "Chỗ ở hiện tại tại VN",
         "btn_add": "🚀 Thêm nhân viên mới",
-        "success_add": "✅ Đã thêm nhân viên `{name}` thành công!",
         "btn_update": "💾 Lưu thay đổi",
-        "success_update": "✅ Đã cập nhật thành công!",
         "btn_archive": "📂 Lưu trữ nghỉ việc",
-        "success_archive": "✅ Đã chuyển sang danh sách nghỉ việc.",
         "btn_reactivate": "🔄 Tái tuyển dụng",
-        "success_reactivate": "🎉 Nhân viên `{code}` đã đi làm trở lại!",
         "btn_hard_delete": "🔥 Xóa vĩnh viễn",
-        "success_hard_delete": "🔥 Đã xóa vĩnh viễn.",
         "search_ph": "🔍 Tìm kiếm...",
         "col_index": "STT",
         "col_code": "Mã NV",
@@ -155,15 +145,10 @@ EMP_I18N = {
         "lbl_addr_perm": "Permanent Address",
         "lbl_addr_temp": "Temporary Address in VN",
         "btn_add": "🚀 Create Employee",
-        "success_add": "✅ Successfully added employee `{name}`!",
         "btn_update": "💾 Save Changes",
-        "success_update": "✅ Updated successfully!",
         "btn_archive": "📂 Archive as Resigned",
-        "success_archive": "✅ Archived successfully.",
         "btn_reactivate": "🔄 Rehired (Reactivate)",
-        "success_reactivate": "🎉 Employee `{code}` reactivated successfully!",
         "btn_hard_delete": "🔥 Permanently Delete",
-        "success_hard_delete": "🔥 Permanently deleted.",
         "search_ph": "🔍 Search...",
         "col_index": "No.",
         "col_code": "Emp ID",
@@ -283,7 +268,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
 
     # 1. 👥 現職員工名冊
     with tab_list:
-        st.markdown(f"### {L['header_list']}")
+        st.markdown("### " + L['header_list'])
         search_q = st.text_input(L["search_ph"], key="emp_search_box_active")
 
         active_data = [e for e in st.session_state.employee_db if "在職" in e.get("狀態", "")]
@@ -297,7 +282,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             display_list = []
             for idx, emp in enumerate(active_data, 1):
                 role_display = role_dict.get(emp["角色"], emp["角色"])
-                doc_no = emp.get("身分證號") if emp.get("國籍") == "越南 (Vietnam)" else f"護照: {emp.get('護照號碼')} / 暫住證: {emp.get('暫住證號')}"
+                doc_no = emp.get("身分證號") if emp.get("國籍") == "越南 (Vietnam)" else ("護照: " + str(emp.get('護照號碼')) + " / 暫住證: " + str(emp.get('暫住證號')))
                 display_list.append({
                     L["col_index"]: idx,
                     L["col_code"]: emp["工號"],
@@ -317,7 +302,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
 
     # 2. 📂 離職與歷史名冊
     with tab_resigned:
-        st.markdown(f"### {L['header_resigned']}")
+        st.markdown("### " + L['header_resigned'])
         resigned_search = st.text_input("🔍 搜尋離職人員姓名或證件號...", key="emp_search_box_resigned")
 
         resigned_data = [e for e in st.session_state.employee_db if "離職" in e.get("狀態", "")]
@@ -331,10 +316,121 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             res_display_list = []
             for idx, emp in enumerate(resigned_data, 1):
                 role_display = role_dict.get(emp["角色"], emp["角色"])
-                doc_no = emp.get("身分證號") if emp.get("國籍") == "越南 (Vietnam)" else f"護照: {emp.get('護照號碼')}"
+                doc_no = emp.get("身分證號") if emp.get("國籍") == "越南 (Vietnam)" else ("護照: " + str(emp.get('護照號碼')))
                 res_display_list.append({
                     L["col_index"]: idx,
                     L["col_code"]: emp["工號"],
                     L["col_name"]: emp["姓名"],
                     L["col_phone"]: emp.get("電話", ""),
                     L["col_id_doc"]: doc_no,
+                    L["col_factory"]: emp["廠區"],
+                    L["col_dept"]: emp["部門"],
+                    L["col_title"]: emp["職稱"],
+                    L["col_attendance"]: emp.get("出勤性質", "廠內固定員工"),
+                    L["col_role"]: role_display,
+                    L["col_status"]: emp["狀態"]
+                })
+            st.dataframe(pd.DataFrame(res_display_list), use_container_width=True)
+            
+            st.markdown("---")
+            st.markdown("#### 🔄 離職人員回鍋復職 (Rehire / Reactivate)")
+            rehire_opts = [e["工號"] + " - " + e["姓名"] for e in resigned_data]
+            sel_rehire = st.selectbox("選擇要辦理復職的員工", rehire_opts, key="rehire_select")
+            
+            if st.button("🔄 " + L["btn_reactivate"], type="primary"):
+                rehire_code = sel_rehire.split(" - ")[0]
+                for e in st.session_state.employee_db:
+                    if e["工號"] == rehire_code:
+                        e["狀態"] = "🟢 在職 (Active)"
+                st.success("🎉 員工 " + rehire_code + " 已成功復職並轉為現職員工！")
+                st.rerun()
+        else:
+            st.info("📂 目前歷史檔案中無離職員工記錄。")
+
+    # 3. ➕ 新增員工
+    with tab_add:
+        st.markdown("### " + L['header_add'])
+        auto_emp_id = "VN-00" + str(len(st.session_state.employee_db) + 1)
+
+        with st.form("form_add_employee"):
+            c1, c2 = st.columns(2)
+            with c1:
+                e_code = st.text_input(L["lbl_code"], value=auto_emp_id)
+                e_name = st.text_input(L["lbl_name"], placeholder="例如: Nguyễn Văn An 或 姓名")
+                e_phone = st.text_input(L["lbl_phone"], placeholder="例如: +84-901-234-567")
+                
+                e_country = st.selectbox(L["lbl_country"], L["country_opts"])
+
+                if e_country == "越南 (Vietnam)":
+                    e_id_card = st.text_input(L["lbl_id_card"], placeholder="例如: 079095012345 (CCCD 12碼)")
+                    e_bhxh = st.text_input(L["lbl_bhxh"], placeholder="例如: 7912345678 (社保卡號)")
+                    e_passport, e_trc = "", ""
+                else:
+                    e_passport = st.text_input(L["lbl_passport"], placeholder="例如: 312345678 (護照號碼)")
+                    e_trc = st.text_input(L["lbl_trc"], placeholder="例如: TRC-VN-123456 (暫住證號)")
+                    e_id_card, e_bhxh = "", ""
+
+                e_attendance = st.selectbox(L["lbl_attendance"], L["attendance_opts"])
+
+            with c2:
+                e_factory = st.selectbox(L["lbl_factory"], L["factory_opts"])
+                e_dept = st.selectbox(L["lbl_dept"], L["dept_opts"])
+                e_title = st.text_input(L["lbl_title"], value="工程師 / 主管")
+                
+                if e_country == "越南 (Vietnam)":
+                    e_hospital = st.text_input(L["lbl_hospital"], value="Bệnh viện Đa khoa Tây Ninh")
+                else:
+                    e_hospital = "國際醫療/商務保險"
+                    st.text_input("外籍幹部醫療保障", value=e_hospital, disabled=True)
+
+                e_pwd = st.text_input(L["lbl_pwd"], value="123456")
+                
+                role_keys = list(role_dict.keys())
+                role_display_names = list(role_dict.values())
+                sel_role_display = st.selectbox(L["lbl_role"], role_display_names)
+                e_role = role_keys[role_display_names.index(sel_role_display)]
+
+            e_addr_perm = st.text_input(L["lbl_addr_perm"], placeholder="原籍戶籍地址")
+            e_addr_temp = st.text_input(L["lbl_addr_temp"], placeholder="越南暫住地址 / 宿舍地址")
+
+            st.markdown("---")
+            st.markdown("##### 📤 證件與官方證照照片上傳區 (護照正面、暫住證正反面等)")
+            uploaded_id_docs = st.file_uploader(
+                "請上傳護照影本、暫住證正反面或身分證照片（可多張同時上傳）", 
+                type=["png", "jpg", "jpeg", "pdf"], 
+                accept_multiple_files=True,
+                help="台陸籍幹部請上傳護照與暫住證；越南籍請上傳 CCCD 正反面。"
+            )
+
+            submitted = st.form_submit_button(L["btn_add"], type="primary", use_container_width=True)
+            if submitted:
+                doc_check = e_id_card if e_country == "越南 (Vietnam)" else e_passport
+                if e_code and e_name and e_phone and doc_check:
+                    existing_codes = [e["工號"] for e in st.session_state.employee_db]
+                    if e_code in existing_codes:
+                        st.error("⚠️ 錯誤：工號 " + e_code + " 已經存在！")
+                    else:
+                        doc_status = "已上傳 " + str(len(uploaded_id_docs)) + " 張證件照" if uploaded_id_docs else "⚠️ 未上傳證件照"
+                        st.session_state.employee_db.append({
+                            "工號": e_code,
+                            "姓名": e_name,
+                            "電話": e_phone,
+                            "國籍": e_country,
+                            "身分證號": e_id_card,
+                            "護照號碼": e_passport,
+                            "暫住證號": e_trc,
+                            "社保證號": e_bhxh,
+                            "投保醫院": e_hospital,
+                            "廠區": e_factory,
+                            "部門": e_dept,
+                            "職稱": e_title,
+                            "出勤性質": e_attendance,
+                            "戶籍地址": e_addr_perm,
+                            "現住地址": e_addr_temp,
+                            "證件照狀態": doc_status,
+                            "角色": e_role,
+                            "密碼": e_pwd,
+                            "must_change_password": True,
+                            "狀態": "🟢 在職 (Active)"
+                        })
+                        st.success("✅ 成功新增員工 " + e_name + " (工號: "
