@@ -4,12 +4,12 @@ import datetime
 
 def render_approval_center(engine=None, lang="繁體中文", **kwargs):
     st.title("✍️ 裕豐電機工業 - 全公司電子簽核與進度追蹤中心")
-    st.caption("提供請假（含 0.5 小時半小時精確計算）、採購請購、車輛調派（西寧廠/海防廠）與物品攜出之跨部門電子簽核。")
+    st.caption("提供請假（含 0.5 小時半小時精確計算）、標準化品項採購請購、車輛調派與物品攜出之跨部門電子簽核。")
 
     if "approval_requests" not in st.session_state:
         st.session_state.approval_requests = [
             {"單號": "REQ-2026-001", "類型": "請假申請", "申請人": "Nguyễn Văn An", "部門": "資訊管理部", "內容": "類別: 事假 | 時數: 4.0 小時", "事由": "前往銀行辦理公務與私事處理", "狀態": "🟢 主管已核准"},
-            {"單號": "CAR-2026-003", "類型": "車輛調派單", "申請人": "admin", "部門": "總經理室", "內容": "車號: 61A-888.88 | 出發: 越南西寧廠 ➔ 目的地: 客戶工程工地", "事由": "載送台幹前往西寧廠進行高壓配電盤驗收", "狀態": "🟢 主管已核准"}
+            {"單號": "PO-2026-002", "類型": "採購請購單", "申請人": "Trần Thị Mai", "部門": "管理部", "內容": "分類: 銅材/導電材料 | 品名: 銅排 Busbar 10x100mm | 金額: 15,000,000 ₫", "事由": "西寧廠 2000A 配電盤專案擴充", "狀態": "🟡 待主管審核"}
         ]
 
     if "gate_pass_records" not in st.session_state:
@@ -34,7 +34,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
             "選擇要提交的表單類型 (Select Request Type)", 
             [
                 "🍃 請假申請單 (Leave Request - 支援半小時計算)", 
-                "🛒 採購請購單 (Purchase Requisition)", 
+                "🛒 採購請購單 (Purchase Requisition - 具備防呆分類選擇)", 
                 "🚗 車輛調派與門禁申請單 (Vehicle Dispatch - 西寧/海防廠)",
                 "📦 物品攜出放行單 (Item Carry-Out Pass)"
             ]
@@ -66,6 +66,56 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                         st.success(f"✅ 成功提交請假申請！總計時數：{leave_hours} 小時。")
                         st.rerun()
 
+        # 💡 採購請購單：嚴格採用採購品項大類與標準規格選擇，防止員工亂寫
+        elif "採購" in req_type:
+            st.markdown("---")
+            st.markdown("#### 🛒 採購請購單 (Đơn đề nghị mua hàng - 標準化分類選單)")
+            st.info("💡 **AI ERP 防呆機制**：為避免品項名稱亂寫或簡寫，請從下方選擇採購分類與標準化規格型號。")
+
+            with st.form("po_request_form"):
+                po1, po2 = st.columns(2)
+                with po1:
+                    st.text_input("申請人", value=f"{current_user}", disabled=True)
+                    
+                    # 採購品項大類選單
+                    po_category = st.selectbox(
+                        "採購品項大類 (Material Category)", 
+                        [
+                            "銅材與導電排 (Copper Busbars)",
+                            "高低壓開關元件 (Circuit Breakers - ACB/MCCB)",
+                            "箱體與板金結構 (Enclosures & Sheet Metal)",
+                            "線材與控制配件 (Cables & Accessories)",
+                            "五金耗材與工具 (Hardware & Consumables)"
+                        ]
+                    )
+                with po2:
+                    po_no = f"PO-{datetime.datetime.now().strftime('%Y%m%d%H%M')}"
+                    st.text_input("請購單編號", value=po_no, disabled=True)
+                    
+                    # 依據大類對應的標準規格品項下拉選單
+                    if "銅材" in po_category:
+                        po_item = st.selectbox("標準品項規格型號", ["CU-BUS-10100 (銅排 10x100mm)", "CU-BUS-0650 (銅排 6x50mm)", "CU-FLEX-01 (軟得銅帶)"])
+                    elif "開關元件" in po_category:
+                        po_item = st.selectbox("標準品項規格型號", ["CB-ACB-2000A (空氣斷路器 2000A)", "CB-MCCB-250A (塑殼斷路器 250A)", "CB-MCB-32A (微型斷路器 32A)"])
+                    elif "箱體" in po_category:
+                        po_item = st.selectbox("標準品項規格型號", ["ENCL-IP54-2M (IP54 高壓配電箱體 2米)", "ENCL-IP65-WALL (壁掛式控制箱)"])
+                    elif "線材" in po_category:
+                        po_item = st.selectbox("標準品項規格型號", ["CABLE-UL-10AWG (UL認證控制線)", "CABLE-THHN-2.5MM (THHN 絕緣導線)"])
+                    else:
+                        po_item = st.selectbox("標準品項規格型號", ["TOOL-CRIMP-01 (壓接端子工具)", "MISC-BOLT-M10 (不銹鋼螺絲 M10組)"])
+
+                po_amount = st.text_input("預估金額 (VND)", value="15,000,000 ₫")
+                po_reason = st.text_area("採購用途說明與專案編號", placeholder="例如：用於西寧廠 2000A 配電盤專案擴充。")
+                
+                if st.form_submit_button("🚀 送出標準化採購請購申請", type="primary", use_container_width=True):
+                    st.session_state.approval_requests.insert(0, {
+                        "單號": po_no, "類型": "採購請購單", "申請人": current_user,
+                        "部門": "採購與工程部", "內容": f"分類: {po_category} | 品名: {po_item} | 金額: {po_amount}",
+                        "事由": po_reason, "狀態": "🟡 待主管審核"
+                    })
+                    st.success("✅ 標準化採購請購單已成功送出！")
+                    st.rerun()
+
         elif "車輛" in req_type:
             st.markdown("---")
             st.markdown("#### 🚗 車輛調派與門禁申請單 (Đơn điều phối xe)")
@@ -92,29 +142,6 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                         "申請人": current_user, "核准狀態": "🟡 待主管審核", "門禁放行狀態": "🔒 待審核與放行"
                     })
                     st.success("✅ 車輛調派申請已送出並連動保全端！")
-                    st.rerun()
-
-        elif "採購" in req_type:
-            st.markdown("---")
-            st.markdown("#### 🛒 採購請購單 (Đơn đề nghị mua hàng)")
-            with st.form("po_request_form"):
-                po1, po2 = st.columns(2)
-                with po1:
-                    st.text_input("申請人", value=f"{current_user}", disabled=True)
-                    po_item = st.text_input("採購品名與規格", placeholder="例如: 銅排 Busbar 10x100mm")
-                with po2:
-                    po_no = f"PO-{datetime.datetime.now().strftime('%Y%m%d%H%M')}"
-                    st.text_input("請購單編號", value=po_no, disabled=True)
-                    po_amount = st.text_input("預估金額 (VND)", value="15,000,000 ₫")
-                
-                po_reason = st.text_area("採購用途說明", placeholder="用於西寧廠專案擴充。")
-                if st.form_submit_button("🚀 送出採購請購申請", type="primary", use_container_width=True):
-                    st.session_state.approval_requests.insert(0, {
-                        "單號": po_no, "類型": "採購請購單", "申請人": current_user,
-                        "部門": "採購與工程部", "內容": f"品名: {po_item} | 金額: {po_amount}",
-                        "事由": po_reason, "狀態": "🟡 待主管審核"
-                    })
-                    st.success("✅ 採購請購單已成功送出！")
                     st.rerun()
 
         else:
