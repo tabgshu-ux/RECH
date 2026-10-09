@@ -15,7 +15,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     texts = {
         "繁體中文": {
             "title": "⚡ 裕豐電機工業 - 工程管理中心與設計部門",
-            "caption": "涵蓋雙層報價、簽核中心串接、BOM 採購連動、外包點工計薪、FAT/SAT 驗收與越南電子發票系統。",
+            "caption": "水電工程與面板製造 ERP 系統（涵蓋雙層報價、簽核中心串接、BOM 採購連動、外包點工計薪、FAT/SAT 驗收與越南電子發票）。",
             "sub1": "⚡ [工程] 配電盤與工程專案雙層報價系統",
             "sub2": "⚡ [工程] 工程驗收與進度追蹤",
             "sub3": "⚡ [工程] 現場工程日報表與出工統計",
@@ -63,7 +63,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     st.title(t["title"])
     st.caption(t["caption"])
 
-    # 🏭 倉庫標準零件與單價成本資料庫
+    # 🏭 資料庫初始化
     if "warehouse_master_parts" not in st.session_state:
         st.session_state.warehouse_master_parts = {
             "銅排 Busbar 10x100mm": 2.5,
@@ -79,47 +79,24 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     if "two_tier_quotations_db" not in st.session_state:
         st.session_state.two_tier_quotations_db = [
             {
-                "quot_id": "QT-2026-001",
-                "client": "Công ty TNHH Xây lắp Tân Thuận",
-                "project_name": "西寧廠主配電盤 2000A 統包工程",
-                "proposer": "協理 - 陳明華",
-                "currency": "USD",
+                "quot_id": "QT-2026-001", "client": "Công ty TNHH Xây lắp Tân Thuận",
+                "project_name": "西寧廠主配電盤 2000A 統包工程", "proposer": "協理 - 陳明華", "currency": "USD",
                 "internal_items": [
                     {"type": "訂製機櫃", "desc": "2000A 防水不銹鋼機櫃", "qty": 2.0, "unit_price": 3500.0, "subtotal": 7000.0},
                     {"type": "水電材料", "desc": "銅排 Busbar 10x100mm", "qty": 450.0, "unit_price": 2.5, "subtotal": 1125.0}
                 ],
-                "total_internal_cost": 8125.0,
-                "customer_facing_summary": "1. 西寧廠 2000A 主配電盤及箱體統包工程",
-                "customer_price": 11500.0,
-                "status": "⏳ 待副總經理審核與價格核定"
+                "total_internal_cost": 8125.0, "customer_facing_summary": "1. 西寧廠 2000A 主配電盤及箱體統包工程",
+                "customer_price": 11500.0, "status": "⏳ 待副總經理審核"
             }
         ]
 
-    if "company_approval_queue" not in st.session_state:
-        st.session_state.company_approval_queue = []
-
-    if "engineering_projects_db" not in st.session_state:
-        st.session_state.engineering_projects_db = [
-            {"proj_code": "PRJ-TN-2026-01", "proj_name": "西寧廠高壓配電盤擴建", "factory": "西寧廠", "budget": 1200000000, "status": "進行中"}
-        ]
-
     if "license_db" not in st.session_state:
-        st.session_state.license_db = [
-            {"emp_id": "EMP-001", "name": "張董事長", "license_name": "甲種電匠", "status": "🔴 30天內即將到期"}
-        ]
-
-    if "ai_photo_archive_db" not in st.session_state:
-        st.session_state.ai_photo_archive_db = []
-
-    if "drawing_storage_db" not in st.session_state:
-        st.session_state.drawing_storage_db = []
+        st.session_state.license_db = [{"emp_id": "EMP-001", "name": "張董事長", "license_name": "甲種電匠", "status": "🔴 30天內即將到期"}]
 
     if "bom_procurement_db" not in st.session_state:
         st.session_state.bom_procurement_db = [
             {
-                "quot_id": "QT-2026-001",
-                "project_name": "西寧廠主配電盤 2000A 統包工程",
-                "client": "Công ty TNHH Xây lắp Tân Thuận",
+                "quot_id": "QT-2026-001", "project_name": "西寧廠主配電盤 2000A 統包工程", "client": "Công ty TNHH Xây lắp Tân Thuận",
                 "bom_items": [
                     {"part_code": "PART-CAB-2000", "part_name": "2000A 防水不銹鋼機櫃", "required_qty": 2.0, "stock_qty": 0.0, "shortage": 2.0, "action": "🔴 需採購"},
                     {"part_code": "PART-BUS-100", "part_name": "銅排 Busbar 10x100mm", "required_qty": 450.0, "stock_qty": 500.0, "shortage": 0.0, "action": "🟢 庫存充足"}
@@ -155,9 +132,9 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
         ]
 
     # ----------------------------------------------------
-    # 1. 雙層報價系統
+    # 1. 配電盤與工程專案雙層報價系統
     # ----------------------------------------------------
-    if "1" in sub_str or "報價" in sub_str or "Quotation" in sub_str:
+    if "1" in sub_str or "報價" in sub_str or "Quotation" in sub_str or "配電盤與工程專案" in sub_str:
         st.markdown(f"### ⚙️ 1. {t['sub1']}")
         tab_prop, tab_review = st.tabs(["✍️ 建立報價提案 (協理填寫)", "🔒 主管審核中心 (簽核中心連動)"])
 
@@ -318,7 +295,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     # ----------------------------------------------------
     # 10. 越南營建電子發票與稅務管家 (強悍功能四)
     # ----------------------------------------------------
-    elif "10" in sub_str or "發票" in sub_str or "Invoice" in sub_str:
+    elif "10" in sub_str or "發票" in sub_str or "Invoice" in sub_str or "越南營建" in sub_str:
         st.markdown(f"### 📊 10. {t['sub10']}")
         st.info("符合越南稅務總局 (GDT) 規範，管理電子發票 (Hóa đơn điện tử) 與加值稅 (VAT 8%/10%) 合規申報。")
         with st.form("inv_form"):
