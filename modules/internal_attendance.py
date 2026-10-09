@@ -3,27 +3,33 @@ import pandas as pd
 import datetime
 
 # ----------------------------------------------------
-# 🌐 廠內考勤與彈性緩衝扣款模組多語系字典 (i18n)
+# 🌐 廠內考勤與越南勞動法合規模組多語系字典 (i18n)
 # ----------------------------------------------------
 INT_ATT_I18N = {
     "繁體中文": {
-        "title": "🏢 管理部 - 廠內智慧考勤與硬體 API 聯動管理",
-        "caption": "依據各廠區獨立管理完整出勤紀錄、支援月份與員工整月考勤追溯、彈性緩衝時間與自動化薪資扣款連動。",
+        "title": "🏢 管理部 - 廠內智慧考勤、越南勞動法合規與硬體 API 聯動",
+        "caption": "依據越南勞動法管理完整出勤、OT加班(150%/200%/300%)、夜班加給(30%)、假別與員工每月考勤統計查詢。",
         "tab_records": "📑 廠內完整出勤日誌與月度查詢",
-        "tab_simulate": "⏱️ 模擬打卡機 / 人臉指紋資料進站",
+        "tab_summary": "📊 員工個人月度考勤統計表 (給員工查閱)",
+        "tab_simulate": "⏱️ 模擬打卡機 / 考勤與加班資料進站",
         "tab_api_config": "🔌 硬體打卡機 API 介面設定 (SaaS)",
         "tab_rules": "⚙️ 彈性緩衝時間與扣款規則設定",
         "header_tayninh": "🏭 西寧廠 (Tay Ninh) 完整出勤與刷卡日誌",
         "header_haiphong": "🏭 海防廠 (Hai Phong) 完整出勤與刷卡日誌",
+        "header_summary": "📊 員工個人月度考勤與薪資結算對帳總表",
         "filter_month": "📅 選擇結算月份 (Month Filter)",
         "search_label": "🔍 搜尋員工姓名或工號...",
-        "header_simulate": "⚡ 模擬硬體打卡資料寫入與即時比對",
+        "header_simulate": "⚡ 模擬硬體打卡、加班與假別資料寫入",
         "header_api": "🔌 智慧人臉/指紋打卡機硬體 API 整合設定中心",
         "header_rules": "⚙️ 考勤緩衝與扣薪參數設定",
         "lbl_emp": "選擇員工 (Select Employee) *",
         "lbl_clock_time": "刷卡時間 *",
         "lbl_type": "考勤類型 *",
         "type_opts": ["上班簽到 (Check-In)", "下班簽退 (Check-Out)"],
+        "lbl_ot": "加班與加給類型 (Overtime & Shift) *",
+        "ot_opts": ["正常工時 (Standard)", "平日加班 OT 150%", "休息日加班 OT 200%", "國定假日加班 OT 300%", "夜班加給 Night Shift (+30%)"],
+        "lbl_leave": "假別狀態 (Leave Status) *",
+        "leave_opts": ["正常出勤 (Normal)", "有薪年假 (Phép năm / Annual Leave)", "病假 (Bản / Sick Leave)", "事假 (Việc riêng / Personal Leave)", "無薪假 (Không lương / Unpaid Leave)"],
         "lbl_brand": "打卡機品牌 / 協定類型 *",
         "brand_opts": ["中控智慧 (ZKTeco BioTime API)", "海康威視 (Hikvision ISAPI)", "通用 RESTful Webhook API", "Suprema BioStar API"],
         "lbl_api_url": "打卡機伺服器 API Endpoint 網址 *",
@@ -33,34 +39,42 @@ INT_ATT_I18N = {
         "factory_opts": ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)", "全集團通用 (Global)"],
         "btn_save_api": "💾 儲存打卡機 API 串接設定",
         "btn_test_api": "🔌 測試打卡機連線 (Test Connection)",
-        "btn_process": "🚀 執行出勤比對並連動薪資扣款",
-        "success_process": "✅ 員工 `{name}` 打卡時間 `{time}` 處理完成！判定：`{status}`",
+        "btn_process": "🚀 執行出勤比對並寫入考勤庫",
+        "success_process": "✅ 員工 `{name}` 考勤資料處理完成！判定狀態：`{status}`",
         "col_index": "STT",
         "col_code": "工號",
         "col_name": "姓名",
         "col_type": "類型",
         "col_time": "刷卡時間",
-        "col_status": "出勤判定狀態",
-        "col_deduct": "實質扣款時數"
+        "col_ot": "加班/加給",
+        "col_leave": "假別",
+        "col_status": "判定狀態",
+        "col_deduct": "扣款時數"
     },
     "Tiếng Việt": {
-        "title": "🏢 Quản lý Chấm công nội bộ & Cấu hình API",
-        "caption": "Quản lý toàn bộ nhật ký chấm công theo nhà máy, tra cứu theo tháng, ân hạn và trừ lương.",
-        "tab_records": "📑 Nhật ký chấm công & Tra cứu tháng",
-        "tab_simulate": "⏱️ Mô phỏng máy chấm công",
+        "title": "🏢 Quản lý Chấm công, Luật Lao động VN & Cấu hình API",
+        "caption": "Quản lý chấm công, tăng ca (150%/200%/300%), phụ cấp đêm (30%), phép năm và bảng tổng hợp tháng.",
+        "tab_records": "📑 Nhật ký chấm công",
+        "tab_summary": "📊 Thống kê tháng cá nhân (Cho nhân viên xem)",
+        "tab_simulate": "⏱️ Mô phỏng chấm công & Tăng ca",
         "tab_api_config": "🔌 Cài đặt API Máy chấm công",
         "tab_rules": "⚙️ Cài đặt ân hạn & Trừ lương",
         "header_tayninh": "🏭 Nhật ký chấm công Nhà máy Tây Ninh",
         "header_haiphong": "🏭 Nhật ký chấm công Nhà máy Hải Phòng",
+        "header_summary": "📊 Bảng tổng hợp công tháng & Đối soát lương cá nhân",
         "filter_month": "📅 Chọn tháng quyết toán",
         "search_label": "🔍 Tìm kiếm theo tên hoặc mã NV...",
-        "header_simulate": "⚡ Giả lập quẹt thẻ",
+        "header_simulate": "⚡ Giả lập quẹt thẻ & Tăng ca",
         "header_api": "🔌 Cấu hình API thiết bị phần cứng",
         "header_rules": "⚙️ Thiết lập tham số",
         "lbl_emp": "Chọn nhân viên *",
         "lbl_clock_time": "Thời gian quẹt thẻ *",
         "lbl_type": "Loại chấm công *",
         "type_opts": ["Vào ca (Check-In)", "Tan ca (Check-Out)"],
+        "lbl_ot": "Loại tăng ca / Phụ cấp *",
+        "ot_opts": ["Giờ chuẩn", "Tăng ca ngày thường 150%", "Tăng ca ngày nghỉ 200%", "Tăng ca ngày lễ 300%", "Phụ cấp ca đêm (+30%)"],
+        "lbl_leave": "Trạng thái nghỉ phép *",
+        "leave_opts": ["Làm việc bình thường", "Phép năm (Annual Leave)", "Nghỉ bệnh (Sick Leave)", "Nghỉ việc riêng", "Nghỉ không lương"],
         "lbl_brand": "Thương hiệu máy chấm công *",
         "brand_opts": ["ZKTeco BioTime API", "Hikvision ISAPI", "RESTful Webhook API chung", "Suprema BioStar API"],
         "lbl_api_url": "Đường dẫn API Endpoint *",
@@ -70,34 +84,42 @@ INT_ATT_I18N = {
         "factory_opts": ["Nhà máy Tây Ninh", "Nhà máy Hải Phòng", "Toàn tập đoàn (Global)"],
         "btn_save_api": "💾 Lưu cấu hình API",
         "btn_test_api": "🔌 Kiểm tra kết nối",
-        "btn_process": "🚀 Xử lý chấm công & Liên kết lương",
-        "success_process": "✅ Đã xử lý cho `{name}` lúc `{time}`, trạng thái: `{status}`",
+        "btn_process": "🚀 Xử lý dữ liệu chấm công",
+        "success_process": "✅ Đã xử lý cho `{name}`, trạng thái: `{status}`",
         "col_index": "STT",
         "col_code": "Mã NV",
         "col_name": "Họ tên",
         "col_type": "Loại",
         "col_time": "Thời gian",
+        "col_ot": "Tăng ca/Ca đêm",
+        "col_leave": "Phép",
         "col_status": "Trạng thái",
         "col_deduct": "Giờ trừ"
     },
     "English": {
-        "title": "🏢 Management - Internal Attendance & Biometric API Hub",
-        "caption": "Full plant attendance logs, monthly search, grace period, payroll sync, and biometric configuration.",
-        "tab_records": "📑 Attendance Logs & Monthly Search",
-        "tab_simulate": "⏱️ Simulate Biometric Input",
+        "title": "🏢 Management - Internal Attendance, VN Labor Law & Biometric Hub",
+        "caption": "Full attendance tracking, overtime (150%/200%/300%), night shift (30%), leaves, and monthly summaries.",
+        "tab_records": "📑 Attendance Logs",
+        "tab_summary": "📊 Monthly Individual Summary (For Employees)",
+        "tab_simulate": "⏱️ Simulate Biometric & Overtime",
         "tab_api_config": "🔌 Biometric Device API Settings",
         "tab_rules": "⚙️ Grace Period & Deduction Settings",
         "header_tayninh": "🏭 Tay Ninh Plant Attendance Log",
         "header_haiphong": "🏭 Hai Phong Plant Attendance Log",
+        "header_summary": "📊 Employee Monthly Attendance & Payroll Reconciliation",
         "filter_month": "📅 Select Settlement Month",
         "search_label": "🔍 Search by Employee Name or ID...",
-        "header_simulate": "⚡ Simulate Device Sync",
+        "header_simulate": "⚡ Simulate Device & Overtime Sync",
         "header_api": "🔌 Biometric Hardware API Integration Center",
         "header_rules": "⚙️ Grace Period Parameters",
         "lbl_emp": "Select Employee *",
         "lbl_clock_time": "Punch Timestamp *",
         "lbl_type": "Punch Type *",
         "type_opts": ["Check-In", "Check-Out"],
+        "lbl_ot": "Overtime & Shift Allowance *",
+        "ot_opts": ["Standard Hours", "Weekday OT 150%", "Rest Day OT 200%", "Holiday OT 300%", "Night Shift (+30%)"],
+        "lbl_leave": "Leave Status *",
+        "leave_opts": ["Normal Work", "Annual Leave (Phép năm)", "Sick Leave", "Personal Leave", "Unpaid Leave"],
         "lbl_brand": "Device Brand / Protocol *",
         "brand_opts": ["ZKTeco BioTime API", "Hikvision ISAPI", "Generic RESTful Webhook API", "Suprema BioStar API"],
         "lbl_api_url": "Device Server API Endpoint URL *",
@@ -107,13 +129,15 @@ INT_ATT_I18N = {
         "factory_opts": ["Tay Ninh Plant", "Hai Phong Plant", "Global (All Plants)"],
         "btn_save_api": "💾 Save API Configuration",
         "btn_test_api": "🔌 Test Device Connection",
-        "btn_process": "🚀 Process Attendance & Link Payroll",
-        "success_process": "✅ Punch for `{name}` at `{time}` processed. Status: `{status}`",
+        "btn_process": "🚀 Process Attendance Record",
+        "success_process": "✅ Punch for `{name}` processed. Status: `{status}`",
         "col_index": "No.",
         "col_code": "Emp ID",
         "col_name": "Name",
         "col_type": "Type",
         "col_time": "Timestamp",
+        "col_ot": "OT / Night Shift",
+        "col_leave": "Leave",
         "col_status": "Status",
         "col_deduct": "Deduct Hours"
     }
@@ -152,6 +176,8 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                 "factory": "西寧廠 (Tay Ninh)",
                 "type": "上班簽到",
                 "time": "2026-10-08 07:55:00",
+                "ot": "正常工時 (Standard)",
+                "leave": "正常出勤 (Normal)",
                 "status": "🟢 正常 (Normal)",
                 "deduct_hours": 0.0
             },
@@ -161,6 +187,8 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                 "factory": "西寧廠 (Tay Ninh)",
                 "type": "下班簽退",
                 "time": "2026-10-08 17:10:00",
+                "ot": "正常工時 (Standard)",
+                "leave": "正常出勤 (Normal)",
                 "status": "🟢 正常 (Normal)",
                 "deduct_hours": 0.0
             },
@@ -170,32 +198,27 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                 "factory": "海防廠 (Hai Phong)",
                 "type": "上班簽到",
                 "time": "2026-10-08 08:12:00",
-                "status": "🟡 遲到 12 分鐘 (超過 5m 緩衝)",
+                "ot": "正常工時 (Standard)",
+                "leave": "正常出勤 (Normal)",
+                "status": "🟡 遲到 12 分鐘",
                 "deduct_hours": 0.12
-            },
-            {
-                "code": "VN-002",
-                "name": "Nguyễn Văn Quý",
-                "factory": "海防廠 (Hai Phong)",
-                "type": "下班簽退",
-                "time": "2026-10-08 17:02:00",
-                "status": "🟢 正常 (Normal)",
-                "deduct_hours": 0.0
             },
             {
                 "code": "VN-003",
                 "name": "Trần Văn Nam",
                 "factory": "西寧廠 (Tay Ninh)",
                 "type": "上班簽到",
-                "time": "2026-10-09 07:58:00",
-                "status": "🟢 正常 (Normal)",
+                "time": "2026-10-09 18:30:00",
+                "ot": "平日加班 OT 150%",
+                "leave": "正常出勤 (Normal)",
+                "status": "🟢 加班中 (OT)",
                 "deduct_hours": 0.0
             }
         ]
 
-    # 🎯 擴充頁籤：記錄、模擬、API設定、緩衝規則
-    tab_records, tab_simulate, tab_api_config, tab_rules = st.tabs([
-        L["tab_records"], L["tab_simulate"], L["tab_api_config"], L["tab_rules"]
+    # 🎯 擴充四大頁籤：日誌、個人月度統計、模擬打卡、API設定、緩衝規則
+    tab_records, tab_summary, tab_simulate, tab_api_config, tab_rules = st.tabs([
+        L["tab_records"], L["tab_summary"], L["tab_simulate"], L["tab_api_config"], L["tab_rules"]
     ])
 
     # 1. 📑 廠內完整出勤日誌與月度查詢
@@ -203,7 +226,6 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
         rules = st.session_state.attendance_rules
         st.markdown(f"📌 **目前生效考勤標準**：上班 `{rules['standard_in']}` | 每日緩衝 `{rules['daily_grace_mins']} 分鐘`")
         
-        # 💡 新增月份過濾與關鍵字搜尋列
         rc1, rc2 = st.columns([1, 2])
         with rc1:
             selected_month = st.selectbox(L["filter_month"], ["全部月份 (All)", "2026-10", "2026-09", "2026-08"], key="att_month_filter")
@@ -218,10 +240,8 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
             item for item in st.session_state.internal_attendance_db 
             if "西寧" in item["factory"] or "Tay Ninh" in item["factory"]
         ]
-        
         if selected_month != "全部月份 (All)":
             tay_ninh_data = [item for item in tay_ninh_data if selected_month in item["time"]]
-
         if search_query:
             tay_ninh_data = [
                 item for item in tay_ninh_data 
@@ -237,6 +257,8 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                     L["col_name"]: item["name"],
                     L["col_type"]: item["type"],
                     L["col_time"]: item["time"],
+                    L["col_ot"]: item["ot"],
+                    L["col_leave"]: item["leave"],
                     L["col_status"]: item["status"],
                     L["col_deduct"]: f"{item['deduct_hours']} 小時"
                 })
@@ -252,10 +274,8 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
             item for item in st.session_state.internal_attendance_db 
             if "海防" in item["factory"] or "Hai Phong" in item["factory"]
         ]
-
         if selected_month != "全部月份 (All)":
             hai_phong_data = [item for item in hai_phong_data if selected_month in item["time"]]
-
         if search_query:
             hai_phong_data = [
                 item for item in hai_phong_data 
@@ -271,6 +291,8 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                     L["col_name"]: item["name"],
                     L["col_type"]: item["type"],
                     L["col_time"]: item["time"],
+                    L["col_ot"]: item["ot"],
+                    L["col_leave"]: item["leave"],
                     L["col_status"]: item["status"],
                     L["col_deduct"]: f"{item['deduct_hours']} 小時"
                 })
@@ -278,7 +300,50 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
         else:
             st.info("海防廠在此月份無符合條件的出勤紀錄。")
 
-    # 2. ⏱️ 模擬打卡機 / 人臉指紋資料進站
+    # 2. 📊 員工個人月度考勤統計表 (方便員工隨時查看遲到、請假、OT)
+    with tab_summary:
+        st.markdown(f"### {L['header_summary']}")
+        st.info("💡 說明：人資可在此輸入或選擇特定員工與月份，即時列出該員當月的遲到總時數、請假天數與各類加班時數，方便直接印出或截圖提供給員工查閱對帳。")
+
+        sc1, sc2 = st.columns(2)
+        with sc1:
+            summary_emp = st.selectbox("選擇員工 (Select Employee)", ["EMP-001 - 張董事長", "VN-002 - Nguyễn Văn Quý", "VN-003 - Trần Văn Nam"], key="summary_emp_sel")
+        with sc2:
+            summary_month = st.selectbox("選擇結算月份 (Month)", ["2026-10", "2026-09", "2026-08"], key="summary_month_sel")
+
+        target_code = summary_emp.split(" - ")[0]
+        target_name = summary_emp.split(" - ")[1]
+
+        # 計算該員工該月份的數據
+        emp_records = [
+            r for r in st.session_state.internal_attendance_db 
+            if r["code"] == target_code and summary_month in r["time"]
+        ]
+
+        total_deduct = sum([r["deduct_hours"] for r in emp_records])
+        ot_records = [r for r in emp_records if "OT" in r["ot"] or "加班" in r["ot"]]
+        leave_records = [r for r in emp_records if "正常出勤" not in r["leave"]]
+
+        st.markdown(f"#### 👤 員工姓名：`{target_name}` (工號: `{target_code}`) | 統計月份：`{summary_month}`")
+        
+        m_col1, m_col2, m_col3, m_col4 = st.columns(4)
+        with m_col1:
+            st.metric("🔴 累計扣款時數", f"{total_deduct} 小時")
+        with m_col2:
+            st.metric("⚡ 加班紀錄筆數", f"{len(ot_records)} 筆")
+        with m_col3:
+            st.metric("🌴 請假紀錄筆數", f"{len(leave_records)} 筆")
+        with m_col4:
+            st.metric("🟢 出勤狀態", "正常結算")
+
+        st.markdown("---")
+        st.markdown("##### 📋 當月詳細出勤與加出勤明細")
+        if emp_records:
+            st.dataframe(pd.DataFrame(emp_records), use_container_width=True)
+        else:
+            st.info(f"該員工在 {summary_month} 尚無打卡或考勤異動紀錄。")
+
+    # 3. ⏱️ 模擬打卡機 / 考勤與加班資料進站
     with tab_simulate:
         st.markdown(f"### {L['header_simulate']}")
         with st.form("form_biometric_simulate_rule"):
@@ -289,6 +354,8 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
             ]
             sel_emp = st.selectbox(L["lbl_emp"], emp_choices)
             clock_type = st.selectbox(L["lbl_type"], L["type_opts"])
+            sel_ot = st.selectbox(L["lbl_ot"], L["ot_opts"])
+            sel_leave = st.selectbox(L["lbl_leave"], L["leave_opts"])
             
             col_t1, col_t2 = st.columns(2)
             with col_t1:
@@ -308,7 +375,9 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                 status = "🟢 正常 (Normal)"
                 deduct = 0.0
                 
-                if "上班" in clock_type or "In" in clock_type:
+                if sel_leave != "正常出勤 (Normal)":
+                    status = f"🌴 假別：{sel_leave}"
+                elif "上班" in clock_type or "In" in clock_type:
                     t1 = datetime.datetime.combine(sim_date, std_time_obj)
                     t2 = datetime.datetime.combine(sim_date, sim_time)
                     diff_mins = (t2 - t1).total_seconds() / 60.0
@@ -316,13 +385,16 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                     if diff_mins > rules["daily_grace_mins"]:
                         net_late_mins = diff_mins - rules["daily_grace_mins"]
                         deduct = round(net_late_mins / 60.0, 2)
-                        status = f"🔴 遲到 {int(diff_mins)} 分鐘 (扣除每日 {rules['daily_grace_mins']}m 緩衝)"
+                        status = f"🔴 遲到 {int(diff_mins)} 分鐘 (扣除緩衝)"
                     elif diff_mins > 0:
-                        status = f"🟢 雖遲到 {int(diff_mins)} 分鐘，但在緩衝內 (免扣)"
+                        status = f"🟢 遲到但在緩衝內 (免扣)"
                     else:
-                        status = "🟢 準時簽到 (Normal)"
+                        status = "🟢 準時簽到"
                 else:
-                    status = "🟢 正常下班簽退 (Normal)"
+                    status = "🟢 正常下班簽退"
+
+                if sel_ot != "正常工時 (Standard)":
+                    status += f" | {sel_ot}"
 
                 st.session_state.internal_attendance_db.insert(0, {
                     "code": emp_code,
@@ -330,19 +402,16 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                     "factory": emp_factory,
                     "type": clock_type,
                     "time": timestamp_str,
+                    "ot": sel_ot,
+                    "leave": sel_leave,
                     "status": status,
                     "deduct_hours": deduct
                 })
                 
-                if "payroll_db" in st.session_state:
-                    for p in st.session_state.payroll_db:
-                        if p["code"] == emp_code:
-                            p["late_hours"] = p.get("late_hours", 0.0) + deduct
-
-                st.success(L["success_process"].format(name=emp_name, time=timestamp_str, status=status))
+                st.success(L["success_process"].format(name=emp_name, status=status))
                 st.rerun()
 
-    # 3. 🔌 硬體打卡機 API 介面設定 (SaaS 商業化功能)
+    # 4. 🔌 硬體打卡機 API 介面設定 (SaaS 商業化功能)
     with tab_api_config:
         st.markdown(f"### {L['header_api']}")
         st.info("💡 說明：銷售時可直接在此輸入客戶現場人臉辨識或指紋打卡機的 API 資訊，系統自動與硬體設備進行考勤數據雙向同步，無須修改程式碼！")
@@ -381,7 +450,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                 else:
                     st.error("⚠️ 連線失敗：API 網址格式不正確，請確認是否以 http:// 或 https:// 開頭。")
 
-    # 4. ⚙️ 彈性緩衝時間與扣款規則設定
+    # 5. ⚙️ 彈性緩衝時間與扣款規則設定
     with tab_rules:
         st.markdown(f"### {L['header_rules']}")
         with st.form("form_attendance_rules"):
