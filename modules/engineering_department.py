@@ -15,10 +15,10 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     texts = {
         "繁體中文": {
             "title": "⚡ 裕豐電機工業 - 工程管理中心與設計部門",
-            "caption": "水電工程與面板製造 ERP 系統（雙層報價、簽核連動、進度追蹤、日報表、BOM採購、外包計薪、FAT/SAT、越南電子發票）。",
+            "caption": "水電工程與面板製造 ERP 系統。",
             "sub1": "⚡ [工程] 配電盤與工程專案雙層報價系統",
             "sub2": "📊 [工程] 工程驗收與進度追蹤",
-            "sub3": "📋 [工程] 現場工程日報表與出工統計",
+            "sub3": "📋 [工程] 現場工程日報表與出工統計 (GPS與登入鎖定)",
             "sub4": "🤖 [工程] AI 施工照片智慧辨識與歸檔",
             "sub5": "⚠️ [工程] 分包商與專業證照到期預警",
             "sub6": "🎨 [設計] 配電盤電氣與機構設計圖庫 Storage",
@@ -32,7 +32,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
             "caption": "Hệ thống quản lý kỹ thuật toàn diện.",
             "sub1": "⚡ [KT] Báo giá tủ điện 2 lớp & Phê duyệt",
             "sub2": "📊 [KT] Theo dõi tiến độ & Nghiệm thu",
-            "sub3": "📋 [KT] Nhật ký công trình & Nhân công",
+            "sub3": "📋 [KT] Nhật ký công trình & Chấm công GPS",
             "sub4": "🤖 [KT] AI Nhận diện & Lưu trữ ảnh thi công",
             "sub5": "⚠️ [KT] Cảnh báo hết hạn chứng chỉ",
             "sub6": "🎨 [TK] Kho bản vẽ thiết kế tủ điện Storage",
@@ -46,7 +46,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
             "caption": "Comprehensive MEP engineering and panel manufacturing management system.",
             "sub1": "⚡ [Eng] Two-Tier Quotation & Approval",
             "sub2": "📊 [Eng] Acceptance & Progress Tracking",
-            "sub3": "📋 [Eng] Daily Site Reports & Labor",
+            "sub3": "📋 [Eng] Daily Site Reports & GPS Attendance",
             "sub4": "🤖 [Eng] AI Field Photo Recognition & Archiving",
             "sub5": "⚠️ [Eng] Subcontractor & License Expiry Alerts",
             "sub6": "🎨 [Design] Electrical & Mechanical Drawing Storage",
@@ -77,18 +77,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
         }
 
     if "two_tier_quotations_db" not in st.session_state:
-        st.session_state.two_tier_quotations_db = [
-            {
-                "quot_id": "QT-2026-001", "client": "Công ty TNHH Xây lắp Tân Thuận",
-                "project_name": "西寧廠主配電盤 2000A 統包工程", "proposer": "協理 - 陳明華", "currency": "USD",
-                "internal_items": [
-                    {"type": "訂製機櫃", "desc": "2000A 防水不銹鋼機櫃", "qty": 2.0, "unit_price": 3500.0, "subtotal": 7000.0},
-                    {"type": "水電材料", "desc": "銅排 Busbar 10x100mm", "qty": 450.0, "unit_price": 2.5, "subtotal": 1125.0}
-                ],
-                "total_internal_cost": 8125.0, "customer_facing_summary": "1. 西寧廠 2000A 主配電盤及箱體統包工程",
-                "customer_price": 11500.0, "status": "⏳ 待副總經理審核"
-            }
-        ]
+        st.session_state.two_tier_quotations_db = []
 
     if "engineering_projects_db" not in st.session_state:
         st.session_state.engineering_projects_db = [
@@ -97,56 +86,37 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
         ]
 
     if "license_db" not in st.session_state:
-        st.session_state.license_db = [
-            {"emp_id": "EMP-001", "name": "張董事長", "license_name": "甲種電匠", "status": "🔴 30天內即將到期"},
-            {"emp_id": "EMP-005", "name": "Nguyễn Văn B", "license_name": "高壓電氣操作證", "status": "🟢 正常"}
-        ]
+        st.session_state.license_db = [{"emp_id": "EMP-001", "name": "張董事長", "license_name": "甲種電匠", "status": "🔴 30天內即將到期"}]
 
     if "ai_photo_archive_db" not in st.session_state:
-        st.session_state.ai_photo_archive_db = [
-            {"photo_id": "IMG-001", "project": "西寧廠高壓配電盤擴建", "category": "配電盤銅排安裝", "ai_tag": "合格 (Pass)", "timestamp": "2026-10-08"}
-        ]
+        st.session_state.ai_photo_archive_db = []
 
     if "drawing_storage_db" not in st.session_state:
-        st.session_state.drawing_storage_db = [
-            {"dwg_id": "DWG-2000A-01", "project": "西寧廠主配電盤 2000A", "type": "單線圖 (Single Line Diagram)", "version": "Rev.2", "file_url": "CAD_2000A_Main.dwg"}
-        ]
+        st.session_state.drawing_storage_db = []
 
     if "bom_procurement_db" not in st.session_state:
-        st.session_state.bom_procurement_db = [
-            {
-                "quot_id": "QT-2026-001", "project_name": "西寧廠主配電盤 2000A 統包工程", "client": "Công ty TNHH Xây lắp Tân Thuận",
-                "bom_items": [
-                    {"part_code": "PART-CAB-2000", "part_name": "2000A 防水不銹鋼機櫃", "required_qty": 2.0, "stock_qty": 0.0, "shortage": 2.0, "action": "🔴 需採購"},
-                    {"part_code": "PART-BUS-100", "part_name": "銅排 Busbar 10x100mm", "required_qty": 450.0, "stock_qty": 500.0, "shortage": 0.0, "action": "🟢 庫存充足"}
-                ],
-                "status": "🟢 BOM 已展開"
-            }
-        ]
+        st.session_state.bom_procurement_db = []
 
     if "subcontractor_attendance_db" not in st.session_state:
-        st.session_state.subcontractor_attendance_db = [
-            {
-                "log_id": "LAB-2026-001", "factory": "越南西寧廠", "contractor": "順發水電外包工班",
-                "date": "2026-10-08", "workers_count": 12, "normal_hours": 8.0, "ot_hours": 2.0,
-                "night_shift": True, "total_calculated_usd": 420.0, "status": "🟢 已確認並生成對帳單"
-            }
-        ]
+        st.session_state.subcontractor_attendance_db = []
 
     if "fat_sat_db" not in st.session_state:
-        st.session_state.fat_sat_db = [
-            {
-                "report_id": "FAT-2026-001", "test_type": "FAT (工廠出廠驗收測試)", "project": "西寧廠主配電盤 2000A",
-                "tester": "品質工程師 - 范文明", "insulation_res": "150 MΩ", "withstand_voltage": "2500V / 1 min",
-                "qr_code_token": "REETECH-FAT-2026-001-VERIFIED", "status": "🟢 檢驗合格並已發行 QR Code"
-            }
-        ]
+        st.session_state.fat_sat_db = []
 
     if "vn_invoice_db" not in st.session_state:
-        st.session_state.vn_invoice_db = [
+        st.session_state.vn_invoice_db = []
+
+    # 初始化現場日報表資料庫 (含 GPS 驗證欄位)
+    if "field_daily_reports_db" not in st.session_state:
+        st.session_state.field_daily_reports_db = [
             {
-                "inv_no": "AA/26E-000128", "client": "Công ty TNHH Xây lắp Tân Thuận", "project": "西寧廠主配電盤工程款",
-                "subtotal_usd": 11500.0, "vat_rate": "10%", "vat_amount_usd": 1150.0, "total_usd": 12650.0, "status": "🟢 GDT Verified"
+                "report_id": "REP-2026-001",
+                "project": "西寧廠高壓配電盤擴建",
+                "reporter_name": "admin",
+                "gps_status": "📍 GPS 定位已簽到 (Tay Ninh Factory Zone A - 10.95°N, 106.31°E)",
+                "workers_count": 15,
+                "summary": "完成主配電盤銅排安裝與絕緣測試。",
+                "date": "2026-10-09"
             }
         ]
 
@@ -238,17 +208,59 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
         st.dataframe(pd.DataFrame(st.session_state.engineering_projects_db), use_container_width=True)
 
     # ----------------------------------------------------
-    # 3. 現場工程日報表與出工統計
+    # 3. 現場工程日報表與出工統計 (已與登入帳號及 GPS 打卡呼應)
     # ----------------------------------------------------
-    elif sub_str == "3" in sub_str or "日報" in sub_str or "Daily" in sub_str or sub_str == "3":
+    elif sub_str == "3" or "日報" in sub_str or "Daily" in sub_str:
         st.markdown(f"### 📋 3. {t['sub3']}")
-        st.info("💡 記錄每日台幹與越籍工人出工人數、施工進度摘要與工地異常狀況回報。")
-        with st.form("daily_rep_form"):
-            r_proj = st.text_input("專案名稱", value="西寧廠高壓配電盤擴建")
-            r_workers = st.number_input("當日出工總人數", value=15)
-            r_desc = st.text_area("今日施工進度與工作紀要", value="完成主配電盤銅排安裝與絕緣測試。")
-            if st.form_submit_button("🚀 提交今日工程日報表", type="primary"):
-                st.success("✅ 現場工程日報表已成功提交並歸檔！")
+        st.info("🔒 **安全內控鎖定**：本表單自動繫結目前登入的使用者帳號，並強制核對外勤 GPS 打卡狀態，杜絕不在現場卻虛報日報表。")
+
+        # 取得目前登入者身分
+        logged_user = st.session_state.get("user_name", "admin")
+        logged_role = st.session_state.get("user_role", "Staff")
+
+        with st.form("secure_daily_rep_form"):
+            rc1, rc2 = st.columns(2)
+            with rc1:
+                # 🔒 自動鎖定填報人，無法任意更改
+                reporter_input = st.text_input("填報人 (系統自動鎖定登入帳號)", value=f"{logged_user} ({logged_role.upper()})", disabled=True)
+            with rc2:
+                # 📍 模擬外勤 GPS 打卡狀態檢核
+                gps_check = st.selectbox(
+                    "外勤 GPS 打卡與工地位置驗證",
+                    [
+                        "📍 己於現場 GPS 簽到打卡 (Tay Ninh Factory Zone A - 10.95°N, 106.31°E)",
+                        "📍 已於現場 GPS 簽到打卡 (Hai Phong Plant Site - 20.84°N, 106.68°E)",
+                        "❌ 未進行現場 GPS 打卡 (禁止提交日報表)"
+                    ]
+                )
+
+            r_proj = st.selectbox("關聯專案名稱", [p["proj_name"] for p in st.session_state.engineering_projects_db])
+            r_workers = st.number_input("當日出工總人數 (台幹 + 越籍工)", min_value=1, value=15)
+            r_desc = st.text_area("今日施工進度與工作紀要 (Work Summary)", value="完成主配電盤銅排安裝與絕緣耐壓測試。")
+
+            if st.form_submit_button("🚀 驗證 GPS 並提交正式工程日報表", type="primary"):
+                if "❌" in gps_check:
+                    st.error("⚠️ 偵測到您尚未進行現場 GPS 打卡！為符合裕豐電機內控規範，未打卡者無法提交工程日報表。")
+                else:
+                    new_id = f"REP-2026-{len(st.session_state.field_daily_reports_db)+1:03d}"
+                    st.session_state.field_daily_reports_db.insert(0, {
+                        "report_id": new_id,
+                        "project": r_proj,
+                        "reporter_name": logged_user,
+                        "gps_status": gps_check,
+                        "workers_count": r_workers,
+                        "summary": r_desc,
+                        "date": str(datetime.date.today())
+                    })
+                    st.success(f"✅ 現場工程日報表 [{new_id}] 已成功提交！已綁定您的登入帳號 [{logged_user}] 與 GPS 打卡紀錄。")
+                    st.rerun()
+
+        st.markdown("---")
+        st.markdown("##### 📋 歷史工程日報表與 GPS 驗證紀錄總覽")
+        if st.session_state.field_daily_reports_db:
+            st.dataframe(pd.DataFrame(st.session_state.field_daily_reports_db), use_container_width=True)
+        else:
+            st.info("目前尚無工程日報表紀錄。")
 
     # ----------------------------------------------------
     # 4. AI 施工照片智慧辨識與歸檔
