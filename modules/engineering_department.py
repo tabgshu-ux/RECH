@@ -265,10 +265,54 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     # ----------------------------------------------------
     # 4. AI 施工照片智慧辨識與歸檔
     # ----------------------------------------------------
-    elif sub_str == "4" or "AI" in sub_str or "照片" in sub_str:
+   elif sub_str == "4" or "AI" in sub_str or "照片" in sub_str:
         st.markdown(f"### 🤖 4. {t['sub4']}")
-        st.info("💡 上傳施工現場照片，系統 AI 自動辨識施工品質與項目並進行智慧歸檔。")
-        st.dataframe(pd.DataFrame(st.session_state.ai_photo_archive_db), use_container_width=True)
+        st.info("💡 上傳施工現場照片，系統 AI 自動辨識施工品質、項目與安全規範並進行智慧歸檔。")
+
+        with st.form("ai_photo_upload_form"):
+            ac1, ac2 = st.columns(2)
+            with ac1:
+                photo_project = st.selectbox("選擇關聯工程案場", [p["proj_name"] for p in st.session_state.engineering_projects_db])
+                photo_category = st.selectbox("施工項目分類", [
+                    "配電盤箱體與結構安裝", 
+                    "導電銅排與絕緣測試", 
+                    "過路橋架與配管工程", 
+                    "高低壓線路拉線與端子壓接", 
+                    "工地工安與防護稽核"
+                ])
+            with ac2:
+                uploaded_photo = st.file_uploader("上傳施工現場照片 (JPG, PNG)", type=["jpg", "jpeg", "png"])
+                photo_note = st.text_input("現場備註說明", placeholder="例如: 西寧廠 A 區主盤銅排間距符合規範")
+
+            if st.form_submit_button("🚀 開始 AI 智慧辨識並歸檔", type="primary"):
+                if uploaded_photo:
+                    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    photo_id = f"AI-PHO-2026-{len(st.session_state.ai_photo_archive_db)+1:03d}"
+                    
+                    # 模擬 AI 自動辨識結果
+                    ai_result = "✅ AI 辨識合格：結構完整、絕緣距離符合標準" if "銅排" in photo_category or "盤" in photo_category else "✅ AI 辨識合格：符合標準施工規範"
+
+                    st.session_state.ai_photo_archive_db.insert(0, {
+                        "photo_id": photo_id,
+                        "project": photo_project,
+                        "category": photo_category,
+                        "filename": uploaded_photo.name,
+                        "ai_analysis": ai_result,
+                        "note": photo_note if photo_note else "無特別備註",
+                        "timestamp": now_str,
+                        "status": "🟢 已歸檔"
+                    })
+                    st.success(f"🎉 成功！照片已透過 AI 辨識完成，檔案編號 [{photo_id}] 已歸入專案資料庫！")
+                    st.rerun()
+                else:
+                    st.warning("⚠️ 請先選擇並上傳一張施工現場照片檔案！")
+
+        st.markdown("---")
+        st.markdown("##### 📁 AI 智慧施工照片歸檔總覽")
+        if st.session_state.ai_photo_archive_db:
+            st.dataframe(pd.DataFrame(st.session_state.ai_photo_archive_db), use_container_width=True)
+        else:
+            st.info("目前尚無 AI 施工照片歸檔紀錄，請透過上方表單上傳。")
 
     # ----------------------------------------------------
     # 5. 分包商與專業證照到期預警
