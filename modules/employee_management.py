@@ -414,7 +414,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 else:
                     st.warning("⚠️ 請完整填寫外派幹部必填欄位：工號、姓名、電話、護照號碼與暫住證號！")
 
-    # 3. ✏️ 修改員工資料 (加入「廠區篩選」與「身分篩選」雙重過濾開關，並強化成功儲存通知)
+    # 3. ✏️ 修改員工資料 (已將 selectbox 移出 form 避免觸發狀態衝突)
     with tab_edit:
         st.markdown("### " + L['header_edit'])
         if st.session_state.employee_db:
@@ -501,7 +501,8 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                         ed_addr_temp = st.text_input(L["lbl_addr_temp"], value=target_emp.get("現住地址", ""))
 
                         # 💾 儲存修改按鈕與明確成功通知回饋
-                        if st.form_submit_button(L["btn_update"], type="primary", use_container_width=True):
+                        submitted_edit = st.form_submit_button(L["btn_update"], type="primary", use_container_width=True)
+                        if submitted_edit:
                             target_emp["姓名"] = ed_name
                             target_emp["電話"] = ed_phone
                             target_emp["國籍"] = ed_country
@@ -518,7 +519,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                             target_emp["戶籍地址"] = ed_addr_perm
                             target_emp["現住地址"] = ed_addr_temp
                             
-                            # 🎯 加入顯著的成功通知與畫面重新整理
                             st.success(f"🎉 成功！員工 [{ed_name} ({target_code})] 的個人檔案與權限已成功更新至系統！")
                             st.balloons()
             else:
@@ -648,21 +648,3 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                     L["col_factory"]: emp["廠區"],
                     L["col_dept"]: emp["部門"],
                     L["col_title"]: emp["職稱"],
-                    L["col_role"]: role_display,
-                    L["col_status"]: emp["狀態"]
-                })
-            st.dataframe(pd.DataFrame(res_display_list), use_container_width=True)
-            
-            st.markdown("---")
-            res_codes = [e["工號"] + " - " + e["姓名"] for e in resigned_data]
-            sel_res_target = st.selectbox("選擇要辦理復職回鍋的員工", res_codes, key="reactivate_select")
-            res_target_code = sel_res_target.split(" - ")[0]
-
-            if st.button(L["btn_reactivate"], type="primary"):
-                for e in st.session_state.employee_db:
-                    if e["工號"] == res_target_code:
-                        e["狀態"] = "🟢 在職 (Active)"
-                st.success("🔄 員工 " + res_target_code + " 已成功辦理復職回鍋！")
-                st.rerun()
-        else:
-            st.info("目前尚無離職歷史記錄。")
