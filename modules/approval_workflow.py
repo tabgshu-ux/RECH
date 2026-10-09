@@ -4,12 +4,12 @@ import datetime
 
 def render_approval_center(engine=None, lang="繁體中文", **kwargs):
     st.title("✍️ 裕豐電機工業 - 全公司電子簽核與進度追蹤中心")
-    st.caption("提供請假、跨部門採購、車輛調派與物品攜出（含防弊照片上傳與保全門檢核對）之電子簽核。")
+    st.caption("提供請假、採購請購、車輛調派與物品攜出之跨部門電子簽核與保全放行管制。")
 
     if "approval_requests" not in st.session_state:
         st.session_state.approval_requests = [
-            {"單號": "REQ-2026-001", "類型": "請假申請", "申請人": "Nguyễn Văn An", "部門": "資訊管理部", "內容": "類別: 病假 | 時數: 8.0 小時 (已附醫生證明)", "事由": "身體不適前往醫院就診", "狀態": "🟢 主管已核准"},
-            {"單號": "OUT-2026-002", "類型": "物品攜出單", "申請人": "阮文強", "部門": "工程部", "內容": "物品: 測試儀器 2 台 (已附設備照片/序號)", "事由": "攜至外部工地現場檢測", "狀態": "🟢 保全已驗收放行"}
+            {"單號": "REQ-2026-001", "類型": "請假申請", "申請人": "Nguyễn Văn An", "部門": "資訊管理部", "內容": "類別: 病假 | 時數: 8.0 小時", "事由": "身體不適前往醫院就診", "狀態": "🟢 主管已核准"},
+            {"單號": "OUT-2026-002", "類型": "物品攜出單", "申請人": "阮文強", "部門": "工程部", "內容": "物品: 測試儀器 2 台", "事由": "攜至外部工地現場檢測", "狀態": "🟢 保全已驗收放行"}
         ]
 
     if "gate_pass_records" not in st.session_state:
@@ -30,24 +30,25 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
     with tab1:
         st.markdown("#### ✍️ 填寫並提交電子簽核表單")
         
+        # 💡 修正：移除下拉選單後面冗長的說明文字，保持專業簡潔
         req_type = st.selectbox(
             "選擇要提交的表單類型 (Select Request Type)", 
             [
-                "🍃 請假申請單 (Leave Request - 完整假別與憑證上傳)", 
-                "🛒 採購請購單 (Purchase Requisition - 支援自由填寫與圖片上傳)", 
-                "🚗 車輛調派與門禁申請單 (Vehicle Dispatch - 西寧/海防廠)",
-                "📦 物品攜出放行單 (Item Carry-Out Pass - 嚴格防弊與照片上傳)"
+                "請假申請單", 
+                "採購請購單", 
+                "車輛調派與門禁申請單",
+                "物品攜出放行單"
             ]
         )
 
-        if "請假" in req_type:
+        if "請假申請單" in req_type:
             st.markdown("---")
             st.markdown("#### 🍃 請假申請單 (Đơn xin nghỉ phép)")
             with st.form("leave_request_form"):
                 lc1, lc2 = st.columns(2)
                 with lc1:
                     st.text_input("申請人姓名", value=f"{current_user} ({current_role})", disabled=True)
-                    leave_type = st.selectbox("請假類別", ["事假 (Personal Leave)", "病假 (Sick Leave)", "特休假 (Annual Leave)", "喪假 (Bereavement Leave - 需附訃聞)"])
+                    leave_type = st.selectbox("請假類別", ["事假", "病假", "特休假", "喪假", "產假 / 婚假"])
                 with lc2:
                     request_no = f"REQ-{datetime.datetime.now().strftime('%Y%m%d%H%M')}"
                     st.text_input("申請單編號", value=request_no, disabled=True)
@@ -68,7 +69,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                         st.success(f"✅ 成功提交請假申請！總計時數：{leave_hours} 小時。")
                         st.rerun()
 
-        elif "採購" in req_type:
+        elif "採購請購單" in req_type:
             st.markdown("---")
             st.markdown("#### 🛒 採購請購單 (Đơn đề nghị mua hàng)")
             with st.form("po_request_form"):
@@ -96,7 +97,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                         st.success("✅ 採購請購單已成功送出！")
                         st.rerun()
 
-        elif "車輛" in req_type:
+        elif "車輛調派與門禁申請單" in req_type:
             st.markdown("---")
             st.markdown("#### 🚗 車輛調派與門禁申請單 (Đơn điều phối xe)")
             with st.form("vehicle_request_form"):
@@ -124,29 +125,24 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                     st.success("✅ 車輛調派申請已送出！")
                     st.rerun()
 
-        # 💡 物品攜出放行單：加入防弊照片上傳功能
         else:
             st.markdown("---")
-            st.markdown("#### 📦 物品攜出放行單 (Giấy phép mang tài sản/vật tư ra ngoài - 嚴格防弊)")
-            st.info("💡 **AI ERP 防弊機制**：為防止資產與物料流失，攜出貴重工具、儀器或設備必須上傳實物照片與設備序號，供保全出廠時核對放行。")
-
+            st.markdown("#### 📦 物品攜出放行單 (Giấy phép mang tài sản/vật tư ra ngoài)")
             with st.form("carryout_request_form"):
                 co1, co2 = st.columns(2)
                 with co1:
                     st.text_input("申請人", value=f"{current_user}", disabled=True)
-                    co_origin = st.selectbox("出發廠區 / 物品所在地 (Origin Plant)", ["越南西寧廠", "越南海防廠"])
-                    co_items = st.text_input("攜出物品名稱、型號與數量 *", placeholder="例如: 筆電、Fluke 測試儀器 2 台")
+                    co_origin = st.selectbox("出發廠區 / 物品所在地", ["越南西寧廠", "越南海防廠"])
+                    co_items = st.text_input("攜出物品名稱、型號與數量 *", placeholder="例如: 筆電、測試儀器 2 台")
                 with co2:
                     co_no = f"OUT-{datetime.datetime.now().strftime('%Y%m%d%H%M')}"
                     st.text_input("攜出單號", value=co_no, disabled=True)
                     co_dest = st.text_input("攜出目的地/用途", value="外部工地現場檢測")
                 
-                # 🛡️ 關鍵防弊功能：強制/建議上傳攜出物品照片
                 uploaded_carryout_img = st.file_uploader("📤 上傳攜出物品照片、設備外觀與序號圖 (防弊查核用) *", type=["png", "jpg", "jpeg"])
-
                 co_reason = st.text_area("攜出事由說明 *", placeholder="因專案工程需要，攜出工具進行現場測試，預計當日攜回。")
                 
-                if st.form_submit_button("🚀 送出物品攜出申請 (含照片防弊)", type="primary", use_container_width=True):
+                if st.form_submit_button("🚀 送出物品攜出申請", type="primary", use_container_width=True):
                     if co_items.strip() and co_reason.strip():
                         img_status = "已附防弊照片" if uploaded_carryout_img else "⚠️ 未附照片"
                         st.session_state.approval_requests.insert(0, {
@@ -158,10 +154,8 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                             "放行單號": co_no, "單據類型": "物品攜出單", "車號/品名": f"{co_items} ({co_origin}發)",
                             "申請人": current_user, "核准狀態": "🟡 待主管審核", "門禁放行狀態": "🔒 待審核與放行"
                         })
-                        st.success("✅ 物品攜出申請已送出！保全門禁將根據您上傳的品名與照片進行出廠查驗。")
+                        st.success("✅ 物品攜出申請已送出！")
                         st.rerun()
-                    else:
-                        st.warning("⚠️ 請完整填寫物品名稱與攜出事由！")
 
     with tab2:
         st.markdown("#### 📊 我的電子簽核申請進度即時追蹤")
