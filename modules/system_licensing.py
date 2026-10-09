@@ -7,11 +7,12 @@ import datetime
 # ----------------------------------------------------
 LICENSING_I18N = {
     "繁體中文": {
-        "title": "🔑 IT 商業授權中心 - 外部企業客戶與 ERP 模組授權控制台",
-        "caption": "專為 SaaS / On-Premise 銷售設計：管理各外部企業租戶（Tenant）之合約方案、模組開關、到期日與使用者席位。",
+        "title": "🔑 IT 商業授權與 Storage 系統管理中心",
+        "caption": "管理外部企業租戶（Tenant）之合約方案、模組開關、到期日，以及系統雲端 Storage 儲存庫路徑設定。",
         "tab_tenants": "🏢 客戶租戶與授權總覽",
         "tab_add_tenant": "➕ 新增客戶租戶合約",
         "tab_manage_tenant": "⚙️ 編輯客戶模組權限與到期日",
+        "tab_storage": "💾 系統 Storage 儲存庫路徑設定",
         "table_header": "📋 全系統客戶租戶授權與模組開關清冊",
         "no_records": "目前尚無客戶租戶授權紀錄。",
         "col_index": "STT",
@@ -24,12 +25,13 @@ LICENSING_I18N = {
         "col_status": "狀態"
     },
     "Tiếng Việt": {
-        "title": "🔑 Trung tâm Bản quyền Thương mại - Quản lý Khách hàng & Module ERP",
-        "caption": "Dành cho kinh doanh phần mềm: Quản lý hợp đồng, bật/tắt module, hạn sử dụng và số lượng ghế của từng khách hàng doanh nghiệp.",
+        "title": "🔑 Trung tâm Bản quyền Thương mại & Quản lý Storage",
+        "caption": "Quản lý hợp đồng khách hàng, bật/tắt module và cấu hình đường dẫn Storage của hệ thống.",
         "tab_tenants": "🏢 Tổng quan Khách hàng & Bản quyền",
         "tab_add_tenant": "➕ Thêm Khách hàng mới",
-        "tab_manage_tenant": "⚙️ Chỉnh sửa Phân quyền & Hạn dùng",
-        "table_header": "📋 Danh sách khách hàng và module đã kích hoạt",
+        "tab_manage_tenant": "⚙️ Chỉnh sửa Phân quyền",
+        "tab_storage": "💾 Cấu hình đường dẫn Storage",
+        "table_header": "📋 Danh sách khách hàng và module",
         "no_records": "Chưa có bản ghi khách hàng nào.",
         "col_index": "STT",
         "col_company": "Tên công ty",
@@ -41,11 +43,12 @@ LICENSING_I18N = {
         "col_status": "Trạng thái"
     },
     "English": {
-        "title": "🔑 Commercial Licensing Center - Enterprise Tenant & Module Portal",
-        "caption": "SaaS / On-Premise Sales Control: Manage tenant contracts, module feature flags, expiry dates, and user seat limits.",
+        "title": "🔑 Commercial Licensing & Storage Management Center",
+        "caption": "Manage enterprise tenant contracts, module feature flags, and system cloud storage paths.",
         "tab_tenants": "🏢 Tenants & Licensing Overview",
         "tab_add_tenant": "➕ Register New Tenant Contract",
         "tab_manage_tenant": "⚙️ Edit Tenant Modules & Expiry",
+        "tab_storage": "💾 System Storage Path Settings",
         "table_header": "📋 Enterprise Tenant License & Module Matrix",
         "no_records": "No tenant license records found.",
         "col_index": "No.",
@@ -66,7 +69,7 @@ def render_system_licensing_page(lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 🏢 初始化多租戶客戶授權資料庫 (Tenant Licensing DB)
+    # 初始化資料庫
     if "tenant_licensing_db" not in st.session_state or not isinstance(st.session_state.tenant_licensing_db, list):
         st.session_state.tenant_licensing_db = [
             {
@@ -91,14 +94,20 @@ def render_system_licensing_page(lang="繁體中文", **kwargs):
             }
         ]
 
-    tab_tenants, tab_add_tenant, tab_manage_tenant = st.tabs([
-        L["tab_tenants"], L["tab_add_tenant"], L["tab_manage_tenant"]
+    if "system_storage_config" not in st.session_state:
+        st.session_state.system_storage_config = {
+            "storage_provider": "本地伺服器儲存 (Local NAS / Server)",
+            "storage_path": "./storage_data/engineering_drawings/",
+            "max_file_size_mb": 100.0,
+            "auto_backup": True
+        }
+
+    tab_tenants, tab_add_tenant, tab_manage_tenant, tab_storage = st.tabs([
+        L["tab_tenants"], L["tab_add_tenant"], L["tab_manage_tenant"], L["tab_storage"]
     ])
 
     with tab_tenants:
         st.markdown(f"### {L['table_header']}")
-        st.info("💡 **銷售管理提示**：您可以隨時在此檢視各家購買系統的企業客戶合約狀態與模組開通清單。")
-        
         if st.session_state.tenant_licensing_db:
             display_data = []
             for idx, tenant in enumerate(st.session_state.tenant_licensing_db, 1):
@@ -132,7 +141,6 @@ def render_system_licensing_page(lang="繁體中文", **kwargs):
 
             st.markdown("---")
             st.markdown("##### 🧩 啟用模組功能開關 (Module Feature Flags)")
-            
             m1, m2, m3 = st.columns(3)
             with m1:
                 mod_hr = st.checkbox("👤 人事薪資與打卡考勤", value=True)
@@ -147,8 +155,6 @@ def render_system_licensing_page(lang="繁體中文", **kwargs):
             if st.form_submit_button("🚀 建立新客戶租戶授權", type="primary", use_container_width=True):
                 if t_name:
                     new_tenant_id = f"TENANT-{len(st.session_state.tenant_licensing_db)+1:03d}"
-                    
-                    # 收集勾選的模組
                     active_modules = []
                     if mod_hr: active_modules.append("人事薪資")
                     if mod_wh: active_modules.append("倉庫資材")
@@ -233,6 +239,28 @@ def render_system_licensing_page(lang="繁體中文", **kwargs):
         else:
             st.info("目前尚無客戶租戶可供修改。")
 
+    with tab_storage:
+        st.markdown("### 💾 系統雲端 Storage 儲存庫路徑與設定")
+        st.info("💡 管理員專用：在此設定全系統設計圖檔、照片與附件儲存的實體或雲端 Storage 路徑。")
+        
+        with st.form("form_storage_settings"):
+            cfg = st.session_state.system_storage_config
+            s_provider = st.selectbox("儲存媒介類型 (Storage Type)", ["本地伺服器儲存 (Local NAS / Server)", "AWS S3 雲端儲存槽 (Cloud S3)", "Google Cloud Storage (GCS)"], index=0 if "本地" in cfg["storage_provider"] else 1)
+            s_path = st.text_input("Storage 實體掛載路徑或 Bucket 名稱", value=cfg["storage_path"])
+            s_max_size = st.number_input("單一上傳檔案大小上限 (MB)", min_value=1.0, max_value=1000.0, value=cfg["max_file_size_mb"])
+            s_backup = st.checkbox("啟用每日自動備份至異地備份槽", value=cfg["auto_backup"])
+
+            if st.form_submit_button("💾 儲存 Storage 系統設定", type="primary", use_container_width=True):
+                st.session_state.system_storage_config = {
+                    "storage_provider": s_provider,
+                    "storage_path": s_path,
+                    "max_file_size_mb": s_max_size,
+                    "auto_backup": s_backup
+                }
+                st.success("🎉 系統 Storage 儲存庫路徑與設定已成功更新！")
+                st.rerun()
+
+# 兼容 app.py 可能呼叫的不同函式名稱
 def show(lang="繁體中文", **kwargs):
     render_system_licensing_page(lang, **kwargs)
 
@@ -240,4 +268,7 @@ def main(lang="繁體中文", **kwargs):
     render_system_licensing_page(lang, **kwargs)
 
 def render_system_licensing(*args, **kwargs):
+    render_system_licensing_page(*args, **kwargs)
+
+def render_licensing_control_page(*args, **kwargs):
     render_system_licensing_page(*args, **kwargs)
