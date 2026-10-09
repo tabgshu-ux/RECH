@@ -235,8 +235,17 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 "狀態": "🟢 在職 (Active)"
             }
         ]
+    else:
+        # 🛡️ 防呆機制：確保現有 session 裡的舊資料都有「狀態」與「出勤性質」欄位，防止崩潰
+        for e in st.session_state.employee_db:
+            if "狀態" not in e:
+                e["狀態"] = "🟢 在職 (Active)"
+            if "出勤性質" not in e:
+                e["出勤性質"] = "廠內固定員工"
+            if "職稱" not in e:
+                e["職稱"] = "一般員工"
 
-    # 建立 5 個獨立分頁（現職名冊、離職歷史名冊、新增、修改、刪除管理）
+    # 建立 5 個獨立分頁
     tab_list, tab_resigned, tab_add, tab_edit, tab_delete = st.tabs([
         L["tab_list"], L["tab_resigned"], L["tab_add"], L["tab_edit"], L["tab_delete"]
     ])
@@ -246,11 +255,11 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         st.markdown(f"### {L['header_list']}")
         search_q = st.text_input(L["search_ph"], key="emp_search_box_active")
 
-        active_data = [e for e in st.session_state.employee_db if "在職" in e["狀態"]]
+        active_data = [e for e in st.session_state.employee_db if "在職" in e.get("狀態", "")]
         if search_q:
             active_data = [
                 e for e in active_data 
-                if search_q.lower() in e["姓名"].lower() or search_q.lower() in e["工號"].lower()
+                if search_q.lower() in e.get("姓名", "").lower() or search_q.lower() in e.get("工號", "").lower()
             ]
 
         if active_data:
@@ -277,11 +286,11 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         st.markdown(f"### {L['header_resigned']}")
         resigned_search = st.text_input("🔍 搜尋離職人員姓名或工號...", key="emp_search_box_resigned")
 
-        resigned_data = [e for e in st.session_state.employee_db if "離職" in e["狀態"]]
+        resigned_data = [e for e in st.session_state.employee_db if "離職" in e.get("狀態", "")]
         if resigned_search:
             resigned_data = [
                 e for e in resigned_data 
-                if resigned_search.lower() in e["姓名"].lower() or resigned_search.lower() in e["工號"].lower()
+                if resigned_search.lower() in e.get("姓名", "").lower() or resigned_search.lower() in e.get("工號", "").lower()
             ]
 
         if resigned_data:
@@ -316,7 +325,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         else:
             st.info("📂 目前歷史檔案中無離職員工記錄。")
 
-    # 3. ➕ 新增員工 (含職稱與出勤性質分流)
+    # 3. ➕ 新增員工
     with tab_add:
         st.markdown(f"### {L['header_add']}")
         auto_emp_id = f"VN-00{len(st.session_state.employee_db) + 1}"
@@ -367,11 +376,11 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 else:
                     st.warning("⚠️ 請填寫員工工號與姓名！")
 
-    # 4. ✏️ 修改員工 (含職稱與出勤性質)
+    # 4. ✏️ 修改員工
     with tab_edit:
         st.markdown(f"### {L['header_edit']}")
         if st.session_state.employee_db:
-            emp_codes = [e["工號"] + " - " + e["姓名"] + " (" + e["狀態"] + ")" for e in st.session_state.employee_db]
+            emp_codes = [e["工號"] + " - " + e["姓名"] + " (" + e.get("狀態", "在職") + ")" for e in st.session_state.employee_db]
             sel_target = st.selectbox("選擇要修改的員工 (Select Employee)", emp_codes, key="edit_emp_select")
             target_code = sel_target.split(" - ")[0]
             
@@ -412,7 +421,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         st.markdown(f"### {L['header_delete']}")
         
         if st.session_state.employee_db:
-            all_emp_codes = [e["工號"] + " - " + e["姓名"] + " (" + e["狀態"] + ")" for e in st.session_state.employee_db]
+            all_emp_codes = [e["工號"] + " - " + e["姓名"] + " (" + e.get("狀態", "在職") + ")" for e in st.session_state.employee_db]
             sel_target_del = st.selectbox("選擇要處理的員工帳號", all_emp_codes, key="manage_emp_select")
             target_code = sel_target_del.split(" - ")[0]
 
