@@ -9,12 +9,12 @@ EMP_I18N = {
     "繁體中文": {
         "title": "👤 管理部 - 員工個人檔案與人事管理中心",
         "caption": "管理全公司在職員工名冊、離職歷史檔案、越南勞動法合規與外籍幹部護照/暫住證證件管理。",
-        "tab_add_vn": "🇻🇳 新增越南籍員工",
-        "tab_add_foreign": "🇹🇼🇨🇳 新增外派幹部",
+        "tab_add_vn": "🇻🇳 新增越南員工",
+        "tab_add_foreign": "🇹🇼🇨🇳 新增外派員工",
         "tab_edit": "✏️ 修改員工資料",
         "tab_list": "👥 現職員工名冊",
-        "tab_delete": "🗑️ 離職與刪除管理",
-        "tab_resigned": "📂 離職歷史名冊",
+        "tab_delete": "🗑️ 員工離職及刪除",
+        "tab_resigned": "📂 離職名冊",
         "header_add_vn": "🇻🇳 新增越南本地員工個人檔案與社會保險設定",
         "header_add_foreign": "🇹🇼🇨🇳 新增台灣籍與中國籍外派幹部護照及暫住證檔案",
         "header_edit": "✏️ 修改員工基本資料與證件管理",
@@ -268,8 +268,8 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             if "戶籍地址" not in e: e["戶籍地址"] = ""
             if "現住地址" not in e: e["現住地址"] = ""
 
-    # 🎯 依照您的最新需求重新排列 6 個分頁順序：
-    # 1. 新增越南員工 | 2. 新增外派員工 | 3. 修改員工資料 | 4. 現職員工名冊 | 5. 離職與刪除管理 | 6. 離職歷史名冊
+    # 🎯 直覺式操作分頁順序：
+    # 1. 新增越南員工 | 2. 新增外派員工 | 3. 修改員工資料 | 4. 現職員工名冊 | 5. 員工離職及刪除 | 6. 離職名冊
     tab_add_vn, tab_add_foreign, tab_edit, tab_list, tab_delete, tab_resigned = st.tabs([
         L["tab_add_vn"], L["tab_add_foreign"], L["tab_edit"], L["tab_list"], L["tab_delete"], L["tab_resigned"]
     ])
@@ -451,162 +451,4 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                         ed_title = st.text_input(L["lbl_title"], value=target_emp.get("職稱", ""))
                         ed_hospital = st.text_input(L["lbl_hospital"], value=target_emp.get("投保醫院", ""))
                         
-                        current_att = target_emp.get("出勤性質", L["attendance_opts"][0])
-                        att_index = L["attendance_opts"].index(current_att) if current_att in L["attendance_opts"] else 0
-                        ed_attendance = st.selectbox(
-                            L["lbl_attendance"], 
-                            L["attendance_opts"], 
-                            index=att_index,
-                            key="edit_attendance_sel"
-                        )
-                        
-                        role_keys = list(role_dict.keys())
-                        role_display_names = list(role_dict.values())
-                        current_role_idx = role_keys.index(target_emp["角色"]) if target_emp["角色"] in role_keys else 0
-                        sel_ed_role_display = st.selectbox(
-                            L["lbl_role"], 
-                            role_display_names, 
-                            index=current_role_idx,
-                            key="edit_role_sel"
-                        )
-                        ed_role = role_keys[role_display_names.index(sel_ed_role_display)]
-                        
-                        ed_pwd = st.text_input("重設新密碼 (Reset Password)", value=target_emp.get("密碼", "123456"))
-
-                    ed_addr_perm = st.text_input(L["lbl_addr_perm"], value=target_emp.get("戶籍地址", ""))
-                    ed_addr_temp = st.text_input(L["lbl_addr_temp"], value=target_emp.get("現住地址", ""))
-
-                    if st.form_submit_button(L["btn_update"], type="primary", use_container_width=True):
-                        target_emp["姓名"] = ed_name
-                        target_emp["電話"] = ed_phone
-                        target_emp["國籍"] = ed_country
-                        target_emp["身分證號"] = ed_id_card
-                        target_emp["護照號碼"] = ed_passport
-                        target_emp["暫住證號"] = ed_trc
-                        target_emp["社保證號"] = ed_bhxh
-                        target_emp["投保醫院"] = ed_hospital
-                        target_emp["廠區"] = ed_factory
-                        target_emp["職稱"] = ed_title
-                        target_emp["出勤性質"] = ed_attendance
-                        target_emp["角色"] = ed_role
-                        target_emp["密碼"] = ed_pwd
-                        target_emp["戶籍地址"] = ed_addr_perm
-                        target_emp["現住地址"] = ed_addr_temp
-                        st.success("✅ 員工 " + target_code + " 資料已成功更新！")
-                        st.rerun()
-        else:
-            st.info("尚無員工可供修改。")
-
-    # 4. 👥 現職員工名冊
-    with tab_list:
-        st.markdown("### " + L['header_list'])
-        search_q = st.text_input(L["search_ph"], key="emp_search_box_active")
-
-        active_data = [e for e in st.session_state.employee_db if "在職" in e.get("狀態", "")]
-        if search_q:
-            active_data = [
-                e for e in active_data 
-                if search_q.lower() in e.get("姓名", "").lower() or search_q.lower() in e.get("工號", "").lower() or search_q.lower() in e.get("身分證號", "").lower() or search_q.lower() in e.get("護照號碼", "").lower()
-            ]
-
-        if active_data:
-            display_list = []
-            for idx, emp in enumerate(active_data, 1):
-                role_display = role_dict.get(emp["角色"], emp["角色"])
-                if emp.get("國籍") == "越南 (Vietnam)":
-                    doc_no = "CCCD: " + str(emp.get('身分證號', ''))
-                else:
-                    doc_no = "護照: " + str(emp.get('護照號碼', '')) + " / 暫住證: " + str(emp.get('暫住證號', ''))
-                
-                display_list.append({
-                    L["col_index"]: idx,
-                    L["col_code"]: emp["工號"],
-                    L["col_name"]: emp["姓名"],
-                    L["col_phone"]: emp.get("電話", ""),
-                    L["col_id_doc"]: doc_no,
-                    L["col_factory"]: emp["廠區"],
-                    L["col_dept"]: emp["部門"],
-                    L["col_title"]: emp["職稱"],
-                    L["col_attendance"]: emp.get("出勤性質", "廠內固定員工"),
-                    L["col_role"]: role_display,
-                    L["col_status"]: emp["狀態"]
-                })
-            st.dataframe(pd.DataFrame(display_list), use_container_width=True)
-        else:
-            st.info("目前尚無在職員工記錄。")
-
-    # 5. 🗑️ 離職與刪除管理
-    with tab_delete:
-        st.markdown("### " + L['header_delete'])
-        
-        if st.session_state.employee_db:
-            all_emp_codes = [e["工號"] + " - " + e["姓名"] + " (" + e.get("狀態", "在職") + ")" for e in st.session_state.employee_db]
-            sel_target_del = st.selectbox("選擇要處理的員工帳號", all_emp_codes, key="manage_emp_select")
-            target_code = sel_target_del.split(" - ")[0]
-
-            col_btn1, col_btn2 = st.columns(2)
-            
-            with col_btn1:
-                if st.button(L["btn_archive"], type="secondary", use_container_width=True):
-                    for e in st.session_state.employee_db:
-                        if e["工號"] == target_code:
-                            e["狀態"] = "🔴 離職 (Resigned)"
-                    st.success("✅ 員工 " + target_code + " 已移至離職歷史名冊。")
-                    st.rerun()
-
-            with col_btn2:
-                if st.button(L["btn_hard_delete"], type="primary", use_container_width=True):
-                    st.session_state.employee_db = [e for e in st.session_state.employee_db if e["工號"] != target_code]
-                    st.success("🔥 帳號 " + target_code + " 已自系統中徹底刪除。")
-                    st.rerun()
-        else:
-            st.info("目前系統中無任何員工記錄。")
-
-    # 6. 📂 離職歷史名冊
-    with tab_resigned:
-        st.markdown("### " + L['header_resigned'])
-        resigned_search = st.text_input("🔍 搜尋離職人員姓名或證件號...", key="emp_search_box_resigned")
-
-        resigned_data = [e for e in st.session_state.employee_db if "離職" in e.get("狀態", "")]
-        if resigned_search:
-            resigned_data = [
-                e for e in resigned_data 
-                if resigned_search.lower() in e.get("姓名", "").lower() or resigned_search.lower() in e.get("工號", "").lower()
-            ]
-
-        if resigned_data:
-            res_display_list = []
-            for idx, emp in enumerate(resigned_data, 1):
-                role_display = role_dict.get(emp["角色"], emp["角色"])
-                if emp.get("國籍") == "越南 (Vietnam)":
-                    doc_no = "CCCD: " + str(emp.get('身分證號', ''))
-                else:
-                    doc_no = "護照: " + str(emp.get('護照號碼', ''))
-                
-                res_display_list.append({
-                    L["col_index"]: idx,
-                    L["col_code"]: emp["工號"],
-                    L["col_name"]: emp["姓名"],
-                    L["col_phone"]: emp.get("電話", ""),
-                    L["col_id_doc"]: doc_no,
-                    L["col_factory"]: emp["廠區"],
-                    L["col_dept"]: emp["部門"],
-                    L["col_title"]: emp["職稱"],
-                    L["col_attendance"]: emp.get("出勤性質", "廠內固定員工"),
-                    L["col_role"]: role_display,
-                    L["col_status"]: emp["狀態"]
-                })
-            st.dataframe(pd.DataFrame(res_display_list), use_container_width=True)
-            
-            st.markdown("---")
-            st.markdown("#### 🔄 離職人員回鍋復職 (Rehire / Reactivate)")
-            rehire_opts = [e["工號"] + " - " + e["姓名"] for e in resigned_data]
-            sel_rehire = st.selectbox("選擇要辦理復職的員工", rehire_opts, key="rehire_select")
-            
-            if st.button("🔄 " + L["btn_reactivate"], type="primary"):
-                rehire_code = sel_rehire.split(" - ")[0]
-                for e in st.session_state.employee_db:
-                    if e["工號"] == rehire_code:
-                        e["狀態"] = "🟢 在職 (Active)"
-                st.success("🎉 員工 " + rehire_code + " 已成功復職並轉為現職員工！")
-                st.
+                        current_att
