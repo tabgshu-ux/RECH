@@ -312,12 +312,103 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
             st.info("目前尚無 AI 施工照片歸檔紀錄，請透過上方表單上傳。")
 
     # ----------------------------------------------------
-    # 5. 分包商與專業證照到期預警
+    # 5. 分包商與專業證照到期預警 (含完整新增、修改、刪除與過濾)
     # ----------------------------------------------------
     elif sub_str == "5" or "證照" in sub_str or "License" in sub_str:
         st.markdown(f"### ⚠️ 5. {t['sub5']}")
-        st.info("💡 系統主動監控技師與外包商專業證照到期日，自動發出合規警報。")
-        st.dataframe(pd.DataFrame(st.session_state.license_db), use_container_width=True)
+        st.info("💡 系統主動監控技師與外包商專業證照到期日與合規狀態，支援即時新增、編輯與刪除管理。")
+
+        tab_lic_list, tab_lic_add, tab_lic_edit = st.tabs(["📋 證照清單與合規總覽", "➕ 新增技師與證照", "✏️ 修改與刪除證照"])
+
+        with tab_lic_list:
+            sc1, sc2 = st.columns([1, 2])
+            with sc1:
+                lic_status_filter = st.selectbox("依合規狀態篩選", ["全部狀態", "🔴 30天內即將到期", "🟢 證照有效合規"])
+            with sc2:
+                lic_search = st.text_input("🔍 搜尋技師姓名、工號或證照名稱...", key="lic_search_box")
+
+            filtered_lic = st.session_state.license_db
+            if lic_status_filter != "全部狀態":
+                filtered_lic = [l for l in filtered_lic if lic_status_filter in l["status"]]
+            if lic_search:
+                filtered_lic = [l for l in filtered_lic if lic_search.lower() in l["name"].lower() or lic_search.lower() in l["emp_id"].lower() or lic_search.lower() in l["license_name"].lower()]
+
+            if filtered_lic:
+                lic_display = []
+                for idx, lic in enumerate(filtered_lic, 1):
+                    lic_display.append({
+                        "STT": idx,
+                        "工號": lic["emp_id"],
+                        "姓名/外包商": lic["name"],
+                        "專業證照名稱": lic["license_name"],
+                        "有效期限": lic.get("expiry_date", "2026-11-30"),
+                        "合規狀態": lic["status"]
+                    })
+                st.dataframe(pd.DataFrame(lic_display), use_container_width=True)
+            else:
+                st.info("⚠️ 找不到符合條件的證照紀錄。")
+
+        with tab_lic_add:
+            with st.form("form_add_license"):
+                lc1, lc2 = st.columns(2)
+                with lc1:
+                    l_id = st.text_input("技師工號 / 外包商代碼 *", value="EMP-005")
+                    l_name = st.text_input("技師或外包商人員姓名 *", value="阮文雄")
+                with lc2:
+                    l_lic = st.text_input("專業證照名稱 *", value="甲種電匠 / 高壓氣體作業主管")
+                    l_date = st.date_input("證照有效期限 (Expiry Date)")
+                
+                l_status = st.selectbox("合規狀態", ["🟢 證照有效合規", "🔴 30天內即將到期", "❌ 已過期失效"])
+
+                if st.form_submit_button("🚀 立即登錄並加入證照預警庫", type="primary"):
+                    if l_id and l_name and l_lic:
+                        st.session_state.license_db.append({
+                            "emp_id": l_id,
+                            "name": l_name,
+                            "license_name": l_lic,
+                            "expiry_date": str(l_date),
+                            "status": l_status
+                        })
+                        st.success(f"✅ 成功登錄 [{l_name}] 的專業證照 [{l_lic}]！")
+                        st.rerun()
+                    else:
+                        st.warning("⚠️ 請完整填寫工號、姓名與證照名稱！")
+
+        with tab_lic_edit:
+            if st.session_state.license_db:
+                lic_options = [f"{l['emp_id']} - {l['name']} ({l['license_name']})" for l in st.session_state.license_db]
+                sel_lic_target = st.selectbox("選擇要修改或刪除的證照紀錄", lic_options)
+                target_emp_id = sel_lic_target.split(" - ")[0]
+                target_lic_item = next((l for l in st.session_state.license_db if l["emp_id"] == target_emp_id), None)
+
+                if target_lic_item:
+                    with st.form("form_edit_license"):
+                        ec1, ec2 = st.columns(2)
+                        with ec1:
+                            ed_l_name = st.text_input("姓名", value=target_lic_item["name"])
+                            ed_l_lic = st.text_input("證照名稱", value=target_lic_item["license_name"])
+                        with ec2:
+                            ed_l_status = st.selectbox("合規狀態", ["🟢 證照有效合規", "🔴 30天內即將到期", "❌ 已過期失效"], index=0 if "有效" in target_lic_item["status"] else (1 if "30天" in target_lic_item["status"] else 2))
+
+                        col_btn1, col_btn2 = st.columns(2)
+                        with col_btn1:
+                            update_submitted = st.form_submit_button("💾 儲存修改內容", type="primary", use_container_width=True)
+                        with col_btn2:
+                            delete_submitted = st.form_submit_button("🔥 刪除此筆證照紀錄", type="secondary", use_container_width=True)
+
+                        if update_submitted:
+                            target_lic_item["name"] = ed_l_name
+                            target_lic_item["license_name"] = ed_l_lic
+                            target_lic_item["status"] = ed_l_status
+                            st.success(f"🎉 成功更新 [{ed_l_name}] 的證照資料！")
+                            st.rerun()
+
+                        if delete_submitted:
+                            st.session_state.license_db = [l for l in st.session_state.license_db if l["emp_id"] != target_emp_id]
+                            st.success("🗑️ 該筆證照紀錄已成功刪除！")
+                            st.rerun()
+            else:
+                st.info("目前尚無證照紀錄可供修改。")
 
     # ----------------------------------------------------
     # 6. 配電盤電氣與機構設計圖庫 Storage
