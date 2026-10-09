@@ -18,9 +18,9 @@ EMP_I18N = {
         "header_add_vn": "🇻🇳 新增越南本地員工個人檔案與社會保險設定",
         "header_add_foreign": "🇹🇼🇨🇳 新增台灣籍與中國籍外派幹部護照及暫住證檔案",
         "header_edit": "✏️ 修改員工基本資料與證件管理",
-        "header_list": "📋 全公司現職員工名冊與權限總覽",
+        "header_list": "📋 全公司現職員工名冊與廠區分流總覽",
         "header_delete": "🗑️ 辦理離職歸檔或徹底刪除重複帳號",
-        "header_resigned": "📂 離職歷史人員名冊與復職管理",
+        "header_resigned": "📂 離職歷史人員名冊與廠區分流復職管理",
         "lbl_code": "員工工號 (登入帳號) *",
         "lbl_name": "員工姓名 (Employee Name) *",
         "lbl_phone": "聯絡電話 (Phone No.) *",
@@ -31,6 +31,7 @@ EMP_I18N = {
         "lbl_hospital": "投保指定醫療院所 (Bệnh viện KCB BHYT)",
         "lbl_factory": "工作廠區 (Factory) *",
         "factory_opts": ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"],
+        "factory_filter_opts": ["全部廠區 (All Plants)", "西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"],
         "lbl_dept": "部門 *",
         "dept_opts": ["總經理室", "管理部", "工程部", "生產部", "資訊部"],
         "lbl_pwd": "初始登入密碼 (預設) *",
@@ -72,9 +73,9 @@ EMP_I18N = {
         "header_add_vn": "🇻🇳 Thêm hồ sơ nhân viên Việt Nam (BHXH & CCCD)",
         "header_add_foreign": "🇹🇼🇨🇳 Thêm hồ sơ Cán bộ Nước ngoài (Hộ chiếu & Thẻ tạm trú)",
         "header_edit": "✏️ Cập nhật thông tin nhân viên",
-        "header_list": "📋 Danh sách nhân viên đang làm việc",
+        "header_list": "📋 Danh sách nhân viên đang làm việc theo nhà máy",
         "header_delete": "🗑️ Xử lý nghỉ việc hoặc Xóa vĩnh viễn",
-        "header_resigned": "📂 Hồ sơ nhân viên đã nghỉ việc",
+        "header_resigned": "📂 Hồ sơ nhân viên đã nghỉ việc theo nhà máy",
         "lbl_code": "Mã nhân viên *",
         "lbl_name": "Họ tên nhân viên *",
         "lbl_phone": "Số điện thoại *",
@@ -85,6 +86,7 @@ EMP_I18N = {
         "lbl_hospital": "Bệnh viện KCB BHYT",
         "lbl_factory": "Nhà máy *",
         "factory_opts": ["Nhà máy Tây Ninh", "Nhà máy Hải Phòng"],
+        "factory_filter_opts": ["Tất cả nhà máy", "Nhà máy Tây Ninh", "Nhà máy Hải Phòng"],
         "lbl_dept": "Phòng ban *",
         "dept_opts": ["Ban Giám đốc", "Phòng Quản lý", "Phòng Kỹ thuật", "Phòng Sản xuất", "Phòng IT"],
         "lbl_pwd": "Mật khẩu ban đầu *",
@@ -126,9 +128,9 @@ EMP_I18N = {
         "header_add_vn": "🇻🇳 Add Vietnamese Employee Profile",
         "header_add_foreign": "🇹🇼🇨🇳 Add Foreign Staff Profile (Passport & TRC)",
         "header_edit": "✏️ Update Employee Info",
-        "header_list": "📋 Active Employee Directory",
+        "header_list": "📋 Active Employee Directory by Plant",
         "header_delete": "🗑️ Archive Resigned or Delete Duplicates",
-        "header_resigned": "📂 Resigned Employee History & Rehiring",
+        "header_resigned": "📂 Resigned Employee History by Plant",
         "lbl_code": "Employee ID *",
         "lbl_name": "Employee Name *",
         "lbl_phone": "Phone Number *",
@@ -139,6 +141,7 @@ EMP_I18N = {
         "lbl_hospital": "Medical Insurance Hospital",
         "lbl_factory": "Work Plant *",
         "factory_opts": ["Tay Ninh Plant", "Hai Phong Plant"],
+        "factory_filter_opts": ["All Plants", "Tay Ninh Plant", "Hai Phong Plant"],
         "lbl_dept": "Department *",
         "dept_opts": ["Executive Office", "Management Dept", "Engineering Dept", "Production Dept", "IT Dept"],
         "lbl_pwd": "Initial Password *",
@@ -268,8 +271,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             if "戶籍地址" not in e: e["戶籍地址"] = ""
             if "現住地址" not in e: e["現住地址"] = ""
 
-    # 🎯 直覺式操作分頁順序：
-    # 1. 新增越南員工 | 2. 新增外派員工 | 3. 修改員工資料 | 4. 現職員工名冊 | 5. 員工離職及刪除 | 6. 離職名冊
+    # 🎯 直覺式操作分頁順序
     tab_add_vn, tab_add_foreign, tab_edit, tab_list, tab_delete, tab_resigned = st.tabs([
         L["tab_add_vn"], L["tab_add_foreign"], L["tab_edit"], L["tab_list"], L["tab_delete"], L["tab_resigned"]
     ])
@@ -334,7 +336,7 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                         st.success("🇻🇳 成功新增越南籍員工 " + e_name + " (工號: " + e_code + ")！")
                         st.rerun()
                 else:
-                    st.warning("⚠️ 請完整填寫必填欄位：工號、姓名、聯絡電話與公民身分證號 (CCCD)！")
+                    st.warning("⚠️ 請完整填寫必填欄位：工號, 姓名, 聯絡電話與公民身分證號 (CCCD)！")
 
     # 2. 🇹🇼🇨🇳 新增外派幹部
     with tab_add_foreign:
@@ -451,7 +453,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                         ed_title = st.text_input(L["lbl_title"], value=target_emp.get("職稱", ""))
                         ed_hospital = st.text_input(L["lbl_hospital"], value=target_emp.get("投保醫院", ""))
                         
-                        # 💡 補回 current_att 變數定義，修復 name 'current_att' is not defined 錯誤
                         current_att = target_emp.get("出勤性質", L["attendance_opts"][0])
                         att_index = L["attendance_opts"].index(current_att) if current_att in L["attendance_opts"] else 0
                         ed_attendance = st.selectbox(
@@ -498,12 +499,24 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         else:
             st.info("尚無員工可供修改。")
 
-    # 4. 👥 現職員工名冊
+    # 4. 👥 現職員工名冊 (加入廠區分流篩選：全部廠區 / 西寧廠 / 海防廠)
     with tab_list:
         st.markdown("### " + L['header_list'])
-        search_q = st.text_input(L["search_ph"], key="emp_search_box_active")
+        
+        fc1, fc2 = st.columns([1, 2])
+        with fc1:
+            sel_plant_filter = st.selectbox("依廠區篩選 (Filter by Plant)", L["factory_filter_opts"], key="list_plant_filter")
+        with fc2:
+            search_q = st.text_input(L["search_ph"], key="emp_search_box_active")
 
         active_data = [e for e in st.session_state.employee_db if "在職" in e.get("狀態", "")]
+        
+        # 廠區過濾
+        if "西寧" in sel_plant_filter:
+            active_data = [e for e in active_data if "西寧" in e.get("廠區", "")]
+        elif "海防" in sel_plant_filter:
+            active_data = [e for e in active_data if "海防" in e.get("廠區", "")]
+
         if search_q:
             active_data = [
                 e for e in active_data 
@@ -534,41 +547,64 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 })
             st.dataframe(pd.DataFrame(display_list), use_container_width=True)
         else:
-            st.info("目前尚無在職員工記錄。")
+            st.info("目前在該廠區尚無在職員工記錄。")
 
-    # 5. 🗑️ 員工離職及刪除
+    # 5. 🗑️ 員工離職及刪除 (加入廠區分流篩選，方便廠區主管精準找到人)
     with tab_delete:
         st.markdown("### " + L['header_delete'])
         
         if st.session_state.employee_db:
-            all_emp_codes = [e["工號"] + " - " + e["姓名"] + " (" + e.get("狀態", "在職") + ")" for e in st.session_state.employee_db]
-            sel_target_del = st.selectbox("選擇要處理的員工帳號", all_emp_codes, key="manage_emp_select")
-            target_code = sel_target_del.split(" - ")[0]
-
-            col_btn1, col_btn2 = st.columns(2)
+            del_plant_filter = st.selectbox("依廠區篩選要處理的員工", L["factory_filter_opts"], key="del_plant_filter")
             
-            with col_btn1:
-                if st.button(L["btn_archive"], type="secondary", use_container_width=True):
-                    for e in st.session_state.employee_db:
-                        if e["工號"] == target_code:
-                            e["狀態"] = "🔴 離職 (Resigned)"
-                    st.success("✅ 員工 " + target_code + " 已移至離職歷史名冊。")
-                    st.rerun()
+            target_pool = [e for e in st.session_state.employee_db if "在職" in e.get("狀態", "")]
+            if "西寧" in del_plant_filter:
+                target_pool = [e for e in target_pool if "西寧" in e.get("廠區", "")]
+            elif "海防" in del_plant_filter:
+                target_pool = [e for e in target_pool if "海防" in e.get("廠區", "")]
 
-            with col_btn2:
-                if st.button(L["btn_hard_delete"], type="primary", use_container_width=True):
-                    st.session_state.employee_db = [e for e in st.session_state.employee_db if e["工號"] != target_code]
-                    st.success("🔥 帳號 " + target_code + " 已自系統中徹底刪除。")
-                    st.rerun()
+            if target_pool:
+                all_emp_codes = [e["工號"] + " - " + e["姓名"] + " (" + e.get("廠區", "") + ")" for e in target_pool]
+                sel_target_del = st.selectbox("選擇要處理的在職員工帳號", all_emp_codes, key="manage_emp_select")
+                target_code = sel_target_del.split(" - ")[0]
+
+                col_btn1, col_btn2 = st.columns(2)
+                
+                with col_btn1:
+                    if st.button(L["btn_archive"], type="secondary", use_container_width=True):
+                        for e in st.session_state.employee_db:
+                            if e["工號"] == target_code:
+                                e["狀態"] = "🔴 離職 (Resigned)"
+                        st.success("✅ 員工 " + target_code + " 已辦理離職並移至離職歷史名冊。")
+                        st.rerun()
+
+                with col_btn2:
+                    if st.button(L["btn_hard_delete"], type="primary", use_container_width=True):
+                        st.session_state.employee_db = [e for e in st.session_state.employee_db if e["工號"] != target_code]
+                        st.success("🔥 帳號 " + target_code + " 已自系統中徹底刪除。")
+                        st.rerun()
+            else:
+                st.info("該廠區目前無在職員工可供處理。")
         else:
             st.info("目前系統中無任何員工記錄。")
 
-    # 6. 📂 離職名冊
+    # 6. 📂 離職名冊 (加入廠區分流篩選與復職管理)
     with tab_resigned:
         st.markdown("### " + L['header_resigned'])
-        resigned_search = st.text_input("🔍 搜尋離職人員姓名或證件號...", key="emp_search_box_resigned")
+        
+        rc1, rc2 = st.columns([1, 2])
+        with rc1:
+            res_plant_filter = st.selectbox("依廠區篩選離職人員", L["factory_filter_opts"], key="res_plant_filter")
+        with rc2:
+            resigned_search = st.text_input("🔍 搜尋離職人員姓名或證件號...", key="emp_search_box_resigned")
 
         resigned_data = [e for e in st.session_state.employee_db if "離職" in e.get("狀態", "")]
+        
+        # 廠區過濾
+        if "西寧" in res_plant_filter:
+            resigned_data = [e for e in resigned_data if "西寧" in e.get("廠區", "")]
+        elif "海防" in res_plant_filter:
+            resigned_data = [e for e in resigned_data if "海防" in e.get("廠區", "")]
+
         if resigned_search:
             resigned_data = [
                 e for e in resigned_data 
@@ -601,5 +637,21 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
             
             st.markdown("---")
             st.markdown("#### 🔄 離職人員回鍋復職 (Rehire / Reactivate)")
-            rehire_opts = [e["工號"] + " - " + e["姓名"] for e in resigned_data]
+            rehire_opts = [e["工號"] + " - " + e["姓名"] + " (" + e.get("廠區", "") + ")" for e in resigned_data]
             sel_rehire = st.selectbox("選擇要辦理復職的員工", rehire_opts, key="rehire_select")
+            
+            if st.button("🔄 " + L["btn_reactivate"], type="primary"):
+                rehire_code = sel_rehire.split(" - ")[0]
+                for e in st.session_state.employee_db:
+                    if e["工號"] == rehire_code:
+                        e["狀態"] = "🟢 在職 (Active)"
+                st.success("🎉 員工 " + rehire_code + " 已成功復職並轉為現職員工！")
+                st.rerun()
+        else:
+            st.info("📂 目前在該廠區歷史檔案中無離職員工記錄。")
+
+def show(*args, **kwargs):
+    render_employee_management(*args, **kwargs)
+
+def main(*args, **kwargs):
+    render_employee_management(*args, **kwargs)
