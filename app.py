@@ -56,6 +56,7 @@ NAV_STRUCTURE = {
             },
             "👔 管理部 (Management Dept)": {
                 "features": {
+                    "📢 公司重要公告與佈告欄": "company_announcements",
                     "👤 員工個人檔案與人事管理": "hr_employee",
                     "🏢 廠內員工固定打卡與出勤紀錄": "internal_attendance",
                     "📍 外勤 GPS 打卡與工地即時人數": "field_attendance",
@@ -126,6 +127,7 @@ NAV_STRUCTURE = {
             },
             "👔 Phòng Quản lý (Management Dept)": {
                 "features": {
+                    "📢 Thông báo công ty": "company_announcements",
                     "👤 Hồ sơ nhân sự": "hr_employee",
                     "🏢 Chấm công nội bộ": "internal_attendance",
                     "📍 Chấm công GPS công trường": "field_attendance",
@@ -196,6 +198,7 @@ NAV_STRUCTURE = {
             },
             "👔 Management Dept (GA & Finance)": {
                 "features": {
+                    "📢 Company Announcements": "company_announcements",
                     "👤 HR Records": "hr_employee",
                     "🏢 Internal Attendance": "internal_attendance",
                     "📍 Field GPS Attendance": "field_attendance",
@@ -392,9 +395,34 @@ else:
 curr_lang = st.session_state.current_lang
 
 # ----------------------------------------------------
+# 📢 登入即見：全公司重要公告彈窗提醒 (公告跑馬燈)
+# ----------------------------------------------------
+if "announcements_db" not in st.session_state:
+    st.session_state.announcements_db = [
+        {
+            "ann_id": "ANN-2026-001",
+            "title": "⚡ 關於越南全國連假與西寧/海防廠安全生產之重要通知",
+            "category": "🔴 緊急公告 (Urgent)",
+            "content": "請各部門主管務必於連假前落實廠區斷電巡檢、消防設備盤點，並確保留守人員通訊暢通。",
+            "publisher": "總經理室 / 董事長辦公室",
+            "date": "2026-10-09",
+            "status": "🟢 發布中 (Active)"
+        }
+    ]
+
+# 在主畫面最上方顯示最新公告提示
+active_anns = [a for a in st.session_state.announcements_db if "發布中" in a["status"]]
+if active_anns:
+    latest_ann = active_anns[0]
+    st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
+
+# ----------------------------------------------------
 # 動態安全路由分流
 # ----------------------------------------------------
-if target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
+if target_route == "company_announcements":
+    load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
+
+elif target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
     load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route=target_route, lang=curr_lang)
 
 elif target_route == "approval_center":
