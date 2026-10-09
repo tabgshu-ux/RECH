@@ -112,7 +112,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                 "report_id": "REP-2026-001",
                 "project": "西寧廠高壓配電盤擴建",
                 "reporter_name": "admin",
-                "gps_status": "📍 GPS 定位已簽到 (Tay Ninh Factory Zone A)",
+                "gps_status": "📍 位置驗證已簽到 (Tay Ninh Factory Zone A)",
                 "workers_count": 16,
                 "summary": "完成主配電盤銅排安裝與絕緣測試。",
                 "date": "2026-10-09"
@@ -207,16 +207,15 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
         st.dataframe(pd.DataFrame(st.session_state.engineering_projects_db), use_container_width=True)
 
     # ----------------------------------------------------
-    # 3. 現場工程日報表與出工統計 (底層自動豁免，表面嚴格稽核)
+    # 3. 現場工程日報表與出工統計
     # ----------------------------------------------------
     elif sub_str == "3" or "日報" in sub_str or "Daily" in sub_str:
         st.markdown(f"### 📋 3. {t['sub3']}")
-        st.info("🔒 **現場施工日報與出工紀錄填報**：系統自動鎖定登入帳號並進行外勤 GPS 驗證。")
+        st.info("🔒 **現場施工日報與出工紀錄填報**：系統自動鎖定登入帳號並進行現場位置驗證。")
 
         logged_user = st.session_state.get("user_name", "admin")
         logged_role = str(st.session_state.get("user_role", "Staff")).strip().lower()
 
-        # 底層判定是否為主管道/台幹（豁免打卡限制，但不顯示任何特權字眼）
         is_exempt_role = logged_role in ["admin", "chairman", "generalmanager", "vicemanager", "manager", "finance_manager", "executive"]
 
         with st.form("secure_daily_rep_form"):
@@ -225,11 +224,11 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                 st.text_input("填報人 (系統自動鎖定)", value=f"{logged_user} ({logged_role.upper()})", disabled=True)
             with rc2:
                 gps_status_val = st.selectbox(
-                    "外勤 GPS 打卡與工地位置驗證",
+                    "現場打卡與位置驗證",
                     [
-                        "📍 已於現場 GPS 簽到打卡 (Tay Ninh Factory Zone A)",
-                        "📍 已於現場 GPS 簽到打卡 (Hai Phong Plant Site)",
-                        "❌ 未進行現場 GPS 打卡"
+                        "📍 已於現場簽到打卡 (Tay Ninh Factory Zone A)",
+                        "📍 已於現場簽到打卡 (Hai Phong Plant Site)",
+                        "❌ 未進行現場打卡"
                     ]
                 )
 
@@ -238,9 +237,8 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
             r_desc = st.text_area("今日施工進度與工作紀要 (Work Summary)", value="完成主配電盤銅排安裝與絕緣耐壓測試。")
 
             if st.form_submit_button("🚀 提交正式工程日報表與出工統計", type="primary"):
-                # 如果不是豁免角色，且勾選未打卡，則阻擋
                 if (not is_exempt_role) and ("❌" in gps_status_val):
-                    st.error("⚠️ 偵測到您尚未進行現場 GPS 打卡，無法提交日報表。")
+                    st.error("⚠️ 偵測到您尚未進行現場位置驗證，無法提交日報表。")
                 else:
                     new_id = f"REP-2026-{len(st.session_state.field_daily_reports_db)+1:03d}"
                     st.session_state.field_daily_reports_db.insert(0, {
@@ -265,7 +263,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
     # ----------------------------------------------------
     # 4. AI 施工照片智慧辨識與歸檔
     # ----------------------------------------------------
-   elif sub_str == "4" or "AI" in sub_str or "照片" in sub_str:
+    elif sub_str == "4" or "AI" in sub_str or "照片" in sub_str:
         st.markdown(f"### 🤖 4. {t['sub4']}")
         st.info("💡 上傳施工現場照片，系統 AI 自動辨識施工品質、項目與安全規範並進行智慧歸檔。")
 
@@ -289,7 +287,6 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                     now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     photo_id = f"AI-PHO-2026-{len(st.session_state.ai_photo_archive_db)+1:03d}"
                     
-                    # 模擬 AI 自動辨識結果
                     ai_result = "✅ AI 辨識合格：結構完整、絕緣距離符合標準" if "銅排" in photo_category or "盤" in photo_category else "✅ AI 辨識合格：符合標準施工規範"
 
                     st.session_state.ai_photo_archive_db.insert(0, {
@@ -308,7 +305,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
                     st.warning("⚠️ 請先選擇並上傳一張施工現場照片檔案！")
 
         st.markdown("---")
-        st.markdown("##### 📁 AI 智慧施工照片歸檔總覽")
+        st.markdown("##### 📁 AI 施工照片智慧歸檔總覽")
         if st.session_state.ai_photo_archive_db:
             st.dataframe(pd.DataFrame(st.session_state.ai_photo_archive_db), use_container_width=True)
         else:
@@ -331,7 +328,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
         st.dataframe(pd.DataFrame(st.session_state.drawing_storage_db), use_container_width=True)
 
     # ----------------------------------------------------
-    # 7. BOM 零件自動展開與採購連動 (強悍功能一)
+    # 7. BOM 零件自動展開與採購連動
     # ----------------------------------------------------
     elif sub_str == "7" or "BOM" in sub_str or "採購" in sub_str:
         st.markdown(f"### 🔌 7. {t['sub7']}")
@@ -346,7 +343,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
             st.info("目前尚無已展開的 BOM 資料。")
 
     # ----------------------------------------------------
-    # 8. 外包商點工計價與越南勞動法計薪 (強悍功能二)
+    # 8. 外包商點工計價與越南勞動法計薪
     # ----------------------------------------------------
     elif sub_str == "8" or "外包商" in sub_str or "點工" in sub_str:
         st.markdown(f"### 👷 8. {t['sub8']}")
@@ -365,7 +362,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
         st.dataframe(pd.DataFrame(st.session_state.subcontractor_attendance_db), use_container_width=True)
 
     # ----------------------------------------------------
-    # 9. FAT/SAT 試驗報告與 QR Code 驗收 (強悍功能三)
+    # 9. FAT/SAT 試驗報告與 QR Code 驗收
     # ----------------------------------------------------
     elif sub_str == "9" or "FAT" in sub_str or "SAT" in sub_str:
         st.markdown(f"### 🧪 9. {t['sub9']}")
@@ -378,7 +375,7 @@ def render_engineering_department_page(engine=None, lang="繁體中文", **kwarg
         st.dataframe(pd.DataFrame(st.session_state.fat_sat_db), use_container_width=True)
 
     # ----------------------------------------------------
-    # 10. 越南營建電子發票與稅務管家 (強悍功能四)
+    # 10. 越南營建電子發票與稅務管家
     # ----------------------------------------------------
     elif sub_str == "10" or "發票" in sub_str or "Invoice" in sub_str or "越南營建" in sub_str:
         st.markdown(f"### 📊 10. {t['sub10']}")
