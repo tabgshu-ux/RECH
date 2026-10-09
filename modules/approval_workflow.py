@@ -4,12 +4,12 @@ import datetime
 
 def render_approval_center(engine=None, lang="繁體中文", **kwargs):
     st.title("✍️ 裕豐電機工業 - 全公司電子簽核與進度追蹤中心")
-    st.caption("提供請假（含 0.5 小時半小時精確計算）、跨部門標準化採購請購（工程、行政文具、IT設備、發票憑證）、車輛調派與物品攜出之電子簽核。")
+    st.caption("提供請假（含 0.5 小時半小時精確計算）、跨部門採購請購（支援自由填寫與圖片上傳預覽）、車輛調派與物品攜出之電子簽核。")
 
     if "approval_requests" not in st.session_state:
         st.session_state.approval_requests = [
             {"單號": "REQ-2026-001", "類型": "請假申請", "申請人": "Nguyễn Văn An", "部門": "資訊管理部", "內容": "類別: 事假 | 時數: 4.0 小時", "事由": "前往銀行辦理公務與私事處理", "狀態": "🟢 主管已核准"},
-            {"單號": "PO-2026-002", "類型": "採購請購單", "申請人": "Trần Thị Mai", "部門": "管理部", "內容": "分類: 辦公文具與消耗品 | 品名: A4 影印紙 70g (一箱 5 包) | 金額: 450,000 ₫", "事由": "管理部日常辦公耗材補充", "狀態": "🟡 待主管審核"}
+            {"單號": "PO-2026-002", "類型": "採購請購單", "申請人": "Trần Thị Mai", "部門": "管理部", "內容": "分類: 辦公文具與消耗品 | 品名: 特殊規格事務筆記本與發票本 | 金額: 1,500,000 ₫", "事由": "管理部日常辦公耗材補充", "狀態": "🟡 待主管審核"}
         ]
 
     if "gate_pass_records" not in st.session_state:
@@ -34,7 +34,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
             "選擇要提交的表單類型 (Select Request Type)", 
             [
                 "🍃 請假申請單 (Leave Request - 支援半小時計算)", 
-                "🛒 採購請購單 (Purchase Requisition - 含文具、IT設備、發票與工程料件)", 
+                "🛒 採購請購單 (Purchase Requisition - 支援自由填寫與圖片上傳)", 
                 "🚗 車輛調派與門禁申請單 (Vehicle Dispatch - 西寧/海防廠)",
                 "📦 物品攜出放行單 (Item Carry-Out Pass)"
             ]
@@ -66,83 +66,53 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                         st.success(f"✅ 成功提交請假申請！總計時數：{leave_hours} 小時。")
                         st.rerun()
 
-        # 💡 採購請購單：完整涵蓋跨部門（行政文具、會計發票、IT設備與工程料件）
+        # 💡 採購請購單：改為「自由填寫品名與規格」並支援「上傳照片/型錄」
         elif "採購" in req_type:
             st.markdown("---")
-            st.markdown("#### 🛒 採購請購單 (Đơn đề nghị mua hàng - 跨部門全方位標準化分類)")
-            st.info("💡 **AI ERP 防呆機制**：請選擇所屬採購大類與標準品項規格，防止同仁隨意簡寫或亂填，確保會計帳務與庫存歸類正確。")
+            st.markdown("#### 🛒 採購請購單 (Đơn đề nghị mua hàng - 自由輸入與圖片上傳確認)")
+            st.info("💡 **AI ERP 採購確認機制**：請自行填寫正確品名與規格，並強烈建議上傳欲採購之物料照片、型錄截圖或發票樣本，供主管與採購人員核對，避免因專業不同而買錯。")
 
             with st.form("po_request_form"):
                 po1, po2 = st.columns(2)
                 with po1:
                     st.text_input("申請人", value=f"{current_user}", disabled=True)
-                    
-                    # 擴充後的跨部門採購大類選單
                     po_category = st.selectbox(
-                        "採購品項大類 (Material & Supplies Category)", 
+                        "採購科目大類 (Expense / Material Category)", 
                         [
-                            "辦公文具與消耗品 (Office Stationery & Supplies - 筆/紙/檔案夾)",
-                            "會計與稅務發票憑證 (Accounting & Tax Invoices - 發票本/傳票)",
-                            "資訊設備與零配件 (IT Hardware & Accessories - 電腦/螢幕/SSD/零配件)",
-                            "廠務與工安防護用品 (Factory & Safety - 工安鞋/安全帽/清潔用品)",
-                            "工程與導電原物料 (Copper & Busbars - 銅排/導電材料)",
-                            "高低壓開關元件 (Circuit Breakers - ACB/MCCB)",
-                            "箱體與板金結構 (Enclosures & Sheet Metal)"
+                            "辦公文具與事務用品 (Office Stationery & Supplies)",
+                            "會計憑證與發票發行耗材 (Accounting Invoices & Vouchers)",
+                            "資訊設備與電腦零配件 (IT Hardware, PCs & Accessories)",
+                            "廠務與工安防護裝備 (Factory GA & Safety Equipment)",
+                            "工程專案機電/五金零件 (Engineering & Electrical Parts)",
+                            "其他雜項採購 (Other Miscellaneous)"
                         ]
                     )
                 with po2:
                     po_no = f"PO-{datetime.datetime.now().strftime('%Y%m%d%H%M')}"
                     st.text_input("請購單編號", value=po_no, disabled=True)
                     
-                    # 依據不同大類動態對應的標準品項規格選單
-                    if "辦公文具" in po_category:
-                        po_item = st.selectbox("標準品項規格型號", [
-                            "STATIONERY-PAPER-A4 (A4 影印紙 70g/500張)", 
-                            "STATIONERY-PEN-BLACK (中性原子筆 0.5mm 黑色/支)", 
-                            "STATIONERY-PEN-BLUE (中性原子筆 0.5mm 藍色/支)", 
-                            "STATIONERY-FOLDER-ARCH (A4 檔案夾/PP抽桿夾)",
-                            "STATIONERY-NOTE-STICKY (便條紙/標籤貼紙組)"
-                        ])
-                    elif "會計" in po_category:
-                        po_item = st.selectbox("標準品項規格型號", [
-                            "ACCT-INVOICE-BK (越南標準增值稅發票本 Hóa đơn GTGT)", 
-                            "ACCT-VOUCHER-PAY (現金/銀行支出傳票本)", 
-                            "ACCT-VOUCHER-REC (現金/銀行收入傳票本)",
-                            "ACCT-STAMP-DATE (會計日期收發章/統一發票章)"
-                        ])
-                    elif "資訊設備" in po_category:
-                        po_item = st.selectbox("標準品項規格型號", [
-                            "IT-PC-DESKTOP (商務辦公桌機 i5/16GB/512G SSD)", 
-                            "IT-LAPTOP-PRO (工程/會計用筆電 i7/16GB/1TB SSD)", 
-                            "IT-MONITOR-27 (27吋 2K 護眼液晶螢幕)", 
-                            "IT-ACC-KEYMOUSE (無線鍵盤滑鼠組)",
-                            "IT-PART-SSD1TB (高速固態硬碟 1TB 零配件)",
-                            "IT-CABLE-NETCAT6 (網路線 Cat.6 100米箱裝)"
-                        ])
-                    elif "廠務" in po_category:
-                        po_item = st.selectbox("標準品項規格型號", [
-                            "SAFETY-BOOTS (CNS認證防護鋼頭鞋)", 
-                            "SAFETY-HELMET (工廠標準安全帽)", 
-                            "GA-CLEAN-TISSUE (工業用擦拭紙/捲筒衛生紙箱裝)"
-                        ])
-                    elif "工程" in po_category:
-                        po_item = st.selectbox("標準品項規格型號", ["CU-BUS-10100 (銅排 10x100mm)", "CU-BUS-0650 (銅排 6x50mm)", "CU-FLEX-01 (軟得銅帶)"])
-                    elif "開關元件" in po_category:
-                        po_item = st.selectbox("標準品項規格型號", ["CB-ACB-2000A (空氣斷路器 2000A)", "CB-MCCB-250A (塑殼斷路器 250A)", "CB-MCB-32A (微型斷路器 32A)"])
-                    else:
-                        po_item = st.selectbox("標準品項規格型號", ["ENCL-IP54-2M (IP54 高壓配電箱體 2米)", "ENCL-IP65-WALL (壁掛式控制箱)"])
+                    # 自由填寫品名與規格
+                    po_item_name = st.text_input("採購品名與詳細規格 (Item Name & Specification) *", placeholder="例如: 辦公室用 A4 影印紙 70g 或 專用發票本 或 零件型號")
 
-                po_amount = st.text_input("預估金額 (VND 或 USD)", value="2,500,000 ₫")
-                po_reason = st.text_area("採購用途說明與部門/專案編號", placeholder="例如：管理部人事與會計日常辦公文具與發票補充，供西寧廠與海防廠使用。")
+                po_amount = st.text_input("預估金額 (VND 或 USD) *", value="2,500,000 ₫")
                 
-                if st.form_submit_button("🚀 送出跨部門標準化採購請購", type="primary", use_container_width=True):
-                    st.session_state.approval_requests.insert(0, {
-                        "單號": po_no, "類型": "採購請購單", "申請人": current_user,
-                        "部門": "管理部/會計部", "內容": f"分類: {po_category} | 品名: {po_item} | 金額: {po_amount}",
-                        "事由": po_reason, "狀態": "🟡 待主管審核"
-                    })
-                    st.success("✅ 跨部門標準化採購請購單已成功送出！")
-                    st.rerun()
+                # 上傳圖片供主管與採購確認
+                uploaded_file = st.file_uploader("📤 上傳欲採購之設備/零件照片、型錄截圖或樣品圖片 (Upload Reference Image)", type=["png", "jpg", "jpeg"])
+
+                po_reason = st.text_area("採購用途說明與部門/專案編號 *", placeholder="例如：管理部人事與會計日常辦公文具與發票補充，供西寧廠與海防廠使用。")
+                
+                if st.form_submit_button("🚀 送出採購請購申請 (含圖片)", type="primary", use_container_width=True):
+                    if po_item_name.strip() and po_reason.strip():
+                        img_status = "已附圖片/型錄" if uploaded_file else "無附圖"
+                        st.session_state.approval_requests.insert(0, {
+                            "單號": po_no, "類型": "採購請購單", "申請人": current_user,
+                            "部門": "管理部/會計部", "內容": f"分類: {po_category} | 品名: {po_item_name} | 金額: {po_amount} ({img_status})",
+                            "事由": po_reason, "狀態": "🟡 待主管審核"
+                        })
+                        st.success("✅ 採購請購單已成功送出！主管與採購人員將可同步檢視您填寫的規格與上傳的圖片進行確認。")
+                        st.rerun()
+                    else:
+                        st.warning("⚠️ 請完整填寫品名規格與用途說明！")
 
         elif "車輛" in req_type:
             st.markdown("---")
