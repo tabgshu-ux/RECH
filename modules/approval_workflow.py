@@ -4,7 +4,7 @@ import datetime
 
 def render_approval_center(engine=None, lang="繁體中文", **kwargs):
     st.title("✍️ 裕豐電機工業 - 全公司電子簽核與進度追蹤中心")
-    st.caption("提供請假、採購、車輛調派（含里程數記錄防偷油機制）與物品攜出之跨部門電子簽核與保全放行管制。")
+    st.caption("提供請假、採購、車輛調派（含里程數與油耗管理）與物品攜出之跨部門電子簽核與保全放行管制。")
 
     if "approval_requests" not in st.session_state:
         st.session_state.approval_requests = [
@@ -90,17 +90,17 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                         img_status = "已附圖片" if uploaded_file else "無附圖"
                         st.session_state.approval_requests.insert(0, {
                             "單號": po_no, "類型": "採購請購單", "申請人": current_user,
-                            "部門": "管理部", "內容": f"分類: {po_category} | 品名: {po_item_name} | 金額: {po_amount} ({img_status})",
+                            "部門": "管理部的", "內容": f"分類: {po_category} | 品名: {po_item_name} | 金額: {po_amount} ({img_status})",
                             "事由": po_reason, "狀態": "🟡 待主管審核"
                         })
                         st.success("✅ 採購請購單已成功送出！")
                         st.rerun()
 
-        # 💡 車輛調派與門禁申請單：加入里程數記錄（防偷油與油資審核）
+        # 💡 車輛調派與門禁申請單：使用專業商業包裝用語
         elif "車輛調派與門禁申請單" in req_type:
             st.markdown("---")
-            st.markdown("#### 🚗 車輛調派與門禁申請單 (Đơn điều phối xe - 含里程數防偷油機制)")
-            st.info("💡 **AI ERP 防弊機制**：出發前必須記錄車輛當前儀表板【起始里程數 (Km)】，保全出廠時將進行複核，未來將串聯 GPS 與油費報銷比對，防止油資浮報與偷油。")
+            st.markdown("#### 🚗 車輛調派與門禁申請單 (Đơn điều phối xe)")
+            st.info("💡 **車輛派遣作業規範**：用車出發前請確實填寫儀表板【起始里程數 (Km)】並上傳儀表板照片，供門禁保全登錄與後續油資與行駛成本結算審核。")
 
             with st.form("vehicle_request_form"):
                 v1, v2 = st.columns(2)
@@ -111,14 +111,13 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                 with v2:
                     v_no = f"CAR-{datetime.datetime.now().strftime('%Y%m%d%H%M')}"
                     st.text_input("派車單號", value=v_no, disabled=True)
-                    # 🛡️ 關鍵新增：出發里程數填寫
                     v_start_km = st.number_input("出發時儀表板里程數 (Start Odometer in KM) *", min_value=0, max_value=999999, value=45200, step=1, help="請填寫車輛出發當下的實際儀表板總公里數")
 
                 v_dest = st.text_input("目的地 (Destination) *", value="客戶端 / 外部工程工地")
-                uploaded_odo_img = st.file_uploader("📤 上傳出發時儀表板里程數照片 (防偷油查核用) *", type=["png", "jpg", "jpeg"])
+                uploaded_odo_img = st.file_uploader("📤 上傳出發時儀表板里程數照片 (行駛紀錄存查) *", type=["png", "jpg", "jpeg"])
                 v_reason = st.text_area("派車事由說明 *", placeholder="載送工程人員與設備前往案場安裝。")
 
-                if st.form_submit_button("🚀 送出車輛調派申請 (含里程紀錄)", type="primary", use_container_width=True):
+                if st.form_submit_button("🚀 送出車輛調派申請", type="primary", use_container_width=True):
                     if v_dest.strip() and v_reason.strip():
                         odo_status = f"起始里程: {v_start_km} km (已附儀表板照片)" if uploaded_odo_img else f"起始里程: {v_start_km} km (⚠️ 未附照片)"
                         st.session_state.approval_requests.insert(0, {
@@ -130,7 +129,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                             "放行單號": v_no, "單據類型": "車輛調派單", "車號/品名": f"{v_car} ({v_origin}出發 | {v_start_km} km)",
                             "申請人": current_user, "核准狀態": "🟡 待主管審核", "門禁放行狀態": "🔒 待審核與放行"
                         })
-                        st.success("✅ 車輛調派申請已送出！保全門檢時將核對里程數與儀表板照片。")
+                        st.success("✅ 車輛調派申請已送出！保全門檢時將核對儀表板里程數。")
                         st.rerun()
                     else:
                         st.warning("⚠️ 請完整填寫目的地與派車事由！")
@@ -149,12 +148,12 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                     st.text_input("攜出單號", value=co_no, disabled=True)
                     co_dest = st.text_input("攜出目的地/用途", value="外部工地現場檢測")
                 
-                uploaded_carryout_img = st.file_uploader("📤 上傳攜出物品照片、設備外觀與序號圖 (防弊查核用) *", type=["png", "jpg", "jpeg"])
+                uploaded_carryout_img = st.file_uploader("📤 上傳攜出物品照片、設備外觀與序號圖 (門禁查核用) *", type=["png", "jpg", "jpeg"])
                 co_reason = st.text_area("攜出事由說明 *", placeholder="因專案工程需要，攜出工具進行現場測試，預計當日攜回。")
                 
                 if st.form_submit_button("🚀 送出物品攜出申請", type="primary", use_container_width=True):
                     if co_items.strip() and co_reason.strip():
-                        img_status = "已附防弊照片" if uploaded_carryout_img else "⚠️ 未附照片"
+                        img_status = "已附照片" if uploaded_carryout_img else "⚠️ 未附照片"
                         st.session_state.approval_requests.insert(0, {
                             "單號": co_no, "類型": "物品攜出單", "申請人": current_user,
                             "部門": "工程部", "內容": f"物品: {co_items} | 出發: {co_origin} ➔ 目的: {co_dest} ({img_status})",
