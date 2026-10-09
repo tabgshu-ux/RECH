@@ -77,10 +77,16 @@ NAV_STRUCTURE = {
             },
             "🛠️ 工程與設計管理中心 (Engineering & Design Center)": {
                 "features": {
-                    "⚡ [工程] 配電盤與工程專案報價": "eng_quote",
+                    "⚡ [工程] 配電盤與工程專案雙層報價": "eng_quote",
                     "📊 [工程] 工程驗收與進度追蹤": "eng_progress",
                     "📋 [工程] 現場工程日報表與出工統計": "field_daily_report",
+                    "🤖 [工程] AI 施工照片智慧辨識與歸檔": "eng_ai_photo",
+                    "⚠️ [工程] 分包商與專業證照到期預警": "eng_license",
                     "🎨 [設計] 配電盤電氣與機構設計圖庫 Storage": "eng_design",
+                    "🔌 [工程] 配電盤 BOM 零件自動展開與採購連動": "eng_bom",
+                    "👷 [工程] 外包商點工計價與越南勞動法計薪": "eng_labor",
+                    "🧪 [工程] FAT/SAT 試驗報告與 QR Code 驗收": "eng_fat",
+                    "📊 [工程] 越南營建電子發票與稅務合規管家": "eng_vn_tax",
                 }
             },
             "🏭 生產部 (Production Dept)": {
@@ -141,10 +147,16 @@ NAV_STRUCTURE = {
             },
             "🛠️ Trung tâm Quản lý Kỹ thuật & Thiết kế": {
                 "features": {
-                    "⚡ [Kỹ thuật] Báo giá Dự án & Truyền AR": "eng_quote",
-                    "📊 [Kỹ thuật] Tiến độ nghiệm thu dự án cơ điện": "eng_progress",
-                    "📋 [Kỹ thuật] Nhật ký Thi công Công trình": "field_daily_report",
+                    "⚡ [Kỹ thuật] Báo giá Dự án": "eng_quote",
+                    "📊 [Kỹ thuật] Tiến độ nghiệm thu": "eng_progress",
+                    "📋 [Kỹ thuật] Nhật ký Thi công": "field_daily_report",
+                    "🤖 [Kỹ thuật] AI Nhận diện ảnh": "eng_ai_photo",
+                    "⚠️ [Kỹ thuật] Cảnh báo chứng chỉ": "eng_license",
                     "🎨 [Thiết kế] Kho Storage Bản vẽ": "eng_design",
+                    "🔌 [Kỹ thuật] Bóc tách BOM & Mua hàng": "eng_bom",
+                    "👷 [Kỹ thuật] Chấm công thầu phụ": "eng_labor",
+                    "🧪 [Kỹ thuật] Thử nghiệm FAT/SAT": "eng_fat",
+                    "📊 [Kỹ thuật] Hóa đơn điện tử VN": "eng_vn_tax",
                 }
             },
             "🏭 Phòng Sản xuất (Production Dept)": {
@@ -205,10 +217,16 @@ NAV_STRUCTURE = {
             },
             "🛠️ Engineering & Design Management Center": {
                 "features": {
-                    "⚡ [Engineering] Quotation & AR Transfer": "eng_quote",
-                    "📊 [Engineering] M&E Acceptance & Progress": "eng_progress",
+                    "⚡ [Engineering] Quotation": "eng_quote",
+                    "📊 [Engineering] M&E Acceptance": "eng_progress",
                     "📋 [Engineering] Daily Construction Report": "field_daily_report",
+                    "🤖 [Engineering] AI Photo Recognition": "eng_ai_photo",
+                    "⚠️ [Engineering] License Alerts": "eng_license",
                     "🎨 [Design] Drawing Storage Center": "eng_design",
+                    "🔌 [Engineering] BOM & Procurement": "eng_bom",
+                    "👷 [Engineering] Subcontractor Labor": "eng_labor",
+                    "🧪 [Engineering] FAT/SAT Testing": "eng_fat",
+                    "📊 [Engineering] Vietnam E-Invoice": "eng_vn_tax",
                 }
             },
             "🏭 Production Dept": {
@@ -391,8 +409,26 @@ elif target_route == "eng_progress":
 elif target_route == "field_daily_report":
     load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="3")
 
-elif target_route == "eng_design":
+elif target_route == "eng_ai_photo":
     load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="4")
+
+elif target_route == "eng_license":
+    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="5")
+
+elif target_route == "eng_design":
+    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="6")
+
+elif target_route == "eng_bom":
+    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="7")
+
+elif target_route == "eng_labor":
+    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="8")
+
+elif target_route == "eng_fat":
+    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="9")
+
+elif target_route == "eng_vn_tax":
+    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="10")
 
 elif target_route == "procurement_ap":
     load_module_safely("modules.procurement_ap", "render_procurement_ap_page", engine=engine, lang=curr_lang)
