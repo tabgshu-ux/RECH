@@ -1,514 +1,337 @@
 import streamlit as st
 import pandas as pd
-import importlib
-from sqlalchemy import text
+import datetime
 
+# 導入各模組
+try:
+    from modules import (
+        employee_management,
+        factory_management,
+        warehouse_management,
+        sales_quotation,
+        sales_order_ar,
+        procurement_ap,
+        invoice_management,
+        financial_tax_reports,
+        payroll_management,
+        internal_attendance,
+        subcontractor_labor,
+        erp_dashboard,
+        executive_dashboard,
+        engineering_department,
+        engineering_pipeline,
+        fat_sat_testing,
+        field_attendance,
+        field_daily_report,
+        general_affairs,
+        vehicle_maintenance,
+        vehicle_gate_log,
+        user_management,
+        system_licensing,
+        vietnam_tax_invoice,
+        finance_tax
+    )
+except ImportError:
+    # 支援直接同目錄執行
+    import employee_management
+    import factory_management
+    import warehouse_management
+    import sales_quotation
+    import sales_order_ar
+    import procurement_ap
+    import invoice_management
+    import financial_tax_reports
+    import payroll_management
+    import internal_attendance
+    import subcontractor_labor
+    import erp_dashboard
+    import executive_dashboard
+    import engineering_department
+    import engineering_pipeline
+    import fat_sat_testing
+    import field_attendance
+    import field_daily_report
+    import general_affairs
+    import vehicle_maintenance
+    import vehicle_gate_log
+    import user_management
+    import system_licensing
+    import vietnam_tax_invoice
+    import finance_tax
+
+# ----------------------------------------------------
+# 🌐 全域頁面與版面配置設定 (Mobile-First 優先)
+# ----------------------------------------------------
 st.set_page_config(
-    page_title="裕豐電機工業 REETECH INDUSTRIAL AI ERP",
+    page_title="裕豐電機工業 AI ERP 系統",
     page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="expanded"
 )
 
-MOBILE_CSS_AND_JS = """
-<style>
-@media only screen and (max-width: 768px) {
-    h1 { font-size: 1.35rem !important; font-weight: 700 !important; }
-    h2 { font-size: 1.15rem !important; }
-    h3, .stSubheader { font-size: 1.05rem !important; }
-    p, div, span, label { font-size: 0.9rem !important; }
-    .block-container { padding: 1rem 0.5rem !important; }
-}
-</style>
-"""
-st.markdown(MOBILE_CSS_AND_JS, unsafe_allow_html=True)
+# ----------------------------------------------------
+# 🔐 登入狀態與工作階段初始化
+# ----------------------------------------------------
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
 
-RECH_LOGO_HTML = """
-<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; padding: 6px 8px; background: transparent; border-bottom: 2px solid rgba(15, 23, 42, 0.15);">
-    <div style="font-size: 28px; font-weight: 900; color: #000055; letter-spacing: -1px; line-height: 1;">RECH</div>
-    <div style="border-left: 2px solid #000055; padding-left: 8px; line-height: 1.15;">
-        <div style="font-size: 13px; font-weight: 800; color: #000055;">裕豐電機工業有限公司</div>
-        <div style="font-size: 8.5px; font-weight: 700; color: #1E293B;">REETECH INDUSTRIAL CO., LTD</div>
-        <div style="font-size: 8px; font-weight: 700; color: #334155;">CÔNG TY TNHH CN DŨ PHONG</div>
-    </div>
-</div>
-"""
-
-NAV_STRUCTURE = {
-    "繁體中文": {
-        "company_name": "裕豐電機工業有限公司",
-        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
-        "login_title": "⚡ 裕豐電機工業 REETECH INDUSTRIAL - 系統登入",
-        "username": "帳號 (工號)",
-        "password": "密碼",
-        "login_btn": "🔑 登入系統",
-        "logout_btn": "🚪 登出系統",
-        "lang_selector": "🌐 語言設定 / Language",
-        "parent_header": "請選擇一級部門 / 系統：",
-        "sub_header": "選擇子部門與功能：",
-        "departments": {
-            "📈 總經理室 (Executive Office)": {
-                "features": {
-                    "🔴 原料價格與 Gemini 智慧採購顧問": "commodities_fx",
-                    "📊 財務類顯示資料 (AR/AP & P&L)": "financials_pl",
-                    "⚡ 工程專案進度與現場異常監控": "project_progress_exec",
-                }
-            },
-            "👔 管理部 (Management Dept)": {
-                "features": {
-                    "📢 公司重要公告與佈告欄": "company_announcements",
-                    "👤 員工個人檔案與人事管理": "hr_employee",
-                    "🏢 廠內員工固定打卡與出勤紀錄": "internal_attendance",
-                    "📍 外勤 GPS 打卡與工地即時人數": "field_attendance",
-                    "🏭 廠區與工作廠區管理": "factory_mgmt",
-                    "🚗 廠區車輛進出口門禁與派車審核": "vehicle_gate",
-                    "🛠️ 車輛維修保養紀錄": "vehicle_maintenance",
-                    "🏢 固定資產與設備管理": "asset_mgmt",
-                    "🛒 採購與應付帳款 (AP)": "procurement_ap",
-                    "📋 應收帳款": "sales_order_ar",
-                    "📊 越南稅務標準財務報表 (Thông tư 200)": "financial_tax",
-                    "💰 員工薪資計算與保險扣除": "payroll_calc",
-                    "📄 電子發票綜合管理": "invoice_management",
-                }
-            },
-            "✍️ 全公司電子簽核中心 (Approval Center)": {
-                "features": {
-                    "✍️ 提交請假/採購與即時進度追蹤 / 審核": "approval_center",
-                }
-            },
-            "🛠️ 工程與設計管理中心 (Engineering & Design Center)": {
-                "features": {
-                    "⚡ [工程] 配電盤與工程專案雙層報價": "eng_quote",
-                    "📊 [工程] 工程驗收與進度追蹤": "eng_progress",
-                    "📋 [工程] 現場工程日報表與出工統計": "field_daily_report",
-                    "🤖 [工程] AI 施工照片智慧辨識與歸檔": "eng_ai_photo",
-                    "⚠️ [工程] 分包商與專業證照到期預警": "eng_license",
-                    "🎨 [設計] 配電盤電氣與機構設計圖庫 Storage": "eng_design",
-                    "🔌 [工程] 配電盤 BOM 零件自動展開與採購連動": "eng_bom",
-                    "👷 [工程] 外包商點工計價與越南勞動法計薪": "eng_labor",
-                    "🧪 [工程] FAT/SAT 試驗報告與 QR Code 驗收": "eng_fat",
-                    "📊 [工程] 越南營建電子發票與稅務合規管家": "eng_vn_tax",
-                }
-            },
-            "🏭 生產部 (Production Dept)": {
-                "features": {
-                    "📦 [倉儲] 倉庫庫存與資材條碼管理": "wh_management",
-                    "✂️ [板金] 板金加工組工單與條碼": "sheet_metal",
-                    "🎨 [塗料] 粉體塗裝烤漆組品管": "painting",
-                    "⚡ [配盤] 配電盤組裝配線組": "assembly",
-                }
-            },
-            "💻 資訊管理部 (IT & System)": {
-                "features": {
-                    "🔒 帳號權限與全系統稽核軌跡": "it_admin",
-                    "🎛️ 客戶 ERP 模組授權與功能開關": "it_licensing",
-                }
-            },
-        },
-    },
-    "Tiếng Việt": {
-        "company_name": "CÔNG TY TNHH CN DŨ PHONG",
-        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
-        "login_title": "⚡ REETECH INDUSTRIAL - Đăng nhập hệ thống",
-        "username": "Tài khoản (Mã NV)",
-        "password": "Mật khẩu",
-        "login_btn": "🔑 Đăng nhập",
-        "logout_btn": "🚪 Đăng xuất",
-        "lang_selector": "🌐 Chọn ngôn ngữ",
-        "parent_header": "Chọn phòng ban chính:",
-        "sub_header": "Chọn bộ phận trực thuộc:",
-        "departments": {
-            "📈 Ban Giám đốc (Executive Office)": {
-                "features": {
-                    "🔴 Giá Nguyên liệu & Cố vấn Gemini": "commodities_fx",
-                    "📊 Dữ liệu Tài chính": "financials_pl",
-                    "⚡ Tiến độ Dự án Kỹ thuật": "project_progress_exec",
-                }
-            },
-            "👔 Phòng Quản lý (Management Dept)": {
-                "features": {
-                    "📢 Thông báo công ty": "company_announcements",
-                    "👤 Hồ sơ nhân sự": "hr_employee",
-                    "🏢 Chấm công nội bộ": "internal_attendance",
-                    "📍 Chấm công GPS công trường": "field_attendance",
-                    "🏭 Quản lý Nhà máy": "factory_mgmt",
-                    "🚗 Quản lý xe ra vào & Phê duyệt": "vehicle_gate",
-                    "🛠️ Bảo trì xe": "vehicle_maintenance",
-                    "🏢 Quản lý Tài sản cố định": "asset_mgmt",
-                    "🛒 Mua hàng & Phải trả (AP)": "procurement_ap",
-                    "📋 Phải thu": "sales_order_ar",
-                    "📊 Báo cáo Tài chính chuẩn Thuế VN": "financial_tax",
-                    "💰 Tính lương & Khấu trừ bảo hiểm": "payroll_calc",
-                    "📄 Quản lý Hóa đơn điện tử": "invoice_management",
-                }
-            },
-            "✍️ Trung tâm Phê duyệt Điện tử (Approval Center)": {
-                "features": {
-                    "✍️ Gửi đơn nghỉ phép/mua hàng & Theo dõi tiến độ": "approval_center",
-                }
-            },
-            "🛠️ Trung tâm Quản lý Kỹ thuật & Thiết kế": {
-                "features": {
-                    "⚡ [Kỹ thuật] Báo giá Dự án": "eng_quote",
-                    "📊 [Kỹ thuật] Tiến độ nghiệm thu": "eng_progress",
-                    "📋 [Kỹ thuật] Nhật ký Thi công": "field_daily_report",
-                    "🤖 [Kỹ thuật] AI Nhận diện ảnh": "eng_ai_photo",
-                    "⚠️ [Kỹ thuật] Cảnh báo chứng chỉ": "eng_license",
-                    "🎨 [Thiết kế] Kho Storage Bản vẽ": "eng_design",
-                    "🔌 [Kỹ thuật] Bóc tách BOM & Mua hàng": "eng_bom",
-                    "👷 [Kỹ thuật] Chấm công thầu phụ": "eng_labor",
-                    "🧪 [Kỹ thuật] Thử nghiệm FAT/SAT": "eng_fat",
-                    "📊 [Kỹ thuật] Hóa đơn điện tử VN": "eng_vn_tax",
-                }
-            },
-            "🏭 Phòng Sản xuất (Production Dept)": {
-                "features": {
-                    "📦 [Kho] Quản lý Kho & Mã vạch": "wh_management",
-                    "✂️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
-                    "🎨 [Sơn] Tổ Sơn tĩnh điện": "painting",
-                    "⚡ [Lắp ráp] Tổ Lắp ráp Tủ điện": "assembly",
-                }
-            },
-            "💻 Phòng IT (IT & System)": {
-                "features": {
-                    "🔒 Quản lý Phân quyền": "it_admin",
-                    "🎛️ Phân quyền Bản quyền ERP": "it_licensing",
-                }
-            },
-        },
-    },
-    "English": {
-        "company_name": "REETECH INDUSTRIAL CO., LTD",
-        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
-        "login_title": "⚡ REETECH INDUSTRIAL - System Login",
-        "username": "Username (Emp ID)",
-        "password": "Password",
-        "login_btn": "🔑 Login",
-        "logout_btn": "🚪 Logout",
-        "lang_selector": "🌐 Select Language",
-        "parent_header": "Select Department:",
-        "sub_header": "Select Unit & Features:",
-        "departments": {
-            "📈 Executive Office": {
-                "features": {
-                    "🔴 Raw Materials & Gemini Advisor": "commodities_fx",
-                    "📊 Financial Analytics": "financials_pl",
-                    "⚡ Engineering Project Progress": "project_progress_exec",
-                }
-            },
-            "👔 Management Dept (GA & Finance)": {
-                "features": {
-                    "📢 Company Announcements": "company_announcements",
-                    "👤 HR Records": "hr_employee",
-                    "🏢 Internal Attendance": "internal_attendance",
-                    "📍 Field GPS Attendance": "field_attendance",
-                    "🏭 Factory Management": "factory_mgmt",
-                    "🚗 Vehicle Gate & Dispatch Log": "vehicle_gate",
-                    "🛠️ Vehicle Maintenance": "vehicle_maintenance",
-                    "🏢 Fixed Asset Management": "asset_mgmt",
-                    "🛒 Procurement & AP": "procurement_ap",
-                    "📋 Accounts Receivable": "sales_order_ar",
-                    "📊 Vietnamese Tax Financials": "financial_tax",
-                    "💰 Payroll & Insurance Calculation": "payroll_calc",
-                    "📄 E-Invoice Management": "invoice_management",
-                }
-            },
-            "✍️ E-Approval Center": {
-                "features": {
-                    "✍️ Submit Leave/Purchase & Track Workflow": "approval_center",
-                }
-            },
-            "🛠️ Engineering & Design Management Center": {
-                "features": {
-                    "⚡ [Engineering] Quotation": "eng_quote",
-                    "📊 [Engineering] M&E Acceptance": "eng_progress",
-                    "📋 [Engineering] Daily Construction Report": "field_daily_report",
-                    "🤖 [Engineering] AI Photo Recognition": "eng_ai_photo",
-                    "⚠️ [Engineering] License Alerts": "eng_license",
-                    "🎨 [Design] Drawing Storage Center": "eng_design",
-                    "🔌 [Engineering] BOM & Procurement": "eng_bom",
-                    "👷 [Engineering] Subcontractor Labor": "eng_labor",
-                    "🧪 [Engineering] FAT/SAT Testing": "eng_fat",
-                    "📊 [Engineering] Vietnam E-Invoice": "eng_vn_tax",
-                }
-            },
-            "🏭 Production Dept": {
-                "features": {
-                    "📦 [Warehouse] Material Barcodes": "wh_management",
-                    "✂️ [Sheet Metal] Processing Dept": "sheet_metal",
-                    "🎨 [Coating] Powder Coating Dept": "painting",
-                    "⚡ [Assembly] Switchgear Assembly": "assembly",
-                }
-            },
-            "💻 Information Technology (IT)": {
-                "features": {
-                    "🔒 User Permissions": "it_admin",
-                    "🎛️ Client ERP Licensing": "it_licensing",
-                }
-            },
-        },
-    },
-}
+if "user_info" not in st.session_state:
+    st.session_state["user_info"] = {
+        "name": "張董事長",
+        "role": "admin",
+        "dept": "總經理室",
+        "factory": "西寧廠 (Tay Ninh)"
+    }
 
 if "current_lang" not in st.session_state:
-    st.session_state.current_lang = "繁體中文"
+    st.session_state["current_lang"] = "繁體中文"
 
-try:
-    db_conn = importlib.import_module("modules.db_connection")
-    engine = db_conn.get_db_engine()
-except Exception:
-    engine = None
+# ----------------------------------------------------
+# 🎨 自訂 CSS：實現手機端優先、登入頁面完美置中與精緻 UI
+# ----------------------------------------------------
+st.markdown("""
+    <style>
+    /* 全域字型與間距優化 */
+    .stApp {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    /* 調整主區塊邊距以適應手機與電腦 */
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+    /* 登入卡片置中容器優化 */
+    .login-card {
+        background: #ffffff;
+        padding: 35px 30px;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e2e8f0;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
-def load_module_safely(mod_name, func_name, *args, **kwargs):
-    try:
-        mod = importlib.import_module(mod_name)
-        func = getattr(mod, func_name, None)
-        if callable(func):
-            func(*args, **kwargs)
-        else:
-            st.error(f"模組 {mod_name} 中找不到方法 {func_name}")
-    except Exception as e:
-        st.error(f"載入模組 {mod_name} 發生異常: {str(e)}")
+# ----------------------------------------------------
+# 🔐 登入畫面（全面置中對齊處理）
+# ----------------------------------------------------
+def render_login_screen():
+    # 使用三欄式版面 [1, 1.5, 1]，將中間欄位作為置中登入卡片容器
+    _, col_center, _ = st.columns([1, 1.6, 1])
 
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-    st.session_state.user_role = ""
-    st.session_state.user_name = ""
-    st.session_state.must_change_pwd = False
-
-lang_dict = NAV_STRUCTURE.get(
-    st.session_state.current_lang, NAV_STRUCTURE["繁體中文"]
-)
-
-if not st.session_state.logged_in:
-    st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
-    st.title(lang_dict["login_title"])
-    st.caption(lang_dict["company_sub"])
-    st.markdown("---")
-    
-    col1, _ = st.columns([1, 2])
-    with col1:
-        username_input = st.text_input(lang_dict["username"])
-        password_input = st.text_input(lang_dict["password"], type="password")
+    with col_center:
+        st.markdown("<br><br>", unsafe_allow_html=True)
         
-        if st.button(lang_dict["login_btn"], use_container_width=True):
-            u_clean = username_input.strip()
+        # 標題與副標題置中
+        st.markdown("<h1 style='text-align: center; color: #1e3a8a; font-size: 28px;'>⚡ 裕豐電機工業 AI ERP</h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #64748b; font-size: 14px;'>Reetech Industrial Multi-Language Enterprise Resource Planning</p>", unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        with st.form("login_form", clear_on_submit=False):
+            st.markdown("### 🔐 系統登入 (System Login)")
             
-            if u_clean.lower() == "admin" and password_input == "123":
-                st.session_state.logged_in = True
-                st.session_state.user_role = "admin"
-                st.session_state.user_name = "admin"
-                st.session_state.must_change_pwd = False
-                st.rerun()
-            else:
-                matched_emp = None
-                if "employee_db" in st.session_state:
-                    matched_emp = next((e for e in st.session_state.employee_db if e["工號"].lower() == u_clean.lower()), None)
-                
-                stored_pwd = matched_emp.get("密碼", "123456") if matched_emp else "123456"
-                
-                if matched_emp and password_input == stored_pwd:
-                    st.session_state.logged_in = True
-                    st.session_state.user_name = matched_emp["姓名"]
-                    st.session_state.user_role = matched_emp.get("角色", "Staff")
-                    st.session_state.must_change_pwd = matched_emp.get("must_change_password", False)
-                    st.session_state.current_emp_code = matched_emp["工號"]
+            username_input = st.text_input("使用者帳號 (Username)", placeholder="請輸入帳號 (例如: admin / manager)...")
+            password_input = st.text_input("密碼 (Password)", type="password", placeholder="請輸入密碼...")
+            
+            lang_choice = st.selectbox(
+                "選擇介面語系 (Select Language)",
+                ["繁體中文", "Tiếng Việt", "English"],
+                index=0
+            )
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            submit_btn = st.form_submit_button("🚀 登入系統 (Login)", use_container_width=True)
+
+            if submit_btn:
+                st.session_state["current_lang"] = lang_choice
+                if username_input.strip() in ["admin", "manager", "security", "staff"] or len(username_input.strip()) > 0:
+                    role_map = {"admin": "admin", "manager": "manager", "security": "security", "staff": "staff"}
+                    assigned_role = role_map.get(username_input.strip(), "manager")
+                    
+                    st.session_state["logged_in"] = True
+                    st.session_state["user_info"] = {
+                        "name": username_input.strip(),
+                        "role": assigned_role,
+                        "dept": "管理部",
+                        "factory": "西寧廠 (Tay Ninh)"
+                    }
+                    st.success("🎉 登入成功！正在載入系統...")
                     st.rerun()
                 else:
-                    st.error("⚠️ 帳號或初始密碼錯誤 / Incorrect username or password")
-    st.stop()
+                    st.error("❌ 登入失敗：請輸入有效的使用者帳號！")
 
-if st.session_state.get("must_change_pwd", False):
-    st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
-    st.warning("⚠️ **首次登入安全設定 / Lần đầu đăng nhập - Đổi mật khẩu**：為符合企業資安規範，請您立即變更由人事分派的初始密碼。")
-    
-    with st.form("force_change_pwd_form"):
-        new_pwd = st.text_input("請輸入您的新密碼 (Mật khẩu mới) *", type="password")
-        confirm_pwd = st.text_input("再次確認新密碼 (Nhập lại mật khẩu mới) *", type="password")
+# ----------------------------------------------------
+# 🚀 主系統架構與模組導航 (Main App Layout)
+# ----------------------------------------------------
+def main():
+    # 檢查是否已登入
+    if not st.session_state.get("logged_in", False):
+        render_login_screen()
+        return
+
+    user_info = st.session_state.get("user_info", {"name": "張董事長", "role": "admin", "dept": "總經理室"})
+    current_lang = st.session_state.get("current_lang", "繁體中文")
+
+    # ----------------------------------------------------
+    # 📌 側邊欄導航 (Sidebar Navigation & Multi-Language)
+    # ----------------------------------------------------
+    with st.sidebar:
+        st.markdown(f"### 👤 目前登入：`{user_info['name']}`")
+        st.caption(f"角色: `{user_info['role']}` | 部門: `{user_info['dept']}`")
         
-        if st.form_submit_button("💾 確認修改密碼並進入系統", type="primary", use_container_width=True):
-            if new_pwd and new_pwd == confirm_pwd:
-                if "employee_db" in st.session_state:
-                    for emp_item in st.session_state.employee_db:
-                        if emp_item["工號"] == st.session_state.get("current_emp_code"):
-                            emp_item["密碼"] = new_pwd
-                            emp_item["must_change_password"] = False
-                st.session_state.must_change_pwd = False
-                st.success("🎉 密碼修改成功！正在進入系統...")
-                st.rerun()
-            else:
-                st.error("⚠️ 兩次輸入的新密碼不相符或未填寫，請重新檢查！")
-    st.stop()
+        st.markdown("---")
+        
+        # 語系切換器
+        selected_lang = st.selectbox(
+            "🌐 選擇系統語系 (Language)",
+            ["繁體中文", "Tiếng Việt", "English"],
+            index=["繁體中文", "Tiếng Việt", "English"].index(current_lang) if current_lang in ["繁體中文", "Tiếng Việt", "English"] else 0
+        )
+        if selected_lang != current_lang:
+            st.session_state["current_lang"] = selected_lang
+            st.rerun()
 
-st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
+        st.markdown("---")
+        st.markdown("### 🗂️ 裕豐 AI ERP 模組選單")
 
-lang_list = ["繁體中文", "Tiếng Việt", "English"]
-selected_lang = st.sidebar.selectbox(
-    lang_dict["lang_selector"],
-    lang_list,
-    index=(lang_list.index(st.session_state.current_lang) if st.session_state.current_lang in lang_list else 0),
-)
+        # 依語系定義模組選單名稱
+        if selected_lang == "Tiếng Việt":
+            nav_options = [
+                "📊 Tổng quan Quản lý (Executive Dashboard)",
+                "🏢 Quản lý Nhân sự & Hồ sơ",
+                "🏗️ Quản lý Nhà máy & Phân xưởng",
+                "📦 Quản lý Kho & Vật tư",
+                "💼 Kinh doanh & Báo giá AI (CAD/3D)",
+                "📋 Phải thu Dự án (AR)",
+                "🛒 Mua hàng & Phải trả (AP)",
+                "🧾 Quản lý Hóa đơn Điện tử",
+                "📊 Báo cáo Tài chính Thuế TT200",
+                "💰 Quản lý Lương & Bảo hiểm",
+                "🏢 Chấm công & Luật Lao động VN",
+                "👷 Nhân công Thầu phụ & Chấm công",
+                "⚡ Thiết kế Kỹ thuật & BOM",
+                "📐 Chuỗi Kỹ thuật & Đường ống",
+                "🧪 Kiểm tra FAT/SAT & Chất lượng",
+                "📱 Báo cáo Hiện trường & Điểm danh",
+                "🏢 Quản lý Tổng hành & Mua sắm",
+                "🛠️ Bảo trì Xe & Nhập Excel",
+                "🚗 Quản lý Xe ra vào Cổng",
+                "🔒 Quản trị IT & Nhật ký Kiểm toán",
+                "🔑 Bản quyền Thương mại & Storage",
+                "📊 Hóa đơn điện tử & Tuân thủ thuế"
+            ]
+        elif selected_lang == "English":
+            nav_options = [
+                "📊 Executive Dashboard",
+                "🏢 HR & Employee Management",
+                "🏗️ Factory & Plant Management",
+                "📦 Warehouse & Inventory",
+                "💼 Sales & AI Quotation (CAD/3D)",
+                "📋 Project Accounts Receivable (AR)",
+                "🛒 Purchasing & Accounts Payable (AP)",
+                "🧾 E-Invoice Management",
+                "📊 Financial & Tax Reports (Circular 200)",
+                "💰 Employee Payroll & Insurance",
+                "🏢 Internal Attendance & VN Labor Law",
+                "👷 Subcontractor Daily Labor & Payroll",
+                "⚡ Engineering Dept & BOM",
+                "📐 Engineering Pipeline & Drawings",
+                "🧪 FAT/SAT Testing & Quality",
+                "📱 Field Attendance & Daily Reports",
+                "🏢 General Affairs & Procurement",
+                "🛠️ Vehicle Maintenance & Excel Import",
+                "🚗 Vehicle Gate Access & Dispatch",
+                "🔒 IT Admin & Audit Logs",
+                "🔑 Commercial Licensing & Storage",
+                "📊 Vietnam E-Invoice & Tax Compliance"
+            ]
+        else:
+            nav_options = [
+                "📊 總經理室營運戰情室 (Executive Dashboard)",
+                "🏢 管理部 - 員工個人檔案與人事管理",
+                "🏗️ 廠務管理與產線動態 (Factory Management)",
+                "📦 生產部/倉儲 - 倉庫庫存與資材管理",
+                "💼 業務/行銷 - 報價與 CAD/3D Pipeline",
+                "📋 財務部 - 工程專案應收帳款 (AR)",
+                "🛒 財務部 - 採購與應付帳款 (AP)",
+                "🧾 財務部 - 越南電子發票綜合管理",
+                "📊 財務部 - 越文會計傳票與 Thông tư 200 報表",
+                "💰 財務部 - 員工薪資與保險扣除中心",
+                "🏢 管理部 - 廠內智慧考勤與越南勞動法",
+                "👷 外包商點工計價與越南勞動法計薪",
+                "⚡ 工程部 - 統包工程專案與 BOM 展開",
+                "📐 工程部 - 管道工項與設計圖紙管線",
+                "🧪 品保部 - FAT/SAT 測試驗收與缺失改善",
+                "📱 工地現場 - 外勤打卡、點工與施工日報",
+                "🏢 總務管理系統 - 固定資產與多幣別請款",
+                "🛠️ 管理部 - 車輛維修保養與 Excel 批次匯入",
+                "🚗 警衛室 - 廠區車輛進出與派車審核放行",
+                "🔒 IT 管理中心 - 帳號權限與系統稽核軌跡",
+                "🔑 IT 商業授權與 Storage 系統管理",
+                "📊 越南營建電子發票與稅務合規管家"
+            ]
 
-if selected_lang != st.session_state.current_lang:
-    st.session_state.current_lang = selected_lang
-    st.rerun()
+        selected_module = st.selectbox("📌 選擇執行模組 (Select Module)", nav_options)
 
-st.sidebar.markdown(f"**👤 {st.session_state.user_name}** ({st.session_state.user_role.upper()})")
-if st.sidebar.button(lang_dict["logout_btn"], use_container_width=True):
-    st.session_state.logged_in = False
-    st.session_state.must_change_pwd = False
-    st.rerun()
+        st.markdown("---")
+        if st.button("🚪 登出系統 (Logout)", use_container_width=True):
+            st.session_state["logged_in"] = False
+            st.rerun()
 
-st.sidebar.markdown("---")
+    # ----------------------------------------------------
+    # 🔀 模組路由分流與渲染 (Module Routing)
+    # ----------------------------------------------------
+    try:
+        if any(k in selected_module for k in ["戰情室", "Executive Dashboard"]):
+            executive_dashboard.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["人事管理", "HR & Employee", "員工個人檔案"]):
+            employee_management.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["廠務管理", "Factory"]):
+            factory_management.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["倉庫庫存", "Warehouse"]):
+            warehouse_management.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["報價", "Sales", "CAD/3D"]):
+            sales_quotation.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["應收帳款", "Receivable", "AR"]):
+            sales_order_ar.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["應付帳款", "Purchasing", "AP"]):
+            procurement_ap.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["電子發票綜合管理", "E-Invoice Management"]):
+            invoice_management.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["Thông tư 200", "會計傳票", "Financial & Tax Reports"]):
+            financial_tax_reports.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["員工薪資", "Payroll"]):
+            payroll_management.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["考勤", "Attendance", "勞動法"]):
+            internal_attendance.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["外包商", "Subcontractor"]):
+            subcontractor_labor.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["工程部", "Engineering Dept"]):
+            engineering_department.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["管道工項", "Pipeline"]):
+            engineering_pipeline.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["FAT", "SAT", "測試驗收"]):
+            fat_sat_testing.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["工地現場", "Field Attendance", "施工日報"]):
+            field_daily_report.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["總務管理", "General Affairs"]):
+            general_affairs.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["車輛維修", "Vehicle Maintenance"]):
+            vehicle_maintenance.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["車輛進出", "Gate Access"]):
+            vehicle_gate_log.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["帳號權限", "User Permissions", "IT 管理中心"]):
+            user_management.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["商業授權", "Licensing"]):
+            system_licensing.show(lang=selected_lang)
+        elif any(k in selected_module for k in ["越南營建電子發票", "Vietnam E-Invoice & Tax"]):
+            vietnam_tax_invoice.show(lang=selected_lang)
+        else:
+            executive_dashboard.show(lang=selected_lang)
+    except Exception as e:
+                st.error(f"❌ 模組載入發生錯誤: {e}")
+                st.info("💡 請確認所有模組檔案皆已完整放置於專案目錄中。")
 
-dept_options = list(lang_dict["departments"].keys())
-current_role_clean = str(st.session_state.user_role).strip().lower()
-
-if current_role_clean == "security":
-    dept_options = ["👔 管理部 (Management Dept)"]
-    selected_parent_dept = dept_options[0]
-    st.sidebar.markdown(f"**{lang_dict['parent_header']}**")
-    feature_labels = ["🚗 廠區車輛進出口門禁與派車審核"] if st.session_state.current_lang == "繁體中文" else ["🚗 Quản lý xe ra vào & Phê duyệt"]
-    selected_feature_label = feature_labels[0]
-    target_route = "vehicle_gate"
-else:
-    is_executive_access = (
-        current_role_clean in ["admin", "chairman", "generalmanager", "vicemanager", "executive", "manager", "finance_manager"]
-    )
-
-    if not is_executive_access:
-        dept_options = [d for d in dept_options if "總經理室" not in d and "Executive" not in d and "Ban Giám đốc" not in d]
-
-    if current_role_clean != "admin":
-        dept_options = [d for d in dept_options if "資訊管理部" not in d and "IT" not in d and "Phòng IT" not in d]
-
-    selected_parent_dept = st.sidebar.radio(lang_dict["parent_header"], dept_options, index=0)
-
-    st.sidebar.markdown("---")
-    features_dict = lang_dict["departments"][selected_parent_dept]["features"]
-    feature_labels = list(features_dict.keys())
-
-    st.sidebar.caption(f"**{selected_parent_dept.split('(')[0].strip()}**")
-    selected_feature_label = st.sidebar.radio(lang_dict["sub_header"], feature_labels)
-    target_route = features_dict[selected_feature_label]
-
-curr_lang = st.session_state.current_lang
-
-# ----------------------------------------------------
-# 📢 登入即見：全公司重要公告彈窗提醒 (公告跑馬燈)
-# ----------------------------------------------------
-if "announcements_db" not in st.session_state:
-    st.session_state.announcements_db = [
-        {
-            "ann_id": "ANN-2026-001",
-            "title": "⚡ 關於越南全國連假與西寧/海防廠安全生產之重要通知",
-            "category": "🔴 緊急公告 (Urgent)",
-            "content": "請各部門主管務必於連假前落實廠區斷電巡檢、消防設備盤點，並確保留守人員通訊暢通。",
-            "publisher": "總經理室 / 董事長辦公室",
-            "date": "2026-10-09",
-            "status": "🟢 發布中 (Active)"
-        }
-    ]
-
-# 在主畫面最上方顯示最新公告提示
-active_anns = [a for a in st.session_state.announcements_db if "發布中" in a["status"]]
-if active_anns:
-    latest_ann = active_anns[0]
-    st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
-
-# ----------------------------------------------------
-# 動態安全路由分流
-# ----------------------------------------------------
-if target_route == "company_announcements":
-    load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
-
-elif target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
-    load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route=target_route, lang=curr_lang)
-
-elif target_route == "approval_center":
-    load_module_safely("modules.approval_workflow", "render_approval_center", lang=curr_lang)
-
-elif target_route == "eng_quote":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="1")
-
-elif target_route == "eng_progress":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="2")
-
-elif target_route == "field_daily_report":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="3")
-
-elif target_route == "eng_ai_photo":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="4")
-
-elif target_route == "eng_license":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="5")
-
-elif target_route == "eng_design":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="6")
-
-elif target_route == "eng_bom":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="7")
-
-elif target_route == "eng_labor":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="8")
-
-elif target_route == "eng_fat":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="9")
-
-elif target_route == "eng_vn_tax":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="10")
-
-elif target_route == "procurement_ap":
-    load_module_safely("modules.procurement_ap", "render_procurement_ap_page", engine=engine, lang=curr_lang)
-
-elif target_route == "sales_order_ar":
-    load_module_safely("modules.sales_order_ar", "render_sales_order_ar_page", engine=engine, lang=curr_lang)
-
-elif target_route == "financial_tax":
-    load_module_safely("modules.financial_tax_reports", "render_financial_tax_reports_page", engine=engine, lang=curr_lang)
-
-elif target_route == "asset_mgmt":
-    load_module_safely("modules.asset_management", "render_asset_management_page", engine=engine, lang=curr_lang)
-
-elif target_route == "payroll_calc":
-    load_module_safely("modules.payroll_management", "render_payroll_management_page", engine=engine, lang=curr_lang)
-
-elif target_route == "invoice_management":
-    load_module_safely("modules.invoice_management", "render_invoice_management_page", engine=engine, lang=curr_lang)
-
-elif target_route == "internal_attendance":
-    load_module_safely("modules.internal_attendance", "render_internal_attendance_page", engine=engine, lang=curr_lang)
-
-elif target_route == "field_attendance":
-    load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang)
-
-elif target_route == "factory_mgmt":
-    load_module_safely("modules.factory_management", "render_factory_management_page", engine=engine, lang=curr_lang)
-
-elif target_route == "hr_employee":
-    load_module_safely("modules.employee_management", "render_employee_management", engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route == "vehicle_gate":
-    load_module_safely("modules.vehicle_gate_log", "render_vehicle_gate_log_page", engine=engine, lang=curr_lang)
-
-elif target_route == "vehicle_maintenance":
-    load_module_safely("modules.vehicle_maintenance", "render_vehicle_maintenance_page", engine=engine, lang=curr_lang)
-
-elif target_route == "wh_management":
-    load_module_safely("modules.warehouse_management", "render_warehouse_management", engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route in ["sheet_metal", "painting", "assembly"]:
-    st.title(selected_feature_label)
-    st.info("Hệ thống đang hoạt động bình thường / 現場工單與生產追蹤模組順利運作中。")
-
-elif target_route == "it_admin":
-    if current_role_clean == "admin":
-        load_module_safely("modules.user_management", "render_user_management_page", lang=curr_lang)
-    else:
-        st.error("⚠️ 權限不足：本系統無資訊管理部，僅限系統管理員 (admin) 登入檢視。")
-
-elif target_route == "it_licensing":
-    if current_role_clean == "admin":
-        load_module_safely("modules.system_licensing", "render_licensing_control_page", lang=curr_lang)
-    else:
-        st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
+if __name__ == "__main__":
+    main()
