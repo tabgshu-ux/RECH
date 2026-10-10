@@ -43,7 +43,7 @@ NAV_STRUCTURE = {
         "password": "密碼",
         "login_btn": "🔑 登入系統",
         "logout_btn": "🚪 登出系統",
-        "lang_selector": "🌐 語言設定 / Language",
+        "lang_selector": "🌐 選擇系統語系 / Select Language",
         "parent_header": "請選擇一級部門 / 系統：",
         "sub_header": "選擇子部門與功能：",
         "departments": {
@@ -114,7 +114,7 @@ NAV_STRUCTURE = {
         "password": "Mật khẩu",
         "login_btn": "🔑 Đăng nhập",
         "logout_btn": "🚪 Đăng xuất",
-        "lang_selector": "🌐 Chọn ngôn ngữ",
+        "lang_selector": "🌐 Chọn ngôn ngữ / Select Language",
         "parent_header": "Chọn phòng ban chính:",
         "sub_header": "Chọn bộ phận trực thuộc:",
         "departments": {
@@ -281,10 +281,20 @@ lang_dict = NAV_STRUCTURE.get(
 )
 
 if not st.session_state.logged_in:
-    # 🎯 登入頁面完美置中排版
     _, center_col, _ = st.columns([1, 1.5, 1])
     with center_col:
         st.markdown("<br><br>", unsafe_allow_html=True)
+        
+        # 🌐 在登入頁面中央上方加入語系選擇器
+        lang_list = ["繁體中文", "Tiếng Việt", "English"]
+        current_lang_idx = lang_list.index(st.session_state.current_lang) if st.session_state.current_lang in lang_list else 0
+        selected_login_lang = st.selectbox(lang_dict["lang_selector"], lang_list, index=current_lang_idx)
+        
+        if selected_login_lang != st.session_state.current_lang:
+            st.session_state.current_lang = selected_login_lang
+            st.rerun()
+
+        st.markdown("---")
         st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
         st.markdown(f"<h2 style='text-align: center;'>{lang_dict['login_title']}</h2>", unsafe_allow_html=True)
         st.markdown(f"<p style='text-align: center; color: gray;'>{lang_dict['company_sub']}</p>", unsafe_allow_html=True)
@@ -358,7 +368,10 @@ if selected_lang != st.session_state.current_lang:
     st.session_state.current_lang = selected_lang
     st.rerun()
 
-st.sidebar.markdown(f"**👤 {st.session_state.user_name}** ({st.session_state.user_role.upper()})")
+u_name_display = st.session_state.get("user_name", "User")
+u_role_display = str(st.session_state.get("user_role", "Staff")).upper()
+st.sidebar.markdown(f"**👤 {u_name_display}** ({u_role_display})")
+
 if st.sidebar.button(lang_dict["logout_btn"], use_container_width=True):
     st.session_state.logged_in = False
     st.session_state.must_change_pwd = False
@@ -367,7 +380,7 @@ if st.sidebar.button(lang_dict["logout_btn"], use_container_width=True):
 st.sidebar.markdown("---")
 
 dept_options = list(lang_dict["departments"].keys())
-current_role_clean = str(st.session_state.user_role).strip().lower()
+current_role_clean = str(st.session_state.get("user_role", "")).strip().lower()
 
 if current_role_clean == "security":
     dept_options = ["👔 管理部 (Management Dept)"]
