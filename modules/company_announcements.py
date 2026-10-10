@@ -30,8 +30,8 @@ def render_company_announcements_page(engine=None, lang="繁體中文", **kwargs
     st.title(t["title"])
     st.caption(t["caption"])
 
-    # 初始化公告資料庫
-    if "announcements_db" not in st.session_state:
+    # 🛡️ 初始化公告資料庫（確保不會被重複覆蓋）
+    if "announcements_db" not in st.session_state or not isinstance(st.session_state.announcements_db, list):
         st.session_state.announcements_db = [
             {
                 "ann_id": "ANN-2026-001",
@@ -88,9 +88,43 @@ def render_company_announcements_page(engine=None, lang="繁體中文", **kwargs
     with tab2:
         st.markdown("##### 📋 現行公司公告清單與維護")
         if st.session_state.announcements_db:
+            # 選擇要修改或刪除的公告
+            ann_options = [f"{a['ann_id']} - {a['title']}" for a in st.session_state.announcements_db]
+            sel_ann_target = st.selectbox("選擇要編輯或刪除的公告項目", ann_options)
+            target_aid = sel_ann_target.split(" - ")[0]
+            target_ann_obj = next((a for a in st.session_state.announcements_db if a["ann_id"] == target_aid), None)
+
+            st.markdown("---")
+
+            if target_ann_obj:
+                with st.form("form_edit_announcement"):
+                    ed_title = st.text_input("修改公告標題", value=target_ann_obj["title"])
+                    ed_status = st.selectbox("修改狀態", ["🟢 發布中 (Active)", "📁 存檔備查 (Archived)"], index=0 if "發布中" in target_ann_obj["status"] else 1)
+                    ed_content = st.text_area("修改公告內容", value=target_ann_obj["content"])
+
+                    col_b1, col_b2 = st.columns(2)
+                    with col_b1:
+                        update_ann_btn = st.form_submit_button("💾 儲存公告變更", type="primary", use_container_width=True)
+                    with col_b2:
+                        delete_ann_btn = st.form_submit_button("🔥 刪除此公告", type="secondary", use_container_width=True)
+
+                    if update_ann_btn:
+                        target_ann_obj["title"] = ed_title
+                        target_ann_obj["status"] = ed_status
+                        target_ann_obj["content"] = ed_content
+                        st.success("🎉 公告內容已成功更新！")
+                        st.rerun()
+
+                    if delete_ann_btn:
+                        st.session_state.announcements_db = [a for a in st.session_state.announcements_db if a["ann_id"] != target_aid]
+                        st.success("🗑️ 該筆公告已從系統中刪除！")
+                        st.rerun()
+
+            st.markdown("---")
+            st.markdown("##### 📜 所有歷史公告總覽")
             for ann in st.session_state.announcements_db:
-                with st.expander(f"📌 [{ann['category']}] {ann['title']} ({ann['date']})"):
-                    st.write(f"**發布單位**：{ann['publisher']} | **狀態**：`{ann['status']}`")
+                with st.expander(f"📌 [{ann['category']}] {ann['title']} ({ann['date']}) - {ann['status']}"):
+                    st.write(f"**發布單位**：{ann['publisher']}")
                     st.markdown(f"**內容說明**：\n{ann['content']}")
         else:
             st.info("目前尚無公告紀錄。")
