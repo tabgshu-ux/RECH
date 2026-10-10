@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import importlib
+from modules import painting
 from modules import sheet_metal
 from sqlalchemy import text
 
