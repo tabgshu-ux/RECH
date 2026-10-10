@@ -9,11 +9,11 @@ def get_supabase_client():
 
 def render_sheet_metal_module(engine=None, t=None, lang="繁體中文", **kwargs):
     st.title("✂️ [板金] 板金加工組工單與條碼管理")
-    st.caption("專為現場設計：支援工程設計圖上傳與線上檢視、大按鈕快速回報、自動同步 Supabase 資料庫。")
+    st.caption("專為現場設計：視覺化進度燈號、圖面隨附、大按鈕一鍵回報、自動同步 Supabase 資料庫。")
 
     supabase = get_supabase_client()
 
-    # 預設板金工單資料 (含設計圖欄位 mock)
+    # 預設板金工單資料
     default_orders = [
         {
             "order_code": "WO-SM-20261001",
@@ -21,7 +21,7 @@ def render_sheet_metal_module(engine=None, t=None, lang="繁體中文", **kwargs
             "spec": "800x600x250mm (厚度2mm)",
             "material_code": "SHEET-SPCC-2MM",
             "qty": 10.0,
-            "status": "📌 待排程 / 領料中",
+            "status": "⚡ 銲接與打磨成型中",
             "manager": "admin",
             "drawing_name": "TN_Control_Box_v1.pdf"
         },
@@ -37,7 +37,7 @@ def render_sheet_metal_module(engine=None, t=None, lang="繁體中文", **kwargs
         }
     ]
 
-    # 初始化 Session State 與 Supabase 同步
+    # 初始化 Session State
     if "sheet_metal_db" not in st.session_state or not isinstance(st.session_state.sheet_metal_db, list) or not st.session_state.sheet_metal_db:
         if supabase:
             try:
@@ -62,11 +62,11 @@ def render_sheet_metal_module(engine=None, t=None, lang="繁體中文", **kwargs
 
     tab_list, tab_action, tab_new = st.tabs([
         "📋 板金工單進度與設計圖總表", 
-        "⚡ 現場快速回報與狀態更新", 
+        "⚡ 現場快速回報與進度燈號", 
         "➕ 建立新板金工單 (含上傳設計圖)"
     ])
 
-    # 1. 總表檢視 (含設計圖提示)
+    # 1. 總表檢視
     with tab_list:
         st.markdown("### 📋 現行板金加工工單與工程圖面清冊")
         if st.session_state.sheet_metal_db:
@@ -83,11 +83,10 @@ def render_sheet_metal_module(engine=None, t=None, lang="繁體中文", **kwargs
                     "經辦": o["manager"]
                 })
             st.dataframe(pd.DataFrame(display_data), use_container_width=True)
-            st.info("💡 提示：現場主管或師傅可於「現場快速回報」分頁中直接點選工單查看詳細資訊與圖檔。")
         else:
             st.info("目前無板金工單紀錄。")
 
-    # 2. 現場快速回報與圖面檢視
+    # 2. 現場快速回報與視覺化進度燈號
     with tab_action:
         st.markdown("### ⚡ 現場主管快速進度回報與圖面檢視")
         
@@ -100,7 +99,29 @@ def render_sheet_metal_module(engine=None, t=None, lang="繁體中文", **kwargs
                 current_order = next((o for o in st.session_state.sheet_metal_db if o["order_code"] == target_code), None)
 
                 if current_order:
-                    # 📐 顯示該工單的詳細規格與設計圖狀態
+                    # 🚦 視覺化進度條（四大製程站別燈號）
+                    st.markdown("#### 📊 目前加工製程進度：")
+                    status_text = current_order["status"]
+                    
+                    # 判斷進度百分比與燈號
+                    p_val = 0
+                    if "待排程" in status_text:
+                        p_val = 10
+                        st.markdown("🔴 **【第 1 階段】📌 待排程 / 領料中** ⏳ (等待領取鋼板)")
+                    elif "雷射切割" in status_text:
+                        p_val = 40
+                        st.markdown("🟡 **【第 2 階段】✂️ 雷射切割與折床中** ⚙️ (正在進行沖孔與折彎)")
+                    elif "銲接" in status_text:
+                        p_val = 75
+                        st.markdown("🔵 **【第 3 階段】⚡ 銲接與打磨成型中** 🛠️ (正在進行箱體銲接與表面打磨)")
+                    elif "完工" in status_text:
+                        p_val = 100
+                        st.markdown("🟢 **【第 4 階段】✅ 板金完工 (待轉塗料組)** 🎉 (已全數檢驗合格，準備送往塗料組)")
+
+                    st.progress(p_val)
+                    st.markdown("---")
+
+                    # 📐 規格與圖面檢視
                     with st.expander("📌 點此展開【工程設計圖與加工規格明細】", expanded=True):
                         col_d1, col_d2 = st.columns(2)
                         with col_d1:
@@ -115,18 +136,18 @@ def render_sheet_metal_module(engine=None, t=None, lang="繁體中文", **kwargs
                         st.warning(f"⚠️ 現場施工提醒：請務必核對上方規格與圖面尺寸（{current_order.get('drawing_name', '無附圖')}）後方可進行折彎與雷射切割！")
 
                     st.markdown("---")
-                    st.markdown("#### 🔄 點擊下方大按鈕更新生產進度：")
+                    st.markdown("#### 🔄 點擊下方大按鈕切換更新生產進度：")
                     
                     col1, col2, col3 = st.columns(3)
                     logged_staff = st.session_state.get('user_name', 'admin')
 
                     with col1:
-                        if st.button("✂️ 1. 開始雷射/折床", use_container_width=True, type="secondary"):
+                        if st.button("✂️ 1. 雷射/折床中", use_container_width=True, type="secondary"):
                             current_order["status"] = "✂️ 雷射切割與折床中"
                             current_order["manager"] = logged_staff
                             if supabase:
                                 supabase.table("sheet_metal_orders").upsert(current_order).execute()
-                            st.success(f"✅ 工單 {target_code} 已更新為：雷射切割與折床中！")
+                            st.success(f"✅ 工單 {target_code} 進度已更新為：雷射切割與折床中！")
                             st.rerun()
 
                     with col2:
@@ -135,21 +156,21 @@ def render_sheet_metal_module(engine=None, t=None, lang="繁體中文", **kwargs
                             current_order["manager"] = logged_staff
                             if supabase:
                                 supabase.table("sheet_metal_orders").upsert(current_order).execute()
-                            st.success(f"✅ 工單 {target_code} 已更新為：銲接成型中！")
+                            st.success(f"✅ 工單 {target_code} 進度已更新為：銲接成型中！")
                             st.rerun()
 
                     with col3:
-                        if st.button("✅ 3. 板金完工 (轉塗料)", use_container_width=True, type="primary"):
+                        if st.button("✅ 3. 板金完工", use_container_width=True, type="primary"):
                             current_order["status"] = "✅ 板金完工 (待轉塗料)"
                             current_order["manager"] = logged_staff
                             if supabase:
                                 supabase.table("sheet_metal_orders").upsert(current_order).execute()
-                            st.success(f"🎉 工單 {target_code} 已順利完工並記錄！")
+                            st.success(f"🎉 工單 {target_code} 已順利完工！")
                             st.rerun()
         else:
             st.warning("⚠️ 目前無可操作的工單。")
 
-    # 3. 新增板金工單 (支援上傳設計圖)
+    # 3. 新增板金工單
     with tab_new:
         st.markdown("### ➕ 開立新板金加工工單與上傳設計圖")
         with st.form("form_new_sheet_metal"):
@@ -163,7 +184,6 @@ def render_sheet_metal_module(engine=None, t=None, lang="繁體中文", **kwargs
                 new_qty = st.number_input("生產數量 *", min_value=1.0, value=10.0, step=1.0)
                 new_status = st.selectbox("初始狀態", ["📌 待排程 / 領料中", "✂️ 雷射切割與折床中"])
 
-            # 📄 設計圖上傳欄位
             uploaded_file = st.file_uploader("📂 上傳工程設計圖檔 (支援 PDF, DWG, PNG, JPG)", type=["pdf", "png", "jpg", "jpeg"])
 
             if st.form_submit_button("💾 儲存工單、上傳圖面並同步至 Supabase", type="primary", use_container_width=True):
@@ -186,7 +206,7 @@ def render_sheet_metal_module(engine=None, t=None, lang="繁體中文", **kwargs
                             supabase.table("sheet_metal_orders").upsert(new_item).execute()
                         except Exception as e:
                             st.error(f"Supabase 寫入失敗: {e}")
-                    st.success(f"✅ 板金工單 `{new_code}` 建立成功，設計圖 `{drawing_filename}` 已順利附加！")
+                    st.success(f"✅ 板金工單 `{new_code}` 建立成功！")
                     st.rerun()
                 else:
                     st.warning("⚠️ 請完整填寫工單編號與專案名稱！")
