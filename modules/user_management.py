@@ -8,9 +8,9 @@ import datetime
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 帳號權限與系統稽核軌跡 (Audit Log)",
-        "caption": "監控全系統使用者登入歷程、自訂角色與完整對齊左側選單所有部門與子功能（含倉管與生產部）網頁授權。",
+        "caption": "監控全系統使用者登入歷程、完整支援帳號權限之新增、修改與刪除，並對齊左側選單所有部門與子功能。",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
-        "tab_users": "👥 系統使用者與全模組權限控管",
+        "tab_users": "👥 系統使用者與帳號權限維護 (CRUD)",
         "tab_api": "🔌 電子發票 API 串接設定",
         "audit_header": "🔍 全系統操作軌跡與稽核軌跡日誌",
         "filter_year": "篩選年份 (Year)",
@@ -18,8 +18,9 @@ USER_MGMT_I18N = {
         "filter_day": "篩選日期 (Day)",
         "search_placeholder": "輸入關鍵字搜尋稽核紀錄...",
         "no_logs": "目前尚無系統稽核紀錄。",
-        "users_header": "👥 系統現有使用者帳號與靈活權限清冊",
-        "add_user_header": "➕ 新增系統使用者帳號與倉管/生產部完整子功能授權",
+        "users_header": "👥 系統現有使用者帳號與權限清冊 (可進行修改與刪除)",
+        "add_user_header": "➕ 新增系統使用者帳號與全模組完整子功能授權",
+        "edit_user_header": "✏️ 修改 / 刪除現有使用者帳號與權限",
         "lbl_username": "登入帳號 (連動人事工號) *",
         "lbl_name": "選擇人事系統員工姓名 *",
         "lbl_role": "權限角色 (可選或自訂主管/倉管角色) *",
@@ -39,7 +40,11 @@ USER_MGMT_I18N = {
         "lbl_site": "所屬廠區 *",
         "site_options": ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"],
         "btn_add_user": "💾 建立使用者帳號與完整權限授權",
-        "success_add": "✅ 系統帳號已成功建立並與倉管及生產部門權限完整串聯！",
+        "btn_update_user": "🔄 儲存修改後的帳號權限",
+        "btn_delete_user": "🗑️ 刪除選定的使用者帳號",
+        "success_add": "✅ 系統帳號已成功建立！",
+        "success_update": "✅ 系統帳號權限已成功更新！",
+        "success_delete": "🗑️ 系統帳號已成功刪除！",
         "fill_warning": "⚠️ 請完整填寫帳號並選擇員工！",
         # 表格欄位
         "col_time": "時間戳記",
@@ -65,52 +70,57 @@ USER_MGMT_I18N = {
     },
     "Tiếng Việt": {
         "title": "🔒 Quản trị IT - Phân quyền Tài khoản & Nhật ký Kiểm toán",
-        "caption": "Giám sát lịch sử đăng nhập, tùy chỉnh vai trò và phân quyền chi tiết toàn bộ menu hệ thống.",
-        "tab_audit": "📊 Nhật ký Kiểm toán (Audit Logs)",
-        "tab_users": "👥 Quản lý Người dùng & Phân quyền",
+        "caption": "Quản lý CRUD tài khoản người dùng và phân quyền chi tiết.",
+        "tab_audit": "📊 Nhật ký Kiểm toán",
+        "tab_users": "👥 Quản lý Tài khoản (CRUD)",
         "tab_api": "🔌 Cấu hình API Hóa đơn",
-        "audit_header": "🔍 Nhật ký thao tác và kiểm toán toàn hệ thống",
-        "filter_year": "Lọc theo Năm",
-        "filter_month": "Lọc theo Tháng",
-        "filter_day": "Lọc theo Ngày",
-        "search_placeholder": "Nhập từ khóa tìm kiếm...",
-        "no_logs": "Hiện chưa có nhật ký kiểm toán nào.",
-        "users_header": "📋 Danh sách tài khoản người dùng hệ thống",
-        "add_user_header": "➕ Thêm tài khoản và phân quyền chi tiết",
-        "lbl_username": "Tài khoản đăng nhập *",
-        "lbl_name": "Chọn nhân viên từ hệ thống *",
-        "lbl_role": "Vai trò phân quyền *",
+        "audit_header": "🔍 Nhật ký thao tác",
+        "filter_year": "Năm",
+        "filter_month": "Tháng",
+        "filter_day": "Ngày",
+        "search_placeholder": "Tìm kiếm...",
+        "no_logs": "Chưa có nhật ký.",
+        "users_header": "📋 Danh sách tài khoản",
+        "add_user_header": "➕ Thêm tài khoản",
+        "edit_user_header": "✏️ Cập nhật / Xóa tài khoản",
+        "lbl_username": "Tài khoản *",
+        "lbl_name": "Nhân viên *",
+        "lbl_role": "Vai trò *",
         "default_roles": ["admin", "Warehouse Manager", "Production Manager", "Staff", "➕ [Tùy chỉnh...]"],
-        "lbl_site": "Nhà máy trực thuộc *",
+        "lbl_site": "Nhà máy *",
         "site_options": ["Nhà máy Tây Ninh", "Nhà máy Hải Phòng"],
         "btn_add_user": "💾 Tạo tài khoản",
-        "success_add": "✅ Đã tạo thành công tài khoản!",
-        "fill_warning": "⚠️ Vui lòng điền đầy đủ thông tin!",
+        "btn_update_user": "🔄 Cập nhật",
+        "btn_delete_user": "🗑️ Xóa",
+        "success_add": "✅ Thành công!",
+        "success_update": "✅ Đã cập nhật!",
+        "success_delete": "🗑️ Đã xóa!",
+        "fill_warning": "⚠️ Vui lòng điền đủ thông tin!",
         "col_time": "Thời gian",
         "col_user": "Tài khoản",
         "col_action": "Hành động",
         "col_module": "Module",
-        "col_ip": "IP nguồn",
+        "col_ip": "IP",
         "col_status": "Trạng thái",
-        "api_header": "🔌 Cấu hình kết nối API Hóa đơn điện tử Việt Nam",
-        "api_provider_label": "Nhà cung cấp hóa đơn *",
-        "api_providers": ["Viettel (S-Invoice)", "VNPT (VNPT-Invoice)", "MISA (MISA meInvoice)", "FPT.eInvoice", "Custom API"],
+        "api_header": "🔌 Cấu hình API",
+        "api_provider_label": "Nhà cung cấp *",
+        "api_providers": ["Viettel", "VNPT", "MISA"],
         "api_env_label": "Môi trường *",
-        "api_env_opts": ["Sandbox (Thử nghiệm)", "Production (Chính thức)"],
-        "tax_code_label": "Mã số thuế công ty *",
-        "endpoint_label": "Đường dẫn API (Endpoint URL) *",
-        "key_label": "Mã khóa API / Token xác thực *",
-        "modifier_label": "Người cấu hình (Khóa hệ thống)",
-        "api_save_btn": "💾 Lưu cấu hình API",
-        "api_test_btn": "🔗 Kiểm tra kết nối API",
-        "api_success": "✅ Đã lưu thành công cấu hình API hóa đơn!",
-        "api_test_success": "✅ Kết nối API thành công!"
+        "api_env_opts": ["Sandbox", "Production"],
+        "tax_code_label": "Mã số thuế *",
+        "endpoint_label": "Endpoint URL *",
+        "key_label": "Token *",
+        "modifier_label": "Người cấu hình",
+        "api_save_btn": "💾 Lưu",
+        "api_test_btn": "🔗 Kiểm tra",
+        "api_success": "✅ Lưu thành công!",
+        "api_test_success": "✅ Kết nối thành công!"
     },
     "English": {
         "title": "🔒 IT Center - User Permissions & System Audit Logs",
-        "caption": "Monitor login history, custom roles, and complete hierarchical menu access control.",
+        "caption": "Full CRUD management for user accounts and fine-grained menu access control.",
         "tab_audit": "📊 System Audit Logs",
-        "tab_users": "👥 Users & Detailed Permissions",
+        "tab_users": "👥 User Management (CRUD)",
         "tab_api": "🔌 E-Invoice API Config",
         "audit_header": "🔍 System Operation & Audit Trail Logs",
         "filter_year": "Filter Year",
@@ -118,8 +128,9 @@ USER_MGMT_I18N = {
         "filter_day": "Filter Day",
         "search_placeholder": "Search audit logs...",
         "no_logs": "No audit logs found.",
-        "users_header": "👥 Active System User Accounts",
-        "add_user_header": "➕ Register New User & Complete Menu Permissions",
+        "users_header": "👥 Active System User Accounts & CRUD Operations",
+        "add_user_header": "➕ Register New User & Permissions",
+        "edit_user_header": "✏️ Edit / Delete Existing User Account",
         "lbl_username": "Username *",
         "lbl_name": "Select Employee from HR *",
         "lbl_role": "Permission Role *",
@@ -127,7 +138,11 @@ USER_MGMT_I18N = {
         "lbl_site": "Plant Location *",
         "site_options": ["Tay Ninh Plant", "Hai Phong Plant"],
         "btn_add_user": "💾 Create User & Permissions",
+        "btn_update_user": "🔄 Update User Permissions",
+        "btn_delete_user": "🗑️ Delete User Account",
         "success_add": "✅ User account successfully created!",
+        "success_update": "✅ User account successfully updated!",
+        "success_delete": "🗑️ User account successfully deleted!",
         "fill_warning": "⚠️ Please fill in username and select employee!",
         "col_time": "Timestamp",
         "col_user": "Username",
@@ -220,6 +235,51 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     with tab_users:
         st.markdown(f"### {L['users_header']}")
         st.dataframe(pd.DataFrame(st.session_state.system_users_db), use_container_width=True)
+
+        # ✏️ 新增：現有帳號之修改與刪除 (CRUD 管理功能)
+        if st.session_state.system_users_db:
+            st.markdown("---")
+            st.markdown(f"### {L['edit_user_header']}")
+            
+            user_usernames = [u["username"] for u in st.session_state.system_users_db]
+            selected_target_user = st.selectbox("🎯 選擇要修改或刪除的登入帳號", user_usernames)
+            
+            # 尋找對應的使用者資料
+            target_user_obj = next((u for u in st.session_state.system_users_db if u["username"] == selected_target_user), None)
+            
+            if target_user_obj:
+                with st.form("form_edit_delete_user"):
+                    ec1, ec2 = st.columns(2)
+                    with ec1:
+                        edit_name = st.text_input("使用者姓名", value=target_user_obj.get("name", ""))
+                        
+                        # 角色選擇
+                        current_role = target_user_obj.get("role", "")
+                        if current_role not in st.session_state.custom_roles_list:
+                            st.session_state.custom_roles_list.insert(0, current_role)
+                        edit_role = st.selectbox("修改權限角色", st.session_state.custom_roles_list, index=st.session_state.custom_roles_list.index(current_role) if current_role in st.session_state.custom_roles_list else 0)
+                    with ec2:
+                        current_site = target_user_obj.get("site", "西寧廠 (Tay Ninh)")
+                        site_choices = L["site_options"]
+                        edit_site = st.selectbox("修改所屬廠區", site_choices, index=site_choices.index(current_site) if current_site in site_choices else 0)
+
+                    col_eb1, col_eb2 = st.columns(2)
+                    with col_eb1:
+                        update_clicked = st.form_submit_button(L["btn_update_user"], type="primary", use_container_width=True)
+                    with col_eb2:
+                        delete_clicked = st.form_submit_button(L["btn_delete_user"], use_container_width=False)
+
+                    if update_clicked:
+                        target_user_obj["name"] = edit_name
+                        target_user_obj["role"] = edit_role
+                        target_user_obj["site"] = edit_site
+                        st.success(L["success_update"])
+                        st.rerun()
+
+                    if delete_clicked:
+                        st.session_state.system_users_db = [u for u in st.session_state.system_users_db if u["username"] != selected_target_user]
+                        st.success(L["success_delete"])
+                        st.rerun()
 
         st.markdown("---")
         st.markdown(f"### {L['add_user_header']}")
