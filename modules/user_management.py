@@ -8,7 +8,7 @@ import datetime
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 帳號權限與系統稽核軌跡 (Audit Log)",
-        "caption": "監控全系統使用者登入歷程、自訂角色與對齊左側選單完整子功能的精細化網頁授權。",
+        "caption": "監控全系統使用者登入歷程、自訂角色與完整對齊左側選單所有部門與子功能網頁授權。",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
         "tab_users": "👥 系統使用者與全模組權限控管",
         "tab_api": "🔌 電子發票 API 串接設定",
@@ -19,7 +19,7 @@ USER_MGMT_I18N = {
         "search_placeholder": "輸入關鍵字搜尋稽核紀錄...",
         "no_logs": "目前尚無系統稽核紀錄。",
         "users_header": "👥 系統現有使用者帳號與靈活權限清冊",
-        "add_user_header": "➕ 新增系統使用者帳號與完整 14 項管理部子功能授權",
+        "add_user_header": "➕ 新增系統使用者帳號與全模組完整子功能授權",
         "lbl_username": "登入帳號 (連動人事工號) *",
         "lbl_name": "選擇人事系統員工姓名 *",
         "lbl_role": "權限角色 (可選或自訂主管/職稱角色) *",
@@ -28,7 +28,7 @@ USER_MGMT_I18N = {
             "董事長 / 總經理 (Chairman / GM)",
             "財務主管 (Finance Manager)",
             "行政主管 (Admin Manager)",
-            "設計主管 (Design Manager)",
+            "工程總監 / 設計主管 (Engineering Director)",
             "生產主管 (Production Manager)",
             "採購主管 (Procurement Manager)",
             "工地主任 / 專案經理 (Site Supervisor)",
@@ -38,8 +38,8 @@ USER_MGMT_I18N = {
         ],
         "lbl_site": "所屬廠區 *",
         "site_options": ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"],
-        "btn_add_user": "💾 建立使用者帳號與完整部門授權",
-        "success_add": "✅ 系統帳號已成功建立並與完整模組權限串聯！",
+        "btn_add_user": "💾 建立使用者帳號與完整權限授權",
+        "success_add": "✅ 系統帳號已成功建立並與完整部門子功能權限串聯！",
         "fill_warning": "⚠️ 請完整填寫帳號並選擇員工！",
         # 表格欄位
         "col_time": "時間戳記",
@@ -80,7 +80,7 @@ USER_MGMT_I18N = {
         "lbl_username": "Tài khoản đăng nhập *",
         "lbl_name": "Chọn nhân viên từ hệ thống *",
         "lbl_role": "Vai trò phân quyền *",
-        "default_roles": ["admin", "Chairman/GM", "Finance Manager", "Admin Manager", "Staff", "➕ [Tùy chỉnh...]"],
+        "default_roles": ["admin", "Chairman/GM", "Engineering Director", "Finance Manager", "Staff", "➕ [Tùy chỉnh...]"],
         "lbl_site": "Nhà máy trực thuộc *",
         "site_options": ["Nhà máy Tây Ninh", "Nhà máy Hải Phòng"],
         "btn_add_user": "💾 Tạo tài khoản",
@@ -123,7 +123,7 @@ USER_MGMT_I18N = {
         "lbl_username": "Username *",
         "lbl_name": "Select Employee from HR *",
         "lbl_role": "Permission Role *",
-        "default_roles": ["admin", "Chairman/GM", "Finance Manager", "Admin Manager", "staff", "➕ [Custom Role...]"],
+        "default_roles": ["admin", "Chairman/GM", "Engineering Director", "Finance Manager", "staff", "➕ [Custom Role...]"],
         "lbl_site": "Plant Location *",
         "site_options": ["Tay Ninh Plant", "Hai Phong Plant"],
         "btn_add_user": "💾 Create User & Permissions",
@@ -242,23 +242,23 @@ def render_user_management_page(lang="繁體中文", **kwargs):
             # 🛠️ 自由自訂新角色輸入框
             final_role = selected_role_opt
             if "➕" in selected_role_opt:
-                custom_role_input = st.text_input("✨ 請自由輸入新的主管/職稱角色名稱 (例如: 行政主管、設計主管、品管主管、業務總監...):")
+                custom_role_input = st.text_input("✨ 請自由輸入新的主管/職稱角色名稱 (例如: 行政主管、設計主管、工程總監...):")
                 if custom_role_input:
                     final_role = custom_role_input
                     if custom_role_input not in st.session_state.custom_roles_list:
                         st.session_state.custom_roles_list.insert(0, custom_role_input)
 
-            # 🏢 嚴格對齊左側選單層級：完整展開管理部所有 14 項子功能與其他部門
+            # 🏢 嚴格對齊左側選單層級：完整展開所有部門與所有子功能
             st.markdown("##### 🔐 依照左側選單層級的完整部門與所有子功能網頁授權派發 (Full Menu-Aligned Access Control)")
             
-            # 1. 總經理室 (Executive Office)
-            st.markdown("###### 👑 總經理室 (Executive Office)")
+            # 1. 總經理室 (Executive Office) & 電子簽核中心
+            st.markdown("###### 👑 總經理室 (Executive Office) 與全公司電子簽核中心")
             col_ex1, col_ex2 = st.columns(2)
             with col_ex1: acc_exec = st.checkbox("📊 總經理室營運總覽與高階決策", value=True)
             with col_ex2: acc_approval = st.checkbox("📋 全公司電子簽核中心 (Approval Center)", value=True)
 
-            # 2. 管理部 (Management Dept) - 完整 14 項子功能
-            st.markdown("###### 📋 管理部 (Management Dept) [完整 14 項子功能]")
+            # 2. 管理部 (Management Dept) - 完整子功能
+            st.markdown("###### 📋 管理部 (Management Dept)")
             cm1, cm2, cm3 = st.columns(3)
             with cm1:
                 acc_m1 = st.checkbox("📢 公司重要公告與佈告欄管理", value=True)
@@ -278,11 +278,21 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                 acc_m13 = st.checkbox("🧾 電子發票綜合管理與 XML 歸檔", value=True)
                 acc_m14 = st.checkbox("🌐 越南營建電子發票與稅務合規管家", value=True)
 
-            # 3. 工程與設計中心 (Engineering & Design Center)
-            st.markdown("###### 🛠️ 工程與設計中心 (Engineering & Design Center)")
-            col_en1, col_en2 = st.columns(2)
-            with col_en1: acc_quote = st.checkbox("🎨 專案智慧報價與 3D 渲染", value=True)
-            with col_en2: acc_proj = st.checkbox("📐 工程工項與預算編號控管", value=True)
+            # 3. 工程與設計中心 (Engineering & Design Center) - 完整 9 項子功能
+            st.markdown("###### 🛠️ 工程與設計中心 (Engineering & Design Center) [完整 9 項子功能]")
+            ce1, ce2, ce3 = st.columns(3)
+            with ce1:
+                acc_e1 = st.checkbox("🎨 [工程] 配電盤與工程專案雙層報價", value=True)
+                acc_e2 = st.checkbox("📐 [工程] 工程驗收與進度追蹤", value=True)
+                acc_e3 = st.checkbox("📊 [工程] 現場工程日報表與出工統計", value=True)
+            with ce2:
+                acc_e4 = st.checkbox("📷 [工程] AI 施工照片智慧辨識與歸檔", value=True)
+                acc_e5 = st.checkbox("⚠️ [工程] 分包商與專業證照到期預警", value=True)
+                acc_e6 = st.checkbox("🗄️ [設計] 配電盤電氣機構設計圖庫 Storage", value=True)
+            with ce3:
+                acc_e7 = st.checkbox("⚙️ [工程] 配電盤 BOM 零件自動展開與採購聯動", value=True)
+                acc_e8 = st.checkbox("👷 [工程] 外包商點工計價與越南勞動法計薪", value=True)
+                acc_e9 = st.checkbox("✅ [工程] FAT/SAT 試驗報告與 QR Code 驗收", value=True)
 
             # 4. 生產部 (Production Dept)
             st.markdown("###### 🏭 生產部 (Production Dept)")
