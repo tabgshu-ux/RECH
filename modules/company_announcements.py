@@ -5,7 +5,7 @@ import datetime
 def render_company_announcements_page(engine=None, lang="繁體中文", **kwargs):
     texts = {
         "繁體中文": {
-            "title": "📢 公司重要公告與佈告欄管理系統 (含稽核軌跡)",
+            "title": "📢 公司重要公告與佈告欄管理系統 ",
             "caption": "發布管理全廠區重要公告，所有異動皆會強制寫入 IT 稽核日誌，確保資安合規與防篡改。",
             "tab1": "📝 發布新公告 (管理部/總經理室)",
             "tab2": "📋 現行公告列表與安全維護"
