@@ -7,15 +7,15 @@ import datetime
 # ----------------------------------------------------
 WAREHOUSE_I18N = {
     "繁體中文": {
-        "title": "📦 生產部/倉儲 - 多倉別與出入庫時間/領料人追蹤系統",
-        "caption": "完整記錄進出倉時間、明確區分「領料人」與「倉庫管理員」，並提供嚴謹的異動稽核紀錄。",
+        "title": "📦 生產部/倉儲 - 多倉別聯動與出入庫追蹤系統",
+        "caption": "選擇目標倉庫後，下方資材選單將自動精準過濾該倉庫內的專屬零件與資材。",
         "tab_inventory": "📑 各倉別即時庫存與安全水位總表",
-        "tab_barcode": "🏷️ 資材出入庫與領料作業 (記錄時間與領取人)",
+        "tab_barcode": "🏷️ 資材出入庫與領料作業 (倉別動態聯動)",
         "tab_history": "📊 倉庫出入庫異動歷史日誌 (Audit Trail)",
         "tab_inbound": "📥 新增資材建檔與初始入庫",
         "table_header": "📋 跨廠區與多倉別資材庫存現況清冊",
         "no_records": "目前無倉庫庫存紀錄。",
-        "op_header": "🔄 倉庫資材出入庫作業處理 (含領料人與時間記錄)",
+        "op_header": "🔄 倉庫資材出入庫作業處理 (依倉別動態聯動)",
         "lbl_op_type": "選擇作業動作 (Operation Type) *",
         "op_opts": ["📥 入庫作業 (Stock In - 增加庫存)", "📤 出庫作業 (Stock Out - 領料扣減庫存)"],
         "lbl_target_wh": "選擇目標倉庫 (Target Warehouse) *",
@@ -25,7 +25,7 @@ WAREHOUSE_I18N = {
             "⚡ 裝配倉 (Assembly Floor WH)",
             "♻️ 退料/殘餘料倉 (Return & Surplus WH)"
         ],
-        "lbl_select_item": "選擇或搜尋資材品項 *",
+        "lbl_select_item": "選擇該倉庫內的資材品項 *",
         "lbl_scan_alt": "或者使用條碼槍掃描料號：",
         "lbl_op_qty": "異動數量 (Quantity) *",
         "lbl_receiver": "領料人 / 申請部門人員姓名 (Receiver) *",
@@ -46,8 +46,8 @@ WAREHOUSE_I18N = {
         "col_status": "庫存狀態"
     },
     "Tiếng Việt": {
-        "title": "📦 Phòng Sản xuất / Kho - Quản lý Xuất Nhập Kho & Người nhận",
-        "caption": "Theo dõi thời gian xuất nhập kho và người nhận vật tư.",
+        "title": "📦 Phòng Sản xuất / Kho - Quản lý Đa kho",
+        "caption": "Lọc vật tư theo kho được chọn.",
         "tab_inventory": "📑 Tồn kho",
         "tab_barcode": "🏷️ Xuất Nhập Kho",
         "tab_history": "📊 Lịch sử kho",
@@ -59,7 +59,7 @@ WAREHOUSE_I18N = {
         "op_opts": ["📥 Nhập kho", "📤 Xuất kho"],
         "lbl_target_wh": "Chọn kho *",
         "warehouse_opts": ["Kho linh kiện", "Kho cáp điện", "Kho lắp ráp", "Kho hàng thừa/trả lại"],
-        "lbl_select_item": "Chọn vật tư *",
+        "lbl_select_item": "Chọn vật tư trong kho *",
         "lbl_scan_alt": "Mã vạch:",
         "lbl_op_qty": "Số lượng *",
         "lbl_receiver": "Người nhận vật tư *",
@@ -80,8 +80,8 @@ WAREHOUSE_I18N = {
         "col_status": "Trạng thái"
     },
     "English": {
-        "title": "📦 Production / Warehouse - Multi-WH with Time & Receiver Tracking",
-        "caption": "Track inbound/outbound timestamps, separate material receivers from warehouse staff.",
+        "title": "📦 Production / Warehouse - Warehouse-Linked Operations",
+        "caption": "Materials list dynamically updates based on the selected target warehouse.",
         "tab_inventory": "📑 Multi-Warehouse Inventory",
         "tab_barcode": "🏷️ Stock In / Stock Out Operations",
         "tab_history": "📊 Warehouse Operation History",
@@ -93,13 +93,13 @@ WAREHOUSE_I18N = {
         "op_opts": ["📥 Stock In", "📤 Stock Out (Material Issue)"],
         "lbl_target_wh": "Target Warehouse *",
         "warehouse_opts": ["Parts & Hardware WH", "Wire & Cable WH", "Assembly Floor WH", "Return & Surplus WH"],
-        "lbl_select_item": "Select Material Item *",
+        "lbl_select_item": "Select Material in Warehouse *",
         "lbl_scan_alt": "Or scan barcode:",
         "lbl_op_qty": "Operation Quantity *",
         "lbl_receiver": "Material Receiver / Requester *",
-        "receiver_placeholder": "Example: John Doe (Engineering Dept) or Assembly Lead",
+        "receiver_placeholder": "Example: John Doe or Assembly Lead",
         "lbl_memo": "Remarks / Project Reference",
-        "memo_placeholder": "Example: Project installation or shopfloor return...",
+        "memo_placeholder": "Example: Project installation...",
         "btn_execute_op": "💾 Confirm Operation & Log Timestamp",
         "success_in": "✅ Stock In recorded at {time} by staff {staff}!",
         "success_out": "📤 Stock Out recorded at {time} issued to {receiver} (Staff: {staff})!",
@@ -134,7 +134,6 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
             {"code": "SURPLUS-NUT", "name": "現場退回雜項螺絲與華司 (待分類/退料)", "category": "退料與殘餘料", "warehouse": "♻️ 退料/殘餘料倉 (Return & Surplus WH)", "qty": 150.0, "safety": 20.0, "status": "庫存充足"}
         ]
 
-    # 初始化倉庫異動歷史日誌
     if "warehouse_logs_db" not in st.session_state:
         st.session_state.warehouse_logs_db = [
             {
@@ -147,24 +146,13 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                 "receiver_or_supplier": "廠商送貨 (Supplier)",
                 "staff": "admin (倉管經辦)",
                 "memo": "採購定期補給"
-            },
-            {
-                "time": "2026-10-06 10:15:40",
-                "op_type": "📤 出庫 (Stock Out)",
-                "code": "CBL-CV-10MM",
-                "name": "極軟式控制電纜 CV 10mm²",
-                "warehouse": "🔌 線材倉 (Wire & Cable WH)",
-                "qty": 50.0,
-                "receiver_or_supplier": "陳志豪 (現場裝配組)",
-                "staff": "admin (倉管經辦)",
-                "memo": "領用於專案控制盤配線"
             }
         ]
 
     if "warehouse_categories_list" not in st.session_state:
         st.session_state.warehouse_categories_list = ["五金配件與墊片", "燈具與照明配件", "PVC管與管件/彎頭", "電線與電纜線", "箱體與鈑金零件", "退料與殘餘料"]
 
-    # 分頁宣告 (新增歷史日誌分頁)
+    # 分頁宣告
     tab_inv, tab_bar, tab_hist, tab_in = st.tabs([
         L["tab_inventory"], L["tab_barcode"], L["tab_history"], L["tab_inbound"]
     ])
@@ -196,28 +184,34 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
         else:
             st.info(L["no_records"])
 
-    # 2. 出入庫與領料作業處理 (含領料人與時間記錄)
+    # 2. 出入庫與領料作業處理 (倉別動態聯動)
     with tab_bar:
         st.markdown(f"### {L['op_header']}")
         
         with st.form("form_stock_operation"):
             op_type = st.radio(L["lbl_op_type"], L["op_opts"], horizontal=True)
+            
+            # 🎯 率先選擇目標倉庫，讓下方選單聯動過濾
             target_warehouse = st.selectbox(L["lbl_target_wh"], L["warehouse_opts"])
+            
+            # 🔗 嚴格根據所選倉庫過濾資材清單
+            warehouse_items = [i for i in st.session_state.warehouse_db if i["warehouse"] == target_warehouse]
             
             c_sel1, c_sel2 = st.columns(2)
             with c_sel1:
-                item_options = [f"{i['code']} - {i['name']} (現庫存: {i['qty']} | 倉別: {i['warehouse']})" for i in st.session_state.warehouse_db]
-                selected_item_str = st.selectbox(L["lbl_select_item"], item_options)
+                if warehouse_items:
+                    item_options = [f"{i['code']} - {i['name']} (現庫存: {i['qty']})" for i in warehouse_items]
+                    selected_item_str = st.selectbox(L["lbl_select_item"], item_options)
+                else:
+                    st.warning(f"⚠️ 此倉庫目前無任何資材，請先至「新增資材建檔」建立。")
+                    selected_item_str = None
             with c_sel2:
                 scan_code_input = st.text_input(L["lbl_scan_alt"], placeholder="例如: GASKET-M10")
 
             op_qty = st.number_input(L["lbl_op_qty"], min_value=1.0, value=10.0, step=1.0)
-            
-            # 👥 領料人欄位（獨立於倉庫管理員）
             receiver_person = st.text_input(L["lbl_receiver"], placeholder=L["receiver_placeholder"])
             memo = st.text_input(L["lbl_memo"], placeholder=L["memo_placeholder"])
 
-            # 🔒 自動綁定當前登入的倉庫管理員身分
             logged_staff = f"{st.session_state.get('user_name', 'admin')} ({st.session_state.get('user_role', 'Warehouse_Keeper')})"
             st.text_input("倉庫管理員 / 經辦人員 (系統自動綁定)", value=logged_staff, disabled=True)
 
@@ -228,32 +222,27 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                 elif selected_item_str:
                     target_code = selected_item_str.split(" - ")[0].strip().lower()
 
+                # 在目標倉庫中尋找對應料號
                 matched_item = next((i for i in st.session_state.warehouse_db if i["code"].strip().lower() == target_code and i["warehouse"] == target_warehouse), None)
-                if not matched_item:
-                    matched_item = next((i for i in st.session_state.warehouse_db if i["code"].strip().lower() == target_code), None)
+
+                # 若是入庫作業且該倉庫沒有此料號，允許從其他倉庫轉移或建立
+                if not matched_item and ("入庫" in op_type or "Stock In" in op_type):
+                    any_matched = next((i for i in st.session_state.warehouse_db if i["code"].strip().lower() == target_code), None)
+                    if any_matched:
+                        new_entry = any_matched.copy()
+                        new_entry["warehouse"] = target_warehouse
+                        new_entry["qty"] = 0.0
+                        st.session_state.warehouse_db.insert(0, new_entry)
+                        matched_item = new_entry
 
                 if matched_item and receiver_person.strip():
                     current_time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     
                     if "入庫" in op_type or "Stock In" in op_type:
-                        if matched_item["warehouse"] == target_warehouse:
-                            matched_item["qty"] += op_qty
-                        else:
-                            exist_in_wh = next((i for i in st.session_state.warehouse_db if i["code"].strip().lower() == target_code and i["warehouse"] == target_warehouse), None)
-                            if exist_in_wh:
-                                exist_in_wh["qty"] += op_qty
-                                matched_item = exist_in_wh
-                            else:
-                                new_entry = matched_item.copy()
-                                new_entry["warehouse"] = target_warehouse
-                                new_entry["qty"] = op_qty
-                                st.session_state.warehouse_db.insert(0, new_entry)
-                                matched_item = new_entry
-
+                        matched_item["qty"] += op_qty
                         if matched_item["qty"] >= matched_item["safety"]:
                             matched_item["status"] = "庫存充足"
                         
-                        # 記錄異動日誌
                         st.session_state.warehouse_logs_db.insert(0, {
                             "time": current_time_str,
                             "op_type": "📥 入庫 (Stock In)",
@@ -269,33 +258,29 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                         st.success(L["success_in"].format(time=current_time_str, staff=logged_staff, qty=op_qty))
                         st.rerun()
                     else: # 出庫 / 領料
-                        if matched_item["warehouse"] == target_warehouse:
-                            if matched_item["qty"] >= op_qty:
-                                matched_item["qty"] -= op_qty
-                                if matched_item["qty"] < matched_item["safety"]:
-                                    matched_item["status"] = "⚠️ 庫存低於安全水位"
-                                
-                                # 記錄異動日誌
-                                st.session_state.warehouse_logs_db.insert(0, {
-                                    "time": current_time_str,
-                                    "op_type": "📤 出庫 (Stock Out)",
-                                    "code": matched_item["code"],
-                                    "name": matched_item["name"],
-                                    "warehouse": target_warehouse,
-                                    "qty": op_qty,
-                                    "receiver_or_supplier": receiver_person,
-                                    "staff": logged_staff,
-                                    "memo": memo or "專案領料"
-                                })
+                        if matched_item["qty"] >= op_qty:
+                            matched_item["qty"] -= op_qty
+                            if matched_item["qty"] < matched_item["safety"]:
+                                matched_item["status"] = "⚠️ 庫存低於安全水位"
+                            
+                            st.session_state.warehouse_logs_db.insert(0, {
+                                "time": current_time_str,
+                                "op_type": "📤 出庫 (Stock Out)",
+                                "code": matched_item["code"],
+                                "name": matched_item["name"],
+                                "warehouse": target_warehouse,
+                                "qty": op_qty,
+                                "receiver_or_supplier": receiver_person,
+                                "staff": logged_staff,
+                                "memo": memo or "專案領料"
+                            })
 
-                                st.success(L["success_out"].format(time=current_time_str, receiver=receiver_person, staff=logged_staff, qty=op_qty))
-                                st.rerun()
-                            else:
-                                st.warning(L["warning_out"].format(total=matched_item["qty"]))
+                            st.success(L["success_out"].format(time=current_time_str, receiver=receiver_person, staff=logged_staff, qty=op_qty))
+                            st.rerun()
                         else:
-                            st.warning(f"⚠️ 所選倉庫 [{target_warehouse}] 中找不到此料號！")
+                            st.warning(L["warning_out"].format(total=matched_item["qty"]))
                 else:
-                    st.warning("⚠️ 請完整填寫料號並輸入「領取人 / 申請部門人員姓名」！")
+                    st.warning("⚠️ 請確認所選資材品項，並完整輸入「領取人 / 申請部門人員姓名」！")
 
     # 3. 倉庫出入庫歷史日誌稽核表
     with tab_hist:
@@ -306,7 +291,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
         else:
             st.info("目前尚無出入庫歷史日誌紀錄。")
 
-    # 4. 新增資材建檔
+    # 4. 新資材建檔
     with tab_in:
         st.markdown(f"### 📥 新增資材建檔與指定倉別初始入庫")
         with st.form("form_new_material"):
