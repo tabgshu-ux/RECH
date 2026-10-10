@@ -2,7 +2,17 @@ import streamlit as st
 import pandas as pd
 import datetime
 
-# 導入各模組
+# ----------------------------------------------------
+# 🌐 裕豐電機工業 AI ERP 系統 - 主程式進入點
+# ----------------------------------------------------
+st.set_page_config(
+    page_title="裕豐電機工業 AI ERP 系統",
+    page_icon="⚡",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# 導入各個模組
 try:
     from modules import (
         employee_management,
@@ -32,7 +42,6 @@ try:
         finance_tax
     )
 except ImportError:
-    # 支援直接同目錄執行
     import employee_management
     import factory_management
     import warehouse_management
@@ -60,16 +69,6 @@ except ImportError:
     import finance_tax
 
 # ----------------------------------------------------
-# 🌐 全域頁面與版面配置設定 (Mobile-First 優先)
-# ----------------------------------------------------
-st.set_page_config(
-    page_title="裕豐電機工業 AI ERP 系統",
-    page_icon="⚡",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# ----------------------------------------------------
 # 🔐 登入狀態與工作階段初始化
 # ----------------------------------------------------
 if "logged_in" not in st.session_state:
@@ -87,85 +86,62 @@ if "current_lang" not in st.session_state:
     st.session_state["current_lang"] = "繁體中文"
 
 # ----------------------------------------------------
-# 🎨 自訂 CSS：實現手機端優先、登入頁面完美置中與精緻 UI
+# 🎨 自訂 CSS：登入畫面置中優化
 # ----------------------------------------------------
 st.markdown("""
     <style>
-    /* 全域字型與間距優化 */
-    .stApp {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
-    /* 調整主區塊邊距以適應手機與電腦 */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-        padding-left: 1.5rem;
-        padding-right: 1.5rem;
-    }
-    /* 登入卡片置中容器優化 */
-    .login-card {
-        background: #ffffff;
-        padding: 35px 30px;
-        border-radius: 16px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-        border: 1px solid #e2e8f0;
+    .login-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# 🔐 登入畫面（全面置中對齊處理）
+# 🔐 登入畫面（置中對齊優化）
 # ----------------------------------------------------
 def render_login_screen():
-    # 使用三欄式版面 [1, 1.5, 1]，將中間欄位作為置中登入卡片容器
+    # 運用三欄式版面 [1, 1.5, 1]，將中間欄位作為置中登入區塊
     _, col_center, _ = st.columns([1, 1.6, 1])
 
     with col_center:
         st.markdown("<br><br>", unsafe_allow_html=True)
-        
-        # 標題與副標題置中
-        st.markdown("<h1 style='text-align: center; color: #1e3a8a; font-size: 28px;'>⚡ 裕豐電機工業 AI ERP</h1>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #64748b; font-size: 14px;'>Reetech Industrial Multi-Language Enterprise Resource Planning</p>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color: #1e3a8a;'>⚡ 裕豐電機工業 AI ERP 系統</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #64748b;'>請輸入帳號密碼與選擇語系以登入系統</p>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
 
-        with st.form("login_form", clear_on_submit=False):
-            st.markdown("### 🔐 系統登入 (System Login)")
+        with st.form("login_form"):
+            username = st.text_input("使用者帳號 (Username)", placeholder="請輸入帳號...")
+            password = st.text_input("密碼 (Password)", type="password", placeholder="請輸入密碼...")
             
-            username_input = st.text_input("使用者帳號 (Username)", placeholder="請輸入帳號 (例如: admin / manager)...")
-            password_input = st.text_input("密碼 (Password)", type="password", placeholder="請輸入密碼...")
-            
-            lang_choice = st.selectbox(
+            selected_lang = st.selectbox(
                 "選擇介面語系 (Select Language)",
-                ["繁體中文", "Tiếng Việt", "English"],
-                index=0
+                ["繁體中文", "Tiếng Việt", "English"]
             )
             
             st.markdown("<br>", unsafe_allow_html=True)
-            submit_btn = st.form_submit_button("🚀 登入系統 (Login)", use_container_width=True)
+            submit_login = st.form_submit_button("🚀 登入系統 (Login)", use_container_width=True)
 
-            if submit_btn:
-                st.session_state["current_lang"] = lang_choice
-                if username_input.strip() in ["admin", "manager", "security", "staff"] or len(username_input.strip()) > 0:
-                    role_map = {"admin": "admin", "manager": "manager", "security": "security", "staff": "staff"}
-                    assigned_role = role_map.get(username_input.strip(), "manager")
-                    
+            if submit_login:
+                st.session_state["current_lang"] = selected_lang
+                if len(username.strip()) > 0:
                     st.session_state["logged_in"] = True
                     st.session_state["user_info"] = {
-                        "name": username_input.strip(),
-                        "role": assigned_role,
-                        "dept": "管理部",
-                        "factory": "西寧廠 (Tay Ninh)"
+                        "name": username,
+                        "role": "admin" if username == "admin" else "manager",
+                        "dept": "總經理室"
                     }
-                    st.success("🎉 登入成功！正在載入系統...")
+                    st.success("🎉 登入成功！")
                     st.rerun()
                 else:
-                    st.error("❌ 登入失敗：請輸入有效的使用者帳號！")
+                    st.error("❌ 請輸入有效的使用者帳號！")
 
 # ----------------------------------------------------
-# 🚀 主系統架構與模組導航 (Main App Layout)
+# 🚀 主系統架構與功能選單導航
 # ----------------------------------------------------
 def main():
-    # 檢查是否已登入
     if not st.session_state.get("logged_in", False):
         render_login_screen()
         return
@@ -280,7 +256,7 @@ def main():
             st.rerun()
 
     # ----------------------------------------------------
-    # 🔀 模組路由分流與渲染 (Module Routing)
+    # 🔀 模組路由分流與安全呼叫
     # ----------------------------------------------------
     try:
         if any(k in selected_module for k in ["戰情室", "Executive Dashboard"]):
@@ -330,8 +306,8 @@ def main():
         else:
             executive_dashboard.show(lang=selected_lang)
     except Exception as e:
-                st.error(f"❌ 模組載入發生錯誤: {e}")
-                st.info("💡 請確認所有模組檔案皆已完整放置於專案目錄中。")
+        st.error(f"❌ 模組載入發生錯誤: {e}")
+        st.info("💡 請確認所有模組檔案皆已完整放置於專案目錄中。")
 
 if __name__ == "__main__":
     main()
