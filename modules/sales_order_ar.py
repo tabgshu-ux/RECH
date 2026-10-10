@@ -9,22 +9,22 @@ from sqlalchemy import text
 AR_I18N = {
     "繁體中文": {
         "title": "📋 管理部 - 客戶應收帳款 (AR) & 專案分期進度管理",
-        "caption": "記錄客戶工程合約總額、動態分期付款排程管理、專案說明與進度實時追蹤。",
+        "caption": "記錄客戶工程合約總額、動態分期付款排程管理、專案說明與進度實時追蹤、催收歷程與拒付呆帳風險管理。",
         "tab_list": "📑 客戶應收款項總表與進度",
-        "tab_edit": "✍️ 修改進行進度說明與催收歷程",
+        "tab_edit": "✍️ 修改進行進度說明與催收歷程/拒付理由",
         "tab_add": "➕ 登記新應收帳款專案",
-        "table_header": "📋 客戶應收帳款專案清冊",
+        "table_header": "📋 客戶應收帳款專案清冊與催收歷程",
         "no_records": "目前無應收帳款紀錄。",
         "read_error": "讀取資料失敗: ",
-        "edit_header": "✍️ 修改專案進行進度說明與催收紀錄",
+        "edit_header": "✍️ 修改專案進行進度說明與催收歷程 / 記錄拒付與呆帳風險",
         "select_project": "請選擇要更新進度的請款專案：",
         "current_project": "當前專案",
         "total_amount_label": "總帳款",
         "new_progress_label": "更新「進行進度說明」*",
-        "new_reason_label": "更新/追加「催收理由與客戶回應」",
+        "new_reason_label": "更新/追加「催收理由、客戶拒付原因或倒閉呆帳風險評估」*",
         "modifier_label": "修改人員姓名*",
-        "save_update_btn": "💾 儲存並更新專案進度",
-        "update_success": "請款單 `{target_id}` 之進行進度與催收理由已更新！",
+        "save_update_btn": "💾 儲存並更新專案進度與催收歷程",
+        "update_success": "請款單 `{target_id}` 之進行進度與催收/拒付紀錄已成功更新！",
         "add_header": "➕ 登記新應收帳款專案",
         "inv_id_label": "請款編號 *",
         "entity_name_label": "客戶名稱 *",
@@ -69,23 +69,23 @@ AR_I18N = {
         "col_ratios": "分期比率",
         "col_progress": "進行進度說明",
         "col_desc": "專案說明",
-        "col_reason": "最新催收理由/歷程"
+        "col_reason": "最新催收歷程與拒付/呆帳備忘"
     },
     "Tiếng Việt": {
         "title": "📋 Khối Quản lý - Phải thu Khách hàng (AR) & Tiến độ Dự án",
-        "caption": "Quản lý tổng số tiền hợp đồng, lịch trình thanh toán theo đợt, cập nhật tiến độ.",
+        "caption": "Quản lý tổng số tiền hợp đồng, lịch trình thanh toán, lịch sử thu nợ, lý do từ chối thanh toán và rủi ro nợ xấu.",
         "tab_list": "📑 Danh sách Phải thu & Tiến độ",
-        "tab_edit": "✍️ Cập nhật Tiến độ & Lý do thu nợ",
+        "tab_edit": "✍️ Cập nhật Tiến độ & Lịch sử thu nợ",
         "tab_add": "➕ Thêm Dự án Phải thu Mới",
-        "table_header": "📋 Sổ chi tiết Phải thu Khách hàng",
+        "table_header": "📋 Sổ chi tiết Phải thu Khách hàng & Lịch sử Thu nợ",
         "no_records": "Hiện không có bản ghi khoản phải thu nào.",
         "read_error": "Lỗi đọc dữ liệu: ",
-        "edit_header": "✍️ Sửa đổi tiến độ dự án và ghi chú thu nợ",
+        "edit_header": "✍️ Sửa đổi tiến độ dự án, ghi chú thu nợ và lý do từ chối thanh toán",
         "select_project": "Chọn dự án cần cập nhật tiến độ:",
         "current_project": "Dự án hiện tại",
         "total_amount_label": "Tổng tiền",
         "new_progress_label": "Cập nhật \"Mô tả tiến độ\" *",
-        "new_reason_label": "Cập nhật/Bổ sung \"Lý do thu nợ & phản hồi từ khách hàng\"",
+        "new_reason_label": "Cập nhật/Bổ sung \"Lý do thu nợ, từ chối thanh toán hoặc rủi ro phá sản\" *",
         "modifier_label": "Họ tên người sửa*",
         "save_update_btn": "💾 Lưu và cập nhật tiến độ dự án",
         "update_success": "Đã cập nhật tiến độ và lý do thu nợ cho hóa đơn `{target_id}`!",
@@ -133,23 +133,23 @@ AR_I18N = {
         "col_ratios": "Tỷ lệ đợt",
         "col_progress": "Mô tả tiến độ",
         "col_desc": "Mô tả dự án",
-        "col_reason": "Lịch sử thu nợ"
+        "col_reason": "Lịch sử thu nợ & Lý do từ chối/Rủi ro"
     },
     "English": {
         "title": "📋 Admin - Accounts Receivable (AR) & Project Installments",
-        "caption": "Track total contract amounts, installment schedules, descriptions, and progress updates.",
+        "caption": "Track total contract amounts, installment schedules, collection logs, rejection reasons, and bad debt risks.",
         "tab_list": "📑 AR Summary & Progress",
         "tab_edit": "✍️ Update Progress & Collection Audit",
         "tab_add": "➕ Register New AR Project",
-        "table_header": "📋 Customer Accounts Receivable Registry",
+        "table_header": "📋 Customer Accounts Receivable Registry & Collection Log",
         "no_records": "No accounts receivable records found.",
         "read_error": "Failed to read data: ",
-        "edit_header": "✍️ Modify Project Progress & Collection Log",
+        "edit_header": "✍️ Modify Project Progress & Collection Log / Rejection & Default Risks",
         "select_project": "Select project to update:",
         "current_project": "Current Project",
         "total_amount_label": "Total Amount",
         "new_progress_label": "Update Progress Description *",
-        "new_reason_label": "Update/Append Collection Remarks & Client Feedback",
+        "new_reason_label": "Update/Append Collection Remarks, Rejection Reasons or Bankruptcy/Bad Debt Risk *",
         "modifier_label": "Modifier Name *",
         "save_update_btn": "💾 Save & Update Project Progress",
         "update_success": "Progress and collection reasons for invoice `{target_id}` updated successfully!",
@@ -197,12 +197,12 @@ AR_I18N = {
         "col_ratios": "Installment Ratios",
         "col_progress": "Progress Note",
         "col_desc": "Project Desc",
-        "col_reason": "Collection History"
+        "col_reason": "Collection History & Rejection/Default Risk"
     }
 }
 
 # ----------------------------------------------------
-# 🔄 智慧雙向對照翻譯引擎 (支援客戶名稱與工程名稱互轉)
+# 🔄 智慧雙向對照翻譯引擎
 # ----------------------------------------------------
 def smart_translate(text_val, target_lang):
     if not text_val or not isinstance(text_val, str) or text_val in ["None", "-", ""]:
@@ -212,46 +212,20 @@ def smart_translate(text_val, target_lang):
 
     text_lower = text_val.lower()
 
-    # 1. 客戶名稱對應
     if "樟榜" in text_val or "trảng bàng" in text_lower or "tay ninh" in text_lower:
-        if target_lang == "Tiếng Việt":
-            return "Nhà máy A KCN Trảng Bàng, Tây Ninh"
-        elif target_lang == "繁體中文":
-            return "越南樟榜工業區A廠"
-        elif target_lang == "English":
-            return "Tay Ninh Plant Client A"
+        if target_lang == "Tiếng Việt": return "Nhà máy A KCN Trảng Bàng, Tây Ninh"
+        elif target_lang == "繁體中文": return "越南樟榜工業區A廠"
+        elif target_lang == "English": return "Tay Ninh Plant Client A"
 
-    # 2. 工程名稱對應
     if "西寧" in text_val or "2000a" in text_lower or "配電櫃" in text_val or "tủ điện" in text_lower:
-        if target_lang == "Tiếng Việt":
-            return "Lắp đặt tủ điện 2000A nhà máy Tây Ninh"
-        elif target_lang == "繁體中文":
-            return "西寧廠 2000A 配電櫃新建工程"
-        elif target_lang == "English":
-            return "Tay Ninh 2000A Switchboard Installation"
+        if target_lang == "Tiếng Việt": return "Lắp đặt tủ điện 2000A nhà máy Tây Ninh"
+        elif target_lang == "繁體中文": return "西寧廠 2000A 配電櫃新建工程"
+        elif target_lang == "English": return "Tay Ninh 2000A Switchboard Installation"
 
-    # 3. 進度說明對應
     if "備料" in text_val or "準備" in text_val or "chuẩn bị" in text_lower:
-        if target_lang == "Tiếng Việt":
-            return "Đang chuẩn bị vật tư / Chuẩn bị thi công"
-        elif target_lang == "繁體中文":
-            return "工程備料中 / 準備施工"
-        elif target_lang == "English":
-            return "Material preparation / Preparing construction"
-
-    # 4. 付款期數模式對應
-    if "不分期" in text_val or "1" in text_val and "đợt" in text_lower or "single" in text_lower or "lump" in text_lower:
-        if target_lang == "Tiếng Việt": return "Thanh toán 1 lần"
-        elif target_lang == "繁體中文": return "不分期"
-        return "Single"
-    if "分三期" in text_val or "3" in text_val:
-        if target_lang == "Tiếng Việt": return "Thanh toán 3 đợt"
-        elif target_lang == "繁體中文": return "分三期"
-        return "3 Installments"
-    if "分五期" in text_val or "5" in text_val:
-        if target_lang == "Tiếng Việt": return "Thanh toán 5 đợt"
-        elif target_lang == "繁體中文": return "分五期"
-        return "5 Installments"
+        if target_lang == "Tiếng Việt": return "Đang chuẩn bị vật tư / Chuẩn bị thi công"
+        elif target_lang == "繁體中文": return "工程備料中 / 準備施工"
+        elif target_lang == "English": return "Material preparation / Preparing construction"
 
     return text_val
 
@@ -272,7 +246,7 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
 
     tab_list, tab_edit, tab_add = st.tabs([L["tab_list"], L["tab_edit"], L["tab_add"]])
 
-    # 1. 應收帳款總覽清單
+    # 1. 應收帳款總覽清單（含催收歷程與拒付/呆帳備忘）
     with tab_list:
         st.subheader(L["table_header"])
         if engine:
@@ -298,7 +272,7 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
                             L["col_ratios"]: r.get("installment_ratios", "100%"),
                             L["col_progress"]: progress_display,
                             L["col_desc"]: desc_display if desc_display != "-" else "-",
-                            L["col_reason"]: r.get("uncollected_reason", "-")
+                            L["col_reason"]: r.get("uncollected_reason", "-") # 完整保留拒付理由與呆帳歷程
                         })
                     st.dataframe(pd.DataFrame(display_list), use_container_width=True)
                 else:
@@ -306,7 +280,7 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
             except Exception as e:
                 st.error(f"{L['read_error']}{e}")
 
-    # 2. 修改進行進度說明與催收歷程
+    # 2. 修改進度說明與催收歷程、拒付理由、倒閉呆帳風險記錄
     with tab_edit:
         st.subheader(L["edit_header"])
         if engine:
@@ -324,7 +298,7 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
                     with st.form("form_update_ar_progress"):
                         default_prog = smart_translate(target_row.get("progress_note", ""), active_lang)
                         new_progress = st.text_area(L["new_progress_label"], value=default_prog)
-                        new_reason = st.text_area(L["new_reason_label"], value=target_row.get("uncollected_reason", ""))
+                        new_reason = st.text_area(L["new_reason_label"], value=target_row.get("uncollected_reason", ""), placeholder="例如：客戶因資金周轉困難要求展延，或因工程驗收爭議拒付，或回報該客戶已進入破產清算程序等...")
                         modifier = st.text_input(L["modifier_label"], value=st.session_state.get("user_name", "admin"))
 
                         if st.form_submit_button(L["save_update_btn"], use_container_width=True):
