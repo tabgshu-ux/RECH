@@ -441,4 +441,54 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
             p4_amt = total_amount * (r4 / 100.0)
             p5_amt = total_amount * (r5 / 100.0)
 
-            col_a, col_b = st.
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.write(f"• **{L['period_1_amt']}**：`{format_curr(p1_amt, currency)}`")
+                d1 = st.date_input(L["period_1_date"], value=datetime.date.today() + datetime.timedelta(days=7), key="ar_5d1")
+                st.write(f"• **{L['period_2_amt']}**：`{format_curr(p2_amt, currency)}`")
+                d2 = st.date_input(L["period_2_date"], value=datetime.date.today() + datetime.timedelta(days=30), key="ar_5d2")
+                st.write(f"• **{L['period_3_amt']}**：`{format_curr(p3_amt, currency)}`")
+                d3 = st.date_input(L["period_3_date"], value=datetime.date.today() + datetime.timedelta(days=60), key="ar_5d3")
+            with col_b:
+                st.write(f"• **{L['period_4_amt']}**：`{format_curr(p4_amt, currency)}`")
+                d4 = st.date_input(L["period_4_date"], value=datetime.date.today() + datetime.timedelta(days=90), key="ar_5d4")
+                st.write(f"• **{L['period_5_amt']}**：`{format_curr(p5_amt, currency)}`")
+                d5 = st.date_input(L["period_5_date"], value=datetime.date.today() + datetime.timedelta(days=120), key="ar_5d5")
+
+        st.markdown("")
+        if st.button(L["save_new_btn"], type="primary", use_container_width=True):
+            if entity_name and project_name:
+                if engine:
+                    with engine.connect() as conn:
+                        conn.execute(
+                            text("""
+                                INSERT INTO invoices (
+                                    invoice_id, entity_name, project_name, currency, amount, quoted_amount, 
+                                    payment_terms, installment_ratios, project_desc, progress_note, 
+                                    due_date, invoice_type, is_paid
+                                ) VALUES (
+                                    :id, :entity, :prj, :curr, :amt, :q_amt, 
+                                    :terms, :ratios, :desc, :prog, 
+                                    :due, 'AR', false
+                                )
+                            """),
+                            {
+                                "id": inv_id, "entity": entity_name, "prj": project_name, "curr": currency,
+                                "amt": p1_amt, "q_amt": total_amount, "terms": plan_type, "ratios": ratios_str,
+                                "desc": project_desc, "prog": "工程備料中 / 準備施工", "due": d1
+                            }
+                        )
+                        conn.commit()
+                st.success(L["create_success"])
+                st.rerun()
+            else:
+                st.warning(L["fill_warning"])
+
+def show(*args, **kwargs):
+    render_sales_order_ar_page(*args, **kwargs)
+
+def main(*args, **kwargs):
+    render_sales_order_ar_page(*args, **kwargs)
+
+def render_sales_order_ar(*args, **kwargs):
+    render_sales_order_ar_page(*args, **kwargs)
