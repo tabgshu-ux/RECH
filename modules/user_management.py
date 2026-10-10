@@ -8,7 +8,7 @@ import datetime
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 帳號權限與系統稽核軌跡 (Audit Log)",
-        "caption": "監控全系統使用者登入歷程、自訂角色與精細化大主管/總經理室與各子功能網頁存取授權。",
+        "caption": "監控全系統使用者登入歷程、自由自訂與管理企業各部門主管角色、總經理室與細緻化網頁存取授權。",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
         "tab_users": "👥 系統使用者與全模組權限控管",
         "tab_api": "🔌 電子發票 API 串接設定",
@@ -19,16 +19,18 @@ USER_MGMT_I18N = {
         "search_placeholder": "輸入關鍵字搜尋稽核紀錄...",
         "no_logs": "目前尚無系統稽核紀錄。",
         "users_header": "👥 系統現有使用者帳號與靈活權限清冊",
-        "add_user_header": "➕ 新增系統使用者帳號 (直接連動人事工號與大主管權限)",
+        "add_user_header": "➕ 新增系統使用者帳號與自訂角色授權",
         "lbl_username": "登入帳號 (連動人事工號) *",
         "lbl_name": "選擇人事系統員工姓名 *",
-        "lbl_role": "權限角色 (可選或自訂新角色) *",
-        "role_opts": [
+        "lbl_role": "權限角色 (可自由選擇或自訂新主管角色) *",
+        "default_roles": [
             "系統管理員 (Admin)",
             "董事長 / 總經理 (Chairman / GM)",
-            "部門經理 / 廠長 (Department Manager)",
-            "財務主管 /會計 (Finance)",
-            "採購主管 (Procurement)",
+            "財務主管 (Finance Manager)",
+            "行政主管 (Admin Manager)",
+            "設計主管 (Design Manager)",
+            "生產主管 (Production Manager)",
+            "採購主管 (Procurement Manager)",
             "工地主任 / 專案經理 (Site Supervisor)",
             "大門保全 / 門禁 (Security)",
             "一般員工 / 作業員 (Staff)",
@@ -37,7 +39,7 @@ USER_MGMT_I18N = {
         "lbl_site": "所屬廠區 *",
         "site_options": ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"],
         "btn_add_user": "💾 建立使用者帳號與全模組授權",
-        "success_add": "✅ 系統帳號已成功建立並與人事系統完整串聯！",
+        "success_add": "✅ 系統帳號已成功建立並與人事系統及自訂角色完整串聯！",
         "fill_warning": "⚠️ 請完整填寫帳號並選擇員工！",
         # 表格欄位
         "col_time": "時間戳記",
@@ -63,7 +65,7 @@ USER_MGMT_I18N = {
     },
     "Tiếng Việt": {
         "title": "🔒 Quản trị IT - Phân quyền Tài khoản & Nhật ký Kiểm toán",
-        "caption": "Giám sát lịch sử đăng nhập, tùy chỉnh vai trò và phân quyền quản lý cấp cao.",
+        "caption": "Giám sát lịch sử đăng nhập, tùy chỉnh vai trò linh hoạt cho mọi loại hình doanh nghiệp.",
         "tab_audit": "📊 Nhật ký Kiểm toán (Audit Logs)",
         "tab_users": "👥 Quản lý Người dùng & Phân quyền",
         "tab_api": "🔌 Cấu hình API Hóa đơn",
@@ -74,11 +76,11 @@ USER_MGMT_I18N = {
         "search_placeholder": "Nhập từ khóa tìm kiếm...",
         "no_logs": "Hiện chưa có nhật ký kiểm toán nào.",
         "users_header": "📋 Danh sách tài khoản người dùng hệ thống",
-        "add_user_header": "➕ Thêm tài khoản và phân quyền quản lý cấp cao",
+        "add_user_header": "➕ Thêm tài khoản và phân quyền tùy chỉnh",
         "lbl_username": "Tài khoản đăng nhập *",
         "lbl_name": "Chọn nhân viên từ hệ thống *",
         "lbl_role": "Vai trò phân quyền *",
-        "role_opts": ["Admin", "Chairman/GM", "Manager", "Finance", "Procurement", "Site Supervisor", "Security", "Staff", "➕ [Tùy chỉnh...]"],
+        "default_roles": ["Admin", "Chairman/GM", "Finance Manager", "Admin Manager", "Design Manager", "Production Manager", "Staff", "➕ [Tùy chỉnh...]"],
         "lbl_site": "Nhà máy trực thuộc *",
         "site_options": ["Nhà máy Tây Ninh", "Nhà máy Hải Phòng"],
         "btn_add_user": "💾 Tạo tài khoản",
@@ -106,9 +108,9 @@ USER_MGMT_I18N = {
     },
     "English": {
         "title": "🔒 IT Center - User Permissions & System Audit Logs",
-        "caption": "Monitor login history, custom roles, executive office access control, and sub-module permissions.",
+        "caption": "Monitor login history, add custom manager roles flexibly for enterprise sales deployment.",
         "tab_audit": "📊 System Audit Logs",
-        "tab_users": "👥 Users & Executive Permissions",
+        "tab_users": "👥 Users & Flexible Roles",
         "tab_api": "🔌 E-Invoice API Config",
         "audit_header": "🔍 System Operation & Audit Trail Logs",
         "filter_year": "Filter Year",
@@ -117,11 +119,11 @@ USER_MGMT_I18N = {
         "search_placeholder": "Search audit logs...",
         "no_logs": "No audit logs found.",
         "users_header": "👥 Active System User Accounts",
-        "add_user_header": "➕ Register New User & Executive Permissions",
+        "add_user_header": "➕ Register New User & Custom Roles",
         "lbl_username": "Username *",
         "lbl_name": "Select Employee from HR *",
         "lbl_role": "Permission Role *",
-        "role_opts": ["admin", "Chairman/GM", "manager", "finance", "procurement", "site_supervisor", "security", "staff", "➕ [Custom Role...]"],
+        "default_roles": ["admin", "Chairman/GM", "Finance Manager", "Admin Manager", "Design Manager", "Production Manager", "staff", "➕ [Custom Role...]"],
         "lbl_site": "Plant Location *",
         "site_options": ["Tay Ninh Plant", "Hai Phong Plant"],
         "btn_add_user": "💾 Create User & Permissions",
@@ -140,7 +142,7 @@ USER_MGMT_I18N = {
         "api_env_opts": ["Sandbox", "Production"],
         "tax_code_label": "Company Tax Code (Mã số thuế) *",
         "endpoint_label": "API Endpoint URL *",
-        "api_key_label": "API Auth Token / Key *",
+        "key_label": "API Auth Token / Key *",
         "modifier_label": "Modifier (System Bound)",
         "api_save_btn": "💾 Save API Settings",
         "api_test_btn": "🔗 Test API Connection",
@@ -186,8 +188,9 @@ def render_user_management_page(lang="繁體中文", **kwargs):
             {"username": "manager", "name": "Nguyễn Văn Quý", "role": "董事長 / 總經理 (Chairman / GM)", "site": "海防廠 (Hai Phong)"}
         ]
 
+    # 初始化動態可擴充的角色清單
     if "custom_roles_list" not in st.session_state:
-        st.session_state.custom_roles_list = L["role_opts"]
+        st.session_state.custom_roles_list = L["default_roles"]
 
     tab_audit, tab_users, tab_api = st.tabs([L["tab_audit"], L["tab_users"], L["tab_api"]])
 
@@ -230,18 +233,18 @@ def render_user_management_page(lang="繁體中文", **kwargs):
         with st.form("form_add_system_user"):
             c1, c2 = st.columns(2)
             with c1:
-                # 自動從選擇的人事員工抓取預設帳號，也可手動輸入
                 selected_employee = st.selectbox(L["lbl_name"], employee_options)
-                suggested_username = selected_employee.split(" (")[0].lower().replace(" ", "") if selected_employee else "staff01"
-                username = st.text_input(L["lbl_username"], value=suggested_username, help="系統自動對應人事工號或姓名")
+                # 🔗 登入帳號完全以人事系統設定為主（自動抓取工號或姓名拼音作為預設帳號）
+                default_acc = selected_employee.split(" (")[0].lower().replace(" ", "") if selected_employee else "staff01"
+                username = st.text_input(L["lbl_username"], value=default_acc, help="系統自動對應人事工號與設定")
             with c2:
                 selected_role_opt = st.selectbox(L["lbl_role"], st.session_state.custom_roles_list)
                 site = st.selectbox(L["lbl_site"], L["site_options"])
 
-            # 🛠️ 允許自訂新角色
+            # 🛠️ 自由自訂新角色輸入框（當選擇自訂時展開）
             final_role = selected_role_opt
             if "➕" in selected_role_opt:
-                custom_role_input = st.text_input("✨ 請輸入自訂的新權限角色名稱 (例如: 執行長特助 / 專案總監):")
+                custom_role_input = st.text_input("✨ 請自由輸入新的主管角色名稱 (例如: 行政主管、設計主管、品管主管、業務總監...):")
                 if custom_role_input:
                     final_role = custom_role_input
                     if custom_role_input not in st.session_state.custom_roles_list:
