@@ -4,6 +4,23 @@ import datetime
 from sqlalchemy import text
 
 # ----------------------------------------------------
+# 📱 手機優先響應式 CSS 注入 (Mobile-First UI)
+# ----------------------------------------------------
+MOBILE_AR_CSS = """
+<style>
+@media only screen and (max-width: 768px) {
+    h1 { font-size: 1.3rem !important; }
+    h2 { font-size: 1.1rem !important; }
+    h3 { font-size: 1.0rem !important; }
+    p, div, span, label { font-size: 0.85rem !important; }
+    .stDataFrame { overflow-x: auto; }
+    .stButton button { width: 100% !important; }
+}
+</style>
+"""
+st.markdown(MOBILE_AR_CSS, unsafe_allow_html=True)
+
+# ----------------------------------------------------
 # 🌐 應收帳款與專案進度模組多語系字典 (i18n)
 # ----------------------------------------------------
 AR_I18N = {
@@ -58,7 +75,6 @@ AR_I18N = {
         "save_new_btn": "💾 儲存並建立應收請款專案",
         "create_success": "專案 `{inv_id}` 建立成功！",
         "fill_warning": "⚠️ 請完整填寫客戶名稱與工程名稱！",
-        # 表格動態標題
         "col_index": "編號",
         "col_inv_id": "請款編號",
         "col_entity": "客戶名稱",
@@ -122,7 +138,6 @@ AR_I18N = {
         "save_new_btn": "💾 Lưu và đăng ký dự án phải thu",
         "create_success": "Đã tạo thành công dự án `{inv_id}`!",
         "fill_warning": "⚠️ Vui lòng điền đầy đủ Tên khách hàng và Tên công trình!",
-        # 表格動態標題
         "col_index": "STT",
         "col_inv_id": "Mã hóa đơn",
         "col_entity": "Tên khách hàng",
@@ -186,7 +201,6 @@ AR_I18N = {
         "save_new_btn": "💾 Save & Register AR Project",
         "create_success": "Project `{inv_id}` successfully created!",
         "fill_warning": "⚠️ Please fill in Client Name and Project Name!",
-        # 表格動態標題
         "col_index": "No.",
         "col_inv_id": "Invoice ID",
         "col_entity": "Client Name",
@@ -202,30 +216,43 @@ AR_I18N = {
 }
 
 # ----------------------------------------------------
-# 🔄 智慧雙向對照翻譯引擎
+# 🔄 智慧模糊語意對照引擎
 # ----------------------------------------------------
 def smart_translate(text_val, target_lang):
-    if not text_val or not isinstance(text_val, str) or text_val in ["None", "-", ""]:
+    if not text_val or not isinstance(text_val, str) or text_val.strip() in ["None", "-", ""]:
         if target_lang == "Tiếng Việt": return "Chưa cập nhật"
         elif target_lang == "English": return "N/A"
         return "-"
 
-    text_lower = text_val.lower()
+    val_lower = text_val.lower()
 
-    if "樟榜" in text_val or "trảng bàng" in text_lower or "tay ninh" in text_lower:
+    if "樟榜" in text_val or "trảng bàng" in val_lower or "tay ninh" in val_lower or "工業區" in text_val:
         if target_lang == "Tiếng Việt": return "Nhà máy A KCN Trảng Bàng, Tây Ninh"
         elif target_lang == "繁體中文": return "越南樟榜工業區A廠"
         elif target_lang == "English": return "Tay Ninh Plant Client A"
 
-    if "西寧" in text_val or "2000a" in text_lower or "配電櫃" in text_val or "tủ điện" in text_lower:
+    if "西寧" in text_val or "2000a" in val_lower or "配電櫃" in text_val or "tủ điện" in val_lower or "新建工程" in text_val:
         if target_lang == "Tiếng Việt": return "Lắp đặt tủ điện 2000A nhà máy Tây Ninh"
         elif target_lang == "繁體中文": return "西寧廠 2000A 配電櫃新建工程"
         elif target_lang == "English": return "Tay Ninh 2000A Switchboard Installation"
 
-    if "備料" in text_val or "準備" in text_val or "chuẩn bị" in text_lower:
+    if "備料" in text_val or "準備" in text_val or "chuẩn bị" in val_lower or "thi công" in val_lower:
         if target_lang == "Tiếng Việt": return "Đang chuẩn bị vật tư / Chuẩn bị thi công"
         elif target_lang == "繁體中文": return "工程備料中 / 準備施工"
         elif target_lang == "English": return "Material preparation / Preparing construction"
+
+    if "不分期" in text_val or "1" in text_val and "đợt" in val_lower or "single" in val_lower or "lump" in val_lower:
+        if target_lang == "Tiếng Việt": return "Thanh toán 1 lần"
+        elif target_lang == "繁體中文": return "不分期"
+        return "Single"
+    if "分三期" in text_val or "3" in text_val:
+        if target_lang == "Tiếng Việt": return "Thanh toán 3 đợt"
+        elif target_lang == "繁體中文": return "分三期"
+        return "3 Installments"
+    if "分五期" in text_val or "5" in text_val:
+        if target_lang == "Tiếng Việt": return "Thanh toán 5 đợt"
+        elif target_lang == "繁體中文": return "分五期"
+        return "5 Installments"
 
     return text_val
 
@@ -246,7 +273,6 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
 
     tab_list, tab_edit, tab_add = st.tabs([L["tab_list"], L["tab_edit"], L["tab_add"]])
 
-    # 1. 應收帳款總覽清單（含催收歷程與拒付/呆帳備忘）
     with tab_list:
         st.subheader(L["table_header"])
         if engine:
@@ -255,24 +281,18 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
                 if not df_ar.empty:
                     display_list = []
                     for idx, r in df_ar.iterrows():
-                        entity_display = smart_translate(r.get("entity_name"), active_lang)
-                        project_display = smart_translate(r.get("project_name"), active_lang)
-                        progress_display = smart_translate(r.get("progress_note"), active_lang)
-                        terms_display = smart_translate(r.get("payment_terms"), active_lang)
-                        desc_display = smart_translate(r.get("project_desc"), active_lang)
-
                         display_list.append({
                             L["col_index"]: idx + 1,
                             L["col_inv_id"]: r.get("invoice_id"),
-                            L["col_entity"]: entity_display,
-                            L["col_project"]: project_display,
+                            L["col_entity"]: smart_translate(r.get("entity_name"), active_lang),
+                            L["col_project"]: smart_translate(r.get("project_name"), active_lang),
                             L["col_currency"]: r.get("currency"),
                             L["col_total"]: format_curr(r.get("quoted_amount", 0.0), r.get("currency")),
-                            L["col_terms"]: terms_display,
+                            L["col_terms"]: smart_translate(r.get("payment_terms"), active_lang),
                             L["col_ratios"]: r.get("installment_ratios", "100%"),
-                            L["col_progress"]: progress_display,
-                            L["col_desc"]: desc_display if desc_display != "-" else "-",
-                            L["col_reason"]: r.get("uncollected_reason", "-") # 完整保留拒付理由與呆帳歷程
+                            L["col_progress"]: smart_translate(r.get("progress_note"), active_lang),
+                            L["col_desc"]: smart_translate(r.get("project_desc"), active_lang),
+                            L["col_reason"]: r.get("uncollected_reason", "-")
                         })
                     st.dataframe(pd.DataFrame(display_list), use_container_width=True)
                 else:
@@ -280,7 +300,6 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
             except Exception as e:
                 st.error(f"{L['read_error']}{e}")
 
-    # 2. 修改進度說明與催收歷程、拒付理由、倒閉呆帳風險記錄
     with tab_edit:
         st.subheader(L["edit_header"])
         if engine:
@@ -298,7 +317,7 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
                     with st.form("form_update_ar_progress"):
                         default_prog = smart_translate(target_row.get("progress_note", ""), active_lang)
                         new_progress = st.text_area(L["new_progress_label"], value=default_prog)
-                        new_reason = st.text_area(L["new_reason_label"], value=target_row.get("uncollected_reason", ""), placeholder="例如：客戶因資金周轉困難要求展延，或因工程驗收爭議拒付，或回報該客戶已進入破產清算程序等...")
+                        new_reason = st.text_area(L["new_reason_label"], value=target_row.get("uncollected_reason", ""), placeholder="例如：客戶資金周轉困難要求展延，驗收爭議拒付，或回報該客戶已倒閉/破產清算...")
                         modifier = st.text_input(L["modifier_label"], value=st.session_state.get("user_name", "admin"))
 
                         if st.form_submit_button(L["save_update_btn"], use_container_width=True):
@@ -322,7 +341,6 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
             except Exception as e:
                 st.error(f"{L['read_error']}{e}")
 
-    # 3. 新增請款專案
     with tab_add:
         st.subheader(L["add_header"])
         
@@ -457,7 +475,6 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
             else:
                 st.warning(L["fill_warning"])
 
-# 💡 確保主程式所有可能的呼叫方式皆能 100% 相容對應
 def show(*args, **kwargs):
     render_sales_order_ar_page(*args, **kwargs)
 
