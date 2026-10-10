@@ -65,10 +65,11 @@ NAV_STRUCTURE = {
                     "🛠️ 車輛維修保養紀錄": "vehicle_maintenance",
                     "🏢 固定資產與設備管理": "asset_mgmt",
                     "🛒 採購與應付帳款 (AP)": "procurement_ap",
-                    "📋 應收帳款與越南電子發票開立": "sales_order_ar", # 整合發票於應收帳款中
+                    "📋 應收帳款與對帳管理中心": "sales_order_ar",
                     "📊 越南稅務標準財務報表 (Thông tư 200)": "financial_tax",
                     "💰 員工薪資計算與保險扣除": "payroll_calc",
-                    "📄 綜合發票檔案與 XML 歸檔": "invoice_management",
+                    "📄 電子發票綜合管理與 XML 歸檔": "invoice_management",
+                    "📊 越南營建電子發票與稅務合規管家": "vn_tax_invoice",
                 }
             },
             "✍️ 全公司電子簽核中心 (Approval Center)": {
@@ -135,10 +136,11 @@ NAV_STRUCTURE = {
                     "🛠️ Bảo trì xe": "vehicle_maintenance",
                     "🏢 Quản lý Tài sản cố định": "asset_mgmt",
                     "🛒 Mua hàng & Phải trả (AP)": "procurement_ap",
-                    "📋 Phải thu & Xuất hóa đơn điện tử": "sales_order_ar",
+                    "📋 Quản lý Phải thu": "sales_order_ar",
                     "📊 Báo cáo Tài chính chuẩn Thuế VN": "financial_tax",
                     "💰 Tính lương & Khấu trừ bảo hiểm": "payroll_calc",
                     "📄 Quản lý Hóa đơn điện tử": "invoice_management",
+                    "📊 Quản lý Hóa đơn điện tử & Tuân thủ Thuế": "vn_tax_invoice",
                 }
             },
             "✍️ Trung tâm Phê duyệt Điện tử (Approval Center)": {
@@ -205,10 +207,11 @@ NAV_STRUCTURE = {
                     "🛠️ Vehicle Maintenance": "vehicle_maintenance",
                     "🏢 Fixed Asset Management": "asset_mgmt",
                     "🛒 Procurement & AP": "procurement_ap",
-                    "📋 Accounts Receivable & E-Invoice": "sales_order_ar",
+                    "📋 Accounts Receivable": "sales_order_ar",
                     "📊 Vietnamese Tax Financials": "financial_tax",
                     "💰 Payroll & Insurance Calculation": "payroll_calc",
                     "📄 E-Invoice Management": "invoice_management",
+                    "📊 Vietnam E-Invoice & Tax Manager": "vn_tax_invoice",
                 }
             },
             "✍️ E-Approval Center": {
@@ -468,11 +471,13 @@ elif target_route == "eng_labor":
 elif target_route == "eng_fat":
     load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="9")
 
+elif target_route == "vn_tax_invoice":
+    load_module_safely("modules.vietnam_tax_api_config", "render_vn_tax_invoice_page", engine=engine, lang=curr_lang)
+
 elif target_route == "procurement_ap":
     load_module_safely("modules.procurement_ap", "render_procurement_ap_page", engine=engine, lang=curr_lang)
 
 elif target_route == "sales_order_ar":
-    # 應收帳款與越南電子發票開立已完美整合於此模組
     load_module_safely("modules.sales_order_ar", "render_sales_order_ar_page", engine=engine, lang=curr_lang)
 
 elif target_route == "financial_tax":
