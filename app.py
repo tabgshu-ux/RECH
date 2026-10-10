@@ -69,6 +69,7 @@ NAV_STRUCTURE = {
                     "📊 越南稅務標準財務報表 (Thông tư 200)": "financial_tax",
                     "💰 員工薪資計算與保險扣除": "payroll_calc",
                     "📄 電子發票綜合管理": "invoice_management",
+                    "📊 [會計] 越南營建電子發票與稅務合規管家": "eng_vn_tax", # 已移至管理部底下
                 }
             },
             "✍️ 全公司電子簽核中心 (Approval Center)": {
@@ -87,7 +88,6 @@ NAV_STRUCTURE = {
                     "🔌 [工程] 配電盤 BOM 零件自動展開與採購連動": "eng_bom",
                     "👷 [工程] 外包商點工計價與越南勞動法計薪": "eng_labor",
                     "🧪 [工程] FAT/SAT 試驗報告與 QR Code 驗收": "eng_fat",
-                    "📊 [工程] 越南營建電子發票與稅務合規管家": "eng_vn_tax",
                 }
             },
             "🏭 生產部 (Production Dept)": {
@@ -140,6 +140,7 @@ NAV_STRUCTURE = {
                     "📊 Báo cáo Tài chính chuẩn Thuế VN": "financial_tax",
                     "💰 Tính lương & Khấu trừ bảo hiểm": "payroll_calc",
                     "📄 Quản lý Hóa đơn điện tử": "invoice_management",
+                    "📊 [Kế toán] Hóa đơn điện tử VN & Thuế": "eng_vn_tax",
                 }
             },
             "✍️ Trung tâm Phê duyệt Điện tử (Approval Center)": {
@@ -158,7 +159,6 @@ NAV_STRUCTURE = {
                     "🔌 [Kỹ thuật] Bóc tách BOM & Mua hàng": "eng_bom",
                     "👷 [Kỹ thuật] Chấm công thầu phụ": "eng_labor",
                     "🧪 [Kỹ thuật] Thử nghiệm FAT/SAT": "eng_fat",
-                    "📊 [Kỹ thuật] Hóa đơn điện tử VN": "eng_vn_tax",
                 }
             },
             "🏭 Phòng Sản xuất (Production Dept)": {
@@ -211,6 +211,7 @@ NAV_STRUCTURE = {
                     "📊 Vietnamese Tax Financials": "financial_tax",
                     "💰 Payroll & Insurance Calculation": "payroll_calc",
                     "📄 E-Invoice Management": "invoice_management",
+                    "📊 [Finance] Vietnam E-Invoice & Tax": "eng_vn_tax",
                 }
             },
             "✍️ E-Approval Center": {
@@ -229,7 +230,6 @@ NAV_STRUCTURE = {
                     "🔌 [Engineering] BOM & Procurement": "eng_bom",
                     "👷 [Engineering] Subcontractor Labor": "eng_labor",
                     "🧪 [Engineering] FAT/SAT Testing": "eng_fat",
-                    "📊 [Engineering] Vietnam E-Invoice": "eng_vn_tax",
                 }
             },
             "🏭 Production Dept": {
@@ -292,7 +292,6 @@ if not st.session_state.logged_in:
         username_input = st.text_input(lang_dict["username"])
         password_input = st.text_input(lang_dict["password"], type="password")
         
-        # 🌐 語系選擇器放置於密碼下方、登入按鈕上方
         lang_list = ["繁體中文", "Tiếng Việt", "English"]
         current_lang_idx = lang_list.index(st.session_state.current_lang) if st.session_state.current_lang in lang_list else 0
         selected_login_lang = st.selectbox(lang_dict["lang_selector"], lang_list, index=current_lang_idx)
@@ -473,7 +472,8 @@ elif target_route == "eng_fat":
     load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="9")
 
 elif target_route == "eng_vn_tax":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="10")
+    # 已移至管理部底下，呼叫會計師與稅務模組或專屬越南發票模組
+    load_module_safely("modules.financial_tax_reports", "render_financial_tax_reports_page", engine=engine, lang=curr_lang)
 
 elif target_route == "procurement_ap":
     load_module_safely("modules.procurement_ap", "render_procurement_ap_page", engine=engine, lang=curr_lang)
