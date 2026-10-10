@@ -514,7 +514,10 @@ elif target_route == "vehicle_maintenance":
 elif target_route == "wh_management":
     load_module_safely("modules.warehouse_management", "render_warehouse_management", engine=engine, t=lang_dict, lang=curr_lang)
 
-elif target_route in ["sheet_metal", "painting", "assembly"]:
+elif target_route == "sheet_metal":
+    sheet_metal.render_sheet_metal_module(engine=engine, t=lang_dict, lang=curr_lang)
+
+elif target_route in ["painting", "assembly"]:
     st.title(selected_feature_label)
     st.info("Hệ thống đang hoạt động bình thường / 現場工單與生產追蹤模組順利運作中。")
 
