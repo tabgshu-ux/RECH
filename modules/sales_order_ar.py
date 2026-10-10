@@ -236,4 +236,209 @@ def smart_translate(text_val, target_lang):
         elif target_lang == "繁體中文": return "西寧廠 2000A 配電櫃新建工程"
         elif target_lang == "English": return "Tay Ninh 2000A Switchboard Installation"
 
-    if "備料" in text_
+    if "備料" in text_val or "準備" in text_val or "chuẩn bị" in val_lower or "thi công" in val_lower:
+        if target_lang == "Tiếng Việt":
+            return "Đang chuẩn bị vật tư / Chuẩn bị thi công"
+        elif target_lang == "繁體中文":
+            return "工程備料中 / 準備施工"
+        elif target_lang == "English":
+            return "Material preparation / Preparing construction"
+
+    if "不分期" in text_val or "1" in text_val and "đợt" in val_lower or "single" in val_lower or "lump" in val_lower:
+        if target_lang == "Tiếng Việt": return "Thanh toán 1 lần"
+        elif target_lang == "繁體中文": return "不分期"
+        return "Single"
+    if "分三期" in text_val or "3" in text_val:
+        if target_lang == "Tiếng Việt": return "Thanh toán 3 đợt"
+        elif target_lang == "繁體中文": return "分三期"
+        return "3 Installments"
+    if "分五期" in text_val or "5" in text_val:
+        if target_lang == "Tiếng Việt": return "Thanh toán 5 đợt"
+        elif target_lang == "繁體中文": return "分五期"
+        return "5 Installments"
+
+    return text_val
+
+def format_curr(amt, curr):
+    if not curr: curr = "越南盾"
+    if "VND" in curr or "越南盾" in curr or "Đồng" in curr: return f"₫ {amt:,.0f} VND"
+    elif "USD" in curr or "美金" in curr or "Đô la" in curr: return f"$ {amt:,.3f} USD"
+    elif "TWD" in curr or "台幣" in curr or "Đài tệ" in curr: return f"NT$ {amt:,.0f} TWD"
+    elif "CNY" in curr or "人民幣" in curr or "Nhân dân tệ" in curr: return f"¥ {amt:,.2f} CNY"
+    return f"{amt:,.3f} {curr}"
+
+def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
+    active_lang = lang or st.session_state.get("lang", "繁體中文")
+    L = AR_I18N.get(active_lang, AR_I18N["繁體中文"])
+
+    st.title(L["title"])
+    st.caption(L["caption"])
+
+    tab_list, tab_edit, tab_add = st.tabs([L["tab_list"], L["tab_edit"], L["tab_add"]])
+
+    with tab_list:
+        st.subheader(L["table_header"])
+        if engine:
+            try:
+                df_ar = pd.read_sql("SELECT * FROM invoices WHERE invoice_type='AR'", engine)
+                if not df_ar.empty:
+                    display_list = []
+                    for idx, r in df_ar.iterrows():
+                        display_list.append({
+                            L["col_index"]: idx + 1,
+                            L["col_inv_id"]: r.get("invoice_id"),
+                            L["col_entity"]: smart_translate(r.get("entity_name"), active_lang),
+                            L["col_project"]: smart_translate(r.get("project_name"), active_lang),
+                            L["col_currency"]: r.get("currency"),
+                            L["col_total"]: format_curr(r.get("quoted_amount", 0.0), r.get("currency")),
+                            L["col_terms"]: smart_translate(r.get("payment_terms"), active_lang),
+                            L["col_ratios"]: r.get("installment_ratios", "100%"),
+                            L["col_progress"]: smart_translate(r.get("progress_note"), active_lang),
+                            L["col_desc"]: smart_translate(r.get("project_desc"), active_lang),
+                            L["col_reason"]: r.get("uncollected_reason", "-")
+                        })
+                    st.dataframe(pd.DataFrame(display_list), use_container_width=True)
+                else:
+                    st.info(L["no_records"])
+            except Exception as e:
+                st.error(f"{L['read_error']}{e}")
+
+    with tab_edit:
+        st.subheader(L["edit_header"])
+        if engine:
+            try:
+                df_ar = pd.read_sql("SELECT * FROM invoices WHERE invoice_type='AR'", engine)
+                if not df_ar.empty:
+                    ar_opts = {f"{r['invoice_id']} - {smart_translate(r['entity_name'], active_lang)} ({smart_translate(r['project_name'], active_lang)})": r['invoice_id'] for _, r in df_ar.iterrows()}
+                    sel_label = st.selectbox(L["select_project"], list(ar_opts.keys()))
+                    target_id = ar_opts[sel_label]
+                    target_row = df_ar[df_ar['invoice_id'] == target_id].iloc[0]
+
+                    proj_name_disp = smart_translate(target_row['project_name'], active_lang)
+                    st.markdown(f"**{L['current_project']}**：`{proj_name_disp}` | **{L['total_amount_label']}**：{format_curr(target_row['quoted_amount'], target_row['currency'])}")
+                    
+                    with st.form("form_update_ar_progress"):
+                        target_milestone = st.selectbox(L["target_milestone_label"], L["milestone_opts"])
+                        
+                        default_prog = smart_translate(target_row.get("progress_note", ""), active_lang)
+                        new_progress = st.text_area(L["progress_note_label"], value=default_prog)
+                        new_reason = st.text_area(L["reason_label"], value=target_row.get("uncollected_reason", ""), placeholder="例如：客戶資金周轉困難要求展延，驗收爭議拒付，或回報該客戶已倒閉/破產清算...")
+                        
+                        logged_user_name = st.session_state.get("user_name", "admin")
+                        logged_user_role = str(st.session_state.get("user_role", "Staff")).upper()
+                        modifier_display = f"{logged_user_name} ({logged_user_role})"
+                        
+                        st.text_input(L["modifier_label"], value=modifier_display, disabled=True)
+
+                        if st.form_submit_button(L["save_update_btn"], type="primary", use_container_width=True):
+                            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+                            full_reason = f"【{timestamp} | {target_milestone} | 經辦:{modifier_display}】{new_reason}"
+                            
+                            with engine.connect() as conn:
+                                conn.execute(
+                                    text("""
+                                        UPDATE invoices 
+                                        SET progress_note = :prog,
+                                            uncollected_reason = :reason,
+                                            quoter_name = :quoter
+                                        WHERE invoice_id = :id
+                                    """),
+                                    {"prog": new_progress, "reason": full_reason, "quoter": modifier_display, "id": target_id}
+                                )
+                                conn.commit()
+                            st.success(L["update_success"])
+                            st.rerun()
+            except Exception as e:
+                st.error(f"{L['read_error']}{e}")
+
+    with tab_add:
+        st.subheader(L["add_header"])
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            inv_id = st.text_input(L["inv_id_label"], value=f"AR-2026-{datetime.datetime.now().strftime('%m%d%H%M')}")
+            entity_name = st.text_input(L["entity_name_label"], placeholder=L["entity_placeholder"])
+            project_name = st.text_input(L["project_name_label"], placeholder=L["project_placeholder"])
+            currency = st.selectbox(L["currency_label"], L["currency_opts"])
+            
+            if "USD" in currency or "美金" in currency or "Đô la" in currency:
+                total_amount = st.number_input(L["usd_label"], min_value=0.0, value=10000.000, format="%.3f", step=0.001)
+            else:
+                total_amount = st.number_input(L["total_lbl"], min_value=0.0, value=100000.0, step=1000.0)
+
+        with c2:
+            plan_type = st.selectbox(L["plan_type_label"], L["plan_opts"])
+            project_desc = st.text_area(L["proj_desc_label"], placeholder=L["proj_desc_placeholder"])
+
+        st.markdown("---")
+        st.markdown(f"##### {L['milestone_header']}")
+
+        ratios_str = "100%"
+        p1_amt, p2_amt, p3_amt, p4_amt, p5_amt = total_amount, 0.0, 0.0, 0.0, 0.0
+        d1, d2, d3, d4, d5 = datetime.date.today(), datetime.date.today(), datetime.date.today(), datetime.date.today(), datetime.date.today()
+
+        is_single = ("不分期" in plan_type) or ("1" in plan_type and "đợt" in plan_type) or ("Single" in plan_type)
+        is_three = ("分三期" in plan_type) or ("3" in plan_type)
+        is_five = ("分五期" in plan_type) or ("5" in plan_type)
+
+        if is_single:
+            d1 = st.date_input(L["payment_date_label"], value=datetime.date.today() + datetime.timedelta(days=30), key="ar_d_single")
+            st.info(f"{L['single_pay_info']} {format_curr(total_amount, currency)}")
+
+        elif is_three:
+            col_r1, col_r2, col_r3 = st.columns(3)
+            with col_r1:
+                r1 = st.number_input("第 1 期比率 (%)" if active_lang=="繁體中文" else "Tỷ lệ đợt 1 (%)", min_value=0.0, max_value=100.0, value=30.0, step=1.0, key="ar_3r1")
+            with col_r2:
+                r2 = st.number_input("第 2 期比率 (%)" if active_lang=="繁體中文" else "Tỷ lệ đợt 2 (%)", min_value=0.0, max_value=100.0, value=40.0, step=1.0, key="ar_3r2")
+            with col_r3:
+                r3 = st.number_input("第 3 期比率 (%)" if active_lang=="繁體中文" else "Tỷ lệ đợt 3 (%)", min_value=0.0, max_value=100.0, value=30.0, step=1.0, key="ar_3r3")
+            
+            total_pct = r1 + r2 + r3
+            if abs(total_pct - 100.0) > 0.01:
+                st.warning(L["ratio_warning"])
+            else:
+                st.success(L["ratio_success"])
+
+            ratios_str = f"{r1}% / {r2}% / {r3}%"
+            p1_amt = total_amount * (r1 / 100.0)
+            p2_amt = total_amount * (r2 / 100.0)
+            p3_amt = total_amount * (r3 / 100.0)
+
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.write(f"• **{L['period_1_amt']}**：`{format_curr(p1_amt, currency)}`")
+                d1 = st.date_input(L["period_1_date"], value=datetime.date.today() + datetime.timedelta(days=7), key="ar_3d1")
+                st.write(f"• **{L['period_2_amt']}**：`{format_curr(p2_amt, currency)}`")
+                d2 = st.date_input(L["period_2_date"], value=datetime.date.today() + datetime.timedelta(days=30), key="ar_3d2")
+            with col_b:
+                st.write(f"• **{L['period_3_amt']}**：`{format_curr(p3_amt, currency)}`")
+                d3 = st.date_input(L["period_3_date"], value=datetime.date.today() + datetime.timedelta(days=60), key="ar_3d3")
+
+        elif is_five:
+            col_r1, col_r2, col_r3, col_r4, col_r5 = st.columns(5)
+            with col_r1:
+                r1 = st.number_input("第 1 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r1")
+            with col_r2:
+                r2 = st.number_input("第 2 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r2")
+            with col_r3:
+                r3 = st.number_input("第 3 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r3")
+            with col_r4:
+                r4 = st.number_input("第 4 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r4")
+            with col_r5:
+                r5 = st.number_input("第 5 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r5")
+
+            total_pct = r1 + r2 + r3 + r4 + r5
+            if abs(total_pct - 100.0) > 0.01:
+                st.warning(L["ratio_warning"])
+            else:
+                st.success(L["ratio_success"])
+
+            ratios_str = f"{r1}% / {r2}% / {r3}% / {r4}% / {r5}%"
+            p1_amt = total_amount * (r1 / 100.0)
+            p2_amt = total_amount * (r2 / 100.0)
+            p3_amt = total_amount * (r3 / 100.0)
+            p4_amt = total_amount * (r4 / 100.0)
+            p5_amt = total_amount * (r5 / 100.0)
+
+            col_a, col_b = st.
