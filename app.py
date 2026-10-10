@@ -284,8 +284,15 @@ if not st.session_state.logged_in:
     _, center_col, _ = st.columns([1, 1.5, 1])
     with center_col:
         st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
+        st.markdown(f"<h2 style='text-align: center;'>{lang_dict['login_title']}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align: center; color: gray;'>{lang_dict['company_sub']}</p>", unsafe_allow_html=True)
+        st.markdown("---")
         
-        # 🌐 在登入頁面中央上方加入語系選擇器
+        username_input = st.text_input(lang_dict["username"])
+        password_input = st.text_input(lang_dict["password"], type="password")
+        
+        # 🌐 語系選擇器放置於密碼下方、登入按鈕上方
         lang_list = ["繁體中文", "Tiếng Việt", "English"]
         current_lang_idx = lang_list.index(st.session_state.current_lang) if st.session_state.current_lang in lang_list else 0
         selected_login_lang = st.selectbox(lang_dict["lang_selector"], lang_list, index=current_lang_idx)
@@ -294,14 +301,7 @@ if not st.session_state.logged_in:
             st.session_state.current_lang = selected_login_lang
             st.rerun()
 
-        st.markdown("---")
-        st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
-        st.markdown(f"<h2 style='text-align: center;'>{lang_dict['login_title']}</h2>", unsafe_allow_html=True)
-        st.markdown(f"<p style='text-align: center; color: gray;'>{lang_dict['company_sub']}</p>", unsafe_allow_html=True)
-        st.markdown("---")
-        
-        username_input = st.text_input(lang_dict["username"])
-        password_input = st.text_input(lang_dict["password"], type="password")
+        st.markdown("<br>", unsafe_allow_html=True)
         
         if st.button(lang_dict["login_btn"], use_container_width=True):
             u_clean = username_input.strip()
