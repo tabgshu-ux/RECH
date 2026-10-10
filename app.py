@@ -518,10 +518,13 @@ elif target_route == "wh_management":
 elif target_route == "sheet_metal":
     sheet_metal.render_sheet_metal_module(engine=engine, t=lang_dict, lang=curr_lang)
 
-elif target_route in ["painting", "assembly"]:
+elif target_route == "painting":
+    painting.render_painting_module(engine=engine, t=lang_dict, lang=curr_lang)
+
+elif target_route == "assembly":
     st.title(selected_feature_label)
     st.info("Hệ thống đang hoạt động bình thường / 現場工單與生產追蹤模組順利運作中。")
-
+    
 elif target_route == "it_admin":
     if current_role_clean == "admin":
         load_module_safely("modules.user_management", "render_user_management_page", lang=curr_lang)
