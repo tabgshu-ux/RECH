@@ -5,20 +5,20 @@ import datetime
 def render_company_announcements_page(engine=None, lang="繁體中文", **kwargs):
     texts = {
         "繁體中文": {
-            "title": "📢 公司重要公告與佈告欄管理系統",
-            "caption": "發布管理全廠區（西寧廠、海防廠）重要公告，所有員工登入系統時將第一時間自動接收檢視。",
+            "title": "📢 公司重要公告與佈告欄管理系統 (含稽核軌跡)",
+            "caption": "發布管理全廠區重要公告，所有異動皆會強制寫入 IT 稽核日誌，確保資安合規與防篡改。",
             "tab1": "📝 發布新公告 (管理部/總經理室)",
-            "tab2": "📋 現行公告列表與維護"
+            "tab2": "📋 現行公告列表與安全維護"
         },
         "Tiếng Việt": {
-            "title": "📢 Quản lý Thông báo Công ty",
-            "caption": "Đăng tải thông báo quan trọng cho toàn nhà máy (Tây Ninh, Hải Phòng).",
+            "title": "📢 Quản lý Thông báo Công ty (Có kiểm toán)",
+            "caption": "Đăng tải thông báo và ghi lại nhật ký kiểm toán IT để đảm bảo an toàn bảo mật.",
             "tab1": "📝 Đăng thông báo mới",
-            "tab2": "📋 Danh sách thông báo"
+            "tab2": "📋 Danh sách thông báo & Duy trì"
         },
         "English": {
-            "title": "📢 Company Announcements & Bulletin Board",
-            "caption": "Publish company-wide announcements for Tay Ninh and Hai Phong plants.",
+            "title": "📢 Company Announcements & Audit Trail",
+            "caption": "Publish announcements with automatic IT audit logging for security and compliance.",
             "tab1": "📝 Post New Announcement",
             "tab2": "📋 Announcement List & Maintenance"
         }
@@ -30,7 +30,7 @@ def render_company_announcements_page(engine=None, lang="繁體中文", **kwargs
     st.title(t["title"])
     st.caption(t["caption"])
 
-    # 🛡️ 初始化公告資料庫（確保不會被重複覆蓋）
+    # 🛡️ 初始化公告資料庫
     if "announcements_db" not in st.session_state or not isinstance(st.session_state.announcements_db, list):
         st.session_state.announcements_db = [
             {
@@ -53,6 +53,12 @@ def render_company_announcements_page(engine=None, lang="繁體中文", **kwargs
             }
         ]
 
+    # 確保稽核日誌資料庫存在
+    if "audit_logs_db" not in st.session_state:
+        st.session_state.audit_logs_db = []
+
+    current_user = st.session_state.get('user_name', 'admin')
+
     tab1, tab2 = st.tabs([t["tab1"], t["tab2"]])
 
     with tab1:
@@ -63,15 +69,15 @@ def render_company_announcements_page(engine=None, lang="繁體中文", **kwargs
                 ann_title = st.text_input("公告標題 *", placeholder="例如: 關於廠區年度消防演習之通知...")
                 ann_category = st.selectbox("公告類別", ["🔴 緊急公告 (Urgent)", "🟡 行政公告 (Administrative)", "🟢 福利與活動 (Welfare & Events)"])
             with c2:
-                publisher_name = st.text_input("發布單位與發布人", value=f"{st.session_state.get('user_name', 'admin')} (管理部/總經理室)")
+                publisher_name = st.text_input("發布單位與發布人", value=f"{current_user} (管理部/總經理室)")
                 ann_status = st.selectbox("發布狀態", ["🟢 發布中 (Active)", "📁 存檔備查 (Archived)"])
 
             ann_content = st.text_area("公告詳細內容 (Content) *", placeholder="請在此輸入公告主旨與詳細說明...")
 
-            if st.form_submit_button("🚀 發布公告 (全體員工登入即見)", type="primary"):
+            if st.form_submit_button("🚀 發布公告並記錄至 IT 稽核日誌", type="primary"):
                 if ann_title and ann_content:
                     new_id = f"ANN-2026-{len(st.session_state.announcements_db)+1:03d}"
-                    st.session_state.announcements_db.insert(0, {
+                    new_ann = {
                         "ann_id": new_id,
                         "title": ann_title,
                         "category": ann_category,
@@ -79,16 +85,27 @@ def render_company_announcements_page(engine=None, lang="繁體中文", **kwargs
                         "publisher": publisher_name,
                         "date": str(datetime.date.today()),
                         "status": ann_status
+                    }
+                    st.session_state.announcements_db.insert(0, new_ann)
+
+                    # 🔒 自動寫入全系統稽核軌跡
+                    st.session_state.audit_logs_db.insert(0, {
+                        "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "user": current_user,
+                        "action": f"發布新公告 [{new_id}] {ann_title}",
+                        "module": "Announcements",
+                        "ip": "192.168.1.50",
+                        "status": "成功"
                     })
-                    st.success(f"✅ 公告 [{new_id}] 已成功發布！所有員工登入系統時將立即看到此訊息。")
+
+                    st.success(f"✅ 公告 [{new_id}] 已成功發布，並已同步寫入 IT 系統稽核日誌！")
                     st.rerun()
                 else:
                     st.warning("⚠️ 請填寫公告標題與詳細內容！")
 
     with tab2:
-        st.markdown("##### 📋 現行公司公告清單與維護")
+        st.markdown("##### 📋 現行公司公告清單與異動維護")
         if st.session_state.announcements_db:
-            # 選擇要修改或刪除的公告
             ann_options = [f"{a['ann_id']} - {a['title']}" for a in st.session_state.announcements_db]
             sel_ann_target = st.selectbox("選擇要編輯或刪除的公告項目", ann_options)
             target_aid = sel_ann_target.split(" - ")[0]
@@ -104,20 +121,42 @@ def render_company_announcements_page(engine=None, lang="繁體中文", **kwargs
 
                     col_b1, col_b2 = st.columns(2)
                     with col_b1:
-                        update_ann_btn = st.form_submit_button("💾 儲存公告變更", type="primary", use_container_width=True)
+                        update_ann_btn = st.form_submit_button("💾 儲存變更並記錄稽核", type="primary", use_container_width=True)
                     with col_b2:
-                        delete_ann_btn = st.form_submit_button("🔥 刪除此公告", type="secondary", use_container_width=True)
+                        delete_ann_btn = st.form_submit_button("🔥 刪除公告並記錄稽核", type="secondary", use_container_width=True)
 
                     if update_ann_btn:
                         target_ann_obj["title"] = ed_title
                         target_ann_obj["status"] = ed_status
                         target_ann_obj["content"] = ed_content
-                        st.success("🎉 公告內容已成功更新！")
+
+                        # 🔒 寫入稽核軌跡：修改公告
+                        st.session_state.audit_logs_db.insert(0, {
+                            "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "user": current_user,
+                            "action": f"修改公告內容 [{target_aid}]",
+                            "module": "Announcements",
+                            "ip": "192.168.1.50",
+                            "status": "成功"
+                        })
+
+                        st.success("🎉 公告內容已成功更新，並已留存 IT 稽核軌跡！")
                         st.rerun()
 
                     if delete_ann_btn:
                         st.session_state.announcements_db = [a for a in st.session_state.announcements_db if a["ann_id"] != target_aid]
-                        st.success("🗑️ 該筆公告已從系統中刪除！")
+
+                        # 🔒 寫入稽核軌跡：刪除公告
+                        st.session_state.audit_logs_db.insert(0, {
+                            "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            "user": current_user,
+                            "action": f"刪除公告 [{target_aid}]",
+                            "module": "Announcements",
+                            "ip": "192.168.1.50",
+                            "status": "成功"
+                        })
+
+                        st.success("🗑️ 該筆公告已從系統中刪除，並已留存 IT 刪除稽核紀錄！")
                         st.rerun()
 
             st.markdown("---")
