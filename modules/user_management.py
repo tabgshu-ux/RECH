@@ -8,9 +8,9 @@ import datetime
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 帳號權限與系統稽核軌跡 (Audit Log)",
-        "caption": "監控全系統使用者登入歷程、權限異動紀錄、資料庫連線安全與系統級稽核日誌，並精準控管各權限可存取的系統網頁。",
+        "caption": "監控全系統使用者登入歷程、自訂角色與精細化子部門/子功能網頁存取授權。",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
-        "tab_users": "👥 系統使用者與網頁權限控管",
+        "tab_users": "👥 系統使用者與細緻權限控管",
         "tab_api": "🔌 電子發票 API 串接設定",
         "audit_header": "🔍 全系統操作軌跡與稽核軌跡日誌",
         "filter_year": "篩選年份 (Year)",
@@ -18,15 +18,15 @@ USER_MGMT_I18N = {
         "filter_day": "篩選日期 (Day)",
         "search_placeholder": "輸入關鍵字搜尋稽核紀錄...",
         "no_logs": "目前尚無系統稽核紀錄。",
-        "users_header": "👥 系統現有使用者帳號與網頁存取權限清冊",
-        "add_user_header": "➕ 新增系統使用者帳號與網頁存取授權",
+        "users_header": "👥 系統現有使用者帳號與靈活權限清冊",
+        "add_user_header": "➕ 新增系統使用者帳號與細緻子部門授權",
         "lbl_username": "登入帳號 *",
         "lbl_name": "使用者姓名 *",
-        "lbl_role": "權限角色 *",
-        "role_opts": ["admin", "manager", "security", "staff"],
+        "lbl_role": "權限角色 (可選或自訂新角色) *",
+        "role_opts": ["admin (系統管理員)", "manager (部門經理)", "finance (財務主管)", "procurement (採購)", "site_supervisor (工地主任)", "security (大門保全)", "staff (一般員工)", "➕ [自訂新角色...]"],
         "lbl_site": "所屬廠區 *",
         "site_opts": ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"],
-        "btn_add_user": "💾 建立使用者帳號與賦權",
+        "btn_add_user": "💾 建立使用者帳號與細緻授權",
         "success_add": "✅ 系統帳號 `{username}` 已成功建立！",
         "fill_warning": "⚠️ 請填寫完整帳號與姓名！",
         # 表格欄位
@@ -52,10 +52,10 @@ USER_MGMT_I18N = {
         "api_test_success": "✅ API 連線測試成功！憑證授權與伺服器回應正常。"
     },
     "Tiếng Việt": {
-        "title": "🔒 Quản trị IT - Phân quyền Tài khoản & Nhật ký Kiểm toán (Audit Log)",
-        "caption": "Giám sát lịch sử đăng nhập, thay đổi phân quyền truy cập trang web và cấu hình API hóa đơn.",
+        "title": "🔒 Quản trị IT - Phân quyền Tài khoản & Nhật ký Kiểm toán",
+        "caption": "Giám sát lịch sử đăng nhập, tùy chỉnh vai trò và phân quyền chi tiết đến từng module con.",
         "tab_audit": "📊 Nhật ký Kiểm toán (Audit Logs)",
-        "tab_users": "👥 Quản lý Người dùng & Phân quyền",
+        "tab_users": "👥 Quản lý Người dùng & Phân quyền chi tiết",
         "tab_api": "🔌 Cấu hình API Hóa đơn",
         "audit_header": "🔍 Nhật ký thao tác và kiểm toán toàn hệ thống",
         "filter_year": "Lọc theo Năm",
@@ -64,11 +64,11 @@ USER_MGMT_I18N = {
         "search_placeholder": "Nhập từ khóa tìm kiếm...",
         "no_logs": "Hiện chưa có nhật ký kiểm toán nào.",
         "users_header": "📋 Danh sách tài khoản người dùng hệ thống",
-        "add_user_header": "➕ Thêm tài khoản người dùng mới",
+        "add_user_header": "➕ Thêm tài khoản và phân quyền chi tiết",
         "lbl_username": "Tài khoản đăng nhập *",
         "lbl_name": "Họ tên người dùng *",
         "lbl_role": "Vai trò phân quyền *",
-        "role_opts": ["admin", "manager", "security", "staff"],
+        "role_opts": ["admin (Quản trị viên)", "manager (Quản lý)", "finance (Tài chính)", "procurement (Mua hàng)", "security (Bảo vệ)", "staff (Nhân viên)", "➕ [Tùy chỉnh...]"],
         "lbl_site": "Nhà máy trực thuộc *",
         "site_opts": ["Nhà máy Tây Ninh", "Nhà máy Hải Phòng"],
         "btn_add_user": "💾 Tạo tài khoản",
@@ -96,9 +96,9 @@ USER_MGMT_I18N = {
     },
     "English": {
         "title": "🔒 IT Center - User Permissions & System Audit Logs",
-        "caption": "Monitor system login history, permission changes, webpage access control, and E-Invoice API settings.",
+        "caption": "Monitor login history, create custom roles, and configure fine-grained sub-module access control.",
         "tab_audit": "📊 System Audit Logs",
-        "tab_users": "👥 Users & Permissions Control",
+        "tab_users": "👥 Users & Fine-grained Permissions",
         "tab_api": "🔌 E-Invoice API Config",
         "audit_header": "🔍 System Operation & Audit Trail Logs",
         "filter_year": "Filter Year",
@@ -107,14 +107,14 @@ USER_MGMT_I18N = {
         "search_placeholder": "Search audit logs...",
         "no_logs": "No audit logs found.",
         "users_header": "👥 Active System User Accounts",
-        "add_user_header": "➕ Register New User Account",
+        "add_user_header": "➕ Register New User & Sub-module Permissions",
         "lbl_username": "Username *",
         "lbl_name": "Full Name *",
         "lbl_role": "Permission Role *",
-        "role_opts": ["admin", "manager", "security", "staff"],
+        "role_opts": ["admin", "manager", "finance", "procurement", "security", "staff", "➕ [Custom Role...]"],
         "lbl_site": "Plant Location *",
         "site_opts": ["Tay Ninh Plant", "Hai Phong Plant"],
-        "btn_add_user": "💾 Create User Account",
+        "btn_add_user": "💾 Create User & Permissions",
         "success_add": "✅ User account `{username}` successfully created!",
         "fill_warning": "⚠️ Please fill in username and full name!",
         "col_time": "Timestamp",
@@ -172,12 +172,14 @@ def render_user_management_page(lang="繁體中文", **kwargs):
 
     if "system_users_db" not in st.session_state:
         st.session_state.system_users_db = [
-            {"username": "admin", "name": "李佑銘", "role": "admin", "site": "西寧廠 (Tay Ninh)"},
-            {"username": "manager", "name": "Nguyễn Văn Quý", "role": "manager", "site": "海防廠 (Hai Phong)"},
-            {"username": "security", "name": "大門保全組", "role": "security", "site": "西寧廠 (Tay Ninh)"}
+            {"username": "admin", "name": "李佑銘", "role": "admin (系統管理員)", "site": "西寧廠 (Tay Ninh)"},
+            {"username": "manager", "name": "Nguyễn Văn Quý", "role": "manager (部門經理)", "site": "海防廠 (Hai Phong)"}
         ]
 
-    # 保留原本的 Tab，並完美追加第三個發票 API 設定 Tab
+    # 初始化自訂角色清單 (可在 session 擴充)
+    if "custom_roles_list" not in st.session_state:
+        st.session_state.custom_roles_list = L["role_opts"]
+
     tab_audit, tab_users, tab_api = st.tabs([L["tab_audit"], L["tab_users"], L["tab_api"]])
 
     with tab_audit:
@@ -210,33 +212,54 @@ def render_user_management_page(lang="繁體中文", **kwargs):
 
         st.markdown("---")
         st.markdown(f"### {L['add_user_header']}")
+        
         with st.form("form_add_system_user"):
             c1, c2 = st.columns(2)
             with c1:
                 username = st.text_input(L["lbl_username"], value="staff01")
                 name = st.text_input(L["lbl_name"], placeholder="例如: Nguyễn Văn A")
             with c2:
-                role = st.selectbox(L["lbl_role"], L["role_opts"])
+                selected_role_opt = st.selectbox(L["lbl_role"], st.session_state.custom_roles_list)
                 site = st.selectbox(L["lbl_site"], L["site_opts"])
 
-            # 🌐 網頁存取權限控管設定區塊（可設定該角色可開啟哪些網頁模組）
-            st.markdown("##### 🔐 網頁存取授權設定 (Web Page Access Control)")
-            col_p1, col_p2, col_p3 = st.columns(3)
-            with col_p1:
-                access_mgmt = st.checkbox("管理部 (Management)", value=True)
-                access_eng = st.checkbox("工程與設計中心 (Engineering)", value=True)
-            with col_p2:
-                access_prod = st.checkbox("生產部 (Production)", value=True)
-                access_exec = st.checkbox("總經理室 (Executive Office)", value=False)
-            with col_p3:
-                access_it = st.checkbox("資訊管理部 (IT & System)", value=False)
+            # 🛠️ 允許自訂新角色名稱
+            final_role = selected_role_opt
+            if "➕" in selected_role_opt:
+                custom_role_input = st.text_input("✨ 請輸入自訂的新權限角色名稱 (例如: 專案業務專員 / 財務會計專員):")
+                if custom_role_input:
+                    final_role = custom_role_input
+                    if custom_role_input not in st.session_state.custom_roles_list:
+                        st.session_state.custom_roles_list.insert(0, custom_role_input)
+
+            # 🌐 細緻到小部門與子功能的網頁存取授權設定
+            st.markdown("##### 🔐 細緻化小部門與子功能網頁授權設定 (Sub-module Access Control)")
+            
+            st.markdown("###### 📋 管理部 (Management Dept)")
+            c_m1, c_m2, c_m3 = st.columns(3)
+            with c_m1: acc_ar = st.checkbox("客戶應收帳款與催收 (AR)", value=True)
+            with c_m2: acc_ap = st.checkbox("採購與應付帳款 (AP)", value=False)
+            with c_m3: acc_tax = st.checkbox("越南稅務與電子發票管理", value=False)
+
+            st.markdown("###### 🛠️ 工程與設計中心 (Engineering & Design)")
+            c_e1, c_e2 = st.columns(2)
+            with c_e1: acc_quote = st.checkbox("專案智慧報價與 3D 渲染", value=True)
+            with c_e2: acc_proj = st.checkbox("工程工項與預算編號控管", value=True)
+
+            st.markdown("###### 🏭 生產部與工廠 (Production & Factory)")
+            c_p1, c_p2 = st.columns(2)
+            with c_p1: acc_attn = st.checkbox("員工固定打卡與出勤紀錄", value=False)
+            with c_p2: acc_gate = st.checkbox("廠區車輛與訪客門禁管理", value=False)
+
+            st.markdown("###### 🔒 IT 與系統管理 (IT & System)")
+            c_i1 = st.columns(1)[0]
+            with c_i1: acc_it_cfg = st.checkbox("IT 稽核日誌與發票 API 參數設定", value=False)
 
             if st.form_submit_button(L["btn_add_user"], type="primary", use_container_width=True):
                 if username and name:
                     st.session_state.system_users_db.append({
                         "username": username,
                         "name": name,
-                        "role": role,
+                        "role": final_role,
                         "site": site
                     })
                     st.success(L["success_add"].format(username=username))
