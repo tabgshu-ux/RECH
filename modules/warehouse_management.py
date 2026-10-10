@@ -15,15 +15,15 @@ def get_supabase_client():
 # ----------------------------------------------------
 WAREHOUSE_I18N = {
     "繁體中文": {
-        "title": "📦 生產部/倉儲 - 多倉別與出入庫追蹤 (Supabase 永久同步)",
-        "caption": "支援依特定倉別篩選歷史稽核日誌，進出庫時間與領料人完美記錄，重啟絕不遺失。",
+        "title": "📦 生產部/倉儲 - 多倉別與出入庫追蹤系統",
+        "caption": "支援多倉別即時庫存、出入庫動態作業、領料人與時間記錄及歷史日誌倉別篩選。",
         "tab_inventory": "📑 各倉別即時庫存與安全水位總表",
         "tab_barcode": "🏷️ 資材出入庫與領料作業 (倉別動態聯動)",
         "tab_history": "📊 倉庫出入庫異動歷史日誌 (含倉別篩選)",
         "tab_inbound": "📥 新增資材建檔與初始入庫",
-        "table_header": "📋 跨廠區與多倉別資材庫存現況清冊 (Supabase)",
+        "table_header": "📋 跨廠區與多倉別資材庫存現況清冊",
         "no_records": "目前無倉庫庫存紀錄。",
-        "op_header": "🔄 倉庫資材出入庫作業處理 (同步寫入資料庫)",
+        "op_header": "🔄 倉庫資材出入庫作業處理",
         "lbl_op_type": "選擇作業動作 (Operation Type) *",
         "op_opts": ["📥 入庫作業 (Stock In - 增加庫存)", "📤 出庫作業 (Stock Out - 領料扣減庫存)"],
         "lbl_target_wh": "選擇目標倉庫 (Target Warehouse) *",
@@ -40,9 +40,9 @@ WAREHOUSE_I18N = {
         "receiver_placeholder": "例如: 王大明 (工程部) 或 現場班長",
         "lbl_memo": "備註說明 / 領料專案編號",
         "memo_placeholder": "例如: 領用於專案工程、或生產線退料入庫...",
-        "btn_execute_op": "💾 確認執行出入庫並同步寫入資料庫",
-        "success_in": "✅ 入庫成功並已同步 Supabase 資料庫！",
-        "success_out": "📤 領料出庫成功並已同步 Supabase 資料庫！",
+        "btn_execute_op": "💾 確認執行出入庫作業",
+        "success_in": "✅ 入庫成功！",
+        "success_out": "📤 領料出庫成功！",
         "warning_out": "⚠️ 該倉庫庫存不足，無法完成此出庫數量。",
         "col_index": "STT",
         "col_code": "料號",
@@ -54,8 +54,8 @@ WAREHOUSE_I18N = {
         "col_status": "庫存狀態"
     },
     "Tiếng Việt": {
-        "title": "📦 Phòng Sản xuất / Kho - Quản lý Đa kho (Đồng bộ Supabase)",
-        "caption": "Lịch sử kho phân theo từng kho.",
+        "title": "📦 Phòng Sản xuất / Kho - Quản lý Đa kho",
+        "caption": "Quản lý tồn kho đa kho và lịch sử xuất nhập kho.",
         "tab_inventory": "📑 Tồn kho",
         "tab_barcode": "🏷️ Xuất Nhập Kho",
         "tab_history": "📊 Lịch sử kho",
@@ -74,7 +74,7 @@ WAREHOUSE_I18N = {
         "receiver_placeholder": "Nhập tên...",
         "lbl_memo": "Ghi chú",
         "memo_placeholder": "Ghi chú...",
-        "btn_execute_op": "💾 Xác nhận & Lưu Database",
+        "btn_execute_op": "💾 Xác nhận",
         "success_in": "✅ Thành công!",
         "success_out": "📤 Thành công!",
         "warning_out": "⚠️ Tồn kho không đủ!",
@@ -88,13 +88,13 @@ WAREHOUSE_I18N = {
         "col_status": "Trạng thái"
     },
     "English": {
-        "title": "📦 Production / Warehouse - Multi-WH with Filterable Logs",
-        "caption": "Filter audit logs by specific warehouse for streamlined tracking.",
+        "title": "📦 Production / Warehouse - Multi-Warehouse Management",
+        "caption": "Manage multi-warehouse inventory, stock operations, and filterable audit logs.",
         "tab_inventory": "📑 Multi-Warehouse Inventory",
         "tab_barcode": "🏷️ Stock In / Stock Out Operations",
-        "tab_history": "📊 Warehouse Operation History (Filtered)",
+        "tab_history": "📊 Warehouse Operation History",
         "tab_inbound": "📥 Register New Material",
-        "table_header": "📋 Inventory Registry (Supabase)",
+        "table_header": "📋 Inventory Registry",
         "no_records": "No records found.",
         "op_header": "🔄 Warehouse Stock Processing",
         "lbl_op_type": "Operation Type *",
@@ -108,9 +108,9 @@ WAREHOUSE_I18N = {
         "receiver_placeholder": "Example: John Doe or Assembly Lead",
         "lbl_memo": "Remarks / Project Reference",
         "memo_placeholder": "Example: Project installation...",
-        "btn_execute_op": "💾 Confirm & Sync to Database",
-        "success_in": "✅ Stock In recorded & synced!",
-        "success_out": "📤 Stock Out recorded & synced!",
+        "btn_execute_op": "💾 Confirm Operation",
+        "success_in": "✅ Stock In recorded!",
+        "success_out": "📤 Stock Out recorded!",
         "warning_out": "⚠️ Insufficient stock in this warehouse!",
         "col_index": "No.",
         "col_code": "Item Code",
@@ -132,18 +132,43 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
 
     supabase = get_supabase_client()
 
-    # 🛡️ 初始化倉庫庫存資料庫（優先從 Supabase 讀取）
-    if "warehouse_db" not in st.session_state or not isinstance(st.session_state.warehouse_db, list):
-        default_warehouse = [
-            {"code": "GASKET-M10", "name": "不鏽鋼平墊片 M10 (不鏽鋼 304)", "category": "五金配件與墊片", "warehouse": "📦 零件倉 (Parts & Hardware WH)", "qty": 2500.0, "safety": 500.0, "status": "庫存充足"},
-            {"code": "GASKET-RUB", "name": "配電盤箱體防水橡膠墊片 (捲裝)", "category": "五金配件與墊片", "warehouse": "📦 零件倉 (Parts & Hardware WH)", "qty": 120.0, "safety": 30.0, "status": "庫存充足"},
-            {"code": "LAMP-LED-4FT", "name": "盤內照明 LED 支架燈管 4尺 (220V)", "category": "燈具與照明配件", "warehouse": "📦 零件倉 (Parts & Hardware WH)", "qty": 85.0, "safety": 20.0, "status": "庫存充足"},
-            {"code": "PVC-ELB-2IN", "name": "硬質 PVC 90度彎頭 2吋", "category": "PVC管與管件/彎頭", "warehouse": "📦 零件倉 (Parts & Hardware WH)", "qty": 350.0, "safety": 80.0, "status": "庫存充足"},
-            {"code": "CBL-CV-10MM", "name": "極軟式控制電纜 CV 10mm² (黑色)", "category": "電線與電纜線", "warehouse": "🔌 線材倉 (Wire & Cable WH)", "qty": 520.0, "safety": 100.0, "status": "庫存充足"},
-            {"code": "SHEET-SPCC-2MM", "name": "SPCC 冷軋鋼板板金料件 (1200x2400x2mm)", "category": "箱體與鈑金零件", "warehouse": "⚡ 裝配倉 (Assembly Floor WH)", "qty": 65.0, "safety": 15.0, "status": "庫存充足"},
-            {"code": "SURPLUS-NUT", "name": "現場退回雜項螺絲與華司 (待分類/退料)", "category": "退料與殘餘料", "warehouse": "♻️ 退料/殘餘料倉 (Return & Surplus WH)", "qty": 150.0, "safety": 20.0, "status": "庫存充足"}
-        ]
-        
+    default_warehouse = [
+        {"code": "GASKET-M10", "name": "不鏽鋼平墊片 M10 (不鏽鋼 304)", "category": "五金配件與墊片", "warehouse": "📦 零件倉 (Parts & Hardware WH)", "qty": 2500.0, "safety": 500.0, "status": "庫存充足"},
+        {"code": "GASKET-RUB", "name": "配電盤箱體防水橡膠墊片 (捲裝)", "category": "五金配件與墊片", "warehouse": "📦 零件倉 (Parts & Hardware WH)", "qty": 120.0, "safety": 30.0, "status": "庫存充足"},
+        {"code": "LAMP-LED-4FT", "name": "盤內照明 LED 支架燈管 4尺 (220V)", "category": "燈具與照明配件", "warehouse": "📦 零件倉 (Parts & Hardware WH)", "qty": 85.0, "safety": 20.0, "status": "庫存充足"},
+        {"code": "PVC-ELB-2IN", "name": "硬質 PVC 90度彎頭 2吋", "category": "PVC管與管件/彎頭", "warehouse": "📦 零件倉 (Parts & Hardware WH)", "qty": 350.0, "safety": 80.0, "status": "庫存充足"},
+        {"code": "CBL-CV-10MM", "name": "極軟式控制電纜 CV 10mm² (黑色)", "category": "電線與電纜線", "warehouse": "🔌 線材倉 (Wire & Cable WH)", "qty": 520.0, "safety": 100.0, "status": "庫存充足"},
+        {"code": "SHEET-SPCC-2MM", "name": "SPCC 冷軋鋼板板金料件 (1200x2400x2mm)", "category": "箱體與鈑金零件", "warehouse": "⚡ 裝配倉 (Assembly Floor WH)", "qty": 65.0, "safety": 15.0, "status": "庫存充足"},
+        {"code": "SURPLUS-NUT", "name": "現場退回雜項螺絲與華司 (待分類/退料)", "category": "退料與殘餘料", "warehouse": "♻️ 退料/殘餘料倉 (Return & Surplus WH)", "qty": 150.0, "safety": 20.0, "status": "庫存充足"}
+    ]
+
+    default_logs = [
+        {
+            "time": "2026-10-06 08:30:12",
+            "op_type": "📥 入庫 (Stock In)",
+            "code": "GASKET-M10",
+            "name": "不鏽鋼平墊片 M10",
+            "warehouse": "📦 零件倉 (Parts & Hardware WH)",
+            "qty": 500.0,
+            "receiver_or_supplier": "廠商送貨 (Supplier)",
+            "staff": "admin (倉管經辦)",
+            "memo": "採購定期補給"
+        },
+        {
+            "time": "2026-10-06 10:15:40",
+            "op_type": "📤 出庫 (Stock Out)",
+            "code": "CBL-CV-10MM",
+            "name": "極軟式控制電纜 CV 10mm²",
+            "warehouse": "🔌 線材倉 (Wire & Cable WH)",
+            "qty": 50.0,
+            "receiver_or_supplier": "陳志豪 (現場裝配組)",
+            "staff": "admin (倉管經辦)",
+            "memo": "領用於專案控制盤配線"
+        }
+    ]
+
+    # 🛡️ 初始化倉庫庫存資料庫
+    if "warehouse_db" not in st.session_state or not isinstance(st.session_state.warehouse_db, list) or not st.session_state.warehouse_db:
         if supabase:
             try:
                 res = supabase.table("warehouse_inventory").select("*").execute()
@@ -159,28 +184,13 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                     } for row in res.data]
                 else:
                     st.session_state.warehouse_db = default_warehouse
-                    for item in default_warehouse:
-                        supabase.table("warehouse_inventory").upsert(item).execute()
             except Exception:
                 st.session_state.warehouse_db = default_warehouse
         else:
             st.session_state.warehouse_db = default_warehouse
 
-    # 初始化歷史日誌（從 Supabase 讀取）
-    if "warehouse_logs_db" not in st.session_state:
-        default_logs = [
-            {
-                "time": "2026-10-06 08:30:12",
-                "op_type": "📥 入庫 (Stock In)",
-                "code": "GASKET-M10",
-                "name": "不鏽鋼平墊片 M10",
-                "warehouse": "📦 零件倉 (Parts & Hardware WH)",
-                "qty": 500.0,
-                "receiver_or_supplier": "廠商送貨 (Supplier)",
-                "staff": "admin (倉管經辦)",
-                "memo": "採購定期補給"
-            }
-        ]
+    # 初始化歷史日誌
+    if "warehouse_logs_db" not in st.session_state or not isinstance(st.session_state.warehouse_logs_db, list) or not st.session_state.warehouse_logs_db:
         if supabase:
             try:
                 res_logs = supabase.table("warehouse_logs").select("*").order("id", desc=True).limit(50).execute()
@@ -350,3 +360,72 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                                     st.error(f"Supabase 同步失敗: {e}")
 
                             st.success(L["success_out"])
+                            st.rerun()
+                        else:
+                            st.warning(L["warning_out"])
+                else:
+                    st.warning("⚠️ 請確認所選資材品項，並完整輸入「領取人 / 申請部門人員姓名」！")
+
+    # 3. 倉庫出入庫歷史日誌稽核表 (支援依倉別篩選過濾)
+    with tab_hist:
+        st.markdown("### 📊 倉庫進出庫與領料稽核歷史日誌 (Audit Trail)")
+        st.caption("詳細記錄每一次進倉時間、出倉時間、領取人與經辦，支援依倉別過濾檢視。")
+        
+        log_filter_opts = ["全部倉庫"] + L["warehouse_opts"]
+        selected_log_wh_filter = st.selectbox("🔍 選擇要檢視歷史日誌的倉別", log_filter_opts, key="log_wh_filter")
+
+        filtered_logs = st.session_state.warehouse_logs_db
+        if selected_log_wh_filter != "全部倉庫":
+            filtered_logs = [log for log in st.session_state.warehouse_logs_db if log.get("warehouse") == selected_log_wh_filter]
+
+        if filtered_logs:
+            st.dataframe(pd.DataFrame(filtered_logs), use_container_width=True)
+        else:
+            st.info("目前該倉庫尚無出入庫歷史日誌紀錄。")
+
+    # 4. 新資材建檔
+    with tab_in:
+        st.markdown(f"### 📥 新增資材建檔與指定倉別初始入庫")
+        with st.form("form_new_material"):
+            nc1, nc2 = st.columns(2)
+            with nc1:
+                new_code = st.text_input("料號 / 條碼編號 *", value="WIRE-PVC-2.0")
+                new_name = st.text_input("資材品項名稱 *", placeholder="例如: 控制軟線 2.0mm²")
+                new_category = st.selectbox("資材類別 *", st.session_state.warehouse_categories_list)
+            with nc2:
+                new_warehouse = st.selectbox("指定初始存放倉庫 *", L["warehouse_opts"])
+                new_qty = st.number_input("初始現有庫存量 *", min_value=0.0, value=200.0, step=10.0)
+                new_safety = st.number_input("安全庫存水位 *", min_value=0.0, value=50.0, step=10.0)
+
+            if st.form_submit_button("💾 建立新資材並登錄", type="primary", use_container_width=True):
+                if new_code and new_name:
+                    new_item = {
+                        "code": new_code,
+                        "name": new_name,
+                        "category": new_category,
+                        "warehouse": new_warehouse,
+                        "qty": new_qty,
+                        "safety": new_safety,
+                        "status": "庫存充足"
+                    }
+                    st.session_state.warehouse_db.insert(0, new_item)
+                    
+                    if supabase:
+                        try:
+                            supabase.table("warehouse_inventory").upsert(new_item).execute()
+                        except Exception as e:
+                            st.error(f"Supabase 寫入失敗: {e}")
+
+                    st.success(f"✅ 新資材 `{new_name}` 已成功建檔！")
+                    st.rerun()
+                else:
+                    st.warning("⚠️ 請完整填寫料號與資材名稱！")
+
+def show(*args, **kwargs):
+    render_warehouse_management(*args, **kwargs)
+
+def main(*args, **kwargs):
+    render_warehouse_management(*args, **kwargs)
+
+def render_warehouse_management_page(*args, **kwargs):
+    render_warehouse_management(*args, **kwargs)
