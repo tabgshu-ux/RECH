@@ -10,7 +10,7 @@ def get_supabase_client():
 WAREHOUSE_I18N = {
     "繁體中文": {
         "title": "📦 生產部/倉儲 - 多倉別與出入庫追蹤系統",
-        "caption": "支援多倉別即時庫存（含零件、線材、裝配、回收拆回料倉）、出入庫動態作業與歷史日誌。",
+        "caption": "支援多倉別即時庫存（零件、線材、裝配、回收拆回料倉）、出入庫動態作業與歷史日誌。",
         "tab_inventory": "📑 各倉別即時庫存與安全水位總表",
         "tab_barcode": "🏷️ 資材出入庫與領料作業 (倉別動態聯動)",
         "tab_history": "📊 倉庫出入庫異動歷史日誌 (含倉別篩選)",
@@ -25,8 +25,7 @@ WAREHOUSE_I18N = {
             "📦 零件倉 (Parts & Hardware WH)",
             "🔌 線材倉 (Wire & Cable WH)",
             "⚡ 裝配倉 (Assembly Floor WH)",
-            "♻️ 回收倉 (Return & Surplus WH - 含工地拆回鐵製屋頂/退料)",
-            "♻️ 退料/殘餘料倉 (Return & Surplus WH)"
+            "♻️ 回收倉 (Return & Surplus WH - 含工地拆回鐵製屋頂/退料)"
         ],
         "lbl_select_item": "選擇該倉庫內的資材品項 *",
         "lbl_scan_alt": "或者使用條碼槍掃描料號：",
@@ -61,7 +60,7 @@ WAREHOUSE_I18N = {
         "lbl_op_type": "Loại nghiệp vụ *",
         "op_opts": ["📥 Nhập kho", "📤 Xuất kho"],
         "lbl_target_wh": "Chọn kho *",
-        "warehouse_opts": ["Kho linh kiện", "Kho cáp điện", "Kho lắp ráp", "Kho thu hồi (Hàng trả về/Mái tôn tháo dỡ)", "Kho hàng thừa/trả lại"],
+        "warehouse_opts": ["Kho linh kiện", "Kho cáp điện", "Kho lắp ráp", "Kho thu hồi (Hàng trả về/Mái tôn tháo dỡ)"],
         "lbl_select_item": "Chọn vật tư trong kho *",
         "lbl_scan_alt": "Mã vạch:",
         "lbl_op_qty": "Số lượng *",
@@ -99,8 +98,7 @@ WAREHOUSE_I18N = {
             "Parts & Hardware WH",
             "Wire & Cable WH",
             "Assembly Floor WH",
-            "♻️ Return & Surplus WH (Includes site dismantled steel roofs & returns)",
-            "Return & Surplus WH"
+            "♻️ Return & Surplus WH (Includes site dismantled steel roofs & returns)"
         ],
         "lbl_select_item": "Select Material in Warehouse *",
         "lbl_scan_alt": "Or scan barcode:",
@@ -144,7 +142,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
     default_logs = [
         {
             "time": "2026-10-06 14:20:00",
-            "op_type": "📥 入庫 (Stock In)",
+            "op_type": "📥 回收/退料入庫 (Stock In)",
             "code": "ROOF-STEEL-DISM",
             "name": "工地辦公室拆回 - 鐵製排水屋頂/浪板",
             "warehouse": "♻️ 回收倉 (Return & Surplus WH - 含工地拆回鐵製屋頂/退料)",
@@ -250,7 +248,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                     item_options = [f"{i['code']} - {i['name']} (現庫存: {i['qty']})" for i in warehouse_items]
                     selected_item_str = st.selectbox(L["lbl_select_item"], item_options)
                 else:
-                    st.warning(f"⚠️ 此倉庫目前無任何資材，請先至「新增資材建檔」建立（例如：登錄工地拆回之鐵製屋頂）。")
+                    st.warning(f"⚠️ 此倉庫目前無任何資材，請先至「新增資材建檔」建立。")
                     selected_item_str = None
             with c_sel2:
                 scan_code_input = st.text_input(L["lbl_scan_alt"], placeholder="例如: ROOF-STEEL-DISM")
@@ -314,7 +312,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
 
                         st.success(L["success_in"])
                         st.rerun()
-                    else: # 出庫 / 領用回收料
+                    else: # 出庫
                         if matched_item["qty"] >= op_qty:
                             matched_item["qty"] -= op_qty
                             if matched_item["qty"] < matched_item["safety"]:
@@ -368,7 +366,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
         else:
             st.info("目前該倉庫尚無出入庫歷史日誌紀錄。")
 
-    # 4. 新資材建檔 (支援新增工地拆回舊料如鐵製屋頂)
+    # 4. 新資材建檔
     with tab_in:
         st.markdown(f"### 📥 新增資材與工地回收/拆回料建檔")
         with st.form("form_new_material"):
@@ -378,11 +376,11 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                 new_name = st.text_input("資材品項名稱 *", value="工地辦公室拆回 - 鐵製排水屋頂/浪板")
                 new_category = st.selectbox("資材類別 *", st.session_state.warehouse_categories_list)
             with nc2:
-                new_warehouse = st.selectbox("指定存放倉庫 (選擇回收倉) *", L["warehouse_opts"])
+                new_warehouse = st.selectbox("指定存放倉庫 *", L["warehouse_opts"])
                 new_qty = st.number_input("回收/拆回初始數量 *", min_value=0.0, value=10.0, step=1.0)
                 new_safety = st.number_input("安全庫存水位 *", min_value=0.0, value=1.0, step=1.0)
 
-            if st.form_submit_button("💾 建立回收資材並登錄至回收倉", type="primary", use_container_width=True):
+            if st.form_submit_button("💾 建立回收資材並登錄", type="primary", use_container_width=True):
                 if new_code and new_name:
                     new_item = {
                         "code": new_code,
@@ -401,7 +399,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                         except Exception as e:
                             st.error(f"Supabase 寫入失敗: {e}")
 
-                    st.success(f"✅ 回收資材 `{new_name}` 已成功建檔並存入【回收倉】！")
+                    st.success(f"✅ 回收資材 `{new_name}` 已成功建檔！")
                     st.rerun()
                 else:
                     st.warning("⚠️ 請完整填寫料號與資材名稱！")
