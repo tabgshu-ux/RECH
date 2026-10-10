@@ -30,8 +30,8 @@ def render_fat_sat_testing_page(engine=None, lang="繁體中文", **kwargs):
     st.title(t["title"])
     st.caption(t["caption"])
 
-    # 1. 初始化 FAT 報告資料庫 (Session State)
-    if "fat_report_db" not in st.session_state:
+    # 🛡️ 確保全域 session_state 資料庫初始化且不會被洗掉
+    if "fat_report_db" not in st.session_state or not isinstance(st.session_state.fat_report_db, list):
         st.session_state.fat_report_db = [
             {
                 "報告編號": "FAT-2026-001",
@@ -48,24 +48,24 @@ def render_fat_sat_testing_page(engine=None, lang="繁體中文", **kwargs):
     with tab1:
         st.markdown("##### 🧪 步驟一：選擇專案並生成帶有防偽 QR Code 的 FAT/SAT 試驗報告")
         
-        # 串聯上游工程專案清單
         default_projects = ["西寧廠主配電盤 2000A", "海防廠低壓配電櫃 1000A", "和鼎隆工業區配電統包工程"]
-        if "engineering_projects_db" in st.session_state:
+        if "engineering_projects_db" in st.session_state and st.session_state.engineering_projects_db:
             proj_choices = [p.get("專案名稱", "未命名專案") for p in st.session_state.engineering_projects_db]
         else:
             proj_choices = default_projects
 
-        with st.form("fat_report_form"):
+        with st.form("fat_report_form_fixed"):
             selected_proj = st.selectbox("關聯專案名稱 / 標體編號 *", proj_choices)
             test_type = st.selectbox("試驗與驗收階段 *", ["FAT 出廠試驗 (Factory Acceptance Test)", "SAT 現場試驗 (Site Acceptance Test)"])
             inspector = st.text_input("品保檢驗工程師 *", value="張品保 (QA Engineer)")
             notes = st.text_area("試驗備註與絕緣/耐壓測試數據", value="絕緣電阻 > 100MΩ，耐壓測試 2500V/1min 通過，各項指示燈及保護電驛正常。")
 
-            if st.form_submit_button("🚀 生成 FAT 試驗報告與 QR Code", type="primary"):
+            submitted = st.form_submit_button("🚀 立即生成 FAT 試驗報告與 QR Code", type="primary")
+
+            if submitted:
                 report_id = f"FAT-{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
                 qr_link = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={report_id}-{selected_proj}"
                 
-                # 將新生成的報告寫入資料庫
                 new_entry = {
                     "報告編號": report_id,
                     "專案名稱": selected_proj,
@@ -74,33 +74,36 @@ def render_fat_sat_testing_page(engine=None, lang="繁體中文", **kwargs):
                     "狀態": "🟢 已通過並產生防偽 QR Code",
                     "防偽 QR Code 連結": qr_link
                 }
-                st.session_state.fat_report_db.insert(0, new_entry)
                 
-                st.success("✅ FAT 試驗報告已成功生成並彙整防偽 QR Code！")
-                st.rerun()
+                # 強制寫入 session_state
+                st.session_state.fat_report_db.insert(0, new_entry)
+                st.success(f"✅ 報告 [{report_id}] 已成功生成並寫入資料庫！")
 
     with tab2:
         st.markdown("##### 📚 驗收報告資料庫與防偽 QR Code 總覽")
-        st.info("💡 說明：業主或現場監造主管可直接掃描下方生成的 QR Code 進行行動端雲端驗收。")
+        st.info("💡 說明：您可以直接在下方檢視所有已生成的 FAT/SAT 驗收報告與對應的防偽 QR Code。")
 
         if st.session_state.fat_report_db:
-            # 呈現表格資料
+            # 1. 顯示資料總表
             st.dataframe(pd.DataFrame(st.session_state.fat_report_db), use_container_width=True)
             
             st.markdown("---")
-            st.markdown("##### 🖼️ 驗收專用防偽 QR Code 預覽")
+            st.markdown("##### 🖼️ 驗收專用防偽 QR Code 預覽與掃描")
+            
+            # 2. 逐筆顯示詳細卡片與 QR Code 圖片
             for r in st.session_state.fat_report_db:
                 col_a, col_b = st.columns([2, 1])
                 with col_a:
                     st.write(f"**報告編號**：`{r['報告編號']}`")
                     st.write(f"**專案名稱**：{r['專案名稱']}")
                     st.write(f"**試驗類型**：{r['試驗類型']}")
+                    st.write(f"**生成日期**：{r['生成日期']}")
                     st.write(f"**驗收狀態**：{r['狀態']}")
                 with col_b:
                     st.image(r["防偽 QR Code 連結"], width=120, caption=f"QR Code ({r['報告編號']})")
                 st.markdown("---")
         else:
-            st.info("目前尚無任何 FAT/SAT 驗收報告紀錄。")
+            st.warning("⚠️ 目前資料庫中無任何 FAT/SAT 驗收報告紀錄。請至分頁一填寫表單並點擊生成。")
 
 def show(engine=None, lang="繁體中文", **kwargs):
     render_fat_sat_testing_page(engine=engine, lang=lang, **kwargs)
