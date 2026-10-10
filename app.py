@@ -3,6 +3,7 @@ import pandas as pd
 import importlib
 from modules import painting
 from modules import sheet_metal
+from modules import assembly
 from sqlalchemy import text
 
 st.set_page_config(
@@ -522,8 +523,7 @@ elif target_route == "painting":
     painting.render_painting_module(engine=engine, t=lang_dict, lang=curr_lang)
 
 elif target_route == "assembly":
-    st.title(selected_feature_label)
-    st.info("Hệ thống đang hoạt động bình thường / 現場工單與生產追蹤模組順利運作中。")
+    assembly.render_assembly_module(engine=engine, t=lang_dict, lang=curr_lang)
     
 elif target_route == "it_admin":
     if current_role_clean == "admin":
