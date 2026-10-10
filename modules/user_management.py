@@ -8,7 +8,7 @@ import datetime
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 帳號權限與系統稽核軌跡 (Audit Log)",
-        "caption": "監控全系統使用者登入歷程、權限異動紀錄、資料庫連線安全與系統級稽核日誌，並實時連動越南廠區與人事資料。",
+        "caption": "監控全系統使用者登入歷程、權限異動紀錄、資料庫連線安全與系統級稽核日誌，並實時連動越南廠區與人事權限角色。",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
         "tab_users": "👥 系統使用者與權限控管",
         "tab_api": "🔌 電子發票 API 串接設定",
@@ -19,14 +19,22 @@ USER_MGMT_I18N = {
         "search_placeholder": "輸入關鍵字搜尋稽核紀錄...",
         "no_logs": "目前尚無系統稽核紀錄。",
         "users_header": "👥 系統現有使用者帳號清冊",
-        "add_user_header": "➕ 新增系統使用者帳號 (直接連動人事與越南廠區)",
+        "add_user_header": "➕ 新增系統使用者帳號 (直接連動人事與越南廠區權限)",
         "lbl_username": "登入帳號 *",
         "lbl_name": "選擇人事系統員工姓名 *",
-        "lbl_role": "權限角色 *",
-        "role_opts": ["admin", "manager", "security", "staff"],
+        "lbl_role": "權限角色 (對應人事系統職稱) *",
+        "role_opts": [
+            "系統管理員 (Admin)",
+            "董事長 (Chairman)",
+            "經理 (General Manager)",
+            "副總經理 / 協理 (Vice Manager)",
+            "部門經理 / 財務主管 / 廠長 (Manager)",
+            "一般員工 / 作業員 (Staff)",
+            "廠區警衛 / 門禁 (Security)"
+        ],
         "lbl_site": "選擇所屬越南廠區 *",
         "btn_add_user": "💾 建立使用者帳號",
-        "success_add": "✅ 系統帳號 `{username}` 已成功建立並與人事廠區連動！",
+        "success_add": "✅ 系統帳號 `{username}` 已成功建立並與人事廠區、權限角色連動！",
         "fill_warning": "⚠️ 請填寫完整帳號並選擇員工！",
         # 表格欄位
         "col_time": "時間戳記",
@@ -63,11 +71,19 @@ USER_MGMT_I18N = {
         "search_placeholder": "Nhập từ khóa tìm kiếm...",
         "no_logs": "Hiện chưa có nhật ký kiểm toán nào.",
         "users_header": "📋 Danh sách tài khoản người dùng hệ thống",
-        "add_user_header": "➕ Thêm tài khoản người dùng mới (Liên kết Nhân sự & Nhà máy)",
+        "add_user_header": "➕ Thêm tài khoản người dùng mới",
         "lbl_username": "Tài khoản đăng nhập *",
         "lbl_name": "Chọn nhân viên từ hệ thống *",
         "lbl_role": "Vai trò phân quyền *",
-        "role_opts": ["admin", "manager", "security", "staff"],
+        "role_opts": [
+            "系統管理員 (Admin)",
+            "董事長 (Chairman)",
+            "經理 (General Manager)",
+            "副總經理 / 協理 (Vice Manager)",
+            "部門經理 / 財務主管 / 廠長 (Manager)",
+            "一般員工 / 作業員 (Staff)",
+            "廠區警衛 / 門禁 (Security)"
+        ],
         "lbl_site": "Chọn nhà máy trực thuộc *",
         "btn_add_user": "💾 Tạo tài khoản",
         "success_add": "✅ Đã tạo thành công tài khoản `{username}`!",
@@ -94,7 +110,7 @@ USER_MGMT_I18N = {
     },
     "English": {
         "title": "🔒 IT Center - User Permissions & System Audit Logs",
-        "caption": "Monitor system login history, permission changes, and real-time Vietnam plant/HR integration.",
+        "caption": "Monitor system login history, permission changes, and real-time Vietnam plant/HR roles integration.",
         "tab_audit": "📊 System Audit Logs",
         "tab_users": "👥 Users & Permissions Control",
         "tab_api": "🔌 E-Invoice API Config",
@@ -105,11 +121,19 @@ USER_MGMT_I18N = {
         "search_placeholder": "Search audit logs...",
         "no_logs": "No audit logs found.",
         "users_header": "👥 Active System User Accounts",
-        "add_user_header": "➕ Register New User Account (Linked to HR & Plants)",
+        "add_user_header": "➕ Register New User Account",
         "lbl_username": "Username *",
         "lbl_name": "Select Employee from HR *",
         "lbl_role": "Permission Role *",
-        "role_opts": ["admin", "manager", "security", "staff"],
+        "role_opts": [
+            "系統管理員 (Admin)",
+            "董事長 (Chairman)",
+            "經理 (General Manager)",
+            "副總經理 / 協理 (Vice Manager)",
+            "部門經理 / 財務主管 / 廠長 (Manager)",
+            "一般員工 / 作業員 (Staff)",
+            "廠區警衛 / 門禁 (Security)"
+        ],
         "lbl_site": "Select Vietnam Plant Location *",
         "btn_add_user": "💾 Create User Account",
         "success_add": "✅ User account `{username}` successfully created!",
@@ -169,8 +193,8 @@ def render_user_management_page(lang="繁體中文", **kwargs):
 
     if "system_users_db" not in st.session_state:
         st.session_state.system_users_db = [
-            {"username": "admin", "name": "李佑銘", "role": "admin", "site": "西寧廠 (Tay Ninh)"},
-            {"username": "manager", "name": "Nguyễn Văn Quý", "role": "manager", "site": "海防廠 (Hai Phong)"}
+            {"username": "admin", "name": "李佑銘", "role": "系統管理員 (Admin)", "site": "西寧廠 (Tay Ninh)"},
+            {"username": "manager", "name": "Nguyễn Văn Quý", "role": "部門經理 / 財務主管 / 廠長 (Manager)", "site": "海防廠 (Hai Phong)"}
         ]
 
     tab_audit, tab_users, tab_api = st.tabs([L["tab_audit"], L["tab_users"], L["tab_api"]])
@@ -206,12 +230,12 @@ def render_user_management_page(lang="繁體中文", **kwargs):
         st.markdown("---")
         st.markdown(f"### {L['add_user_header']}")
         
-        # 🔗 嚴格只從系統的「人事員工名冊」與「廠區設定」中動態撈取越南廠區資料
+        # 🔗 動態撈取人事員工清單
         employee_options = ["李佑銘 (TW-001 - 西寧廠)", "Nguyễn Văn Quý (VN-002 - 海防廠)"]
         if "employees_db" in st.session_state and st.session_state.employees_db:
             employee_options = [f"{emp.get('name', '')} (工號: {emp.get('code', emp.get('id', ''))} - {emp.get('site', '')})" for emp in st.session_state.employees_db]
 
-        # 嚴格排除任何總公司選項，僅抓取真實存在的廠區
+        # 🔗 動態撈取越南廠區清單（排除台灣總部）
         site_options = ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"]
         if "sites_db" in st.session_state and st.session_state.sites_db:
             site_options = [f"{site.get('name', site.get('site_name', ''))}" for site in st.session_state.sites_db]
