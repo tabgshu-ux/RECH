@@ -7,22 +7,34 @@ import datetime
 # ----------------------------------------------------
 WAREHOUSE_I18N = {
     "繁體中文": {
-        "title": "📦 生產部/倉儲 - 倉庫庫存與資材條碼管理",
-        "caption": "管理跨國廠區（西寧廠/海防廠）配電盤原物料、銅排厚度、PVC管規格、斷路器庫存水位與條碼作業。",
+        "title": "📦 生產部/倉儲 - 倉庫庫存與資材條碼管理 (彈性自訂分類)",
+        "caption": "管理跨國廠區配電盤原物料、墊片、燈具燈管、PVC管件、各類電纜線、板金件與動態擴充資材類別。",
         "tab_inventory": "📑 倉庫即時庫存與安全水位總表",
         "tab_barcode": "🏷️ 資材條碼掃描與出入庫作業",
-        "tab_inbound": "📥 資材入庫登記入帳",
-        "table_header": "📋 倉庫資材庫存現況清冊 (含銅排、PVC、指示燈與斷路器多規格)",
+        "tab_inbound": "📥 資材入庫登記入帳 (含自訂類別)",
+        "table_header": "📋 倉庫資材庫存現況清冊 (支援多樣化電機與五金零件)",
         "no_records": "目前無倉庫庫存紀錄。",
         "barcode_header": "🏷️ 倉庫條碼掃描與出入庫作業",
         "barcode_input": "請使用條碼槍掃描或輸入料號 (Barcode / Item Code)：",
         "btn_scan": "🔍 查詢資材與庫存",
-        "inbound_header": "📥 新增資材入庫作業",
+        "inbound_header": "📥 新增資材入庫作業 (支援自由新增零件與類別)",
         "lbl_code": "料號 / 條碼編號 *",
         "lbl_name": "資材品項名稱 *",
-        "item_placeholder": "例如: 導電銅排 Busbar 10x100mm",
-        "lbl_category": "資材類別 *",
-        "cat_opts": ["銅排與導電材料", "低壓斷路器 (MCCB/MCB)", "空氣斷路器 (ACB)", "箱體與鈑金零件", "線材與端子配件", "指示燈與按鈕開關", "PVC管與配線槽"],
+        "item_placeholder": "例如: 不鏽鋼墊片 M10 / PVC 90度彎頭 2吋 / 橡膠絕緣墊片",
+        "lbl_category": "資材類別 (可選或自訂新類別) *",
+        "default_categories": [
+            "五金配件與墊片 (Gaskets & Washers)",
+            "燈具與照明配件 (Lamps & Holders)",
+            "PVC管與管件/彎頭 (PVC Pipes & Fittings)",
+            "電線與電纜線 (Cables & Wires)",
+            "銅排與導電材料 (Copper Busbars)",
+            "低壓斷路器 (MCCB/MCB)",
+            "空氣斷路器 (ACB)",
+            "箱體與鈑金零件 (Enclosures & Sheet Metal)",
+            "線材與端子配件 (Terminals & Lugs)",
+            "指示燈與按鈕開關 (Indicators & Pushbuttons)",
+            "➕ [自訂新資材類別...]"
+        ],
         "lbl_site": "存放廠區倉庫 *",
         "site_opts": ["🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "🇻🇳 越南海防廠倉庫 (Hai Phong WH)"],
         "lbl_qty": "入庫數量 *",
@@ -40,77 +52,72 @@ WAREHOUSE_I18N = {
         "col_status": "庫存狀態"
     },
     "Tiếng Việt": {
-        "title": "📦 Phòng Sản xuất / Kho - Quản lý Kho & Mã vạch Vật tư",
-        "caption": "Quản lý tồn kho nguyên vật liệu tủ điện, đồng thanh cái, ống PVC, đèn báo và mã vạch.",
-        "tab_inventory": "📑 Báo cáo Tồn kho & Cảnh báo an toàn",
-        "tab_barcode": "🏷️ Quét mã vạch xuất nhập kho",
+        "title": "📦 Phòng Sản xuất / Kho - Quản lý Kho & Phân loại linh hoạt",
+        "caption": "Quản lý tồn kho gioăng đệm, đèn, ống PVC, cáp điện, tôn tấm và danh mục tùy chỉnh.",
+        "tab_inventory": "📑 Tồn kho & Cảnh báo an toàn",
+        "tab_barcode": "🏷️ Quét mã vạch",
         "tab_inbound": "📥 Nhập kho Vật tư",
-        "table_header": "📋 Sổ chi tiết tồn kho vật tư tủ điện",
-        "no_records": "Hiện không có bản ghi tồn kho nào.",
-        "barcode_header": "🏷️ Quét mã vạch tra cứu tồn kho",
-        "barcode_input": "Quét hoặc nhập mã vạch / mã linh kiện (Barcode):",
-        "btn_scan": "🔍 Tra cứu vật tư",
-        "inbound_header": "📥 Đăng ký nhập kho vật tư mới",
-        "lbl_code": "Mã vật tư / Barcode *",
+        "table_header": "📋 Danh mục tồn kho vật tư thiết bị điện",
+        "no_records": "Không có bản ghi.",
+        "barcode_header": "🏷️ Tra cứu mã vạch",
+        "barcode_input": "Nhập mã vạch:",
+        "btn_scan": "🔍 Tra cứu",
+        "inbound_header": "📥 Nhập kho vật tư mới",
+        "lbl_code": "Mã vật tư *",
         "lbl_name": "Tên vật tư *",
-        "item_placeholder": "Ví dụ: Đồng thanh cái Busbar 10x100mm",
+        "item_placeholder": "Ví dụ: Gioăng cao su, Ống PVC...",
         "lbl_category": "Phân loại *",
-        "cat_opts": ["Đồng & Vật liệu dẫn điện", "Aptomat / MCCB / MCB", "Máy cắt không khí (ACB)", "Vỏ tủ điện & Cơ khí", "Dây điện & Phụ kiện", "Đèn báo & Nút nhấn", "Ống PVC & Máng cáp"],
-        "lbl_site": "Kho nhà máy *",
-        "site_opts": ["Kho Nhà máy Tây Ninh", "Kho Nhà máy Hải Phòng"],
-        "lbl_qty": "Số lượng nhập *",
-        "lbl_safety": "Mức tồn kho an toàn *",
-        "btn_save_inbound": "💾 Xác nhận nhập kho",
-        "success_inbound": "✅ Đã nhập kho thành công vật tư `{item_name}`!",
-        "fill_warning": "⚠️ Vui lòng điền Mã vật tư và Tên vật tư!",
+        "default_categories": ["Gioăng đệm", "Đèn & Máng đèn", "Ống & Co PVC", "Cáp điện", "Đồng thanh cái", "Tủ điện & Tôn tấm", "➕ [Tùy chỉnh...]"],
+        "lbl_site": "Kho *",
+        "site_opts": ["Kho Tây Ninh", "Kho Hải Phòng"],
+        "lbl_qty": "Số lượng *",
+        "lbl_safety": "Mức an toàn *",
+        "btn_save_inbound": "💾 Nhập kho",
+        "success_inbound": "✅ Đã nhập thành công `{item_name}`!",
+        "fill_warning": "⚠️ Vui lòng điền đủ thông tin!",
         "col_index": "STT",
-        "col_code": "Mã linh kiện",
+        "col_code": "Mã",
         "col_name": "Tên vật tư",
         "col_cat": "Phân loại",
         "col_site": "Kho",
         "col_qty": "Tồn kho",
-        "col_safety": "Mức an toàn",
+        "col_safety": "An toàn",
         "col_status": "Trạng thái"
     },
     "English": {
-        "title": "📦 Production / Warehouse - Inventory & Barcode Management",
-        "caption": "Manage switchgear raw materials, copper busbars, PVC pipes, indicator lights, and inventory.",
-        "tab_inventory": "📑 Real-time Inventory & Safety Levels",
-        "tab_barcode": "🏷️ Barcode Scanning & Operations",
-        "tab_inbound": "📥 Material Inbound Registration",
+        "title": "📦 Production / Warehouse - Inventory & Custom Categories",
+        "caption": "Manage gaskets, lamp holders, PVC fittings, cables, sheet metals, and dynamic categories.",
+        "tab_inventory": "📑 Inventory & Safety Levels",
+        "tab_barcode": "🏷️ Barcode Operations",
+        "tab_inbound": "📥 Material Inbound (Custom Categories)",
         "table_header": "📋 Warehouse Inventory Registry",
-        "no_records": "No inventory records found.",
-        "barcode_header": "🏷️ Barcode Scan & Lookup",
-        "barcode_input": "Scan barcode or enter Item Code:",
-        "btn_scan": "🔍 Lookup Item",
-        "inbound_header": "📥 Register Material Inbound",
-        "lbl_code": "Item Code / Barcode *",
+        "no_records": "No records found.",
+        "barcode_header": "🏷️ Barcode Lookup",
+        "barcode_input": "Scan or enter Item Code:",
+        "btn_scan": "🔍 Lookup",
+        "inbound_header": "📥 Register Inbound (Custom Categories)",
+        "lbl_code": "Item Code *",
         "lbl_name": "Material Name *",
-        "item_placeholder": "Example: Copper Busbar 10x100mm",
+        "item_placeholder": "Example: Stainless Gasket M10, PVC Elbow 2-inch",
         "lbl_category": "Category *",
-        "cat_opts": ["Copper & Conductive Materials", "MCCB / MCB Breakers", "Air Circuit Breaker (ACB)", "Enclosure & Sheet Metal", "Wires & Terminals", "Indicator Lights & Pushbuttons", "PVC Pipes & Cable Trays"],
-        "lbl_site": "Warehouse Plant *",
-        "site_opts": ["Tay Ninh Plant Warehouse", "Hai Phong Plant Warehouse"],
-        "lbl_qty": "Inbound Qty *",
-        "lbl_safety": "Safety Stock Level *",
-        "btn_save_inbound": "💾 Confirm Inbound & Update Stock",
-        "success_inbound": "✅ Material `{item_name}` successfully added to warehouse!",
-        "fill_warning": "⚠️ Please fill in Item Code and Material Name!",
+        "default_categories": ["Gaskets & Washers", "Lamps & Holders", "PVC Pipes & Fittings", "Cables & Wires", "Copper Busbars", "Enclosures & Sheet Metal", "➕ [Custom Category...]"],
+        "lbl_site": "Warehouse *",
+        "site_opts": ["Tay Ninh Plant", "Hai Phong Plant"],
+        "lbl_qty": "Qty *",
+        "lbl_safety": "Safety Level *",
+        "btn_save_inbound": "💾 Confirm Inbound",
+        "success_inbound": "✅ Material `{item_name}` added!",
+        "fill_warning": "⚠️ Please fill in all required fields!",
         "col_index": "No.",
         "col_code": "Item Code",
         "col_name": "Material Name",
         "col_cat": "Category",
         "col_site": "Warehouse",
-        "col_qty": "Current Stock",
-        "col_safety": "Safety Level",
+        "col_qty": "Stock",
+        "col_safety": "Safety",
         "col_status": "Status"
     }
 }
-
-def smart_translate_wh(text_val, target_lang):
-    if not text_val or not isinstance(text_val, str):
-        return text_val
-    return text_val
 
 def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwargs):
     active_lang = lang or st.session_state.get("lang", "繁體中文")
@@ -119,24 +126,25 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 🛡️ 初始化倉庫庫存資料庫（包含多規格銅排、PVC管、指示燈、斷路器）
+    # 🛡️ 初始化倉庫庫存資料庫（擴充墊片、燈具、PVC管配件、電纜線與板金多樣零件）
     if "warehouse_db" not in st.session_state or not isinstance(st.session_state.warehouse_db, list):
         st.session_state.warehouse_db = [
+            {"code": "GASKET-M10", "name": "不鏽鋼平墊片 M10 (不鏽鋼 304)", "category": "五金配件與墊片 (Gaskets & Washers)", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 2500.0, "safety": 500.0, "status": "庫存充足"},
+            {"code": "GASKET-RUB", "name": "配電盤箱體防水橡膠墊片 (捲裝)", "category": "五金配件與墊片 (Gaskets & Washers)", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 120.0, "safety": 30.0, "status": "庫存充足"},
+            {"code": "LAMP-LED-4FT", "name": "盤內照明 LED 支架燈管 4尺 (220V)", "category": "燈具與照明配件 (Lamps & Holders)", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 85.0, "safety": 20.0, "status": "庫存充足"},
+            {"code": "PVC-ELB-2IN", "name": "硬質 PVC 90度彎頭 2吋", "category": "PVC管與管件/彎頭 (PVC Pipes & Fittings)", "site": "🇻🇳 越南海防廠倉庫 (Hai Phong WH)", "qty": 350.0, "safety": 80.0, "status": "庫存充足"},
+            {"code": "CBL-CV-10MM", "name": "極軟式控制電纜 CV 10mm² (黑色)", "category": "電線與電纜線 (Cables & Wires)", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 520.0, "safety": 100.0, "status": "庫存充足"},
+            {"code": "SHEET-SPCC-2MM", "name": "SPCC 冷軋鋼板板金料件 (1200x2400x2mm)", "category": "箱體與鈑金零件 (Enclosures & Sheet Metal)", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 65.0, "safety": 15.0, "status": "庫存充足"},
             {"code": "CU-BUS-3MM", "name": "導電銅排 Busbar 3x30mm (厚度 3mm)", "category": "銅排與導電材料", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 800.0, "safety": 200.0, "status": "庫存充足"},
-            {"code": "CU-BUS-5MM", "name": "導電銅排 Busbar 5x50mm (厚度 5mm)", "category": "銅排與導電材料", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 1000.0, "safety": 250.0, "status": "庫存充足"},
-            {"code": "CU-BUS-10100", "name": "導電銅排 Busbar 10x100mm (厚度 10mm)", "category": "銅排與導電材料", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 1250.0, "safety": 300.0, "status": "庫存充足"},
             {"code": "CB-MCCB-250A", "name": "塑殼斷路器 MCCB 250A (Schneider)", "category": "低壓斷路器 (MCCB/MCB)", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 45.0, "safety": 10.0, "status": "庫存充足"},
-            {"code": "CB-ACB-2000A", "name": "空氣斷路器 ACB 2000A (Schneider)", "category": "空氣斷路器 (ACB)", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 8.0, "safety": 5.0, "status": "庫存充足"},
-            {"code": "PVC-PIPE-1IN", "name": "硬質 PVC 配線管 1吋 (4米/支)", "category": "PVC管與配線槽", "site": "🇻🇳 越南海防廠倉庫 (Hai Phong WH)", "qty": 600.0, "safety": 150.0, "status": "庫存充足"},
-            {"code": "PVC-PIPE-2IN", "name": "硬質 PVC 配線管 2吋 (4米/支)", "category": "PVC管與配線槽", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 400.0, "safety": 100.0, "status": "庫存充足"},
-            {"code": "PVC-PIPE-3IN", "name": "硬質 PVC 配線管 3吋 (4米/支)", "category": "PVC管與配線槽", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 250.0, "safety": 80.0, "status": "庫存充足"},
-            {"code": "IND-LED-RED", "name": "LED 盤面指示燈 (紅裝 22mm)", "category": "指示燈與按鈕開關", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 300.0, "safety": 50.0, "status": "庫存充足"},
-            {"code": "IND-LED-GRN", "name": "LED 盤面指示燈 (綠裝 22mm)", "category": "指示燈與按鈕開關", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 320.0, "safety": 50.0, "status": "庫存充足"},
-            {"code": "IND-LED-YEL", "name": "LED 盤面指示燈 (黃裝 22mm)", "category": "指示燈與按鈕開關", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 150.0, "safety": 40.0, "status": "庫存充足"},
-            {"code": "CBL-CTRL-3.5", "name": "控制電纜 3.5mm² (100米/卷)", "category": "線材與端子配件", "site": "🇻🇳 越南海防廠倉庫 (Hai Phong WH)", "qty": 85.0, "safety": 20.0, "status": "庫存充足"}
+            {"code": "IND-LED-RED", "name": "LED 盤面指示燈 (紅裝 22mm)", "category": "指示燈與按鈕開關", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 300.0, "safety": 50.0, "status": "庫存充足"}
         ]
 
-    # 🔗 定義各分頁變數，解決未定義錯誤
+    # 初始化動態類別清單
+    if "warehouse_categories_list" not in st.session_state:
+        st.session_state.warehouse_categories_list = L["default_categories"]
+
+    # 🔗 定義各分頁變數
     tab_inv, tab_bar, tab_in = st.tabs([
         L["tab_inventory"], L["tab_barcode"], L["tab_inbound"]
     ])
@@ -162,7 +170,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
 
     with tab_bar:
         st.markdown(f"### {L['barcode_header']}")
-        scan_code = st.text_input(L["barcode_input"], value="CU-BUS-10100")
+        scan_code = st.text_input(L["barcode_input"], value="GASKET-M10")
         if st.button(L["btn_scan"], type="primary"):
             matched = next((i for i in st.session_state.warehouse_db if i["code"].lower() == scan_code.strip().lower()), None)
             if matched:
@@ -176,20 +184,30 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
         with st.form("form_inbound"):
             c1, c2 = st.columns(2)
             with c1:
-                code = st.text_input(L["lbl_code"], value="CU-BUS-8MM")
+                code = st.text_input(L["lbl_code"], value="GASKET-COPPER-8MM")
                 name = st.text_input(L["lbl_name"], placeholder=L["item_placeholder"])
-                category = st.selectbox(L["lbl_category"], L["cat_opts"])
+                
+                selected_cat_opt = st.selectbox(L["lbl_category"], st.session_state.warehouse_categories_list)
             with c2:
                 site = st.selectbox(L["lbl_site"], L["site_opts"])
                 qty = st.number_input(L["lbl_qty"], min_value=0.0, value=500.0, step=10.0)
                 safety = st.number_input(L["lbl_safety"], min_value=0.0, value=100.0, step=10.0)
+
+            # 🛠️ 允許自訂新資材類別
+            final_category = selected_cat_opt
+            if "➕" in selected_cat_opt:
+                custom_cat_input = st.text_input("✨ 請自由輸入新的資材分類名稱 (例如: 絕緣材料類、氣動元件類、五金螺絲類...):")
+                if custom_cat_input:
+                    final_category = custom_cat_input
+                    if custom_cat_input not in st.session_state.warehouse_categories_list:
+                        st.session_state.warehouse_categories_list.insert(0, custom_cat_input)
 
             if st.form_submit_button(L["btn_save_inbound"], type="primary", use_container_width=True):
                 if code and name:
                     st.session_state.warehouse_db.insert(0, {
                         "code": code,
                         "name": name,
-                        "category": category,
+                        "category": final_category,
                         "site": site,
                         "qty": qty,
                         "safety": safety,
