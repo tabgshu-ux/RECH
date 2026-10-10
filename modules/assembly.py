@@ -178,6 +178,47 @@ def render_assembly_module(engine=None, t=None, lang="繁體中文", **kwargs):
                 else:
                     st.warning("⚠️ 請完整填寫工單編號與專案名稱！")
 
+# 當點擊「拍照驗收完成並自動入庫」按鈕時的連動邏輯
+if st.button("🎉 拍照驗收完成並【自動入庫】", use_container_width=True, type="primary"):
+    photo_filename = uploaded_photo.name if uploaded_photo is not None else "Final_Assembly_Inspection.jpg"
+    current_order["status"] = "🟢 組裝完工並已拍照驗收自動入庫"
+    current_order["photo_name"] = photo_filename
+    current_order["manager"] = logged_staff
+    
+    # 🔗 核心連動：自動同步將完工成品增加至「裝配倉 (Assembly Floor WH)」或成品庫存中
+    if "warehouse_db" in st.session_state:
+        # 檢查倉庫中是否已有此成品料號，若無則自動新增建檔入庫
+        target_wh = "⚡ 裝配倉 (Assembly Floor WH)"
+        existing_wh_item = next((i for i in st.session_state.warehouse_db if i["code"] == current_order["order_code"] and i["warehouse"] == target_wh), None)
+        
+        if existing_wh_item:
+            existing_wh_item["qty"] += current_order["qty"]
+        else:
+            new_finished_item = {
+                "code": current_order["order_code"],
+                "name": f"[完工成品] {current_order['project_name']} - {current_order['panel_spec']}",
+                "category": "配電盤成品與半成品",
+                "warehouse": target_wh,
+                "qty": float(current_order["qty"]),
+                "safety": 1.0,
+                "status": "庫存充足"
+            }
+            st.session_state.warehouse_db.insert(0, new_finished_item)
+            if supabase:
+                try:
+                    supabase.table("warehouse_inventory").upsert(new_finished_item).execute()
+                except Exception:
+                    pass
+
+    if supabase:
+        try:
+            supabase.table("assembly_orders").upsert(current_order).execute()
+        except Exception as e:
+            st.error(f"Supabase 同步失敗: {e}")
+
+    st.success(f"🎉 恭喜！工單 {target_code} 驗收合格，照片已上傳，且已**自動入庫至裝配倉**！")
+    st.rerun()
+
 def show(*args, **kwargs):
     render_assembly_module(*args, **kwargs)
 
