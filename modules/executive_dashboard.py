@@ -31,7 +31,7 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
     # 子功能 1：原料價格與 Gemini 智慧採購顧問
     # ====================================================
     if sub_route == "commodities_fx":
-        st.markdown("### 🔴 1. 配電盤製造關鍵原料即時行情與採購決策建議")
+        st.markdown("### 🔴配電盤製造關鍵原料即時行情與採購決策建議")
         st.caption("專為總經理與高階經營團隊打造的 AI 決策支援系統，可即時分析國際金屬期貨、避險策略與專案成本控管。")
 
         # 原料行情與決策建議表格
@@ -55,7 +55,7 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
     # 子功能 2：財務類顯示資料 (AR/AP & P&L) - 直接內嵌 Thông tư 200 財報
     # ====================================================
     elif sub_route == "financials_pl":
-        st.markdown("### 📊 2. 財務類顯示資料 (AR/AP & P&L 總覽與會計師審計專區)")
+        st.markdown("### 📊財務類顯示資料 (AR/AP & P&L 總覽與會計師審計專區)")
         st.caption("提供管理部與會計師查帳專用之越南稅務標準財務報表（Thông tư 200），與即時 AR/AP 帳款追蹤。")
 
         # 左右分欄展示 AR / AP
@@ -112,7 +112,7 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
     # 子功能 3：工程專案進度與現場異常監控
     # ====================================================
     elif sub_route == "project_progress_exec":
-        st.markdown("### ⚡ 3. 工程專案進度與現場異常紅綠燈監控")
+        st.markdown("### ⚡工程專案進度與現場異常紅綠燈監控")
         st.caption("即時掌握各廠區在手專案合約、目前施工階段（談判中、等待開標、設備安裝、驗收中）與現場回報異常。")
 
         # 工程進度紅綠燈表格
