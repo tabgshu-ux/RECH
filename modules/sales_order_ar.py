@@ -39,9 +39,9 @@ AR_I18N = {
         "total_amount_label": "總帳款",
         "target_milestone_label": "指定付款期數 *",
         "milestone_opts": ["全部期數 / 總合約", "第一期款 (訂金)", "第二期款", "第三期款", "第四期款", "尾款 / 驗收保留款", "保固金"],
-        "new_progress_label": "進行進度說明 *",
-        "new_reason_label": "催收歷程、客戶拒付原因或呆帳風險評估 *",
-        "modifier_label": "經辦人員姓名 *",
+        "progress_note_label": "進行進度說明 *",
+        "reason_label": "催收歷程、客戶拒付原因或呆帳風險評估 *",
+        "modifier_label": "經辦人員 (系統綁定登入帳號)",
         "save_update_btn": "💾 儲存專案進度與催收歷程",
         "update_success": "請款單 `{target_id}` 之進度與催收紀錄已成功儲存！",
         "add_header": "➕ 登記新應收帳款專案",
@@ -58,7 +58,6 @@ AR_I18N = {
         "plan_opts": ["不分期", "分三期", "分五期"],
         "proj_desc_label": "專案說明",
         "proj_desc_placeholder": "請填寫本工程施工內容與合約細節...",
-        "progress_note_label": "進行進度說明",
         "milestone_header": "💳 分期百分比 (%) 與付款日期細項設定",
         "single_pay_info": "全額一次付清：",
         "payment_date_label": "付款日期",
@@ -104,9 +103,9 @@ AR_I18N = {
         "total_amount_label": "Tổng tiền",
         "target_milestone_label": "Đợt thanh toán *",
         "milestone_opts": ["Tất cả các đợt", "Đợt 1 (Đặt cọc)", "Đợt 2", "Đợt 3", "Đợt 4", "Đợt cuối / Giữ bảo hành", "Tiền bảo hành"],
-        "new_progress_label": "Mô tả tiến độ *",
-        "new_reason_label": "Lịch sử thu nợ, lý do từ chối hoặc rủi ro nợ xấu *",
-        "modifier_label": "Người thực hiện *",
+        "progress_note_label": "Mô tả tiến độ *",
+        "reason_label": "Lịch sử thu nợ, lý do từ chối hoặc rủi ro nợ xấu *",
+        "modifier_label": "Người thực hiện (Hệ thống khóa)",
         "save_update_btn": "💾 Lưu tiến độ & Lịch sử thu nợ",
         "update_success": "Đã cập nhật tiến độ và lịch sử thu nợ cho hóa đơn `{target_id}`!",
         "add_header": "➕ Đăng ký dự án khoản phải thu mới",
@@ -123,7 +122,6 @@ AR_I18N = {
         "plan_opts": ["Thanh toán 1 lần", "Thanh toán 3 đợt", "Thanh toán 5 đợt"],
         "proj_desc_label": "Mô tả dự án",
         "proj_desc_placeholder": "Nhập nội dung thi công...",
-        "progress_note_label": "Mô tả tiến độ",
         "milestone_header": "💳 Thiết lập tỷ lệ phần trăm (%) theo đợt",
         "single_pay_info": "Thanh toán 100%:",
         "payment_date_label": "Ngày thanh toán",
@@ -169,9 +167,9 @@ AR_I18N = {
         "total_amount_label": "Total Amount",
         "target_milestone_label": "Payment Milestone *",
         "milestone_opts": ["All Milestones / Total", "Period 1 (Deposit)", "Period 2", "Period 3", "Period 4", "Final / Retention", "Warranty Deposit"],
-        "new_progress_label": "Progress Description *",
-        "new_reason_label": "Collection Log, Rejection Reasons or Default Risk *",
-        "modifier_label": "Modifier Name *",
+        "progress_note_label": "Progress Description *",
+        "reason_label": "Collection Log, Rejection Reasons or Default Risk *",
+        "modifier_label": "Modifier (System Bound)",
         "save_update_btn": "💾 Save Progress & Collection Log",
         "update_success": "Progress and collection log for invoice `{target_id}` saved successfully!",
         "add_header": "➕ Register New AR Project",
@@ -188,7 +186,6 @@ AR_I18N = {
         "plan_opts": ["Lump Sum (Single)", "3 Installments", "5 Installments"],
         "proj_desc_label": "Project Description",
         "proj_desc_placeholder": "Enter scope...",
-        "progress_note_label": "Progress Description",
         "milestone_header": "💳 Milestone Installment Ratios (%)",
         "single_pay_info": "Full payment:",
         "payment_date_label": "Due Date",
@@ -318,18 +315,24 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
                     st.markdown(f"**{L['current_project']}**：`{proj_name_disp}` | **{L['total_amount_label']}**：{format_curr(target_row['quoted_amount'], target_row['currency'])}")
                     
                     with st.form("form_update_ar_progress"):
-                        # 新增：指定哪一期付款的下拉選單
+                        # 指定付款期數
                         target_milestone = st.selectbox(L["target_milestone_label"], L["milestone_opts"])
                         
                         default_prog = smart_translate(target_row.get("progress_note", ""), active_lang)
-                        new_progress = st.text_area(L["new_progress_label"], value=default_prog)
-                        new_reason = st.text_area(L["new_reason_label"], value=target_row.get("uncollected_reason", ""), placeholder="例如：客戶資金周轉困難要求展延，驗收爭議拒付，或回報該客戶已倒閉/破產清算...")
-                        modifier = st.text_input(L["modifier_label"], value=st.session_state.get("user_name", "admin"))
+                        new_progress = st.text_area(L["progress_note_label"], value=default_prog)
+                        new_reason = st.text_area(L["reason_label"], value=target_row.get("uncollected_reason", ""), placeholder="例如：客戶資金周轉困難要求展延，驗收爭議拒付，或回報該客戶已倒閉/破產清算...")
+                        
+                        # 🔒 強制綁定登入者姓名與工號，禁止手動改名 (IT 稽核鐵律)
+                        logged_user_name = st.session_state.get("user_name", "admin")
+                        logged_user_role = str(st.session_state.get("user_role", "Staff")).upper()
+                        modifier_display = f"{logged_user_name} ({logged_user_role})"
+                        
+                        st.text_input(L["modifier_label"], value=modifier_display, disabled=True)
 
                         if st.form_submit_button(L["save_update_btn"], type="primary", use_container_width=True):
                             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-                            # 將所選期數直接帶入紀錄標題中，讓使用者一眼看出是哪一期款項
-                            full_reason = f"【{timestamp} | {target_milestone} | 經辦:{modifier}】{new_reason}"
+                            # 將所選期數與系統綁定的真實登入者寫入稽核紀錄
+                            full_reason = f"【{timestamp} | {target_milestone} | 經辦:{modifier_display}】{new_reason}"
                             
                             with engine.connect() as conn:
                                 conn.execute(
@@ -340,7 +343,7 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
                                             quoter_name = :quoter
                                         WHERE invoice_id = :id
                                     """),
-                                    {"prog": new_progress, "reason": full_reason, "quoter": modifier, "id": target_id}
+                                    {"prog": new_progress, "reason": full_reason, "quoter": modifier_display, "id": target_id}
                                 )
                                 conn.commit()
                             st.success(L["update_success"].format(target_id=target_id))
@@ -366,7 +369,6 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
         with c2:
             plan_type = st.selectbox(L["plan_type_label"], L["plan_opts"])
             project_desc = st.text_area(L["proj_desc_label"], placeholder=L["proj_desc_placeholder"])
-            progress_note = st.text_input(L["progress_note_label"], value="工程備料中 / 準備施工" if active_lang == "繁體中文" else "Đang chuẩn bị vật tư / Chuẩn bị thi công")
 
         st.markdown("---")
         st.markdown(f"##### {L['milestone_header']}")
@@ -418,75 +420,4 @@ def render_sales_order_ar_page(engine=None, lang="繁體中文", **kwargs):
             with col_r1:
                 r1 = st.number_input("第 1 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r1")
             with col_r2:
-                r2 = st.number_input("第 2 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r2")
-            with col_r3:
-                r3 = st.number_input("第 3 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r3")
-            with col_r4:
-                r4 = st.number_input("第 4 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r4")
-            with col_r5:
-                r5 = st.number_input("第 5 期 %", min_value=0.0, max_value=100.0, value=20.0, step=1.0, key="ar_5r5")
-
-            total_pct = r1 + r2 + r3 + r4 + r5
-            if abs(total_pct - 100.0) > 0.01:
-                st.warning(L["ratio_warning"].format(total_pct=total_pct))
-            else:
-                st.success(L["ratio_success"])
-
-            ratios_str = f"{r1}% / {r2}% / {r3}% / {r4}% / {r5}%"
-            p1_amt = total_amount * (r1 / 100.0)
-            p2_amt = total_amount * (r2 / 100.0)
-            p3_amt = total_amount * (r3 / 100.0)
-            p4_amt = total_amount * (r4 / 100.0)
-            p5_amt = total_amount * (r5 / 100.0)
-
-            col_a, col_b = st.columns(2)
-            with col_a:
-                st.write(f"• **{L['period_1_amt']}**：`{format_curr(p1_amt, currency)}`")
-                d1 = st.date_input(L["period_1_date"], value=datetime.date.today() + datetime.timedelta(days=7), key="ar_5d1")
-                st.write(f"• **{L['period_2_amt']}**：`{format_curr(p2_amt, currency)}`")
-                d2 = st.date_input(L["period_2_date"], value=datetime.date.today() + datetime.timedelta(days=30), key="ar_5d2")
-                st.write(f"• **{L['period_3_amt']}**：`{format_curr(p3_amt, currency)}`")
-                d3 = st.date_input(L["period_3_date"], value=datetime.date.today() + datetime.timedelta(days=60), key="ar_5d3")
-            with col_b:
-                st.write(f"• **{L['period_4_amt']}**：`{format_curr(p4_amt, currency)}`")
-                d4 = st.date_input(L["period_4_date"], value=datetime.date.today() + datetime.timedelta(days=90), key="ar_5d4")
-                st.write(f"• **{L['period_5_amt']}**：`{format_curr(p5_amt, currency)}`")
-                d5 = st.date_input(L["period_5_date"], value=datetime.date.today() + datetime.timedelta(days=120), key="ar_5d5")
-
-        st.markdown("")
-        if st.button(L["save_new_btn"], type="primary", use_container_width=True):
-            if entity_name and project_name:
-                if engine:
-                    with engine.connect() as conn:
-                        conn.execute(
-                            text("""
-                                INSERT INTO invoices (
-                                    invoice_id, entity_name, project_name, currency, amount, quoted_amount, 
-                                    payment_terms, installment_ratios, project_desc, progress_note, 
-                                    due_date, invoice_type, is_paid
-                                ) VALUES (
-                                    :id, :entity, :prj, :curr, :amt, :q_amt, 
-                                    :terms, :ratios, :desc, :prog, 
-                                    :due, 'AR', false
-                                )
-                            """),
-                            {
-                                "id": inv_id, "entity": entity_name, "prj": project_name, "curr": currency,
-                                "amt": p1_amt, "q_amt": total_amount, "terms": plan_type, "ratios": ratios_str,
-                                "desc": project_desc, "prog": progress_note, "due": d1
-                            }
-                        )
-                        conn.commit()
-                st.success(L["create_success"].format(inv_id=inv_id))
-                st.rerun()
-            else:
-                st.warning(L["fill_warning"])
-
-def show(*args, **kwargs):
-    render_sales_order_ar_page(*args, **kwargs)
-
-def main(*args, **kwargs):
-    render_sales_order_ar_page(*args, **kwargs)
-
-def render_sales_order_ar(*args, **kwargs):
-    render_sales_order_ar_page(*args, **kwargs)
+                r2 = st.number_input("第 2 期 %", min_
