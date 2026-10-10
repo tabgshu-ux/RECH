@@ -8,7 +8,7 @@ import datetime
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 帳號權限與系統稽核軌跡 (Audit Log)",
-        "caption": "監控全系統使用者登入歷程、權限異動紀錄、資料庫連線安全與系統級稽核日誌，並實時連動人事與廠區資料。",
+        "caption": "監控全系統使用者登入歷程、權限異動紀錄、資料庫連線安全與系統級稽核日誌，並實時連動越南廠區與人事資料。",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
         "tab_users": "👥 系統使用者與權限控管",
         "tab_api": "🔌 電子發票 API 串接設定",
@@ -19,12 +19,12 @@ USER_MGMT_I18N = {
         "search_placeholder": "輸入關鍵字搜尋稽核紀錄...",
         "no_logs": "目前尚無系統稽核紀錄。",
         "users_header": "👥 系統現有使用者帳號清冊",
-        "add_user_header": "➕ 新增系統使用者帳號 (直接連動人事與廠區)",
+        "add_user_header": "➕ 新增系統使用者帳號 (直接連動人事與越南廠區)",
         "lbl_username": "登入帳號 *",
         "lbl_name": "選擇人事系統員工姓名 *",
         "lbl_role": "權限角色 *",
         "role_opts": ["admin", "manager", "security", "staff"],
-        "lbl_site": "選擇所屬廠區/據點 *",
+        "lbl_site": "選擇所屬越南廠區 *",
         "btn_add_user": "💾 建立使用者帳號",
         "success_add": "✅ 系統帳號 `{username}` 已成功建立並與人事廠區連動！",
         "fill_warning": "⚠️ 請填寫完整帳號並選擇員工！",
@@ -52,7 +52,7 @@ USER_MGMT_I18N = {
     },
     "Tiếng Việt": {
         "title": "🔒 Quản trị IT - Phân quyền Tài khoản & Nhật ký Kiểm toán (Audit Log)",
-        "caption": "Giám sát lịch sử đăng nhập, thay đổi phân quyền và liên kết trực tiếp với nhân sự, nhà máy.",
+        "caption": "Giám sát lịch sử đăng nhập, thay đổi phân quyền và liên kết trực tiếp với nhà máy tại Việt Nam.",
         "tab_audit": "📊 Nhật ký Kiểm toán (Audit Logs)",
         "tab_users": "👥 Quản lý Người dùng & Phân quyền",
         "tab_api": "🔌 Cấu hình API Hóa đơn",
@@ -94,7 +94,7 @@ USER_MGMT_I18N = {
     },
     "English": {
         "title": "🔒 IT Center - User Permissions & System Audit Logs",
-        "caption": "Monitor system login history, permission changes, and real-time HR/Plant integration.",
+        "caption": "Monitor system login history, permission changes, and real-time Vietnam plant/HR integration.",
         "tab_audit": "📊 System Audit Logs",
         "tab_users": "👥 Users & Permissions Control",
         "tab_api": "🔌 E-Invoice API Config",
@@ -110,7 +110,7 @@ USER_MGMT_I18N = {
         "lbl_name": "Select Employee from HR *",
         "lbl_role": "Permission Role *",
         "role_opts": ["admin", "manager", "security", "staff"],
-        "lbl_site": "Select Plant Location *",
+        "lbl_site": "Select Vietnam Plant Location *",
         "btn_add_user": "💾 Create User Account",
         "success_add": "✅ User account `{username}` successfully created!",
         "fill_warning": "⚠️ Please fill in username and select employee!",
@@ -206,12 +206,13 @@ def render_user_management_page(lang="繁體中文", **kwargs):
         st.markdown("---")
         st.markdown(f"### {L['add_user_header']}")
         
-        # 🔗 強制直接從系統的「人事員工名冊」與「廠區設定」中動態撈取資料進行連動
+        # 🔗 嚴格只從系統的「人事員工名冊」與「廠區設定」中動態撈取越南廠區資料
         employee_options = ["李佑銘 (TW-001 - 西寧廠)", "Nguyễn Văn Quý (VN-002 - 海防廠)"]
         if "employees_db" in st.session_state and st.session_state.employees_db:
             employee_options = [f"{emp.get('name', '')} (工號: {emp.get('code', emp.get('id', ''))} - {emp.get('site', '')})" for emp in st.session_state.employees_db]
 
-        site_options = ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)", "台灣總部 (Taiwan HQ)"]
+        # 嚴格排除任何總公司選項，僅抓取真實存在的廠區
+        site_options = ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"]
         if "sites_db" in st.session_state and st.session_state.sites_db:
             site_options = [f"{site.get('name', site.get('site_name', ''))}" for site in st.session_state.sites_db]
         elif "factories_db" in st.session_state and st.session_state.factories_db:
@@ -228,7 +229,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
 
             if st.form_submit_button(L["btn_add_user"], type="primary", use_container_width=True):
                 if username and selected_employee:
-                    # 從選擇的字串中擷取員工姓名
                     emp_name_extracted = selected_employee.split(" (")[0]
                     st.session_state.system_users_db.append({
                         "username": username,
