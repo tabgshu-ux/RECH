@@ -29,7 +29,7 @@ WAREHOUSE_I18N = {
         "lbl_safety": "安全庫存水位 *",
         "btn_save_inbound": "💾 確認入庫並更新庫存",
         "success_inbound": "✅ 資材 `{item_name}` 已成功入庫！",
-        "fill_warning": "⚠ 請完整填寫料號與資材名稱！",
+        "fill_warning": "⚠️ 請完整填寫料號與資材名稱！",
         "col_index": "STT",
         "col_code": "料號",
         "col_name": "資材品項名稱",
@@ -94,7 +94,7 @@ WAREHOUSE_I18N = {
         "lbl_qty": "Inbound Qty *",
         "lbl_safety": "Safety Stock Level *",
         "btn_save_inbound": "💾 Confirm Inbound & Update Stock",
-        "success_save": "✅ Material `{item_name}` successfully added to warehouse!",
+        "success_inbound": "✅ Material `{item_name}` successfully added to warehouse!",
         "fill_warning": "⚠️ Please fill in Item Code and Material Name!",
         "col_index": "No.",
         "col_code": "Item Code",
@@ -122,29 +122,21 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
     # 🛡️ 初始化倉庫庫存資料庫（包含多規格銅排、PVC管、指示燈、斷路器）
     if "warehouse_db" not in st.session_state or not isinstance(st.session_state.warehouse_db, list):
         st.session_state.warehouse_db = [
-            # 銅排系列 (Busbar - 多種厚度規格)
             {"code": "CU-BUS-3MM", "name": "導電銅排 Busbar 3x30mm (厚度 3mm)", "category": "銅排與導電材料", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 800.0, "safety": 200.0, "status": "庫存充足"},
             {"code": "CU-BUS-5MM", "name": "導電銅排 Busbar 5x50mm (厚度 5mm)", "category": "銅排與導電材料", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 1000.0, "safety": 250.0, "status": "庫存充足"},
             {"code": "CU-BUS-10100", "name": "導電銅排 Busbar 10x100mm (厚度 10mm)", "category": "銅排與導電材料", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 1250.0, "safety": 300.0, "status": "庫存充足"},
-            
-            # 斷路器與ACB系列
             {"code": "CB-MCCB-250A", "name": "塑殼斷路器 MCCB 250A (Schneider)", "category": "低壓斷路器 (MCCB/MCB)", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 45.0, "safety": 10.0, "status": "庫存充足"},
             {"code": "CB-ACB-2000A", "name": "空氣斷路器 ACB 2000A (Schneider)", "category": "空氣斷路器 (ACB)", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 8.0, "safety": 5.0, "status": "庫存充足"},
-            
-            # PVC管系列 (多種英吋規格)
             {"code": "PVC-PIPE-1IN", "name": "硬質 PVC 配線管 1吋 (4米/支)", "category": "PVC管與配線槽", "site": "🇻🇳 越南海防廠倉庫 (Hai Phong WH)", "qty": 600.0, "safety": 150.0, "status": "庫存充足"},
             {"code": "PVC-PIPE-2IN", "name": "硬質 PVC 配線管 2吋 (4米/支)", "category": "PVC管與配線槽", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 400.0, "safety": 100.0, "status": "庫存充足"},
             {"code": "PVC-PIPE-3IN", "name": "硬質 PVC 配線管 3吋 (4米/支)", "category": "PVC管與配線槽", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 250.0, "safety": 80.0, "status": "庫存充足"},
-
-            # 指示燈與按鈕系列 (紅、綠、黃)
             {"code": "IND-LED-RED", "name": "LED 盤面指示燈 (紅裝 22mm)", "category": "指示燈與按鈕開關", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 300.0, "safety": 50.0, "status": "庫存充足"},
             {"code": "IND-LED-GRN", "name": "LED 盤面指示燈 (綠裝 22mm)", "category": "指示燈與按鈕開關", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 320.0, "safety": 50.0, "status": "庫存充足"},
             {"code": "IND-LED-YEL", "name": "LED 盤面指示燈 (黃裝 22mm)", "category": "指示燈與按鈕開關", "site": "🇻🇳 越南西寧廠倉庫 (Tay Ninh WH)", "qty": 150.0, "safety": 40.0, "status": "庫存充足"},
-
-            # 線材系列
             {"code": "CBL-CTRL-3.5", "name": "控制電纜 3.5mm² (100米/卷)", "category": "線材與端子配件", "site": "🇻🇳 越南海防廠倉庫 (Hai Phong WH)", "qty": 85.0, "safety": 20.0, "status": "庫存充足"}
         ]
 
+    # 🔗 定義各分頁變數，解決未定義錯誤
     tab_inv, tab_bar, tab_in = st.tabs([
         L["tab_inventory"], L["tab_barcode"], L["tab_inbound"]
     ])
@@ -179,7 +171,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
             else:
                 st.warning("⚠️ 查無此料號，請確認條碼是否正確！")
 
-    with tab_inbound:
+    with tab_in:
         st.markdown(f"### {L['inbound_header']}")
         with st.form("form_inbound"):
             c1, c2 = st.columns(2)
