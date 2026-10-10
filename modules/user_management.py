@@ -7,10 +7,11 @@ import datetime
 # ----------------------------------------------------
 USER_MGMT_I18N = {
     "繁體中文": {
-        "title": "🔒 IT 管理中心 - 帳號權限與系統稽核軌跡 (Audit Log)",
-        "caption": "監控全系統使用者登入歷程、完整支援帳號權限之新增、修改與刪除，並對齊左側選單所有部門與子功能。",
+        "title": "🔒 IT 管理中心 - 系統角色權限範本與稽核軌跡",
+        "caption": "統一維護系統角色名稱與各角色可存取的完整部門子功能權限範本（人員帳號以人事系統為準）。",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
-        "tab_users": "👥 系統使用者與帳號權限維護 (CRUD)",
+        "tab_roles": "⚙️ 系統角色與權限範本管理 (Role RBAC)",
+        "tab_users": "👥 現有系統使用者與人事連動清冊",
         "tab_api": "🔌 電子發票 API 串接設定",
         "audit_header": "🔍 全系統操作軌跡與稽核軌跡日誌",
         "filter_year": "篩選年份 (Year)",
@@ -18,34 +19,16 @@ USER_MGMT_I18N = {
         "filter_day": "篩選日期 (Day)",
         "search_placeholder": "輸入關鍵字搜尋稽核紀錄...",
         "no_logs": "目前尚無系統稽核紀錄。",
-        "users_header": "👥 系統現有使用者帳號與權限清冊 (可進行修改與刪除)",
-        "add_user_header": "➕ 新增系統使用者帳號與全模組完整子功能授權",
-        "edit_user_header": "✏️ 修改 / 刪除現有使用者帳號與權限",
-        "lbl_username": "登入帳號 (連動人事工號) *",
-        "lbl_name": "選擇人事系統員工姓名 *",
-        "lbl_role": "權限角色 (可選或自訂主管/倉管角色) *",
-        "default_roles": [
-            "系統管理員 (Admin)",
-            "董事長 / 總經理 (Chairman / GM)",
-            "倉管主管 / 倉庫管理員 (Warehouse Manager)",
-            "財務主管 (Finance Manager)",
-            "行政主管 (Admin Manager)",
-            "生產主管 (Production Manager)",
-            "工程總監 (Engineering Director)",
-            "工地主任 / 專案經理 (Site Supervisor)",
-            "大門保全 / 門禁 (Security)",
-            "一般員工 / 作業員 (Staff)",
-            "➕ [自訂新角色...]"
-        ],
-        "lbl_site": "所屬廠區 *",
-        "site_options": ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"],
-        "btn_add_user": "💾 建立使用者帳號與完整權限授權",
-        "btn_update_user": "🔄 儲存修改後的帳號權限",
-        "btn_delete_user": "🗑️ 刪除選定的使用者帳號",
-        "success_add": "✅ 系統帳號已成功建立！",
-        "success_update": "✅ 系統帳號權限已成功更新！",
-        "success_delete": "🗑️ 系統帳號已成功刪除！",
-        "fill_warning": "⚠️ 請完整填寫帳號並選擇員工！",
+        "roles_header": "⚙️ 現有系統權限角色範本清冊 (可進行修改名稱或調整功能權限)",
+        "add_role_header": "➕ 新增自訂權限角色與功能範本",
+        "users_header": "👥 系統現有使用者帳號清冊 (對應人事與廠區)",
+        "add_user_header": "➕ 派發人事系統員工之系統帳號與權限",
+        "lbl_role_name": "角色名稱 (例如: 財務主管、行政主管、品管經理...) *",
+        "btn_save_role": "💾 儲存角色權限範本設定",
+        "btn_delete_role": "🗑️ 刪除此權限角色",
+        "success_role_save": "✅ 系統角色權限範本已成功更新！",
+        "success_role_delete": "🗑️ 系統角色已成功刪除！",
+        "success_add_user": "✅ 員工系統帳號與權限已成功指派！",
         # 表格欄位
         "col_time": "時間戳記",
         "col_user": "操作帳號",
@@ -69,10 +52,11 @@ USER_MGMT_I18N = {
         "api_test_success": "✅ API 連線測試成功！憑證授權與伺服器回應正常。"
     },
     "Tiếng Việt": {
-        "title": "🔒 Quản trị IT - Phân quyền Tài khoản & Nhật ký Kiểm toán",
-        "caption": "Quản lý CRUD tài khoản người dùng và phân quyền chi tiết.",
+        "title": "🔒 Quản trị IT - Cấu hình Vai trò & Phân quyền Hệ thống",
+        "caption": "Quản lý tên vai trò và quyền hạn truy cập module.",
         "tab_audit": "📊 Nhật ký Kiểm toán",
-        "tab_users": "👥 Quản lý Tài khoản (CRUD)",
+        "tab_roles": "⚙️ Quản lý Vai trò (RBAC)",
+        "tab_users": "👥 Danh sách Người dùng",
         "tab_api": "🔌 Cấu hình API Hóa đơn",
         "audit_header": "🔍 Nhật ký thao tác",
         "filter_year": "Năm",
@@ -80,22 +64,16 @@ USER_MGMT_I18N = {
         "filter_day": "Ngày",
         "search_placeholder": "Tìm kiếm...",
         "no_logs": "Chưa có nhật ký.",
+        "roles_header": "⚙️ Danh sách vai trò hệ thống",
+        "add_role_header": "➕ Thêm vai trò mới",
         "users_header": "📋 Danh sách tài khoản",
-        "add_user_header": "➕ Thêm tài khoản",
-        "edit_user_header": "✏️ Cập nhật / Xóa tài khoản",
-        "lbl_username": "Tài khoản *",
-        "lbl_name": "Nhân viên *",
-        "lbl_role": "Vai trò *",
-        "default_roles": ["admin", "Warehouse Manager", "Production Manager", "Staff", "➕ [Tùy chỉnh...]"],
-        "lbl_site": "Nhà máy *",
-        "site_options": ["Nhà máy Tây Ninh", "Nhà máy Hải Phòng"],
-        "btn_add_user": "💾 Tạo tài khoản",
-        "btn_update_user": "🔄 Cập nhật",
-        "btn_delete_user": "🗑️ Xóa",
-        "success_add": "✅ Thành công!",
-        "success_update": "✅ Đã cập nhật!",
-        "success_delete": "🗑️ Đã xóa!",
-        "fill_warning": "⚠️ Vui lòng điền đủ thông tin!",
+        "add_user_header": "➕ Phân quyền người dùng",
+        "lbl_role_name": "Tên vai trò *",
+        "btn_save_role": "💾 Lưu cấu hình vai trò",
+        "btn_delete_role": "🗑️ Xóa vai trò",
+        "success_role_save": "✅ Đã lưu cấu hình vai trò!",
+        "success_role_delete": "🗑️ Đã xóa vai trò!",
+        "success_add_user": "✅ Thành công!",
         "col_time": "Thời gian",
         "col_user": "Tài khoản",
         "col_action": "Hành động",
@@ -117,10 +95,11 @@ USER_MGMT_I18N = {
         "api_test_success": "✅ Kết nối thành công!"
     },
     "English": {
-        "title": "🔒 IT Center - User Permissions & System Audit Logs",
-        "caption": "Full CRUD management for user accounts and fine-grained menu access control.",
+        "title": "🔒 IT Center - Role RBAC & System Audit Logs",
+        "caption": "Manage system role definitions and fine-grained menu access control templates.",
         "tab_audit": "📊 System Audit Logs",
-        "tab_users": "👥 User Management (CRUD)",
+        "tab_roles": "⚙️ Role Management (RBAC)",
+        "tab_users": "👥 User Accounts Registry",
         "tab_api": "🔌 E-Invoice API Config",
         "audit_header": "🔍 System Operation & Audit Trail Logs",
         "filter_year": "Filter Year",
@@ -128,22 +107,16 @@ USER_MGMT_I18N = {
         "filter_day": "Filter Day",
         "search_placeholder": "Search audit logs...",
         "no_logs": "No audit logs found.",
-        "users_header": "👥 Active System User Accounts & CRUD Operations",
-        "add_user_header": "➕ Register New User & Permissions",
-        "edit_user_header": "✏️ Edit / Delete Existing User Account",
-        "lbl_username": "Username *",
-        "lbl_name": "Select Employee from HR *",
-        "lbl_role": "Permission Role *",
-        "default_roles": ["admin", "Warehouse Manager", "Production Manager", "staff", "➕ [Custom Role...]"],
-        "lbl_site": "Plant Location *",
-        "site_options": ["Tay Ninh Plant", "Hai Phong Plant"],
-        "btn_add_user": "💾 Create User & Permissions",
-        "btn_update_user": "🔄 Update User Permissions",
-        "btn_delete_user": "🗑️ Delete User Account",
-        "success_add": "✅ User account successfully created!",
-        "success_update": "✅ User account successfully updated!",
-        "success_delete": "🗑️ User account successfully deleted!",
-        "fill_warning": "⚠️ Please fill in username and select employee!",
+        "roles_header": "⚙️ System Permission Roles & Access Templates",
+        "add_role_header": "➕ Create New Permission Role Template",
+        "users_header": "👥 Active System User Accounts",
+        "add_user_header": "➕ Assign Role & Permissions to Employee",
+        "lbl_role_name": "Role Name (e.g., Finance Manager, Admin Manager, QC Lead) *",
+        "btn_save_role": "💾 Save Role Permission Template",
+        "btn_delete_role": "🗑️ Delete Role Template",
+        "success_role_save": "✅ Role permission template successfully saved!",
+        "success_role_delete": "🗑️ Role template successfully deleted!",
+        "success_add_user": "✅ User account permissions successfully assigned!",
         "col_time": "Timestamp",
         "col_user": "Username",
         "col_action": "Action",
@@ -189,13 +162,21 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化稽核日誌與使用者資料庫
+    # 初始化稽核日誌與系統角色資料庫 (RBAC Roles DB)
     if "audit_logs_db" not in st.session_state:
         st.session_state.audit_logs_db = [
             {"time": "2026-10-06 13:00:15", "user": "admin", "action": "登入系統 (Login)", "module": "Auth", "ip": "192.168.1.50", "status": "成功"},
-            {"time": "2026-10-06 13:05:22", "user": "manager", "action": "審核電子簽核單 [APP-2026-001]", "module": "Approval", "ip": "192.168.1.88", "status": "成功"},
-            {"time": "2026-10-06 13:10:40", "user": "security", "action": "登記廠區車輛進出 [61A-888.66]", "module": "VehicleGate", "ip": "192.168.1.102", "status": "成功"}
+            {"time": "2026-10-06 13:05:22", "user": "manager", "action": "審核電子簽核單 [APP-2026-001]", "module": "Approval", "ip": "192.168.1.88", "status": "成功"}
         ]
+
+    if "system_roles_db" not in st.session_state:
+        st.session_state.system_roles_db = {
+            "系統管理員 (Admin)": {"desc": "擁有全系統所有模組最高權限"},
+            "董事長 / 總經理 (Chairman / GM)": {"desc": "總經理室與跨部門最高審核權限"},
+            "財務主管 (Finance Manager)": {"desc": "管理部應收應付與財務稅務報表"},
+            "行政主管 (Admin Manager)": {"desc": "人事公告與廠區資產管理"},
+            "倉庫管理員 (Warehouse Manager)": {"desc": "生產部倉庫與資材條碼管理"}
+        }
 
     if "system_users_db" not in st.session_state:
         st.session_state.system_users_db = [
@@ -203,14 +184,11 @@ def render_user_management_page(lang="繁體中文", **kwargs):
             {"username": "manager", "name": "Nguyễn Văn Quý", "role": "董事長 / 總經理 (Chairman / GM)", "site": "海防廠 (Hai Phong)"}
         ]
 
-    if "custom_roles_list" not in st.session_state:
-        st.session_state.custom_roles_list = L["default_roles"]
-
-    tab_audit, tab_users, tab_api = st.tabs([L["tab_audit"], L["tab_users"], L["tab_api"]])
+    # 分頁架構：稽核日誌 | 角色與權限範本管理 (CRUD) | 使用者清冊 | API 設定
+    tab_audit, tab_roles, tab_users, tab_api = st.tabs([L["tab_audit"], L["tab_roles"], L["tab_users"], L["tab_api"]])
 
     with tab_audit:
         st.markdown(f"### {L['audit_header']}")
-        
         c1, c2, c3, c4 = st.columns([1, 1, 1, 2])
         with c1: f_year = st.selectbox(L["filter_year"], ["全部", "2026", "2025"])
         with c2: f_month = st.selectbox(L["filter_month"], ["全部", "10", "09", "08"])
@@ -232,162 +210,168 @@ def render_user_management_page(lang="繁體中文", **kwargs):
         else:
             st.info(L["no_logs"])
 
+    # ⚙️ 核心功能：系統角色與權限範本管理 (新增、修改、刪除角色與權限勾選)
+    with tab_roles:
+        st.markdown(f"### {L['roles_header']}")
+        
+        # 顯示現有角色清單
+        role_list_display = [{"角色名稱": r_name, "說明": r_info.get("desc", "")} for r_name, r_info in st.session_state.system_roles_db.items()]
+        st.dataframe(pd.DataFrame(role_list_display), use_container_width=True)
+
+        st.markdown("---")
+        st.markdown(f"### ✏️ 修改或刪除現有角色 / ➕ 新增角色範本")
+        
+        role_action_mode = st.radio("選擇操作模式 / Operation Mode", ["修改現有角色範本 (Edit Role)", "新增全新角色範本 (Add New Role)"], horizontal=True)
+
+        if role_action_mode == "修改現有角色範本 (Edit Role)":
+            existing_role_names = list(st.session_state.system_roles_db.keys())
+            selected_edit_role = st.selectbox("🎯 選擇要修改或刪除的角色名稱", existing_role_names)
+            
+            with st.form("form_edit_role_template"):
+                new_role_title = st.text_input("修改後的角色名稱", value=selected_edit_role)
+                role_desc_input = st.text_input("角色職責說明", value=st.session_state.system_roles_db[selected_edit_role].get("desc", ""))
+                
+                st.markdown("##### 🔐 調整該角色可開啟的部門與子功能網頁權限")
+                
+                # 總經理室
+                st.markdown("###### 👑 總經理室 (Executive Office)")
+                rc_ex1, rc_ex2 = st.columns(2)
+                with rc_ex1: r_exec = st.checkbox("📊 總經理室營運總覽與高階決策", value=True)
+                with rc_ex2: r_approval = st.checkbox("📋 全公司電子簽核中心 (Approval Center)", value=True)
+
+                # 管理部
+                st.markdown("###### 📋 管理部 (Management Dept) [14 項子功能]")
+                rcm1, rcm2, rcm3 = st.columns(3)
+                with rcm1:
+                    rm1 = st.checkbox("📢 公司重要公告與佈告欄管理", value=True)
+                    rm2 = st.checkbox("👥 員工個人檔案與人事管理", value=True)
+                    rm3 = st.checkbox("⏱️ 廠內員工固定打卡與出勤紀錄", value=True)
+                    rm4 = st.checkbox("📍 外勤位置驗證與工地即時人數", value=True)
+                    rm5 = st.checkbox("🏭 廠區與工作廠區管理", value=True)
+                with rcm2:
+                    rm6 = st.checkbox("🚗 廠區車輛進出口門禁與派車審核", value=True)
+                    rm7 = st.checkbox("🔧 車輛維修保養紀錄", value=True)
+                    rm8 = st.checkbox("🏷️ 固定資產與設備管理", value=True)
+                    rm9 = st.checkbox("🛒 採購與應付帳款 (AP)", value=True)
+                    rm10 = st.checkbox("💰 客戶應收帳款與對帳管理 (AR)", value=True)
+                with rcm3:
+                    rm11 = st.checkbox("📑 越南稅務標準財務報表 (Thông tư 200)", value=True)
+                    rm12 = st.checkbox("💵 員工薪資計算與保險扣除", value=True)
+                    rm13 = st.checkbox("🧾 電子發票綜合管理與 XML 歸檔", value=True)
+                    rm14 = st.checkbox("🌐 越南營建電子發票與稅務合規管家", value=True)
+
+                # 工程與設計中心
+                st.markdown("###### 🛠️ 工程與設計中心 (Engineering & Design Center) [9 項子功能]")
+                rce1, rce2, rce3 = st.columns(3)
+                with rce1:
+                    re1 = st.checkbox("🎨 [工程] 配電盤與工程專案雙層報價", value=True)
+                    re2 = st.checkbox("📐 [工程] 工程驗收與進度追蹤", value=True)
+                    re3 = st.checkbox("📊 [工程] 現場工程日報表與出工統計", value=True)
+                with rce2:
+                    re4 = st.checkbox("📷 [工程] AI 施工照片智慧辨識與歸檔", value=True)
+                    re5 = st.checkbox("⚠️ [工程] 分包商與專業證照到期預警", value=True)
+                    re6 = st.checkbox("🗄️ [設計] 配電盤電氣機構設計圖庫 Storage", value=True)
+                with rce3:
+                    re7 = st.checkbox("⚙️ [工程] 配電盤 BOM 零件自動展開與採購聯動", value=True)
+                    re8 = st.checkbox("👷 [工程] 外包商點工計價與越南勞動法計薪", value=True)
+                    re9 = st.checkbox("✅ [工程] FAT/SAT 試驗報告與 QR Code 驗收", value=True)
+
+                # 生產部
+                st.markdown("###### 🏭 生產部 (Production Dept) [4 項子功能]")
+                rcp1, rcp2 = st.columns(2)
+                with rcp1:
+                    rp1 = st.checkbox("📦 [倉庫] 倉庫即時庫存與資材條碼管理", value=True)
+                    rp2 = st.checkbox("🧱 [板金] 板金加工組工單與條碼", value=True)
+                with rcp2:
+                    rp3 = st.checkbox("🎨 [塗料] 粉體塗裝烤漆組品管", value=True)
+                    rp4 = st.checkbox("⚡ [配盤] 配電盤組裝線組", value=True)
+
+                # 資訊管理部
+                st.markdown("###### 🔒 資訊管理部 (IT & System)")
+                rc_it1, rc_it2 = st.columns(2)
+                with rc_it1: r_audit = st.checkbox("📊 系統稽核日誌與帳號權限控管", value=False)
+                with rc_it2: r_api_set = st.checkbox("🔌 越南電子發票 API 參數設定", value=False)
+
+                col_btn_r1, col_btn_r2 = st.columns(2)
+                with col_btn_r1:
+                    save_role_btn = st.form_submit_button(L["btn_save_role"], type="primary", use_container_width=True)
+                with col_btn_r2:
+                    delete_role_btn = st.form_submit_button(L["btn_delete_role"], use_container_width=False)
+
+                if save_role_btn:
+                    if new_role_title != selected_edit_role:
+                        del st.session_state.system_roles_db[selected_edit_role]
+                    st.session_state.system_roles_db[new_role_title] = {"desc": role_desc_input}
+                    st.success(L["success_role_save"])
+                    st.rerun()
+
+                if delete_role_btn:
+                    if len(st.session_state.system_roles_db) > 1:
+                        del st.session_state.system_roles_db[selected_edit_role]
+                        st.success(L["success_role_delete"])
+                        st.rerun()
+                    else:
+                        st.warning("⚠️ 系統至少需保留一個角色範本！")
+
+        else:
+            with st.form("form_add_role_template"):
+                new_role_title = st.text_input("新角色名稱 (例如: 行政主管、設計主管、品管經理...)")
+                role_desc_input = st.text_input("角色職責說明")
+                
+                st.markdown("##### 🔐 勾選該新角色可開啟的部門與子功能網頁權限")
+                # 簡單快速勾選預設
+                add_r_exec = st.checkbox("總經理室與各部門完整子功能", value=True)
+
+                if st.form_submit_button("💾 建立新權限角色範本", type="primary", use_container_width=True):
+                    if new_role_title:
+                        st.session_state.system_roles_db[new_role_title] = {"desc": role_desc_input}
+                        st.success("✅ 新權限角色範本已成功建立！")
+                        st.rerun()
+                    else:
+                        st.warning("⚠️ 請輸入角色名稱！")
+
+    # 👥 使用者清冊與權限指派 (以人事系統為準)
     with tab_users:
         st.markdown(f"### {L['users_header']}")
         st.dataframe(pd.DataFrame(st.session_state.system_users_db), use_container_width=True)
 
-        # ✏️ 新增：現有帳號之修改與刪除 (CRUD 管理功能)
-        if st.session_state.system_users_db:
-            st.markdown("---")
-            st.markdown(f"### {L['edit_user_header']}")
-            
-            user_usernames = [u["username"] for u in st.session_state.system_users_db]
-            selected_target_user = st.selectbox("🎯 選擇要修改或刪除的登入帳號", user_usernames)
-            
-            # 尋找對應的使用者資料
-            target_user_obj = next((u for u in st.session_state.system_users_db if u["username"] == selected_target_user), None)
-            
-            if target_user_obj:
-                with st.form("form_edit_delete_user"):
-                    ec1, ec2 = st.columns(2)
-                    with ec1:
-                        edit_name = st.text_input("使用者姓名", value=target_user_obj.get("name", ""))
-                        
-                        # 角色選擇
-                        current_role = target_user_obj.get("role", "")
-                        if current_role not in st.session_state.custom_roles_list:
-                            st.session_state.custom_roles_list.insert(0, current_role)
-                        edit_role = st.selectbox("修改權限角色", st.session_state.custom_roles_list, index=st.session_state.custom_roles_list.index(current_role) if current_role in st.session_state.custom_roles_list else 0)
-                    with ec2:
-                        current_site = target_user_obj.get("site", "西寧廠 (Tay Ninh)")
-                        site_choices = L["site_options"]
-                        edit_site = st.selectbox("修改所屬廠區", site_choices, index=site_choices.index(current_site) if current_site in site_choices else 0)
-
-                    col_eb1, col_eb2 = st.columns(2)
-                    with col_eb1:
-                        update_clicked = st.form_submit_button(L["btn_update_user"], type="primary", use_container_width=True)
-                    with col_eb2:
-                        delete_clicked = st.form_submit_button(L["btn_delete_user"], use_container_width=False)
-
-                    if update_clicked:
-                        target_user_obj["name"] = edit_name
-                        target_user_obj["role"] = edit_role
-                        target_user_obj["site"] = edit_site
-                        st.success(L["success_update"])
-                        st.rerun()
-
-                    if delete_clicked:
-                        st.session_state.system_users_db = [u for u in st.session_state.system_users_db if u["username"] != selected_target_user]
-                        st.success(L["success_delete"])
-                        st.rerun()
-
         st.markdown("---")
         st.markdown(f"### {L['add_user_header']}")
         
-        # 🔗 動態連動人事系統中的員工清單
+        # 🔗 動態連動人事系統員工清單
         employee_options = ["李佑銘 (TW-001 - 西寧廠)", "Nguyễn Văn Quý (VN-002 - 海防廠)"]
         if "employees_db" in st.session_state and st.session_state.employees_db:
             employee_options = [f"{emp.get('name', '')} (工號: {emp.get('code', emp.get('id', ''))} - {emp.get('site', '')})" for emp in st.session_state.employees_db]
 
-        with st.form("form_add_system_user"):
-            c1, c2 = st.columns(2)
-            with c1:
-                selected_employee = st.selectbox(L["lbl_name"], employee_options)
+        available_roles = list(st.session_state.system_roles_db.keys())
+
+        with st.form("form_assign_user_role"):
+            uc1, uc2 = st.columns(2)
+            with uc1:
+                selected_employee = st.selectbox("選擇人事系統員工", employee_options)
                 default_acc = selected_employee.split(" (")[0].lower().replace(" ", "") if selected_employee else "staff01"
-                username = st.text_input(L["lbl_username"], value=default_acc, help="系統自動對應人事工號與設定")
-            with c2:
-                selected_role_opt = st.selectbox(L["lbl_role"], st.session_state.custom_roles_list)
-                site = st.selectbox(L["lbl_site"], L["site_options"])
+                username = st.text_input("登入帳號 (對應人事工號)", value=default_acc)
+            with uc2:
+                assigned_role = st.selectbox("指派系統角色範本", available_roles)
+                site = st.selectbox("所屬廠區", ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"])
 
-            # 🛠️ 自由自訂新角色輸入框
-            final_role = selected_role_opt
-            if "➕" in selected_role_opt:
-                custom_role_input = st.text_input("✨ 請自由輸入新的主管/倉管角色名稱 (例如: 倉庫管理員、生產主管、品管組長...):")
-                if custom_role_input:
-                    final_role = custom_role_input
-                    if custom_role_input not in st.session_state.custom_roles_list:
-                        st.session_state.custom_roles_list.insert(0, custom_role_input)
-
-            # 🏢 嚴格對齊左側選單層級：完整展開所有部門與所有子功能（含倉管與生產部 4 項）
-            st.markdown("##### 🔐 依照左側選單層級的完整部門與所有子功能網頁授權派發 (Full Menu-Aligned Access Control)")
-            
-            # 1. 總經理室 (Executive Office) & 電子簽核中心
-            st.markdown("###### 👑 總經理室 (Executive Office) 與全公司電子簽核中心")
-            col_ex1, col_ex2 = st.columns(2)
-            with col_ex1: acc_exec = st.checkbox("📊 總經理室營運總覽與高階決策", value=True)
-            with col_ex2: acc_approval = st.checkbox("📋 全公司電子簽核中心 (Approval Center)", value=True)
-
-            # 2. 管理部 (Management Dept) - 完整子功能
-            st.markdown("###### 📋 管理部 (Management Dept)")
-            cm1, cm2, cm3 = st.columns(3)
-            with cm1:
-                acc_m1 = st.checkbox("📢 公司重要公告與佈告欄管理", value=True)
-                acc_m2 = st.checkbox("👥 員工個人檔案與人事管理", value=True)
-                acc_m3 = st.checkbox("⏱️ 廠內員工固定打卡與出勤紀錄", value=True)
-                acc_m4 = st.checkbox("📍 外勤位置驗證與工地即時人數", value=True)
-                acc_m5 = st.checkbox("🏭 廠區與工作廠區管理", value=True)
-            with cm2:
-                acc_m6 = st.checkbox("🚗 廠區車輛進出口門禁與派車審核", value=True)
-                acc_m7 = st.checkbox("🔧 車輛維修保養紀錄", value=True)
-                acc_m8 = st.checkbox("🏷️ 固定資產與設備管理", value=True)
-                acc_m9 = st.checkbox("🛒 採購與應付帳款 (AP)", value=True)
-                acc_m10 = st.checkbox("💰 客戶應收帳款與對帳管理 (AR)", value=True)
-            with cm3:
-                acc_m11 = st.checkbox("📑 越南稅務標準財務報表 (Thông tư 200)", value=True)
-                acc_m12 = st.checkbox("💵 員工薪資計算與保險扣除", value=True)
-                acc_m13 = st.checkbox("🧾 電子發票綜合管理與 XML 歸檔", value=True)
-                acc_m14 = st.checkbox("🌐 越南營建電子發票與稅務合規管家", value=True)
-
-            # 3. 工程與設計中心 (Engineering & Design Center) - 完整 9 項子功能
-            st.markdown("###### 🛠️ 工程與設計中心 (Engineering & Design Center) [完整 9 項子功能]")
-            ce1, ce2, ce3 = st.columns(3)
-            with ce1:
-                acc_e1 = st.checkbox("🎨 [工程] 配電盤與工程專案雙層報價", value=True)
-                acc_e2 = st.checkbox("📐 [工程] 工程驗收與進度追蹤", value=True)
-                acc_e3 = st.checkbox("📊 [工程] 現場工程日報表與出工統計", value=True)
-            with ce2:
-                acc_e4 = st.checkbox("📷 [工程] AI 施工照片智慧辨識與歸檔", value=True)
-                acc_e5 = st.checkbox("⚠️ [工程] 分包商與專業證照到期預警", value=True)
-                acc_e6 = st.checkbox("🗄️ [設計] 配電盤電氣機構設計圖庫 Storage", value=True)
-            with ce3:
-                acc_e7 = st.checkbox("⚙️ [工程] 配電盤 BOM 零件自動展開與採購聯動", value=True)
-                acc_e8 = st.checkbox("👷 [工程] 外包商點工計價與越南勞動法計薪", value=True)
-                acc_e9 = st.checkbox("✅ [工程] FAT/SAT 試驗報告與 QR Code 驗收", value=True)
-
-            # 4. 生產部 (Production Dept) - 完整 4 項子功能（含倉庫管理員專屬）
-            st.markdown("###### 🏭 生產部 (Production Dept) [完整 4 項子功能 - 含倉管]")
-            cp1, cp2 = st.columns(2)
-            with cp1:
-                acc_p1 = st.checkbox("📦 [倉庫] 倉庫即時庫存與資材條碼管理", value=True)
-                acc_p2 = st.checkbox("🧱 [板金] 板金加工組工單與條碼", value=True)
-            with cp2:
-                acc_p3 = st.checkbox("🎨 [塗料] 粉體塗裝烤漆組品管", value=True)
-                acc_p4 = st.checkbox("⚡ [配盤] 配電盤組裝線組", value=True)
-
-            # 5. 資訊管理部 (IT & System)
-            st.markdown("###### 🔒 資訊管理部 (IT & System)")
-            col_it1, col_it2 = st.columns(2)
-            with col_it1: acc_audit = st.checkbox("📊 系統稽核日誌與帳號權限控管", value=False)
-            with col_it2: acc_api_set = st.checkbox("🔌 越南電子發票 API 參數設定", value=False)
-
-            if st.form_submit_button(L["btn_add_user"], type="primary", use_container_width=True):
+            if st.form_submit_button("💾 確認指派系統帳號與權限", type="primary", use_container_width=True):
                 if username and selected_employee:
                     emp_name_extracted = selected_employee.split(" (")[0]
                     st.session_state.system_users_db.append({
                         "username": username,
                         "name": emp_name_extracted,
-                        "role": final_role,
+                        "role": assigned_role,
                         "site": site
                     })
-                    st.success(L["success_add"])
+                    st.success(L["success_add_user"])
                     st.rerun()
                 else:
-                    st.warning(L["fill_warning"])
+                    st.warning("⚠️ 請填寫完整資訊！")
 
     # 🔌 追加：越南電子發票 API 串接設定頁籤
     with tab_api:
         st.markdown(f"### {L['api_header']}")
-        
         with st.form("form_e_invoice_api_config"):
             api_provider = st.selectbox(L["api_provider_label"], L["api_providers"])
             api_env = st.selectbox(L["api_env_label"], L["api_env_opts"])
@@ -395,7 +379,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
             api_endpoint = st.text_input(L["endpoint_label"], value="https://api.einvoice.viettel.vn/v1/publish")
             api_key = st.text_input(L["key_label"], type="password", value="VT-TOKEN-2026-RETECH-SECURE-KEY")
             
-            # 🔒 IT 循跡稽核鐵律：自動綁定當前登入帳號與身分
             logged_user_name = st.session_state.get("user_name", "admin")
             logged_user_role = str(st.session_state.get("user_role", "IT_Admin")).upper()
             modifier_display = f"{logged_user_name} ({logged_user_role})"
