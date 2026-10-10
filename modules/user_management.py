@@ -8,7 +8,7 @@ import datetime
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 帳號權限與系統稽核軌跡 (Audit Log)",
-        "caption": "監控全系統使用者登入歷程、自訂角色與完整對齊左側選單所有部門與子功能網頁授權。",
+        "caption": "監控全系統使用者登入歷程、自訂角色與完整對齊左側選單所有部門與子功能（含倉管與生產部）網頁授權。",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
         "tab_users": "👥 系統使用者與全模組權限控管",
         "tab_api": "🔌 電子發票 API 串接設定",
@@ -19,18 +19,18 @@ USER_MGMT_I18N = {
         "search_placeholder": "輸入關鍵字搜尋稽核紀錄...",
         "no_logs": "目前尚無系統稽核紀錄。",
         "users_header": "👥 系統現有使用者帳號與靈活權限清冊",
-        "add_user_header": "➕ 新增系統使用者帳號與全模組完整子功能授權",
+        "add_user_header": "➕ 新增系統使用者帳號與倉管/生產部完整子功能授權",
         "lbl_username": "登入帳號 (連動人事工號) *",
         "lbl_name": "選擇人事系統員工姓名 *",
-        "lbl_role": "權限角色 (可選或自訂主管/職稱角色) *",
+        "lbl_role": "權限角色 (可選或自訂主管/倉管角色) *",
         "default_roles": [
             "系統管理員 (Admin)",
             "董事長 / 總經理 (Chairman / GM)",
+            "倉管主管 / 倉庫管理員 (Warehouse Manager)",
             "財務主管 (Finance Manager)",
             "行政主管 (Admin Manager)",
-            "工程總監 / 設計主管 (Engineering Director)",
             "生產主管 (Production Manager)",
-            "採購主管 (Procurement Manager)",
+            "工程總監 (Engineering Director)",
             "工地主任 / 專案經理 (Site Supervisor)",
             "大門保全 / 門禁 (Security)",
             "一般員工 / 作業員 (Staff)",
@@ -39,7 +39,7 @@ USER_MGMT_I18N = {
         "lbl_site": "所屬廠區 *",
         "site_options": ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"],
         "btn_add_user": "💾 建立使用者帳號與完整權限授權",
-        "success_add": "✅ 系統帳號已成功建立並與完整部門子功能權限串聯！",
+        "success_add": "✅ 系統帳號已成功建立並與倉管及生產部門權限完整串聯！",
         "fill_warning": "⚠️ 請完整填寫帳號並選擇員工！",
         # 表格欄位
         "col_time": "時間戳記",
@@ -80,7 +80,7 @@ USER_MGMT_I18N = {
         "lbl_username": "Tài khoản đăng nhập *",
         "lbl_name": "Chọn nhân viên từ hệ thống *",
         "lbl_role": "Vai trò phân quyền *",
-        "default_roles": ["admin", "Chairman/GM", "Engineering Director", "Finance Manager", "Staff", "➕ [Tùy chỉnh...]"],
+        "default_roles": ["admin", "Warehouse Manager", "Production Manager", "Staff", "➕ [Tùy chỉnh...]"],
         "lbl_site": "Nhà máy trực thuộc *",
         "site_options": ["Nhà máy Tây Ninh", "Nhà máy Hải Phòng"],
         "btn_add_user": "💾 Tạo tài khoản",
@@ -123,7 +123,7 @@ USER_MGMT_I18N = {
         "lbl_username": "Username *",
         "lbl_name": "Select Employee from HR *",
         "lbl_role": "Permission Role *",
-        "default_roles": ["admin", "Chairman/GM", "Engineering Director", "Finance Manager", "staff", "➕ [Custom Role...]"],
+        "default_roles": ["admin", "Warehouse Manager", "Production Manager", "staff", "➕ [Custom Role...]"],
         "lbl_site": "Plant Location *",
         "site_options": ["Tay Ninh Plant", "Hai Phong Plant"],
         "btn_add_user": "💾 Create User & Permissions",
@@ -242,13 +242,13 @@ def render_user_management_page(lang="繁體中文", **kwargs):
             # 🛠️ 自由自訂新角色輸入框
             final_role = selected_role_opt
             if "➕" in selected_role_opt:
-                custom_role_input = st.text_input("✨ 請自由輸入新的主管/職稱角色名稱 (例如: 行政主管、設計主管、工程總監...):")
+                custom_role_input = st.text_input("✨ 請自由輸入新的主管/倉管角色名稱 (例如: 倉庫管理員、生產主管、品管組長...):")
                 if custom_role_input:
                     final_role = custom_role_input
                     if custom_role_input not in st.session_state.custom_roles_list:
                         st.session_state.custom_roles_list.insert(0, custom_role_input)
 
-            # 🏢 嚴格對齊左側選單層級：完整展開所有部門與所有子功能
+            # 🏢 嚴格對齊左側選單層級：完整展開所有部門與所有子功能（含倉管與生產部 4 項）
             st.markdown("##### 🔐 依照左側選單層級的完整部門與所有子功能網頁授權派發 (Full Menu-Aligned Access Control)")
             
             # 1. 總經理室 (Executive Office) & 電子簽核中心
@@ -294,12 +294,15 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                 acc_e8 = st.checkbox("👷 [工程] 外包商點工計價與越南勞動法計薪", value=True)
                 acc_e9 = st.checkbox("✅ [工程] FAT/SAT 試驗報告與 QR Code 驗收", value=True)
 
-            # 4. 生產部 (Production Dept)
-            st.markdown("###### 🏭 生產部 (Production Dept)")
-            col_pr1, col_pr2, col_pr3 = st.columns(3)
-            with col_pr1: acc_p1 = st.checkbox("⏱️ 生產線固定打卡與出勤紀錄", value=True)
-            with col_pr2: acc_p2 = st.checkbox("📍 生產車間即時人數統計", value=True)
-            with col_pr3: acc_p3 = st.checkbox("🚗 廠區產線車輛進出與物料派車", value=True)
+            # 4. 生產部 (Production Dept) - 完整 4 項子功能（含倉庫管理員專屬）
+            st.markdown("###### 🏭 生產部 (Production Dept) [完整 4 項子功能 - 含倉管]")
+            cp1, cp2 = st.columns(2)
+            with cp1:
+                acc_p1 = st.checkbox("📦 [倉庫] 倉庫即時庫存與資材條碼管理", value=True)
+                acc_p2 = st.checkbox("🧱 [板金] 板金加工組工單與條碼", value=True)
+            with cp2:
+                acc_p3 = st.checkbox("🎨 [塗料] 粉體塗裝烤漆組品管", value=True)
+                acc_p4 = st.checkbox("⚡ [配盤] 配電盤組裝線組", value=True)
 
             # 5. 資訊管理部 (IT & System)
             st.markdown("###### 🔒 資訊管理部 (IT & System)")
