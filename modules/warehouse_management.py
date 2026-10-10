@@ -184,17 +184,17 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
         else:
             st.info(L["no_records"])
 
-    # 2. 出入庫與領料作業處理 (倉別動態聯動)
+    # 2. 出入庫與領料作業處理 (倉別即時動態聯動)
     with tab_bar:
         st.markdown(f"### {L['op_header']}")
+        
+        # 🎯 將目標倉庫移到表單外面，實現即時重新載入與過濾
+        target_warehouse = st.selectbox(L["lbl_target_wh"], L["warehouse_opts"])
         
         with st.form("form_stock_operation"):
             op_type = st.radio(L["lbl_op_type"], L["op_opts"], horizontal=True)
             
-            # 🎯 率先選擇目標倉庫，讓下方選單聯動過濾
-            target_warehouse = st.selectbox(L["lbl_target_wh"], L["warehouse_opts"])
-            
-            # 🔗 嚴格根據所選倉庫過濾資材清單
+            # 🔗 嚴格根據上方所選的倉庫過濾資材清單
             warehouse_items = [i for i in st.session_state.warehouse_db if i["warehouse"] == target_warehouse]
             
             c_sel1, c_sel2 = st.columns(2)
@@ -225,7 +225,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                 # 在目標倉庫中尋找對應料號
                 matched_item = next((i for i in st.session_state.warehouse_db if i["code"].strip().lower() == target_code and i["warehouse"] == target_warehouse), None)
 
-                # 若是入庫作業且該倉庫沒有此料號，允許從其他倉庫轉移或建立
+                # 若是入庫作業且該倉庫沒有此料號，自動建立或轉移
                 if not matched_item and ("入庫" in op_type or "Stock In" in op_type):
                     any_matched = next((i for i in st.session_state.warehouse_db if i["code"].strip().lower() == target_code), None)
                     if any_matched:
