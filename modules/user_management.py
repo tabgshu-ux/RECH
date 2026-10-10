@@ -7,11 +7,11 @@ import datetime
 # ----------------------------------------------------
 USER_MGMT_I18N = {
     "繁體中文": {
-        "title": "🔒 IT 管理中心 - 系統角色權限範本與稽核軌跡",
-        "caption": "統一維護系統角色名稱與各角色可存取的完整部門子功能權限範本（人員帳號以人事系統為準）。",
+        "title": "🔒 IT 管理中心 - 組織職能角色與系統權限範本管理",
+        "caption": "依據企業組織架構（總經理室全覽、管理部行政匯總、工程部專案、生產倉管廠區）精細化配置角色權限範本。",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
-        "tab_roles": "⚙️ 系統角色與權限範本管理 (Role RBAC)",
-        "tab_users": "👥 現有系統使用者與人事連動清冊",
+        "tab_roles": "⚙️ 組織角色與部門功能權限範本 (RBAC)",
+        "tab_users": "👥 人事系統員工與系統帳號總覽",
         "tab_api": "🔌 電子發票 API 串接設定",
         "audit_header": "🔍 全系統操作軌跡與稽核軌跡日誌",
         "filter_year": "篩選年份 (Year)",
@@ -19,24 +19,22 @@ USER_MGMT_I18N = {
         "filter_day": "篩選日期 (Day)",
         "search_placeholder": "輸入關鍵字搜尋稽核紀錄...",
         "no_logs": "目前尚無系統稽核紀錄。",
-        "roles_header": "⚙️ 現有系統權限角色範本清冊 (可進行修改名稱或調整功能權限)",
-        "add_role_header": "➕ 新增自訂權限角色與功能範本",
-        "users_header": "👥 系統現有使用者帳號清冊 (對應人事與廠區)",
-        "add_user_header": "➕ 派發人事系統員工之系統帳號與權限",
-        "lbl_role_name": "角色名稱 (例如: 財務主管、行政主管、品管經理...) *",
-        "btn_save_role": "💾 儲存角色權限範本設定",
-        "btn_delete_role": "🗑️ 刪除此權限角色",
-        "success_role_save": "✅ 系統角色權限範本已成功更新！",
-        "success_role_delete": "🗑️ 系統角色已成功刪除！",
-        "success_add_user": "✅ 員工系統帳號與權限已成功指派！",
-        # 表格欄位
+        "roles_header": "⚙️ 企業組織部門角色與權限範本清冊",
+        "add_role_header": "➕ 新增部門主管/職能角色範本",
+        "users_header": "👥 系統現有使用者帳號與人事連動清冊",
+        "add_user_header": "➕ 依人事系統員工工號派發角色權限",
+        "lbl_role_name": "角色名稱 (例如: 總經理、管理部主管、工程主管、倉庫管理員...) *",
+        "btn_save_role": "💾 儲存部門角色權限範本",
+        "btn_delete_role": "🗑️ 刪除此角色範本",
+        "success_role_save": "✅ 部門角色權限範本已成功更新！",
+        "success_role_delete": "🗑️ 角色範本已成功刪除！",
+        "success_add_user": "✅ 人事員工系統帳號與權限已成功指派！",
         "col_time": "時間戳記",
         "col_user": "操作帳號",
         "col_action": "動作行為",
         "col_module": "模組名稱",
         "col_ip": "來源 IP",
         "col_status": "執行狀態",
-        # API 設定專用
         "api_header": "🔌 越南電子發票 (E-Invoice / Thông tư 200) API 閘道設定",
         "api_provider_label": "發票系統商 (E-Invoice Provider) *",
         "api_providers": ["Viettel (S-Invoice)", "VNPT (VNPT-Invoice)", "MISA (MISA meInvoice)", "FPT.eInvoice", "Custom API"],
@@ -52,11 +50,11 @@ USER_MGMT_I18N = {
         "api_test_success": "✅ API 連線測試成功！憑證授權與伺服器回應正常。"
     },
     "Tiếng Việt": {
-        "title": "🔒 Quản trị IT - Cấu hình Vai trò & Phân quyền Hệ thống",
-        "caption": "Quản lý tên vai trò và quyền hạn truy cập module.",
+        "title": "🔒 Quản trị IT - Cấu hình Vai trò & Phân quyền Doanh nghiệp",
+        "caption": "Quản lý vai trò và phân quyền theo cơ cấu tổ chức.",
         "tab_audit": "📊 Nhật ký Kiểm toán",
         "tab_roles": "⚙️ Quản lý Vai trò (RBAC)",
-        "tab_users": "👥 Danh sách Người dùng",
+        "tab_users": "👥 Danh sách Nhân sự",
         "tab_api": "🔌 Cấu hình API Hóa đơn",
         "audit_header": "🔍 Nhật ký thao tác",
         "filter_year": "Năm",
@@ -64,15 +62,15 @@ USER_MGMT_I18N = {
         "filter_day": "Ngày",
         "search_placeholder": "Tìm kiếm...",
         "no_logs": "Chưa có nhật ký.",
-        "roles_header": "⚙️ Danh sách vai trò hệ thống",
+        "roles_header": "⚙️ Danh sách vai trò",
         "add_role_header": "➕ Thêm vai trò mới",
         "users_header": "📋 Danh sách tài khoản",
-        "add_user_header": "➕ Phân quyền người dùng",
+        "add_user_header": "➕ Phân quyền",
         "lbl_role_name": "Tên vai trò *",
-        "btn_save_role": "💾 Lưu cấu hình vai trò",
-        "btn_delete_role": "🗑️ Xóa vai trò",
-        "success_role_save": "✅ Đã lưu cấu hình vai trò!",
-        "success_role_delete": "🗑️ Đã xóa vai trò!",
+        "btn_save_role": "💾 Lưu",
+        "btn_delete_role": "🗑️ Xóa",
+        "success_role_save": "✅ Đã lưu!",
+        "success_role_delete": "🗑️ Đã xóa!",
         "success_add_user": "✅ Thành công!",
         "col_time": "Thời gian",
         "col_user": "Tài khoản",
@@ -91,15 +89,15 @@ USER_MGMT_I18N = {
         "modifier_label": "Người cấu hình",
         "api_save_btn": "💾 Lưu",
         "api_test_btn": "🔗 Kiểm tra",
-        "api_success": "✅ Lưu thành công!",
+        "api_success": "✅ Thành công!",
         "api_test_success": "✅ Kết nối thành công!"
     },
     "English": {
-        "title": "🔒 IT Center - Role RBAC & System Audit Logs",
-        "caption": "Manage system role definitions and fine-grained menu access control templates.",
+        "title": "🔒 IT Center - Departmental Role RBAC & System Audit Logs",
+        "caption": "Configure role templates aligned with company organizational structure (Executive, Admin, Engineering, Production & Warehouse).",
         "tab_audit": "📊 System Audit Logs",
-        "tab_roles": "⚙️ Role Management (RBAC)",
-        "tab_users": "👥 User Accounts Registry",
+        "tab_roles": "⚙️ Departmental Roles (RBAC)",
+        "tab_users": "👥 HR & User Accounts",
         "tab_api": "🔌 E-Invoice API Config",
         "audit_header": "🔍 System Operation & Audit Trail Logs",
         "filter_year": "Filter Year",
@@ -107,16 +105,16 @@ USER_MGMT_I18N = {
         "filter_day": "Filter Day",
         "search_placeholder": "Search audit logs...",
         "no_logs": "No audit logs found.",
-        "roles_header": "⚙️ System Permission Roles & Access Templates",
-        "add_role_header": "➕ Create New Permission Role Template",
-        "users_header": "👥 Active System User Accounts",
-        "add_user_header": "➕ Assign Role & Permissions to Employee",
-        "lbl_role_name": "Role Name (e.g., Finance Manager, Admin Manager, QC Lead) *",
-        "btn_save_role": "💾 Save Role Permission Template",
+        "roles_header": "⚙️ Departmental Permission Roles & Access Templates",
+        "add_role_header": "➕ Create New Department Role Template",
+        "users_header": "👥 HR Employee & System Accounts Registry",
+        "add_user_header": "➕ Assign Department Role to HR Employee",
+        "lbl_role_name": "Role Name (e.g., General Manager, Admin Manager, Engineering Lead, Warehouse Keeper) *",
+        "btn_save_role": "💾 Save Department Role Template",
         "btn_delete_role": "🗑️ Delete Role Template",
-        "success_role_save": "✅ Role permission template successfully saved!",
+        "success_role_save": "✅ Department role template successfully saved!",
         "success_role_delete": "🗑️ Role template successfully deleted!",
-        "success_add_user": "✅ User account permissions successfully assigned!",
+        "success_add_user": "✅ Employee system account & role successfully assigned!",
         "col_time": "Timestamp",
         "col_user": "Username",
         "col_action": "Action",
@@ -162,7 +160,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化稽核日誌與系統角色資料庫 (RBAC Roles DB)
+    # 初始化稽核日誌與部門角色資料庫
     if "audit_logs_db" not in st.session_state:
         st.session_state.audit_logs_db = [
             {"time": "2026-10-06 13:00:15", "user": "admin", "action": "登入系統 (Login)", "module": "Auth", "ip": "192.168.1.50", "status": "成功"},
@@ -171,20 +169,18 @@ def render_user_management_page(lang="繁體中文", **kwargs):
 
     if "system_roles_db" not in st.session_state:
         st.session_state.system_roles_db = {
-            "系統管理員 (Admin)": {"desc": "擁有全系統所有模組最高權限"},
-            "董事長 / 總經理 (Chairman / GM)": {"desc": "總經理室與跨部門最高審核權限"},
-            "財務主管 (Finance Manager)": {"desc": "管理部應收應付與財務稅務報表"},
-            "行政主管 (Admin Manager)": {"desc": "人事公告與廠區資產管理"},
-            "倉庫管理員 (Warehouse Manager)": {"desc": "生產部倉庫與資材條碼管理"}
+            "董事長 / 總經理 (Chairman / GM)": {"desc": "👑 總經理室：可檢視與審核全系統所有部門與跨模組資料"},
+            "管理部主管 (Admin & Finance Manager)": {"desc": "📋 管理部：負責人事、財務、總務與匯總下方各部門資料"},
+            "工程總監 / 設計主管 (Engineering Director)": {"desc": "🛠️ 工程部門：專注於專案報價、工程驗收、日報表與 BOM 展開"},
+            "倉庫管理員 / 生產主管 (Warehouse & Production)": {"desc": "🏭 生產與倉管：管理廠區生產線、車間打卡、板金塗料與倉庫庫存"}
         }
 
     if "system_users_db" not in st.session_state:
         st.session_state.system_users_db = [
-            {"username": "admin", "name": "李佑銘", "role": "系統管理員 (Admin)", "site": "西寧廠 (Tay Ninh)"},
-            {"username": "manager", "name": "Nguyễn Văn Quý", "role": "董事長 / 總經理 (Chairman / GM)", "site": "海防廠 (Hai Phong)"}
+            {"username": "admin", "name": "李佑銘", "role": "董事長 / 總經理 (Chairman / GM)", "site": "西寧廠 (Tay Ninh)"},
+            {"username": "manager", "name": "Nguyễn Văn Quý", "role": "管理部主管 (Admin & Finance Manager)", "site": "海防廠 (Hai Phong)"}
         ]
 
-    # 分頁架構：稽核日誌 | 角色與權限範本管理 (CRUD) | 使用者清冊 | API 設定
     tab_audit, tab_roles, tab_users, tab_api = st.tabs([L["tab_audit"], L["tab_roles"], L["tab_users"], L["tab_api"]])
 
     with tab_audit:
@@ -210,37 +206,36 @@ def render_user_management_page(lang="繁體中文", **kwargs):
         else:
             st.info(L["no_logs"])
 
-    # ⚙️ 核心功能：系統角色與權限範本管理 (新增、修改、刪除角色與權限勾選)
+    # ⚙️ 角色與權限範本管理 (依據各部門職能與觀察匯總權限)
     with tab_roles:
         st.markdown(f"### {L['roles_header']}")
         
-        # 顯示現有角色清單
-        role_list_display = [{"角色名稱": r_name, "說明": r_info.get("desc", "")} for r_name, r_info in st.session_state.system_roles_db.items()]
+        role_list_display = [{"角色名稱": r_name, "部門職責與資料範圍說明": r_info.get("desc", "")} for r_name, r_info in st.session_state.system_roles_db.items()]
         st.dataframe(pd.DataFrame(role_list_display), use_container_width=True)
 
         st.markdown("---")
-        st.markdown(f"### ✏️ 修改或刪除現有角色 / ➕ 新增角色範本")
+        st.markdown(f"### ✏️ 修改現有部門角色範本或 ➕ 新增角色")
         
-        role_action_mode = st.radio("選擇操作模式 / Operation Mode", ["修改現有角色範本 (Edit Role)", "新增全新角色範本 (Add New Role)"], horizontal=True)
+        role_action_mode = st.radio("選擇操作模式", ["修改現有部門角色範本", "新增全新部門角色範本"], horizontal=True)
 
-        if role_action_mode == "修改現有角色範本 (Edit Role)":
+        if role_action_mode == "修改現有部門角色範本":
             existing_role_names = list(st.session_state.system_roles_db.keys())
-            selected_edit_role = st.selectbox("🎯 選擇要修改或刪除的角色名稱", existing_role_names)
+            selected_edit_role = st.selectbox("🎯 選擇要修改的角色名稱", existing_role_names)
             
-            with st.form("form_edit_role_template"):
+            with st.form("form_edit_department_role"):
                 new_role_title = st.text_input("修改後的角色名稱", value=selected_edit_role)
-                role_desc_input = st.text_input("角色職責說明", value=st.session_state.system_roles_db[selected_edit_role].get("desc", ""))
+                role_desc_input = st.text_input("部門職責與檢視權限說明", value=st.session_state.system_roles_db[selected_edit_role].get("desc", ""))
                 
-                st.markdown("##### 🔐 調整該角色可開啟的部門與子功能網頁權限")
+                st.markdown("##### 🔐 依組織架構勾選該角色可開啟的部門與子功能範圍")
                 
-                # 總經理室
-                st.markdown("###### 👑 總經理室 (Executive Office)")
+                # 總經理室 (全覽)
+                st.markdown("###### 👑 總經理室 (Executive Office) [全系統檢視與高階決策]")
                 rc_ex1, rc_ex2 = st.columns(2)
                 with rc_ex1: r_exec = st.checkbox("📊 總經理室營運總覽與高階決策", value=True)
                 with rc_ex2: r_approval = st.checkbox("📋 全公司電子簽核中心 (Approval Center)", value=True)
 
-                # 管理部
-                st.markdown("###### 📋 管理部 (Management Dept) [14 項子功能]")
+                # 管理部 (行政、人事、財務、總務與下方各部門資料匯總)
+                st.markdown("###### 📋 管理部 (Management Dept) [人事、財務、總務與下方部門資料匯總]")
                 rcm1, rcm2, rcm3 = st.columns(3)
                 with rcm1:
                     rm1 = st.checkbox("📢 公司重要公告與佈告欄管理", value=True)
@@ -260,8 +255,8 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                     rm13 = st.checkbox("🧾 電子發票綜合管理與 XML 歸檔", value=True)
                     rm14 = st.checkbox("🌐 越南營建電子發票與稅務合規管家", value=True)
 
-                # 工程與設計中心
-                st.markdown("###### 🛠️ 工程與設計中心 (Engineering & Design Center) [9 項子功能]")
+                # 工程部門 (工程人員內會用到的專屬功能)
+                st.markdown("###### 🛠️ 工程與設計中心 (Engineering & Design Center) [工程專屬功能]")
                 rce1, rce2, rce3 = st.columns(3)
                 with rce1:
                     re1 = st.checkbox("🎨 [工程] 配電盤與工程專案雙層報價", value=True)
@@ -276,8 +271,8 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                     re8 = st.checkbox("👷 [工程] 外包商點工計價與越南勞動法計薪", value=True)
                     re9 = st.checkbox("✅ [工程] FAT/SAT 試驗報告與 QR Code 驗收", value=True)
 
-                # 生產部
-                st.markdown("###### 🏭 生產部 (Production Dept) [4 項子功能]")
+                # 生產與倉管 (廠區生產、倉管)
+                st.markdown("###### 🏭 生產部與倉庫 (Production & Warehouse) [廠區生產與倉管]")
                 rcp1, rcp2 = st.columns(2)
                 with rcp1:
                     rp1 = st.checkbox("📦 [倉庫] 倉庫即時庫存與資材條碼管理", value=True)
@@ -314,23 +309,19 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                         st.warning("⚠️ 系統至少需保留一個角色範本！")
 
         else:
-            with st.form("form_add_role_template"):
-                new_role_title = st.text_input("新角色名稱 (例如: 行政主管、設計主管、品管經理...)")
-                role_desc_input = st.text_input("角色職責說明")
-                
-                st.markdown("##### 🔐 勾選該新角色可開啟的部門與子功能網頁權限")
-                # 簡單快速勾選預設
-                add_r_exec = st.checkbox("總經理室與各部門完整子功能", value=True)
+            with st.form("form_add_department_role"):
+                new_role_title = st.text_input("新部門角色名稱 (例如: 行政主管、設計主管、品管經理...)")
+                role_desc_input = st.text_input("部門職責與資料範圍說明")
 
-                if st.form_submit_button("💾 建立新權限角色範本", type="primary", use_container_width=True):
+                if st.form_submit_button("💾 建立新部門角色範本", type="primary", use_container_width=True):
                     if new_role_title:
                         st.session_state.system_roles_db[new_role_title] = {"desc": role_desc_input}
-                        st.success("✅ 新權限角色範本已成功建立！")
+                        st.success("✅ 新部門角色範本已成功建立！")
                         st.rerun()
                     else:
                         st.warning("⚠️ 請輸入角色名稱！")
 
-    # 👥 使用者清冊與權限指派 (以人事系統為準)
+    # 👥 人事系統員工與帳號權限指派
     with tab_users:
         st.markdown(f"### {L['users_header']}")
         st.dataframe(pd.DataFrame(st.session_state.system_users_db), use_container_width=True)
@@ -338,24 +329,24 @@ def render_user_management_page(lang="繁體中文", **kwargs):
         st.markdown("---")
         st.markdown(f"### {L['add_user_header']}")
         
-        # 🔗 動態連動人事系統員工清單
-        employee_options = ["李佑銘 (TW-001 - 西寧廠)", "Nguyễn Văn Quý (VN-002 - 海防廠)"]
+        # 🔗 連結人事系統員工清單
+        employee_options = ["李佑銘 (TW-001 - 西寧廠 - 總經理室)", "Nguyễn Văn Quý (VN-002 - 海防廠 - 管理部)"]
         if "employees_db" in st.session_state and st.session_state.employees_db:
             employee_options = [f"{emp.get('name', '')} (工號: {emp.get('code', emp.get('id', ''))} - {emp.get('site', '')})" for emp in st.session_state.employees_db]
 
         available_roles = list(st.session_state.system_roles_db.keys())
 
-        with st.form("form_assign_user_role"):
+        with st.form("form_assign_department_role"):
             uc1, uc2 = st.columns(2)
             with uc1:
                 selected_employee = st.selectbox("選擇人事系統員工", employee_options)
                 default_acc = selected_employee.split(" (")[0].lower().replace(" ", "") if selected_employee else "staff01"
                 username = st.text_input("登入帳號 (對應人事工號)", value=default_acc)
             with uc2:
-                assigned_role = st.selectbox("指派系統角色範本", available_roles)
+                assigned_role = st.selectbox("指派部門角色權限", available_roles)
                 site = st.selectbox("所屬廠區", ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"])
 
-            if st.form_submit_button("💾 確認指派系統帳號與權限", type="primary", use_container_width=True):
+            if st.form_submit_button("💾 確認指派人事員工之系統角色與權限", type="primary", use_container_width=True):
                 if username and selected_employee:
                     emp_name_extracted = selected_employee.split(" (")[0]
                     st.session_state.system_users_db.append({
