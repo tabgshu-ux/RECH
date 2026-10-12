@@ -300,3 +300,25 @@ def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
 
             if st.button(L["btn_submit_daily"], type="primary", use_container_width=True):
                 if not uploaded_receipt:
+                    st.error(L["alert_no_photo"])
+                else:
+                    status_final = L["status_ok"]
+                    if is_over_budget or has_price_anomaly:
+                        status_final = L["status_need_audit"]
+
+                    st.session_state.dorm_catering_db.insert(0, {
+                        "date": str(buy_date),
+                        "people_count": people_cnt,
+                        "budget_cap_per_person": cap_per_person,
+                        "total_budget": max_allowed_budget,
+                        "total_actual": total_actual_amt,
+                        "buyer": buyer_name,
+                        "status": status_final,
+                        "photo_uploaded": True,
+                        "items": st.session_state.temp_shopping_cart.copy()
+                    })
+                    st.session_state.temp_shopping_cart = []
+                    st.success(L["success_submit"].format(status=status_final))
+                    st.rerun()
+
+    # ----------------
