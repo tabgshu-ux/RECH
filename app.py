@@ -1,9 +1,6 @@
 import streamlit as st
 import pandas as pd
 import importlib
-from modules import painting
-from modules import sheet_metal
-from modules import assembly
 from sqlalchemy import text
 
 st.set_page_config(
@@ -63,7 +60,7 @@ NAV_STRUCTURE = {
                     "👤 員工個人檔案與人事管理": "hr_employee",
                     "🏢 廠內員工固定打卡與出勤紀錄": "internal_attendance",
                     "📍 外勤位置驗證與工地即時人數": "field_attendance",
-                    "🥗 幹部宿舍伙食與採購控管": "dorm_catering",  # 👈 新增：幹部宿舍伙食控管
+                    "🥗 幹部宿舍伙食與採購控管": "dorm_catering",
                     "🏭 廠區與工作廠區管理": "factory_mgmt",
                     "🚗 廠區車輛進出口門禁與派車審核": "vehicle_gate",
                     "🛠️ 車輛維修保養紀錄": "vehicle_maintenance",
@@ -135,7 +132,7 @@ NAV_STRUCTURE = {
                     "👤 Hồ sơ nhân sự": "hr_employee",
                     "🏢 Chấm công nội bộ": "internal_attendance",
                     "📍 Chấm công vị trí công trường": "field_attendance",
-                    "🥗 Quản lý Ký túc xá & Mua thực phẩm": "dorm_catering", # 👈 新增
+                    "🥗 Quản lý Ký túc xá & Mua thực phẩm": "dorm_catering",
                     "🏭 Quản lý Nhà máy": "factory_mgmt",
                     "🚗 Quản lý xe ra vào & Phê duyệt": "vehicle_gate",
                     "🛠️ Bảo trì xe": "vehicle_maintenance",
@@ -207,7 +204,7 @@ NAV_STRUCTURE = {
                     "👤 HR Records": "hr_employee",
                     "🏢 Internal Attendance": "internal_attendance",
                     "📍 Field Attendance": "field_attendance",
-                    "🥗 Dormitory Catering & Food Procurement": "dorm_catering", # 👈 新增
+                    "🥗 Dormitory Catering & Food Procurement": "dorm_catering",
                     "🏭 Factory Management": "factory_mgmt",
                     "🚗 Vehicle Gate & Dispatch Log": "vehicle_gate",
                     "🛠️ Vehicle Maintenance": "vehicle_maintenance",
@@ -286,6 +283,9 @@ lang_dict = NAV_STRUCTURE.get(
     st.session_state.current_lang, NAV_STRUCTURE["繁體中文"]
 )
 
+# ----------------------------------------------------
+# 🔐 1. 未登入處理 (完全防範非登入狀態元件外洩)
+# ----------------------------------------------------
 if not st.session_state.logged_in:
     _, center_col, _ = st.columns([1, 1.5, 1])
     with center_col:
@@ -335,6 +335,9 @@ if not st.session_state.logged_in:
                     st.error("⚠️ 帳號或初始密碼錯誤 / Incorrect username or password")
     st.stop()
 
+# ----------------------------------------------------
+# 🔐 2. 首次登入強制修改密碼
+# ----------------------------------------------------
 if st.session_state.get("must_change_pwd", False):
     _, center_col, _ = st.columns([1, 1.5, 1])
     with center_col:
@@ -360,6 +363,9 @@ if st.session_state.get("must_change_pwd", False):
                     st.error("⚠️ 兩次輸入的新密碼不相符或未填寫，請重新檢查！")
     st.stop()
 
+# ----------------------------------------------------
+# 🚀 3. 已登入系統側邊欄與功能導向
+# ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
 lang_list = ["繁體中文", "Tiếng Việt", "English"]
@@ -418,7 +424,7 @@ else:
 curr_lang = st.session_state.current_lang
 
 # ----------------------------------------------------
-# 📢 登入即見：全公司重要公告彈窗提醒 (公告跑馬燈)
+# 📢 登入即見：全公司重要公告跑馬燈
 # ----------------------------------------------------
 if "announcements_db" not in st.session_state:
     st.session_state.announcements_db = [
@@ -439,7 +445,7 @@ if active_anns:
     st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
 
 # ----------------------------------------------------
-# 動態安全路由分流
+# 🔀 安全動態路由分流 (全數統一採用 load_module_safely 延遲載入)
 # ----------------------------------------------------
 if target_route == "company_announcements":
     load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
@@ -450,7 +456,7 @@ elif target_route in ["commodities_fx", "financials_pl", "project_progress_exec"
 elif target_route == "approval_center":
     load_module_safely("modules.approval_workflow", "render_approval_center", lang=curr_lang)
 
-elif target_route == "dorm_catering":  # 👈 新增：幹部宿舍伙食與採購控管安全路由
+elif target_route == "dorm_catering":
     load_module_safely("modules.dorm_catering", "render_dorm_catering_module", engine=engine, lang=curr_lang)
 
 elif target_route == "eng_quote":
@@ -523,13 +529,13 @@ elif target_route == "wh_management":
     load_module_safely("modules.warehouse_management", "render_warehouse_management", engine=engine, t=lang_dict, lang=curr_lang)
 
 elif target_route == "sheet_metal":
-    sheet_metal.render_sheet_metal_module(engine=engine, t=lang_dict, lang=curr_lang)
+    load_module_safely("modules.sheet_metal", "render_sheet_metal_module", engine=engine, t=lang_dict, lang=curr_lang)
 
 elif target_route == "painting":
-    painting.render_painting_module(engine=engine, t=lang_dict, lang=curr_lang)
+    load_module_safely("modules.painting", "render_painting_module", engine=engine, t=lang_dict, lang=curr_lang)
 
 elif target_route == "assembly":
-    assembly.render_assembly_module(engine=engine, t=lang_dict, lang=curr_lang)
+    load_module_safely("modules.assembly", "render_assembly_module", engine=engine, t=lang_dict, lang=curr_lang)
 
 elif target_route == "it_admin":
     if current_role_clean == "admin":
