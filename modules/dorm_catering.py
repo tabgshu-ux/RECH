@@ -21,7 +21,7 @@ CATERING_I18N = {
         "lbl_buyer": "採購經辦 / 總務人員",
         "buyer_default": "煮菜阿姨 / 總務專員",
         "lbl_item": "食材品項名稱",
-        "lbl_qty": "採購數量 (kg / 包 / 箱)",
+        "lbl_qty": "採購數量",
         "lbl_unit_price": "採購單價 (VND)",
         "lbl_ref_price": "西寧即時參考價",
         "lbl_photo": "📸 上傳攤販收據小票與食材秤重照片 (強制拍照存證)",
@@ -68,7 +68,7 @@ CATERING_I18N = {
         "lbl_buyer": "Người đi chợ / Tổng vụ",
         "buyer_default": "Dì nấu ăn / Chuyên viên Tổng vụ",
         "lbl_item": "Tên thực phẩm",
-        "lbl_qty": "Số lượng (kg / gói / thùng)",
+        "lbl_qty": "Số lượng",
         "lbl_unit_price": "Đơn giá mua (VND)",
         "lbl_ref_price": "Giá tham chiếu Tây Ninh",
         "lbl_photo": "📸 Tải ảnh hóa đơn & Ảnh cân thực phẩm (Bắt buộc chụp ảnh)",
@@ -115,7 +115,7 @@ CATERING_I18N = {
         "lbl_buyer": "Buyer / GA Staff",
         "buyer_default": "Cook / GA Specialist",
         "lbl_item": "Food Item",
-        "lbl_qty": "Quantity (kg / pack / box)",
+        "lbl_qty": "Quantity",
         "lbl_unit_price": "Unit Price (VND)",
         "lbl_ref_price": "Tay Ninh Ref Price",
         "lbl_photo": "📸 Upload Receipt & Food Weighing Photo (Mandatory)",
@@ -153,17 +153,17 @@ CATERING_I18N = {
 # 🛒 西寧在地市場與 Co.opmart 即時物價與浮動趨勢基準
 # ----------------------------------------------------
 DEFAULT_TAY_NINH_DYNAMIC_PRICES = {
-    "Thịt heo đùi/vai (豬肉腿/肩肉)": {"price": 105000.0, "delta": "+5,000 VND (Mùa mưa tăng nhẹ)", "status": "up"},
-    "Thịt ba rọi (五花肉)": {"price": 135000.0, "delta": "0 VND (Ổn định)", "status": "stable"},
-    "Thịt gà nguyên con (全雞/土雞)": {"price": 85000.0, "delta": "0 VND (Ổn định)", "status": "stable"},
-    "Thịt bò (牛肉)": {"price": 240000.0, "delta": "-10,000 VND (Nguồn cung dồi dào)", "status": "down"},
-    "Cá diêu hồng/Cá lóc (鮮魚)": {"price": 60000.0, "delta": "+2,000 VND (Tăng nhẹ)", "status": "up"},
-    "Tôm tươi (鮮蝦)": {"price": 160000.0, "delta": "0 VND (Ổn định)", "status": "stable"},
-    "Rau cải / Rau muống (葉菜類)": {"price": 22000.0, "delta": "+4,000 VND (Mùa mưa rau giảm)", "status": "up"},
-    "Bắp cải / Củ quả (根莖類)": {"price": 25000.0, "delta": "0 VND (Ổn định)", "status": "stable"},
-    "Trứng gà - 10 quả (雞蛋)": {"price": 32000.0, "delta": "-1,000 VND (Giảm nhẹ)", "status": "down"},
-    "Gạo thơm / Nàng Hoa (白米)": {"price": 22000.0, "delta": "0 VND (Ổn định)", "status": "stable"},
-    "Dầu ăn / Gia vị (食用油/調料)": {"price": 45000.0, "delta": "0 VND (Ổn định)", "status": "stable"}
+    "Thịt heo đùi/vai (豬肉腿/肩肉)": {"price": 105000.0, "unit": "VND/kg", "delta": "+5,000 VND (Mùa mưa tăng nhẹ)", "status": "up"},
+    "Thịt ba rọi (五花肉)": {"price": 135000.0, "unit": "VND/kg", "delta": "0 VND (Ổn định)", "status": "stable"},
+    "Thịt gà nguyên con (全雞/土雞)": {"price": 85000.0, "unit": "VND/kg", "delta": "0 VND (Ổn định)", "status": "stable"},
+    "Thịt bò (牛肉)": {"price": 240000.0, "unit": "VND/kg", "delta": "-10,000 VND (Nguồn cung dồi dào)", "status": "down"},
+    "Cá diêu hồng/Cá lóc (鮮魚)": {"price": 60000.0, "unit": "VND/kg", "delta": "+2,000 VND (Tăng nhẹ)", "status": "up"},
+    "Tôm tươi (鮮蝦)": {"price": 160000.0, "unit": "VND/kg", "delta": "0 VND (Ổn định)", "status": "stable"},
+    "Rau cải / Rau muống (葉菜類)": {"price": 22000.0, "unit": "VND/kg", "delta": "+4,000 VND (Mùa mưa rau giảm)", "status": "up"},
+    "Bắp cải / Củ quả (根莖類)": {"price": 25000.0, "unit": "VND/kg", "delta": "0 VND (Ổn định)", "status": "stable"},
+    "Trứng gà - 10 quả (雞蛋-10顆/1打)": {"price": 32000.0, "unit": "VND/10 quả (1打)", "delta": "-1,000 VND (Giảm nhẹ)", "status": "down"},
+    "Gạo thơm / Nàng Hoa (白米)": {"price": 22000.0, "unit": "VND/kg", "delta": "0 VND (Ổn định)", "status": "stable"},
+    "Dầu ăn / Gia vị (食用油/調料)": {"price": 45000.0, "unit": "VND/chai (瓶)", "delta": "0 VND (Ổn định)", "status": "stable"}
 }
 
 def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
@@ -245,141 +245,7 @@ def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
             col_i1, col_i2, col_i3 = st.columns([2, 1, 1.5])
             with col_i1:
                 item_name = st.selectbox(L.get("lbl_item", "Item"), list(st.session_state.market_price_dynamic.keys()) + ["Khác / 其他"])
-            with col_i2:
-                item_qty = st.number_input(L.get("lbl_qty", "Qty"), min_value=0.1, value=1.0, step=0.5)
-            with col_i3:
-                ref_info = st.session_state.market_price_dynamic.get(item_name, {"price": 50000.0, "delta": "0 VND"})
-                ref_p = ref_info["price"]
-                item_price = st.number_input(f"{L.get('lbl_unit_price', 'Price')} ({L.get('lbl_ref_price', 'Ref')}: {ref_p:,.0f})", min_value=0.0, value=ref_p, step=5000.0)
-
-            add_item_btn = st.form_submit_button(L.get("btn_add_item", "Add"), type="secondary")
-            if add_item_btn:
-                amt = item_qty * item_price
-                flag_status = L.get("flag_normal", "🟢 OK")
-                
-                if item_name in st.session_state.market_price_dynamic:
-                    ref_price = st.session_state.market_price_dynamic[item_name]["price"]
-                    margin_pct = st.session_state.allowed_price_margin_pct / 100.0
-                    
-                    if item_price > ref_price * (1 + margin_pct):
-                        diff_pct = ((item_price - ref_price) / ref_price) * 100
-                        flag_status = L.get("flag_high", "🔴 High").format(pct=diff_pct)
-                    elif item_price > ref_price:
-                        diff_pct = ((item_price - ref_price) / ref_price) * 100
-                        flag_status = L.get("flag_slight_high", "🟡 High").format(pct=diff_pct)
-
-                st.session_state.temp_shopping_cart.append({
-                    "item": item_name,
-                    "qty": item_qty,
-                    "unit_price": item_price,
-                    "amount": amt,
-                    "flag": flag_status
-                })
-                st.rerun()
-
-        # 展示當次採購清單
-        if st.session_state.temp_shopping_cart:
-            st.markdown(f"##### {L.get('lbl_cart', '')}")
-            df_temp = pd.DataFrame(st.session_state.temp_shopping_cart)
-            st.dataframe(df_temp, use_container_width=True)
-
-            total_actual_amt = df_temp["amount"].sum()
-            has_price_anomaly = any("🔴" in str(row["flag"]) or "Cao" in str(row["flag"]) or "High" in str(row["flag"]) for row in st.session_state.temp_shopping_cart)
-            is_over_budget = total_actual_amt > max_allowed_budget
-
-            st.markdown("---")
-            st.markdown(L.get("lbl_total_actual", "").format(actual=total_actual_amt, cap=max_allowed_budget))
-
-            if is_over_budget:
-                st.error(L.get("alert_over_budget", ""))
-            if has_price_anomaly:
-                st.warning(L.get("alert_price_anomaly", ""))
-
-            # 強制照片上傳存證
-            uploaded_receipt = st.file_uploader(L.get("lbl_photo", "Photo"), type=["jpg", "jpeg", "png"])
-
-            if st.button(L.get("btn_submit_daily", "Submit"), type="primary", use_container_width=True):
-                if not uploaded_receipt:
-                    st.error(L.get("alert_no_photo", ""))
-                else:
-                    status_final = L.get("status_ok", "🟢 OK")
-                    if is_over_budget or has_price_anomaly:
-                        status_final = L.get("status_need_audit", "⚠️ Audit")
-
-                    st.session_state.dorm_catering_db.insert(0, {
-                        "date": str(buy_date),
-                        "people_count": people_cnt,
-                        "budget_cap_per_person": cap_per_person,
-                        "total_budget": max_allowed_budget,
-                        "total_actual": total_actual_amt,
-                        "buyer": buyer_name,
-                        "status": status_final,
-                        "photo_uploaded": True,
-                        "items": st.session_state.temp_shopping_cart.copy()
-                    })
-                    st.session_state.temp_shopping_cart = []
-                    st.success(L.get("success_submit", "").format(status=status_final))
-                    st.rerun()
-
-    # ----------------------------------------------------
-    # 📊 2. 宿舍伙食費月度統計與單價稽核
-    # ----------------------------------------------------
-    with tab_summary:
-        st.markdown(f"### {L.get('header_summary', '')}")
-        if st.session_state.get("dorm_catering_db"):
-            df_summary = pd.DataFrame(st.session_state.dorm_catering_db)
-            st.dataframe(df_summary[["date", "people_count", "total_budget", "total_actual", "buyer", "status"]], use_container_width=True)
             
-            st.markdown("---")
-            st.markdown(f"##### {L.get('header_drilldown', '')}")
-            records_list = [str(r.get("date", "")) + " - " + str(r.get("buyer", "")) for r in st.session_state.dorm_catering_db]
-            if records_list:
-                sel_date_record = st.selectbox(L.get("sel_record_date", "Select"), records_list)
-                target_date = sel_date_record.split(" - ")[0]
-                target_obj = next((r for r in st.session_state.dorm_catering_db if r.get("date") == target_date), None)
-                if target_obj:
-                    st.write(f"**{L.get('lbl_date', 'Date')}**：`{target_obj.get('date', '')}` | **{L.get('lbl_people', 'People')}**：`{target_obj.get('people_count', 0)}` | **{L.get('lbl_total_actual', 'Total').split('/')[0]}**：`{target_obj.get('total_actual', 0):,.0f} VND`")
-                    if target_obj.get("items"):
-                        st.dataframe(pd.DataFrame(target_obj["items"]), use_container_width=True)
-        else:
-            st.info(L.get("no_records", "No records."))
-
-    # ----------------------------------------------------
-    # ⚙️ 3. 西寧在地食材市場參考單價與趨勢設定
-    # ----------------------------------------------------
-    with tab_prices:
-        st.markdown(f"### {L.get('header_prices', '')}")
-        st.info(L.get("caption_prices", ""))
-
-        # 設定容許浮動門檻
-        st.session_state.allowed_price_margin_pct = st.slider(
-            L.get("lbl_slider_margin", "Margin %"), 
-            min_value=5.0, max_value=30.0, value=float(st.session_state.get("allowed_price_margin_pct", 15.0)), step=1.0,
-            help=L.get("help_slider_margin", "")
-        )
-
-        st.markdown("---")
-        st.markdown(f"#### {L.get('header_adjust_prices', '')}")
-
-        with st.form("form_update_dynamic_prices"):
-            updated_dict = {}
-            for food_item, info in st.session_state.market_price_dynamic.items():
-                col_p1, col_p2 = st.columns([2, 1])
-                with col_p1:
-                    new_p = st.number_input(f"{food_item} (VND/kg)", min_value=1000.0, value=float(info.get("price", 10000.0)), step=5000.0)
-                with col_p2:
-                    short_label = food_item.split(" (")[0]
-                    new_delta = st.text_input(f"{L.get('lbl_trend_tag', 'Trend')} ({short_label})", value=str(info.get("delta", "0 VND")))
-
-                updated_dict[food_item] = {"price": new_p, "delta": new_delta, "status": "updated"}
-
-            if st.form_submit_button(L.get("btn_save_prices", "Save"), type="primary"):
-                st.session_state.market_price_dynamic = updated_dict
-                st.success(L.get("success_save_prices", "Saved."))
-                st.rerun()
-
-def show(engine=None, lang="繁體中文", **kwargs):
-    render_dorm_catering_module(engine=engine, lang=lang, **kwargs)
-
-def main(engine=None, lang="繁體中文", **kwargs):
-    render_dorm_catering_module(engine=engine, lang=lang, **kwargs)
+            ref_info = st.session_state.market_price_dynamic.get(item_name, {"price": 50000.0, "unit": "VND/kg", "delta": "0 VND"})
+            ref_unit = ref_info.get("unit", "VND/kg")
+            ref_p = ref_info.get("price", 50000
