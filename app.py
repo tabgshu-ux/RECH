@@ -63,6 +63,7 @@ NAV_STRUCTURE = {
                     "👤 員工個人檔案與人事管理": "hr_employee",
                     "🏢 廠內員工固定打卡與出勤紀錄": "internal_attendance",
                     "📍 外勤位置驗證與工地即時人數": "field_attendance",
+                    "🥗 幹部宿舍伙食與採購控管": "dorm_catering",  # 👈 新增：幹部宿舍伙食控管
                     "🏭 廠區與工作廠區管理": "factory_mgmt",
                     "🚗 廠區車輛進出口門禁與派車審核": "vehicle_gate",
                     "🛠️ 車輛維修保養紀錄": "vehicle_maintenance",
@@ -134,6 +135,7 @@ NAV_STRUCTURE = {
                     "👤 Hồ sơ nhân sự": "hr_employee",
                     "🏢 Chấm công nội bộ": "internal_attendance",
                     "📍 Chấm công vị trí công trường": "field_attendance",
+                    "🥗 Quản lý Ký túc xá & Mua thực phẩm": "dorm_catering", # 👈 新增
                     "🏭 Quản lý Nhà máy": "factory_mgmt",
                     "🚗 Quản lý xe ra vào & Phê duyệt": "vehicle_gate",
                     "🛠️ Bảo trì xe": "vehicle_maintenance",
@@ -205,6 +207,7 @@ NAV_STRUCTURE = {
                     "👤 HR Records": "hr_employee",
                     "🏢 Internal Attendance": "internal_attendance",
                     "📍 Field Attendance": "field_attendance",
+                    "🥗 Dormitory Catering & Food Procurement": "dorm_catering", # 👈 新增
                     "🏭 Factory Management": "factory_mgmt",
                     "🚗 Vehicle Gate & Dispatch Log": "vehicle_gate",
                     "🛠️ Vehicle Maintenance": "vehicle_maintenance",
@@ -447,6 +450,9 @@ elif target_route in ["commodities_fx", "financials_pl", "project_progress_exec"
 elif target_route == "approval_center":
     load_module_safely("modules.approval_workflow", "render_approval_center", lang=curr_lang)
 
+elif target_route == "dorm_catering":  # 👈 新增：幹部宿舍伙食與採購控管安全路由
+    load_module_safely("modules.dorm_catering", "render_dorm_catering_module", engine=engine, lang=curr_lang)
+
 elif target_route == "eng_quote":
     load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="1")
 
@@ -524,7 +530,7 @@ elif target_route == "painting":
 
 elif target_route == "assembly":
     assembly.render_assembly_module(engine=engine, t=lang_dict, lang=curr_lang)
-    
+
 elif target_route == "it_admin":
     if current_role_clean == "admin":
         load_module_safely("modules.user_management", "render_user_management_page", lang=curr_lang)
