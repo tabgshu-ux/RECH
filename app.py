@@ -59,7 +59,7 @@ NAV_STRUCTURE = {
                     "📢 公司重要公告與佈告欄": "company_announcements",
                     "👤 員工個人檔案與人事管理": "hr_employee",
                     "🏢 廠內員工固定打卡與出勤紀錄": "internal_attendance",
-                    "📍 外勤位置驗證與工地即時人數": "field_attendance",
+                    "📍 外勤出勤統計與工地人數監控": "field_attendance",  # 👉 管理部：監控與統計
                     "🥗 幹部宿舍伙食與採購控管": "dorm_catering",
                     "🏭 廠區與工作廠區管理": "factory_mgmt",
                     "🚗 廠區車輛進出口門禁與派車審核": "vehicle_gate",
@@ -83,6 +83,7 @@ NAV_STRUCTURE = {
                     "⚡ [工程] 配電盤與工程專案雙層報價": "eng_quote",
                     "📊 [工程] 工程驗收與進度追蹤": "eng_progress",
                     "📋 [工程] 現場工程日報表與出工統計": "field_daily_report",
+                    "📍 [工程] 現場外勤打卡與作業登記": "eng_field_checkin",  # 👉 工程部：現場打卡
                     "🤖 [工程] AI 施工照片智慧辨識與歸檔": "eng_ai_photo",
                     "⚠️ [工程] 分包商與專業證照到期預警": "eng_license",
                     "🎨 [設計] 配電盤電氣與機構設計圖庫 Storage": "eng_design",
@@ -131,7 +132,7 @@ NAV_STRUCTURE = {
                     "📢 Thông báo công ty": "company_announcements",
                     "👤 Hồ sơ nhân sự": "hr_employee",
                     "🏢 Chấm công nội bộ": "internal_attendance",
-                    "📍 Chấm công vị trí công trường": "field_attendance",
+                    "📍 Giám sát quân số công trường": "field_attendance",
                     "🥗 Quản lý Ký túc xá & Mua thực phẩm": "dorm_catering",
                     "🏭 Quản lý Nhà máy": "factory_mgmt",
                     "🚗 Quản lý xe ra vào & Phê duyệt": "vehicle_gate",
@@ -155,6 +156,7 @@ NAV_STRUCTURE = {
                     "⚡ [Kỹ thuật] Báo giá Dự án": "eng_quote",
                     "📊 [Kỹ thuật] Tiến độ nghiệm thu": "eng_progress",
                     "📋 [Kỹ thuật] Nhật ký Thi công": "field_daily_report",
+                    "📍 [Kỹ thuật] Chấm công ngoài công trường": "eng_field_checkin",
                     "🤖 [Kỹ thuật] AI Nhận diện ảnh": "eng_ai_photo",
                     "⚠️ [Kỹ thuật] Cảnh báo chứng chỉ": "eng_license",
                     "🎨 [Thiết kế] Kho Storage Bản vẽ": "eng_design",
@@ -203,7 +205,7 @@ NAV_STRUCTURE = {
                     "📢 Company Announcements": "company_announcements",
                     "👤 HR Records": "hr_employee",
                     "🏢 Internal Attendance": "internal_attendance",
-                    "📍 Field Attendance": "field_attendance",
+                    "📍 Site Workforce Monitoring": "field_attendance",
                     "🥗 Dormitory Catering & Food Procurement": "dorm_catering",
                     "🏭 Factory Management": "factory_mgmt",
                     "🚗 Vehicle Gate & Dispatch Log": "vehicle_gate",
@@ -227,6 +229,7 @@ NAV_STRUCTURE = {
                     "⚡ [Engineering] Quotation": "eng_quote",
                     "📊 [Engineering] M&E Acceptance": "eng_progress",
                     "📋 [Engineering] Daily Construction Report": "field_daily_report",
+                    "📍 [Engineering] Field Check-in Log": "eng_field_checkin",
                     "🤖 [Engineering] AI Photo Recognition": "eng_ai_photo",
                     "⚠️ [Engineering] License Alerts": "eng_license",
                     "🎨 [Design] Drawing Storage Center": "eng_design",
@@ -284,7 +287,7 @@ lang_dict = NAV_STRUCTURE.get(
 )
 
 # ----------------------------------------------------
-# 🔐 1. 未登入處理 (完全防範非登入狀態元件外洩)
+# 🔐 1. 登入介面 (防範未登入元件浮動)
 # ----------------------------------------------------
 if not st.session_state.logged_in:
     _, center_col, _ = st.columns([1, 1.5, 1])
@@ -364,7 +367,7 @@ if st.session_state.get("must_change_pwd", False):
     st.stop()
 
 # ----------------------------------------------------
-# 🚀 3. 已登入系統側邊欄與功能導向
+# 🚀 3. 已登入側邊欄與功能選單
 # ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
@@ -424,7 +427,7 @@ else:
 curr_lang = st.session_state.current_lang
 
 # ----------------------------------------------------
-# 📢 登入即見：全公司重要公告跑馬燈
+# 📢 公司公告跑馬燈
 # ----------------------------------------------------
 if "announcements_db" not in st.session_state:
     st.session_state.announcements_db = [
@@ -445,7 +448,7 @@ if active_anns:
     st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
 
 # ----------------------------------------------------
-# 🔀 安全動態路由分流 (全數統一採用 load_module_safely 延遲載入)
+# 🔀 動態安全路由分流
 # ----------------------------------------------------
 if target_route == "company_announcements":
     load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
@@ -467,6 +470,14 @@ elif target_route == "eng_progress":
 
 elif target_route == "field_daily_report":
     load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="3")
+
+# 👉 【工程部現場端】：載入現場外勤打卡 (view_mode="field_worker")
+elif target_route == "eng_field_checkin":
+    load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="field_worker")
+
+# 👉 【管理部主管端】：載入跨案場人數監控 (view_mode="management")
+elif target_route == "field_attendance":
+    load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="management")
 
 elif target_route == "eng_ai_photo":
     load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="4")
@@ -509,9 +520,6 @@ elif target_route == "invoice_management":
 
 elif target_route == "internal_attendance":
     load_module_safely("modules.internal_attendance", "render_internal_attendance_page", engine=engine, lang=curr_lang)
-
-elif target_route == "field_attendance":
-    load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang)
 
 elif target_route == "factory_mgmt":
     load_module_safely("modules.factory_management", "render_factory_management_page", engine=engine, lang=curr_lang)
