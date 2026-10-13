@@ -4,15 +4,32 @@ import datetime
 from sqlalchemy import text
 
 # ----------------------------------------------------
-# 🇻🇳 越南法規標準金額格式化 (千位數用 '.'，小數用 ',')
+# 🇻🇳 越南法規標準金額格式化 (千位數用 '.'，例如: 13.507.200)
 # ----------------------------------------------------
-def fmt_vn_curr(val):
-    """格式化為越南法規金額 (例如: 13.507.200 VND)"""
+def parse_vn_num(val_str):
+    """將包含 '.' 或 ',' 的字串轉回純數字 float"""
+    if isinstance(val_str, (int, float)):
+        return float(val_str)
+    if not val_str:
+        return 0.0
+    # 移除所有點號與逗號空格
+    cleaned = str(val_str).replace(".", "").replace(",", "").replace("VND", "").strip()
+    try:
+        return float(cleaned)
+    except Exception:
+        return 0.0
+
+def fmt_vn_num(val):
+    """格式化為越南法規金額數字 (例如: 13.507.200)"""
     try:
         v = float(val)
-        return f"{v:,.0f}".replace(",", ".") + " VND"
+        return f"{v:,.0f}".replace(",", ".")
     except Exception:
-        return "0 VND"
+        return "0"
+
+def fmt_vn_curr(val):
+    """格式化為越南法規金額 (例如: 13.507.200 VND)"""
+    return fmt_vn_num(val) + " VND"
 
 # ----------------------------------------------------
 # 🌐 員工薪資與保險扣除管理多語系字典 (i18n)
@@ -20,7 +37,7 @@ def fmt_vn_curr(val):
 PAYROLL_I18N = {
     "繁體中文": {
         "title": "💰 管理部 - 員工薪資計算與電子薪資單中心",
-        "caption": "符合越南勞動法與 2026/09 最新薪資結構：支援 6 大津貼、4 階梯加班費、全勤獎金條件試算、社保/醫保/失業保扣繳、所得稅 (TNCN) 與電子薪資單。",
+        "caption": "符合越南勞動法與 2026/09 最新薪資結構：支援 6 大津貼、4 階梯加班費、全勤獎金條件試算、社保/醫保/失業保扣繳與電子薪資單 (金額採 '.' 千位分隔)。",
         "tab_calc": "🧮 月度薪資試算與結算",
         "tab_slip": "📄 個人電子薪資單 (Phiếu lương)",
         "tab_history": "📊 歷史薪資清冊與發放紀錄",
@@ -44,9 +61,7 @@ PAYROLL_I18N = {
         "lbl_ot195": "加班 1.95 倍時數 (小時)",
         "lbl_ot20": "加班 2.0 倍時數 (小時)",
         "lbl_ot30": "加班 3.0 倍時數 (小時)",
-        "lbl_dependents": "扶養親屬人數 (Người phụ thuộc)",
         "lbl_advance": "本月預支金額 Tạm ứng (VND)",
-        "lbl_tax_adj": "所得稅多退少補 (VND)",
         "lbl_other_deduct": "其他扣款 Khoản trừ (VND)",
         "btn_calc_and_save": "💾 計算並寫入 Supabase 薪資資料庫",
         "msg_success": "✅ 薪資清冊計算完畢並已成功寫入資料庫！",
@@ -55,7 +70,7 @@ PAYROLL_I18N = {
     },
     "Tiếng Việt": {
         "title": "💰 Phòng Quản lý - Tính Luơng & Phiếu Lương Điện Tử",
-        "caption": "Tuân thủ Luật Lao động VN & Bảng lương 09/2026: Phụ cấp, Tăng ca 4 hệ số, Chuyên cần, BHXH/BHYT/BHTN, Thuế TNCN và Phiếu lương cá nhân.",
+        "caption": "Tuân thủ Luật Lao động VN & Bảng lương 09/2026: Phụ cấp, Tăng ca 4 hệ số, Chuyên cần, BHXH/BHYT/BHTN và Phiếu lương cá nhân.",
         "tab_calc": "🧮 Tính lương & Tăng ca",
         "tab_slip": "📄 Phiếu Lương Cá Nhân",
         "tab_history": "📊 Lịch sử bảng lương & Báo cáo",
@@ -79,9 +94,7 @@ PAYROLL_I18N = {
         "lbl_ot195": "Số giờ tăng ca 1.95",
         "lbl_ot20": "Số giờ tăng ca 2.0",
         "lbl_ot30": "Số giờ tăng ca 3.0",
-        "lbl_dependents": "Số người phụ thuộc",
         "lbl_advance": "Số tiền tạm ứng (VND)",
-        "lbl_tax_adj": "Thừa/Thiếu thuế TNCN (VND)",
         "lbl_other_deduct": "Khoản trừ khác (VND)",
         "btn_calc_and_save": "💾 Tính & Lưu Bảng Lương vào Cơ Sở Dữ Liệu",
         "msg_success": "✅ Đã tính lương và lưu bảng lương thành công!",
@@ -90,7 +103,7 @@ PAYROLL_I18N = {
     },
     "English": {
         "title": "💰 GA & HR - Payroll & Digital Payslip Management",
-        "caption": "Vietnamese Labor Law Compliant (09/2026 Structure): Allowances, 4 OT rates, Attendance Bonus logic, Insurance, PIT and Digital Payslip.",
+        "caption": "Vietnamese Labor Law Compliant (09/2026 Structure): Allowances, 4 OT rates, Attendance Bonus logic, Insurance and Digital Payslip.",
         "tab_calc": "🧮 Payroll & Overtime Calculation",
         "tab_slip": "📄 Individual Digital Payslip",
         "tab_history": "📊 Historical Payroll Records",
@@ -114,9 +127,7 @@ PAYROLL_I18N = {
         "lbl_ot195": "OT 1.95x Hours",
         "lbl_ot20": "OT 2.0x Hours",
         "lbl_ot30": "OT 3.0x Hours",
-        "lbl_dependents": "Number of Dependents",
         "lbl_advance": "Salary Advance (VND)",
-        "lbl_tax_adj": "PIT Adjustment (VND)",
         "lbl_other_deduct": "Other Deductions (VND)",
         "btn_calc_and_save": "💾 Calculate & Save to Database",
         "msg_success": "✅ Payroll calculation saved to database successfully!",
@@ -204,18 +215,18 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown("---")
         
         with st.form("form_calc_payroll"):
-            st.markdown("##### 1️⃣ 基本薪資與 6 大津貼項目 (Lương & Phụ cấp)")
+            st.markdown("##### 1️⃣ 基本薪資與 6 大津貼項目 (Lương & Phụ cấp) - 採越南 '.' 千位分隔")
             col1, col2, col3 = st.columns(3)
             with col1:
                 e_name = st.text_input(L["lbl_emp_name"], value="NGUYỄN THỊ TUYẾT NHUNG")
-                base_sal = st.number_input(L["lbl_base_salary"], min_value=0.0, value=13507200.0, step=100000.0)
-                pos_allowance = st.number_input(L["lbl_allowance_pos"], min_value=0.0, value=3000000.0, step=100000.0)
+                str_base_sal = st.text_input(L["lbl_base_salary"], value="13.507.200")
+                str_pos_allowance = st.text_input(L["lbl_allowance_pos"], value="3.000.000")
             with col2:
-                eval_bonus = st.number_input(L["lbl_allowance_eval"], min_value=0.0, value=3174192.0, step=100000.0)
-                gas_allowance = st.number_input(L["lbl_allowance_gas"], min_value=0.0, value=144000.0, step=10000.0)
-                women_allowance = st.number_input(L["lbl_allowance_women"], min_value=0.0, value=100000.0, step=10000.0)
+                str_eval_bonus = st.text_input(L["lbl_allowance_eval"], value="3.174.192")
+                str_gas_allowance = st.text_input(L["lbl_allowance_gas"], value="144.000")
+                str_women_allowance = st.text_input(L["lbl_allowance_women"], value="100.000")
             with col3:
-                spec_bonus = st.number_input(L["lbl_allowance_spec"], min_value=0.0, value=500000.0, step=100000.0)
+                str_spec_bonus = st.text_input(L["lbl_allowance_spec"], value="500.000")
                 std_hours = st.number_input(L["lbl_standard_hours"], min_value=1.0, value=208.0, step=1.0)
                 act_hours = st.number_input(L["lbl_actual_hours"], min_value=0.0, value=208.0, step=0.5)
 
@@ -227,18 +238,32 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 ot_20 = st.number_input(L["lbl_ot20"], min_value=0.0, value=0.0, step=0.5)
                 ot_30 = st.number_input(L["lbl_ot30"], min_value=0.0, value=0.0, step=0.5)
             with col5:
-                meal_fee = st.number_input(L["lbl_meal_fee"], min_value=0.0, value=648000.0, step=10000.0)
-                prod_bonus = st.number_input(L["lbl_prod_bonus"], min_value=0.0, value=0.0, step=50000.0)
-                network_fee = st.number_input(L["lbl_network_fee"], min_value=0.0, value=300000.0, step=50000.0)
+                str_meal_fee = st.text_input(L["lbl_meal_fee"], value="648.000")
+                str_prod_bonus = st.text_input(L["lbl_prod_bonus"], value="0")
+                str_network_fee = st.text_input(L["lbl_network_fee"], value="300.000")
             with col6:
                 auto_att_bonus = calculate_attendance_bonus(act_hours)
-                att_bonus = st.number_input("全勤獎金 Chuyên cần (自動試算)", min_value=0.0, value=float(auto_att_bonus), step=50000.0)
-                other_deduct = st.number_input(L["lbl_other_deduct"], min_value=0.0, value=0.0, step=50000.0)
-                advance_pay = st.number_input(L["lbl_advance"], min_value=0.0, value=0.0, step=100000.0)
+                str_att_bonus = st.text_input("全勤獎金 Chuyên cần (自動試算)", value=fmt_vn_num(auto_att_bonus))
+                str_other_deduct = st.text_input(L["lbl_other_deduct"], value="0")
+                str_advance_pay = st.text_input(L["lbl_advance"], value="0")
 
             # ----------------------------------------------------
-            # 🧮 Excel 精確算式核心邏輯
+            # 🧮 轉為數值計算
             # ----------------------------------------------------
+            base_sal = parse_vn_num(str_base_sal)
+            pos_allowance = parse_vn_num(str_pos_allowance)
+            eval_bonus = parse_vn_num(str_eval_bonus)
+            gas_allowance = parse_vn_num(str_gas_allowance)
+            women_allowance = parse_vn_num(str_women_allowance)
+            spec_bonus = parse_vn_num(str_spec_bonus)
+            meal_fee = parse_vn_num(str_meal_fee)
+            prod_bonus = parse_vn_num(str_prod_bonus)
+            network_fee = parse_vn_num(str_network_fee)
+            att_bonus = parse_vn_num(str_att_bonus)
+            other_deduct = parse_vn_num(str_other_deduct)
+            advance_pay = parse_vn_num(str_advance_pay)
+
+            # Excel 精確算式核心邏輯
             hourly_base_rate = (base_sal + pos_allowance + eval_bonus + gas_allowance + women_allowance + spec_bonus) / std_hours
             work_salary = hourly_base_rate * act_hours
 
@@ -348,7 +373,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
     # 📊 Tab 3: 歷史薪資清冊查詢
     # ----------------------------------------------------
     with tab_history:
-        st.markdown("#### " + str(L['header_summary']))
+        st.markdown("#### " + str(L["header_summary"]))
         if engine:
             try:
                 with engine.connect() as conn:
@@ -376,7 +401,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                     else:
                         st.info("目前尚無歷史薪資紀錄。")
             except Exception as e:
-                st.info("尚未讀取到歷史薪資紀錄。")
+                st.info("尚未讀取到歷史薪資紀錄: " + str(e))
         else:
             st.info("目前展示模式，請連接 PostgreSQL / Supabase 以讀取歷史紀錄。")
 
