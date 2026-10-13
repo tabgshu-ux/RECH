@@ -370,4 +370,18 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                             row_dict["實發淨薪"] = fmt_vn_curr(row_dict.get("net_salary", 0))
                             formatted_rows.append(row_dict)
 
-                        df_p = pd.DataFrame(formatted_rows
+                        df_p = pd.DataFrame(formatted_rows)[["payroll_month", "emp_code", "emp_name", "department", "factory", "底薪", "上班工資", "加班費", "應領總額", "保險扣除", "實發淨薪", "status"]]
+                        df_p.columns = ["計薪月份", "工號", "姓名", "部門", "廠區", "底薪", "上班工資", "加班費", "應領總額", "保險扣除", "實發淨薪", "狀態"]
+                        st.dataframe(df_p, use_container_width=True)
+                    else:
+                        st.info("目前尚無歷史薪資紀錄。")
+            except Exception as e:
+                st.info("尚未讀取到歷史薪資紀錄。")
+        else:
+            st.info("目前展示模式，請連接 PostgreSQL / Supabase 以讀取歷史紀錄。")
+
+def show(engine=None, lang="繁體中文", **kwargs):
+    render_payroll_management_page(engine=engine, lang=lang, **kwargs)
+
+def main(engine=None, lang="繁體中文", **kwargs):
+    render_payroll_management_page(engine=engine, lang=lang, **kwargs)
