@@ -11,7 +11,8 @@ AP_I18N = {
         "title": "🛒 管理部 - 採購與應付帳款 (AP) 預算控管中心",
         "caption": "自動連動工程部專案預算！採購請款金額超過報價預算時自動鎖定並觸發審核流程。",
         "tab_add": "📝 採購請款單錄入 (預算即時對比)",
-        "tab_list": "📋 採購請款歷史紀錄與預算稽核",
+        "tab_audit": "⚖️ AP 帳款審核與沖銷付款",
+        "tab_list": "📊 採購請款歷史紀錄與預算稽核看板",
         "lbl_po_id": "採購單號 (PO ID)",
         "lbl_project": "關聯工程專案 (連動工程部報價單)",
         "lbl_vendor": "供應商 / 外包商名稱",
@@ -21,13 +22,16 @@ AP_I18N = {
         "btn_submit": "🚀 提交採購請款單",
         "alert_over_budget": "⚠️ 警告：本次請款金額高於專案剩餘預算！系統已自動標記為【超預算審核】狀態。",
         "msg_success": "✅ 採購請款單已成功寫入資料庫！狀態：`{status}`",
-        "no_proj": "-- 無專案關聯 (一般行政採購) --"
+        "no_proj": "-- 無專案關聯 (一般行政採購) --",
+        "btn_pay": "💳 付款沖銷",
+        "btn_approve": "✅ 審核通過"
     },
     "Tiếng Việt": {
         "title": "🛒 Phòng Quản lý - Mua Hàng & Phải Trả (AP) Khống Chế Ngân Sách",
         "caption": "Tự động kết nối ngân sách dự án kỹ thuật! Cảnh báo và khóa phê duyệt khi vượt ngân sách báo giá.",
         "tab_add": "📝 Nhập Yêu Cầu Mua Hàng & Thanh Toán",
-        "tab_list": "📋 Lịch Sử Yêu Cầu Mua Hàng & Kiểm Toán Ngân Sách",
+        "tab_audit": "⚖️ Duyệt AP & Phê Duyệt Thanh Toán",
+        "tab_list": "📊 Lịch Sử Mua Hàng & Bảng Báo Cáo Ngân Sách",
         "lbl_po_id": "Mã đơn mua hàng (PO)",
         "lbl_project": "Dự án kỹ thuật liên quan (Báo giá)",
         "lbl_vendor": "Nhà cung cấp / Thầu phụ",
@@ -37,13 +41,16 @@ AP_I18N = {
         "btn_submit": "🚀 Lưu Yêu Cầu Mua Hàng",
         "alert_over_budget": "⚠️ Cảnh báo: Số tiền thanh toán vượt quá ngân sách còn lại! Đã tự động chuyển trạng thái chờ duyệt.",
         "msg_success": "✅ Đã lưu yêu cầu mua hàng vào cơ sở dữ liệu! Trạng thái: `{status}`",
-        "no_proj": "-- Không theo dự án (Chi phí hành chính) --"
+        "no_proj": "-- Không theo dự án (Chi phí hành chính) --",
+        "btn_pay": "💳 Thanh toán",
+        "btn_approve": "✅ Phê duyệt"
     },
     "English": {
         "title": "🛒 GA & Procurement - Accounts Payable (AP) Budget Control",
         "caption": "Auto-linked to Engineering Project Budgets! Automatically locks requests that exceed quoted budget caps.",
         "tab_add": "📝 Purchase & AP Request Entry",
-        "tab_list": "📋 AP History & Budget Audit Log",
+        "tab_audit": "⚖️ AP Audit & Payment Settlement",
+        "tab_list": "📊 AP History & Budget Audit Log",
         "lbl_po_id": "PO Number",
         "lbl_project": "Linked Engineering Project",
         "lbl_vendor": "Vendor / Subcontractor",
@@ -53,7 +60,9 @@ AP_I18N = {
         "btn_submit": "🚀 Submit AP Request",
         "alert_over_budget": "⚠️ Warning: Requested amount exceeds remaining project budget! Flagged for manager approval.",
         "msg_success": "✅ AP Request saved to database! Status: `{status}`",
-        "no_proj": "-- General Administrative Procurement --"
+        "no_proj": "-- General Administrative Procurement --",
+        "btn_pay": "💳 Pay Settlement",
+        "btn_approve": "✅ Approve"
     }
 }
 
@@ -72,7 +81,7 @@ def init_procurement_ap_db(engine):
                     item_desc TEXT,
                     project_budget NUMERIC(12,2) DEFAULT 0,
                     is_over_budget BOOLEAN DEFAULT FALSE,
-                    status VARCHAR(50) DEFAULT '🟢 正常核銷 (Approved)',
+                    status VARCHAR(50) DEFAULT '🟡 待審核 (Pending)',
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
@@ -88,7 +97,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
 
     init_procurement_ap_db(engine)
 
-    # 1. 從工程報價單資料庫動態撈取專案清單與預算
+    # 動態撈取專案報價金額
     project_budget_map = {}
     if engine:
         try:
@@ -100,17 +109,17 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
         except Exception:
             pass
 
-    # 若無專案紀錄，提供預設選單供測試
     if not project_budget_map:
         project_budget_map = {
             "PROJ-2026-001 - 西寧廠低壓配電盤案": 150000000.0,
             "PROJ-2026-002 - 海防馬達控制中心": 280000000.0
         }
 
-    tab_add, tab_list = st.tabs([L["tab_add"], L["tab_list"]])
+    # 恢復原本三大功能頁籤
+    tab_add, tab_audit, tab_list = st.tabs([L["tab_add"], L["tab_audit"], L["tab_list"]])
 
     # ----------------------------------------------------
-    # 📝 Tab 1: 採購請款單錄入 (自動連動專案預算)
+    # 📝 1. 採購請款單錄入 (預算即時對比)
     # ----------------------------------------------------
     with tab_add:
         with st.form("form_procurement_ap"):
@@ -125,14 +134,12 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
 
             item_desc = st.text_area(L["lbl_item_desc"], placeholder="請填寫採購之銅排、無熔絲開關 (MCCB) 或箱體材料規格...")
 
-            # 專案預算檢查邏輯
             p_budget = 0.0
             p_spent = 0.0
             is_over = False
 
             if selected_proj != L["no_proj"]:
                 p_budget = project_budget_map.get(selected_proj, 0.0)
-                # 算累計已請款金額
                 if engine:
                     try:
                         with engine.connect() as conn:
@@ -152,7 +159,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                     st.error(L["alert_over_budget"])
 
             if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
-                final_status = "⚠️ 超預算 (待總經理簽核)" if is_over else "🟢 正常核銷 (Approved)"
+                final_status = "⚠️ 超預算 (待總經理簽核)" if is_over else "🟡 待主管審核 (Pending)"
                 p_code_save = selected_proj.split(" - ")[0] if selected_proj != L["no_proj"] else ""
 
                 if engine:
@@ -173,9 +180,42 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                         st.error(f"❌ 寫入資料庫失敗: {str(e)}")
 
     # ----------------------------------------------------
-    # 📋 Tab 2: 採購請款紀錄與預算稽核
+    # ⚖️ 2. AP 帳款審核與沖銷付款 (原第二個功能)
+    # ----------------------------------------------------
+    with tab_audit:
+        st.markdown("#### ⚖️ 應付帳款 (AP) 審核與沖銷處置")
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    res = conn.execute(text("""
+                        SELECT id, po_id, vendor_name, amount, status 
+                        FROM public.procurement_ap 
+                        WHERE status LIKE '%待%' OR status LIKE '%超預算%'
+                        ORDER BY id DESC
+                    """))
+                    pending_rows = res.fetchall()
+                    if pending_rows:
+                        for row in pending_rows:
+                            col_a1, col_a2, col_a3 = st.columns([2, 1, 1])
+                            col_a1.write(f"**{row[1]}** | {row[2]} | `{float(row[3]):,.0f} VND` ({row[4]})")
+                            if col_a2.button(L["btn_approve"], key=f"app_{row[0]}"):
+                                with engine.begin() as c_up:
+                                    c_up.execute(text("UPDATE public.procurement_ap SET status = '🟢 已審核 (待付款)' WHERE id = :id"), {"id": row[0]})
+                                st.rerun()
+                            if col_a3.button(L["btn_pay"], key=f"pay_{row[0]}"):
+                                with engine.begin() as c_up:
+                                    c_up.execute(text("UPDATE public.procurement_ap SET status = '🔵 已付款沖銷 (Paid)' WHERE id = :id"), {"id": row[0]})
+                                st.rerun()
+                    else:
+                        st.success("🎉 目前無待審核或待付款之 AP 帳款項目。")
+            except Exception:
+                st.info("尚未讀取到待處置 AP 項目。")
+
+    # ----------------------------------------------------
+    # 📊 3. 採購請款歷史紀錄與預算稽核看板 (原第三個功能)
     # ----------------------------------------------------
     with tab_list:
+        st.markdown("#### 📊 全廠採購請款總表與預算執行率")
         if engine:
             try:
                 with engine.connect() as conn:
@@ -186,15 +226,4 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                     """))
                     rows = res.fetchall()
                     if rows:
-                        df_ap = pd.DataFrame(rows, columns=["採購單號", "專案代碼", "供應商", "請款金額", "專案預算", "審核狀態", "建立時間"])
-                        st.dataframe(df_ap, use_container_width=True)
-                    else:
-                        st.info("目前尚無採購請款紀錄。")
-            except Exception:
-                st.info("無法載入採購請款紀錄。")
-
-def show(engine=None, lang="繁體中文", **kwargs):
-    render_procurement_ap_page(engine=engine, lang=lang, **kwargs)
-
-def main(engine=None, lang="繁體中文", **kwargs):
-    render_procurement_ap_page(engine=engine, lang=lang, **kwargs)
+                        df_ap
