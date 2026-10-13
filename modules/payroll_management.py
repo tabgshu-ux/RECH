@@ -4,6 +4,17 @@ import datetime
 from sqlalchemy import text
 
 # ----------------------------------------------------
+# 🇻🇳 越南法規標準金額格式化 (千位數用 '.'，小數用 ',')
+# ----------------------------------------------------
+def fmt_vn_curr(val):
+    """格式化為越南法規金額 (例如: 13.507.200 VND)"""
+    try:
+        v = float(val)
+        return f"{v:,.0f}".replace(",", ".") + " VND"
+    except Exception:
+        return "0 VND"
+
+# ----------------------------------------------------
 # 🌐 員工薪資與保險扣除管理多語系字典 (i18n)
 # ----------------------------------------------------
 PAYROLL_I18N = {
@@ -243,12 +254,12 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             net_pay = total_gross - total_insurance - advance_pay
 
             st.markdown("---")
-            st.markdown("##### 📊 薪資試算精準結果 (Excel 對接格式)：")
+            st.markdown("##### 📊 薪資試算精準結果 (越南法規 '.' 千位符號格式)：")
             m1, m2, m3, m4 = st.columns(4)
-            m1.metric("上班工工資 (Cộng lương)", "{:,.0f} VND".format(work_salary))
-            m2.metric("加班費總額 (Tăng ca)", "{:,.0f} VND".format(ot_pay))
-            m3.metric("應領總額 (Tổng lương)", "{:,.0f} VND".format(total_gross))
-            m4.metric(L["lbl_net_pay"], "{:,.0f} VND".format(net_pay))
+            m1.metric("上班工工資 (Cộng lương)", fmt_vn_curr(work_salary))
+            m2.metric("加班費總額 (Tăng ca)", fmt_vn_curr(ot_pay))
+            m3.metric("應領總額 (Tổng lương)", fmt_vn_curr(total_gross))
+            m4.metric(L["lbl_net_pay"], fmt_vn_curr(net_pay))
 
             if st.form_submit_button(L["btn_calc_and_save"], type="primary", use_container_width=True):
                 if engine:
@@ -306,7 +317,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_slip:
         st.markdown("### 📄 員工個人電子薪資單預覽 (Phiếu Lương Cá Nhân)")
-        st.caption("適應手機端螢幕展示，讓員工可隨時登入查閱個人當月實領薪資細項。")
+        st.caption("適應手機端螢幕展示，符合越南財政部 (Thông tư 200) 格式規範。")
 
         total_allowance_sum = pos_allowance + eval_bonus + gas_allowance + women_allowance + spec_bonus
 
@@ -322,16 +333,16 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.write("**Bộ phận / 部門:** " + str(dept_name))
                 st.write("**Số giờ thực làm / 實際時數:** " + str(act_hours) + " 小時")
             with col_b:
-                st.write("**Lương cb / 底薪:** " + "{:,.0f} VND".format(base_sal))
-                st.write("**Tổng phụ cấp / 各項津貼:** " + "{:,.0f} VND".format(total_allowance_sum))
-                st.write("**Chuyên cần / 全勤獎金:** " + "{:,.0f} VND".format(att_bonus))
-                st.write("**Tiền cơm / 伙食費:** " + "{:,.0f} VND".format(meal_fee))
+                st.write("**Lương cb / 底薪:** " + fmt_vn_curr(base_sal))
+                st.write("**Tổng phụ cấp / 各項津貼:** " + fmt_vn_curr(total_allowance_sum))
+                st.write("**Chuyên cần / 全勤獎金:** " + fmt_vn_curr(att_bonus))
+                st.write("**Tiền cơm / 伙食費:** " + fmt_vn_curr(meal_fee))
 
             st.markdown("---")
             col_c, col_d, col_e = st.columns(3)
-            col_c.metric("Tổng lương (應領總計)", "{:,.0f} VND".format(total_gross))
-            col_d.metric("BHXH/BHYT/BHTN (保險扣款)", "{:,.0f} VND".format(total_insurance))
-            col_e.metric("Thực lãnh (實領金額)", "{:,.0f} VND".format(net_pay), delta="🟢 已核對無誤")
+            col_c.metric("Tổng lương (應領總計)", fmt_vn_curr(total_gross))
+            col_d.metric("BHXH/BHYT/BHTN (保險扣款)", fmt_vn_curr(total_insurance))
+            col_e.metric("Thực lãnh (實領金額)", fmt_vn_curr(net_pay), delta="🟢 已核對無誤")
 
     # ----------------------------------------------------
     # 📊 Tab 3: 歷史薪資清冊查詢
@@ -348,17 +359,15 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                     """))
                     rows = res.fetchall()
                     if rows:
-                        df_p = pd.DataFrame(rows, columns=["計薪月份", "工號", "姓名", "部門", "廠區", "底薪", "上班工資", "加班費", "應領總額", "保險扣除", "實發淨薪", "狀態"])
-                        st.dataframe(df_p, use_container_width=True)
-                    else:
-                        st.info("目前尚無歷史薪資紀錄。")
-            except Exception:
-                st.info("尚未讀取到歷史薪資紀錄。")
-        else:
-            st.info("目前展示模式，請連接 PostgreSQL / Supabase 以讀取歷史紀錄。")
+                        formatted_rows = []
+                        for r in rows:
+                            row_dict = dict(r._mapping)
+                            row_dict["底薪"] = fmt_vn_curr(row_dict.get("base_salary", 0))
+                            row_dict["上班工資"] = fmt_vn_curr(row_dict.get("work_salary", 0))
+                            row_dict["加班費"] = fmt_vn_curr(row_dict.get("overtime_pay", 0))
+                            row_dict["應領總額"] = fmt_vn_curr(row_dict.get("total_gross", 0))
+                            row_dict["保險扣除"] = fmt_vn_curr(row_dict.get("total_insurance", 0))
+                            row_dict["實發淨薪"] = fmt_vn_curr(row_dict.get("net_salary", 0))
+                            formatted_rows.append(row_dict)
 
-def show(engine=None, lang="繁體中文", **kwargs):
-    render_payroll_management_page(engine=engine, lang=lang, **kwargs)
-
-def main(engine=None, lang="繁體中文", **kwargs):
-    render_payroll_management_page(engine=engine, lang=lang, **kwargs)
+                        df_p = pd.DataFrame(formatted_rows
