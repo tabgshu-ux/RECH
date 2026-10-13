@@ -21,7 +21,7 @@ EMP_I18N = {
     }
 }
 
-def render_employee_profile_page(engine=None, lang="繁體中文", **kwargs):
+def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
     active_lang = lang or st.session_state.get("current_lang", "繁體中文")
     L = EMP_I18N.get(active_lang, EMP_I18N["繁體中文"])
 
@@ -50,7 +50,6 @@ def render_employee_profile_page(engine=None, lang="繁體中文", **kwargs):
         if engine:
             try:
                 with engine.connect() as conn:
-                    # 從 employee_profiles 讀取資料
                     query = """
                         SELECT emp_code, emp_name, phone, id_card, factory, department, position, attendance_type, system_role, status
                         FROM public.employee_profiles
@@ -77,14 +76,20 @@ def render_employee_profile_page(engine=None, lang="繁體中文", **kwargs):
                         df.columns = ["STT", "工號", "姓名", "電話", "身份證/護照與居留證", "廠區", "部門", "職稱", "出勤性質", "系統角色", "狀態"]
                         st.dataframe(df, use_container_width=True)
                     else:
-                        st.warning("⚠️ 目前資料庫尚無符合條件的員工資料，請先至【員工薪資計算】頁面完成批次匯入 Excel。")
+                        st.warning("⚠️ 目前資料庫尚無符合條件的員工資料，請至【員工薪資計算】頁面完成批次匯入 Excel。")
             except Exception as e:
                 st.error("❌ 讀取員工名冊失敗: " + str(e))
         else:
             st.info("目前為展示模式，連線至資料庫後即可自動同步呈現名冊。")
 
+def render_employee_management(engine=None, lang="繁體中文", **kwargs):
+    render_employee_management_page(engine=engine, lang=lang, **kwargs)
+
+def render_employee_profile_page(engine=None, lang="繁體中文", **kwargs):
+    render_employee_management_page(engine=engine, lang=lang, **kwargs)
+
 def show(engine=None, lang="繁體中文", **kwargs):
-    render_employee_profile_page(engine=engine, lang=lang, **kwargs)
+    render_employee_management_page(engine=engine, lang=lang, **kwargs)
 
 def main(engine=None, lang="繁體中文", **kwargs):
-    render_employee_profile_page(engine=engine, lang=lang, **kwargs)
+    render_employee_management_page(engine=engine, lang=lang, **kwargs)
