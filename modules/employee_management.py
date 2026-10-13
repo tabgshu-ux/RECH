@@ -322,17 +322,14 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 安全初始化 session_state
     if "employee_db" not in st.session_state or not isinstance(st.session_state.employee_db, list) or len(st.session_state.employee_db) == 0:
         st.session_state.employee_db = [dict(emp) for emp in DEFAULT_EMPLOYEES]
     else:
-        # 確保核心預設名單始終存在
         existing_codes = [e["工號"] for e in st.session_state.employee_db]
         for def_emp in DEFAULT_EMPLOYEES:
             if def_emp["工號"] not in existing_codes:
                 st.session_state.employee_db.append(dict(def_emp))
 
-    # 確保每個物件的欄位完整
     for e in st.session_state.employee_db:
         if "狀態" not in e: e["狀態"] = "🟢 在職 (Active)"
         if "出勤性質" not in e: e["出勤性質"] = "廠內固定員工 (Plant Fixed Staff)"
@@ -351,7 +348,6 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
         L["tab_add_vn"], L["tab_add_foreign"], L["tab_edit"], L["tab_list"], L["tab_delete"], L["tab_resigned"]
     ])
 
-    # 1️⃣ 新增越南員工
     with tab_add_vn:
         st.markdown("### " + L['header_add_vn'])
         auto_emp_id_vn = "VN-00" + str(len(st.session_state.employee_db) + 1)
@@ -377,4 +373,66 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                 sel_role_display = st.selectbox(L["lbl_role"], role_display_names, key="vn_role")
                 e_role = role_keys[role_display_names.index(sel_role_display)]
 
-            e_addr_perm = st.text_input(L["lbl_addr_perm"], placeholder="戶籍地址 (Hộ khẩu thường trú)", key="vn_
+            e_addr_perm = st.text_input(L["lbl_addr_perm"], placeholder="戶籍地址 (Hộ khẩu thường trú)", key="vn_perm")
+            e_addr_temp = st.text_input(L["lbl_addr_temp"], placeholder="現住地址 (Chỗ ở hiện tại)", key="vn_temp")
+
+            submitted_vn = st.form_submit_button(L["btn_add"], type="primary", use_container_width=True)
+            if submitted_vn:
+                if e_code and e_name and e_phone and e_id_card:
+                    existing_codes = [e["工號"] for e in st.session_state.employee_db]
+                    if e_code in existing_codes:
+                        st.error("⚠️ 錯誤：工號 " + e_code + " 已經存在！")
+                    else:
+                        st.session_state.employee_db.append({
+                            "工號": e_code, "姓名": e_name, "電話": e_phone, "國籍": "越南 (Vietnam)",
+                            "身分證號": e_id_card, "護照號碼": "", "暫住證號": "", "社保證號": e_bhxh,
+                            "投保醫院": e_hospital, "廠區": e_factory, "部門": e_dept, "職稱": e_title,
+                            "出勤性質": e_attendance, "戶籍地址": e_addr_perm, "現住地址": e_addr_temp,
+                            "角色": e_role, "密碼": e_pwd, "must_change_password": True, "狀態": "🟢 在職 (Active)"
+                        })
+                        st.success("🇻🇳 成功新增越南籍員工 " + e_name + " (工號: " + e_code + ")！")
+                        st.rerun()
+                else:
+                    st.warning("⚠️ 請完整填寫必填欄位：工號、姓名、聯絡電話與公民身分證號 (CCCD)！")
+
+    with tab_add_foreign:
+        st.markdown("### " + L['header_add_foreign'])
+        auto_emp_id_fo = "TW-00" + str(len(st.session_state.employee_db) + 1)
+
+        with st.form("form_add_foreign_employee"):
+            c1, c2 = st.columns(2)
+            with c1:
+                e_code_fo = st.text_input(L["lbl_code"], value=auto_emp_id_fo, key="fo_code")
+                e_name_fo = st.text_input(L["lbl_name"], placeholder="例如: 王大明 / 張偉", key="fo_name")
+                e_phone_fo = st.text_input(L["lbl_phone"], placeholder="例如: +886-912-345-678", key="fo_phone")
+                e_country_fo = st.selectbox(L["lbl_country"], ["台灣 (Taiwan)", "中國 (China)"], key="fo_country")
+                e_passport = st.text_input(L["lbl_passport"], placeholder="例如: 312345678 (護照號碼)", key="fo_pass")
+                e_trc = st.text_input(L["lbl_trc"], placeholder="例如: TRC-VN-123456 (暫住證號)", key="fo_trc")
+                e_attendance_fo = st.selectbox(L["lbl_attendance"], L["attendance_opts"], key="fo_att")
+            with c2:
+                e_factory_fo = st.selectbox(L["lbl_factory"], L["factory_opts"], key="fo_fact")
+                e_dept_fo = st.selectbox(L["lbl_dept"], L["dept_opts"], key="fo_dept")
+                e_title_fo = st.text_input(L["lbl_title"], value="外派專案經理 / 工程師", key="fo_title")
+                e_pwd_fo = st.text_input(L["lbl_pwd"], value="123456", key="fo_pwd")
+                
+                role_keys = list(role_dict.keys())
+                role_display_names = list(role_dict.values())
+                sel_role_display_fo = st.selectbox(L["lbl_role"], role_display_names, key="fo_role")
+                e_role_fo = role_keys[role_display_names.index(sel_role_display_fo)]
+
+            e_addr_perm_fo = st.text_input(L["lbl_addr_perm"], placeholder="台灣或中國原籍地址", key="fo_perm")
+            e_addr_temp_fo = st.text_input(L["lbl_addr_temp"], placeholder="越南公司宿舍 / 租屋地址", key="fo_temp")
+
+            submitted_fo = st.form_submit_button(L["btn_add"], type="primary", use_container_width=True)
+            if submitted_fo:
+                if e_code_fo and e_name_fo and e_phone_fo and e_passport and e_trc:
+                    existing_codes = [e["工號"] for e in st.session_state.employee_db]
+                    if e_code_fo in existing_codes:
+                        st.error("⚠️ 錯誤：工號 " + e_code_fo + " 已經存在！")
+                    else:
+                        st.session_state.employee_db.append({
+                            "工號": e_code_fo, "姓名": e_name_fo, "電話": e_phone_fo, "國籍": e_country_fo,
+                            "身分證號": "", "護照號碼": e_passport, "暫住證號": e_trc, "社保證號": "N/A",
+                            "投保醫院": "國際商務醫療險", "廠區": e_factory_fo, "部門": e_dept_fo, "職稱": e_title_fo,
+                            "出勤性質": e_attendance_fo, "戶籍地址": e_addr_perm_fo, "現住地址": e_addr_temp_fo,
+                            "角色": e_role_fo, "密碼": e_pwd_fo, "must_change_
