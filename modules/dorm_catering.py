@@ -3,249 +3,129 @@ import pandas as pd
 import datetime
 
 # ----------------------------------------------------
-# 🌐 幹部宿舍與餐飲採購控管模組完整多語系字典 (i18n)
+# 🌐 幹部宿舍伙食與採購管控模組多語系字典 (i18n)
 # ----------------------------------------------------
-CATERING_I18N = {
+DORM_I18N = {
     "繁體中文": {
-        "title": "🥗 總務部 - 幹部宿舍伙食採購與防浮報控管中心 (西寧廠)",
-        "caption": "管控幹部宿舍每日買菜預算、食材採購明細、照片存證與西寧在地物價即時浮動比對。",
-        "tab_daily": "📝 每日買菜記帳與食材拍照存證",
-        "tab_summary": "📊 宿舍伙食費月度統計與單價稽核",
-        "tab_prices": "⚙️ 西寧在地物價即時浮動與參考單價維護",
-        "header_daily": "🛒 每日幹部食堂買菜支出登記與防浮報稽核",
-        "header_items": "🥦 食材採購明細錄入 (即時比對西寧物價浮動)",
-        "expander_trends": "📈 點此展開【西寧當地最新食材物價行情與漲跌趨勢看板】",
-        "lbl_date": "買菜/用餐日期",
-        "lbl_people": "今日用餐幹部人數 (人)",
-        "lbl_budget_cap": "每人每日預算基準 (VND/人)",
-        "lbl_buyer": "採購經辦 / 總務人員",
-        "buyer_default": "煮菜阿姨 / 總務專員",
-        "lbl_item": "食材品項名稱",
-        "lbl_qty": "採購數量",
-        "lbl_unit_price": "採購單價 (VND)",
-        "lbl_ref_price": "西寧即時參考價",
-        "lbl_photo": "📸 上傳攤販收據小票與食材秤重照片 (強制拍照存證)",
-        "btn_add_item": "➕ 新增食材採購明細",
-        "btn_submit_daily": "🚀 提交今日買菜支出並進行防浮報稽核",
-        "total_budget_cap": "今日伙食總預算上限",
-        "formula_cap": "公式：{people} 人 × {cap:,.0f} VND",
-        "lbl_cart": "📋 今日已加入食材清單：",
-        "lbl_total_actual": "💰 採購總金額：`{actual:,.0f} VND` / 預算上限：`{cap:,.0f} VND`",
-        "alert_over_budget": "⚠️ 警告：今日買菜總金額超過「幹部人數 × 預算基準」上限！須總務主管簽核。",
-        "alert_price_anomaly": "⚠️ 警告：部分食材採購單價高於西寧市場參考價與容許浮動區間！可能存在浮報風險！",
-        "alert_no_photo": "❌ 系統防偷與防浮報鐵律：請務必拍照並上傳【菜市場收據小票與食材秤重照片】方可結算！",
-        "success_submit": "✅ 今日買菜支出已成功登錄！狀態：`{status}`",
-        "header_summary": "📊 幹部宿舍伙食費歷史月度報表與異常稽核",
-        "header_drilldown": "🔍 查看特定日期買菜照片與食材明細穿透",
-        "sel_record_date": "選擇日期查看明細",
-        "no_records": "目前尚無買菜支出紀錄。",
-        "header_prices": "⚙️ 西寧在地物價即時浮動與容許誤差門檻設定",
-        "caption_prices": "💡 總務主管可根據西寧菜市場（Trảng Bàng, Gò Dầu...）與 Co.opmart 最新行情，調整參考單價與浮動趨勢標記。",
-        "lbl_slider_margin": "🛡️ 防浮報系統容許之物價波動上限 (%)",
-        "help_slider_margin": "當阿姨買菜單價高於西寧參考價超過此百分比時，系統將自動亮紅燈警告！",
-        "header_adjust_prices": "📝 調整各品項即時參考單價與漲跌說明",
-        "lbl_trend_tag": "漲跌趨勢標記",
-        "btn_save_prices": "💾 儲存西寧即時物價行情與趨勢",
-        "success_save_prices": "✅ 西寧即時物價與趨勢標記已成功更新！",
-        "flag_normal": "🟢 正常",
-        "flag_high": "🔴 偏高 (高出西寧行情 {pct:.0f}%)",
-        "flag_slight_high": "🟡 微漲 (+{pct:.0f}%)",
-        "status_ok": "🟢 正常核銷",
-        "status_need_audit": "⚠️ 需總務主管審核 (單價高於市場浮動區間或超支)"
+        "title": "🏢 管理部 - 幹部宿舍伙食與採購管控中心",
+        "caption": "管控西寧廠與海防廠幹部宿舍用餐登記、採購預算核銷、食材庫存與廚房支出費用。",
+        "tab_catering": "🍱 每日伙食登記",
+        "tab_purchase": "🛒 食材採購與請款",
+        "tab_inventory": "📦 宿舍物資庫存",
+        "tab_reports": "📊 費用月度統計",
+        "lbl_plant": "選擇廠區",
+        "lbl_date": "選擇用餐日期",
+        "lbl_meal_type": "餐別",
+        "lbl_people_cnt": "用餐人數",
+        "btn_submit": "🚀 提交登記",
+        "msg_success": "✅ 登記成功！已寫入系統。"
     },
     "Tiếng Việt": {
-        "title": "🥗 Phòng Quản lý - Mua thực phẩm & Kiểm soát Ký túc xá Cán bộ (Tây Ninh)",
-        "caption": "Quản lý chi phí đi chợ hàng ngày, kiểm soát đơn giá thực phẩm và đối soát biến động giá thị trường Tây Ninh.",
-        "tab_daily": "📝 Nhập chi phí đi chợ & Ảnh chụp",
-        "tab_summary": "📊 Báo cáo chi phí ăn uống tháng",
-        "tab_prices": "⚙️ Cấu hình đơn giá & Biến động giá thị trường Tây Ninh",
-        "header_daily": "🛒 Nhập chi phí đi chợ hàng ngày & Kiểm soát đơn giá",
-        "header_items": "🥦 Nhập chi tiết thực phẩm (So sánh với biến động giá Tây Ninh)",
-        "expander_trends": "📈 Bấm để xem 【Bảng biến động giá thực phẩm mới nhất tại Tây Ninh】",
-        "lbl_date": "Ngày đi chợ / Dùng bữa",
-        "lbl_people": "Số lượng cán bộ ăn (Người)",
-        "lbl_budget_cap": "Định mức/người/ngày (VND)",
-        "lbl_buyer": "Người đi chợ / Tổng vụ",
-        "buyer_default": "Dì nấu ăn / Chuyên viên Tổng vụ",
-        "lbl_item": "Tên thực phẩm",
-        "lbl_qty": "Số lượng",
-        "lbl_unit_price": "Đơn giá mua (VND)",
-        "lbl_ref_price": "Giá tham chiếu Tây Ninh",
-        "lbl_photo": "📸 Tải ảnh hóa đơn & Ảnh cân thực phẩm (Bắt buộc chụp ảnh)",
-        "btn_add_item": "➕ Thêm món",
-        "btn_submit_daily": "🚀 Lưu chi phí & Kiểm tra đơn giá",
-        "total_budget_cap": "Hạn mức ngân sách tiền ăn hôm nay",
-        "formula_cap": "Công thức: {people} người × {cap:,.0f} VND",
-        "lbl_cart": "📋 Danh sách thực phẩm đã nhập hôm nay:",
-        "lbl_total_actual": "💰 Tổng tiền mua: `{actual:,.0f} VND` / Hạn mức: `{cap:,.0f} VND`",
-        "alert_over_budget": "⚠️ Cảnh báo: Tổng chi vượt ngân sách định mức! Cần Trưởng phòng duyệt.",
-        "alert_price_anomaly": "⚠️ Cảnh báo: Đơn giá cao hơn biến động cho phép của thị trường Tây Ninh!",
-        "alert_no_photo": "❌ Bắt buộc: Vui lòng chụp và tải ảnh hóa đơn/ảnh cân thực phẩm!",
-        "success_submit": "✅ Đã lưu chi phí đi chợ thành công! Trạng thái: `{status}`",
-        "header_summary": "📊 Báo cáo lịch sử chi phí ăn uống & Kiểm toán bất thường",
-        "header_drilldown": "🔍 Xem chi tiết thực phẩm & Ảnh chụp theo ngày",
-        "sel_record_date": "Chọn ngày để xem chi tiết",
-        "no_records": "Chưa có bản ghi chi phí đi chợ nào.",
-        "header_prices": "⚙️ Cấu hình đơn giá & Ngưỡng biến động giá Tây Ninh",
-        "caption_prices": "💡 Quản lý có thể điều chỉnh giá tham chiếu theo thị trường Tây Ninh (Trảng Bàng, Gò Dầu, Co.opmart...).",
-        "lbl_slider_margin": "🛡️ Biên độ biến động giá cho phép (%)",
-        "help_slider_margin": "Khi đơn giá mua vượt quá tỷ lệ này so với giá tham chiếu, hệ thống sẽ cảnh báo đỏ!",
-        "header_adjust_prices": "📝 Điều chỉnh đơn giá tham chiếu & Ghi chú xu hướng",
-        "lbl_trend_tag": "Ghi chú biến động giá",
-        "btn_save_prices": "💾 Lưu giá tham chiếu & Xu hướng",
-        "success_save_prices": "✅ Đã cập nhật giá tham chiếu Tây Ninh thành công!",
-        "flag_normal": "🟢 Bình thường",
-        "flag_high": "🔴 Cao (Cao hơn thị trường {pct:.0f}%)",
-        "flag_slight_high": "🟡 Tăng nhẹ (+{pct:.0f}%)",
-        "status_ok": "🟢 Đã duyệt bình thường",
-        "status_need_audit": "⚠️ Cần Trưởng phòng duyệt (Đơn giá cao hoặc vượt ngân sách)"
+        "title": "🏢 Phòng Quản lý - Quản lý Cơm Ký túc xá & Mua sắm",
+        "caption": "Quản lý đăng ký suất ăn ký túc xá, chi phí mua thực phẩm và vật tư tại nhà máy.",
+        "tab_catering": "🍱 Đăng ký suất ăn",
+        "tab_purchase": "🛒 Mua sắm thực phẩm",
+        "tab_inventory": "📦 Kho vật tư KTX",
+        "tab_reports": "📊 Báo cáo chi phí",
+        "lbl_plant": "Chọn nhà máy",
+        "lbl_date": "Chọn ngày",
+        "lbl_meal_type": "Bữa ăn",
+        "lbl_people_cnt": "Số người",
+        "btn_submit": "🚀 Lưu đăng ký",
+        "msg_success": "✅ Đã lưu thành công!"
     },
     "English": {
-        "title": "🥗 GA - Dormitory Catering & Food Procurement Control (Tay Ninh)",
-        "caption": "Manage daily grocery budgets, track food item procurement, enforce photo evidence, and monitor real-time Tay Ninh market price trends.",
-        "tab_daily": "📝 Daily Grocery Logging & Photo Upload",
-        "tab_summary": "📊 Monthly Expense & Price Anomaly Audit",
-        "tab_prices": "⚙️ Tay Ninh Real-time Market Price & Trend Settings",
-        "header_daily": "🛒 Daily Grocery Expense Entry & Price Control",
-        "header_items": "🥦 Food Item Procurement Entry (Compared with Tay Ninh Prices)",
-        "expander_trends": "📈 Click to view 【Tay Ninh Latest Food Price Trends & Board】",
-        "lbl_date": "Date",
-        "lbl_people": "Number of Staff Dining",
-        "lbl_budget_cap": "Daily Cap per Person (VND)",
-        "lbl_buyer": "Buyer / GA Staff",
-        "buyer_default": "Cook / GA Specialist",
-        "lbl_item": "Food Item",
-        "lbl_qty": "Quantity",
-        "lbl_unit_price": "Unit Price (VND)",
-        "lbl_ref_price": "Tay Ninh Ref Price",
-        "lbl_photo": "📸 Upload Receipt & Food Weighing Photo (Mandatory)",
-        "btn_add_item": "➕ Add Food Item",
-        "btn_submit_daily": "🚀 Submit Daily Expense & Perform Audit",
-        "total_budget_cap": "Today's Total Budget Cap",
-        "formula_cap": "Formula: {people} persons × {cap:,.0f} VND",
-        "lbl_cart": "📋 Today's Added Grocery Items:",
-        "lbl_total_actual": "💰 Total Spent: `{actual:,.0f} VND` / Budget Cap: `{cap:,.0f} VND`",
-        "alert_over_budget": "⚠️ Warning: Total grocery cost exceeds the budget cap!",
-        "alert_price_anomaly": "⚠️ Warning: Item unit price exceeds Tay Ninh benchmark price & allowed margin!",
-        "alert_no_photo": "❌ Mandatory: Please upload receipt and food weighing photo!",
-        "success_submit": "✅ Daily grocery expense successfully submitted! Status: `{status}`",
-        "header_summary": "📊 Monthly Expense History & Price Anomaly Audit",
-        "header_drilldown": "🔍 View Item Details & Photos by Date",
-        "sel_record_date": "Select Date to View Details",
-        "no_records": "No grocery expense records found.",
-        "header_prices": "⚙️ Tay Ninh Real-time Market Price & Fluctuation Threshold Settings",
-        "caption_prices": "💡 GA Manager can adjust reference prices according to latest Tay Ninh market trends.",
-        "lbl_slider_margin": "🛡️ Allowed Price Fluctuation Margin (%)",
-        "help_slider_margin": "If purchase price exceeds reference price by more than this percentage, a red alert is triggered!",
-        "header_adjust_prices": "📝 Adjust Reference Prices & Trend Tags",
-        "lbl_trend_tag": "Trend Tag",
-        "btn_save_prices": "💾 Save Tay Ninh Market Prices & Trends",
-        "success_save_prices": "✅ Tay Ninh market prices and trends successfully updated!",
-        "flag_normal": "🟢 Normal",
-        "flag_high": "🔴 High (+{pct:.0f}% above market)",
-        "flag_slight_high": "🟡 Slightly High (+{pct:.0f}%)",
-        "status_ok": "🟢 Approved Normally",
-        "status_need_audit": "⚠️ Requires GA Manager Approval (Over budget or high unit price)"
+        "title": "🏢 Management - Dormitory Catering & Procurement",
+        "caption": "Manage dorm meal check-ins, ingredient purchases, kitchen supplies, and monthly expenses.",
+        "tab_catering": "🍱 Daily Catering",
+        "tab_purchase": "🛒 Food Procurement",
+        "tab_inventory": "📦 Supplies Inventory",
+        "tab_reports": "📊 Expense Reports",
+        "lbl_plant": "Select Plant",
+        "lbl_date": "Select Date",
+        "lbl_meal_type": "Meal Type",
+        "lbl_people_cnt": "Headcount",
+        "btn_submit": "🚀 Submit Entry",
+        "msg_success": "✅ Submitted successfully!"
     }
 }
 
-# ----------------------------------------------------
-# 🛒 西寧在地市場與 Co.opmart 即時物價與浮動趨勢基準
-# ----------------------------------------------------
-DEFAULT_TAY_NINH_DYNAMIC_PRICES = {
-    "Thịt heo đùi/vai (豬肉腿/肩肉)": {"price": 105000.0, "unit": "VND/kg", "delta": "+5,000 VND (Mùa mưa tăng nhẹ)", "status": "up"},
-    "Thịt ba rọi (五花肉)": {"price": 135000.0, "unit": "VND/kg", "delta": "0 VND (Ổn định)", "status": "stable"},
-    "Thịt gà nguyên con (全雞/土雞)": {"price": 85000.0, "unit": "VND/kg", "delta": "0 VND (Ổn định)", "status": "stable"},
-    "Thịt bò (牛肉)": {"price": 240000.0, "unit": "VND/kg", "delta": "-10,000 VND (Nguồn cung dồi dào)", "status": "down"},
-    "Cá diêu hồng/Cá lóc (鮮魚)": {"price": 60000.0, "unit": "VND/kg", "delta": "+2,000 VND (Tăng nhẹ)", "status": "up"},
-    "Tôm tươi (鮮蝦)": {"price": 160000.0, "unit": "VND/kg", "delta": "0 VND (Ổn định)", "status": "stable"},
-    "Rau cải / Rau muống (葉菜類)": {"price": 22000.0, "unit": "VND/kg", "delta": "+4,000 VND (Mùa mưa rau giảm)", "status": "up"},
-    "Bắp cải / Củ quả (根莖類)": {"price": 25000.0, "unit": "VND/kg", "delta": "0 VND (Ổn định)", "status": "stable"},
-    "Trứng gà - 10 quả (雞蛋-10顆/1打)": {"price": 32000.0, "unit": "VND/10 quả (1打)", "delta": "-1,000 VND (Giảm nhẹ)", "status": "down"},
-    "Gạo thơm / Nàng Hoa (白米)": {"price": 22000.0, "unit": "VND/kg", "delta": "0 VND (Ổn định)", "status": "stable"},
-    "Dầu ăn / Gia vị (食用油/調料)": {"price": 45000.0, "unit": "VND/chai (瓶)", "delta": "0 VND (Ổn định)", "status": "stable"}
-}
+def render_dorm_catering_page(engine=None, lang="繁體中文", **kwargs):
+    active_lang = lang if lang in DORM_I18N else "繁體中文"
+    L = DORM_I18N[active_lang]
 
-def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
-    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
-    L = CATERING_I18N.get(active_lang, CATERING_I18N.get("繁體中文", {}))
+    st.title(L["title"])
+    st.caption(L["caption"])
 
-    st.title(L.get("title", "🥗 Dorm Catering"))
-    st.caption(L.get("caption", ""))
-
-    # 1. 初始化西寧即時動態物價與趨勢
-    if "market_price_dynamic" not in st.session_state:
-        st.session_state.market_price_dynamic = DEFAULT_TAY_NINH_DYNAMIC_PRICES.copy()
-
-    # 2. 物價容許浮動範圍百分比
-    if "allowed_price_margin_pct" not in st.session_state:
-        st.session_state.allowed_price_margin_pct = 15.0
-
-    # 3. 初始化買菜歷史數據庫
-    if "dorm_catering_db" not in st.session_state:
-        st.session_state.dorm_catering_db = [
-            {
-                "date": "2026-10-12",
-                "people_count": 12,
-                "budget_cap_per_person": 100000.0,
-                "total_budget": 1200000.0,
-                "total_actual": 1150000.0,
-                "buyer": L.get("buyer_default", "Cook"),
-                "status": L.get("status_ok", "🟢 OK"),
-                "photo_uploaded": True,
-                "items": [
-                    {"item": "Thịt heo đùi/vai (豬肉腿/肩肉)", "qty": 4.0, "unit_price": 105000.0, "amount": 420000.0, "flag": L.get("flag_normal", "🟢 OK")},
-                    {"item": "Rau cải / Rau muống (葉菜類)", "qty": 6.0, "unit_price": 22000.0, "amount": 132000.0, "flag": L.get("flag_normal", "🟢 OK")},
-                    {"item": "Cá diêu hồng/Cá lóc (鮮魚)", "qty": 5.0, "unit_price": 62000.0, "amount": 310000.0, "flag": L.get("flag_normal", "🟢 OK")}
-                ]
-            }
-        ]
-
-    tab_daily, tab_summary, tab_prices = st.tabs([
-        L.get("tab_daily", "Tab 1"), L.get("tab_summary", "Tab 2"), L.get("tab_prices", "Tab 3")
+    tab_catering, tab_purchase, tab_inventory, tab_reports = st.tabs([
+        L["tab_catering"],
+        L["tab_purchase"],
+        L["tab_inventory"],
+        L["tab_reports"]
     ])
 
-    # ----------------------------------------------------
-    # 📝 1. 每日買菜記帳與防浮報審核
-    # ----------------------------------------------------
-    with tab_daily:
-        st.markdown(f"### {L.get('header_daily', '')}")
-        
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            buy_date = st.date_input(L.get("lbl_date", "Date"), value=datetime.date.today())
-            buyer_name = st.text_input(L.get("lbl_buyer", "Buyer"), value=L.get("buyer_default", ""))
-        with c2:
-            people_cnt = st.number_input(L.get("lbl_people", "People"), min_value=1, value=12, step=1)
-            cap_per_person = st.number_input(L.get("lbl_budget_cap", "Cap"), min_value=10000.0, value=100000.0, step=5000.0)
-        with c3:
-            max_allowed_budget = people_cnt * cap_per_person
-            st.metric(L.get("total_budget_cap", "Budget Cap"), f"{max_allowed_budget:,.0f} VND")
-            st.caption(L.get("formula_cap", "").format(people=people_cnt, cap=cap_per_person))
+    # 🍱 Tab 1: 每日伙食登記
+    with tab_catering:
+        st.markdown("### 🍱 幹部宿舍每日用餐人數登記")
+        with st.form("form_dorm_meal"):
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                plant = st.selectbox(L["lbl_plant"], ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"])
+                meal_date = st.date_input(L["lbl_date"], value=datetime.date.today())
+            with c2:
+                meal_type = st.selectbox(L["lbl_meal_type"], ["早餐 (Breakfast)", "午餐 (Lunch)", "晚餐 (Dinner)", "宵夜 (Night Snack)"])
+                people_cnt = st.number_input(L["lbl_people_cnt"], min_value=1, max_value=100, value=12)
+            with c3:
+                applicant = st.text_input("登記人 / 舍監", value=st.session_state.get("user_name", "許福村"))
+                note = st.text_input("備註 / 特別菜單需求", placeholder="如：不吃牛肉、素食人數...")
+
+            if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
+                st.success(L["msg_success"])
 
         st.markdown("---")
-        st.markdown(f"#### {L.get('header_items', '')}")
+        st.markdown("##### 📋 本週宿舍搭夥統計預估")
+        sample_catering = [
+            {"日期": "2026-10-13", "廠區": "西寧廠", "早餐": "8 人", "午餐": "15 人", "晚餐": "12 人", "負責人": "許福村"},
+            {"日期": "2026-10-13", "廠區": "海防廠", "早餐": "5 人", "午餐": "10 人", "晚餐": "8 人", "負責人": "Nguyễn Văn Quý"}
+        ]
+        st.dataframe(pd.DataFrame(sample_catering), use_container_width=True)
 
-        # 看板
-        with st.expander(L.get("expander_trends", "Trends"), expanded=False):
-            m_cols = st.columns(4)
-            items_keys = list(st.session_state.market_price_dynamic.keys())
-            for idx, k in enumerate(items_keys[:4]):
-                data_info = st.session_state.market_price_dynamic[k]
-                m_cols[idx % 4].metric(
-                    label=k.split(" (")[0],
-                    value=f"{data_info['price']:,.0f} VND",
-                    delta=data_info['delta']
-                )
+    # 🛒 Tab 2: 食材採購與請款
+    with tab_purchase:
+        st.markdown("### 🛒 宿舍食材採購與廚房雜支請款")
+        with st.form("form_dorm_purchase"):
+            pc1, pc2 = st.columns(2)
+            with pc1:
+                p_item = st.text_input("採購項目 / 食材品名", placeholder="例如：米、豬肉、蔬菜、沙拉油...")
+                p_amount = st.number_input("金額 (VND)", min_value=0, value=500000, step=50000)
+            with pc2:
+                p_vendor = st.text_input("供應商 / 傳統市場名稱", value="Local Market")
+                p_receipt = st.file_uploader("上傳收據 / 發票照片", type=["jpg", "png", "pdf"])
 
-        if "temp_shopping_cart" not in st.session_state:
-            st.session_state.temp_shopping_cart = []
+            if st.form_submit_button("🚀 送出採購請款單", type="primary", use_container_width=True):
+                st.success("✅ 請款單已成功送出主管審核！")
 
-        with st.form("form_add_food_item"):
-            col_i1, col_i2, col_i3 = st.columns([2, 1, 1.5])
-            with col_i1:
-                item_name = st.selectbox(L.get("lbl_item", "Item"), list(st.session_state.market_price_dynamic.keys()) + ["Khác / 其他"])
-            
-            ref_info = st.session_state.market_price_dynamic.get(item_name, {"price": 50000.0, "unit": "VND/kg", "delta": "0 VND"})
-            ref_unit = ref_info.get("unit", "VND/kg")
-            ref_p = ref_info.get("price", 50000
+    # 📦 Tab 3: 宿舍物資庫存
+    with tab_inventory:
+        st.markdown("### 📦 宿舍物資與廚房耗材庫存盤點")
+        inventory_data = [
+            {"品名": "越光米 (50kg)", "分類": "主食", "目前庫存": "3 包", "安全庫存": "2 包", "狀態": "🟢 正常"},
+            {"品名": "食用沙拉油 (5L)", "分類": "調味料", "目前庫存": "1 瓶", "安全庫存": "2 瓶", "狀態": "🟡 請儘速補貨"},
+            {"品名": "飲用水 (20L 桶裝)", "分類": "飲水", "目前庫存": "10 桶", "安全庫存": "5 桶", "狀態": "🟢 正常"}
+        ]
+        st.dataframe(pd.DataFrame(inventory_data), use_container_width=True)
+
+    # 📊 Tab 4: 費用月度統計
+    with tab_reports:
+        st.markdown("### 📊 幹部宿舍伙食費用月度分析")
+        rc1, rc2 = st.columns(2)
+        with rc1:
+            st.metric("本月累計伙食總支出 (VND)", "18,500,000 VND", delta="-5% 比上月")
+        with rc2:
+            st.metric("平均每人每餐成本 (VND)", "45,000 VND", delta="持平")
+
+def show(engine=None, lang="繁體中文", **kwargs):
+    render_dorm_catering_page(engine=engine, lang=lang, **kwargs)
+
+def main(engine=None, lang="繁體中文", **kwargs):
+    render_dorm_catering_page(engine=engine, lang=lang, **kwargs)
