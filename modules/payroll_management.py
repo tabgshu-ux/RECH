@@ -122,9 +122,10 @@ def init_payroll_db(engine):
                 );
             """))
 
-            # 2. 為舊資料表補齊所有可能缺少的新欄位 (解決 relation does not exist 報錯)
+            # 2. 自動補齊所有欄位 (解決 total_gross, pos_allowance 等 column does not exist 報錯)
             alter_cols = [
                 ("factory", "VARCHAR(100) DEFAULT '文房 (VP)'"),
+                ("base_salary", "NUMERIC(12,2) DEFAULT 0"),
                 ("pos_allowance", "NUMERIC(12,2) DEFAULT 0"),
                 ("eval_bonus", "NUMERIC(12,2) DEFAULT 0"),
                 ("gas_allowance", "NUMERIC(12,2) DEFAULT 0"),
@@ -138,6 +139,7 @@ def init_payroll_db(engine):
                 ("network_fee", "NUMERIC(12,2) DEFAULT 0"),
                 ("attendance_bonus", "NUMERIC(12,2) DEFAULT 0"),
                 ("other_deduct", "NUMERIC(12,2) DEFAULT 0"),
+                ("total_gross", "NUMERIC(12,2) DEFAULT 0"),
                 ("bhxh_deduction", "NUMERIC(12,2) DEFAULT 0"),
                 ("bhyt_deduction", "NUMERIC(12,2) DEFAULT 0"),
                 ("bhtn_deduction", "NUMERIC(12,2) DEFAULT 0"),
@@ -164,7 +166,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
     tab_calc, tab_import, tab_slip, tab_history = st.tabs([L["tab_calc"], L["tab_import"], L["tab_slip"], L["tab_history"]])
 
     # ----------------------------------------------------
-    # 🧮 Tab 1: 單筆薪資計算
+    # 🧮 Tab 1: 單筆薪資核算
     # ----------------------------------------------------
     with tab_calc:
         c_m1, c_m2, c_m3, c_m4 = st.columns(4)
@@ -299,7 +301,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
         st.caption("只需上傳公司 Excel 檔案 (例如 `Lương 09.2026.xls`)，系統會自動拆解文房、廠房與工程清冊，並寫入資料庫！")
 
         uploaded_file = st.file_uploader("請選擇要匯入的 Excel 薪資檔案 (.xls / .xlsx)", type=["xls", "xlsx"])
-        import_month = st.text_input("匯入薪资月份 (YYYY-MM)", value="2026-09")
+        import_month = st.text_input("匯入薪資月份 (YYYY-MM)", value="2026-09")
 
         if uploaded_file and st.button("🚀 開始自動解析並匯入資料庫", type="primary"):
             try:
