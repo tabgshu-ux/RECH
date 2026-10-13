@@ -9,8 +9,8 @@ from sqlalchemy import text
 PAYROLL_I18N = {
     "繁體中文": {
         "title": "💰 管理部 - 員工薪資計算與保險扣除管理中心",
-        "caption": "符合越南勞動法與稅務標準：自動計算底薪、加班費、社保 (BHXH 8%)、醫保 (BHYT 1.5%)、失業保 (BHTN 1%) 與實發淨薪。",
-        "tab_calc": "🧮 月度薪資計算與核算",
+        "caption": "符合越南勞動法：自動跨表讀取現場外勤打卡天數！自動試算底薪、加班費、外勤津貼、社保 (BHXH 8%)、醫保 (BHYT 1.5%)、失業保 (BHTN 1%) 與實發淨薪。",
+        "tab_calc": "🧮 月度薪資與外勤津貼自動核算",
         "tab_history": "📊 歷史薪資清冊與發放紀錄",
         "lbl_month": "計薪月份 (YYYY-MM)",
         "lbl_emp_code": "員工工號",
@@ -20,15 +20,17 @@ PAYROLL_I18N = {
         "lbl_ot_hours": "本月加班時數 (小時)",
         "lbl_ot_rate": "加班費時薪倍率 (1.5倍/2.0倍)",
         "lbl_allowance": "職務與外勤津貼 (VND)",
+        "lbl_daily_rate": "外勤每日津貼標準 (VND/天)",
         "btn_calc_and_save": "💾 計算並寫入 Supabase 薪資資料庫",
         "msg_success": "✅ 薪資清冊計算完畢並已成功寫入資料庫！",
         "lbl_net_pay": "💵 本月應發實付淨薪 (Net Salary)",
-        "header_summary": "📋 歷史月度薪資與保險扣除統計表"
+        "header_summary": "📋 歷史月度薪資與保險扣除統計表",
+        "info_field_days": "📍 系統自動偵測：該員工 `{month}` 月在現場外勤打卡 **{days} 天**（自動試算外勤津貼 `{allowance:,.0f} VND`）。"
     },
     "Tiếng Việt": {
         "title": "💰 Phòng Quản lý - Tính Luơng & Khấu Trừ Bảo Hiểm",
-        "caption": "Tuân thủ Luật Lao động VN: Tự động tính lương cơ bản, tăng ca, BHXH (8%), BHYT (1.5%), BHTN (1%) và Lương thực nhận (Net).",
-        "tab_calc": "🧮 Tính lương tháng",
+        "caption": "Tuân thủ Luật Lao động VN: Tự động kết nối ngày chấm công công trường! Tính lương cơ bản, tăng ca, phụ cấp, BHXH (8%), BHYT (1.5%), BHTN (1%) và Lương thực nhận (Net).",
+        "tab_calc": "🧮 Tính lương & Phụ cấp công tác",
         "tab_history": "📊 Lịch sử bảng lương & Báo cáo",
         "lbl_month": "Tháng tính lương (YYYY-MM)",
         "lbl_emp_code": "Mã nhân viên",
@@ -38,15 +40,17 @@ PAYROLL_I18N = {
         "lbl_ot_hours": "Số giờ tăng ca (Giờ)",
         "lbl_ot_rate": "Hệ số tăng ca (1.5 / 2.0)",
         "lbl_allowance": "Phụ cấp công tác / Chức vụ (VND)",
+        "lbl_daily_rate": "Đơn giá phụ cấp công tác (VND/Ngày)",
         "btn_calc_and_save": "💾 Tính & Lưu Bảng Lương vào Cơ Sở Dữ Liệu",
         "msg_success": "✅ Đã tính lương và lưu bảng lương thành công!",
         "lbl_net_pay": "💵 Lương thực nhận (Net Salary)",
-        "header_summary": "📋 Lịch sử Bảng lương & Bảo hiểm tháng"
+        "header_summary": "📋 Lịch sử Bảng lương & Bảo hiểm tháng",
+        "info_field_days": "📍 Hệ thống ghi nhận: Nhân viên chấm công công trường tháng `{month}` là **{days} ngày** (Phụ cấp tính tự động `{allowance:,.0f} VND`)."
     },
     "English": {
         "title": "💰 GA & HR - Payroll & Insurance Calculation Center",
-        "caption": "Vietnamese Labor Law Compliant: Auto-calculate basic salary, OT, BHXH (8%), BHYT (1.5%), BHTN (1%), and Net Pay.",
-        "tab_calc": "🧮 Monthly Payroll Calculation",
+        "caption": "Vietnamese Labor Law Compliant: Auto-fetches site check-in days! Calculates basic salary, OT, field allowances, BHXH (8%), BHYT (1.5%), BHTN (1%), and Net Pay.",
+        "tab_calc": "🧮 Monthly Payroll & Allowance Calculation",
         "tab_history": "📊 Historical Payroll Records",
         "lbl_month": "Payroll Month (YYYY-MM)",
         "lbl_emp_code": "Employee Code",
@@ -55,11 +59,13 @@ PAYROLL_I18N = {
         "lbl_base_salary": "Base Salary (VND)",
         "lbl_ot_hours": "OT Hours",
         "lbl_ot_rate": "OT Multiplier (1.5x / 2.0x)",
-        "lbl_allowance": "Allowances (VND)",
+        "lbl_allowance": "Field & Position Allowances (VND)",
+        "lbl_daily_rate": "Daily Field Allowance Rate (VND/Day)",
         "btn_calc_and_save": "💾 Calculate & Save to Database",
         "msg_success": "✅ Payroll calculation saved to database successfully!",
         "lbl_net_pay": "💵 Net Salary Payable",
-        "header_summary": "📋 Monthly Payroll & Insurance Summary"
+        "header_summary": "📋 Monthly Payroll & Insurance Summary",
+        "info_field_days": "📍 System Auto-detect: Employee has **{days} site check-in days** in `{month}` (Calculated allowance `{allowance:,.0f} VND`)."
     }
 }
 
@@ -102,27 +108,56 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
     tab_calc, tab_history = st.tabs([L["tab_calc"], L["tab_history"]])
 
     # ----------------------------------------------------
-    # 🧮 Tab 1: 薪資與保險核算表單
+    # 🧮 Tab 1: 薪資與外勤津貼自動核算
     # ----------------------------------------------------
     with tab_calc:
-        c_m1, c_m2 = st.columns(2)
+        c_m1, c_m2, c_m3 = st.columns(3)
         with c_m1:
             payroll_m = st.text_input(L["lbl_month"], value=datetime.datetime.now().strftime("%Y-%m"))
         with c_m2:
+            e_code = st.text_input(L["lbl_emp_code"], value="EMP-001")
+        with c_m3:
             dept_name = st.selectbox(L["lbl_dept"], ["🛠️ 工程部", "👔 管理部", "🏭 生產部", "📈 總經理室"])
+
+        # 📍 跨表查詢該員工當月外勤打卡天數
+        field_days = 0
+        if engine and e_code and payroll_m:
+            try:
+                with engine.connect() as conn:
+                    # 依據工號與月份查詢上班打卡筆數
+                    res = conn.execute(text("""
+                        SELECT COUNT(DISTINCT DATE(check_time)) 
+                        FROM public.field_attendance_logs 
+                        WHERE (emp_code = :code OR emp_name = :code)
+                          AND TO_CHAR(check_time, 'YYYY-MM') = :month
+                          AND check_type LIKE '%上班%'
+                    """), {"code": e_code, "month": payroll_m})
+                    val = res.fetchone()[0]
+                    if val:
+                        field_days = int(val)
+            except Exception:
+                pass
+
+        # 外勤每日津貼設定 (預設 200,000 VND/天)
+        daily_allowance_rate = 200000.0
+        auto_calculated_allowance = field_days * daily_allowance_rate
+
+        if field_days > 0:
+            st.info(L["info_field_days"].format(month=payroll_m, days=field_days, allowance=auto_calculated_allowance))
+        else:
+            st.caption("ℹ️ 當月尚無現場外勤打卡紀錄或該員工為廠內固定人員。")
 
         st.markdown("---")
         
         with st.form("form_calc_payroll"):
             col1, col2, col3 = st.columns(3)
             with col1:
-                e_code = st.text_input(L["lbl_emp_code"], value="EMP-001")
                 e_name = st.text_input(L["lbl_emp_name"], value="許福村")
-            with col2:
                 base_sal = st.number_input(L["lbl_base_salary"], min_value=0.0, value=15000000.0, step=500000.0)
-                allowance = st.number_input(L["lbl_allowance"], min_value=0.0, value=2000000.0, step=100000.0)
-            with col3:
+            with col2:
+                allowance = st.number_input(L["lbl_allowance"], min_value=0.0, value=float(auto_calculated_allowance), step=100000.0)
                 ot_hrs = st.number_input(L["lbl_ot_hours"], min_value=0.0, value=10.0, step=1.0)
+            with col3:
                 ot_rate = st.selectbox(L["lbl_ot_rate"], [1.5, 2.0])
 
             # 越南法規保險扣除計算 (以底薪為基準)
@@ -165,6 +200,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                                 "bhxh": bhxh, "bhyt": bhyt, "bhtn": bhtn, "net": net_pay
                             })
                         st.success(L["msg_success"])
+                        st.rerun()
                     except Exception as e:
                         st.error(f"❌ 寫入資料庫失敗: {str(e)}")
 
