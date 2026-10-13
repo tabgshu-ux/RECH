@@ -50,7 +50,7 @@ DORM_I18N = {
     }
 }
 
-def render_dorm_catering_page(engine=None, lang="繁體中文", **kwargs):
+def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
     active_lang = lang if lang in DORM_I18N else "繁體中文"
     L = DORM_I18N[active_lang]
 
@@ -124,8 +124,12 @@ def render_dorm_catering_page(engine=None, lang="繁體中文", **kwargs):
         with rc2:
             st.metric("平均每人每餐成本 (VND)", "45,000 VND", delta="持平")
 
+# 相容性進入點別名
+def render_dorm_catering_page(engine=None, lang="繁體中文", **kwargs):
+    render_dorm_catering_module(engine=engine, lang=lang, **kwargs)
+
 def show(engine=None, lang="繁體中文", **kwargs):
-    render_dorm_catering_page(engine=engine, lang=lang, **kwargs)
+    render_dorm_catering_module(engine=engine, lang=lang, **kwargs)
 
 def main(engine=None, lang="繁體中文", **kwargs):
-    render_dorm_catering_page(engine=engine, lang=lang, **kwargs)
+    render_dorm_catering_module(engine=engine, lang=lang, **kwargs)
