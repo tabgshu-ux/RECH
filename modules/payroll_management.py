@@ -279,7 +279,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             net_pay = total_gross - total_insurance - advance_pay
 
             st.markdown("---")
-            st.markdown("##### 📊 薪資試算精準結果 (越南法規 '.' 千位符號格式)：")
+            st.markdown("##### 📊 薪資試算精準結果：")
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("上班工工資 (Cộng lương)", fmt_vn_curr(work_salary))
             m2.metric("加班費總額 (Tăng ca)", fmt_vn_curr(ot_pay))
