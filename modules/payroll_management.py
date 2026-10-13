@@ -163,7 +163,7 @@ def init_payroll_db(engine):
                 );
             """))
     except Exception as e:
-        st.warning(f"⚠️ 資料庫 Table 初始化提示: {str(e)}")
+        st.warning("⚠️ 資料庫 Table 初始化提示: " + str(e))
 
 def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
     active_lang = lang or st.session_state.get("current_lang", "繁體中文")
@@ -253,87 +253,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             st.markdown("---")
             st.markdown("##### 📊 薪資試算精準結果 (Excel 對接格式)：")
             m1, m2, m3, m4 = st.columns(4)
-            m1.metric("上班工工資 (Cộng lương)", f"{work_salary:,.0f} VND")
-            m2.metric("加班費總額 (Tăng ca)", f"{ot_pay:,.0f} VND")
-            m3.metric("應領總額 (Tổng lương)", f"{total_gross:,.0f} VND")
-            m4.metric(L["lbl_net_pay"], f"{net_pay:,.0f} VND")
-
-            if st.form_submit_button(L["btn_calc_and_save"], type="primary", use_container_width=True):
-                if engine:
-                    try:
-                        with engine.begin() as conn:
-                            conn.execute(text("""
-                                INSERT INTO public.payroll_records 
-                                (payroll_month, emp_code, emp_name, department, factory, base_salary, pos_allowance, eval_bonus, 
-                                 gas_allowance, women_allowance, spec_bonus, actual_hours, work_salary, overtime_pay, 
-                                 meal_fee, prod_bonus, network_fee, attendance_bonus, other_deduct, total_gross, 
-                                 bhxh_deduction, bhyt_deduction, bhtn_deduction, advance_pay, net_salary)
-                                VALUES (:m, :code, :name, :dept, '西寧廠 (Tay Ninh)', :bs, :pos, :ev, :gas, :wom, :spec, :act_h,
-                                        :ws, :ot, :meal, :prod, :net_f, :att, :od, :gross, :bhxh, :bhyt, :bhtn, :adv, :net)
-                                ON CONFLICT (payroll_month, emp_code) DO UPDATE
-                                SET emp_name = EXCLUDED.emp_name,
-                                    department = EXCLUDED.department,
-                                    base_salary = EXCLUDED.base_salary,
-                                    pos_allowance = EXCLUDED.pos_allowance,
-                                    eval_bonus = EXCLUDED.eval_bonus,
-                                    gas_allowance = EXCLUDED.gas_allowance,
-                                    women_allowance = EXCLUDED.women_allowance,
-                                    spec_bonus = EXCLUDED.spec_bonus,
-                                    actual_hours = EXCLUDED.actual_hours,
-                                    work_salary = EXCLUDED.work_salary,
-                                    overtime_pay = EXCLUDED.overtime_pay,
-                                    meal_fee = EXCLUDED.meal_fee,
-                                    prod_bonus = EXCLUDED.prod_bonus,
-                                    network_fee = EXCLUDED.network_fee,
-                                    attendance_bonus = EXCLUDED.attendance_bonus,
-                                    other_deduct = EXCLUDED.other_deduct,
-                                    total_gross = EXCLUDED.total_gross,
-                                    bhxh_deduction = EXCLUDED.bhxh_deduction,
-                                    bhyt_deduction = EXCLUDED.bhyt_deduction,
-                                    bhtn_deduction = EXCLUDED.bhtn_deduction,
-                                    advance_pay = EXCLUDED.advance_pay,
-                                    net_salary = EXCLUDED.net_salary,
-                                    updated_at = CURRENT_TIMESTAMP;
-                            """), {
-                                "m": payroll_m, "code": e_code, "name": e_name, "dept": dept_name,
-                                "bs": base_sal, "pos": pos_allowance, "ev": eval_bonus, "gas": gas_allowance,
-                                "wom": women_allowance, "spec": spec_bonus, "act_h": act_hours,
-                                "ws": work_salary, "ot": ot_pay, "meal": meal_fee, "prod": prod_bonus,
-                                "net_f": network_fee, "att": att_bonus, "od": other_deduct, "gross": total_gross,
-                                "bhxh": bhxh, "bhyt": bhyt, "bhtn": bhtn, "adv": advance_pay, "net": net_pay
-                            })
-                        st.success(L["msg_success"])
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"❌ 寫入資料庫失敗: {str(e)}")
-                else:
-                    st.success("✅ 試算完成（展示模式）。")
-
-    # ----------------------------------------------------
-    # 📄 Tab 2: 個人電子薪資單 (Phiếu lương)
-    # ----------------------------------------------------
-    with tab_slip:
-        st.markdown("### 📄 員工個人電子薪資單預覽 (Phiếu Lương Cá Nhân)")
-        st.caption("適應手機端螢幕展示，讓員工可隨時登入查閱個人當月實領薪資細項。")
-
-        with st.container(border=True):
-            st.markdown("<h3 style='text-align: center; color: #1E3A8A;'>CÔNG TY TNHH CN DŨ PHONG</h3>", unsafe_allow_html=True)
-            st.markdown(f"<h4 style='text-align: center;'>PHIẾU LƯƠNG THÁNG {payroll_m} (TÂY NINH)</h4>", unsafe_allow_html=True)
-            st.markdown("---")
-
-            col_a, col_b = st.columns(2)
-            with col_a:
-                st.write(f"**MNS / 工號:** `{e_code}`")
-                st.write(f"**Họ tên / 姓名:** **{e_name}**")
-                st.write(f"**Bộ phận / 部門:** {dept_name}")
-                st.write(f"**Số giờ thực làm / 實際時數:** {act_hours} 小時")
-            with col_b:
-                st.write(f"**Lương cb / 底薪:** {base_sal:,.0f} VND")
-                st.write(f"**Tổng phụ cấp / 各項津貼:** {(pos_allowance + eval_bonus + gas_allowance + women_allowance + spec_bonus):,.0f} VND")
-                st.write(f"**Chuyên cần / 全勤獎金:** {att_bonus:,.0f} VND")
-                st.write(f"**Tiền cơm / 伙食費:** {meal_fee:,.0f} VND")
-
-            st.markdown("---")
-            col_c, col_d, col_e = st.columns(3)
-            col_c.metric("Tổng lương (應領總計)", f"{total_gross:,.0f} VND")
-            col_d.metric("BHXH/BHYT/BHTN (保險扣款)", f"{total_insurance:,.0f} VND
+            m1.metric("上班工工資 (Cộng lương)", "{:,.0f} VND".format(work_salary))
+            m2.metric("加班費總額 (Tăng ca)", "{:,.0f} VND".format(ot_pay))
+            m3.metric("應領總額 (Tổng lương)", "{:,.0f} VND".format(total_gross))
+            m4.metric(L["lbl_net_pay"], "{:,.0f} VND".format
