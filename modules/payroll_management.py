@@ -7,8 +7,10 @@ from sqlalchemy import text
 # 🇻🇳 越南法規標準金額格式化 (千位數用 '.'，例如: 13.507.200)
 # ----------------------------------------------------
 def parse_vn_num(val_str):
-    """將包含 '.' 或 ',' 的字串轉回純數字 float"""
+    """將包含 '.' 或 ',' 或 NaN 的字串轉回純數字 float"""
     if isinstance(val_str, (int, float)):
+        if pd.isna(val_str):
+            return 0.0
         return float(val_str)
     if not val_str or pd.isna(val_str):
         return 0.0
@@ -78,10 +80,12 @@ def calculate_attendance_bonus(actual_hours):
     return 0.0
 
 def init_payroll_db(engine):
+    """資料庫初始化與自動拓建遺漏欄位"""
     if not engine:
         return
     try:
         with engine.begin() as conn:
+            # 1. 建立基本資料表
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS public.payroll_records (
                     id SERIAL PRIMARY KEY,
@@ -89,7 +93,7 @@ def init_payroll_db(engine):
                     emp_code VARCHAR(50) NOT NULL,
                     emp_name VARCHAR(100) NOT NULL,
                     department VARCHAR(100),
-                    factory VARCHAR(100) DEFAULT '西寧廠 (Tay Ninh)',
+                    factory VARCHAR(100) DEFAULT '文房 (VP)',
                     base_salary NUMERIC(12,2) DEFAULT 0,
                     pos_allowance NUMERIC(12,2) DEFAULT 0,
                     eval_bonus NUMERIC(12,2) DEFAULT 0,
@@ -116,10 +120,35 @@ def init_payroll_db(engine):
                     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                     CONSTRAINT unique_emp_payroll_month UNIQUE (payroll_month, emp_code)
                 );
-                
-                -- 自動補齊缺少欄位 (修復 factory column does not exist 錯誤)
-                ALTER TABLE public.payroll_records ADD COLUMN IF NOT EXISTS factory VARCHAR(100) DEFAULT '西寧廠 (Tay Ninh)';
             """))
+
+            # 2. 為舊資料表補齊所有可能缺少的新欄位 (解決 relation does not exist 報錯)
+            alter_cols = [
+                ("factory", "VARCHAR(100) DEFAULT '文房 (VP)'"),
+                ("pos_allowance", "NUMERIC(12,2) DEFAULT 0"),
+                ("eval_bonus", "NUMERIC(12,2) DEFAULT 0"),
+                ("gas_allowance", "NUMERIC(12,2) DEFAULT 0"),
+                ("women_allowance", "NUMERIC(12,2) DEFAULT 0"),
+                ("spec_bonus", "NUMERIC(12,2) DEFAULT 0"),
+                ("actual_hours", "NUMERIC(6,2) DEFAULT 208"),
+                ("work_salary", "NUMERIC(12,2) DEFAULT 0"),
+                ("overtime_pay", "NUMERIC(12,2) DEFAULT 0"),
+                ("meal_fee", "NUMERIC(12,2) DEFAULT 0"),
+                ("prod_bonus", "NUMERIC(12,2) DEFAULT 0"),
+                ("network_fee", "NUMERIC(12,2) DEFAULT 0"),
+                ("attendance_bonus", "NUMERIC(12,2) DEFAULT 0"),
+                ("other_deduct", "NUMERIC(12,2) DEFAULT 0"),
+                ("bhxh_deduction", "NUMERIC(12,2) DEFAULT 0"),
+                ("bhyt_deduction", "NUMERIC(12,2) DEFAULT 0"),
+                ("bhtn_deduction", "NUMERIC(12,2) DEFAULT 0"),
+                ("pit_tax", "NUMERIC(12,2) DEFAULT 0"),
+                ("advance_pay", "NUMERIC(12,2) DEFAULT 0")
+            ]
+            for col_name, col_type in alter_cols:
+                try:
+                    conn.execute(text(f"ALTER TABLE public.payroll_records ADD COLUMN IF NOT EXISTS {col_name} {col_type};"))
+                except Exception:
+                    pass
     except Exception as e:
         pass
 
@@ -270,7 +299,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
         st.caption("只需上傳公司 Excel 檔案 (例如 `Lương 09.2026.xls`)，系統會自動拆解文房、廠房與工程清冊，並寫入資料庫！")
 
         uploaded_file = st.file_uploader("請選擇要匯入的 Excel 薪資檔案 (.xls / .xlsx)", type=["xls", "xlsx"])
-        import_month = st.text_input("匯入薪資月份 (YYYY-MM)", value="2026-09")
+        import_month = st.text_input("匯入薪资月份 (YYYY-MM)", value="2026-09")
 
         if uploaded_file and st.button("🚀 開始自動解析並匯入資料庫", type="primary"):
             try:
@@ -286,7 +315,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 for sheet_name, factory_label in sheet_mapping.items():
                     if sheet_name in xls.sheet_names:
                         df_s = pd.read_excel(uploaded_file, sheet_name=sheet_name)
-                        # 從第 6 行開始讀取資料列
                         for idx in range(6, len(df_s)):
                             row = df_s.iloc[idx]
                             emp_code = str(row.iloc[2]).strip() if pd.notna(row.iloc[2]) else ""
@@ -340,6 +368,9 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                                     base_salary = EXCLUDED.base_salary,
                                     pos_allowance = EXCLUDED.pos_allowance,
                                     eval_bonus = EXCLUDED.eval_bonus,
+                                    gas_allowance = EXCLUDED.gas_allowance,
+                                    women_allowance = EXCLUDED.women_allowance,
+                                    spec_bonus = EXCLUDED.spec_bonus,
                                     total_gross = EXCLUDED.total_gross,
                                     net_salary = EXCLUDED.net_salary,
                                     updated_at = CURRENT_TIMESTAMP;
