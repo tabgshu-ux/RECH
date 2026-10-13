@@ -4,8 +4,37 @@ import datetime
 from sqlalchemy import text
 
 # ----------------------------------------------------
-# 🌐 多語系字典
+# 🌐 裕豐電機工業 (Reetech Industrial) 組織規格
 # ----------------------------------------------------
+DEFAULT_FACTORY = "西寧廠 (Tay Ninh)"
+
+DEPT_OPTIONS = [
+    "總經理室 (Executive Office)",
+    "管理部 (Management Dept)",
+    "財務部 (Finance Dept)",
+    "工程與設計管理中心 (Engineering & Design Center)",
+    "生產部 (Production Dept)",
+    "資訊管理部 (IT & System)",
+    "工務與工地現場 (Site Operations)"
+]
+
+SYSTEM_ROLES = [
+    "系統管理員 (Admin)",
+    "董事長 / 總經理 (Executive)",
+    "財務副理 / 財務主管 (Finance Manager)",
+    "廠長 / 工務經理 (Plant/Project Manager)",
+    "現場工地主任 / 組長 (Site Supervisor)",
+    "採購 / 倉管 / 兼任會計 (Purchasing/Inventory)",
+    "一般員工 (Staff)"
+]
+
+ATTENDANCE_TYPES = [
+    "免打卡高階主管 (Exempt Executive)",
+    "廠內固定員工 (Plant Fixed Staff)",
+    "外勤施工人員 (Site Staff)",
+    "外派輪休幹部 (Expat Staff)"
+]
+
 EMP_I18N = {
     "繁體中文": {
         "title": "👤 管理部 - 員工個人檔案與人事管理中心",
@@ -22,10 +51,22 @@ EMP_I18N = {
     }
 }
 
-SINGLE_FACTORY = "西寧廠 (Tay Ninh)"
+def get_factory_list(engine):
+    """取得資料庫中定義的廠區，若只有西寧廠則預設傳回西寧廠"""
+    if not engine:
+        return [DEFAULT_FACTORY]
+    try:
+        with engine.connect() as conn:
+            res = conn.execute(text("SELECT DISTINCT factory_name FROM public.factories WHERE factory_name IS NOT NULL AND factory_name != '';"))
+            rows = res.fetchall()
+            if rows:
+                return [r[0] for r in rows]
+    except Exception:
+        pass
+    return [DEFAULT_FACTORY]
 
 def init_employee_db(engine):
-    """確保員工表具備越南當地勞動法與社保合規完整欄位，並將歷史廠區統一更正為『西寧廠 (Tay Ninh)』"""
+    """確保員工表具備完整欄位，並校正歷史廠區"""
     if not engine:
         return
     try:
@@ -46,7 +87,7 @@ def init_employee_db(engine):
                     factory VARCHAR(100) DEFAULT '西寧廠 (Tay Ninh)',
                     department VARCHAR(100),
                     position VARCHAR(100),
-                    attendance_type VARCHAR(100) DEFAULT '廠內固定員工 (Plant Fixed Staff)',
+                    attendance_type VARCHAR(100) DEFAULT '免打卡高階主管 (Exempt Executive)',
                     system_role VARCHAR(100) DEFAULT '一般員工 (Staff)',
                     base_salary NUMERIC(12,2) DEFAULT 0,
                     status VARCHAR(50) DEFAULT '在職',
@@ -63,6 +104,8 @@ def init_employee_db(engine):
                 ("health_code", "VARCHAR(50)"),
                 ("hospital_name", "VARCHAR(200)"),
                 ("factory", "VARCHAR(100) DEFAULT '西寧廠 (Tay Ninh)'"),
+                ("attendance_type", "VARCHAR(100) DEFAULT '免打卡高階主管 (Exempt Executive)'"),
+                ("system_role", "VARCHAR(100) DEFAULT '一般員工 (Staff)'"),
                 ("base_salary", "NUMERIC(12,2) DEFAULT 0"),
                 ("status", "VARCHAR(50) DEFAULT '在職'")
             ]
@@ -72,8 +115,8 @@ def init_employee_db(engine):
                 except Exception:
                     pass
 
-            # 校正所有舊資料，統一廠區為「西寧廠 (Tay Ninh)」
-            conn.execute(text("UPDATE public.employee_profiles SET factory = '西寧廠 (Tay Ninh)' WHERE factory IS NULL OR factory != '西寧廠 (Tay Ninh)';"))
+            # 校正所有舊資料廠區為西寧廠
+            conn.execute(text("UPDATE public.employee_profiles SET factory = '西寧廠 (Tay Ninh)' WHERE factory IS NULL OR factory NOT IN ('西寧廠 (Tay Ninh)');"))
     except Exception as e:
         pass
 
@@ -85,6 +128,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
     st.caption(L["caption"])
 
     init_employee_db(engine)
+    available_factories = get_factory_list(engine)
 
     tab_add_vn, tab_add_tw, tab_edit, tab_resign, tab_list, tab_resigned_list = st.tabs([
         L["tab_add_vn"], L["tab_add_tw"], L["tab_edit"], L["tab_resign"], L["tab_list"], L["tab_resigned_list"]
@@ -105,8 +149,8 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                 v_tax_code = st.text_input("個人稅號 (Mã số thuế)", placeholder="例: 8012345678")
 
             with col2:
-                v_factory = st.text_input("工作廠區 (Nhà máy)", value=SINGLE_FACTORY, disabled=True)
-                v_dept = st.text_input("部門 (Bộ phận)", value="生產部 (Phòng sản xuất)")
+                v_factory = st.selectbox("駐點廠區 (Nhà máy)", available_factories)
+                v_dept = st.selectbox("部門 (Bộ phận)", DEPT_OPTIONS, index=4)
                 v_pos = st.text_input("職稱 (Chức vụ)", value="廠內固定員工")
                 v_att = st.selectbox("出勤性質", ["廠內固定員工 (Plant Fixed Staff)", "外勤施工人員 (Site Staff)", "免打卡高階主管 (Exempt Executive)"])
                 v_social_code = st.text_input("社保號碼 (Mã số BHXH)", placeholder="例: 7912345678")
@@ -123,8 +167,8 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                         with engine.begin() as conn:
                             conn.execute(text("""
                                 INSERT INTO public.employee_profiles 
-                                (emp_code, emp_name, phone, id_card, tax_code, permanent_address, current_address, social_code, hospital_name, factory, department, position, attendance_type, base_salary, status)
-                                VALUES (:code, :name, :phone, :id, :tax, :perm, :curr, :social, :hosp, :factory, :dept, :pos, :att, :sal, '在職')
+                                (emp_code, emp_name, phone, id_card, tax_code, permanent_address, current_address, social_code, hospital_name, factory, department, position, attendance_type, system_role, base_salary, status)
+                                VALUES (:code, :name, :phone, :id, :tax, :perm, :curr, :social, :hosp, :factory, :dept, :pos, :att, '一般員工 (Staff)', :sal, '在職')
                                 ON CONFLICT (emp_code) DO UPDATE
                                 SET emp_name = EXCLUDED.emp_name,
                                     phone = EXCLUDED.phone,
@@ -137,12 +181,13 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                     factory = EXCLUDED.factory,
                                     department = EXCLUDED.department,
                                     position = EXCLUDED.position,
+                                    attendance_type = EXCLUDED.attendance_type,
                                     base_salary = EXCLUDED.base_salary,
                                     status = '在職';
                             """), {
                                 "code": v_code, "name": v_name, "phone": v_phone, "id": v_id, "tax": v_tax_code,
                                 "perm": v_perm_addr, "curr": v_curr_addr, "social": v_social_code, "hosp": v_hosp,
-                                "factory": SINGLE_FACTORY, "dept": v_dept, "pos": v_pos, "att": v_att, "sal": v_sal
+                                "factory": v_factory, "dept": v_dept, "pos": v_pos, "att": v_att, "sal": v_sal
                             })
                         st.success(f"🎉 成功新增/更新越南籍員工：{v_name} ({v_code})！")
                         st.rerun()
@@ -152,7 +197,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.warning("⚠️ 請務必填寫『工號』與『姓名』！")
 
     # ----------------------------------------------------
-    # 🇹🇼 Tab 2: 新增外派幹部
+    # 🇹🇼 Tab 2: 新增外派幹部 (包含免打卡選項、部門與完整系統權限角色)
     # ----------------------------------------------------
     with tab_add_tw:
         st.markdown("### 🇹🇼 TW/CN 新增外派幹部 / 台籍與中籍員工")
@@ -162,35 +207,41 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                 t_code = st.text_input("外派工號 *", placeholder="例: TW-005")
                 t_name = st.text_input("中文/英文姓名 *", placeholder="例: 王大明 Wang Ta Ming")
                 t_passport = st.text_input("護照號碼 (Passport No.)", placeholder="例: 312345678")
-            with col2:
-                t_factory = st.text_input("駐點廠區", value=SINGLE_FACTORY, disabled=True)
-                t_dept = st.text_input("部門", value="總經理室 (Executive Office)")
-                t_pos = st.text_input("職稱 / 系統角色", value="廠長 / 專案經理")
-            with col3:
                 t_trc = st.text_input("暫住證 TRC 號碼", placeholder="例: TRC-888999")
-                t_sal = st.number_input("約定底薪 (VND / USD / TWD)", min_value=0.0, value=30000000.0, step=1000000.0)
-                t_role = st.selectbox("系統權限角色", ["部門經理 / 財務主管 / 廠長", "總經理 / 協理", "系統管理員 (Admin)"])
 
-            if st.form_submit_button("➕ 儲存外派幹部檔案", type="primary", use_container_width=True):
+            with col2:
+                t_factory = st.selectbox("駐點廠區", available_factories)
+                t_dept = st.selectbox("所屬部門", DEPT_OPTIONS, index=0)
+                t_pos = st.text_input("職稱 (Chức vụ)", value="廠長 / 專案經理")
+                t_att = st.selectbox("出勤性質 (考勤打卡)", ATTENDANCE_TYPES, index=0)
+
+            with col3:
+                t_sal = st.number_input("約定底薪 (VND / USD / TWD)", min_value=0.0, value=30000000.0, step=1000000.0)
+                t_role = st.selectbox("系統權限角色 (System Role)", SYSTEM_ROLES, index=2)
+                t_phone = st.text_input("聯絡電話", placeholder="例: +886-912345678")
+
+            if st.form_submit_button("💾 儲存外派幹部檔案", type="primary", use_container_width=True):
                 if engine and t_code and t_name:
                     try:
                         with engine.begin() as conn:
                             conn.execute(text("""
                                 INSERT INTO public.employee_profiles 
                                 (emp_code, emp_name, phone, id_card, factory, department, position, attendance_type, system_role, base_salary, status)
-                                VALUES (:code, :name, '外派幹部', :id, :factory, :dept, :pos, '免打卡高階主管 (Exempt Executive)', :role, :sal, '在職')
+                                VALUES (:code, :name, :phone, :id, :factory, :dept, :pos, :att, :role, :sal, '在職')
                                 ON CONFLICT (emp_code) DO UPDATE
                                 SET emp_name = EXCLUDED.emp_name,
+                                    phone = EXCLUDED.phone,
                                     id_card = EXCLUDED.id_card,
                                     factory = EXCLUDED.factory,
                                     department = EXCLUDED.department,
                                     position = EXCLUDED.position,
+                                    attendance_type = EXCLUDED.attendance_type,
                                     system_role = EXCLUDED.system_role,
                                     base_salary = EXCLUDED.base_salary,
                                     status = '在職';
                             """), {
-                                "code": t_code, "name": t_name, "id": f"護照:{t_passport} / TRC:{t_trc}",
-                                "factory": SINGLE_FACTORY, "dept": t_dept, "pos": t_pos, "role": t_role, "sal": t_sal
+                                "code": t_code, "name": t_name, "phone": t_phone, "id": f"護照:{t_passport} / TRC:{t_trc}",
+                                "factory": t_factory, "dept": t_dept, "pos": t_pos, "att": t_att, "role": t_role, "sal": t_sal
                             })
                         st.success(f"🎉 成功新增外派幹部：{t_name} ({t_code})！")
                         st.rerun()
@@ -222,23 +273,32 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                 col_e1, col_e2, col_e3 = st.columns(3)
                                 with col_e1:
                                     edit_name = st.text_input("姓名 (Họ tên)", value=str(e.get("emp_name") or ""))
-                                    edit_dept = st.text_input("部門 (Bộ phận)", value=str(e.get("department") or ""))
+                                    curr_dept = str(e.get("department") or "")
+                                    dept_idx = DEPT_OPTIONS.index(curr_dept) if curr_dept in DEPT_OPTIONS else 0
+                                    edit_dept = st.selectbox("部門 (Bộ phận)", DEPT_OPTIONS, index=dept_idx)
                                     edit_phone = st.text_input("電話 (Số ĐT)", value=str(e.get("phone") or ""))
                                 with col_e2:
-                                    edit_factory = st.text_input("廠區 (Nhà máy)", value=SINGLE_FACTORY, disabled=True)
+                                    edit_factory = st.selectbox("廠區 (Nhà máy)", available_factories)
                                     edit_pos = st.text_input("職稱 (Chức vụ)", value=str(e.get("position") or "廠內固定員工"))
-                                    edit_status = st.selectbox("在職狀態", ["在職", "離職"])
+                                    curr_att = str(e.get("attendance_type") or "")
+                                    att_idx = ATTENDANCE_TYPES.index(curr_att) if curr_att in ATTENDANCE_TYPES else 0
+                                    edit_att = st.selectbox("出勤性質", ATTENDANCE_TYPES, index=att_idx)
                                 with col_e3:
                                     edit_sal = st.number_input("底薪 (Lương CB - VND)", value=float(e.get("base_salary") or 0.0), step=100000.0)
+                                    curr_role = str(e.get("system_role") or "")
+                                    role_idx = SYSTEM_ROLES.index(curr_role) if curr_role in SYSTEM_ROLES else 6
+                                    edit_role = st.selectbox("系統角色", SYSTEM_ROLES, index=role_idx)
+                                    edit_status = st.selectbox("在職狀態", ["在職", "離職"])
+
+                                st.markdown("##### 2️⃣ 身分證、稅號與地址 (Giấy tờ & Địa chỉ)")
+                                col_a1, col_a2, col_a3 = st.columns(3)
+                                with col_a1:
                                     edit_id = st.text_input("身分證 CCCD / 護照", value=str(e.get("id_card") or ""))
                                     edit_tax = st.text_input("個人稅號 (Mã số thuế)", value=str(e.get("tax_code") or ""))
-
-                                st.markdown("##### 2️⃣ 戶籍與現居地址 (Địa chỉ thường trú & Tạm trú)")
-                                col_a1, col_a2 = st.columns(2)
-                                with col_a1:
-                                    edit_perm_addr = st.text_area("戶籍地址 (Địa chỉ thường trú)", value=str(e.get("permanent_address") or ""), height=80)
                                 with col_a2:
-                                    edit_curr_addr = st.text_area("現居地址 (Địa chỉ tạm trú)", value=str(e.get("current_address") or ""), height=80)
+                                    edit_perm_addr = st.text_area("戶籍地址 (Địa chỉ thường trú)", value=str(e.get("permanent_address") or ""), height=70)
+                                with col_a3:
+                                    edit_curr_addr = st.text_area("現居地址 (Địa chỉ tạm trú)", value=str(e.get("current_address") or ""), height=70)
 
                                 st.markdown("##### 3️⃣ 社保、醫保與看診醫院 (Bảo hiểm xã hội & Bệnh viện)")
                                 col_b1, col_b2, col_b3 = st.columns(3)
@@ -258,6 +318,8 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                                 phone = :phone,
                                                 factory = :fac,
                                                 position = :pos,
+                                                attendance_type = :att,
+                                                system_role = :role,
                                                 base_salary = :sal,
                                                 id_card = :id_card,
                                                 tax_code = :tax,
@@ -271,13 +333,13 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                             WHERE emp_code = :code;
                                         """), {
                                             "name": edit_name, "dept": edit_dept, "phone": edit_phone,
-                                            "fac": SINGLE_FACTORY, "pos": edit_pos, "sal": edit_sal,
-                                            "id_card": edit_id, "tax": edit_tax, "perm": edit_perm_addr,
-                                            "curr": edit_curr_addr, "social": edit_social_code,
-                                            "health": edit_health_code, "hosp": edit_hospital,
-                                            "st": edit_status, "code": target_code
+                                            "fac": edit_factory, "pos": edit_pos, "att": edit_att, "role": edit_role,
+                                            "sal": edit_sal, "id_card": edit_id, "tax": edit_tax,
+                                            "perm": edit_perm_addr, "curr": edit_curr_addr,
+                                            "social": edit_social_code, "health": edit_health_code,
+                                            "hosp": edit_hospital, "st": edit_status, "code": target_code
                                         })
-                                    st.success(f"🎉 已成功更新員工【{edit_name}】的個人、住址與保險醫院資料！")
+                                    st.success(f"🎉 已成功更新員工【{edit_name}】的個人與系統權限資料！")
                                     st.rerun()
                     else:
                         st.info("目前尚無在職員工資料。")
@@ -323,7 +385,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
         with c1:
             selected_factory = st.selectbox(
                 L["lbl_filter_factory"],
-                [SINGLE_FACTORY]
+                available_factories
             )
         with c2:
             search_keyword = st.text_input(L["lbl_search"], value="")
