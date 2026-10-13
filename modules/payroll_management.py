@@ -1,66 +1,94 @@
 import streamlit as st
 import pandas as pd
 import datetime
+from sqlalchemy import text
 
 # ----------------------------------------------------
-# 🌐 員工薪資與保險模組多語系字典 (i18n)
+# 🌐 員工薪資與保險計算多語系字典 (i18n)
 # ----------------------------------------------------
 PAYROLL_I18N = {
     "繁體中文": {
-        "title": "💰 財務部 - 員工薪資計算、津貼與保險扣除中心",
-        "caption": "依據越南勞動法與裕豐電機工薪資結構，自動同步「員工個人檔案」資料，計算基礎薪資、各項津貼、保險扣款（BHXH 8%、BHYT 1.5%、BHTN 1%）。",
-        "tab_list": "📑 全廠員工薪資總表 (同步自人事模組)",
-        "tab_individual": "🔍 個別員工薪資、津貼與扣款調整",
-        "tab_history": "📊 歷史薪資與會計帳務查詢",
-        "btn_export": "📥 匯出全廠薪資報表 Excel (.xlsx)",
-        "col_index": "STT",
-        "col_no": "工號",
-        "col_name": "姓名 (Họ tên)",
-        "col_dept": "部門",
-        "col_title": "職稱",
-        "col_base": "薪資總額",
-        "col_allowance": "津貼合計",
-        "col_ot": "加班費合計",
-        "col_deduct": "扣款合計 (含保險)",
-        "col_net": "實領金額 (Thực lãnh)"
+        "title": "💰 管理部 - 員工薪資計算與保險扣除管理中心",
+        "caption": "符合越南勞動法與稅務標準：自動計算底薪、加班費、社保 (BHXH 8%)、醫保 (BHYT 1.5%)、失業保 (BHTN 1%) 與實發淨薪。",
+        "tab_calc": "🧮 月度薪資計算與核算",
+        "tab_history": "📊 歷史薪資清冊與發放紀錄",
+        "lbl_month": "計薪月份 (YYYY-MM)",
+        "lbl_emp_code": "員工工號",
+        "lbl_emp_name": "員工姓名",
+        "lbl_dept": "所屬部門",
+        "lbl_base_salary": "約定基本薪資 (VND)",
+        "lbl_ot_hours": "本月加班時數 (小時)",
+        "lbl_ot_rate": "加班費時薪倍率 (1.5倍/2.0倍)",
+        "lbl_allowance": "職務與外勤津貼 (VND)",
+        "btn_calc_and_save": "💾 計算並寫入 Supabase 薪資資料庫",
+        "msg_success": "✅ 薪資清冊計算完畢並已成功寫入資料庫！",
+        "lbl_net_pay": "💵 本月應發實付淨薪 (Net Salary)",
+        "header_summary": "📋 歷史月度薪資與保險扣除統計表"
     },
     "Tiếng Việt": {
-        "title": "💰 Quản lý Lương, Phụ cấp & Khấu trừ Bảo hiểm",
-        "caption": "Đồng bộ tự động từ Hồ sơ nhân sự.",
-        "tab_list": "📑 Bảng lương",
-        "tab_individual": "🔍 Điều chỉnh lương cá nhân",
-        "tab_history": "📊 Lịch sử lương",
-        "btn_export": "📥 Xuất Excel",
-        "col_index": "STT",
-        "col_no": "Mã NV",
-        "col_name": "Họ tên",
-        "col_dept": "Bộ phận",
-        "col_title": "Chức vụ",
-        "col_base": "Lương cơ bản",
-        "col_allowance": "Phụ cấp",
-        "col_ot": "Tăng ca",
-        "col_deduct": "Khấu trừ (BH)",
-        "col_net": "Thực lãnh"
+        "title": "💰 Phòng Quản lý - Tính Luơng & Khấu Trừ Bảo Hiểm",
+        "caption": "Tuân thủ Luật Lao động VN: Tự động tính lương cơ bản, tăng ca, BHXH (8%), BHYT (1.5%), BHTN (1%) và Lương thực nhận (Net).",
+        "tab_calc": "🧮 Tính lương tháng",
+        "tab_history": "📊 Lịch sử bảng lương & Báo cáo",
+        "lbl_month": "Tháng tính lương (YYYY-MM)",
+        "lbl_emp_code": "Mã nhân viên",
+        "lbl_emp_name": "Tên nhân viên",
+        "lbl_dept": "Phòng ban",
+        "lbl_base_salary": "Lương cơ bản (VND)",
+        "lbl_ot_hours": "Số giờ tăng ca (Giờ)",
+        "lbl_ot_rate": "Hệ số tăng ca (1.5 / 2.0)",
+        "lbl_allowance": "Phụ cấp công tác / Chức vụ (VND)",
+        "btn_calc_and_save": "💾 Tính & Lưu Bảng Lương vào Cơ Sở Dữ Liệu",
+        "msg_success": "✅ Đã tính lương và lưu bảng lương thành công!",
+        "lbl_net_pay": "💵 Lương thực nhận (Net Salary)",
+        "header_summary": "📋 Lịch sử Bảng lương & Bảo hiểm tháng"
     },
     "English": {
-        "title": "💰 Employee Payroll, Allowance & Insurance Deduction",
-        "caption": "Synchronized with Employee Directory for automated payroll processing.",
-        "tab_list": "📑 Payroll Master Log",
-        "tab_individual": "🔍 Individual Adjustment",
-        "tab_history": "📊 Payroll History",
-        "btn_export": "📥 Export Payroll Excel",
-        "col_index": "No.",
-        "col_no": "Emp ID",
-        "col_name": "Full Name",
-        "col_dept": "Department",
-        "col_title": "Title",
-        "col_base": "Base Salary",
-        "col_allowance": "Allowances",
-        "col_ot": "Overtime",
-        "col_deduct": "Deductions (Insurance)",
-        "col_net": "Net Pay"
+        "title": "💰 GA & HR - Payroll & Insurance Calculation Center",
+        "caption": "Vietnamese Labor Law Compliant: Auto-calculate basic salary, OT, BHXH (8%), BHYT (1.5%), BHTN (1%), and Net Pay.",
+        "tab_calc": "🧮 Monthly Payroll Calculation",
+        "tab_history": "📊 Historical Payroll Records",
+        "lbl_month": "Payroll Month (YYYY-MM)",
+        "lbl_emp_code": "Employee Code",
+        "lbl_emp_name": "Employee Name",
+        "lbl_dept": "Department",
+        "lbl_base_salary": "Base Salary (VND)",
+        "lbl_ot_hours": "OT Hours",
+        "lbl_ot_rate": "OT Multiplier (1.5x / 2.0x)",
+        "lbl_allowance": "Allowances (VND)",
+        "btn_calc_and_save": "💾 Calculate & Save to Database",
+        "msg_success": "✅ Payroll calculation saved to database successfully!",
+        "lbl_net_pay": "💵 Net Salary Payable",
+        "header_summary": "📋 Monthly Payroll & Insurance Summary"
     }
 }
+
+def init_payroll_db(engine):
+    if not engine:
+        return
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS public.payroll_records (
+                    id SERIAL PRIMARY KEY,
+                    payroll_month VARCHAR(7) NOT NULL,
+                    emp_code VARCHAR(50) NOT NULL,
+                    emp_name VARCHAR(100) NOT NULL,
+                    department VARCHAR(100),
+                    base_salary NUMERIC(12,2) DEFAULT 0,
+                    overtime_pay NUMERIC(12,2) DEFAULT 0,
+                    allowance NUMERIC(12,2) DEFAULT 0,
+                    bhxh_deduction NUMERIC(12,2) DEFAULT 0,
+                    bhyt_deduction NUMERIC(12,2) DEFAULT 0,
+                    bhtn_deduction NUMERIC(12,2) DEFAULT 0,
+                    net_salary NUMERIC(12,2) NOT NULL,
+                    status VARCHAR(50) DEFAULT '🟡 待審核 (Pending)',
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT unique_emp_payroll_month UNIQUE (payroll_month, emp_code)
+                );
+            """))
+    except Exception as e:
+        st.warning(f"⚠️ 資料庫 Table 初始化提示: {str(e)}")
 
 def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
     active_lang = lang or st.session_state.get("current_lang", "繁體中文")
@@ -69,132 +97,101 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 📅 動態年月選擇器（讓使用者可自由切換不同月份來計算薪資）
-    st.markdown("---")
-    col_y, col_m, col_spacer = st.columns([2, 2, 4])
-    with col_y:
-        selected_year = st.selectbox("📅 選擇薪資年度 (Year)", [2026, 2027, 2025], index=0)
-    with col_m:
-        selected_month = st.selectbox("📅 選擇薪資月份 (Month)", list(range(1, 13)), index=datetime.date.today().month - 1 if datetime.date.today().month <= 12 else 0)
+    init_payroll_db(engine)
 
-    # 動態組合標題（支援動態年月與越文連動）
-    dynamic_title_zh = f"📋 {selected_year} 年 {selected_month} 月全廠員工薪資總表"
-    dynamic_title_vn = f"Lương Tháng {selected_month}/{selected_year}"
+    tab_calc, tab_history = st.tabs([L["tab_calc"], L["tab_history"]])
 
-    # 🔗 強制串聯：從 session_state 讀取「員工個人檔案模組」的真實員工清單
-    if "employee_db" not in st.session_state or not st.session_state.employee_db:
-        st.session_state.employee_db = [
-            {"工號": "EMP-001", "姓名": "張董事長 (Chairman)", "部門": "總經理室", "職稱": "董事長 (Chairman)", "底薪": 25000000.0, "津貼": 9500000.0},
-            {"工號": "EMP-002", "姓名": "Nguyễn Văn Quý", "部門": "管理部", "職稱": "副店長/副經理 (Vice Manager)", "底薪": 6000000.0, "津貼": 3500000.0}
-        ]
+    # ----------------------------------------------------
+    # 🧮 Tab 1: 薪資與保險核算表單
+    # ----------------------------------------------------
+    with tab_calc:
+        c_m1, c_m2 = st.columns(2)
+        with c_m1:
+            payroll_m = st.text_input(L["lbl_month"], value=datetime.datetime.now().strftime("%Y-%m"))
+        with c_m2:
+            dept_name = st.selectbox(L["lbl_dept"], ["🛠️ 工程部", "👔 管理部", "🏭 生產部", "📈 總經理室"])
 
-    if "payroll_adjustments" not in st.session_state:
-        st.session_state.payroll_adjustments = {}
-
-    tab_list, tab_individual, tab_history = st.tabs([
-        L["tab_list"], L["tab_individual"], L["tab_history"]
-    ])
-
-    # 1. 📑 全廠員工薪資總表 (動態年月)
-    with tab_list:
-        st.markdown(f"### {dynamic_title_zh} `({dynamic_title_vn})`")
+        st.markdown("---")
         
-        employees = st.session_state.employee_db
-        if employees:
-            payroll_rows = []
-            for idx, emp in enumerate(employees, 1):
-                emp_id = emp.get("工號", f"EMP-{idx:03d}")
-                emp_name = emp.get("姓名", "未命名")
-                emp_dept = emp.get("部門", "管理部")
-                emp_title = emp.get("職稱", "一般員工")
-                
-                base_sal = float(emp.get("底薪", 6000000.0))
-                allowance = float(emp.get("津貼", 1500000.0))
-                
-                # 依據年月與工號讀取調整紀錄
-                adj_key = f"{selected_year}-{selected_month:02d}-{emp_id}"
-                adj = st.session_state.payroll_adjustments.get(adj_key, {})
-                ot_pay = adj.get("ot", 0.0)
-                extra_deduct = adj.get("deduct", 0.0)
-                
-                # 越南保險扣除計算 (BHXH 8% + BHYT 1.5% + BHTN 1% = 10.5%)
-                insurance_deduct = base_sal * 0.105
-                total_deduct = insurance_deduct + extra_deduct
-                net_pay = base_sal + allowance + ot_pay - total_deduct
+        with st.form("form_calc_payroll"):
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                e_code = st.text_input(L["lbl_emp_code"], value="EMP-001")
+                e_name = st.text_input(L["lbl_emp_name"], value="許福村")
+            with col2:
+                base_sal = st.number_input(L["lbl_base_salary"], min_value=0.0, value=15000000.0, step=500000.0)
+                allowance = st.number_input(L["lbl_allowance"], min_value=0.0, value=2000000.0, step=100000.0)
+            with col3:
+                ot_hrs = st.number_input(L["lbl_ot_hours"], min_value=0.0, value=10.0, step=1.0)
+                ot_rate = st.selectbox(L["lbl_ot_rate"], [1.5, 2.0])
 
-                payroll_rows.append({
-                    L["col_index"]: idx,
-                    L["col_no"]: emp_id,
-                    L["col_name"]: emp_name,
-                    L["col_dept"]: emp_dept,
-                    L["col_title"]: emp_title,
-                    L["col_base"]: f"{base_sal:,.0f} ₫",
-                    L["col_allowance"]: f"{allowance:,.0f} ₫",
-                    L["col_ot"]: f"{ot_pay:,.0f} ₫",
-                    L["col_deduct"]: f"{total_deduct:,.0f} ₫ (含保險)",
-                    L["col_net"]: f"{net_pay:,.0f} ₫"
-                })
-
-            st.dataframe(pd.DataFrame(payroll_rows), use_container_width=True)
+            # 越南法規保險扣除計算 (以底薪為基準)
+            hourly_rate = (base_sal / 26.0) / 8.0
+            ot_pay = ot_hrs * hourly_rate * ot_rate
             
-            if st.button(L["btn_export"]):
-                st.success(f"✅ {selected_year}年{selected_month}月全廠薪資總表已成功匯出為 Excel 檔案！")
-        else:
-            st.warning("目前無員工薪資記錄，請先至「員工個人檔案與人事管理」建立員工。")
+            bhxh = base_sal * 0.08    # 社會保險 8%
+            bhyt = base_sal * 0.015   # 醫療保險 1.5%
+            bhtn = base_sal * 0.01    # 失業保險 1%
+            total_deduction = bhxh + bhyt + bhtn
+            
+            net_pay = base_sal + ot_pay + allowance - total_deduction
 
-    # 2. 🔍 個別員工薪資微調 (動態年月)
-    with tab_individual:
-        st.markdown(f"### 🔍 個別員工薪資與津貼微調 (`{selected_year} 年 {selected_month} 月`)")
-        st.caption("您可以選擇特定員工與月份，調整其當月加班費或額外扣款。")
-        
-        if st.session_state.employee_db:
-            emp_options = {f"{e.get('工號')} - {e.get('姓名')} ({e.get('職稱')})": e for e in st.session_state.employee_db}
-            sel_emp_key = st.selectbox("選擇員工 (Select Employee)", list(emp_options.keys()))
-            target_emp = emp_options[sel_emp_key]
-            t_id = target_emp.get("工號")
+            st.markdown("##### 📊 計算結果預覽：")
+            m1, m2, m3 = st.columns(3)
+            m1.metric("本月加班費", f"{ot_pay:,.0f} VND")
+            m2.metric("保險扣除總額 (10.5%)", f"{total_deduction:,.0f} VND")
+            m3.metric(L["lbl_net_pay"], f"{net_pay:,.0f} VND")
 
-            adj_key = f"{selected_year}-{selected_month:02d}-{t_id}"
-            curr_adj = st.session_state.payroll_adjustments.get(adj_key, {"ot": 0.0, "deduct": 0.0})
+            if st.form_submit_button(L["btn_calc_and_save"], type="primary", use_container_width=True):
+                if engine:
+                    try:
+                        with engine.begin() as conn:
+                            conn.execute(text("""
+                                INSERT INTO public.payroll_records 
+                                (payroll_month, emp_code, emp_name, department, base_salary, overtime_pay, allowance, bhxh_deduction, bhyt_deduction, bhtn_deduction, net_salary)
+                                VALUES (:m, :code, :name, :dept, :bs, :ot, :al, :bhxh, :bhyt, :bhtn, :net)
+                                ON CONFLICT (payroll_month, emp_code) DO UPDATE
+                                SET base_salary = EXCLUDED.base_salary,
+                                    overtime_pay = EXCLUDED.overtime_pay,
+                                    allowance = EXCLUDED.allowance,
+                                    bhxh_deduction = EXCLUDED.bhxh_deduction,
+                                    bhyt_deduction = EXCLUDED.bhyt_deduction,
+                                    bhtn_deduction = EXCLUDED.bhtn_deduction,
+                                    net_salary = EXCLUDED.net_salary,
+                                    updated_at = CURRENT_TIMESTAMP;
+                            """), {
+                                "m": payroll_m, "code": e_code, "name": e_name, "dept": dept_name,
+                                "bs": base_sal, "ot": ot_pay, "al": allowance,
+                                "bhxh": bhxh, "bhyt": bhyt, "bhtn": bhtn, "net": net_pay
+                            })
+                        st.success(L["msg_success"])
+                    except Exception as e:
+                        st.error(f"❌ 寫入資料庫失敗: {str(e)}")
 
-            with st.form("form_adjust_payroll"):
-                st.info(f"正在調整 **{selected_year}年{selected_month}月** 員工：**{target_emp.get('姓名')}** (工號: `{t_id}`)")
-                
-                c1, c2 = st.columns(2)
-                with c1:
-                    adj_ot = st.number_input("加班費合計 (Overtime Pay in VND)", min_value=0.0, value=float(curr_adj.get("ot", 0.0)), step=100000.0)
-                with c2:
-                    adj_deduct = st.number_input("額外扣款/預支扣除 (Extra Deductions in VND)", min_value=0.0, value=float(curr_adj.get("deduct", 0.0)), step=50000.0)
-
-                if st.form_submit_button("💾 儲存該月份薪資調整紀錄", type="primary", use_container_width=True):
-                    st.session_state.payroll_adjustments[adj_key] = {
-                        "ot": adj_ot,
-                        "deduct": adj_deduct
-                    }
-                    st.success(f"✅ {selected_year}年{selected_month}月員工 `{target_emp.get('姓名')}` 薪資調整已儲存！")
-                    st.rerun()
-        else:
-            st.info("目前無員工資料可供調整。")
-
-    # 3. 📊 歷史薪資與會計帳務查詢
+    # ----------------------------------------------------
+    # 📊 Tab 2: 歷史薪資清冊查詢
+    # ----------------------------------------------------
     with tab_history:
-        st.markdown("### 📊 歷史薪資與會計傳票總額查詢 (Historical Payroll & Accounting)")
-        st.caption("歷年各月份全廠薪資總支出、保險總繳交金額與會計傳票歸檔查詢。")
-        
-        history_data = [
-            {"月份 (Month)": "2026-09", "總人數": len(st.session_state.employee_db), "薪資總支出 (VND)": "48,500,000 ₫", "保險總額 (VND)": "5,092,500 ₫", "會計狀態": "🟢 已結算過帳"},
-            {"月份 (Month)": "2026-08", "總人數": len(st.session_state.employee_db), "薪資總支出 (VND)": "47,800,000 ₫", "保險總額 (VND)": "5,019,000 ₫", "會計狀態": "🟢 已結算過帳"},
-            {"月份 (Month)": "2026-07", "總人數": len(st.session_state.employee_db), "薪資總支出 (VND)": "46,200,000 ₫", "保險總額 (VND)": "4,851,000 ₫", "會計狀態": "🟢 已結算過帳"}
-        ]
-        st.dataframe(pd.DataFrame(history_data), use_container_width=True)
+        st.markdown(f"#### {L['header_summary']}")
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    res = conn.execute(text("""
+                        SELECT payroll_month, emp_code, emp_name, department, base_salary, overtime_pay, allowance, (bhxh_deduction + bhyt_deduction + bhtn_deduction) as total_insurance, net_salary, status
+                        FROM public.payroll_records
+                        ORDER BY payroll_month DESC, emp_code ASC
+                    """))
+                    rows = res.fetchall()
+                    if rows:
+                        df_p = pd.DataFrame(rows, columns=["計薪月份", "工號", "姓名", "部門", "底薪", "加班費", "津貼", "保險扣除", "實發淨薪", "狀態"])
+                        st.dataframe(df_p, use_container_width=True)
+                    else:
+                        st.info("目前尚無歷史薪資紀錄。")
+            except Exception:
+                st.info("尚未讀取到歷史薪資紀錄。")
 
-# ----------------------------------------------------
-# 🔗 相容性進入點定義
-# ----------------------------------------------------
-def show(*args, **kwargs):
-    render_payroll_management_page(*args, **kwargs)
+def show(engine=None, lang="繁體中文", **kwargs):
+    render_payroll_management_page(engine=engine, lang=lang, **kwargs)
 
-def main(*args, **kwargs):
-    render_payroll_management_page(*args, **kwargs)
-
-def render_payroll_management(*args, **kwargs):
-    render_payroll_management_page(*args, **kwargs)
+def main(engine=None, lang="繁體中文", **kwargs):
+    render_payroll_management_page(engine=engine, lang=lang, **kwargs)
