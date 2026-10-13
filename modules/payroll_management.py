@@ -122,7 +122,7 @@ def init_payroll_db(engine):
                 );
             """))
 
-            # 2. 自動補齊所有欄位 (解決 total_gross, pos_allowance 等 column does not exist 報錯)
+            # 2. 自動補齊所有潛在缺少欄位 (包含 updated_at, created_at, total_gross 等)
             alter_cols = [
                 ("factory", "VARCHAR(100) DEFAULT '文房 (VP)'"),
                 ("base_salary", "NUMERIC(12,2) DEFAULT 0"),
@@ -144,7 +144,9 @@ def init_payroll_db(engine):
                 ("bhyt_deduction", "NUMERIC(12,2) DEFAULT 0"),
                 ("bhtn_deduction", "NUMERIC(12,2) DEFAULT 0"),
                 ("pit_tax", "NUMERIC(12,2) DEFAULT 0"),
-                ("advance_pay", "NUMERIC(12,2) DEFAULT 0")
+                ("advance_pay", "NUMERIC(12,2) DEFAULT 0"),
+                ("created_at", "TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"),
+                ("updated_at", "TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP")
             ]
             for col_name, col_type in alter_cols:
                 try:
@@ -278,8 +280,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                                     bhyt_deduction = EXCLUDED.bhyt_deduction,
                                     bhtn_deduction = EXCLUDED.bhtn_deduction,
                                     advance_pay = EXCLUDED.advance_pay,
-                                    net_salary = EXCLUDED.net_salary,
-                                    updated_at = CURRENT_TIMESTAMP;
+                                    net_salary = EXCLUDED.net_salary;
                             """), {
                                 "m": payroll_m, "code": e_code, "name": e_name, "dept": dept_name,
                                 "bs": base_sal, "pos": pos_allowance, "ev": eval_bonus, "gas": gas_allowance,
@@ -374,8 +375,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                                     women_allowance = EXCLUDED.women_allowance,
                                     spec_bonus = EXCLUDED.spec_bonus,
                                     total_gross = EXCLUDED.total_gross,
-                                    net_salary = EXCLUDED.net_salary,
-                                    updated_at = CURRENT_TIMESTAMP;
+                                    net_salary = EXCLUDED.net_salary;
                             """), rec)
                     st.success(f"🎉 成功批次匯入 {len(parsed_records)} 筆員工 2026/09 薪資與人事資料至 Supabase 資料庫！")
                     st.rerun()
