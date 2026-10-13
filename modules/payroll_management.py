@@ -40,7 +40,7 @@ PAYROLL_I18N = {
         "title": "💰 管理部 - 員工薪資計算與電子薪資單中心",
         "caption": "符合越南勞動法：支援批次匯入 Excel、6 大津貼、4 階梯加班費、社保/醫保扣繳與 1:1 電子薪資單。",
         "tab_calc": "🧮 單筆薪資核算",
-        "tab_import": "📤 批次匯入 Excel (建立人事與9月薪資)",
+        "tab_import": "📤 批次匯入 Excel (同步建立人事檔案與9月薪資)",
         "tab_slip": "📄 個人電子薪資單 (Phiếu lương)",
         "tab_history": "📊 歷史薪資清冊與發放紀錄",
         "lbl_month": "計薪月份 (YYYY-MM)",
@@ -85,7 +85,7 @@ def init_payroll_db(engine):
         return
     try:
         with engine.begin() as conn:
-            # 1. 建立基本資料表
+            # 1. 建立薪資表
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS public.payroll_records (
                     id SERIAL PRIMARY KEY,
@@ -122,7 +122,26 @@ def init_payroll_db(engine):
                 );
             """))
 
-            # 2. 自動補齊所有潛在缺少欄位 (包含 updated_at, created_at, total_gross 等)
+            # 2. 建立/補齊員工個人檔案主表 (employee_profiles)
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS public.employee_profiles (
+                    id SERIAL PRIMARY KEY,
+                    emp_code VARCHAR(50) UNIQUE NOT NULL,
+                    emp_name VARCHAR(100) NOT NULL,
+                    phone VARCHAR(50),
+                    id_card VARCHAR(100),
+                    factory VARCHAR(100) DEFAULT '西寧廠 (Tay Ninh)',
+                    department VARCHAR(100),
+                    position VARCHAR(100),
+                    attendance_type VARCHAR(100) DEFAULT '廠內固定員工 (Plant Fixed Staff)',
+                    system_role VARCHAR(100) DEFAULT '一般員工 (Staff)',
+                    base_salary NUMERIC(12,2) DEFAULT 0,
+                    status VARCHAR(50) DEFAULT '在職',
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+
             alter_cols = [
                 ("factory", "VARCHAR(100) DEFAULT '文房 (VP)'"),
                 ("base_salary", "NUMERIC(12,2) DEFAULT 0"),
@@ -250,6 +269,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 if engine:
                     try:
                         with engine.begin() as conn:
+                            # 1. 寫入薪資表
                             conn.execute(text("""
                                 INSERT INTO public.payroll_records 
                                 (payroll_month, emp_code, emp_name, department, factory, base_salary, pos_allowance, eval_bonus, 
@@ -289,6 +309,17 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                                 "net_f": network_fee, "att": att_bonus, "od": other_deduct, "gross": total_gross,
                                 "bhxh": bhxh, "bhyt": bhyt, "bhtn": bhtn, "adv": advance_pay, "net": net_pay
                             })
+
+                            # 2. 同步寫入/更新 員工個人檔案主表 (employee_profiles)
+                            conn.execute(text("""
+                                INSERT INTO public.employee_profiles (emp_code, emp_name, department, base_salary, factory)
+                                VALUES (:code, :name, :dept, :bs, '文房 (VP)')
+                                ON CONFLICT (emp_code) DO UPDATE
+                                SET emp_name = EXCLUDED.emp_name,
+                                    department = EXCLUDED.department,
+                                    base_salary = EXCLUDED.base_salary;
+                            """), {"code": e_code, "name": e_name, "dept": dept_name, "bs": base_sal})
+
                         st.success(L["msg_success"])
                         st.rerun()
                     except Exception as e:
@@ -298,8 +329,8 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
     # 📤 Tab 2: 批次匯入 Excel 薪資表與建立人事資料
     # ----------------------------------------------------
     with tab_import:
-        st.markdown("### 📤 批次匯入 Excel 薪資表 (自動建立人事與歷史薪資)")
-        st.caption("只需上傳公司 Excel 檔案 (例如 `Lương 09.2026.xls`)，系統會自動拆解文房、廠房與工程清冊，並寫入資料庫！")
+        st.markdown("### 📤 批次匯入 Excel 薪資表 (同步建立人事名冊與歷史薪資)")
+        st.caption("只需上傳公司 Excel 檔案 (例如 `Lương 09.2026.xls`)，系統會自動拆解文房、廠房與工程清冊，並同步寫入【人事名冊】與【薪資紀錄】！")
 
         uploaded_file = st.file_uploader("請選擇要匯入的 Excel 薪資檔案 (.xls / .xlsx)", type=["xls", "xlsx"])
         import_month = st.text_input("匯入薪資月份 (YYYY-MM)", value="2026-09")
@@ -310,9 +341,9 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 parsed_records = []
 
                 sheet_mapping = {
-                    "VAN PHONG": "文房 (VP)",
-                    "NHA XUONG": "廠房 (NX)",
-                    "CONG TRINH": "工程 (CT)"
+                    "VAN PHONG": "西寧廠 (Tay Ninh)",
+                    "NHA XUONG": "海防廠 (Hai Phong)",
+                    "CONG TRINH": "工程工地 (Site)"
                 }
 
                 for sheet_name, factory_label in sheet_mapping.items():
@@ -356,6 +387,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 if parsed_records and engine:
                     with engine.begin() as conn:
                         for rec in parsed_records:
+                            # 1. 寫入薪資表
                             conn.execute(text("""
                                 INSERT INTO public.payroll_records 
                                 (payroll_month, emp_code, emp_name, department, factory, base_salary, pos_allowance, eval_bonus, 
@@ -377,7 +409,25 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                                     total_gross = EXCLUDED.total_gross,
                                     net_salary = EXCLUDED.net_salary;
                             """), rec)
-                    st.success(f"🎉 成功批次匯入 {len(parsed_records)} 筆員工 2026/09 薪資與人事資料至 Supabase 資料庫！")
+
+                            # 2. 同步寫入/更新 員工個人檔案名冊 (employee_profiles)
+                            conn.execute(text("""
+                                INSERT INTO public.employee_profiles (emp_code, emp_name, department, factory, base_salary)
+                                VALUES (:code, :name, :dept, :factory, :bs)
+                                ON CONFLICT (emp_code) DO UPDATE
+                                SET emp_name = EXCLUDED.emp_name,
+                                    department = EXCLUDED.department,
+                                    factory = EXCLUDED.factory,
+                                    base_salary = EXCLUDED.base_salary;
+                            """), {
+                                "code": rec["code"],
+                                "name": rec["name"],
+                                "dept": rec["dept"],
+                                "factory": rec["factory"],
+                                "bs": rec["bs"]
+                            })
+
+                    st.success(f"🎉 成功批次匯入 {len(parsed_records)} 筆員工資料！已同步建立【現職員工名冊】與【2026/09 歷史薪資】。")
                     st.rerun()
                 elif not engine:
                     st.info(f"解析成功！共讀取到 {len(parsed_records)} 筆員工資料 (展示模式)。")
