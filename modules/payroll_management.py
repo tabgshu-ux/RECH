@@ -12,7 +12,6 @@ def parse_vn_num(val_str):
         return float(val_str)
     if not val_str:
         return 0.0
-    # 移除所有點號與逗號空格
     cleaned = str(val_str).replace(".", "").replace(",", "").replace("VND", "").strip()
     try:
         return float(cleaned)
@@ -44,7 +43,7 @@ PAYROLL_I18N = {
         "lbl_month": "計薪月份 (YYYY-MM)",
         "lbl_emp_code": "員工工號 / 人事編號",
         "lbl_emp_name": "員工姓名",
-        "lbl_dept": "所屬部門",
+        "lbl_dept": "所屬部門 / 職務",
         "lbl_factory": "工作廠區",
         "lbl_base_salary": "約定底薪 Lương cb (VND)",
         "lbl_standard_hours": "標準上班時數 (預設 208 小時)",
@@ -77,7 +76,7 @@ PAYROLL_I18N = {
         "lbl_month": "Tháng tính lương (YYYY-MM)",
         "lbl_emp_code": "Mã nhân viên (MNS)",
         "lbl_emp_name": "Tên nhân viên",
-        "lbl_dept": "Phòng ban",
+        "lbl_dept": "Bộ phận / Chức vụ",
         "lbl_factory": "Nhà máy",
         "lbl_base_salary": "Lương cơ bản (VND)",
         "lbl_standard_hours": "Số giờ LV chuẩn (208 giờ)",
@@ -110,7 +109,7 @@ PAYROLL_I18N = {
         "lbl_month": "Payroll Month (YYYY-MM)",
         "lbl_emp_code": "Employee Code",
         "lbl_emp_name": "Employee Name",
-        "lbl_dept": "Department",
+        "lbl_dept": "Department / Position",
         "lbl_factory": "Work Plant",
         "lbl_base_salary": "Base Salary (VND)",
         "lbl_standard_hours": "Standard Work Hours (208h)",
@@ -208,7 +207,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
         with c_m2:
             e_code = st.text_input(L["lbl_emp_code"], value="2007031201")
         with c_m3:
-            dept_name = st.selectbox(L["lbl_dept"], ["👔 管理部", "🛠️ 工程部", "🏭 生產部", "📈 總經理室", "💻 資訊部"])
+            dept_name = st.selectbox(L["lbl_dept"], ["PGĐ BP Tài vụ (財務部 副理)", "CQ Thiết kế (設計主管)", "GĐ Thiết Kế (設計經理)", "CQ hành chính (行政主管)", "CQ Tính Toán (精算主管)"])
         with c_m4:
             st.text_input(L["lbl_factory"], value="西寧廠 (Tay Ninh)", disabled=True)
 
@@ -218,7 +217,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             st.markdown("##### 1️⃣ 基本薪資與 6 大津貼項目 (Lương & Phụ cấp) - 採越南 '.' 千位分隔")
             col1, col2, col3 = st.columns(3)
             with col1:
-                e_name = st.text_input(L["lbl_emp_name"], value="NGUYỄN THỊ TUYẾT NHUNG")
+                e_name = st.text_input(L["lbl_emp_name"], value="NGUYỄN THỊ TUYẾT NHUNG (阮氏雪絨)")
                 str_base_sal = st.text_input(L["lbl_base_salary"], value="13.507.200")
                 str_pos_allowance = st.text_input(L["lbl_allowance_pos"], value="3.000.000")
             with col2:
@@ -279,7 +278,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             net_pay = total_gross - total_insurance - advance_pay
 
             st.markdown("---")
-            st.markdown("##### 📊 薪資試算精準結果：")
+            st.markdown("##### 📊 薪資試算精準結果 (越南法規 '.' 千位符號格式)：")
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("上班工工資 (Cộng lương)", fmt_vn_curr(work_salary))
             m2.metric("加班費總額 (Tăng ca)", fmt_vn_curr(ot_pay))
@@ -338,36 +337,141 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.success("✅ 試算完成（展示模式）。")
 
     # ----------------------------------------------------
-    # 📄 Tab 2: 個人電子薪資單 (Phiếu lương)
+    # 📄 Tab 2: 1:1 還原 Excel 文件「CHI TIẾT LƯƠNG」個人電子薪資單
     # ----------------------------------------------------
     with tab_slip:
-        st.markdown("### 📄 員工個人電子薪資單預覽 (Phiếu Lương Cá Nhân)")
-        st.caption("適應手機端螢幕展示，符合越南財政部 (Thông tư 200) 格式規範。")
+        st.markdown("### 📄 1:1 還原『CHI TIẾT LƯƠNG』個人電子薪資單")
+        st.caption("完整比照上傳之 Excel 薪資文件樣式與排版 (適應手機與電腦螢幕展示)。")
 
-        total_allowance_sum = pos_allowance + eval_bonus + gas_allowance + women_allowance + spec_bonus
+        # 格式化所有顯示數值
+        m_formatted = payroll_m.replace("-", ".") if "-" in payroll_m else payroll_m
 
-        with st.container(border=True):
-            st.markdown("<h3 style='text-align: center; color: #1E3A8A;'>CÔNG TY TNHH CN DŨ PHONG</h3>", unsafe_allow_html=True)
-            st.markdown("<h4 style='text-align: center;'>PHIẾU LƯƠNG THÁNG " + str(payroll_m) + " (TÂY NINH)</h4>", unsafe_allow_html=True)
-            st.markdown("---")
+        slip_html = f"""
+        <div style="border: 2px solid #1E3A8A; padding: 20px; border-radius: 8px; background-color: #FFFFFF; font-family: 'Segoe UI', Arial, sans-serif; max-width: 850px; margin: auto; color: #111;">
+            <!-- 公司抬頭與標題 -->
+            <div style="text-align: center; border-bottom: 2px solid #1E3A8A; padding-bottom: 10px; margin-bottom: 15px;">
+                <h2 style="margin: 0; color: #1E3A8A; font-weight: bold; font-size: 22px;">REETECH INDUSTRIAL CO., LTD</h2>
+                <h3 style="margin: 5px 0 0 0; color: #333; font-size: 18px;">領薪資明細／CHI TIẾT LƯƠNG T.{m_formatted}</h3>
+            </div>
 
-            col_a, col_b = st.columns(2)
-            with col_a:
-                st.write("**MNS / 工號:** `" + str(e_code) + "`")
-                st.write("**Họ tên / 姓名:** **" + str(e_name) + "**")
-                st.write("**Bộ phận / 部門:** " + str(dept_name))
-                st.write("**Số giờ thực làm / 實際時數:** " + str(act_hours) + " 小時")
-            with col_b:
-                st.write("**Lương cb / 底薪:** " + fmt_vn_curr(base_sal))
-                st.write("**Tổng phụ cấp / 各項津貼:** " + fmt_vn_curr(total_allowance_sum))
-                st.write("**Chuyên cần / 全勤獎金:** " + fmt_vn_curr(att_bonus))
-                st.write("**Tiền cơm / 伙食費:** " + fmt_vn_curr(meal_fee))
+            <!-- 基本資料列 -->
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 14px;">
+                <tr style="background-color: #F3F4F6;">
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold; width: 20%;">人事編號<br><span style="font-size: 12px; color: #555;">Mã nhân viên</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; width: 30%; color: #1E3A8A; font-weight: bold;">{e_code}</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold; width: 20%;">姓名<br><span style="font-size: 12px; color: #555;">Họ tên</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; width: 30%; font-weight: bold; font-size: 15px;">{e_name}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">職務<br><span style="font-size: 12px; color: #555;">Chức vụ</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{dept_name}</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">底薪<br><span style="font-size: 12px; color: #555;">Lương CB</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">{fmt_vn_num(base_sal)}</td>
+                </tr>
+                <tr style="background-color: #F8FAFC;">
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">職務津貼<br><span style="font-size: 12px; color: #555;">PC chức vụ</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{fmt_vn_num(pos_allowance)}</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">評核獎金<br><span style="font-size: 12px; color: #555;">Tiền thưởng đánh giá</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{fmt_vn_num(eval_bonus)}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">出差油費<br><span style="font-size: 12px; color: #555;">PC tiền xăng</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{fmt_vn_num(gas_allowance)}</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">女性津貼<br><span style="font-size: 12px; color: #555;">Phụ cấp phụ nữ</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{fmt_vn_num(women_allowance)}</td>
+                </tr>
+                <tr style="background-color: #F8FAFC;">
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">上班標準時數<br><span style="font-size: 12px; color: #555;">SG làm việc TC</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{std_hours:.0f} 小時</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">請假時數<br><span style="font-size: 12px; color: #555;">Nghỉ phép</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">0 小時</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">上班實際時數<br><span style="font-size: 12px; color: #555;">SG làm việc TT</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{act_hours:.1f} 小時</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold; color: #1E3A8A;">合計／Cộng</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold; color: #1E3A8A;">{fmt_vn_num(work_salary)}</td>
+                </tr>
+            </table>
 
-            st.markdown("---")
-            col_c, col_d, col_e = st.columns(3)
-            col_c.metric("Tổng lương (應領總計)", fmt_vn_curr(total_gross))
-            col_d.metric("BHXH/BHYT/BHTN (保險扣款)", fmt_vn_curr(total_insurance))
-            col_e.metric("Thực lãnh (實領金額)", fmt_vn_curr(net_pay), delta="🟢 已核對無誤")
+            <!-- 加班費與補助 -->
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 14px;">
+                <tr style="background-color: #EFF6FF;">
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold; width: 25%;">加班時數 SG Tăng ca*1.5</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; width: 25%;">{ot_15} 小時</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold; width: 25%;">加班時數 Tăng ca*2.0</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; width: 25%;">{ot_20} 小時</td>
+                </tr>
+                <tr style="background-color: #EFF6FF;">
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">加班時數 Tăng ca*1.95</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{ot_195} 小時</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">加班時數 Tăng ca*3.0</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{ot_30} 小時</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold; color: #1E3A8A;">加班合計／Cộng</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold; color: #1E3A8A;">{fmt_vn_num(ot_pay)}</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">績效獎金<br><span style="font-size: 12px; color: #555;">Thưởng N.Suất</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{fmt_vn_num(prod_bonus)}</td>
+                </tr>
+                <tr style="background-color: #F8FAFC;">
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">餐費<br><span style="font-size: 12px; color: #555;">Tiền cơm</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{fmt_vn_num(meal_fee)}</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">電話／網路費補貼<br><span style="font-size: 12px; color: #555;">PC phí đt/mạng</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{fmt_vn_num(network_fee)}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">全勤<br><span style="font-size: 12px; color: #555;">Chuyên cần</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{fmt_vn_num(att_bonus)}</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">專業獎金<br><span style="font-size: 12px; color: #555;">Tiền thưởng chuyên môn</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{fmt_vn_num(spec_bonus)}</td>
+                </tr>
+                <tr style="background-color: #FEF3C7; font-size: 15px;">
+                    <td colspan="2" style="padding: 8px; border: 1px solid #CBD5E1; font-weight: bold; color: #92400E; text-align: right;">Tổng lương／總計：</td>
+                    <td colspan="2" style="padding: 8px; border: 1px solid #CBD5E1; font-weight: bold; color: #92400E; font-size: 16px;">{fmt_vn_curr(total_gross)}</td>
+                </tr>
+            </table>
+
+            <!-- 扣除款項 (KHOẢN TRỪ) -->
+            <div style="background-color: #FEE2E2; padding: 6px; font-weight: bold; color: #991B1B; border: 1px solid #FCA5A5; border-bottom: none; margin-top: 10px; font-size: 14px;">
+                KHOẢN TRỪ／扣除款項
+            </div>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 14px;">
+                <tr>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold; width: 25%;">所得稅<br><span style="font-size: 12px; color: #555;">TN cá nhân</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; width: 25%;">0</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold; width: 25%;">社會保險<br><span style="font-size: 12px; color: #555;">BHXH (8%)</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; width: 25%;">{fmt_vn_num(bhxh)}</td>
+                </tr>
+                <tr style="background-color: #F8FAFC;">
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">醫療保險<br><span style="font-size: 12px; color: #555;">BHYT (1.5%)</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{fmt_vn_num(bhyt)}</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">失業保險<br><span style="font-size: 12px; color: #555;">BH Thất nghiệp (1%)</span></td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">{fmt_vn_num(bhtn)}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">Nộp thừa thuế TNCN</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">0</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1; font-weight: bold;">Trừ thuế TNCN</td>
+                    <td style="padding: 6px; border: 1px solid #CBD5E1;">0</td>
+                </tr>
+            </table>
+
+            <!-- 實領金額 (THỰC LÃNH) -->
+            <div style="background-color: #10B981; color: white; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 15px;">
+                <span style="font-size: 16px; font-weight: bold; display: block;">實領／THỰC LÃNH</span>
+                <span style="font-size: 26px; font-weight: bold; font-family: monospace;">{fmt_vn_curr(net_pay)}</span>
+            </div>
+
+            <!-- 底部公司規定警語 (Excel 1:1 警語) -->
+            <div style="border-top: 1px dashed #94A3B8; padding-top: 10px; font-size: 12px; color: #475569; text-align: center; font-style: italic; line-height: 1.5;">
+                Nhân viên phải quý trọng công việc, làm việc có tinh thần trách nhiệm.<br>
+                Không được làm những việc vi phạm pháp luật và qui định công ty.
+            </div>
+        </div>
+        """
+        
+        st.components.v1.html(slip_html, height=880, scrolling=True)
 
     # ----------------------------------------------------
     # 📊 Tab 3: 歷史薪資清冊查詢
