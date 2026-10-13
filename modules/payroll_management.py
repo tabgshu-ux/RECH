@@ -228,26 +228,18 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             # ----------------------------------------------------
             # 🧮 Excel 精確算式核心邏輯
             # ----------------------------------------------------
-            # 1. 上班工時工資 (Cộng lương làm việc)
             hourly_base_rate = (base_sal + pos_allowance + eval_bonus + gas_allowance + women_allowance + spec_bonus) / std_hours
             work_salary = hourly_base_rate * act_hours
 
-            # 2. 四階梯加班費 (Tổng tiền tăng ca)
-            ot_pay = (ot_15 * hourly_base_rate * 1.5) + \
-                     (ot_195 * hourly_base_rate * 1.95) + \
-                     (ot_20 * hourly_base_rate * 2.0) + \
-                     (ot_30 * hourly_base_rate * 3.0)
+            ot_pay = (ot_15 * hourly_base_rate * 1.5) + (ot_195 * hourly_base_rate * 1.95) + (ot_20 * hourly_base_rate * 2.0) + (ot_30 * hourly_base_rate * 3.0)
 
-            # 3. 應領薪資總額 (Tổng lương)
             total_gross = work_salary + ot_pay + meal_fee + prod_bonus + network_fee + att_bonus - other_deduct
 
-            # 4. 保險扣費 (BHXH 8%, BHYT 1.5%, BHTN 1%) - 以底薪為基準
             bhxh = base_sal * 0.08
             bhyt = base_sal * 0.015
             bhtn = base_sal * 0.01
             total_insurance = bhxh + bhyt + bhtn
 
-            # 5. 實領金額 (Thực lãnh)
             net_pay = total_gross - total_insurance - advance_pay
 
             st.markdown("---")
@@ -256,4 +248,117 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             m1.metric("上班工工資 (Cộng lương)", "{:,.0f} VND".format(work_salary))
             m2.metric("加班費總額 (Tăng ca)", "{:,.0f} VND".format(ot_pay))
             m3.metric("應領總額 (Tổng lương)", "{:,.0f} VND".format(total_gross))
-            m4.metric(L["lbl_net_pay"], "{:,.0f} VND".format
+            m4.metric(L["lbl_net_pay"], "{:,.0f} VND".format(net_pay))
+
+            if st.form_submit_button(L["btn_calc_and_save"], type="primary", use_container_width=True):
+                if engine:
+                    try:
+                        with engine.begin() as conn:
+                            conn.execute(text("""
+                                INSERT INTO public.payroll_records 
+                                (payroll_month, emp_code, emp_name, department, factory, base_salary, pos_allowance, eval_bonus, 
+                                 gas_allowance, women_allowance, spec_bonus, actual_hours, work_salary, overtime_pay, 
+                                 meal_fee, prod_bonus, network_fee, attendance_bonus, other_deduct, total_gross, 
+                                 bhxh_deduction, bhyt_deduction, bhtn_deduction, advance_pay, net_salary)
+                                VALUES (:m, :code, :name, :dept, '西寧廠 (Tay Ninh)', :bs, :pos, :ev, :gas, :wom, :spec, :act_h,
+                                        :ws, :ot, :meal, :prod, :net_f, :att, :od, :gross, :bhxh, :bhyt, :bhtn, :adv, :net)
+                                ON CONFLICT (payroll_month, emp_code) DO UPDATE
+                                SET emp_name = EXCLUDED.emp_name,
+                                    department = EXCLUDED.department,
+                                    base_salary = EXCLUDED.base_salary,
+                                    pos_allowance = EXCLUDED.pos_allowance,
+                                    eval_bonus = EXCLUDED.eval_bonus,
+                                    gas_allowance = EXCLUDED.gas_allowance,
+                                    women_allowance = EXCLUDED.women_allowance,
+                                    spec_bonus = EXCLUDED.spec_bonus,
+                                    actual_hours = EXCLUDED.actual_hours,
+                                    work_salary = EXCLUDED.work_salary,
+                                    overtime_pay = EXCLUDED.overtime_pay,
+                                    meal_fee = EXCLUDED.meal_fee,
+                                    prod_bonus = EXCLUDED.prod_bonus,
+                                    network_fee = EXCLUDED.network_fee,
+                                    attendance_bonus = EXCLUDED.attendance_bonus,
+                                    other_deduct = EXCLUDED.other_deduct,
+                                    total_gross = EXCLUDED.total_gross,
+                                    bhxh_deduction = EXCLUDED.bhxh_deduction,
+                                    bhyt_deduction = EXCLUDED.bhyt_deduction,
+                                    bhtn_deduction = EXCLUDED.bhtn_deduction,
+                                    advance_pay = EXCLUDED.advance_pay,
+                                    net_salary = EXCLUDED.net_salary,
+                                    updated_at = CURRENT_TIMESTAMP;
+                            """), {
+                                "m": payroll_m, "code": e_code, "name": e_name, "dept": dept_name,
+                                "bs": base_sal, "pos": pos_allowance, "ev": eval_bonus, "gas": gas_allowance,
+                                "wom": women_allowance, "spec": spec_bonus, "act_h": act_hours,
+                                "ws": work_salary, "ot": ot_pay, "meal": meal_fee, "prod": prod_bonus,
+                                "net_f": network_fee, "att": att_bonus, "od": other_deduct, "gross": total_gross,
+                                "bhxh": bhxh, "bhyt": bhyt, "bhtn": bhtn, "adv": advance_pay, "net": net_pay
+                            })
+                        st.success(L["msg_success"])
+                        st.rerun()
+                    except Exception as e:
+                        st.error("❌ 寫入資料庫失敗: " + str(e))
+                else:
+                    st.success("✅ 試算完成（展示模式）。")
+
+    # ----------------------------------------------------
+    # 📄 Tab 2: 個人電子薪資單 (Phiếu lương)
+    # ----------------------------------------------------
+    with tab_slip:
+        st.markdown("### 📄 員工個人電子薪資單預覽 (Phiếu Lương Cá Nhân)")
+        st.caption("適應手機端螢幕展示，讓員工可隨時登入查閱個人當月實領薪資細項。")
+
+        total_allowance_sum = pos_allowance + eval_bonus + gas_allowance + women_allowance + spec_bonus
+
+        with st.container(border=True):
+            st.markdown("<h3 style='text-align: center; color: #1E3A8A;'>CÔNG TY TNHH CN DŨ PHONG</h3>", unsafe_allow_html=True)
+            st.markdown("<h4 style='text-align: center;'>PHIẾU LƯƠNG THÁNG " + str(payroll_m) + " (TÂY NINH)</h4>", unsafe_allow_html=True)
+            st.markdown("---")
+
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.write("**MNS / 工號:** `" + str(e_code) + "`")
+                st.write("**Họ tên / 姓名:** **" + str(e_name) + "**")
+                st.write("**Bộ phận / 部門:** " + str(dept_name))
+                st.write("**Số giờ thực làm / 實際時數:** " + str(act_hours) + " 小時")
+            with col_b:
+                st.write("**Lương cb / 底薪:** " + "{:,.0f} VND".format(base_sal))
+                st.write("**Tổng phụ cấp / 各項津貼:** " + "{:,.0f} VND".format(total_allowance_sum))
+                st.write("**Chuyên cần / 全勤獎金:** " + "{:,.0f} VND".format(att_bonus))
+                st.write("**Tiền cơm / 伙食費:** " + "{:,.0f} VND".format(meal_fee))
+
+            st.markdown("---")
+            col_c, col_d, col_e = st.columns(3)
+            col_c.metric("Tổng lương (應領總計)", "{:,.0f} VND".format(total_gross))
+            col_d.metric("BHXH/BHYT/BHTN (保險扣款)", "{:,.0f} VND".format(total_insurance))
+            col_e.metric("Thực lãnh (實領金額)", "{:,.0f} VND".format(net_pay), delta="🟢 已核對無誤")
+
+    # ----------------------------------------------------
+    # 📊 Tab 3: 歷史薪資清冊查詢
+    # ----------------------------------------------------
+    with tab_history:
+        st.markdown("#### " + str(L['header_summary']))
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    res = conn.execute(text("""
+                        SELECT payroll_month, emp_code, emp_name, department, factory, base_salary, work_salary, overtime_pay, total_gross, (bhxh_deduction + bhyt_deduction + bhtn_deduction) as total_insurance, net_salary, status
+                        FROM public.payroll_records
+                        ORDER BY payroll_month DESC, emp_code ASC
+                    """))
+                    rows = res.fetchall()
+                    if rows:
+                        df_p = pd.DataFrame(rows, columns=["計薪月份", "工號", "姓名", "部門", "廠區", "底薪", "上班工資", "加班費", "應領總額", "保險扣除", "實發淨薪", "狀態"])
+                        st.dataframe(df_p, use_container_width=True)
+                    else:
+                        st.info("目前尚無歷史薪資紀錄。")
+            except Exception:
+                st.info("尚未讀取到歷史薪資紀錄。")
+        else:
+            st.info("目前展示模式，請連接 PostgreSQL / Supabase 以讀取歷史紀錄。")
+
+def show(engine=None, lang="繁體中文", **kwargs):
+    render_payroll_management_page(engine=engine, lang=lang, **kwargs)
+
+def main(engine=None, lang="繁體中文", **kwargs):
+    render_payroll_management_page(engine=engine, lang=lang, **kwargs)
