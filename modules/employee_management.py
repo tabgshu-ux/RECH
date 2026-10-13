@@ -8,7 +8,7 @@ import datetime
 EMP_I18N = {
     "繁體中文": {
         "title": "👤 管理部 - 員工個人檔案與人事管理中心",
-        "caption": "數據已全面與 Supabase 雲端資料庫同步，雲端伺服器重啟或休眠資料亦不遺失。",
+        "caption": "管理全公司在職員工名冊、離職歷史檔案、越南勞動法合規與外籍幹部護照/暫住證證件管理。",
         "tab_add_vn": "🇻🇳 新增越南員工",
         "tab_add_foreign": "🇹🇼🇨🇳 新增外派員工",
         "tab_edit": "✏️ 修改員工資料",
@@ -44,8 +44,8 @@ EMP_I18N = {
         "lbl_role": "系統權限角色 *",
         "lbl_addr_perm": "戶籍地址 / 原籍地址",
         "lbl_addr_temp": "越南現住地址 (Temporary Address)",
-        "btn_add": "🚀 立即新增員工並儲存至雲端",
-        "btn_update": "💾 儲存修改後員工資料至 Supabase",
+        "btn_add": "🚀 立即新增員工並建立檔案",
+        "btn_update": "💾 儲存修改後員工資料",
         "btn_archive": "📂 將此員工辦理離職歸檔",
         "btn_reactivate": "🔄 辦理回鍋復職 (Reactivate)",
         "btn_hard_delete": "🔥 徹底刪除帳號 (僅適用於重複建檔錯誤)",
@@ -64,7 +64,7 @@ EMP_I18N = {
     },
     "Tiếng Việt": {
         "title": "🏢 Quản lý Nhân sự & Hồ sơ Nhân viên",
-        "caption": "Dữ liệu được đồng bộ trực tiếp với Supabase Cloud Database.",
+        "caption": "Quản lý nhân viên, hộ chiếu, thẻ tạm trú và phân quyền.",
         "tab_add_vn": "🇻🇳 Thêm NV Việt Nam",
         "tab_add_foreign": "🇹🇼🇨🇳 Thêm Cán bộ Nước ngoài",
         "tab_edit": "✏️ Sửa Thông tin",
@@ -120,7 +120,7 @@ EMP_I18N = {
     },
     "English": {
         "title": "👤 Management - Employee Profile & HR Center",
-        "caption": "Data is synchronized with Supabase Cloud DB.",
+        "caption": "Manage active employees, passports, TRC cards, and roles.",
         "tab_add_vn": "🇻🇳 Add VN Employee",
         "tab_add_foreign": "🇹🇼🇨🇳 Add Foreign Staff",
         "tab_edit": "✏️ Edit Profile",
@@ -206,56 +206,113 @@ ROLE_I18N = {
     }
 }
 
-# ----------------------------------------------------
-# ☁️ Supabase / 本地記憶體 雙向同步核心函式
-# ----------------------------------------------------
-def load_employees_data(engine=None):
-    """優先從 Supabase 讀取資料；若無資料庫連線則讀取 session_state 預設資料"""
-    default_employees = [
-        {"工號": "TW-001", "姓名": "李佑路", "電話": "+886-912-345-678", "國籍": "台灣 (Taiwan)", "身分證號": "", "護照號碼": "312345678", "暫住證號": "TRC-VN-888888", "社保證號": "N/A", "投保醫院": "N/A", "廠區": "西寧廠 (Tay Ninh)", "部門": "總經理室", "職稱": "董事長", "出勤性質": "👑 免打卡高階主管 (Exempt Executive)", "戶籍地址": "台北市信義路五段7號", "現住地址": "Tay Ninh, Vietnam", "角色": "admin", "密碼": "123456", "must_change_password": False, "狀態": "🟢 在職 (Active)"},
-        {"工號": "TW-002", "姓名": "陳智賢", "電話": "+84 0918-999-080", "國籍": "台灣 (Taiwan)", "身分證號": "", "護照號碼": "1111111", "暫住證號": "1111111", "社保證號": "N/A", "投保醫院": "區源商務醫療險", "廠區": "西寧廠 (Tay Ninh)", "部門": "總經理室", "職稱": "總經理", "出勤性質": "👑 免打卡高階主管 (Exempt Executive)", "戶籍地址": "台中", "現住地址": "7郡", "角色": "generalmanager", "密碼": "123456", "must_change_password": False, "狀態": "🟢 在職 (Active)"},
-        {"工號": "TW-003", "姓名": "副總經理", "電話": "+886-987-654-321", "國籍": "台灣 (Taiwan)", "身分證號": "", "護照號碼": "2222222", "暫住證號": "TRC-VN-222222", "社保證號": "N/A", "投保醫院": "國際商務醫療險", "廠區": "西寧廠 (Tay Ninh)", "部門": "總經理室", "職稱": "副總經理", "出勤性質": "👑 免打卡高階主管 (Exempt Executive)", "戶籍地址": "台灣", "現住地址": "Tay Ninh, Vietnam", "角色": "vicemanager", "密碼": "123456", "must_change_password": False, "狀態": "🟢 在職 (Active)"},
-        {"工號": "TW-004", "姓名": "許福村", "電話": "+84-900-000-000", "國籍": "台灣 (Taiwan)", "身分證號": "", "護照號碼": "9999999", "暫住證號": "TRC-VN-999999", "社保證號": "N/A", "投保醫院": "國際商務醫療險", "廠區": "西寧廠 (Tay Ninh)", "部門": "管理部", "職稱": "經理 / 資訊主管", "出勤性質": "👑 免打卡高階主管 (Exempt Executive)", "戶籍地址": "台灣", "現住地址": "Tay Ninh, Vietnam", "角色": "manager", "密碼": "123456", "must_change_password": False, "狀態": "🟢 在職 (Active)"},
-        {"工號": "VN-002", "姓名": "Nguyễn Văn Quý", "電話": "+84-901-234-567", "國籍": "越南 (Vietnam)", "身分證號": "079095012345", "護照號碼": "", "暫住證號": "", "社保證號": "7912345678", "投保醫院": "Bệnh viện Đa khoa Xuyên Á", "廠區": "海防廠 (Hai Phong)", "部門": "管理部", "職稱": "財務主管", "出勤性質": "廠內固定員工 (Plant Fixed Staff)", "戶籍地址": "District 1, HCMC", "現住地址": "Hai Phong, Vietnam", "角色": "manager", "密碼": "123456", "must_change_password": True, "狀態": "🟢 在職 (Active)"}
-    ]
-
-    if engine:
-        try:
-            query = "SELECT * FROM employees ORDER BY emp_code ASC;"
-            df = pd.read_sql(query, engine)
-            if not df.empty:
-                # 轉回 Streamlit standard 格式
-                db_list = []
-                for _, row in df.iterrows():
-                    db_list.append({
-                        "工號": row.get("emp_code", ""),
-                        "姓名": row.get("name", ""),
-                        "電話": row.get("phone", ""),
-                        "國籍": row.get("country", ""),
-                        "身分證號": row.get("id_card", ""),
-                        "護照號碼": row.get("passport", ""),
-                        "暫住證號": row.get("trc", ""),
-                        "社保證號": row.get("bhxh", ""),
-                        "投保醫院": row.get("hospital", ""),
-                        "廠區": row.get("factory", ""),
-                        "部門": row.get("department", ""),
-                        "職稱": row.get("title", ""),
-                        "出勤性質": row.get("attendance_type", ""),
-                        "戶籍地址": row.get("perm_address", ""),
-                        "現住地址": row.get("temp_address", ""),
-                        "角色": row.get("role", "staff"),
-                        "密碼": row.get("password", "123456"),
-                        "must_change_password": False,
-                        "狀態": row.get("status", "🟢 在職 (Active)")
-                    })
-                return db_list
-        except Exception:
-            pass
-
-    # 備援寫入 session_state
-    if "employee_db" not in st.session_state:
-        st.session_state.employee_db = default_employees
-    return st.session_state.employee_db
+DEFAULT_EMPLOYEES = [
+    {
+        "工號": "TW-001",
+        "姓名": "李佑路",
+        "電話": "+886-912-345-678",
+        "國籍": "台灣 (Taiwan)",
+        "身分證號": "",
+        "護照號碼": "312345678",
+        "暫住證號": "TRC-VN-888888",
+        "社保證號": "N/A",
+        "投保醫院": "N/A",
+        "廠區": "西寧廠 (Tay Ninh)",
+        "部門": "總經理室",
+        "職稱": "董事長",
+        "出勤性質": "👑 免打卡高階主管 (Exempt Executive)",
+        "戶籍地址": "台北市信義路五段7號",
+        "現住地址": "Tay Ninh, Vietnam",
+        "角色": "admin",
+        "密碼": "123456",
+        "must_change_password": False,
+        "狀態": "🟢 在職 (Active)"
+    },
+    {
+        "工號": "TW-002",
+        "姓名": "陳智賢",
+        "電話": "+84 0918-999-080",
+        "國籍": "台灣 (Taiwan)",
+        "身分證號": "",
+        "護照號碼": "1111111",
+        "暫住證號": "1111111",
+        "社保證號": "N/A",
+        "投保醫院": "區源商務醫療險",
+        "廠區": "西寧廠 (Tay Ninh)",
+        "部門": "總經理室",
+        "職稱": "總經理",
+        "出勤性質": "👑 免打卡高階主管 (Exempt Executive)",
+        "戶籍地址": "台中",
+        "現住地址": "7郡",
+        "角色": "generalmanager",
+        "密碼": "123456",
+        "must_change_password": False,
+        "狀態": "🟢 在職 (Active)"
+    },
+    {
+        "工號": "TW-003",
+        "姓名": "副總經理",
+        "電話": "+886-987-654-321",
+        "國籍": "台灣 (Taiwan)",
+        "身分證號": "",
+        "護照號碼": "2222222",
+        "暫住證號": "TRC-VN-222222",
+        "社保證號": "N/A",
+        "投保醫院": "國際商務醫療險",
+        "廠區": "西寧廠 (Tay Ninh)",
+        "部門": "總經理室",
+        "職稱": "副總經理",
+        "出勤性質": "👑 免打卡高階主管 (Exempt Executive)",
+        "戶籍地址": "台灣",
+        "現住地址": "Tay Ninh, Vietnam",
+        "角色": "vicemanager",
+        "密碼": "123456",
+        "must_change_password": False,
+        "狀態": "🟢 在職 (Active)"
+    },
+    {
+        "工號": "TW-004",
+        "姓名": "許福村",
+        "電話": "+84-900-000-000",
+        "國籍": "台灣 (Taiwan)",
+        "身分證號": "",
+        "護照號碼": "9999999",
+        "暫住證號": "TRC-VN-999999",
+        "社保證號": "N/A",
+        "投保醫院": "國際商務醫療險",
+        "廠區": "西寧廠 (Tay Ninh)",
+        "部門": "管理部",
+        "職稱": "經理 / 資訊主管",
+        "出勤性質": "👑 免打卡高階主管 (Exempt Executive)",
+        "戶籍地址": "台灣",
+        "現住地址": "Tay Ninh, Vietnam",
+        "角色": "manager",
+        "密碼": "123456",
+        "must_change_password": False,
+        "狀態": "🟢 在職 (Active)"
+    },
+    {
+        "工號": "VN-002",
+        "姓名": "Nguyễn Văn Quý",
+        "電話": "+84-901-234-567",
+        "國籍": "越南 (Vietnam)",
+        "身分證號": "079095012345",
+        "護照號碼": "",
+        "暫住證號": "",
+        "社保證號": "7912345678",
+        "投保醫院": "Bệnh viện Đa khoa Xuyên Á",
+        "廠區": "海防廠 (Hai Phong)",
+        "部門": "管理部",
+        "職稱": "財務主管",
+        "出勤性質": "廠內固定員工 (Plant Fixed Staff)",
+        "戶籍地址": "District 1, HCMC",
+        "現住地址": "Hai Phong, Vietnam",
+        "角色": "manager",
+        "密碼": "123456",
+        "must_change_password": True,
+        "狀態": "🟢 在職 (Active)"
+    }
+]
 
 def render_employee_management(engine=None, t=None, lang="繁體中文", **kwargs):
     active_lang = lang if lang in EMP_I18N else "繁體中文"
@@ -265,13 +322,36 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 載入資料 (全雲端同步)
-    st.session_state.employee_db = load_employees_data(engine)
+    # 安全初始化 session_state
+    if "employee_db" not in st.session_state or not isinstance(st.session_state.employee_db, list) or len(st.session_state.employee_db) == 0:
+        st.session_state.employee_db = list(DEFAULT_EMPLOYEES)
+    else:
+        # 確保核心預設名單始終存在
+        existing_codes = [e["工號"] for e in st.session_state.employee_db]
+        for def_emp in DEFAULT_EMPLOYEES:
+            if def_emp["工號"] not in existing_codes:
+                st.session_state.employee_db.append(def_emp)
+
+    # 確保每個物件的欄位完整
+    for e in st.session_state.employee_db:
+        if "狀態" not in e: e["狀態"] = "🟢 在職 (Active)"
+        if "出勤性質" not in e: e["出勤性質"] = "廠內固定員工 (Plant Fixed Staff)"
+        if "職稱" not in e: e["職稱"] = "一般員工"
+        if "電話" not in e: e["電話"] = "+84-900-000-000"
+        if "國籍" not in e: e["國籍"] = "越南 (Vietnam)"
+        if "身分證號" not in e: e["身分證號"] = ""
+        if "護照號碼" not in e: e["護照號碼"] = ""
+        if "暫住證號" not in e: e["暫住證號"] = ""
+        if "社保證號" not in e: e["社保證號"] = ""
+        if "投保醫院" not in e: e["投保醫院"] = ""
+        if "戶籍地址" not in e: e["戶籍地址"] = ""
+        if "現住地址" not in e: e["現住地址"] = ""
 
     tab_add_vn, tab_add_foreign, tab_edit, tab_list, tab_delete, tab_resigned = st.tabs([
         L["tab_add_vn"], L["tab_add_foreign"], L["tab_edit"], L["tab_list"], L["tab_delete"], L["tab_resigned"]
     ])
 
+    # 1️⃣ 新增越南員工
     with tab_add_vn:
         st.markdown("### " + L['header_add_vn'])
         auto_emp_id_vn = "VN-00" + str(len(st.session_state.employee_db) + 1)
@@ -307,22 +387,28 @@ def render_employee_management(engine=None, t=None, lang="繁體中文", **kwarg
                     if e_code in existing_codes:
                         st.error("⚠️ 錯誤：工號 " + e_code + " 已經存在！")
                     else:
-                        new_emp = {
+                        st.session_state.employee_db.append({
                             "工號": e_code, "姓名": e_name, "電話": e_phone, "國籍": "越南 (Vietnam)",
                             "身分證號": e_id_card, "護照號碼": "", "暫住證號": "", "社保證號": e_bhxh,
                             "投保醫院": e_hospital, "廠區": e_factory, "部門": e_dept, "職稱": e_title,
                             "出勤性質": e_attendance, "戶籍地址": e_addr_perm, "現住地址": e_addr_temp,
                             "角色": e_role, "密碼": e_pwd, "must_change_password": True, "狀態": "🟢 在職 (Active)"
-                        }
-                        st.session_state.employee_db.append(new_emp)
+                        })
                         st.success("🇻🇳 成功新增越南籍員工 " + e_name + " (工號: " + e_code + ")！")
                         st.rerun()
                 else:
                     st.warning("⚠️ 請完整填寫必填欄位：工號、姓名、聯絡電話與公民身分證號 (CCCD)！")
 
+    # 2️⃣ 新增外派員工
     with tab_add_foreign:
         st.markdown("### " + L['header_add_foreign'])
         auto_emp_id_fo = "TW-00" + str(len(st.session_state.employee_db) + 1)
 
         with st.form("form_add_foreign_employee"):
-            c1,
+            c1, c2 = st.columns(2)
+            with c1:
+                e_code_fo = st.text_input(L["lbl_code"], value=auto_emp_id_fo, key="fo_code")
+                e_name_fo = st.text_input(L["lbl_name"], placeholder="例如: 王大明 / 張偉", key="fo_name")
+                e_phone_fo = st.text_input(L["lbl_phone"], placeholder="例如: +886-912-345-678", key="fo_phone")
+                e_country_fo = st.selectbox(L["lbl_country"], ["台灣 (Taiwan)", "中國 (China)"], key="fo_country")
+                e_passport = st.text_input(L["lbl_passport"], placeholder="例如: 312345678 (護照號碼)",
