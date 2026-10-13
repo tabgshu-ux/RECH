@@ -4,70 +4,123 @@ import datetime
 from sqlalchemy import text
 
 # ----------------------------------------------------
-# 🌐 員工薪資與保險計算多語系字典 (i18n)
+# 🌐 員工薪資與保險扣除管理多語系字典 (i18n)
 # ----------------------------------------------------
 PAYROLL_I18N = {
     "繁體中文": {
-        "title": "💰 管理部 - 員工薪資計算與保險扣除管理中心",
-        "caption": "符合越南勞動法：自動跨表讀取現場外勤打卡天數！自動試算底薪、加班費、外勤津貼、社保 (BHXH 8%)、醫保 (BHYT 1.5%)、失業保 (BHTN 1%) 與實發淨薪。",
-        "tab_calc": "🧮 月度薪資與外勤津貼自動核算",
+        "title": "💰 管理部 - 員工薪資計算與電子薪資單中心",
+        "caption": "符合越南勞動法與 2026/09 最新薪資結構：支援 6 大津貼、4 階梯加班費、全勤獎金條件試算、社保/醫保/失業保扣繳、所得稅 (TNCN) 與電子薪資單。",
+        "tab_calc": "🧮 月度薪資試算與結算",
+        "tab_slip": "📄 個人電子薪資單 (Phiếu lương)",
         "tab_history": "📊 歷史薪資清冊與發放紀錄",
         "lbl_month": "計薪月份 (YYYY-MM)",
-        "lbl_emp_code": "員工工號",
+        "lbl_emp_code": "員工工號 / 人事編號",
         "lbl_emp_name": "員工姓名",
         "lbl_dept": "所屬部門",
-        "lbl_base_salary": "約定基本薪資 (VND)",
-        "lbl_ot_hours": "本月加班時數 (小時)",
-        "lbl_ot_rate": "加班費時薪倍率 (1.5倍/2.0倍)",
-        "lbl_allowance": "職務與外勤津貼 (VND)",
-        "lbl_daily_rate": "外勤每日津貼標準 (VND/天)",
+        "lbl_factory": "工作廠區",
+        "lbl_base_salary": "約定底薪 Lương cb (VND)",
+        "lbl_standard_hours": "標準上班時數 (預設 208 小時)",
+        "lbl_actual_hours": "實際上班時數 (小時)",
+        "lbl_allowance_pos": "職務津貼 Phụ cấp chức vụ (VND)",
+        "lbl_allowance_eval": "評核獎金 Tiền thưởng đánh giá (VND)",
+        "lbl_allowance_gas": "出差油費 Phụ Cấp Xăng (VND)",
+        "lbl_allowance_women": "女性津貼 Phụ cấp phụ nữ (VND)",
+        "lbl_allowance_spec": "專業獎金 Tiền thưởng chuyên môn (VND)",
+        "lbl_meal_fee": "伙食費 Tiền cơm (VND)",
+        "lbl_network_fee": "電話/網路費補貼 PC đt/mạng (VND)",
+        "lbl_prod_bonus": "績效獎金 Thưởng năng suất (VND)",
+        "lbl_ot15": "加班 1.5 倍時數 (小時)",
+        "lbl_ot195": "加班 1.95 倍時數 (小時)",
+        "lbl_ot20": "加班 2.0 倍時數 (小時)",
+        "lbl_ot30": "加班 3.0 倍時數 (小時)",
+        "lbl_dependents": "扶養親屬人數 (Người phụ thuộc)",
+        "lbl_advance": "本月預支金額 Tạm ứng (VND)",
+        "lbl_tax_adj": "所得稅多退少補 (VND)",
+        "lbl_other_deduct": "其他扣款 Khoản trừ (VND)",
         "btn_calc_and_save": "💾 計算並寫入 Supabase 薪資資料庫",
         "msg_success": "✅ 薪資清冊計算完畢並已成功寫入資料庫！",
-        "lbl_net_pay": "💵 本月應發實付淨薪 (Net Salary)",
-        "header_summary": "📋 歷史月度薪資與保險扣除統計表",
-        "info_field_days": "📍 系統自動偵測：該員工 `{month}` 月在現場外勤打卡 **{days} 天**（自動試算外勤津貼 `{allowance:,.0f} VND`）。"
+        "lbl_net_pay": "💵 本月應發實領金額 (Thực lãnh)",
+        "header_summary": "📋 歷史月度薪資與保險扣除統計表"
     },
     "Tiếng Việt": {
-        "title": "💰 Phòng Quản lý - Tính Luơng & Khấu Trừ Bảo Hiểm",
-        "caption": "Tuân thủ Luật Lao động VN: Tự động kết nối ngày chấm công công trường! Tính lương cơ bản, tăng ca, phụ cấp, BHXH (8%), BHYT (1.5%), BHTN (1%) và Lương thực nhận (Net).",
-        "tab_calc": "🧮 Tính lương & Phụ cấp công tác",
+        "title": "💰 Phòng Quản lý - Tính Luơng & Phiếu Lương Điện Tử",
+        "caption": "Tuân thủ Luật Lao động VN & Bảng lương 09/2026: Phụ cấp, Tăng ca 4 hệ số, Chuyên cần, BHXH/BHYT/BHTN, Thuế TNCN và Phiếu lương cá nhân.",
+        "tab_calc": "🧮 Tính lương & Tăng ca",
+        "tab_slip": "📄 Phiếu Lương Cá Nhân",
         "tab_history": "📊 Lịch sử bảng lương & Báo cáo",
         "lbl_month": "Tháng tính lương (YYYY-MM)",
-        "lbl_emp_code": "Mã nhân viên",
+        "lbl_emp_code": "Mã nhân viên (MNS)",
         "lbl_emp_name": "Tên nhân viên",
         "lbl_dept": "Phòng ban",
+        "lbl_factory": "Nhà máy",
         "lbl_base_salary": "Lương cơ bản (VND)",
-        "lbl_ot_hours": "Số giờ tăng ca (Giờ)",
-        "lbl_ot_rate": "Hệ số tăng ca (1.5 / 2.0)",
-        "lbl_allowance": "Phụ cấp công tác / Chức vụ (VND)",
-        "lbl_daily_rate": "Đơn giá phụ cấp công tác (VND/Ngày)",
+        "lbl_standard_hours": "Số giờ LV chuẩn (208 giờ)",
+        "lbl_actual_hours": "Số giờ thực làm (Giờ)",
+        "lbl_allowance_pos": "Phụ cấp chức vụ (VND)",
+        "lbl_allowance_eval": "Tiền thưởng đánh giá (VND)",
+        "lbl_allowance_gas": "Phụ cấp xăng (VND)",
+        "lbl_allowance_women": "Phụ cấp phụ nữ (VND)",
+        "lbl_allowance_spec": "Tiền thưởng chuyên môn (VND)",
+        "lbl_meal_fee": "Tiền cơm (VND)",
+        "lbl_network_fee": "Phụ cấp điện thoại/mạng (VND)",
+        "lbl_prod_bonus": "Thưởng năng suất (VND)",
+        "lbl_ot15": "Số giờ tăng ca 1.5",
+        "lbl_ot195": "Số giờ tăng ca 1.95",
+        "lbl_ot20": "Số giờ tăng ca 2.0",
+        "lbl_ot30": "Số giờ tăng ca 3.0",
+        "lbl_dependents": "Số người phụ thuộc",
+        "lbl_advance": "Số tiền tạm ứng (VND)",
+        "lbl_tax_adj": "Thừa/Thiếu thuế TNCN (VND)",
+        "lbl_other_deduct": "Khoản trừ khác (VND)",
         "btn_calc_and_save": "💾 Tính & Lưu Bảng Lương vào Cơ Sở Dữ Liệu",
         "msg_success": "✅ Đã tính lương và lưu bảng lương thành công!",
-        "lbl_net_pay": "💵 Lương thực nhận (Net Salary)",
-        "header_summary": "📋 Lịch sử Bảng lương & Bảo hiểm tháng",
-        "info_field_days": "📍 Hệ thống ghi nhận: Nhân viên chấm công công trường tháng `{month}` là **{days} ngày** (Phụ cấp tính tự động `{allowance:,.0f} VND`)."
+        "lbl_net_pay": "💵 Lương thực lãnh (Thực lãnh)",
+        "header_summary": "📋 Lịch sử Bảng lương & Bảo hiểm tháng"
     },
     "English": {
-        "title": "💰 GA & HR - Payroll & Insurance Calculation Center",
-        "caption": "Vietnamese Labor Law Compliant: Auto-fetches site check-in days! Calculates basic salary, OT, field allowances, BHXH (8%), BHYT (1.5%), BHTN (1%), and Net Pay.",
-        "tab_calc": "🧮 Monthly Payroll & Allowance Calculation",
+        "title": "💰 GA & HR - Payroll & Digital Payslip Management",
+        "caption": "Vietnamese Labor Law Compliant (09/2026 Structure): Allowances, 4 OT rates, Attendance Bonus logic, Insurance, PIT and Digital Payslip.",
+        "tab_calc": "🧮 Payroll & Overtime Calculation",
+        "tab_slip": "📄 Individual Digital Payslip",
         "tab_history": "📊 Historical Payroll Records",
         "lbl_month": "Payroll Month (YYYY-MM)",
         "lbl_emp_code": "Employee Code",
         "lbl_emp_name": "Employee Name",
         "lbl_dept": "Department",
+        "lbl_factory": "Work Plant",
         "lbl_base_salary": "Base Salary (VND)",
-        "lbl_ot_hours": "OT Hours",
-        "lbl_ot_rate": "OT Multiplier (1.5x / 2.0x)",
-        "lbl_allowance": "Field & Position Allowances (VND)",
-        "lbl_daily_rate": "Daily Field Allowance Rate (VND/Day)",
+        "lbl_standard_hours": "Standard Work Hours (208h)",
+        "lbl_actual_hours": "Actual Work Hours",
+        "lbl_allowance_pos": "Position Allowance (VND)",
+        "lbl_allowance_eval": "Evaluation Bonus (VND)",
+        "lbl_allowance_gas": "Gasoline Allowance (VND)",
+        "lbl_allowance_women": "Women Allowance (VND)",
+        "lbl_allowance_spec": "Specialty Bonus (VND)",
+        "lbl_meal_fee": "Meal Allowance (VND)",
+        "lbl_network_fee": "Phone/Internet Subsidy (VND)",
+        "lbl_prod_bonus": "Productivity Bonus (VND)",
+        "lbl_ot15": "OT 1.5x Hours",
+        "lbl_ot195": "OT 1.95x Hours",
+        "lbl_ot20": "OT 2.0x Hours",
+        "lbl_ot30": "OT 3.0x Hours",
+        "lbl_dependents": "Number of Dependents",
+        "lbl_advance": "Salary Advance (VND)",
+        "lbl_tax_adj": "PIT Adjustment (VND)",
+        "lbl_other_deduct": "Other Deductions (VND)",
         "btn_calc_and_save": "💾 Calculate & Save to Database",
         "msg_success": "✅ Payroll calculation saved to database successfully!",
-        "lbl_net_pay": "💵 Net Salary Payable",
-        "header_summary": "📋 Monthly Payroll & Insurance Summary",
-        "info_field_days": "📍 System Auto-detect: Employee has **{days} site check-in days** in `{month}` (Calculated allowance `{allowance:,.0f} VND`)."
+        "lbl_net_pay": "💵 Net Pay (Thực lãnh)",
+        "header_summary": "📋 Monthly Payroll & Insurance Summary"
     }
 }
+
+def calculate_attendance_bonus(actual_hours):
+    """Excel 公式全勤獎金算式: IF(H>=207, 400000, IF(204<=H<=206.5, 200000, 0))"""
+    if actual_hours >= 207:
+        return 400000.0
+    elif 204 <= actual_hours <= 206.5:
+        return 200000.0
+    return 0.0
 
 def init_payroll_db(engine):
     if not engine:
@@ -81,15 +134,31 @@ def init_payroll_db(engine):
                     emp_code VARCHAR(50) NOT NULL,
                     emp_name VARCHAR(100) NOT NULL,
                     department VARCHAR(100),
+                    factory VARCHAR(100) DEFAULT '西寧廠 (Tay Ninh)',
                     base_salary NUMERIC(12,2) DEFAULT 0,
+                    pos_allowance NUMERIC(12,2) DEFAULT 0,
+                    eval_bonus NUMERIC(12,2) DEFAULT 0,
+                    gas_allowance NUMERIC(12,2) DEFAULT 0,
+                    women_allowance NUMERIC(12,2) DEFAULT 0,
+                    spec_bonus NUMERIC(12,2) DEFAULT 0,
+                    actual_hours NUMERIC(6,2) DEFAULT 208,
+                    work_salary NUMERIC(12,2) DEFAULT 0,
                     overtime_pay NUMERIC(12,2) DEFAULT 0,
-                    allowance NUMERIC(12,2) DEFAULT 0,
+                    meal_fee NUMERIC(12,2) DEFAULT 0,
+                    prod_bonus NUMERIC(12,2) DEFAULT 0,
+                    network_fee NUMERIC(12,2) DEFAULT 0,
+                    attendance_bonus NUMERIC(12,2) DEFAULT 0,
+                    other_deduct NUMERIC(12,2) DEFAULT 0,
+                    total_gross NUMERIC(12,2) DEFAULT 0,
                     bhxh_deduction NUMERIC(12,2) DEFAULT 0,
                     bhyt_deduction NUMERIC(12,2) DEFAULT 0,
                     bhtn_deduction NUMERIC(12,2) DEFAULT 0,
+                    pit_tax NUMERIC(12,2) DEFAULT 0,
+                    advance_pay NUMERIC(12,2) DEFAULT 0,
                     net_salary NUMERIC(12,2) NOT NULL,
-                    status VARCHAR(50) DEFAULT '🟡 待審核 (Pending)',
+                    status VARCHAR(50) DEFAULT '🟢 已結算 (Calculated)',
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                     CONSTRAINT unique_emp_payroll_month UNIQUE (payroll_month, emp_code)
                 );
             """))
@@ -105,77 +174,89 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
 
     init_payroll_db(engine)
 
-    tab_calc, tab_history = st.tabs([L["tab_calc"], L["tab_history"]])
+    tab_calc, tab_slip, tab_history = st.tabs([L["tab_calc"], L["tab_slip"], L["tab_history"]])
 
     # ----------------------------------------------------
-    # 🧮 Tab 1: 薪資與外勤津貼自動核算
+    # 🧮 Tab 1: 月度薪資與多階梯加班自動核算
     # ----------------------------------------------------
     with tab_calc:
-        c_m1, c_m2, c_m3 = st.columns(3)
+        c_m1, c_m2, c_m3, c_m4 = st.columns(4)
         with c_m1:
             payroll_m = st.text_input(L["lbl_month"], value=datetime.datetime.now().strftime("%Y-%m"))
         with c_m2:
-            e_code = st.text_input(L["lbl_emp_code"], value="EMP-001")
+            e_code = st.text_input(L["lbl_emp_code"], value="2007031201")
         with c_m3:
-            dept_name = st.selectbox(L["lbl_dept"], ["🛠️ 工程部", "👔 管理部", "🏭 生產部", "📈 總經理室"])
-
-        # 📍 跨表查詢該員工當月外勤打卡天數
-        field_days = 0
-        if engine and e_code and payroll_m:
-            try:
-                with engine.connect() as conn:
-                    # 依據工號與月份查詢上班打卡筆數
-                    res = conn.execute(text("""
-                        SELECT COUNT(DISTINCT DATE(check_time)) 
-                        FROM public.field_attendance_logs 
-                        WHERE (emp_code = :code OR emp_name = :code)
-                          AND TO_CHAR(check_time, 'YYYY-MM') = :month
-                          AND check_type LIKE '%上班%'
-                    """), {"code": e_code, "month": payroll_m})
-                    val = res.fetchone()[0]
-                    if val:
-                        field_days = int(val)
-            except Exception:
-                pass
-
-        # 外勤每日津貼設定 (預設 200,000 VND/天)
-        daily_allowance_rate = 200000.0
-        auto_calculated_allowance = field_days * daily_allowance_rate
-
-        if field_days > 0:
-            st.info(L["info_field_days"].format(month=payroll_m, days=field_days, allowance=auto_calculated_allowance))
-        else:
-            st.caption("ℹ️ 當月尚無現場外勤打卡紀錄或該員工為廠內固定人員。")
+            dept_name = st.selectbox(L["lbl_dept"], ["👔 管理部", "🛠️ 工程部", "🏭 生產部", "📈 總經理室", "💻 資訊部"])
+        with c_m4:
+            st.text_input(L["lbl_factory"], value="西寧廠 (Tay Ninh)", disabled=True)
 
         st.markdown("---")
         
         with st.form("form_calc_payroll"):
+            st.markdown("##### 1️⃣ 基本薪資與 6 大津貼項目 (Lương & Phụ cấp)")
             col1, col2, col3 = st.columns(3)
             with col1:
-                e_name = st.text_input(L["lbl_emp_name"], value="許福村")
-                base_sal = st.number_input(L["lbl_base_salary"], min_value=0.0, value=15000000.0, step=500000.0)
+                e_name = st.text_input(L["lbl_emp_name"], value="NGUYỄN THỊ TUYẾT NHUNG")
+                base_sal = st.number_input(L["lbl_base_salary"], min_value=0.0, value=13507200.0, step=100000.0)
+                pos_allowance = st.number_input(L["lbl_allowance_pos"], min_value=0.0, value=3000000.0, step=100000.0)
             with col2:
-                allowance = st.number_input(L["lbl_allowance"], min_value=0.0, value=float(auto_calculated_allowance), step=100000.0)
-                ot_hrs = st.number_input(L["lbl_ot_hours"], min_value=0.0, value=10.0, step=1.0)
+                eval_bonus = st.number_input(L["lbl_allowance_eval"], min_value=0.0, value=3174192.0, step=100000.0)
+                gas_allowance = st.number_input(L["lbl_allowance_gas"], min_value=0.0, value=144000.0, step=10000.0)
+                women_allowance = st.number_input(L["lbl_allowance_women"], min_value=0.0, value=100000.0, step=10000.0)
             with col3:
-                ot_rate = st.selectbox(L["lbl_ot_rate"], [1.5, 2.0])
+                spec_bonus = st.number_input(L["lbl_allowance_spec"], min_value=0.0, value=500000.0, step=100000.0)
+                std_hours = st.number_input(L["lbl_standard_hours"], min_value=1.0, value=208.0, step=1.0)
+                act_hours = st.number_input(L["lbl_actual_hours"], min_value=0.0, value=208.0, step=0.5)
 
-            # 越南法規保險扣除計算 (以底薪為基準)
-            hourly_rate = (base_sal / 26.0) / 8.0
-            ot_pay = ot_hrs * hourly_rate * ot_rate
-            
-            bhxh = base_sal * 0.08    # 社會保險 8%
-            bhyt = base_sal * 0.015   # 醫療保險 1.5%
-            bhtn = base_sal * 0.01    # 失業保險 1%
-            total_deduction = bhxh + bhyt + bhtn
-            
-            net_pay = base_sal + ot_pay + allowance - total_deduction
+            st.markdown("##### 2️⃣ 四階梯加班費與補助項目 (Tăng ca & Subsidies)")
+            col4, col5, col6 = st.columns(3)
+            with col4:
+                ot_15 = st.number_input(L["lbl_ot15"], min_value=0.0, value=0.0, step=0.5)
+                ot_195 = st.number_input(L["lbl_ot195"], min_value=0.0, value=0.0, step=0.5)
+                ot_20 = st.number_input(L["lbl_ot20"], min_value=0.0, value=0.0, step=0.5)
+                ot_30 = st.number_input(L["lbl_ot30"], min_value=0.0, value=0.0, step=0.5)
+            with col5:
+                meal_fee = st.number_input(L["lbl_meal_fee"], min_value=0.0, value=648000.0, step=10000.0)
+                prod_bonus = st.number_input(L["lbl_prod_bonus"], min_value=0.0, value=0.0, step=50000.0)
+                network_fee = st.number_input(L["lbl_network_fee"], min_value=0.0, value=300000.0, step=50000.0)
+            with col6:
+                auto_att_bonus = calculate_attendance_bonus(act_hours)
+                att_bonus = st.number_input("全勤獎金 Chuyên cần (自動試算)", min_value=0.0, value=float(auto_att_bonus), step=50000.0)
+                other_deduct = st.number_input(L["lbl_other_deduct"], min_value=0.0, value=0.0, step=50000.0)
+                advance_pay = st.number_input(L["lbl_advance"], min_value=0.0, value=0.0, step=100000.0)
 
-            st.markdown("##### 📊 計算結果預覽：")
-            m1, m2, m3 = st.columns(3)
-            m1.metric("本月加班費", f"{ot_pay:,.0f} VND")
-            m2.metric("保險扣除總額 (10.5%)", f"{total_deduction:,.0f} VND")
-            m3.metric(L["lbl_net_pay"], f"{net_pay:,.0f} VND")
+            # ----------------------------------------------------
+            # 🧮 Excel 精確算式核心邏輯
+            # ----------------------------------------------------
+            # 1. 上班工時工資 (Cộng lương làm việc)
+            hourly_base_rate = (base_sal + pos_allowance + eval_bonus + gas_allowance + women_allowance + spec_bonus) / std_hours
+            work_salary = hourly_base_rate * act_hours
+
+            # 2. 四階梯加班費 (Tổng tiền tăng ca)
+            ot_pay = (ot_15 * hourly_base_rate * 1.5) + \
+                     (ot_195 * hourly_base_rate * 1.95) + \
+                     (ot_20 * hourly_base_rate * 2.0) + \
+                     (ot_30 * hourly_base_rate * 3.0)
+
+            # 3. 應領薪資總額 (Tổng lương)
+            total_gross = work_salary + ot_pay + meal_fee + prod_bonus + network_fee + att_bonus - other_deduct
+
+            # 4. 保險扣費 (BHXH 8%, BHYT 1.5%, BHTN 1%) - 以底薪為基準
+            bhxh = base_sal * 0.08
+            bhyt = base_sal * 0.015
+            bhtn = base_sal * 0.01
+            total_insurance = bhxh + bhyt + bhtn
+
+            # 5. 實領金額 (Thực lãnh)
+            net_pay = total_gross - total_insurance - advance_pay
+
+            st.markdown("---")
+            st.markdown("##### 📊 薪資試算精準結果 (Excel 對接格式)：")
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("上班工工資 (Cộng lương)", f"{work_salary:,.0f} VND")
+            m2.metric("加班費總額 (Tăng ca)", f"{ot_pay:,.0f} VND")
+            m3.metric("應領總額 (Tổng lương)", f"{total_gross:,.0f} VND")
+            m4.metric(L["lbl_net_pay"], f"{net_pay:,.0f} VND")
 
             if st.form_submit_button(L["btn_calc_and_save"], type="primary", use_container_width=True):
                 if engine:
@@ -183,51 +264,76 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                         with engine.begin() as conn:
                             conn.execute(text("""
                                 INSERT INTO public.payroll_records 
-                                (payroll_month, emp_code, emp_name, department, base_salary, overtime_pay, allowance, bhxh_deduction, bhyt_deduction, bhtn_deduction, net_salary)
-                                VALUES (:m, :code, :name, :dept, :bs, :ot, :al, :bhxh, :bhyt, :bhtn, :net)
+                                (payroll_month, emp_code, emp_name, department, factory, base_salary, pos_allowance, eval_bonus, 
+                                 gas_allowance, women_allowance, spec_bonus, actual_hours, work_salary, overtime_pay, 
+                                 meal_fee, prod_bonus, network_fee, attendance_bonus, other_deduct, total_gross, 
+                                 bhxh_deduction, bhyt_deduction, bhtn_deduction, advance_pay, net_salary)
+                                VALUES (:m, :code, :name, :dept, '西寧廠 (Tay Ninh)', :bs, :pos, :ev, :gas, :wom, :spec, :act_h,
+                                        :ws, :ot, :meal, :prod, :net_f, :att, :od, :gross, :bhxh, :bhyt, :bhtn, :adv, :net)
                                 ON CONFLICT (payroll_month, emp_code) DO UPDATE
-                                SET base_salary = EXCLUDED.base_salary,
+                                SET emp_name = EXCLUDED.emp_name,
+                                    department = EXCLUDED.department,
+                                    base_salary = EXCLUDED.base_salary,
+                                    pos_allowance = EXCLUDED.pos_allowance,
+                                    eval_bonus = EXCLUDED.eval_bonus,
+                                    gas_allowance = EXCLUDED.gas_allowance,
+                                    women_allowance = EXCLUDED.women_allowance,
+                                    spec_bonus = EXCLUDED.spec_bonus,
+                                    actual_hours = EXCLUDED.actual_hours,
+                                    work_salary = EXCLUDED.work_salary,
                                     overtime_pay = EXCLUDED.overtime_pay,
-                                    allowance = EXCLUDED.allowance,
+                                    meal_fee = EXCLUDED.meal_fee,
+                                    prod_bonus = EXCLUDED.prod_bonus,
+                                    network_fee = EXCLUDED.network_fee,
+                                    attendance_bonus = EXCLUDED.attendance_bonus,
+                                    other_deduct = EXCLUDED.other_deduct,
+                                    total_gross = EXCLUDED.total_gross,
                                     bhxh_deduction = EXCLUDED.bhxh_deduction,
                                     bhyt_deduction = EXCLUDED.bhyt_deduction,
                                     bhtn_deduction = EXCLUDED.bhtn_deduction,
+                                    advance_pay = EXCLUDED.advance_pay,
                                     net_salary = EXCLUDED.net_salary,
                                     updated_at = CURRENT_TIMESTAMP;
                             """), {
                                 "m": payroll_m, "code": e_code, "name": e_name, "dept": dept_name,
-                                "bs": base_sal, "ot": ot_pay, "al": allowance,
-                                "bhxh": bhxh, "bhyt": bhyt, "bhtn": bhtn, "net": net_pay
+                                "bs": base_sal, "pos": pos_allowance, "ev": eval_bonus, "gas": gas_allowance,
+                                "wom": women_allowance, "spec": spec_bonus, "act_h": act_hours,
+                                "ws": work_salary, "ot": ot_pay, "meal": meal_fee, "prod": prod_bonus,
+                                "net_f": network_fee, "att": att_bonus, "od": other_deduct, "gross": total_gross,
+                                "bhxh": bhxh, "bhyt": bhyt, "bhtn": bhtn, "adv": advance_pay, "net": net_pay
                             })
                         st.success(L["msg_success"])
                         st.rerun()
                     except Exception as e:
                         st.error(f"❌ 寫入資料庫失敗: {str(e)}")
+                else:
+                    st.success("✅ 試算完成（展示模式）。")
 
     # ----------------------------------------------------
-    # 📊 Tab 2: 歷史薪資清冊查詢
+    # 📄 Tab 2: 個人電子薪資單 (Phiếu lương)
     # ----------------------------------------------------
-    with tab_history:
-        st.markdown(f"#### {L['header_summary']}")
-        if engine:
-            try:
-                with engine.connect() as conn:
-                    res = conn.execute(text("""
-                        SELECT payroll_month, emp_code, emp_name, department, base_salary, overtime_pay, allowance, (bhxh_deduction + bhyt_deduction + bhtn_deduction) as total_insurance, net_salary, status
-                        FROM public.payroll_records
-                        ORDER BY payroll_month DESC, emp_code ASC
-                    """))
-                    rows = res.fetchall()
-                    if rows:
-                        df_p = pd.DataFrame(rows, columns=["計薪月份", "工號", "姓名", "部門", "底薪", "加班費", "津貼", "保險扣除", "實發淨薪", "狀態"])
-                        st.dataframe(df_p, use_container_width=True)
-                    else:
-                        st.info("目前尚無歷史薪資紀錄。")
-            except Exception:
-                st.info("尚未讀取到歷史薪資紀錄。")
+    with tab_slip:
+        st.markdown("### 📄 員工個人電子薪資單預覽 (Phiếu Lương Cá Nhân)")
+        st.caption("適應手機端螢幕展示，讓員工可隨時登入查閱個人當月實領薪資細項。")
 
-def show(engine=None, lang="繁體中文", **kwargs):
-    render_payroll_management_page(engine=engine, lang=lang, **kwargs)
+        with st.container(border=True):
+            st.markdown("<h3 style='text-align: center; color: #1E3A8A;'>CÔNG TY TNHH CN DŨ PHONG</h3>", unsafe_allow_html=True)
+            st.markdown(f"<h4 style='text-align: center;'>PHIẾU LƯƠNG THÁNG {payroll_m} (TÂY NINH)</h4>", unsafe_allow_html=True)
+            st.markdown("---")
 
-def main(engine=None, lang="繁體中文", **kwargs):
-    render_payroll_management_page(engine=engine, lang=lang, **kwargs)
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.write(f"**MNS / 工號:** `{e_code}`")
+                st.write(f"**Họ tên / 姓名:** **{e_name}**")
+                st.write(f"**Bộ phận / 部門:** {dept_name}")
+                st.write(f"**Số giờ thực làm / 實際時數:** {act_hours} 小時")
+            with col_b:
+                st.write(f"**Lương cb / 底薪:** {base_sal:,.0f} VND")
+                st.write(f"**Tổng phụ cấp / 各項津貼:** {(pos_allowance + eval_bonus + gas_allowance + women_allowance + spec_bonus):,.0f} VND")
+                st.write(f"**Chuyên cần / 全勤獎金:** {att_bonus:,.0f} VND")
+                st.write(f"**Tiền cơm / 伙食費:** {meal_fee:,.0f} VND")
+
+            st.markdown("---")
+            col_c, col_d, col_e = st.columns(3)
+            col_c.metric("Tổng lương (應領總計)", f"{total_gross:,.0f} VND")
+            col_d.metric("BHXH/BHYT/BHTN (保險扣款)", f"{total_insurance:,.0f} VND
