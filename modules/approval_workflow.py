@@ -6,70 +6,100 @@ import re
 from sqlalchemy import text
 
 # ----------------------------------------------------
-# 🌐 三語系字典 (自動跟隨全域語系)
+# 🌐 三語系字典 (完整補齊 lbl_proj 避開 KeyError)
 # ----------------------------------------------------
 APPROVAL_I18N = {
     "繁體中文": {
         "title": "✍️ 全公司電子簽核中心 (Approval Center)",
-        "caption": "提交請購、請假、公務派車或專案簽報；系統自動依據權限與金額進行多級電子簽核。",
-        "tab_vehicle": "🚗 1. 廠區公務派車申請單",
+        "caption": "提交請假、採購請款、公務派車或專案簽報；系統自動依據權限進行多級電子簽核。",
+        "tab_leave": "🏖️ 1. 員工請假申請",
         "tab_proc": "📦 2. 採購與請款申請單 (PR)",
-        "tab_leave": "🏖️ 3. 員工請假單申請",
-        "tab_status": "📊 簽核進度即時追蹤",
-        "tab_pending": "📑 待簽核案件審查 (主管專區)",
-        "tab_security": "🛡️ 保全門禁車輛放行查驗 (保全專區)",
+        "tab_vehicle": "🚗 3. 廠區公務派車申請單",
+        "tab_pending": "📑 4. 待簽核案件審查 (主管專區)",
+        "tab_status": "📊 5. 簽核進度即時追蹤",
+        "tab_security": "🛡️ 6. 保全門禁車輛放行查驗 (保全專區)",
         "info_vehicle": "🔒 派車申請流程：員工填單 ➔ 部門主管簽核 ➔ 門禁保全確認出廠放行與里程登記。",
+        "info_pr": "🔒 系統已自動綁定目前登入者身分，並支援上傳/拍攝實物照片供採購與主管對比確認。",
         "lbl_requester": "申請人姓名 (系統綁定) *",
         "lbl_dept": "所屬部門 (系統綁定)",
+        "lbl_proj": "歸屬工程/專案編號",
+        "lbl_cat": "請購項目細分類別 *",
+        "lbl_item": "物品/材料名稱與規格 *",
+        "lbl_qty": "需求數量",
+        "lbl_unit": "單位",
+        "lbl_amount": "預估總金額 (VND) *",
+        "lbl_photo": "📸 上傳/拍攝實物對比照片或規格圖檔 (JPG/PNG/PDF)",
+        "lbl_reason": "請購用途與詳細說明",
+        "btn_submit_pr": "🚀 提交採購請款單並啟動多級簽核",
         "lbl_v_type": "派車用途類別 *",
         "lbl_vehicle": "選擇公務車輛 / 車號 *",
         "lbl_driver": "駕駛員 / 司機姓名",
         "lbl_destination": "前往目的地 / 案場名稱 *",
         "lbl_out_time": "預計出廠時間",
         "lbl_in_time": "預計返回時間",
-        "lbl_reason": "派車公務事由與詳細說明 *",
-        "btn_submit_v": "🚀 提交派車申請單並送部門主管審核"
+        "lbl_v_reason": "派車公務事由與詳細說明 *",
+        "btn_submit_v": "🚀 提交派車申請單送部門主管審核"
     },
     "English": {
         "title": "✍️ Enterprise Approval Center",
-        "caption": "Submit PR, Leave, Vehicle Dispatch, or Approvals; automated multi-level pipeline.",
-        "tab_vehicle": "🚗 1. Vehicle Dispatch Request",
+        "caption": "Submit Leave, PR, Vehicle Dispatch, or Approvals; automated multi-level pipeline.",
+        "tab_leave": "🏖️ 1. Leave Request",
         "tab_proc": "📦 2. Purchase Requisition (PR)",
-        "tab_leave": "🏖️ 3. Leave Application",
-        "tab_status": "📊 Real-time Workflow Tracking",
-        "tab_pending": "📑 Pending Approvals (Manager Zone)",
-        "tab_security": "🛡️ Gate Security Gatepass Control",
+        "tab_vehicle": "🚗 3. Vehicle Dispatch",
+        "tab_pending": "📑 4. Pending Approvals (Managers)",
+        "tab_status": "📊 5. Real-time Workflow Tracking",
+        "tab_security": "🛡️ 6. Gate Security Gatepass Control",
         "info_vehicle": "🔒 Dispatch flow: Employee submit ➔ Manager Approval ➔ Security Check-out.",
+        "info_pr": "🔒 Identity locked to current user. Supports uploading item photos for review.",
         "lbl_requester": "Applicant Name (Locked) *",
         "lbl_dept": "Department (Locked)",
+        "lbl_proj": "Project Code",
+        "lbl_cat": "Detailed Category *",
+        "lbl_item": "Item Name & Specs *",
+        "lbl_qty": "Quantity",
+        "lbl_unit": "Unit",
+        "lbl_amount": "Est. Total Amount (VND) *",
+        "lbl_photo": "📸 Upload / Capture Photo or Spec (JPG/PNG/PDF)",
+        "lbl_reason": "Purpose & Detailed Notes",
+        "btn_submit_pr": "🚀 Submit PR & Launch Approval Workflow",
         "lbl_v_type": "Dispatch Purpose *",
         "lbl_vehicle": "Select Vehicle / Plate No *",
         "lbl_driver": "Driver Name",
         "lbl_destination": "Destination / Site *",
         "lbl_out_time": "Est. Outbound Time",
         "lbl_in_time": "Est. Return Time",
-        "lbl_reason": "Purpose & Notes *",
+        "lbl_v_reason": "Purpose & Notes *",
         "btn_submit_v": "🚀 Submit Dispatch Request"
     },
     "Tiếng Việt": {
         "title": "✍️ Trung tâm Phê duyệt Điện tử",
-        "caption": "Tạo yêu cầu mua hàng, xin xe, nghỉ phép; hệ thống tự động duyệt theo phân cấp.",
-        "tab_vehicle": "🚗 1. Đăng ký xe công tác",
+        "caption": "Tạo yêu cầu nghỉ phép, mua hàng, xin xe; hệ thống tự động duyệt theo phân cấp.",
+        "tab_leave": "🏖️ 1. Đơn xin nghỉ phép",
         "tab_proc": "📦 2. Đơn yêu cầu mua hàng (PR)",
-        "tab_leave": "🏖️ 3. Đơn xin nghỉ phép",
-        "tab_status": "📊 Theo dõi tiến độ phê duyệt",
-        "tab_pending": "📑 Hồ sơ chờ duyệt (Dành cho Sếp)",
-        "tab_security": "🛡️ Bảo vệ kiểm tra xe ra vào",
+        "tab_vehicle": "🚗 3. Đăng ký xe công tác",
+        "tab_pending": "📑 4. Hồ sơ chờ duyệt (Dành cho Sếp)",
+        "tab_status": "📊 5. Theo dõi tiến độ phê duyệt",
+        "tab_security": "🛡️ 6. Bảo vệ kiểm tra xe ra vào",
         "info_vehicle": "🔒 Quy trình: Nhân viên đăng ký ➔ Quản lý duyệt ➔ Bảo vệ cho xe ra.",
+        "info_pr": "🔒 Tự động khóa tài khoản người tạo. Hỗ trợ chụp/tải ảnh đính kèm.",
         "lbl_requester": "Tên người đăng ký (Khóa) *",
         "lbl_dept": "Bộ phận (Khóa)",
+        "lbl_proj": "Mã dự án",
+        "lbl_cat": "Phân loại vật tư *",
+        "lbl_item": "Tên & Quy cách vật tư *",
+        "lbl_qty": "Số lượng",
+        "lbl_unit": "Đơn vị",
+        "lbl_amount": "Tổng tiền dự kiến (VND) *",
+        "lbl_photo": "📸 Tải ảnh / Chụp ảnh vật tư (JPG/PNG/PDF)",
+        "lbl_reason": "Mục đích sử dụng & Ghi chú",
+        "btn_submit_pr": "🚀 Gửi đơn yêu cầu mua hàng",
         "lbl_v_type": "Mục đích sử dụng *",
         "lbl_vehicle": "Chọn xe / Biển số xe *",
         "lbl_driver": "Tên tài xế",
         "lbl_destination": "Nơi đến / Tên công trường *",
         "lbl_out_time": "Thời gian ra dự kiến",
         "lbl_in_time": "Thời gian về dự kiến",
-        "lbl_reason": "Lý do công tác *",
+        "lbl_v_reason": "Lý do công tác *",
         "btn_submit_v": "🚀 Gửi đơn đăng ký xe"
     }
 }
@@ -131,12 +161,12 @@ def inject_approval_css():
     """, unsafe_allow_html=True)
 
 def init_approval_db(engine):
-    """建立派車單與請購單資料表"""
+    """初始化資料庫表格"""
     if not engine:
         return
     try:
         with engine.begin() as conn:
-            # 1. 採購請購單
+            # 1. 請購單
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS public.purchase_requisitions (
                     id SERIAL PRIMARY KEY,
@@ -160,7 +190,7 @@ def init_approval_db(engine):
                 );
             """))
 
-            # 2. 車輛派車單與門禁放行紀錄
+            # 2. 派車單
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS public.vehicle_dispatch_orders (
                     id SERIAL PRIMARY KEY,
@@ -196,64 +226,37 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
 
     init_approval_db(engine)
 
-    tab_vehicle, tab_proc, tab_leave, tab_status, tab_pending, tab_security = st.tabs([
-        L["tab_vehicle"], L["tab_proc"], L["tab_leave"], L["tab_status"], L["tab_pending"], L["tab_security"]
+    # 按照使用者指定的最新常用順序排列 Tabs
+    tab_leave, tab_proc, tab_vehicle, tab_pending, tab_status, tab_security = st.tabs([
+        L["tab_leave"], L["tab_proc"], L["tab_vehicle"], L["tab_pending"], L["tab_status"], L["tab_security"]
     ])
 
     current_user_name = st.session_state.get("user_name", "admin")
     current_user_role = str(st.session_state.get("user_role", "Staff")).upper()
 
     # ----------------------------------------------------
-    # 🚗 頁籤 1: 廠區公務派車申請單
+    # 🏖️ 1. 員工請假申請
     # ----------------------------------------------------
-    with tab_vehicle:
-        st.markdown(f"### {L['tab_vehicle']}")
-        st.info(L["info_vehicle"])
-
-        with st.form("form_create_vehicle_dispatch"):
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                st.text_input(L["lbl_requester"], value=current_user_name, disabled=True)
-                st.text_input(L["lbl_dept"], value=f"角色: {current_user_role}", disabled=True)
-                v_type = st.selectbox(L["lbl_v_type"], ["🚗 廠務/工程公務外出", "🏭 西寧廠↔海防廠物料運送", "🤝 訪客/客戶機場專車接送", "🔧 設備急件載運與採購"])
-            with c2:
-                v_plate = st.selectbox(L["lbl_vehicle"], ["60A-888.99 (Toyota Fortuner 7座)", "70C-123.45 (Isuzu 3.5噸卡車)", "60B-999.11 (Ford Transit 16座)", "自駕私車公用"])
-                v_driver = st.text_input(L["lbl_driver"], value="Nguyễn Văn Tài (專職司機)")
-                v_dest = st.text_input(L["lbl_destination"], placeholder="例: 西寧省安平工業區案場")
-            with c3:
-                v_out_dt = st.date_input(L["lbl_out_time"], datetime.date.today())
-                v_in_dt = st.date_input(L["lbl_in_time"], datetime.date.today())
-                v_purpose = st.text_area(L["lbl_reason"], placeholder="例: 前往西寧廠區載運 400A 配電盤，並陪同客戶驗收。")
-
-            if st.form_submit_button(L["btn_submit_v"], type="primary", use_container_width=True):
-                if not v_dest or not v_purpose:
-                    st.error("⚠️ 請填寫前往目的地與派車事由！")
-                else:
-                    v_code = "VD-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-                    if engine:
-                        try:
-                            with engine.begin() as conn:
-                                conn.execute(text("""
-                                    INSERT INTO public.vehicle_dispatch_orders 
-                                    (dispatch_code, applicant_name, department, dispatch_type, vehicle_plate, driver_name, destination, purpose, audit_log)
-                                    VALUES (:code, :req, :dept, :vtype, :plate, :driver, :dest, :purp, :log);
-                                """), {
-                                    "code": v_code, "req": current_user_name, "dept": current_user_role,
-                                    "vtype": v_type, "plate": v_plate, "driver": v_driver, "dest": v_dest, "purp": v_purpose,
-                                    "log": f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}] {current_user_name} 建立派車單。"
-                                })
-                            st.success(f"🎉 派車申請單【{v_code}】建立成功！已自動發送給部門主管簽核。")
-                            st.rerun()
-                        except Exception as e:
-                            st.error("寫入失敗: " + str(e))
-                    else:
-                        st.success(f"🎉 [展示模式] 派車單【{v_code}】建立成功！")
+    with tab_leave:
+        st.markdown(f"### {L['tab_leave']}")
+        c_l1, c_l2 = st.columns(2)
+        with c_l1:
+            st.text_input("請假人 (Applicant)", value=current_user_name, disabled=True)
+            st.selectbox("假別類型", ["事假 (Personal)", "病假 (Sick)", "特休 (Annual Leave)", "婚假/產假"])
+        with c_l2:
+            st.date_input("開始日期", datetime.date.today())
+            st.date_input("結束日期", datetime.date.today())
+        st.text_area("請假事由說明", placeholder="請詳細說明請假原因...")
+        if st.button("📤 提交假單並啟動簽核", type="primary"):
+            st.success("🎉 請假單已成功送出！等待主管審核中。")
 
     # ----------------------------------------------------
-    # 📦 頁籤 2: 採購與請款申請單 (PR)
+    # 📦 2. 採購與請款申請單 (PR)
     # ----------------------------------------------------
     with tab_proc:
         st.markdown(f"### {L['tab_proc']}")
+        st.info(L["info_pr"])
+        
         with st.form("form_approval_create_pr"):
             c1, c2, c3 = st.columns(3)
             with c1:
@@ -300,64 +303,62 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                             st.rerun()
                         except Exception as e:
                             st.error("寫入失敗: " + str(e))
-
-    # ----------------------------------------------------
-    # 🏖️ 頁籤 3: 員工請假單
-    # ----------------------------------------------------
-    with tab_leave:
-        st.markdown("### 🏖️ 員工請假單申請")
-        c_l1, c_l2 = st.columns(2)
-        with c_l1:
-            st.text_input("請假人", value=current_user_name, disabled=True)
-            st.selectbox("假別類型", ["事假 (Personal)", "病假 (Sick)", "特休 (Annual Leave)", "婚假/產假"])
-        with c_l2:
-            st.date_input("開始日期", datetime.date.today())
-            st.date_input("結束日期", datetime.date.today())
-        st.text_area("請假事由說明", placeholder="請詳細說明請假原因...")
-        if st.button("📤 提交假單並啟動簽核", type="primary"):
-            st.success("🎉 請假單已成功送出！等待主管審核中。")
-
-    # ----------------------------------------------------
-    # 📊 頁籤 4: 簽核進度即時追蹤 (含派車單狀態)
-    # ----------------------------------------------------
-    with tab_status:
-        st.markdown(f"### {L['tab_status']}")
-        st.caption("即時查看您發起的請購單與公務派車單簽核狀態。")
-        
-        st.markdown("#### 🚗 派車單追蹤 (Vehicle Dispatch Tracker)")
-        if engine:
-            try:
-                with engine.connect() as conn:
-                    res_v = conn.execute(text("SELECT dispatch_code, applicant_name, vehicle_plate, destination, mgr_status, security_status FROM public.vehicle_dispatch_orders ORDER BY id DESC;"))
-                    v_rows = res_v.fetchall()
-                    if v_rows:
-                        st.dataframe(pd.DataFrame([dict(r._mapping) for r in v_rows]), use_container_width=True)
                     else:
-                        st.info("尚無公務派車申請紀錄。")
-            except Exception:
-                pass
-
-        st.markdown("#### 📦 請購單追蹤 (Purchase Tracker)")
-        if engine:
-            try:
-                with engine.connect() as conn:
-                    res = conn.execute(text("SELECT pr_code, item_name, est_amount, tech_approval, mgr_approval, exec_approval, po_status FROM public.purchase_requisitions ORDER BY id DESC;"))
-                    rows = res.fetchall()
-                    if rows:
-                        df = pd.DataFrame([dict(r._mapping) for r in rows])
-                        df["est_amount"] = df["est_amount"].apply(format_vnd_text)
-                        st.dataframe(df, use_container_width=True)
-            except Exception:
-                pass
+                        st.success(f"🎉 [展示模式] 請購單【{pr_code_gen}】建立成功！")
 
     # ----------------------------------------------------
-    # 📑 頁籤 5: 待簽核案件審查 (主管簽核專區)
+    # 🚗 3. 廠區公務派車申請單
+    # ----------------------------------------------------
+    with tab_vehicle:
+        st.markdown(f"### {L['tab_vehicle']}")
+        st.info(L["info_vehicle"])
+
+        with st.form("form_create_vehicle_dispatch"):
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.text_input(L["lbl_requester"], value=current_user_name, disabled=True)
+                st.text_input(L["lbl_dept"], value=f"角色: {current_user_role}", disabled=True)
+                v_type = st.selectbox(L["lbl_v_type"], ["🚗 廠務/工程公務外出", "🏭 西寧廠↔海防廠物料運送", "🤝 訪客/客戶機場專車接送", "🔧 設備急件載運與採購"])
+            with c2:
+                v_plate = st.selectbox(L["lbl_vehicle"], ["60A-888.99 (Toyota Fortuner 7座)", "70C-123.45 (Isuzu 3.5噸卡車)", "60B-999.11 (Ford Transit 16座)", "自駕私車公用"])
+                v_driver = st.text_input(L["lbl_driver"], value="Nguyễn Văn Tài (專職司機)")
+                v_dest = st.text_input(L["lbl_destination"], placeholder="例: 西寧省安平工業區案場")
+            with c3:
+                v_out_dt = st.date_input(L["lbl_out_time"], datetime.date.today())
+                v_in_dt = st.date_input(L["lbl_in_time"], datetime.date.today())
+                v_purpose = st.text_area(L["lbl_v_reason"], placeholder="例: 前往西寧廠區載運 400A 配電盤，並陪同客戶驗收。")
+
+            if st.form_submit_button(L["btn_submit_v"], type="primary", use_container_width=True):
+                if not v_dest or not v_purpose:
+                    st.error("⚠️ 請填寫前往目的地與派車事由！")
+                else:
+                    v_code = "VD-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+                    if engine:
+                        try:
+                            with engine.begin() as conn:
+                                conn.execute(text("""
+                                    INSERT INTO public.vehicle_dispatch_orders 
+                                    (dispatch_code, applicant_name, department, dispatch_type, vehicle_plate, driver_name, destination, purpose, audit_log)
+                                    VALUES (:code, :req, :dept, :vtype, :plate, :driver, :dest, :purp, :log);
+                                """), {
+                                    "code": v_code, "req": current_user_name, "dept": current_user_role,
+                                    "vtype": v_type, "plate": v_plate, "driver": v_driver, "dest": v_dest, "purp": v_purpose,
+                                    "log": f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}] {current_user_name} 建立派車單。"
+                                })
+                            st.success(f"🎉 派車申請單【{v_code}】建立成功！已自動發送給部門主管簽核。")
+                            st.rerun()
+                        except Exception as e:
+                            st.error("寫入失敗: " + str(e))
+                    else:
+                        st.success(f"🎉 [展示模式] 派車單【{v_code}】建立成功！")
+
+    # ----------------------------------------------------
+    # 📑 4. 待簽核案件審查 (主管審核專區)
     # ----------------------------------------------------
     with tab_pending:
         st.markdown(f"### {L['tab_pending']}")
         st.caption("主管專區：審核下屬提交之【公務派車單】與【採購請購單】。")
         
-        # 1. 主管審核派車單
         st.markdown("#### 🚗 待簽核派車單 (Pending Vehicle Dispatch)")
         if engine:
             try:
@@ -389,9 +390,9 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                                             "c": v_item['dispatch_code'],
                                             "log": f"\n[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}] 部門主管 {current_user_name} 已核准派車。"
                                         })
-                                    st.success(f"✅ 派車單【{v_item['dispatch_code']}】已簽核！系統已通知廠區門禁保全準備放行。")
+                                    st.success(f"✅ 派車單【{v_item['dispatch_code']}】已簽核！")
                                     st.rerun()
-                            with col_a2:
+                            with col_v2:
                                 if st.button(f"🔴 駁回派車單 ({v_item['dispatch_code']})"):
                                     with engine.begin() as conn_u:
                                         conn_u.execute(text("UPDATE public.vehicle_dispatch_orders SET mgr_status = '🔴 主管駁回' WHERE dispatch_code = :c;"), {"c": v_item['dispatch_code']})
@@ -403,7 +404,6 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
             except Exception as e:
                 st.error("讀取失敗: " + str(e))
 
-        # 2. 主管審核請購單
         st.markdown("#### 📦 待簽核請購單 (Pending Purchase Requisition)")
         if engine:
             try:
@@ -446,7 +446,40 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                 st.error("讀取失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 🛡️ 頁籤 6: 保全門禁車輛放行查驗 (保全專區)
+    # 📊 5. 簽核進度即時追蹤
+    # ----------------------------------------------------
+    with tab_status:
+        st.markdown(f"### {L['tab_status']}")
+        st.caption("即時查看您發起的請購單與公務派車單簽核狀態。")
+        
+        st.markdown("#### 🚗 派車單追蹤 (Vehicle Dispatch Tracker)")
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    res_v = conn.execute(text("SELECT dispatch_code, applicant_name, vehicle_plate, destination, mgr_status, security_status FROM public.vehicle_dispatch_orders ORDER BY id DESC;"))
+                    v_rows = res_v.fetchall()
+                    if v_rows:
+                        st.dataframe(pd.DataFrame([dict(r._mapping) for r in v_rows]), use_container_width=True)
+                    else:
+                        st.info("尚無公務派車申請紀錄。")
+            except Exception:
+                pass
+
+        st.markdown("#### 📦 請購單追蹤 (Purchase Tracker)")
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    res = conn.execute(text("SELECT pr_code, item_name, est_amount, tech_approval, mgr_approval, exec_approval, po_status FROM public.purchase_requisitions ORDER BY id DESC;"))
+                    rows = res.fetchall()
+                    if rows:
+                        df = pd.DataFrame([dict(r._mapping) for r in rows])
+                        df["est_amount"] = df["est_amount"].apply(format_vnd_text)
+                        st.dataframe(df, use_container_width=True)
+            except Exception:
+                pass
+
+    # ----------------------------------------------------
+    # 🛡️ 6. 保全門禁車輛放行查驗 (保全專區)
     # ----------------------------------------------------
     with tab_security:
         st.markdown(f"### {L['tab_security']}")
@@ -489,7 +522,7 @@ def render_approval_center(engine=None, lang="繁體中文", **kwargs):
                                             "c": s_item['dispatch_code'],
                                             "log": f"\n[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}] 門禁保全確認放行出廠，儀表里程：{km_out} KM。"
                                         })
-                                    st.success(f"🎉 派車單【{s_item['dispatch_code']}】已完成門禁放行驗證！放行時間與里程已自動存檔。")
+                                    st.success(f"🎉 派車單【{s_item['dispatch_code']}】已完成門禁放行驗證！")
                                     st.rerun()
                             st.markdown("---")
                     else:
