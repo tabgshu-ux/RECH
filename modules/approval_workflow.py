@@ -1,208 +1,338 @@
 import streamlit as st
 import pandas as pd
+import datetime
+import base64
+import re
+from sqlalchemy import text
+
+# ----------------------------------------------------
+# 🌐 三語系字典 (自動跟隨全域語系)
+# ----------------------------------------------------
+APPROVAL_I18N = {
+    "繁體中文": {
+        "title": "✍️ 全公司電子簽核中心 (Approval Center)",
+        "caption": "提交請購、請假或專案簽報；系統自動依據權限與金額進行多級電子簽核。",
+        "tab_leave": "🏖️ 員工請假單申請",
+        "tab_proc": "📦 採購與請款申請單 (PR)",
+        "tab_status": "📊 簽核進度即時追蹤",
+        "tab_pending": "📑 待簽核案件審查 (主管專區)",
+        "info_pr": "🔒 系統已自動綁定目前登入者身分，並支援上傳/拍攝實物照片供採購與主管對比確認。",
+        "lbl_requester": "請購人姓名 (系統綁定) *",
+        "lbl_dept": "所屬部門 (系統綁定)",
+        "lbl_proj": "歸屬工程/專案編號",
+        "lbl_cat": "請購項目細分類別 *",
+        "lbl_item": "物品/材料名稱與規格 *",
+        "lbl_qty": "需求數量",
+        "lbl_unit": "單位",
+        "lbl_amount": "預估總金額 (VND) *",
+        "lbl_photo": "📸 上傳/拍攝實物對比照片或規格圖檔 (JPG/PNG/PDF)",
+        "lbl_reason": "請購用途與詳細說明",
+        "btn_submit_pr": "🚀 提交採購請款單並啟動多級簽核"
+    },
+    "English": {
+        "title": "✍️ Enterprise Approval Center",
+        "caption": "Submit PR, Leave, or Approval requests; automated multi-level approval pipeline.",
+        "tab_leave": "🏖️ Leave Application",
+        "tab_proc": "📦 Purchase Requisition (PR)",
+        "tab_status": "📊 Real-time Workflow Tracking",
+        "tab_pending": "📑 Pending Approvals (Manager Zone)",
+        "info_pr": "🔒 Identity locked to current user. Supports uploading item photos for review.",
+        "lbl_requester": "Requester Name (Locked) *",
+        "lbl_dept": "Department (Locked)",
+        "lbl_proj": "Project Code",
+        "lbl_cat": "Detailed Category *",
+        "lbl_item": "Item Name & Specs *",
+        "lbl_qty": "Quantity",
+        "lbl_unit": "Unit",
+        "lbl_amount": "Est. Total Amount (VND) *",
+        "lbl_photo": "📸 Upload / Capture Photo or Spec (JPG/PNG/PDF)",
+        "lbl_reason": "Purpose & Detailed Notes",
+        "btn_submit_pr": "🚀 Submit PR & Launch Approval Workflow"
+    },
+    "Tiếng Việt": {
+        "title": "✍️ Trung tâm Phê duyệt Điện tử",
+        "caption": "Tạo yêu cầu mua hàng, nghỉ phép; hệ thống tự động duyệt theo phân cấp.",
+        "tab_leave": "🏖️ Đơn xin nghỉ phép",
+        "tab_proc": "📦 Đơn yêu cầu mua hàng (PR)",
+        "tab_status": "📊 Theo dõi tiến độ phê duyệt",
+        "tab_pending": "📑 Hồ sơ chờ duyệt (Dành cho Sếp)",
+        "info_pr": "🔒 Tự động khóa tài khoản người tạo. Hỗ trợ chụp/tải ảnh đính kèm.",
+        "lbl_requester": "Tên người yêu cầu (Khóa) *",
+        "lbl_dept": "Bộ phận (Khóa)",
+        "lbl_proj": "Mã dự án",
+        "lbl_cat": "Phân loại vật tư *",
+        "lbl_item": "Tên & Quy cách vật tư *",
+        "lbl_qty": "Số lượng",
+        "lbl_unit": "Đơn vị",
+        "lbl_amount": "Tổng tiền dự kiến (VND) *",
+        "lbl_photo": "📸 Tải ảnh / Chụp ảnh vật tư (JPG/PNG/PDF)",
+        "lbl_reason": "Mục đích sử dụng & Ghi chú",
+        "btn_submit_pr": "🚀 Gửi đơn yêu cầu mua hàng"
+    }
+}
+
+PROC_CATEGORIES = [
+    "🔌 配電盤高低壓元件與電氣材料 (需設計/BOM審核)",
+    "⚡ 水電工程管線與線槽/電纜材料",
+    "✂️ 板金加工原物料 (銅排、鐵板、粉體塗料)",
+    "🛠️ 工地現場施工耗材、工具與五金配件",
+    "🦺 工安防護具與現場安全設施",
+    "🚗 廠區車輛維修零件與油品",
+    "🏢 廠區機器設備與固定資產",
+    "💻 資訊軟硬體與網路通訊設備",
+    "🥗 幹部宿舍食材與廚房用品",
+    "📄 行政總務文具與日常用品"
+]
+
+def parse_formatted_amount(val_str):
+    """將點或逗號千分位字串還原為純數字，例: '45.000.000' -> 45000000"""
+    if not val_str:
+        return 0.0
+    clean_str = re.sub(r"[^\d]", "", str(val_str))
+    return float(clean_str) if clean_str else 0.0
+
+def format_vnd_text(amount):
+    """將金額格式化為越南點號千分位格式，例: 45.000.000 VND"""
+    try:
+        val = float(amount)
+        return f"{val:,.0f}".replace(",", ".") + " VND"
+    except Exception:
+        return f"{amount} VND"
+
+def inject_approval_css():
+    st.markdown("""
+        <style>
+        html, body, [class*="css"] { font-size: 16px !important; }
+        div.stButton > button {
+            width: 100% !important;
+            height: 3rem !important;
+            font-size: 1.1rem !important;
+            font-weight: bold !important;
+            border-radius: 8px !important;
+        }
+        .appr-card {
+            background-color: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-left: 5px solid #0284C7;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+def init_approval_db(engine):
+    """與採購模組共用 public.purchase_requisitions 表格"""
+    if not engine:
+        return
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS public.purchase_requisitions (
+                    id SERIAL PRIMARY KEY,
+                    pr_code VARCHAR(50) UNIQUE NOT NULL,
+                    requester_name VARCHAR(100) NOT NULL,
+                    department VARCHAR(100) NOT NULL,
+                    project_code VARCHAR(50),
+                    item_category VARCHAR(100) NOT NULL,
+                    item_name VARCHAR(200) NOT NULL,
+                    qty NUMERIC(10,2) NOT NULL,
+                    unit VARCHAR(20) DEFAULT '個',
+                    est_amount NUMERIC(15,2) DEFAULT 0,
+                    item_photo TEXT,
+                    tech_approval VARCHAR(50) DEFAULT '待設計主管審核',
+                    mgr_approval VARCHAR(50) DEFAULT '待部門主管審核',
+                    exec_approval VARCHAR(50) DEFAULT '待副總/高階審核',
+                    po_status VARCHAR(50) DEFAULT '待總務採購詢價',
+                    ap_status VARCHAR(50) DEFAULT '待財務付款',
+                    audit_log TEXT,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+
+            try:
+                conn.execute(text("ALTER TABLE public.purchase_requisitions ADD COLUMN IF NOT EXISTS item_photo TEXT;"))
+            except Exception:
+                pass
+    except Exception:
+        pass
 
 def render_approval_center(engine=None, lang="繁體中文", **kwargs):
-    texts = {
-        "繁體中文": {
-            "title": "✍️ 全公司電子簽核與工程報價/請款審核中心",
-            "info": "提交請假、採購或工程雙層報價，系統自動依據權限進行多級簽核（協理提案 ➔ 副總核准 ➔ 總經理/董事長拍板）。",
-            "tab1": "✍️ 員工請假申請單",
-            "tab2": "📦 採購與請款申請單",
-            "tab3": "📊 簽核進度即時追蹤",
-            "tab4": "📋 待簽核案件審查 (主管專區)",
-            "form1_title": "### 📝 填寫請假申請單",
-            "applicant": "申請人 (已鎖定登入帳號)",
-            "dept": "所屬部門 (依帳號自動對應)",
-            "days": "請假天數 (天) *",
-            "reason": "申請事由與說明 *",
-            "reason_ph": "例如: 因家庭事務請假 4 天...",
-            "submit_btn": "🚀 提交送出簽核",
-            "success_msg": "✅ 請假申請已成功提交並進入電子簽核流程！"
-        },
-        "Tiếng Việt": {
-            "title": "✍️ Trung tâm Phê duyệt Điện tử & Báo giá Kỹ thuật",
-            "info": "Gửi đơn nghỉ phép, mua hàng hoặc báo giá 2 lớp, hệ thống tự động phê duyệt đa cấp.",
-            "tab1": "✍️ Đơn xin nghỉ phép",
-            "tab2": "📦 Đơn mua hàng & Thanh toán",
-            "tab3": "📊 Theo dõi tiến độ phê duyệt",
-            "tab4": "📋 Xét duyệt chờ xử lý (Dành cho cấp quản lý)",
-            "form1_title": "### 📝 Điền đơn xin nghỉ phép",
-            "applicant": "Người nộp đơn",
-            "dept": "Phòng ban",
-            "days": "Số ngày nghỉ (ngày) *",
-            "reason": "Lý do & Mô tả chi tiết *",
-            "reason_ph": "Ví dụ: Nghỉ việc gia đình...",
-            "submit_btn": "🚀 Gửi yêu cầu phê duyệt",
-            "success_msg": "✅ Đơn xin nghỉ phép đã được gửi thành công!"
-        },
-        "English": {
-            "title": "✍️ Enterprise Approval & Engineering Quotation Center",
-            "info": "Submit leave, procurement, or two-tier engineering quotations with automated multi-level approval workflows.",
-            "tab1": "✍️ Submit Leave Request",
-            "tab2": "📦 Purchase & Payment Request",
-            "tab3": "📊 Real-time Approval Tracking",
-            "tab4": "📋 Pending Approvals Review (Management)",
-            "form1_title": "### 📝 Leave Application Form",
-            "applicant": "Applicant",
-            "dept": "Department",
-            "days": "Leave Days *",
-            "reason": "Reason & Description *",
-            "reason_ph": "e.g., Family affairs...",
-            "submit_btn": "🚀 Submit for Approval",
-            "success_msg": "✅ Leave application submitted successfully!"
-        }
-    }
+    inject_approval_css()
 
-    active_lang = lang if lang in texts else "繁體中文"
-    t = texts[active_lang]
+    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
+    L = APPROVAL_I18N.get(active_lang, APPROVAL_I18N["繁體中文"])
 
-    st.title(t["title"])
-    st.info(t["info"])
+    st.title(L["title"])
+    st.caption(L["caption"])
 
-    # 初始化簽核資料庫
-    if "approval_db" not in st.session_state:
-        st.session_state.approval_db = [
-            {
-                "單號": "APV-2026-001", "類型": "請假單", "申請人": "admin", "部門": "總經理室",
-                "內容": "家庭事務請假 3 天", "狀態": "簽核中 (Pending)", "送出時間": "2026-10-07"
-            }
-        ]
+    init_approval_db(engine)
 
-    tab1, tab2, tab3, tab4 = st.tabs([t["tab1"], t["tab2"], t["tab3"], t["tab4"]])
+    tab_leave, tab_proc, tab_status, tab_pending = st.tabs([
+        L["tab_leave"], L["tab_proc"], L["tab_status"], L["tab_pending"]
+    ])
 
-    with tab1:
-        with st.form("leave_application_form"):
-            st.markdown(t["form1_title"])
-            c1, c2 = st.columns(2)
-            with c1:
-                st.text_input(t["applicant"], value=st.session_state.get("user_name", "admin"), disabled=True, key="lev_user")
-            with c2:
-                st.text_input(t["dept"], value="總經理室 / Executive Office", disabled=True, key="lev_dept")
+    # ----------------------------------------------------
+    # 🏖️ 頁籤 1: 員工請假單
+    # ----------------------------------------------------
+    with tab_leave:
+        st.markdown("### 🏖️ 員工請假單申請 (Leave Request)")
+        c_l1, c_l2 = st.columns(2)
+        with c_l1:
+            st.text_input("請假人 (Applicant)", value=st.session_state.get("user_name", "admin"), disabled=True)
+            st.selectbox("假別類型", ["事假 (Personal)", "病假 (Sick)", "特休 (Annual Leave)", "婚假/產假"])
+        with c_l2:
+            st.date_input("開始日期", datetime.date.today())
+            st.date_input("結束日期", datetime.date.today())
+        st.text_area("請假事由說明", placeholder="請詳細說明請假原因...")
+        if st.button("📤 提交假單並啟動簽核", type="primary"):
+            st.success("🎉 請假單已成功送出！等待主管審核中。")
 
-            leave_days = st.number_input(t["days"], min_value=0.5, value=3.0, step=0.5, key="lev_days")
-            leave_reason = st.text_area(t["reason"], placeholder=t["reason_ph"], key="lev_reason")
-
-            if st.form_submit_button(t["submit_btn"], type="primary"):
-                if leave_reason:
-                    new_no = f"APV-2026-{len(st.session_state.approval_db)+1:03d}"
-                    st.session_state.approval_db.append({
-                        "單號": new_no,
-                        "類型": "請假單 (Leave)",
-                        "申請人": st.session_state.get("user_name", "admin"),
-                        "部門": "總經理室",
-                        "內容": f"請假 {leave_days} 天: {leave_reason}",
-                        "狀態": "簽核中 (Pending)",
-                        "送出時間": datetime_str_now() if 'datetime_str_now' in globals() else "2026-10-09"
-                    })
-                    st.success(t["success_msg"])
-                    st.rerun()
-                else:
-                    st.warning("⚠️ 請填寫申請事由！")
-
-    with tab2:
-        st.markdown("### 📦 採購與請款申請單 (Purchase & Payment Request)")
-        with st.form("purchase_approval_form"):
-            p_item = st.text_input("採購項目 / 品名 (Item Name) *", placeholder="例如: 變壓器 / 零件...")
-            p_amt = st.number_input("預估金額 (Estimated Amount VND)", value=5000000.0, step=100.00)
-            p_desc = st.text_area("採購用途與必要性說明", placeholder="請說明採購原因...")
-
-            if st.form_submit_button("🚀 提交採購請款簽核", type="primary"):
-                if p_item:
-                    new_no = f"APV-2026-{len(st.session_state.approval_db)+1:03d}"
-                    st.session_state.approval_db.append({
-                        "單號": new_no,
-                        "類型": "採購請款單",
-                        "申請人": st.session_state.get("user_name", "admin"),
-                        "部門": "工程與設計管理中心",
-                        "內容": f"採購: {p_item} (金額: {p_amt:,.0f} VND)",
-                        "狀態": "簽核中 (Pending)",
-                        "送出時間": "2026-10-09"
-                    })
-                    st.success("✅ 採購申請已送出並進入電子簽核流程！")
-                    st.rerun()
-                else:
-                    st.warning("⚠️ 請填寫採購項目名稱！")
-
-    with tab3:
-        st.markdown("### 📊 全公司簽核進度即時追蹤")
-        if st.session_state.approval_db:
-            st.dataframe(pd.DataFrame(st.session_state.approval_db), use_container_width=True)
-        else:
-            st.info("目前尚無任何簽核單據紀錄。")
-
-    with tab4:
-        st.markdown("### 📋 主管待簽核案件審查 (副總 / 總經理 / 董事長專區)")
-        st.info("💡 說明：主管可在此審查一般請假、採購單，以及**工程部提交的雙層報價案（包含內部機密成本與對外業主報價）**。")
-
-        # 1. 審查一般簽核單據 (請假、採購)
-        st.markdown("##### 📌 一般電子簽核案件")
-        pending_general = [item for item in st.session_state.approval_db if "簽核中" in item["狀態"]]
-        if pending_general:
-            for idx, item in enumerate(pending_general):
-                with st.expander(f"單據：{item['單號']} - {item['類型']} ({item['申請人']})"):
-                    st.write(f"**部門**：{item['部門']} | **內容**：{item['內容']}")
-                    c_g1, c_g2 = st.columns(2)
-                    with c_g1:
-                        if st.button(f"✅ 核准單據 {item['單號']}", key=f"app_gen_{idx}"):
-                            item["狀態"] = "🟢 已核准 (Approved)"
-                            st.success("已核准！")
-                            st.rerun()
-                    with c_g2:
-                        if st.button(f"❌ 駁回單據 {item['單號']}", key=f"rej_gen_{idx}"):
-                            item["狀態"] = "🔴 已退回 (Rejected)"
-                            st.error("已退回。")
-                            st.rerun()
-        else:
-            st.success("🎉 目前沒有一般待辦簽核案件。")
-
-        st.markdown("---")
-        st.markdown("##### ⚡ 工程部雙層報價與重大採購核決專區 (副總 ➔ 總經理/董事長兩階段)")
+    # ----------------------------------------------------
+    # 📦 頁籤 2: 最新標準【採購與請款申請單 (PR)】
+    # ----------------------------------------------------
+    with tab_proc:
+        st.markdown(f"### {L['tab_proc']}")
+        st.info(L["info_pr"])
         
-        # 2. 審查工程部雙層報價單 (`two_tier_quotations_db`)
-        if "two_tier_quotations_db" in st.session_state and st.session_state.two_tier_quotations_db:
-            for q in st.session_state.two_tier_quotations_db:
-                with st.expander(f"📌 工程報價單號：{q['quot_id']} | 專案：{q['project_name']} | 提案人：{q['proposer']} | 狀態：{q['status']}", expanded=True):
-                    st.write(f"**客戶名稱**：{q['client']} | **幣別**：{q.get('currency', 'USD')}")
-                    st.write(f"**🔒 【內部機密】內部成本總和**：`$ {q['total_internal_cost']:,.2f}`")
-                    
-                    st.markdown("**📦 內部成本明細表 (機櫃、材料、人工)：**")
-                    st.dataframe(pd.DataFrame(q["internal_items"]), use_container_width=True)
+        current_user_name = st.session_state.get("user_name", "admin")
+        current_user_role = str(st.session_state.get("user_role", "Staff")).upper()
+        
+        with st.form("form_approval_create_pr"):
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.text_input(L["lbl_requester"], value=current_user_name, disabled=True)
+                st.text_input(L["lbl_dept"], value=f"角色: {current_user_role}", disabled=True)
+                pr_proj = st.text_input(L["lbl_proj"], placeholder="例: PRJ-2026-001 (西寧擴建案)")
+            with c2:
+                pr_cat = st.selectbox(L["lbl_cat"], PROC_CATEGORIES)
+                pr_item = st.text_input(L["lbl_item"], placeholder="例: Schneider 400A 空氣斷路器 (ACB)")
+                pr_qty = st.number_input(L["lbl_qty"], min_value=1.0, value=1.0, step=1.0)
+            with c3:
+                pr_unit = st.text_input(L["lbl_unit"], value="台")
+                
+                # 💰 越南格式金額輸入框：點號千分位
+                pr_est_str = st.text_input(
+                    L["lbl_amount"], 
+                    value="45.000.000",
+                    help="直接輸入數字即可，系統會自動轉換為越南千位點號格式 (例如: 45.000.000)"
+                )
+                pr_est_val = parse_formatted_amount(pr_est_str)
 
-                    st.markdown("---")
-                    st.markdown(f"**📄 【對外業主報價金額】**：`$ {q['customer_price']:,.2f}`")
-                    st.text_area(f"對外業主合約摘要預覽 ({q['quot_id']})", value=q["customer_facing_summary"], disabled=True, key=f"app_sum_{q['quot_id']}")
+                pr_reason = st.text_area(L["lbl_reason"], placeholder="例: 西寧廠 A 區開關損壞，請對照照片規格採買。")
 
-                    st.markdown(f"**📍 目前關卡**：`{q['status']}`")
+            st.markdown("##### " + L["lbl_photo"])
+            photo_file = st.file_uploader("選擇或拍攝圖片檔案", type=["jpg", "jpeg", "png", "pdf"])
+            
+            encoded_photo = ""
+            if photo_file:
+                if photo_file.type.startswith("image"):
+                    st.image(photo_file, caption="預覽對比照片", width=250)
+                encoded_photo = base64.b64encode(photo_file.read()).decode("utf-8")
 
-                    # 🎯 兩階段核決按鈕
-                    col_b1, col_b2 = st.columns(2)
-                    if "待副總經理審核" in q["status"] or "[階段一]" in q["status"] or "待副總" in q["status"]:
-                        with col_b1:
-                            if st.button(f"🔒 【副總經理】核准並鎖定價格 (呈報總經理) {q['quot_id']}", key=f"center_vp_{q['quot_id']}", type="primary"):
-                                q["status"] = "🟢 副總已核准，待總經理/董事長最終確認 (Waiting Board Sign-off)"
-                                st.success("🎉 副總已核准！單據已自動轉交至總經理與董事長進行最終拍板。")
-                                st.rerun()
-                        with col_b2:
-                            if st.button(f"❌ 副總退回修改 {q['quot_id']}", key=f"center_rej_vp_{q['quot_id']}"):
-                                q["status"] = "🔴 已被副總退回修改"
-                                st.warning("已退回給提案協理。")
-                                st.rerun()
-
-                    elif "待總經理" in q["status"] or "等待總經理" in q["status"] or "Waiting Board" in q["status"]:
-                        with col_b1:
-                            if st.button(f"👑 【總經理 / 董事長】最終拍板發行 {q['quot_id']}", key=f"center_board_{q['quot_id']}", type="primary"):
-                                q["status"] = "🎉 董事長/總經理已最終拍板發行 (Official)"
-                                st.success("🎉 恭喜！總經理與董事長已完成最終拍板，報價單正式生效！")
-                                st.rerun()
-                        with col_b2:
-                            if st.button(f"❌ 董事長退回複查 {q['quot_id']}", key=f"center_rej_board_{q['quot_id']}"):
-                                q["status"] = "🔴 董事長要求重新評估成本"
-                                st.warning("已退回複查。")
-                                st.rerun()
+            if st.form_submit_button(L["btn_submit_pr"], type="primary", use_container_width=True):
+                if not pr_item:
+                    st.error("⚠️ 請填寫物品/材料名稱與規格！")
+                elif pr_est_val <= 0:
+                    st.error("⚠️ 請填寫正確的預估總金額！")
+                else:
+                    pr_code_gen = "PR-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+                    if engine:
+                        try:
+                            with engine.begin() as conn:
+                                conn.execute(text("""
+                                    INSERT INTO public.purchase_requisitions 
+                                    (pr_code, requester_name, department, project_code, item_category, item_name, qty, unit, est_amount, item_photo, audit_log)
+                                    VALUES (:code, :req, :dept, :proj, :cat, :item, :qty, :unit, :amt, :img, :log);
+                                """), {
+                                    "code": pr_code_gen, "req": current_user_name, "dept": current_user_role, "proj": pr_proj,
+                                    "cat": pr_cat, "item": pr_item, "qty": pr_qty, "unit": pr_unit, "amt": pr_est_val,
+                                    "img": encoded_photo,
+                                    "log": f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}] {current_user_name} 於簽核中心提交請購 ({format_vnd_text(pr_est_val)})。"
+                                })
+                            st.success(f"🎉 請購單【{pr_code_gen}】已成功建立並啟動多級簽核！金額：{format_vnd_text(pr_est_val)}")
+                            st.rerun()
+                        except Exception as e:
+                            st.error("寫入失敗: " + str(e))
                     else:
-                        st.success("✅ 此工程報價單已完成所有高階主管核決流程。")
-        else:
-            st.info("目前尚無工程雙層報價待審案件。")
+                        st.success(f"🎉 [展示模式] 請購單【{pr_code_gen}】建立成功！")
+
+    # ----------------------------------------------------
+    # 📊 頁籤 3: 簽核進度即時追蹤
+    # ----------------------------------------------------
+    with tab_status:
+        st.markdown(f"### {L['tab_status']}")
+        st.caption("即時查看您發起的請購單目前在哪一位主管/關卡簽核中。")
+        
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    res = conn.execute(text("SELECT pr_code, item_name, est_amount, tech_approval, mgr_approval, exec_approval, po_status FROM public.purchase_requisitions ORDER BY id DESC;"))
+                    rows = res.fetchall()
+                    if rows:
+                        df = pd.DataFrame([dict(r._mapping) for r in rows])
+                        df["est_amount"] = df["est_amount"].apply(format_vnd_text)
+                        st.dataframe(df, use_container_width=True)
+                    else:
+                        st.info("目前尚無簽核單據紀錄。")
+            except Exception as e:
+                st.error("讀取失敗: " + str(e))
+
+    # ----------------------------------------------------
+    # 📑 頁籤 4: 待簽核案件審查 (主管審核專區)
+    # ----------------------------------------------------
+    with tab_pending:
+        st.markdown(f"### {L['tab_pending']}")
+        st.caption("主管可在此查閱待審核單據、比對請購對比照片並點選核准。")
+        
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    res = conn.execute(text("SELECT * FROM public.purchase_requisitions WHERE po_status = '待總務採購詢價' ORDER BY id DESC;"))
+                    prs = res.fetchall()
+                    if prs:
+                        for p in prs:
+                            pd_item = dict(p._mapping)
+                            formatted_amount = format_vnd_text(pd_item['est_amount'])
+                            st.markdown(f"""
+                            <div class="appr-card">
+                                <b>請購單號：{pd_item['pr_code']}</b> | 申請人：<b>{pd_item['requester_name']}</b> ({pd_item['department']})<br>
+                                品名：<b>{pd_item['item_name']}</b> x {pd_item['qty']} {pd_item['unit']} | 金額：<b style="color:#B91C1C; font-size:18px;">{formatted_amount}</b><br>
+                                類別：{pd_item['item_category']} | 專案：{pd_item['project_code'] or '無'}
+                            </div>
+                            """, unsafe_allow_html=True)
+                            
+                            if pd_item.get("item_photo"):
+                                try:
+                                    img_bytes = base64.b64decode(pd_item["item_photo"])
+                                    st.image(img_bytes, caption=f"對比參考圖片 ({pd_item['pr_code']})", width=220)
+                                except Exception:
+                                    pass
+
+                            col_a1, col_a2, col_a3 = st.columns(3)
+                            with col_a1:
+                                if st.button(f"🎨 設計主管核准規格 ({pd_item['pr_code']})"):
+                                    with engine.begin() as conn_u:
+                                        conn_u.execute(text("UPDATE public.purchase_requisitions SET tech_approval = '🟢 規格審核通過' WHERE pr_code = :c;"), {"c": pd_item['pr_code']})
+                                    st.success("✅ 規格已核准！")
+                                    st.rerun()
+                            with col_a2:
+                                if st.button(f"👔 部門主管核准預算 ({pd_item['pr_code']})"):
+                                    with engine.begin() as conn_u:
+                                        conn_u.execute(text("UPDATE public.purchase_requisitions SET mgr_approval = '🟢 主管核准' WHERE pr_code = :c;"), {"c": pd_item['pr_code']})
+                                    st.success("✅ 預算已核准！")
+                                    st.rerun()
+                            with col_a3:
+                                if st.button(f"👑 副總/高階特批簽發 ({pd_item['pr_code']})", type="primary"):
+                                    with engine.begin() as conn_u:
+                                        conn_u.execute(text("UPDATE public.purchase_requisitions SET exec_approval = '🟢 高階核准發包', po_status = '已簽核/交總務採購' WHERE pr_code = :c;"), {"c": pd_item['pr_code']})
+                                    st.success("🎉 高階特批完成，單據已自動拋轉給總務/採購執行！")
+                                    st.rerun()
+                            st.markdown("---")
+                    else:
+                        st.info("目前沒有等待您簽核的單據。")
+            except Exception as e:
+                st.error("讀取失敗: " + str(e))
 
 def show(engine=None, lang="繁體中文", **kwargs):
     render_approval_center(engine=engine, lang=lang, **kwargs)
