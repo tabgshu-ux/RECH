@@ -23,7 +23,7 @@ def format_currency_text(amount, currency="VND"):
         return f"{amount} {currency}"
 
 # ----------------------------------------------------
-# 🌐 三語字典 (繁體中文 / English / Tiếng Việt)
+# 🌐 三語字典 (繁體中文 / English / Tiếng Việt) - 嚴格 1~10 依序排列
 # ----------------------------------------------------
 ENG_I18N = {
     "繁體中文": {
@@ -31,8 +31,8 @@ ENG_I18N = {
         "caption": "水電工程、配電盤製造、現場探勘與雙層報價系統",
         "lbl_sub_action": "請選擇要執行的工程/設計功能：",
         "actions": [
-            "⚡ 2. 配電盤與工程專案雙層報價",
             "📊 1. 工程主管戰情室 (Executive Cockpit)",
+            "⚡ 2. 配電盤與工程專案雙層報價",
             "📈 3. 工程驗收與進度追蹤",
             "📋 4. 現場工程日報表與出工統計",
             "📷 5. AI 施工照片智慧辨識與歸檔",
@@ -48,8 +48,8 @@ ENG_I18N = {
         "caption": "MEP Engineering, Panel Manufacturing, Site Survey & Quotations",
         "lbl_sub_action": "Select Engineering Feature:",
         "actions": [
-            "⚡ 2. Two-Tier Quotation System",
             "📊 1. Executive Cockpit",
+            "⚡ 2. Two-Tier Quotation System",
             "📈 3. Acceptance & Progress Tracking",
             "📋 4. Daily Site Reports & Labor Stats",
             "📷 5. AI Field Photo Recognition",
@@ -65,8 +65,8 @@ ENG_I18N = {
         "caption": "Thi công M&E, Sản xuất tủ điện, Khảo sát & Báo giá 2 lớp",
         "lbl_sub_action": "Chọn chức năng kỹ thuật:",
         "actions": [
-            "⚡ 2. Báo giá Tủ điện & Dự án 2 lớp",
             "📊 1. Bàn làm việc Quản lý Kỹ thuật",
+            "⚡ 2. Báo giá Tủ điện & Dự án 2 lớp",
             "📈 3. Nghiệm thu & Theo dõi Tiến độ",
             "📋 4. Nhật ký thi công & Báo cáo Điểm danh",
             "📷 5. AI Nhận diện & Lưu trữ Ảnh thi công",
@@ -88,7 +88,7 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
         or st.session_state.get("current_sub_action")
         or st.session_state.get("selected_sub_menu")
         or st.session_state.get("sub_menu")
-        or "2"
+        or "1"
     )
     sub_str = str(sub_action).strip()
 
@@ -125,28 +125,36 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
     if "license_db" not in st.session_state:
         st.session_state.license_db = [{"emp_id": "EMP-001", "name": "張董事長", "license_name": "甲種電匠", "status": "🔴 30天內即將到期"}]
 
-    # 關鍵修正：將下拉選單選項改為完整動態 10 大子功能清單
+    # 完整動態 10 大子功能清單 (依 1~10 排序)
     all_actions = t["actions"]
     
-    # 預設定位項目
+    # 計算選單預設定位
     def_idx = 0
-    if sub_str == "1" or "戰情室" in sub_str:
-        def_idx = 1
-    elif sub_str in ["2", "0"] or "報價" in sub_str:
-        def_idx = 0
-    else:
-        for idx, act in enumerate(all_actions):
-            if sub_str in act:
-                def_idx = idx
-                break
+    for idx, act in enumerate(all_actions):
+        if sub_str in act or (sub_str == "1" and "1." in act) or (sub_str == "2" and "2." in act):
+            def_idx = idx
+            break
 
     selected_option = st.selectbox(t["lbl_sub_action"], all_actions, index=def_idx)
 
     # ====================================================
+    # 📊 1. 工程主管戰情室 (Executive Cockpit)
+    # ====================================================
+    if "1." in selected_option or "戰情室" in selected_option:
+        st.markdown("### 📊 1. 工程主管戰情室 (Executive Cockpit)")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("在建工程案場", "3 案場")
+        c2.metric("平均施工進度", "68.5%")
+        c3.metric("本月累計請款", "1.25B VND")
+        c4.metric("證照到期預警", "2 筆預警", delta="-1", delta_color="inverse")
+        st.markdown("##### 🏗️ 全廠工程專案進度即時看板")
+        st.dataframe(pd.DataFrame(st.session_state.engineering_projects_db), use_container_width=True)
+
+    # ====================================================
     # ⚡ 2. 配電盤與工程專案雙層報價 (完整功能 + Excel 樣式 + 簽核連動)
     # ====================================================
-    if "2." in selected_option or "報價" in selected_option or "Báo giá" in selected_option:
-        st.markdown("### ⚡ 配電盤與工程專案雙層報價系統")
+    elif "2." in selected_option or "報價" in selected_option or "Báo giá" in selected_option:
+        st.markdown("### ⚡ 2. 配電盤與工程專案雙層報價系統")
         tab_prop, tab_edit, tab_review = st.tabs(["✍️ 建立/提交報價提案", "✏️ 修改與刪除報價單", "🔒 主管審核與報價單樣式預覽"])
 
         with tab_prop:
@@ -399,19 +407,6 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                         st.markdown(excel_quotation_html, unsafe_allow_html=True)
             else:
                 st.info("目前尚無工程報價單資料。")
-
-    # ====================================================
-    # 📊 1. 工程主管戰情室 (Executive Cockpit)
-    # ====================================================
-    elif "1." in selected_option or "戰情室" in selected_option:
-        st.markdown("### 📊 1. 工程主管戰情室 (Executive Cockpit)")
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("在建工程案場", "3 案場")
-        c2.metric("平均施工進度", "68.5%")
-        c3.metric("本月累計請款", "1.25B VND")
-        c4.metric("證照到期預警", "2 筆預警", delta="-1", delta_color="inverse")
-        st.markdown("##### 🏗️ 全廠工程專案進度即時看板")
-        st.dataframe(pd.DataFrame(st.session_state.engineering_projects_db), use_container_width=True)
 
     # ====================================================
     # 📈 3. 工程驗收與進度追蹤
