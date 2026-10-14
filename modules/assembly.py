@@ -1,229 +1,234 @@
 import streamlit as st
 import pandas as pd
 import datetime
+from sqlalchemy import text
 
-def get_supabase_client():
-    if "supabase" in st.session_state:
-        return st.session_state.supabase
-    return None
+# ----------------------------------------------------
+# 🌐 動態讀取【廠區管理】主表，確保全系統廠區資料即時連動
+# ----------------------------------------------------
+def get_active_factories(engine):
+    """從 public.factories 主表讀取最新廠區清單"""
+    default_factories = ["越南西寧廠 (Tay Ninh)"]
+    if not engine:
+        return default_factories
+    try:
+        with engine.connect() as conn:
+            res = conn.execute(text("SELECT factory_name FROM public.factories ORDER BY id ASC;"))
+            rows = res.fetchall()
+            if rows:
+                return [r[0] for r in rows if r[0]]
+    except Exception:
+        pass
+    return default_factories
 
-def render_assembly_module(engine=None, t=None, lang="繁體中文", **kwargs):
-    st.title("⚡ [配盤] 配電盤組裝配線組與拍照入庫")
-    st.caption("專為配盤車間設計：多規格配電盤管理、佈線組裝追蹤、完工拍照上傳與自動完工入庫。")
+def init_asset_db(engine):
+    """資料庫初始化"""
+    if not engine:
+        return
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS public.fixed_assets (
+                    id SERIAL PRIMARY KEY,
+                    asset_code VARCHAR(50) UNIQUE NOT NULL,
+                    asset_name VARCHAR(200) NOT NULL,
+                    category VARCHAR(100) DEFAULT '生產機具',
+                    factory VARCHAR(100) DEFAULT '越南西寧廠 (Tay Ninh)',
+                    brand_landlord VARCHAR(150),
+                    status VARCHAR(50) DEFAULT '🟢 在用/租賃中 (Active)',
+                    cost_amount NUMERIC(12,2) DEFAULT 0,
+                    start_date DATE,
+                    end_date DATE,
+                    notes TEXT,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+    except Exception as e:
+        pass
 
-    supabase = get_supabase_client()
+def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
+    st.title("🏢 管理部 - 固定資產與設備/租賃合約管理中心")
+    st.caption("管理西寧廠與各工作廠區之生產機械、土地房屋租賃合約、車輛、網路、品管儀器與工安設施之完整生命週期。")
 
-    # 預設配電盤組裝工單
-    default_assembly_orders = [
-        {
-            "order_code": "WO-AS-20261001",
-            "project_name": "越南西寧廠低壓主配電盤 (LVS)",
-            "panel_spec": "2000x800x600mm (主斷路器 1600A)",
-            "qty": 2.0,
-            "status": "⚡ 內部銅排配置與二次控制線配線中",
-            "photo_name": "LVS_Panel_Wiring_Draft.jpg",
-            "manager": "admin"
-        },
-        {
-            "order_code": "WO-AS-20261002",
-            "project_name": "海防廠馬達控制中心 (MCC)",
-            "panel_spec": "1800x600x500mm (多迴路 Inverter)",
-            "qty": 4.0,
-            "status": "📌 待組裝配線",
-            "photo_name": "無完工照片",
-            "manager": "admin"
-        }
-    ]
+    init_asset_db(engine)
+    
+    # 動態取得『廠區與工作廠區管理』中的最新廠區名冊
+    current_factories = get_active_factories(engine)
 
-    # 初始化 Session State
-    if "assembly_db" not in st.session_state or not isinstance(st.session_state.assembly_db, list) or not st.session_state.assembly_db:
-        if supabase:
-            try:
-                res = supabase.table("assembly_orders").select("*").execute()
-                if res.data:
-                    st.session_state.assembly_db = [{
-                        "order_code": row["order_code"],
-                        "project_name": row["project_name"],
-                        "panel_spec": row["panel_spec"],
-                        "qty": float(row["qty"]),
-                        "status": row["status"],
-                        "photo_name": row.get("photo_name", "無完工照片"),
-                        "manager": row["manager"]
-                    } for row in res.data]
-                else:
-                    st.session_state.assembly_db = default_assembly_orders
-            except Exception:
-                st.session_state.assembly_db = default_assembly_orders
-        else:
-            st.session_state.assembly_db = default_assembly_orders
-
-    tab_list, tab_action, tab_new = st.tabs([
-        "📋 配電盤組裝與完工總表", 
-        "⚡ 現場配線回報與拍照上傳入庫", 
-        "➕ 接收塗料完工件並開立配盤工單"
+    tab_list, tab_add, tab_edit, tab_terminate, tab_history = st.tabs([
+        "📄 廠區資產總表與分項檢視",
+        "➕ 新增固定資產與租賃合約",
+        "✏️ 修改資產與租賃資料",
+        "🗑️ 辦理資產報廢或合約終止",
+        "📜 歷史報廢與停用資產紀錄"
     ])
 
-    # 1. 總表檢視
-    with tab_list:
-        st.markdown("### 📋 現行配電盤組裝進度與成品清冊")
-        if st.session_state.assembly_db:
-            df = pd.DataFrame(st.session_state.assembly_db)
-            st.dataframe(df, use_container_width=True)
-        else:
-            st.info("目前無配盤組裝工單紀錄。")
-
-    # 2. 現場快速回報與拍照入庫
-    with tab_action:
-        st.markdown("### ⚡ 配盤車間主管現場組裝進度回報")
-        
-        if st.session_state.assembly_db:
-            order_options = [f"{o['order_code']} - {o['project_name']} (現狀: {o['status']})" for o in st.session_state.assembly_db]
-            selected_order_str = st.selectbox("🎯 選擇要回報的配電盤工單", order_options, key="select_assembly_order")
-
-            if selected_order_str:
-                target_code = selected_order_str.split(" - ")[0].strip()
-                current_order = next((o for o in st.session_state.assembly_db if o["order_code"] == target_code), None)
-
-                if current_order:
-                    st.markdown("#### 📊 目前配盤組裝進度燈號：")
-                    status_text = current_order["status"]
-                    
-                    p_val = 0
-                    if "待組裝" in status_text:
-                        p_val = 15
-                        st.markdown("🔴 **【第 1 階段】📌 待組裝配線** ⏳ (箱體已送達，等待配線師傅進場)")
-                    elif "銅排" in status_text or "配線中" in status_text:
-                        p_val = 60
-                        st.markdown("🟡 **【第 2 階段】⚡ 內部銅排配置與二次控制線配線中** 🔌 (正在進行主母線安裝與控制迴路配線)")
-                    elif "完工" in status_text or "入庫" in status_text:
-                        p_val = 100
-                        st.markdown("🟢 **【第 3 階段】🎉 組裝完工並已拍照驗收自動入庫** ✅ (FAT 檢驗合格，正式入庫準備出貨)")
-
-                    st.progress(p_val)
-                    st.markdown("---")
-
-                    with st.expander("📌 點此展開【配電盤規格與完工照片驗收】", expanded=True):
-                        col_a1, col_a2 = st.columns(2)
-                        with col_a1:
-                            st.markdown(f"**工單編號**：`{current_order['order_code']}`")
-                            st.markdown(f"**專案名稱**：{current_order['project_name']}")
-                            st.markdown(f"**盤體規格**：`{current_order['panel_spec']}`")
-                        with col_a2:
-                            st.markdown(f"**生產數量**：`{current_order['qty']} 台`")
-                            st.markdown(f"**完工照片檔案**：📸 `{current_order.get('photo_name', '無完工照片')}`")
-                        
-                        st.warning("⚠️ 配盤品管提醒：配線完成後務必進行絕緣耐壓測試（Megger Test），並上傳實體完工照片後方可按下入庫按鈕！")
-
-                    st.markdown("---")
-                    st.markdown("#### 📸 拍照上傳完成驗收並入庫：")
-                    
-                    uploaded_photo = st.file_uploader("📷 拍攝或上傳配電盤完工照片 (JPG, PNG)", type=["png", "jpg", "jpeg"], key="assembly_photo_upload")
-
-                    col1, col2 = st.columns(2)
-                    logged_staff = st.session_state.get('user_name', 'admin')
-
-                    with col1:
-                        if st.button("🔌 進行內部配線與銅排組裝", use_container_width=True, type="secondary"):
-                            current_order["status"] = "⚡ 內部銅排配置與二次控制線配線中"
-                            current_order["manager"] = logged_staff
-                            if supabase:
-                                supabase.table("assembly_orders").upsert(current_order).execute()
-                            st.success(f"✅ 工單 {target_code} 已更新為：配線組裝中！")
-                            st.rerun()
-
-                    with col2:
-                        if st.button("🎉 拍照驗收完成並【自動入庫】", use_container_width=True, type="primary"):
-                            photo_filename = uploaded_photo.name if uploaded_photo is not None else "Final_Assembly_Inspection.jpg"
-                            current_order["status"] = "🟢 組裝完工並已拍照驗收自動入庫"
-                            current_order["photo_name"] = photo_filename
-                            current_order["manager"] = logged_staff
-                            if supabase:
-                                supabase.table("assembly_orders").upsert(current_order).execute()
-                            st.success(f"🎉 恭喜！工單 {target_code} 驗收合格，照片 `{photo_filename}` 已上傳並完成自動入庫！")
-                            st.rerun()
-        else:
-            st.warning("⚠️ 目前無可操作的配盤工單。")
-
-    # 3. 新增配盤工單
-    with tab_new:
-        st.markdown("### ➕ 接收塗料完工件並建立配電盤組裝工單")
-        with st.form("form_new_assembly"):
-            c1, c2 = st.columns(2)
-            with c1:
-                new_code = st.text_input("配盤工單編號 *", value="WO-AS-20261003")
-                new_project = st.text_input("專案名稱 *", placeholder="例如: 某某科技廠總配電盤")
-            with c2:
-                new_spec = st.text_input("盤體規格與容量描述 *", value="1600x800x500mm (MCC 盤)")
-                new_qty = st.number_input("數量 (台) *", min_value=1.0, value=2.0, step=1.0)
-
-            if st.form_submit_button("💾 建立配盤工單並同步至 Supabase", type="primary", use_container_width=True):
-                if new_code and new_project:
-                    new_item = {
-                        "order_code": new_code,
-                        "project_name": new_project,
-                        "panel_spec": new_spec,
-                        "qty": new_qty,
-                        "status": "📌 待組裝配線",
-                        "photo_name": "無完工照片",
-                        "manager": st.session_state.get('user_name', 'admin')
-                    }
-                    st.session_state.assembly_db.insert(0, new_item)
-                    if supabase:
-                        try:
-                            supabase.table("assembly_orders").upsert(new_item).execute()
-                        except Exception as e:
-                            st.error(f"Supabase 寫入失敗: {e}")
-                    st.success(f"✅ 配盤工單 `{new_code}` 建立成功！")
-                    st.rerun()
-                else:
-                    st.warning("⚠️ 請完整填寫工單編號與專案名稱！")
-
-# 當點擊「拍照驗收完成並自動入庫」按鈕時的連動邏輯
-if st.button("🎉 拍照驗收完成並【自動入庫】", use_container_width=True, type="primary"):
-    photo_filename = uploaded_photo.name if uploaded_photo is not None else "Final_Assembly_Inspection.jpg"
-    current_order["status"] = "🟢 組裝完工並已拍照驗收自動入庫"
-    current_order["photo_name"] = photo_filename
-    current_order["manager"] = logged_staff
-    
-    # 🔗 核心連動：自動同步將完工成品增加至「裝配倉 (Assembly Floor WH)」或成品庫存中
-    if "warehouse_db" in st.session_state:
-        # 檢查倉庫中是否已有此成品料號，若無則自動新增建檔入庫
-        target_wh = "⚡ 裝配倉 (Assembly Floor WH)"
-        existing_wh_item = next((i for i in st.session_state.warehouse_db if i["code"] == current_order["order_code"] and i["warehouse"] == target_wh), None)
-        
-        if existing_wh_item:
-            existing_wh_item["qty"] += current_order["qty"]
-        else:
-            new_finished_item = {
-                "code": current_order["order_code"],
-                "name": f"[完工成品] {current_order['project_name']} - {current_order['panel_spec']}",
-                "category": "配電盤成品與半成品",
-                "warehouse": target_wh,
-                "qty": float(current_order["qty"]),
-                "safety": 1.0,
-                "status": "庫存充足"
-            }
-            st.session_state.warehouse_db.insert(0, new_finished_item)
-            if supabase:
-                try:
-                    supabase.table("warehouse_inventory").upsert(new_finished_item).execute()
-                except Exception:
-                    pass
-
-    if supabase:
+    # ----------------------------------------------------
+    # 📊 頂部動態指標看板
+    # ----------------------------------------------------
+    if engine:
         try:
-            supabase.table("assembly_orders").upsert(current_order).execute()
-        except Exception as e:
-            st.error(f"Supabase 同步失敗: {e}")
+            with engine.connect() as conn:
+                res_total = conn.execute(text("SELECT COUNT(*) FROM public.fixed_assets WHERE status NOT LIKE '%報廢%';")).fetchone()
+                total_cnt = res_total[0] if res_total else 0
+                
+                res_retired = conn.execute(text("SELECT COUNT(*) FROM public.fixed_assets WHERE status LIKE '%報廢%';")).fetchone()
+                retired_cnt = res_retired[0] if res_retired else 0
+        except Exception:
+            total_cnt, retired_cnt = 0, 0
+    else:
+        total_cnt, retired_cnt = 3, 1
 
-    st.success(f"🎉 恭喜！工單 {target_code} 驗收合格，照片已上傳，且已**自動入庫至裝配倉**！")
-    st.rerun()
+    c_m1, c_m2, c_m3 = st.columns(3)
+    c_m1.metric("在用總項目數", f"{total_cnt} 項")
+    c_m2.metric("歷史報廢/封存數", f"{retired_cnt} 項")
+    c_m3.metric("廠區分布", " | ".join(current_factories))
 
-def show(*args, **kwargs):
-    render_assembly_module(*args, **kwargs)
+    st.markdown("---")
 
-def main(*args, **kwargs):
-    render_assembly_module(*args, **kwargs)
+    # ----------------------------------------------------
+    # 📄 Tab 1: 動態連動廠區篩選清冊
+    # ----------------------------------------------------
+    with tab_list:
+        st.markdown("### 📋 廠區固定資產與租賃合約清冊")
+        
+        filter_factory = st.selectbox("請選擇要檢視的廠區：", ["全部廠區 (All Plants)"] + current_factories)
+        
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    query = "SELECT asset_code, asset_name, category, factory, brand_landlord, start_date, end_date, status FROM public.fixed_assets WHERE status NOT LIKE '%報廢%'"
+                    params = {}
+                    if filter_factory != "全部廠區 (All Plants)":
+                        query += " AND factory = :fac"
+                        params["fac"] = filter_factory
+                    query += " ORDER BY id ASC;"
 
-def render_assembly_page(*args, **kwargs):
-    render_assembly_module(*args, **kwargs)
+                    res = conn.execute(text(query), params)
+                    rows = res.fetchall()
+                    if rows:
+                        df = pd.DataFrame([dict(r._mapping) for r in rows])
+                        df.insert(0, "STT", range(len(df)))
+                        df.columns = ["STT", "編號", "名稱/合約", "類別", "廠區", "品牌/型號/房東", "租約起始", "租約到期", "狀態"]
+                        st.dataframe(df, use_container_width=True)
+                    else:
+                        st.info("目前該廠區尚無固定資產或租賃合約紀錄。")
+            except Exception as e:
+                st.error("讀取資產資料失敗: " + str(e))
+
+    # ----------------------------------------------------
+    # ➕ Tab 2: 新增固定資產 (廠區選單完全動態連動)
+    # ----------------------------------------------------
+    with tab_add:
+        st.markdown("### ➕ 新增固定資產與租賃合約")
+        with st.form("form_add_asset"):
+            col1, col2 = st.columns(2)
+            with col1:
+                a_code = st.text_input("資產/合約編號 *", placeholder="例: AST-EQ-005")
+                a_name = st.text_input("資產或合約名稱 *", placeholder="例: CNC 數控母線排切加工機")
+                # 動態下拉，直接來自廠區管理
+                a_factory = st.selectbox("存放廠區/據點 *", current_factories)
+                a_cat = st.selectbox("資產類別", ["土地與房屋租賃", "生產機具", "車輛", "電腦與資訊設備", "辦公設備", "網路伺服器", "品管儀器", "倉儲物流", "消防工安"])
+
+            with col2:
+                a_brand = st.text_input("品牌與型號 / 房東與出租方", placeholder="例: Amada - CNC Busbar 160T")
+                a_status = st.selectbox("目前狀態", ["🟢 在用/租賃中 (Active)", "🟡 租約將到期", "🔴 停用/維修中"])
+                a_cost = st.number_input("取得成本或月租金/總租金 (USD / VND)", min_value=0.0, value=1500.0, step=100.0)
+
+            st.markdown("##### 📅 租賃合約專用日期 (若非土地房屋租賃可不填)")
+            c_d1, c_d2 = st.columns(2)
+            with c_d1:
+                a_start = st.date_input("租約起始日期 (Lease Start Date)", datetime.date.today())
+            with c_d2:
+                a_end = st.date_input("租約到期日期 (Lease Expiry Date)", datetime.date.today() + datetime.timedelta(days=1095))
+
+            if st.form_submit_button("📌 確認新增固定資產或合約", type="primary", use_container_width=True):
+                if engine and a_code and a_name:
+                    try:
+                        with engine.begin() as conn:
+                            conn.execute(text("""
+                                INSERT INTO public.fixed_assets 
+                                (asset_code, asset_name, category, factory, brand_landlord, status, cost_amount, start_date, end_date)
+                                VALUES (:code, :name, :cat, :fac, :brand, :st, :cost, :start, :end)
+                                ON CONFLICT (asset_code) DO UPDATE
+                                SET asset_name = EXCLUDED.asset_name,
+                                    category = EXCLUDED.category,
+                                    factory = EXCLUDED.factory,
+                                    brand_landlord = EXCLUDED.brand_landlord,
+                                    status = EXCLUDED.status,
+                                    cost_amount = EXCLUDED.cost_amount,
+                                    start_date = EXCLUDED.start_date,
+                                    end_date = EXCLUDED.end_date;
+                            """), {
+                                "code": a_code, "name": a_name, "cat": a_cat, "fac": a_factory,
+                                "brand": a_brand, "st": a_status, "cost": a_cost, "start": a_start, "end": a_end
+                            })
+                        st.success(f"🎉 成功新增資產/合約：{a_name} ({a_code})，已綁定至【{a_factory}】！")
+                        st.rerun()
+                    except Exception as e:
+                        st.error("❌ 寫入資料庫失敗: " + str(e))
+                else:
+                    st.warning("⚠️ 請填寫資產編號與名稱！")
+
+    # ----------------------------------------------------
+    # ✏️ Tab 3: 修改資產與租賃資料
+    # ----------------------------------------------------
+    with tab_edit:
+        st.markdown("### ✏️ 修改現有固定資產與租賃合約資料")
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    res_a = conn.execute(text("SELECT asset_code, asset_name, factory FROM public.fixed_assets WHERE status NOT LIKE '%報廢%' ORDER BY asset_code;"))
+                    ast_list = res_a.fetchall()
+                    if ast_list:
+                        ast_opts = {f"{r.asset_code} - {r.asset_name} ({r.factory})": r.asset_code for r in ast_list}
+                        selected_ast_label = st.selectbox("請選擇要修改的資產或合約：", list(ast_opts.keys()))
+                        target_ast_code = ast_opts[selected_ast_label]
+
+                        ast_detail = conn.execute(text("SELECT * FROM public.fixed_assets WHERE asset_code = :c;"), {"c": target_ast_code}).fetchone()
+                        if ast_detail:
+                            ad = dict(ast_detail._mapping)
+                            with st.form("form_edit_asset_full"):
+                                col_ea1, col_ea2 = st.columns(2)
+                                with col_ea1:
+                                    edit_a_name = st.text_input("資產/合約名稱", value=str(ad.get("asset_name") or ""))
+                                    curr_fac = str(ad.get("factory") or "")
+                                    fac_idx = current_factories.index(curr_fac) if curr_fac in current_factories else 0
+                                    edit_a_factory = st.selectbox("存放廠區/據點", current_factories, index=fac_idx)
+                                with col_ea2:
+                                    edit_a_brand = st.text_input("品牌與型號 / 房東", value=str(ad.get("brand_landlord") or ""))
+                                    edit_a_cost = st.number_input("金額 (USD / VND)", value=float(ad.get("cost_amount") or 0.0))
+
+                                if st.form_submit_button("💾 儲存修改內容", type="primary"):
+                                    with engine.begin() as conn_u:
+                                        conn_u.execute(text("""
+                                            UPDATE public.fixed_assets
+                                            SET asset_name = :name, factory = :fac, brand_landlord = :brand, cost_amount = :cost, updated_at = CURRENT_TIMESTAMP
+                                            WHERE asset_code = :code;
+                                        """), {"name": edit_a_name, "fac": edit_a_factory, "brand": edit_a_brand, "cost": edit_a_cost, "code": target_ast_code})
+                                    st.success(f"✅ 已成功更新資產【{edit_a_name}】資料！")
+                                    st.rerun()
+            except Exception as e:
+                st.error("讀取失敗: " + str(e))
+
+    # ----------------------------------------------------
+    # 🗑️ Tab 4: 辦理資產報廢或合約終止
+    # ----------------------------------------------------
+    with tab_terminate:
+        st.markdown("### 🗑️ 辦理資產報廢或租賃合約終止")
+
+    # ----------------------------------------------------
+    # 📜 Tab 5: 歷史報廢紀錄
+    # ----------------------------------------------------
+    with tab_history:
+        st.markdown("### 📜 歷史報廢與停用資產紀錄")
+
+def render_asset_management(engine=None, lang="繁體中文", **kwargs):
+    render_asset_management_page(engine=engine, lang=lang, **kwargs)
+
+def show(engine=None, lang="繁體中文", **kwargs):
+    render_asset_management_page(engine=engine, lang=lang, **kwargs)
+
+def main(engine=None, lang="繁體中文", **kwargs):
+    render_asset_management_page(engine=engine, lang=lang, **kwargs)
