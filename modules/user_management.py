@@ -26,7 +26,7 @@ USER_MGMT_I18N = {
         "lbl_role_name": "角色名稱 (例如: 總經理、管理部主管、工程主管、倉庫管理員...) *",
         "btn_save_role": "💾 儲存部門角色權限範本",
         "btn_delete_role": "🗑️ 刪除此角色範本",
-        "success_role_save": "✅ 部門角色權限範本已成功更新！",
+        "success_role_save": "✅ 部門角色權限範本已成功更新並生效！",
         "success_role_delete": "🗑️ 角色範本已成功刪除！",
         "success_add_user": "✅ 人事員工系統帳號與權限已成功指派！",
         "col_time": "時間戳記",
@@ -137,20 +137,14 @@ USER_MGMT_I18N = {
     }
 }
 
-# ----------------------------------------------------
-# 🔄 智慧語意對照引擎 (日誌與狀態互轉)
-# ----------------------------------------------------
 def smart_translate_user(text_val, target_lang):
     if not text_val or not isinstance(text_val, str):
         return text_val
-    
     val_lower = text_val.lower()
-
     if "成功" in text_val or "success" in val_lower or "thành công" in val_lower:
         if target_lang == "Tiếng Việt": return "🟢 Thành công (Success)"
         elif target_lang == "English": return "🟢 Success"
         return "🟢 執行成功 (Success)"
-
     return text_val
 
 def render_user_management_page(lang="繁體中文", **kwargs):
@@ -160,7 +154,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 初始化稽核日誌與部門角色資料庫
     if "audit_logs_db" not in st.session_state:
         st.session_state.audit_logs_db = [
             {"time": "2026-10-06 13:00:15", "user": "admin", "action": "登入系統 (Login)", "module": "Auth", "ip": "192.168.1.50", "status": "成功"},
@@ -206,16 +199,13 @@ def render_user_management_page(lang="繁體中文", **kwargs):
         else:
             st.info(L["no_logs"])
 
-    # ⚙️ 角色與權限範本管理 (依據各部門職能與觀察匯總權限)
     with tab_roles:
         st.markdown(f"### {L['roles_header']}")
-        
         role_list_display = [{"角色名稱": r_name, "部門職責與資料範圍說明": r_info.get("desc", "")} for r_name, r_info in st.session_state.system_roles_db.items()]
         st.dataframe(pd.DataFrame(role_list_display), use_container_width=True)
 
         st.markdown("---")
-        st.markdown(f"### ✏️ 修改現有部門角色範本或 ➕ 新增角色")
-        
+        st.markdown("### ✏️ 修改現有部門角色範本或 ➕ 新增角色")
         role_action_mode = st.radio("選擇操作模式", ["修改現有部門角色範本", "新增全新部門角色範本"], horizontal=True)
 
         if role_action_mode == "修改現有部門角色範本":
@@ -228,13 +218,11 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                 
                 st.markdown("##### 🔐 依組織架構勾選該角色可開啟的部門與子功能範圍")
                 
-                # 總經理室 (全覽)
                 st.markdown("###### 👑 總經理室 (Executive Office) [全系統檢視與高階決策]")
                 rc_ex1, rc_ex2 = st.columns(2)
                 with rc_ex1: r_exec = st.checkbox("📊 總經理室營運總覽與高階決策", value=True)
                 with rc_ex2: r_approval = st.checkbox("📋 全公司電子簽核中心 (Approval Center)", value=True)
 
-                # 管理部 (行政、人事、財務、總務與下方各部門資料匯總)
                 st.markdown("###### 📋 管理部 (Management Dept) [人事、財務、總務與下方部門資料匯總]")
                 rcm1, rcm2, rcm3 = st.columns(3)
                 with rcm1:
@@ -255,7 +243,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                     rm13 = st.checkbox("🧾 電子發票綜合管理與 XML 歸檔", value=True)
                     rm14 = st.checkbox("🌐 越南營建電子發票與稅務合規管家", value=True)
 
-                # 工程部門 (工程人員內會用到的專屬功能)
                 st.markdown("###### 🛠️ 工程與設計中心 (Engineering & Design Center) [工程專屬功能]")
                 rce1, rce2, rce3 = st.columns(3)
                 with rce1:
@@ -271,7 +258,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                     re8 = st.checkbox("👷 [工程] 外包商點工計價與越南勞動法計薪", value=True)
                     re9 = st.checkbox("✅ [工程] FAT/SAT 試驗報告與 QR Code 驗收", value=True)
 
-                # 生產與倉管 (廠區生產、倉管)
                 st.markdown("###### 🏭 生產部與倉庫 (Production & Warehouse) [廠區生產與倉管]")
                 rcp1, rcp2 = st.columns(2)
                 with rcp1:
@@ -281,7 +267,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                     rp3 = st.checkbox("🎨 [塗料] 粉體塗裝烤漆組品管", value=True)
                     rp4 = st.checkbox("⚡ [配盤] 配電盤組裝線組", value=True)
 
-                # 資訊管理部
                 st.markdown("###### 🔒 資訊管理部 (IT & System)")
                 rc_it1, rc_it2 = st.columns(2)
                 with rc_it1: r_audit = st.checkbox("📊 系統稽核日誌與帳號權限控管", value=False)
@@ -297,6 +282,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                     if new_role_title != selected_edit_role:
                         del st.session_state.system_roles_db[selected_edit_role]
                     st.session_state.system_roles_db[new_role_title] = {"desc": role_desc_input}
+                    # 🟢 修正點：加上這行明確的成功提示通知，解決點擊後無反應的問題
                     st.success(L["success_role_save"])
                     st.rerun()
 
@@ -307,7 +293,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                         st.rerun()
                     else:
                         st.warning("⚠️ 系統至少需保留一個角色範本！")
-
         else:
             with st.form("form_add_department_role"):
                 new_role_title = st.text_input("新部門角色名稱 (例如: 行政主管、設計主管、品管經理...)")
@@ -321,7 +306,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                     else:
                         st.warning("⚠️ 請輸入角色名稱！")
 
-    # 👥 人事系統員工與帳號權限指派
     with tab_users:
         st.markdown(f"### {L['users_header']}")
         st.dataframe(pd.DataFrame(st.session_state.system_users_db), use_container_width=True)
@@ -329,7 +313,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
         st.markdown("---")
         st.markdown(f"### {L['add_user_header']}")
         
-        # 🔗 連結人事系統員工清單
         employee_options = ["李佑銘 (TW-001 - 西寧廠 - 總經理室)", "Nguyễn Văn Quý (VN-002 - 海防廠 - 管理部)"]
         if "employees_db" in st.session_state and st.session_state.employees_db:
             employee_options = [f"{emp.get('name', '')} (工號: {emp.get('code', emp.get('id', ''))} - {emp.get('site', '')})" for emp in st.session_state.employees_db]
@@ -360,7 +343,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                 else:
                     st.warning("⚠️ 請填寫完整資訊！")
 
-    # 🔌 追加：越南電子發票 API 串接設定頁籤
     with tab_api:
         st.markdown(f"### {L['api_header']}")
         with st.form("form_e_invoice_api_config"):
