@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import base64
 from sqlalchemy import text
 
 # ----------------------------------------------------
@@ -15,17 +16,18 @@ PROC_I18N = {
         "tab_po": "🛒 3. 總務/採購詢比價與下單 (PO)",
         "tab_ap": "💰 4. 財務應付帳款與付款 (AP)",
         "tab_audit": "🔍 稽核軌跡與權限追蹤",
-        "info_pr": "🔒 系統已自動綁定目前登入者身分，防止冒名申請。",
-        "lbl_requester": "請購人姓名 (系統綁定/不可修改) *",
+        "info_pr": "🔒 系統已自動綁定目前登入者身分，並支援上傳/拍攝實物照片供採購確認。",
+        "lbl_requester": "請購人姓名 (系統綁定) *",
         "lbl_dept": "所屬部門 (系統綁定)",
         "lbl_proj": "歸屬工程/專案編號",
-        "lbl_cat": "請購類別",
+        "lbl_cat": "請購項目細分類別 *",
         "lbl_item": "物品/材料名稱與規格 *",
         "lbl_qty": "需求數量",
         "lbl_unit": "單位",
         "lbl_amount": "預估總金額 (VND)",
-        "lbl_reason": "請購用途說明",
-        "btn_submit_pr": "📤 提交請購單並啟動簽核"
+        "lbl_photo": "📸 上傳/拍攝實物對比照片或規格圖檔 (JPG/PNG/PDF)",
+        "lbl_reason": "請購用途與詳細說明",
+        "btn_submit_pr": "📤 提交請購單 (含實物照片) 並啟動簽核"
     },
     "English": {
         "title": "🛒 Procurement & AP - Enterprise PR/PO & Approval Workflow",
@@ -35,17 +37,18 @@ PROC_I18N = {
         "tab_po": "🛒 3. GA / Purchasing (PO)",
         "tab_ap": "💰 4. Finance & AP Payment",
         "tab_audit": "🔍 Audit Trail & Logs",
-        "info_pr": "🔒 Locked to current logged-in user identity to prevent impersonation.",
+        "info_pr": "🔒 Locked to current logged-in user. Supports photo/spec uploads for purchasing verification.",
         "lbl_requester": "Requester Name (Locked) *",
         "lbl_dept": "Department (Locked)",
         "lbl_proj": "Project Code",
-        "lbl_cat": "Item Category",
+        "lbl_cat": "Detailed Category *",
         "lbl_item": "Item Name & Specs *",
         "lbl_qty": "Quantity",
         "lbl_unit": "Unit",
         "lbl_amount": "Est. Total Amount (VND)",
-        "lbl_reason": "Purpose / Description",
-        "btn_submit_pr": "📤 Submit PR & Start Workflow"
+        "lbl_photo": "📸 Upload / Capture Item Photo or Spec (JPG/PNG/PDF)",
+        "lbl_reason": "Purpose & Detailed Notes",
+        "btn_submit_pr": "📤 Submit PR with Photo & Start Workflow"
     },
     "Tiếng Việt": {
         "title": "🛒 Mua hàng & Phải trả (AP) - Quy trình Yêu cầu & Phê duyệt",
@@ -55,19 +58,33 @@ PROC_I18N = {
         "tab_po": "🛒 3. Hành chính / Mua hàng (PO)",
         "tab_ap": "💰 4. Kế toán & Phải trả (AP)",
         "tab_audit": "🔍 Nhật ký Kiểm toán",
-        "info_pr": "🔒 Tự động khóa theo tài khoản đang đăng nhập để tránh mạo danh.",
+        "info_pr": "🔒 Khóa theo tài khoản đang đăng nhập. Hỗ trợ chụp/tải ảnh vật tư để đối chiếu.",
         "lbl_requester": "Tên người yêu cầu (Khóa) *",
         "lbl_dept": "Bộ phận (Khóa)",
         "lbl_proj": "Mã dự án",
-        "lbl_cat": "Loại vật tư",
+        "lbl_cat": "Phân loại vật tư *",
         "lbl_item": "Tên & Quy cách vật tư *",
         "lbl_qty": "Số lượng",
         "lbl_unit": "Đơn vị",
         "lbl_amount": "Tổng tiền dự kiến (VND)",
-        "lbl_reason": "Mục đích sử dụng",
-        "btn_submit_pr": "📤 Gửi đơn yêu cầu mua hàng"
+        "lbl_photo": "📸 Tải ảnh / Chụp ảnh vật tư (JPG/PNG/PDF)",
+        "lbl_reason": "Mục đích sử dụng & Ghi chú",
+        "btn_submit_pr": "📤 Gửi đơn yêu cầu (Kèm hình ảnh)"
     }
 }
+
+PROC_CATEGORIES = [
+    "🔌 配電盤高低壓元件與電氣材料 (需設計/BOM審核)",
+    "⚡ 水電工程管線與線槽/電纜材料",
+    "✂️ 板金加工原物料 (銅排、鐵板、粉體塗料)",
+    "🛠️ 工地現場施工耗材、工具與五金配件",
+    "🦺 工安防護具與現場安全設施",
+    "🚗 廠區車輛維修零件與油品",
+    "🏢 廠區機器設備與固定資產",
+    "💻 資訊軟硬體與網路通訊設備",
+    "🥗 幹部宿舍食材與廚房用品",
+    "📄 行政總務文具與日常用品"
+]
 
 def inject_procurement_css():
     st.markdown("""
@@ -103,11 +120,12 @@ def init_procurement_db(engine):
                     requester_name VARCHAR(100) NOT NULL,
                     department VARCHAR(100) NOT NULL,
                     project_code VARCHAR(50),
-                    item_category VARCHAR(50) NOT NULL,
+                    item_category VARCHAR(100) NOT NULL,
                     item_name VARCHAR(200) NOT NULL,
                     qty NUMERIC(10,2) NOT NULL,
                     unit VARCHAR(20) DEFAULT '個',
                     est_amount NUMERIC(15,2) DEFAULT 0,
+                    item_photo TEXT,
                     tech_approval VARCHAR(50) DEFAULT '待設計主管審核',
                     mgr_approval VARCHAR(50) DEFAULT '待部門主管審核',
                     exec_approval VARCHAR(50) DEFAULT '待副總/高階審核',
@@ -117,13 +135,18 @@ def init_procurement_db(engine):
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
+
+            # 自動補齊照片欄位
+            try:
+                conn.execute(text("ALTER TABLE public.purchase_requisitions ADD COLUMN IF NOT EXISTS item_photo TEXT;"))
+            except Exception:
+                pass
     except Exception:
         pass
 
 def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
     inject_procurement_css()
 
-    # 自動跟隨主程式側邊欄選擇的語系（不再出現右上方重複 Dropdown）
     active_lang = lang or st.session_state.get("current_lang", "繁體中文")
     L = PROC_I18N.get(active_lang, PROC_I18N["繁體中文"])
 
@@ -137,31 +160,39 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
     ])
 
     # ----------------------------------------------------
-    # 📝 階段 1: 員工請購申請 (PR) - 強制鎖定目前登入身分
+    # 📝 階段 1: 員工請購申請 (PR) - 含實物照片拍攝/上傳
     # ----------------------------------------------------
     with tab_pr:
         st.markdown(f"### {L['tab_pr']}")
         st.info(L["info_pr"])
         
-        # 取得登入者資訊
         current_user_name = st.session_state.get("user_name", "admin")
         current_user_role = str(st.session_state.get("user_role", "Staff")).upper()
         
-        with st.form("form_create_pr"):
+        with st.form("form_create_pr_with_photo"):
             c1, c2, c3 = st.columns(3)
             with c1:
-                # 🔒 資安防護：disabled=True 灰色鎖定，防止冒用他人姓名或改名陷害
                 st.text_input(L["lbl_requester"], value=current_user_name, disabled=True)
-                st.text_input(L["lbl_dept"], value=f"部門角色: {current_user_role}", disabled=True)
+                st.text_input(L["lbl_dept"], value=f"角色: {current_user_role}", disabled=True)
                 pr_proj = st.text_input(L["lbl_proj"], placeholder="例: PRJ-2026-001 (西寧擴建案)")
             with c2:
-                pr_cat = st.selectbox(L["lbl_cat"], ["🔌 配電盤/水電工程材料 (需設計審核)", "🛠️ 工地現場耗材與工具", "🥗 幹部宿舍與總務用品", "💻 資訊與辦公設備"])
+                pr_cat = st.selectbox(L["lbl_cat"], PROC_CATEGORIES)
                 pr_item = st.text_input(L["lbl_item"], placeholder="例: Schneider 400A 空氣斷路器 (ACB)")
-                pr_qty = st.number_input(L["lbl_qty"], min_value=1.0, value=2.0)
+                pr_qty = st.number_input(L["lbl_qty"], min_value=1.0, value=1.0)
             with c3:
                 pr_unit = st.text_input(L["lbl_unit"], value="台")
                 pr_est_val = st.number_input(L["lbl_amount"], min_value=0.0, value=45000000.0, step=1000000.0)
-                pr_reason = st.text_area(L["lbl_reason"], placeholder="例: 西寧廠 A 區配電盤主開關更換備料。")
+                pr_reason = st.text_area(L["lbl_reason"], placeholder="例: 舊開關過載燒毀，請採購對照照片型號規格採買。")
+
+            st.markdown("##### " + L["lbl_photo"])
+            photo_file = st.file_uploader("選擇或拍攝圖片檔案", type=["jpg", "jpeg", "png", "pdf"])
+            
+            encoded_photo = ""
+            if photo_file:
+                if photo_file.type.startswith("image"):
+                    st.image(photo_file, caption="預覽對比照片", width=250)
+                # 轉 Base64 寫入資料庫
+                encoded_photo = base64.b64encode(photo_file.read()).decode("utf-8")
 
             if st.form_submit_button(L["btn_submit_pr"], type="primary", use_container_width=True):
                 if not pr_item:
@@ -173,14 +204,15 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                             with engine.begin() as conn:
                                 conn.execute(text("""
                                     INSERT INTO public.purchase_requisitions 
-                                    (pr_code, requester_name, department, project_code, item_category, item_name, qty, unit, est_amount, audit_log)
-                                    VALUES (:code, :req, :dept, :proj, :cat, :item, :qty, :unit, :amt, :log);
+                                    (pr_code, requester_name, department, project_code, item_category, item_name, qty, unit, est_amount, item_photo, audit_log)
+                                    VALUES (:code, :req, :dept, :proj, :cat, :item, :qty, :unit, :amt, :img, :log);
                                 """), {
                                     "code": pr_code_gen, "req": current_user_name, "dept": current_user_role, "proj": pr_proj,
                                     "cat": pr_cat, "item": pr_item, "qty": pr_qty, "unit": pr_unit, "amt": pr_est_val,
-                                    "log": f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}] {current_user_name} (身分驗證完成) 提出請購。"
+                                    "img": encoded_photo,
+                                    "log": f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}] {current_user_name} 提出請購 (含規格對比圖片)。"
                                 })
-                            st.success(f"🎉 請購單【{pr_code_gen}】已成功建立並送出！")
+                            st.success(f"🎉 請購單【{pr_code_gen}】已成功建立並包含圖片檔！")
                             st.rerun()
                         except Exception as e:
                             st.error("寫入失敗: " + str(e))
@@ -188,11 +220,11 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                         st.success(f"🎉 [展示模式] 請購單【{pr_code_gen}】建立成功！")
 
     # ----------------------------------------------------
-    # ✍️ 階段 2: 簽核中心與規格審查
+    # ✍️ 階段 2: 簽核中心與規格審查 (包含對比照片預覽)
     # ----------------------------------------------------
     with tab_approval:
         st.markdown(f"### {L['tab_approval']}")
-        st.caption("🔒 權責分離規範：設計主管僅審核規格與 BOM 相符性；行政與副總審核預算與必要性。")
+        st.caption("🔒 權責分離規範：設計主管僅審核規格與 BOM 相符性；主管可檢視申請人上傳的對比照片。")
         
         if engine:
             try:
@@ -210,6 +242,14 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                             </div>
                             """, unsafe_allow_html=True)
                             
+                            # 若有照片，顯示對比圖
+                            if pd_item.get("item_photo"):
+                                try:
+                                    img_bytes = base64.b64decode(pd_item["item_photo"])
+                                    st.image(img_bytes, caption=f"請購參考圖片 ({pd_item['pr_code']})", width=220)
+                                except Exception:
+                                    pass
+
                             col_a1, col_a2, col_a3 = st.columns(3)
                             with col_a1:
                                 if st.button(f"🎨 設計主管: 確認規格合規 ({pd_item['pr_code']})"):
@@ -236,11 +276,11 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                 st.error("讀取失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 🛒 階段 3: 總務/採購詢比價與下單 (PO)
+    # 🛒 階段 3: 總務/採購詢比價與下單 (PO) - 採購人員查看對比照片
     # ----------------------------------------------------
     with tab_po:
         st.markdown(f"### {L['tab_po']}")
-        st.info("💡 簽核通過之單據在此集中由【總務/採購專員】進行廠商詢價、比價與建立 PO 採購單。")
+        st.info("💡 簽核通過之單據在此集中由【總務/採購專員】進行廠商詢價、比價與建立 PO 採購單。請採購對照照片採買對應規格。")
         
         if engine:
             try:
@@ -252,6 +292,15 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                             p_dict = dict(po._mapping)
                             with st.form(f"form_po_{p_dict['pr_code']}"):
                                 st.markdown(f"##### 📦 請購單據：{p_dict['pr_code']} - {p_dict['item_name']} (請購人: {p_dict['requester_name']})")
+                                
+                                # 顯示請購人上傳的照片
+                                if p_dict.get("item_photo"):
+                                    try:
+                                        img_bytes_po = base64.b64decode(p_dict["item_photo"])
+                                        st.image(img_bytes_po, caption=f"請購實物照片：{p_dict['item_name']}", width=250)
+                                    except Exception:
+                                        pass
+
                                 c_p1, c_p2 = st.columns(2)
                                 with c_p1:
                                     vendor = st.text_input("選定決標供應商 (Nhà cung cấp)", placeholder="例: ABB Vietnam / 施耐德代理商")
