@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import re
 from sqlalchemy import text
 
 # ----------------------------------------------------
@@ -81,7 +82,15 @@ ASSET_CATEGORIES = [
     "📦 辦公傢俱與其他資產"
 ]
 
+def parse_formatted_amount(val_str):
+    """將點或逗號千分位字串還原為純數字，例: '850.000.000' -> 850000000"""
+    if not val_str:
+        return 0.0
+    clean_str = re.sub(r"[^\d]", "", str(val_str))
+    return float(clean_str) if clean_str else 0.0
+
 def format_vnd(amount):
+    """將數字格式化為越南點號千分位格式，例: 850.000.000 VND"""
     try:
         val = float(amount)
         return f"{val:,.0f}".replace(",", ".") + " VND"
@@ -139,7 +148,6 @@ def inject_assets_css():
     """, unsafe_allow_html=True)
 
 def init_assets_db(engine):
-    """升級並補齊 PostgreSQL 所有缺少欄位 (防止 psycopg2.errors.UndefinedColumn)"""
     if not engine:
         return
     try:
@@ -163,7 +171,6 @@ def init_assets_db(engine):
                 );
             """))
 
-            # 強制補齊 PostgreSQL 資料庫歷史缺失欄位
             cols = [
                 ("brand_model", "VARCHAR(150)"),
                 ("license_plate", "VARCHAR(50)"),
@@ -210,8 +217,22 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
             with c2:
                 site_loc = st.selectbox(L["lbl_site"], ["越南西寧廠 (Tay Ninh)", "海防辦事處 (Hai Phong)", "胡志明總部 (HCMC)"])
                 asset_status = st.selectbox(L["lbl_status"], ["🟢 在用/租賃中 (Active)", "🟡 維修保養中 (Maintenance)", "🔴 報廢/封存 (Retired)"])
-                cost_val = st.number_input(L["lbl_cost"], min_value=0.0, value=850000000.0, step=10000000.0)
-                salvage_val = st.number_input(L["lbl_salvage"], min_value=0.0, value=85000000.0, step=5000000.0)
+                
+                # 💰 越南千位點號格式輸入框 (取得原價成本)
+                cost_str = st.text_input(
+                    L["lbl_cost"], 
+                    value="850.000.000",
+                    help="自動轉換為越南千位點號格式 (例如: 850.000.000)"
+                )
+                cost_val = parse_formatted_amount(cost_str)
+
+                # 💰 越南千位點號格式輸入框 (預估 5 年後殘值)
+                salvage_str = st.text_input(
+                    L["lbl_salvage"], 
+                    value="85.000.000",
+                    help="預設為原價 10%，自動轉換為越南點號格式"
+                )
+                salvage_val = parse_formatted_amount(salvage_str)
 
             license_plate = ""
             v_model = ""
@@ -242,6 +263,8 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.error("⚠️ 請填寫資產編號與名稱！")
                 elif "車輛" in asset_cat and not license_plate:
                     st.error("⚠️ 請填寫車輛的【車牌號碼】！")
+                elif cost_val <= 0:
+                    st.error("⚠️ 請填寫正確的取得原價成本！")
                 else:
                     if engine:
                         try:
@@ -255,7 +278,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                     "bm": v_model, "plate": license_plate, "driver": driver_name, "pdate": purchase_dt,
                                     "exp": inspection_date, "cost": cost_val, "sal": salvage_val, "status": asset_status
                                 })
-                            st.success(f"🎉 車輛/資產【{asset_name}】建立成功！購買日期：{purchase_dt}")
+                            st.success(f"🎉 車輛/資產【{asset_name}】建立成功！原價：{format_vnd(cost_val)}")
                             st.rerun()
                         except Exception as e:
                             st.error("寫入失敗: " + str(e))
@@ -282,7 +305,6 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                         for r in rows:
                             item = dict(r._mapping)
                             
-                            # 關鍵字過濾
                             if search_kw:
                                 kw = search_kw.lower()
                                 match_code = kw in str(item.get("asset_code", "")).lower()
@@ -291,7 +313,6 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                 if not (match_code or match_name or match_plate):
                                     continue
 
-                            # 試算 5 年折舊與殘值
                             cost_amt = item.get("cost_amount", 0) or 0
                             salvage_amt = item.get("salvage_amount", 0) or (cost_amt * 0.1)
                             p_date = item.get("purchase_date") or datetime.date(2023, 1, 1)
@@ -322,7 +343,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.error("讀取失敗: " + str(e))
 
 # ----------------------------------------------------
-# 🔗 相容性進入點 (防護所有可能的主程式呼叫)
+# 🔗 相容性進入點
 # ----------------------------------------------------
 def render_assets_page(engine=None, lang="繁體中文", **kwargs):
     render_asset_management_page(engine=engine, lang=lang, **kwargs)
