@@ -136,6 +136,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
     init_assets_db(engine)
 
+    # 確保頁籤正常渲染
     tab_add, tab_list = st.tabs([L["tab_add"], L["tab_list"]])
 
     # ----------------------------------------------------
@@ -155,7 +156,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 asset_status = st.selectbox(L["lbl_status"], ["🟢 在用/租賃中 (Active)", "🟡 維修保養中 (Maintenance)", "🔴 報廢/封存 (Retired)"])
                 cost_val = st.number_input(L["lbl_cost"], min_value=0.0, value=850000000.0, step=10000000.0)
 
-            # 🚗 動態檢測：若類別屬於「車輛」，自動展開藍色車輛專用欄位區！
+            # 🚗 車輛類別：展開藍色專用輸入框
             license_plate = ""
             v_model = ""
             driver_name = ""
@@ -223,7 +224,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.error("讀取失敗: " + str(e))
 
 # ----------------------------------------------------
-# 🔗 相容性進入點 (對接主程式任何名稱呼叫)
+# 🔗 相容性進入點
 # ----------------------------------------------------
 def render_assets_page(engine=None, lang="繁體中文", **kwargs):
     render_asset_management_page(engine=engine, lang=lang, **kwargs)
