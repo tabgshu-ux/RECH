@@ -59,7 +59,7 @@ NAV_STRUCTURE = {
                     "📢 公司重要公告與佈告欄": "company_announcements",
                     "👤 員工個人檔案與人事管理": "hr_employee",
                     "🏢 廠內員工固定打卡與出勤紀錄": "internal_attendance",
-                    "📍 外勤出勤統計與工地人數監控": "field_attendance",  # 👉 管理部：監控與統計
+                    "📍 外勤出勤統計與工地人數監控": "field_attendance",
                     "🥗 幹部宿舍伙食與採購控管": "dorm_catering",
                     "🏭 廠區與工作廠區管理": "factory_mgmt",
                     "🚗 廠區車輛進出口門禁與派車審核": "vehicle_gate",
@@ -80,16 +80,8 @@ NAV_STRUCTURE = {
             },
             "🛠️ 工程與設計管理中心 (Engineering & Design Center)": {
                 "features": {
-                    "⚡ [工程] 配電盤與工程專案雙層報價": "eng_quote",
-                    "📊 [工程] 工程驗收與進度追蹤": "eng_progress",
-                    "📋 [工程] 現場工程日報表與出工統計": "field_daily_report",
-                    "📍 [工程] 現場外勤打卡與作業登記": "eng_field_checkin",  # 👉 工程部：現場打卡
-                    "🤖 [工程] AI 施工照片智慧辨識與歸檔": "eng_ai_photo",
-                    "⚠️ [工程] 分包商與專業證照到期預警": "eng_license",
-                    "🎨 [設計] 配電盤電氣與機構設計圖庫 Storage": "eng_design",
-                    "🔌 [工程] 配電盤 BOM 零件自動展開與採購連動": "eng_bom",
-                    "👷 [工程] 外包商點工計價與越南勞動法計薪": "eng_labor",
-                    "🧪 [工程] FAT/SAT 試驗報告與 QR Code 驗收": "eng_fat",
+                    "⚡ 工程主管戰情室與案場管理": "eng_mgmt_center",
+                    "📍 [工程] 現場外勤打卡與作業登記": "eng_field_checkin",
                 }
             },
             "🏭 生產部 (Production Dept)": {
@@ -153,16 +145,8 @@ NAV_STRUCTURE = {
             },
             "🛠️ Trung tâm Quản lý Kỹ thuật & Thiết kế": {
                 "features": {
-                    "⚡ [Kỹ thuật] Báo giá Dự án": "eng_quote",
-                    "📊 [Kỹ thuật] Tiến độ nghiệm thu": "eng_progress",
-                    "📋 [Kỹ thuật] Nhật ký Thi công": "field_daily_report",
-                    "📍 [Kỹ thuật] Chấm công ngoài công trường": "eng_field_checkin",
-                    "🤖 [Kỹ thuật] AI Nhận diện ảnh": "eng_ai_photo",
-                    "⚠️ [Kỹ thuật] Cảnh báo chứng chỉ": "eng_license",
-                    "🎨 [Thiết kế] Kho Storage Bản vẽ": "eng_design",
-                    "🔌 [Kỹ thuật] Bóc tách BOM & Mua hàng": "eng_bom",
-                    "👷 [Kỹ thuật] Chấm công thầu phụ": "eng_labor",
-                    "🧪 [Kỹ thuật] Thử nghiệm FAT/SAT": "eng_fat",
+                    "⚡ Quản lý Kỹ thuật & Dự án": "eng_mgmt_center",
+                    "📍 Chấm công ngoài công trường": "eng_field_checkin",
                 }
             },
             "🏭 Phòng Sản xuất (Production Dept)": {
@@ -226,16 +210,8 @@ NAV_STRUCTURE = {
             },
             "🛠️ Engineering & Design Management Center": {
                 "features": {
-                    "⚡ [Engineering] Quotation": "eng_quote",
-                    "📊 [Engineering] M&E Acceptance": "eng_progress",
-                    "📋 [Engineering] Daily Construction Report": "field_daily_report",
-                    "📍 [Engineering] Field Check-in Log": "eng_field_checkin",
-                    "🤖 [Engineering] AI Photo Recognition": "eng_ai_photo",
-                    "⚠️ [Engineering] License Alerts": "eng_license",
-                    "🎨 [Design] Drawing Storage Center": "eng_design",
-                    "🔌 [Engineering] BOM & Procurement": "eng_bom",
-                    "👷 [Engineering] Subcontractor Labor": "eng_labor",
-                    "🧪 [Engineering] FAT/SAT Testing": "eng_fat",
+                    "⚡ Engineering Executive Center": "eng_mgmt_center",
+                    "📍 Field Check-in Log": "eng_field_checkin",
                 }
             },
             "🏭 Production Dept": {
@@ -287,7 +263,7 @@ lang_dict = NAV_STRUCTURE.get(
 )
 
 # ----------------------------------------------------
-# 🔐 1. 登入介面 (防範未登入元件浮動)
+# 🔐 1. 登入介面
 # ----------------------------------------------------
 if not st.session_state.logged_in:
     _, center_col, _ = st.columns([1, 1.5, 1])
@@ -362,197 +338,3 @@ if st.session_state.get("must_change_pwd", False):
                     st.session_state.must_change_pwd = False
                     st.success("🎉 密碼修改成功！正在進入系統...")
                     st.rerun()
-                else:
-                    st.error("⚠️ 兩次輸入的新密碼不相符或未填寫，請重新檢查！")
-    st.stop()
-
-# ----------------------------------------------------
-# 🚀 3. 已登入側邊欄與功能選單
-# ----------------------------------------------------
-st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
-
-lang_list = ["繁體中文", "Tiếng Việt", "English"]
-selected_lang = st.sidebar.selectbox(
-    lang_dict["lang_selector"],
-    lang_list,
-    index=(lang_list.index(st.session_state.current_lang) if st.session_state.current_lang in lang_list else 0),
-)
-
-if selected_lang != st.session_state.current_lang:
-    st.session_state.current_lang = selected_lang
-    st.rerun()
-
-u_name_display = st.session_state.get("user_name", "User")
-u_role_display = str(st.session_state.get("user_role", "Staff")).upper()
-st.sidebar.markdown(f"**👤 {u_name_display}** ({u_role_display})")
-
-if st.sidebar.button(lang_dict["logout_btn"], use_container_width=True):
-    st.session_state.logged_in = False
-    st.session_state.must_change_pwd = False
-    st.rerun()
-
-st.sidebar.markdown("---")
-
-dept_options = list(lang_dict["departments"].keys())
-current_role_clean = str(st.session_state.get("user_role", "")).strip().lower()
-
-if current_role_clean == "security":
-    dept_options = ["👔 管理部 (Management Dept)"]
-    selected_parent_dept = dept_options[0]
-    st.sidebar.markdown(f"**{lang_dict['parent_header']}**")
-    feature_labels = ["🚗 廠區車輛進出口門禁與派車審核"] if st.session_state.current_lang == "繁體中文" else ["🚗 Quản lý xe ra vào & Phê duyệt"]
-    selected_feature_label = feature_labels[0]
-    target_route = "vehicle_gate"
-else:
-    is_executive_access = (
-        current_role_clean in ["admin", "chairman", "generalmanager", "vicemanager", "executive", "manager", "finance_manager"]
-    )
-
-    if not is_executive_access:
-        dept_options = [d for d in dept_options if "總經理室" not in d and "Executive" not in d and "Ban Giám đốc" not in d]
-
-    if current_role_clean != "admin":
-        dept_options = [d for d in dept_options if "資訊管理部" not in d and "IT" not in d and "Phòng IT" not in d]
-
-    selected_parent_dept = st.sidebar.radio(lang_dict["parent_header"], dept_options, index=0)
-
-    st.sidebar.markdown("---")
-    features_dict = lang_dict["departments"][selected_parent_dept]["features"]
-    feature_labels = list(features_dict.keys())
-
-    st.sidebar.caption(f"**{selected_parent_dept.split('(')[0].strip()}**")
-    selected_feature_label = st.sidebar.radio(lang_dict["sub_header"], feature_labels)
-    target_route = features_dict[selected_feature_label]
-
-curr_lang = st.session_state.current_lang
-
-# ----------------------------------------------------
-# 📢 公司公告跑馬燈
-# ----------------------------------------------------
-if "announcements_db" not in st.session_state:
-    st.session_state.announcements_db = [
-        {
-            "ann_id": "ANN-2026-001",
-            "title": "⚡ 關於越南全國連假與西寧/海防廠安全生產之重要通知",
-            "category": "🔴 緊急公告 (Urgent)",
-            "content": "請各部門主管務必於連假前落實廠區斷電巡檢、消防設備盤點，並確保留守人員通訊暢通。",
-            "publisher": "總經理室 / 董事長辦公室",
-            "date": "2026-10-09",
-            "status": "🟢 發布中 (Active)"
-        }
-    ]
-
-active_anns = [a for a in st.session_state.announcements_db if "發布中" in a["status"]]
-if active_anns:
-    latest_ann = active_anns[0]
-    st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
-
-# ----------------------------------------------------
-# 🔀 動態安全路由分流
-# ----------------------------------------------------
-if target_route == "company_announcements":
-    load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
-
-elif target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
-    load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route=target_route, lang=curr_lang)
-
-elif target_route == "approval_center":
-    load_module_safely("modules.approval_workflow", "render_approval_center", lang=curr_lang)
-
-elif target_route == "dorm_catering":
-    load_module_safely("modules.dorm_catering", "render_dorm_catering_module", engine=engine, lang=curr_lang)
-
-elif target_route == "eng_quote":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="1")
-
-elif target_route == "eng_progress":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="2")
-
-elif target_route == "field_daily_report":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="3")
-
-# 👉 【工程部現場端】：載入現場外勤打卡 (view_mode="field_worker")
-elif target_route == "eng_field_checkin":
-    load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="field_worker")
-
-# 👉 【管理部主管端】：載入跨案場人數監控 (view_mode="management")
-elif target_route == "field_attendance":
-    load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="management")
-
-elif target_route == "eng_ai_photo":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="4")
-
-elif target_route == "eng_license":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="5")
-
-elif target_route == "eng_design":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="6")
-
-elif target_route == "eng_bom":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="7")
-
-elif target_route == "eng_labor":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="8")
-
-elif target_route == "eng_fat":
-    load_module_safely("modules.engineering_department", "render_engineering_department_page", engine=engine, lang=curr_lang, sub_action="9")
-
-elif target_route == "vn_tax_invoice":
-    load_module_safely("modules.vietnam_tax_api_config", "render_vn_tax_invoice_page", engine=engine, lang=curr_lang)
-
-elif target_route == "procurement_ap":
-    load_module_safely("modules.procurement_ap", "render_procurement_ap_page", engine=engine, lang=curr_lang)
-
-elif target_route == "sales_order_ar":
-    load_module_safely("modules.sales_order_ar", "render_sales_order_ar_page", engine=engine, lang=curr_lang)
-
-elif target_route == "financial_tax":
-    load_module_safely("modules.financial_tax_reports", "render_financial_tax_reports_page", engine=engine, lang=curr_lang)
-
-elif target_route == "asset_mgmt":
-    load_module_safely("modules.asset_management", "render_asset_management_page", engine=engine, lang=curr_lang)
-
-elif target_route == "payroll_calc":
-    load_module_safely("modules.payroll_management", "render_payroll_management_page", engine=engine, lang=curr_lang)
-
-elif target_route == "invoice_management":
-    load_module_safely("modules.invoice_management", "render_invoice_management_page", engine=engine, lang=curr_lang)
-
-elif target_route == "internal_attendance":
-    load_module_safely("modules.internal_attendance", "render_internal_attendance_page", engine=engine, lang=curr_lang)
-
-elif target_route == "factory_mgmt":
-    load_module_safely("modules.factory_management", "render_factory_management_page", engine=engine, lang=curr_lang)
-
-elif target_route == "hr_employee":
-    load_module_safely("modules.employee_management", "render_employee_management", engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route == "vehicle_gate":
-    load_module_safely("modules.vehicle_gate_log", "render_vehicle_gate_log_page", engine=engine, lang=curr_lang)
-
-elif target_route == "vehicle_maintenance":
-    load_module_safely("modules.vehicle_maintenance", "render_vehicle_maintenance_page", engine=engine, lang=curr_lang)
-
-elif target_route == "wh_management":
-    load_module_safely("modules.warehouse_management", "render_warehouse_management", engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route == "sheet_metal":
-    load_module_safely("modules.sheet_metal", "render_sheet_metal_module", engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route == "painting":
-    load_module_safely("modules.painting", "render_painting_module", engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route == "assembly":
-    load_module_safely("modules.assembly", "render_assembly_module", engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route == "it_admin":
-    if current_role_clean == "admin":
-        load_module_safely("modules.user_management", "render_user_management_page", lang=curr_lang)
-    else:
-        st.error("⚠️ 權限不足：本系統無資訊管理部，僅限系統管理員 (admin) 登入檢視。")
-
-elif target_route == "it_licensing":
-    if current_role_clean == "admin":
-        load_module_safely("modules.system_licensing", "render_licensing_control_page", lang=curr_lang)
-    else:
-        st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
