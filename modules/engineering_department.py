@@ -1,55 +1,11 @@
 import streamlit as st
 import pandas as pd
 import datetime
-import base64
 import re
-from sqlalchemy import text
 
 # ----------------------------------------------------
-# 🌐 三語系字典 (i18n)
+# 🌐 金額格式化與語系處理
 # ----------------------------------------------------
-QUO_I18N = {
-    "繁體中文": {
-        "title": "⚡ 配電盤與工程專案雙層報價與現場探勘系統",
-        "caption": "探勘人員選擇倉庫材料/手動輸入未在庫項目，上傳現場勘查照片並計算多幣別總價呈報副總經理。",
-        "lbl_code": "報價單編號 *",
-        "lbl_customer": "客戶名稱 *",
-        "lbl_proj": "專案/工程名稱 *",
-        "lbl_currency": "💱 報價幣別選擇 *",
-        "lbl_total_amount": "💰 預估工程總報價金額 *",
-        "lbl_photo_site": "📸 上傳現場探勘照片與勘查圖檔 (供副總經理審核參考) *",
-        "lbl_file_doc": "📄 上傳詳細報價單與附件 (Excel / PDF / DWG)",
-        "lbl_site_notes": "📝 現場探勘狀況與特殊施工說明",
-        "btn_submit": "🚀 送出探勘報價單並呈報副總經理審核"
-    },
-    "English": {
-        "title": "⚡ Project Quotation & Site Exploration System",
-        "caption": "Select warehouse inventory, input custom materials, upload site photos, and submit to VP.",
-        "lbl_code": "Quotation Code *",
-        "lbl_customer": "Customer Name *",
-        "lbl_proj": "Project Name *",
-        "lbl_currency": "💱 Currency *",
-        "lbl_total_amount": "💰 Est. Total Amount *",
-        "lbl_photo_site": "📸 Upload Site Survey Photos (For Vice President Review) *",
-        "lbl_file_doc": "📄 Upload Detailed Quotation (Excel / PDF / DWG)",
-        "lbl_site_notes": "📝 Site Condition & Engineering Notes",
-        "btn_submit": "🚀 Submit Quotation to Vice President"
-    },
-    "Tiếng Việt": {
-        "title": "⚡ Hệ thống Báo giá Dự án & Khảo sát Thực địa",
-        "caption": "Chọn vật tư kho, nhập vật tư ngoài, tải ảnh thực địa và trình Phó Tổng Giám Đốc duyệt.",
-        "lbl_code": "Mã báo giá *",
-        "lbl_customer": "Tên khách hàng *",
-        "lbl_proj": "Tên dự án / Công trình *",
-        "lbl_currency": "💱 Loại tiền tệ *",
-        "lbl_total_amount": "💰 Tổng giá trị báo giá dự kiến *",
-        "lbl_photo_site": "📸 Tải ảnh khảo sát thực địa (Gửi Phó Tổng Giám Đốc tham khảo) *",
-        "lbl_file_doc": "📄 Tải tệp báo giá chi tiết (Excel / PDF / DWG)",
-        "lbl_site_notes": "📝 Ghi chú khảo sát thực địa",
-        "btn_submit": "🚀 Gửi báo giá trình Phó Tổng Giám Đốc"
-    }
-}
-
 def parse_formatted_amount(val_str):
     if not val_str:
         return 0.0
@@ -59,220 +15,171 @@ def parse_formatted_amount(val_str):
 def format_currency_text(amount, currency="VND"):
     try:
         val = float(amount)
-        if currency == "VND":
-            return f"{val:,.0f}".replace(",", ".") + " VND"
-        elif currency == "USD":
-            return f"${val:,.2f} USD"
-        elif currency == "RMB":
-            return f"¥{val:,.2f} RMB"
-        elif currency == "TWD":
-            return f"NT${val:,.0f} TWD"
+        if currency in ["VND", "TWD"]:
+            return f"{val:,.0f}".replace(",", ".") + f" {currency}"
         else:
-            return f"{val:,.0f} {currency}"
+            return f"{val:,.2f} {currency}"
     except Exception:
         return f"{amount} {currency}"
 
-def inject_quo_css():
-    st.markdown("""
-        <style>
-        html, body, [class*="css"] { font-size: 16px !important; }
-        div.stButton > button {
-            width: 100% !important;
-            height: 3rem !important;
-            font-size: 1.1rem !important;
-            font-weight: bold !important;
-            border-radius: 8px !important;
+def render_engineering_page(engine=None, lang="繁體中文", **kwargs):
+    st.title("⚡ 裕豐電機 - 工程與設計管理中心")
+    st.caption("手機優化版・主管戰情室・估驗報價・BOM展算・設計圖庫")
+
+    # 倉庫物料資料庫預設
+    if "warehouse_master_parts" not in st.session_state:
+        st.session_state.warehouse_master_parts = {
+            "銅排 Busbar 10x100mm": 250000.0,
+            "空氣斷路器 ACB 2000A": 45000000.0,
+            "塑殼斷路器 MCCB 250A": 3500000.0,
+            "2000A 防水不銹鋼機櫃": 85000000.0,
+            "PVC 管 2寸 (50米)": 1200000.0,
+            "控制電纜 3.5mm² (100m)": 2800000.0
         }
-        .bom-box {
-            background-color: #F0FDFA;
-            border: 2px dashed #0D9488;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 20px;
-        }
-        .site-photo-box {
-            background-color: #FEF3C7;
-            border: 2px dashed #D97706;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 20px;
-        }
-        </style>
-    """, unsafe_allow_html=True)
 
-def init_quo_db(engine):
-    if not engine:
-        return
-    try:
-        with engine.begin() as conn:
-            conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS public.project_quotations (
-                    id SERIAL PRIMARY KEY,
-                    quo_code VARCHAR(50) UNIQUE NOT NULL,
-                    customer_name VARCHAR(200) NOT NULL,
-                    project_name VARCHAR(200) NOT NULL,
-                    currency VARCHAR(10) DEFAULT 'VND',
-                    total_amount NUMERIC(15,2) DEFAULT 0,
-                    site_photos TEXT,
-                    quote_doc TEXT,
-                    site_notes TEXT,
-                    bom_details JSONB,
-                    vp_approval VARCHAR(50) DEFAULT '🟡 待副總經理簽核',
-                    created_by VARCHAR(100),
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
-            """))
-    except Exception:
-        pass
-
-def render_engineering_quotation_page(engine=None, lang="繁體中文", **kwargs):
-    inject_quo_css()
-
-    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
-    L = QUO_I18N.get(active_lang, QUO_I18N["繁體中文"])
-
-    st.title(L["title"])
-    st.caption(L["caption"])
-
-    init_quo_db(engine)
-
-    current_user_name = st.session_state.get("user_name", "探勘工程師")
+    if "two_tier_quotations_db" not in st.session_state:
+        st.session_state.two_tier_quotations_db = []
 
     # ----------------------------------------------------
-    # 初始化探勘 BOM 清單 Session State
+    # ⚡ 配電盤與工程專案雙層報價系統 (BOM + 多幣別 + 照片)
     # ----------------------------------------------------
-    if "survey_bom_items" not in st.session_state:
-        st.session_state.survey_bom_items = [
-            {"item_name": "Schneider 400A 空氣斷路器 (ACB)", "spec": "3P 65kA", "qty": 1.0, "unit": "台", "price": 45000000.0, "source": "倉庫連線物料"},
-            {"item_name": "高壓電纜 3x240mm2", "spec": "24kV XLPE", "qty": 50.0, "unit": "米", "price": 1200000.0, "source": "倉庫連線物料"}
-        ]
+    st.markdown("### ⚡ 配電盤與工程專案雙層報價系統")
+    
+    tab_prop, tab_review = st.tabs(["✍️ 現場探勘與雙層報價提案", "🔒 主管審核中心 (副總經理簽核)"])
 
-    with st.form("form_project_quotation_survey"):
-        # 1. 報價基本資料
-        st.markdown("#### 📝 1. 專案報價基本資訊")
-        c1, c2 = st.columns(2)
-        with c1:
-            default_qcode = "QUO-" + datetime.datetime.now().strftime("%Y%m%d-%H%M")
-            q_code = st.text_input(L["lbl_code"], value=default_qcode)
-            p_name = st.text_input(L["lbl_proj"], placeholder="例: 西寧廠高壓配電盤擴建案")
-        with c2:
-            cust_name = st.text_input(L["lbl_customer"], placeholder="例: 台商越南造紙廠")
-            
-            # 💱 4 種幣別選擇 (VND, USD, RMB, TWD)
-            q_currency = st.selectbox(L["lbl_currency"], ["VND", "USD", "RMB", "TWD"], index=0)
+    with tab_prop:
+        with st.form("form_project_quotation_survey"):
+            st.markdown("##### 📝 1. 專案報價基本資訊")
+            c1, c2, c3, c4 = st.columns(4)
+            with c1:
+                p_client = st.text_input("客戶名稱 (Client) *", value="台商越南造紙廠")
+            with c2:
+                p_proj = st.text_input("專案/工程名稱 *", value="西寧廠高壓配電盤擴建案")
+            with c3:
+                p_prop = st.text_input("提案人 (職稱與姓名) *", value="探勘工程師 - 陳明華")
+            with c4:
+                p_curr = st.selectbox("💱 報價計價幣別 *", ["VND", "USD", "RMB", "TWD"], index=0)
 
-        # 2. 探勘 BOM 材料明細（倉庫連線 + 未在庫手動新增）
-        st.markdown("""
-        <div class="bom-box">
-            <h5 style="color:#0F766E; margin-top:0;">📦 2. 探勘工程 BOM 材料清單 (倉庫連線 + 現場手動輸入)</h5>
-        """, unsafe_allow_html=True)
-        
-        st.caption("探勘人員可直接從倉庫物料連線挑選，若倉庫沒有則可直接在下方編輯器新增：")
+            st.markdown("---")
+            st.markdown("##### 📦 2. 現場探勘材料 BOM 清單 (倉庫庫存連線 + 現場手動輸入未在庫項目)")
+            st.caption("請選擇倉庫物料；若倉庫無此品項，請選擇『現場手動新增未在庫材料』並輸入名稱與單價。")
 
-        # 編輯 BOM 材料表格
-        bom_df = pd.DataFrame(st.session_state.survey_bom_items)
-        edited_bom = st.data_editor(
-            bom_df,
-            num_rows="dynamic",
-            use_container_width=True,
-            column_config={
-                "item_name": st.column_config.TextColumn("材料/設備名稱 *", required=True),
-                "spec": st.column_config.TextColumn("規格型號"),
-                "qty": st.column_config.NumberColumn("需求數量", min_value=0.1, step=1.0),
-                "unit": st.column_config.TextColumn("單位"),
-                "price": st.column_config.NumberColumn(f"預估單價 ({q_currency})", min_value=0.0),
-                "source": st.column_config.SelectboxColumn("物料來源", options=["倉庫連線物料", "現場手動新增未在庫"])
-            }
-        )
+            num_items = st.number_input("項目數量 (增減材料格數)", min_value=1, max_value=30, value=3, step=1)
 
-        # 計算 BOM 總價與自動帶入
-        bom_total = 0.0
-        if not edited_bom.empty:
-            try:
-                bom_total = (edited_bom["qty"] * edited_bom["price"]).sum()
-            except Exception:
-                bom_total = 0.0
+            internal_rows = []
+            total_cost = 0.0
+            available_parts = ["--- 現場手動新增未在庫材料 ---"] + list(st.session_state.warehouse_master_parts.keys())
 
-        st.markdown(f"**💡 BOM 自動加總參考金額：** `:red[{format_currency_text(bom_total, q_currency)}]`")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # 3. 金額輸入與現場探勘照片上傳 (呈報副總經理)
-        st.markdown("#### 💰 3. 專案預估總價與現場探勘照片呈報")
-        
-        # 💰 使用點號千分位格式輸入框 (絕不帶 .00)
-        default_amt_str = f"{bom_total:,.0f}".replace(",", ".") if q_currency in ["VND", "TWD"] else f"{bom_total:,.2f}"
-        total_amt_str = st.text_input(
-            L["lbl_total_amount"],
-            value=default_amt_str,
-            help="請輸入金額，系統支援千位點號格式 (例如: 250.000.000)"
-        )
-        total_amt_val = parse_formatted_amount(total_amt_str)
-
-        st.markdown("""
-        <div class="site-photo-box">
-            <h5 style="color:#B45309; margin-top:0;">📸 4. 現場探勘照片與備註 (提供副總經理/高階簽核參考)</h5>
-        """, unsafe_allow_html=True)
-        
-        site_photos = st.file_uploader(
-            L["lbl_photo_site"],
-            type=["jpg", "jpeg", "png"],
-            accept_multiple_files=True,
-            help="請拍攝上傳現場變壓器、開關箱、配線走線與施工現場照片"
-        )
-
-        quote_doc_file = st.file_uploader(L["lbl_file_doc"], type=["xlsx", "xls", "pdf", "dwg"])
-        site_notes = st.text_area(L["lbl_site_notes"], placeholder="例: 現場高壓走線受限，需要額外增加 15 米線槽；客戶要求週六停電施工。")
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # 4. 提交按鈕
-        if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
-            if not p_name or not cust_name:
-                st.error("⚠️ 請填寫專案名稱與客戶名稱！")
-            elif total_amt_val <= 0:
-                st.error("⚠️ 請輸入正確的預估工程總金額！")
-            else:
-                # 處理照片編碼
-                encoded_photos = []
-                if site_photos:
-                    for ph in site_photos:
-                        encoded_photos.append(base64.b64encode(ph.read()).decode("utf-8"))
-
-                # 處理報價單檔案
-                encoded_doc = ""
-                if quote_doc_file:
-                    encoded_doc = base64.b64encode(quote_doc_file.read()).decode("utf-8")
-
-                bom_json = edited_bom.to_dict(orient="records") if not edited_bom.empty else []
-
-                if engine:
-                    try:
-                        with engine.begin() as conn:
-                            conn.execute(text("""
-                                INSERT INTO public.project_quotations 
-                                (quo_code, customer_name, project_name, currency, total_amount, site_photos, quote_doc, site_notes, bom_details, created_by)
-                                VALUES (:code, :cust, :proj, :curr, :amt, :photos, :doc, :notes, :bom, :user);
-                            """), {
-                                "code": q_code, "cust": cust_name, "proj": p_name,
-                                "curr": q_currency, "amt": total_amt_val,
-                                "photos": ",".join(encoded_photos), "doc": encoded_doc,
-                                "notes": site_notes, "bom": pd.io.json.dumps(bom_json),
-                                "user": current_user_name
-                            })
-                        st.success(f"🎉 探勘報價單【{q_code}】已成功建立！總金額：{format_currency_text(total_amt_val, q_currency)}，已自動呈報給【副總經理】進行審核。")
-                        st.rerun()
-                    except Exception as e:
-                        st.error("寫入失敗: " + str(e))
+            for i in range(1, int(num_items) + 1):
+                ic1, ic2, ic3, ic4, ic5 = st.columns([2.5, 2, 1.2, 1.5, 1.8])
+                with ic1:
+                    selected_part = st.selectbox(f"材料/設備品項 #{i}", available_parts, key=f"part_sel_{i}")
+                
+                if selected_part == "--- 現場手動新增未在庫材料 ---":
+                    with ic2:
+                        custom_name = st.text_input(f"手動輸入材料名稱/規格 #{i}", placeholder="例: 特殊防爆接線盒", key=f"inote_{i}")
+                    with ic3:
+                        iqty = st.number_input(f"數量 #{i}", min_value=0.0, value=1.0, key=f"iqty_{i}")
+                    with ic4:
+                        c_price = st.number_input(f"手動單價 ({p_curr}) #{i}", min_value=0.0, value=500000.0 if p_curr in ["VND","TWD"] else 20.0, key=f"cprice_{i}")
+                    auto_unit_price = c_price
+                    part_display_name = custom_name if custom_name else f"手動材料 #{i}"
                 else:
-                    st.success(f"🎉 [展示模式] 報價單【{q_code}】（金額: {format_currency_text(total_amt_val, q_currency)}）已建立並呈報副總經理！")
+                    auto_unit_price = st.session_state.warehouse_master_parts[selected_part]
+                    with ic2:
+                        note_extra = st.text_input(f"規格備註 #{i}", value="", key=f"inote_{i}")
+                        part_display_name = f"{selected_part} ({note_extra})" if note_extra else selected_part
+                    with ic3:
+                        iqty = st.number_input(f"數量 #{i}", min_value=0.0, value=1.0, key=f"iqty_{i}")
+                    with ic4:
+                        st.text_input(f"單價 ({p_curr}) #{i}", value=f"{auto_unit_price:,.0f}" if p_curr in ["VND","TWD"] else f"{auto_unit_price:,.2f}", disabled=True, key=f"price_display_{i}")
+
+                sub = iqty * auto_unit_price
+                with ic5:
+                    sub_str = f"{sub:,.0f} {p_curr}" if p_curr in ["VND","TWD"] else f"${sub:,.2f} {p_curr}"
+                    st.text_input(f"小計 #{i}", value=sub_str, disabled=True, key=f"sub_display_{i}")
+
+                if iqty > 0 and part_display_name:
+                    total_cost += sub
+                    internal_rows.append({
+                        "品項名稱": part_display_name,
+                        "數量": iqty,
+                        "單價": auto_unit_price,
+                        "小計": sub,
+                        "來源": "手動新增" if selected_part == "--- 現場手動新增未在庫材料 ---" else "倉庫庫存連线"
+                    })
+
+            st.markdown(f"### 💰 BOM 材料小計總金額：`:red[{format_currency_text(total_cost, p_curr)}]`")
+            st.markdown("---")
+
+            st.markdown("##### 📸 3. 專案預估總價與現場探勘照片呈報 (供副總經理簽核)")
+            
+            cust_summary = st.text_area("對外工程摘要說明", value="1. 西寧廠高壓配電盤安裝工程\n2. 現場電纜拉線與配管施工")
+            
+            default_suggested = f"{total_cost * 1.25:,.0f}".replace(",", ".") if p_curr in ["VND","TWD"] else f"{total_cost * 1.25:,.2f}"
+            cust_suggested_price_str = st.text_input(
+                f"💰 預估對外工程總報價金額 ({p_curr}) *", 
+                value=default_suggested,
+                help="請輸入金額，系統支援越南點號格式 (例如: 250.000.000)"
+            )
+
+            site_photos = st.file_uploader(
+                "📷 上傳現場探勘與施工照片 (呈報副總經理參考)",
+                type=["jpg", "jpeg", "png"],
+                accept_multiple_files=True
+            )
+            site_notes = st.text_area("📝 現場探勘狀況與特殊施工備註", placeholder="例: 現場高壓線路走線受限，需要額外增加 15 米線槽。")
+
+            if st.form_submit_button("🚀 提交探勘報價單並呈報副總經理審核", type="primary"):
+                if p_client and p_proj and internal_rows:
+                    clean_amt_str = str(cust_suggested_price_str).replace(".", "").replace(",", "")
+                    try:
+                        final_cust_price = float(clean_amt_str)
+                    except Exception:
+                        final_cust_price = total_cost * 1.25
+
+                    new_id = f"QUO-2026-{len(st.session_state.two_tier_quotations_db)+1:03d}"
+                    st.session_state.two_tier_quotations_db.append({
+                        "quot_id": new_id, 
+                        "client": p_client, 
+                        "project_name": p_proj, 
+                        "proposer": p_prop,
+                        "currency": p_curr, 
+                        "internal_items": internal_rows, 
+                        "total_internal_cost": total_cost,
+                        "customer_facing_summary": cust_summary, 
+                        "customer_price": final_cust_price, 
+                        "site_photos_count": len(site_photos) if site_photos else 0,
+                        "site_notes": site_notes,
+                        "status": "⏳ 待副總經理審核"
+                    })
+                    st.success(f"✅ 探勘報價提案 [{new_id}] 已成功提交！含 {len(site_photos) if site_photos else 0} 張現場照片，已呈報副總經理簽核！")
+                    st.rerun()
+                else:
+                    st.warning("⚠️ 請完整填寫客戶、專案名稱及至少一筆有效的材料明細！")
+
+    with tab_review:
+        if st.session_state.two_tier_quotations_db:
+            for q in st.session_state.two_tier_quotations_db:
+                curr_fmt = q.get('currency', 'VND')
+                with st.expander(f"📌 單號：{q['quot_id']} | 專案：{q['project_name']} | 提案人：{q['proposer']} | 狀態：{q['status']}"):
+                    st.write(f"**客戶**：{q['client']} | **計價幣別**：`{curr_fmt}` | **對外報價總金額**：`:red[{format_currency_text(q['customer_price'], curr_fmt)}]`")
+                    st.markdown("**📦 探勘 BOM 材料清單 (倉庫連線 + 現場手動品項)：**")
+                    st.dataframe(pd.DataFrame(q["internal_items"]), use_container_width=True)
+                    st.write(f"**📸 現場探勘照片張數**：{q.get('site_photos_count', 0)} 張")
+                    st.write(f"**📝 現場勘查說明**：{q.get('site_notes', '無')}")
+                    st.info(f"目前簽核狀態：{q['status']}")
+        else:
+            st.info("目前尚無雙層報價與探勘紀錄。")
 
 # ----------------------------------------------------
-# 🔗 相容性進入點
+# 🔗 相容進入點
 # ----------------------------------------------------
-def render_quotation_page(engine=None, lang="繁體中文", **kwargs):
-    render_engineering_quotation_page(engine=engine, lang=lang, **kwargs)
+def render_engineering_department_page(engine=None, lang="繁體中文", **kwargs):
+    render_engineering_page(engine=engine, lang=lang, **kwargs)
 
 def show(engine=None, lang="繁體中文", **kwargs):
-    render_engineering_quotation_page(engine=engine, lang=lang, **kwargs)
+    render_engineering_page(engine=engine, lang=lang, **kwargs)
 
 def main(engine=None, lang="繁體中文", **kwargs):
-    render_engineering_quotation_page(engine=engine, lang=lang, **kwargs)
+    render_engineering_page(engine=engine, lang=lang, **kwargs)
