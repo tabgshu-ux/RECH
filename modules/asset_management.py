@@ -116,7 +116,6 @@ def init_assets_db(engine):
                 );
             """))
 
-            # 自動升級補齊車牌與維修欄位
             try:
                 conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS license_plate VARCHAR(50);"))
                 conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS driver_custodian VARCHAR(100);"))
@@ -126,7 +125,7 @@ def init_assets_db(engine):
     except Exception:
         pass
 
-def render_assets_page(engine=None, lang="繁體中文", **kwargs):
+def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     inject_assets_css()
 
     active_lang = lang or st.session_state.get("current_lang", "繁體中文")
@@ -156,7 +155,7 @@ def render_assets_page(engine=None, lang="繁體中文", **kwargs):
                 asset_status = st.selectbox(L["lbl_status"], ["🟢 在用/租賃中 (Active)", "🟡 維修保養中 (Maintenance)", "🔴 報廢/封存 (Retired)"])
                 cost_val = st.number_input(L["lbl_cost"], min_value=0.0, value=850000000.0, step=10000000.0)
 
-            # 🚗 動態檢測：若類別屬於「車輛」，自動展開車輛專用輸入框！
+            # 🚗 動態檢測：若類別屬於「車輛」，自動展開藍色車輛專用欄位區！
             license_plate = ""
             v_model = ""
             driver_name = ""
@@ -223,8 +222,17 @@ def render_assets_page(engine=None, lang="繁體中文", **kwargs):
             except Exception as e:
                 st.error("讀取失敗: " + str(e))
 
+# ----------------------------------------------------
+# 🔗 相容性進入點 (對接主程式任何名稱呼叫)
+# ----------------------------------------------------
+def render_assets_page(engine=None, lang="繁體中文", **kwargs):
+    render_asset_management_page(engine=engine, lang=lang, **kwargs)
+
+def render_fixed_assets(engine=None, lang="繁體中文", **kwargs):
+    render_asset_management_page(engine=engine, lang=lang, **kwargs)
+
 def show(engine=None, lang="繁體中文", **kwargs):
-    render_assets_page(engine=engine, lang=lang, **kwargs)
+    render_asset_management_page(engine=engine, lang=lang, **kwargs)
 
 def main(engine=None, lang="繁體中文", **kwargs):
-    render_assets_page(engine=engine, lang=lang, **kwargs)
+    render_asset_management_page(engine=engine, lang=lang, **kwargs)
