@@ -86,6 +86,24 @@ PROC_CATEGORIES = [
     "📄 行政總務文具與日常用品"
 ]
 
+def format_vnd_text(amount):
+    """將純數字轉換為帶逗號千分位與億/萬大寫提示"""
+    try:
+        val = float(amount)
+        formatted_str = f"{val:,.0f} VND"
+        
+        # 輔助單位說明
+        if val >= 1000000000:
+            helper = f"({val/1000000000:.2f} 億 / {val/1000000000:.2f} Tỷ VND)"
+        elif val >= 1000000:
+            helper = f"({val/1000000:.1f} 萬 / {val/1000000:.1f} Triệu VND)"
+        else:
+            helper = ""
+            
+        return f"{formatted_str} {helper}".strip()
+    except Exception:
+        return f"{amount} VND"
+
 def inject_procurement_css():
     st.markdown("""
         <style>
@@ -104,6 +122,16 @@ def inject_procurement_css():
             border-radius: 8px;
             padding: 14px;
             margin-bottom: 12px;
+        }
+        .amount-hint {
+            background-color: #FEF3C7;
+            color: #92400E;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 15px;
+            margin-top: -10px;
+            margin-bottom: 10px;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -136,7 +164,6 @@ def init_procurement_db(engine):
                 );
             """))
 
-            # 自動補齊照片欄位
             try:
                 conn.execute(text("ALTER TABLE public.purchase_requisitions ADD COLUMN IF NOT EXISTS item_photo TEXT;"))
             except Exception:
@@ -160,7 +187,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
     ])
 
     # ----------------------------------------------------
-    # 📝 階段 1: 員工請購申請 (PR) - 含實物照片拍攝/上傳
+    # 📝 階段 1: 員工請購申請 (PR) - 含千分位提示
     # ----------------------------------------------------
     with tab_pr:
         st.markdown(f"### {L['tab_pr']}")
@@ -182,6 +209,10 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
             with c3:
                 pr_unit = st.text_input(L["lbl_unit"], value="台")
                 pr_est_val = st.number_input(L["lbl_amount"], min_value=0.0, value=45000000.0, step=1000000.0)
+                
+                # 💰 即時千分位與越文大寫提示
+                st.markdown(f'<div class="amount-hint">💰 千分位對照：{format_vnd_text(pr_est_val)}</div>', unsafe_allow_html=True)
+
                 pr_reason = st.text_area(L["lbl_reason"], placeholder="例: 舊開關過載燒毀，請採購對照照片型號規格採買。")
 
             st.markdown("##### " + L["lbl_photo"])
@@ -191,7 +222,6 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
             if photo_file:
                 if photo_file.type.startswith("image"):
                     st.image(photo_file, caption="預覽對比照片", width=250)
-                # 轉 Base64 寫入資料庫
                 encoded_photo = base64.b64encode(photo_file.read()).decode("utf-8")
 
             if st.form_submit_button(L["btn_submit_pr"], type="primary", use_container_width=True):
@@ -210,9 +240,9 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                                     "code": pr_code_gen, "req": current_user_name, "dept": current_user_role, "proj": pr_proj,
                                     "cat": pr_cat, "item": pr_item, "qty": pr_qty, "unit": pr_unit, "amt": pr_est_val,
                                     "img": encoded_photo,
-                                    "log": f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}] {current_user_name} 提出請購 (含規格對比圖片)。"
+                                    "log": f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}] {current_user_name} 提出請購 ({format_vnd_text(pr_est_val)})。"
                                 })
-                            st.success(f"🎉 請購單【{pr_code_gen}】已成功建立並包含圖片檔！")
+                            st.success(f"🎉 請購單【{pr_code_gen}】已成功建立！預估金額：{format_vnd_text(pr_est_val)}")
                             st.rerun()
                         except Exception as e:
                             st.error("寫入失敗: " + str(e))
@@ -220,7 +250,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                         st.success(f"🎉 [展示模式] 請購單【{pr_code_gen}】建立成功！")
 
     # ----------------------------------------------------
-    # ✍️ 階段 2: 簽核中心與規格審查 (包含對比照片預覽)
+    # ✍️ 階段 2: 簽核中心與規格審查 (千分位顯示)
     # ----------------------------------------------------
     with tab_approval:
         st.markdown(f"### {L['tab_approval']}")
@@ -234,15 +264,15 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                     if prs:
                         for p in prs:
                             pd_item = dict(p._mapping)
+                            formatted_amount = format_vnd_text(pd_item['est_amount'])
                             st.markdown(f"""
                             <div class="proc-card">
                                 <b>單號：{pd_item['pr_code']}</b> | 請購人：<b>{pd_item['requester_name']}</b> ({pd_item['department']})<br>
-                                物品：<b>{pd_item['item_name']}</b> x {pd_item['qty']} {pd_item['unit']} | 預估金額：<b>{pd_item['est_amount']:,} VND</b><br>
+                                物品：<b>{pd_item['item_name']}</b> x {pd_item['qty']} {pd_item['unit']} | 預估金額：<b style="color:#B91C1C; font-size:18px;">{formatted_amount}</b><br>
                                 專案：{pd_item['project_code'] or '無'} | 類別：{pd_item['item_category']}
                             </div>
                             """, unsafe_allow_html=True)
                             
-                            # 若有照片，顯示對比圖
                             if pd_item.get("item_photo"):
                                 try:
                                     img_bytes = base64.b64decode(pd_item["item_photo"])
@@ -276,11 +306,11 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                 st.error("讀取失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 🛒 階段 3: 總務/採購詢比價與下單 (PO) - 採購人員查看對比照片
+    # 🛒 階段 3: 總務/採購詢比價與下單 (PO) - 含議價千分位提示
     # ----------------------------------------------------
     with tab_po:
         st.markdown(f"### {L['tab_po']}")
-        st.info("💡 簽核通過之單據在此集中由【總務/採購專員】進行廠商詢價、比價與建立 PO 採購單。請採購對照照片採買對應規格。")
+        st.info("💡 簽核通過之單據在此集中由【總務/採購專員】進行廠商詢價、比價與建立 PO 採購單。")
         
         if engine:
             try:
@@ -293,7 +323,6 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                             with st.form(f"form_po_{p_dict['pr_code']}"):
                                 st.markdown(f"##### 📦 請購單據：{p_dict['pr_code']} - {p_dict['item_name']} (請購人: {p_dict['requester_name']})")
                                 
-                                # 顯示請購人上傳的照片
                                 if p_dict.get("item_photo"):
                                     try:
                                         img_bytes_po = base64.b64decode(p_dict["item_photo"])
@@ -305,6 +334,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                                 with c_p1:
                                     vendor = st.text_input("選定決標供應商 (Nhà cung cấp)", placeholder="例: ABB Vietnam / 施耐德代理商")
                                     final_price = st.number_input("最終議價總金額 (VND)", min_value=0.0, value=float(p_dict['est_amount']))
+                                    st.markdown(f'<div class="amount-hint">💰 決標金額對照：{format_vnd_text(final_price)}</div>', unsafe_allow_html=True)
                                 with c_p2:
                                     delivery_date = st.date_input("約定交貨日期", datetime.date.today() + datetime.timedelta(days=7))
                                     po_notes = st.text_input("採購備註 / 付款條件", value="收到發票後 30 天月結 (AP 30 Days)")
@@ -319,9 +349,9 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                                             WHERE pr_code = :c;
                                         """), {
                                             "c": p_dict['pr_code'],
-                                            "log": f"\n[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}] 總務/採購已下單給 {vendor}，金額 {final_price:,} VND。"
+                                            "log": f"\n[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}] 總務/採購已下單給 {vendor}，金額 {format_vnd_text(final_price)}。"
                                         })
-                                    st.success(f"🎉 已成功建立 PO 採購單並指派給財務部！")
+                                    st.success(f"🎉 已成功建立 PO 採購單並指派給財務部！金額：{format_vnd_text(final_price)}")
                                     st.rerun()
                     else:
                         st.info("目前沒有待採購下單的簽核單據。")
@@ -342,6 +372,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                     ap_items = res_ap.fetchall()
                     if ap_items:
                         df_ap = pd.DataFrame([dict(r._mapping) for r in ap_items])
+                        df_ap["est_amount"] = df_ap["est_amount"].apply(format_vnd_text)
                         st.dataframe(df_ap[["pr_code", "requester_name", "item_name", "qty", "est_amount", "po_status", "ap_status"]], use_container_width=True)
                         if st.button("💳 執行批次付款並沖銷 AP 應付帳款", type="primary"):
                             st.success("✅ 財務付款與稅務發票沖銷作業完成！")
