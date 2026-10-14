@@ -87,20 +87,10 @@ PROC_CATEGORIES = [
 ]
 
 def format_vnd_text(amount):
-    """將純數字轉換為帶逗號千分位與億/萬大寫提示"""
+    """將金額格式化為千分位格式，例: 45,000,000 VND"""
     try:
         val = float(amount)
-        formatted_str = f"{val:,.0f} VND"
-        
-        # 輔助單位說明
-        if val >= 1000000000:
-            helper = f"({val/1000000000:.2f} 億 / {val/1000000000:.2f} Tỷ VND)"
-        elif val >= 1000000:
-            helper = f"({val/1000000:.1f} 萬 / {val/1000000:.1f} Triệu VND)"
-        else:
-            helper = ""
-            
-        return f"{formatted_str} {helper}".strip()
+        return f"{val:,.0f} VND"
     except Exception:
         return f"{amount} VND"
 
@@ -122,16 +112,6 @@ def inject_procurement_css():
             border-radius: 8px;
             padding: 14px;
             margin-bottom: 12px;
-        }
-        .amount-hint {
-            background-color: #FEF3C7;
-            color: #92400E;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 15px;
-            margin-top: -10px;
-            margin-bottom: 10px;
         }
         </style>
     """, unsafe_allow_html=True)
@@ -187,7 +167,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
     ])
 
     # ----------------------------------------------------
-    # 📝 階段 1: 員工請購申請 (PR) - 含千分位提示
+    # 📝 階段 1: 員工請購申請 (PR) - 輸入框直接呈現格式化數值
     # ----------------------------------------------------
     with tab_pr:
         st.markdown(f"### {L['tab_pr']}")
@@ -205,13 +185,18 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
             with c2:
                 pr_cat = st.selectbox(L["lbl_cat"], PROC_CATEGORIES)
                 pr_item = st.text_input(L["lbl_item"], placeholder="例: Schneider 400A 空氣斷路器 (ACB)")
-                pr_qty = st.number_input(L["lbl_qty"], min_value=1.0, value=1.0)
+                pr_qty = st.number_input(L["lbl_qty"], min_value=1.0, value=1.0, step=1.0)
             with c3:
                 pr_unit = st.text_input(L["lbl_unit"], value="台")
-                pr_est_val = st.number_input(L["lbl_amount"], min_value=0.0, value=45000000.0, step=1000000.0)
                 
-                # 💰 即時千分位與越文大寫提示
-                st.markdown(f'<div class="amount-hint">💰 千分位對照：{format_vnd_text(pr_est_val)}</div>', unsafe_allow_html=True)
+                # 💰 金額輸入框格式化：移除 .00 小數點，format="%d" 設定為整數格式，與薪資計算單一致
+                pr_est_val = st.number_input(
+                    L["lbl_amount"], 
+                    min_value=0, 
+                    value=45000000, 
+                    step=1000000,
+                    format="%d"
+                )
 
                 pr_reason = st.text_area(L["lbl_reason"], placeholder="例: 舊開關過載燒毀，請採購對照照片型號規格採買。")
 
@@ -250,7 +235,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                         st.success(f"🎉 [展示模式] 請購單【{pr_code_gen}】建立成功！")
 
     # ----------------------------------------------------
-    # ✍️ 階段 2: 簽核中心與規格審查 (千分位顯示)
+    # ✍️ 階段 2: 簽核中心與規格審查
     # ----------------------------------------------------
     with tab_approval:
         st.markdown(f"### {L['tab_approval']}")
@@ -306,7 +291,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                 st.error("讀取失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 🛒 階段 3: 總務/採購詢比價與下單 (PO) - 含議價千分位提示
+    # 🛒 階段 3: 總務/採購詢比價與下單 (PO)
     # ----------------------------------------------------
     with tab_po:
         st.markdown(f"### {L['tab_po']}")
@@ -333,8 +318,13 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                                 c_p1, c_p2 = st.columns(2)
                                 with c_p1:
                                     vendor = st.text_input("選定決標供應商 (Nhà cung cấp)", placeholder="例: ABB Vietnam / 施耐德代理商")
-                                    final_price = st.number_input("最終議價總金額 (VND)", min_value=0.0, value=float(p_dict['est_amount']))
-                                    st.markdown(f'<div class="amount-hint">💰 決標金額對照：{format_vnd_text(final_price)}</div>', unsafe_allow_html=True)
+                                    final_price = st.number_input(
+                                        "最終議價總金額 (VND)", 
+                                        min_value=0, 
+                                        value=int(p_dict['est_amount']),
+                                        step=1000000,
+                                        format="%d"
+                                    )
                                 with c_p2:
                                     delivery_date = st.date_input("約定交貨日期", datetime.date.today() + datetime.timedelta(days=7))
                                     po_notes = st.text_input("採購備註 / 付款條件", value="收到發票後 30 天月結 (AP 30 Days)")
