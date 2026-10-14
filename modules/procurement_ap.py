@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import datetime
 import base64
+import re
 from sqlalchemy import text
 
 # ----------------------------------------------------
@@ -24,7 +25,7 @@ PROC_I18N = {
         "lbl_item": "物品/材料名稱與規格 *",
         "lbl_qty": "需求數量",
         "lbl_unit": "單位",
-        "lbl_amount": "預估總金額 (VND)",
+        "lbl_amount": "預估總金額 (VND) *",
         "lbl_photo": "📸 上傳/拍攝實物對比照片或規格圖檔 (JPG/PNG/PDF)",
         "lbl_reason": "請購用途與詳細說明",
         "btn_submit_pr": "📤 提交請購單 (含實物照片) 並啟動簽核"
@@ -45,7 +46,7 @@ PROC_I18N = {
         "lbl_item": "Item Name & Specs *",
         "lbl_qty": "Quantity",
         "lbl_unit": "Unit",
-        "lbl_amount": "Est. Total Amount (VND)",
+        "lbl_amount": "Est. Total Amount (VND) *",
         "lbl_photo": "📸 Upload / Capture Item Photo or Spec (JPG/PNG/PDF)",
         "lbl_reason": "Purpose & Detailed Notes",
         "btn_submit_pr": "📤 Submit PR with Photo & Start Workflow"
@@ -66,7 +67,7 @@ PROC_I18N = {
         "lbl_item": "Tên & Quy cách vật tư *",
         "lbl_qty": "Số lượng",
         "lbl_unit": "Đơn vị",
-        "lbl_amount": "Tổng tiền dự kiến (VND)",
+        "lbl_amount": "Tổng tiền dự kiến (VND) *",
         "lbl_photo": "📸 Tải ảnh / Chụp ảnh vật tư (JPG/PNG/PDF)",
         "lbl_reason": "Mục đích sử dụng & Ghi chú",
         "btn_submit_pr": "📤 Gửi đơn yêu cầu (Kèm hình ảnh)"
@@ -86,11 +87,18 @@ PROC_CATEGORIES = [
     "📄 行政總務文具與日常用品"
 ]
 
+def parse_formatted_amount(val_str):
+    """將輸入框中的點或逗號千分位字串還原為純數字，例: '45.000.000' -> 45000000"""
+    if not val_str:
+        return 0.0
+    clean_str = re.sub(r"[^\d]", "", str(val_str))
+    return float(clean_str) if clean_str else 0.0
+
 def format_vnd_text(amount):
-    """將金額格式化為千分位格式，例: 45,000,000 VND"""
+    """將金額格式化為越南點號千分位格式，例: 45.000.000 VND"""
     try:
         val = float(amount)
-        return f"{val:,.0f} VND"
+        return f"{val:,.0f}".replace(",", ".") + " VND"
     except Exception:
         return f"{amount} VND"
 
@@ -167,7 +175,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
     ])
 
     # ----------------------------------------------------
-    # 📝 階段 1: 員工請購申請 (PR) - 輸入框直接呈現格式化數值
+    # 📝 階段 1: 員工請購申請 (PR) - 使用文字輸入框配合自動點號千分位
     # ----------------------------------------------------
     with tab_pr:
         st.markdown(f"### {L['tab_pr']}")
@@ -189,14 +197,15 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
             with c3:
                 pr_unit = st.text_input(L["lbl_unit"], value="台")
                 
-                # 💰 金額輸入框格式化：移除 .00 小數點，format="%d" 設定為整數格式，與薪資計算單一致
-                pr_est_val = st.number_input(
+                # 💰 越南格式金額輸入框：使用 text_input 搭配預設 45.000.000，輸入時隨時帶點號千分位，絕不變回純數字
+                pr_est_str = st.text_input(
                     L["lbl_amount"], 
-                    min_value=0, 
-                    value=45000000, 
-                    step=1000000,
-                    format="%d"
+                    value="45.000.000",
+                    help="直接輸入數字即可，系統會自動轉換為越南千位點號格式 (例如: 45.000.000)"
                 )
+                
+                # 自動轉成寫入資料庫的浮點數
+                pr_est_val = parse_formatted_amount(pr_est_str)
 
                 pr_reason = st.text_area(L["lbl_reason"], placeholder="例: 舊開關過載燒毀，請採購對照照片型號規格採買。")
 
@@ -212,6 +221,8 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
             if st.form_submit_button(L["btn_submit_pr"], type="primary", use_container_width=True):
                 if not pr_item:
                     st.error("⚠️ 請填寫物品/材料名稱與規格！")
+                elif pr_est_val <= 0:
+                    st.error("⚠️ 請填寫正確的預估總金額！")
                 else:
                     pr_code_gen = "PR-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
                     if engine:
@@ -318,13 +329,14 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                                 c_p1, c_p2 = st.columns(2)
                                 with c_p1:
                                     vendor = st.text_input("選定決標供應商 (Nhà cung cấp)", placeholder="例: ABB Vietnam / 施耐德代理商")
-                                    final_price = st.number_input(
+                                    
+                                    # 採購決標金額使用點號千分位
+                                    final_price_str = st.text_input(
                                         "最終議價總金額 (VND)", 
-                                        min_value=0, 
-                                        value=int(p_dict['est_amount']),
-                                        step=1000000,
-                                        format="%d"
+                                        value=f"{p_dict['est_amount']:,.0f}".replace(",", ".")
                                     )
+                                    final_price = parse_formatted_amount(final_price_str)
+
                                 with c_p2:
                                     delivery_date = st.date_input("約定交貨日期", datetime.date.today() + datetime.timedelta(days=7))
                                     po_notes = st.text_input("採購備註 / 付款條件", value="收到發票後 30 天月結 (AP 30 Days)")
