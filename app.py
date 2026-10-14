@@ -338,3 +338,177 @@ if st.session_state.get("must_change_pwd", False):
                     st.session_state.must_change_pwd = False
                     st.success("🎉 密碼修改成功！正在進入系統...")
                     st.rerun()
+                else:
+                    st.error("⚠️ 兩次輸入的新密碼不相符或未填寫，請重新檢查！")
+    st.stop()
+
+# ----------------------------------------------------
+# 🚀 3. 已登入側邊欄與功能選單
+# ----------------------------------------------------
+st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
+
+lang_list = ["繁體中文", "Tiếng Việt", "English"]
+selected_lang = st.sidebar.selectbox(
+    lang_dict["lang_selector"],
+    lang_list,
+    index=(lang_list.index(st.session_state.current_lang) if st.session_state.current_lang in lang_list else 0),
+)
+
+if selected_lang != st.session_state.current_lang:
+    st.session_state.current_lang = selected_lang
+    st.rerun()
+
+u_name_display = st.session_state.get("user_name", "User")
+u_role_display = str(st.session_state.get("user_role", "Staff")).upper()
+st.sidebar.markdown(f"**👤 {u_name_display}** ({u_role_display})")
+
+if st.sidebar.button(lang_dict["logout_btn"], use_container_width=True):
+    st.session_state.logged_in = False
+    st.session_state.must_change_pwd = False
+    st.rerun()
+
+st.sidebar.markdown("---")
+
+dept_options = list(lang_dict["departments"].keys())
+current_role_clean = str(st.session_state.get("user_role", "")).strip().lower()
+
+if current_role_clean == "security":
+    dept_options = ["👔 管理部 (Management Dept)"]
+    selected_parent_dept = dept_options[0]
+    st.sidebar.markdown(f"**{lang_dict['parent_header']}**")
+    feature_labels = ["🚗 廠區車輛進出口門禁與派車審核"] if st.session_state.current_lang == "繁體中文" else ["🚗 Quản lý xe ra vào & Phê duyệt"]
+    selected_feature_label = feature_labels[0]
+    target_route = "vehicle_gate"
+else:
+    is_executive_access = (
+        current_role_clean in ["admin", "chairman", "generalmanager", "vicemanager", "executive", "manager", "finance_manager"]
+    )
+
+    if not is_executive_access:
+        dept_options = [d for d in dept_options if "總經理室" not in d and "Executive" not in d and "Ban Giám đốc" not in d]
+
+    if current_role_clean != "admin":
+        dept_options = [d for d in dept_options if "資訊管理部" not in d and "IT" not in d and "Phòng IT" not in d]
+
+    selected_parent_dept = st.sidebar.radio(lang_dict["parent_header"], dept_options, index=0)
+
+    st.sidebar.markdown("---")
+    features_dict = lang_dict["departments"][selected_parent_dept]["features"]
+    feature_labels = list(features_dict.keys())
+
+    st.sidebar.caption(f"**{selected_parent_dept.split('(')[0].strip()}**")
+    selected_feature_label = st.sidebar.radio(lang_dict["sub_header"], feature_labels)
+    target_route = features_dict[selected_feature_label]
+
+curr_lang = st.session_state.current_lang
+
+# ----------------------------------------------------
+# 📢 公司公告跑馬燈
+# ----------------------------------------------------
+if "announcements_db" not in st.session_state:
+    st.session_state.announcements_db = [
+        {
+            "ann_id": "ANN-2026-001",
+            "title": "⚡ 關於越南全國連假與西寧/海防廠安全生產之重要通知",
+            "category": "🔴 緊急公告 (Urgent)",
+            "content": "請各部門主管務必於連假前落實廠區斷電巡檢、消防設備盤點，並確保留守人員通訊暢通。",
+            "publisher": "總經理室 / 董事長辦公室",
+            "date": "2026-10-09",
+            "status": "🟢 發布中 (Active)"
+        }
+    ]
+
+active_anns = [a for a in st.session_state.announcements_db if "發布中" in a["status"]]
+if active_anns:
+    latest_ann = active_anns[0]
+    st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
+
+# ----------------------------------------------------
+# 🔀 動態安全路由分流
+# ----------------------------------------------------
+if target_route == "company_announcements":
+    load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
+
+elif target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
+    load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route=target_route, lang=curr_lang)
+
+elif target_route == "approval_center":
+    load_module_safely("modules.approval_workflow", "render_approval_center", lang=curr_lang)
+
+elif target_route == "dorm_catering":
+    load_module_safely("modules.dorm_catering", "render_dorm_catering_module", engine=engine, lang=curr_lang)
+
+# 🛠️ 【工程部核心】：向下相容所有新舊路由標籤，統一載入三語系重構模組
+elif target_route in [
+    "eng_mgmt_center", "eng_quote", "eng_progress", "field_daily_report", 
+    "eng_ai_photo", "eng_license", "eng_design", "eng_bom", "eng_labor", "eng_fat"
+]:
+    load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang)
+
+# 👉 【工程部現場打卡】：載入現場外勤打卡
+elif target_route == "eng_field_checkin":
+    load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="field_worker")
+
+# 👉 【管理部主管端】：載入跨案場人數監控
+elif target_route == "field_attendance":
+    load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="management")
+
+elif target_route == "vn_tax_invoice":
+    load_module_safely("modules.vietnam_tax_api_config", "render_vn_tax_invoice_page", engine=engine, lang=curr_lang)
+
+elif target_route == "procurement_ap":
+    load_module_safely("modules.procurement_ap", "render_procurement_ap_page", engine=engine, lang=curr_lang)
+
+elif target_route == "sales_order_ar":
+    load_module_safely("modules.sales_order_ar", "render_sales_order_ar_page", engine=engine, lang=curr_lang)
+
+elif target_route == "financial_tax":
+    load_module_safely("modules.financial_tax_reports", "render_financial_tax_reports_page", engine=engine, lang=curr_lang)
+
+elif target_route == "asset_mgmt":
+    load_module_safely("modules.asset_management", "render_asset_management_page", engine=engine, lang=curr_lang)
+
+elif target_route == "payroll_calc":
+    load_module_safely("modules.payroll_management", "render_payroll_management_page", engine=engine, lang=curr_lang)
+
+elif target_route == "invoice_management":
+    load_module_safely("modules.invoice_management", "render_invoice_management_page", engine=engine, lang=curr_lang)
+
+elif target_route == "internal_attendance":
+    load_module_safely("modules.internal_attendance", "render_internal_attendance_page", engine=engine, lang=curr_lang)
+
+elif target_route == "factory_mgmt":
+    load_module_safely("modules.factory_management", "render_factory_management_page", engine=engine, lang=curr_lang)
+
+elif target_route == "hr_employee":
+    load_module_safely("modules.employee_management", "render_employee_management", engine=engine, t=lang_dict, lang=curr_lang)
+
+elif target_route == "vehicle_gate":
+    load_module_safely("modules.vehicle_gate_log", "render_vehicle_gate_log_page", engine=engine, lang=curr_lang)
+
+elif target_route == "vehicle_maintenance":
+    load_module_safely("modules.vehicle_maintenance", "render_vehicle_maintenance_page", engine=engine, lang=curr_lang)
+
+elif target_route == "wh_management":
+    load_module_safely("modules.warehouse_management", "render_warehouse_management", engine=engine, t=lang_dict, lang=curr_lang)
+
+elif target_route == "sheet_metal":
+    load_module_safely("modules.sheet_metal", "render_sheet_metal_module", engine=engine, t=lang_dict, lang=curr_lang)
+
+elif target_route == "painting":
+    load_module_safely("modules.painting", "render_painting_module", engine=engine, t=lang_dict, lang=curr_lang)
+
+elif target_route == "assembly":
+    load_module_safely("modules.assembly", "render_assembly_module", engine=engine, t=lang_dict, lang=curr_lang)
+
+elif target_route == "it_admin":
+    if current_role_clean == "admin":
+        load_module_safely("modules.user_management", "render_user_management_page", lang=curr_lang)
+    else:
+        st.error("⚠️ 權限不足：本系統無資訊管理部，僅限系統管理員 (admin) 登入檢視。")
+
+elif target_route == "it_licensing":
+    if current_role_clean == "admin":
+        load_module_safely("modules.system_licensing", "render_licensing_control_page", lang=curr_lang)
+    else:
+        st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
