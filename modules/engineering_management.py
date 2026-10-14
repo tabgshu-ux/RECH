@@ -9,105 +9,74 @@ from sqlalchemy import text
 ENG_I18N = {
     "繁體中文": {
         "title": "⚡ 裕豐電機 - 工程與設計管理中心",
-        "caption": "手機優化版 · 主管戰情室 · 估驗報價 · AI 照片歸檔",
-        "tab_cockpit": "📊 戰情室 (Cockpit)",
-        "tab_projects": "🏗️ 案場進度 (Projects)",
-        "tab_site_ai": "📸 AI照片 (AI Photos)",
-        "tab_design_cost": "📐 設計/外包 (BOM & Cost)",
-        "metric_active": "在建工程案場",
-        "metric_progress": "平均施工進度",
-        "metric_claim": "本月請款金額",
-        "metric_alert": "證照/工安預警",
-        "btn_ai_upload": "📸 拍照 / 上傳施工照片並 AI 歸檔",
-        "btn_approve": "✅ 一鍵批次核准一般請款",
-        "btn_submit_daily": "📤 提交工程日報",
-        "alert_budget_title": "⚠️ 點工費用超額預警",
-        "alert_budget_desc": "<b>西寧二期水電工程</b>：點工請款超預算 8%，等待主管點擊確認。",
-        "alert_cert_title": "📋 證照到期提醒",
-        "alert_cert_desc": "外包商 <b>Nguyễn Văn A</b> 電焊證照將於 2026/11/01 到期。",
-        "lbl_project_select": "選擇工程案場:",
-        "lbl_daily_summary": "施工摘要:",
-        "placeholder_daily": "例如: 完成主幹線拉線，現場點工 12 人",
-        "msg_approved": "✅ 已順利完成核准！",
-        "msg_submitted": "🎉 日報表已成功送出！",
-        "msg_ai_success": "🤖 AI 已自動辨識為【配電盤內部接線】並歸檔至西寧廠案場！"
+        "caption": "手機優化版 · 主管戰情室 · 估驗報價 · BOM展算 · 設計圖庫",
+        "lbl_sub_action": "請選擇要執行的工程/設計功能：",
+        "actions": [
+            "📊 1. 工程主管戰情室 (Executive Cockpit)",
+            "⚡ 2. 配電盤與工程專案雙層報價",
+            "📊 3. 工程驗收與進度追蹤",
+            "📋 4. 現場工程日報表與出工統計",
+            "📸 5. AI 施工照片智慧辨識與歸檔",
+            "⚠️ 6. 分包商與專業證照到期預警",
+            "🎨 7. 配電盤電氣與機構設計圖庫 Storage",
+            "🔌 8. 配電盤 BOM 零件自動展開與採購連動",
+            "👷 9. 外包商點工計價與勞動法計薪",
+            "🧪 10. FAT/SAT 試驗報告與 QR Code 驗收"
+        ]
     },
     "English": {
-        "title": "⚡ REETECH - Engineering & Design Center",
-        "caption": "Mobile Optimized · Executive Cockpit · Valuation · AI Photo Archiving",
-        "tab_cockpit": "📊 Executive Cockpit",
-        "tab_projects": "🏗️ Project Progress",
-        "tab_site_ai": "📸 AI Site Photos",
-        "tab_design_cost": "📐 BOM & Costing",
-        "metric_active": "Active Projects",
-        "metric_progress": "Avg Progress",
-        "metric_claim": "Monthly Claim",
-        "metric_alert": "Safety Alerts",
-        "btn_ai_upload": "📸 Capture / Upload Photo for AI Archiving",
-        "btn_approve": "✅ Quick Approve Standard Claims",
-        "btn_submit_daily": "📤 Submit Daily Report",
-        "alert_budget_title": "⚠️ Budget Overrun Warning",
-        "alert_budget_desc": "<b>Tay Ninh Phase 2</b>: Labor cost exceeded budget by 8%, pending manager approval.",
-        "alert_cert_title": "📋 Certificate Expiry Warning",
-        "alert_cert_desc": "Subcontractor <b>Nguyễn Văn A</b> welding permit expires on 2026/11/01.",
-        "lbl_project_select": "Select Project:",
-        "lbl_daily_summary": "Daily Summary:",
-        "placeholder_daily": "E.g., Completed main cable wiring, 12 workers on site.",
-        "msg_approved": "✅ Approved successfully!",
-        "msg_submitted": "🎉 Daily report submitted successfully!",
-        "msg_ai_success": "🤖 AI identified as [Control Panel Wiring] and archived to Tay Ninh Plant!"
+        "title": "⚡ REETECH - Engineering & Design Management Center",
+        "caption": "Mobile Optimized · Cockpit · Quotation · BOM · Storage",
+        "lbl_sub_action": "Select Engineering Feature:",
+        "actions": [
+            "📊 1. Executive Cockpit",
+            "⚡ 2. M&E & Switchgear Quotation",
+            "📊 3. Progress Tracking & Acceptance",
+            "📋 4. Daily Construction Log",
+            "📸 5. AI Photo Archiving",
+            "⚠️ 6. Subcontractor License Alerts",
+            "🎨 7. CAD/Design Drawing Storage",
+            "🔌 8. BOM Explode & Procurement Link",
+            "👷 9. Subcontractor Labor Costing",
+            "🧪 10. FAT/SAT Reports & QR Acceptance"
+        ]
     },
     "Tiếng Việt": {
         "title": "⚡ REETECH - Trung tâm Quản lý Kỹ thuật & Thiết kế",
-        "caption": "Tối ưu di động · Phòng điều hành · Nghiệm thu · Phân loại ảnh AI",
-        "tab_cockpit": "📊 Phòng điều hành",
-        "tab_projects": "🏗️ Tiến độ dự án",
-        "tab_site_ai": "📸 Ảnh thi công AI",
-        "tab_design_cost": "📐 Thiết kế & Chi phí",
-        "metric_active": "Dự án đang làm",
-        "metric_progress": "Tiến độ trung bình",
-        "metric_claim": "Tổng nghiệm thu",
-        "metric_alert": "Cảnh báo an toàn",
-        "btn_ai_upload": "📸 Chụp ảnh / Tải ảnh & Phân loại AI",
-        "btn_approve": "✅ Duyệt nhanh thanh toán chuẩn",
-        "btn_submit_daily": "📤 Gửi báo cáo ngày",
-        "alert_budget_title": "⚠️ Cảnh báo chi phí vượt ngân sách",
-        "alert_budget_desc": "<b>Dự án Tây Ninh 2</b>: Chi phí nhân công vượt 8%, chờ sếp duyệt.",
-        "alert_cert_title": "📋 Cảnh báo chứng chỉ hết hạn",
-        "alert_cert_desc": "Nhà thầu phụ <b>Nguyễn Văn A</b> chứng chỉ hàn hết hạn ngày 01/11/2026.",
-        "lbl_project_select": "Chọn dự án:",
-        "lbl_daily_summary": "Nội dung công việc:",
-        "placeholder_daily": "Ví dụ: Hoàn thành kéo cáp chính, 12 công nhân tại hiện trường.",
-        "msg_approved": "✅ Đã duyệt thành công!",
-        "msg_submitted": "🎉 Báo cáo đã gửi thành công!",
-        "msg_ai_success": "🤖 AI đã tự động phân loại vào [Dự án Tây Ninh]!"
+        "caption": "Tối ưu di động · Điều hành · Báo giá · Bóc tách BOM · Kho bản vẽ",
+        "lbl_sub_action": "Chọn chức năng kỹ thuật:",
+        "actions": [
+            "📊 1. Bàn điều hành sếp (Cockpit)",
+            "⚡ 2. Báo giá dự án & Tủ điện",
+            "📊 3. Theo dõi tiến độ & Nghiệm thu",
+            "📋 4. Nhật ký thi công hàng ngày",
+            "📸 5. Phân loại ảnh thi công AI",
+            "⚠️ 6. Cảnh báo chứng chỉ an toàn",
+            "🎨 7. Kho lưu trữ bản vẽ thiết kế Storage",
+            "🔌 8. Bóc tách BOM & Mua hàng",
+            "👷 9. Tính lương thầu phụ & Nhân công",
+            "🧪 10. Báo cáo thử nghiệm FAT/SAT"
+        ]
     }
 }
 
 def inject_mobile_elder_friendly_css():
-    """注入手機端大字體、大按鈕與高對比專用 CSS (Mobile-First & Elder-Friendly)"""
     st.markdown("""
         <style>
-        html, body, [class*="css"] {
-            font-size: 18px !important;
-        }
+        html, body, [class*="css"] { font-size: 17px !important; }
         div.stButton > button {
             width: 100% !important;
-            height: 3.3rem !important;
-            font-size: 1.25rem !important;
+            height: 3.2rem !important;
+            font-size: 1.2rem !important;
             font-weight: bold !important;
-            border-radius: 12px !important;
-            margin-top: 8px !important;
-            margin-bottom: 8px !important;
+            border-radius: 10px !important;
+            margin-top: 6px !important;
+            margin-bottom: 6px !important;
         }
         [data-testid="stMetricValue"] {
             font-size: 1.8rem !important;
             font-weight: bold !important;
             color: #1E3A8A !important;
-        }
-        [data-testid="stMetricLabel"] {
-            font-size: 1.1rem !important;
-            color: #374151 !important;
         }
         .mobile-card {
             background-color: #FFFFFF;
@@ -140,11 +109,10 @@ def init_engineering_db(engine):
     except Exception:
         pass
 
-def render_engineering_management_page(engine=None, lang="繁體中文", **kwargs):
-    # 1. 載入手機長輩友善樣式
+def render_engineering_management_page(engine=None, lang="繁體中文", sub_action=None, **kwargs):
     inject_mobile_elder_friendly_css()
 
-    # 2. 中、英、越 三語系即時切換按鈕
+    # 1. 語系選擇與標題
     c_title, c_lang = st.columns([2, 1])
     with c_lang:
         selected_lang = st.selectbox(
@@ -160,85 +128,142 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
 
     init_engineering_db(engine)
 
-    # 3. 大字體頁籤 (Tabs)
-    tab_cockpit, tab_projects, tab_site_ai, tab_design_cost = st.tabs([
-        L["tab_cockpit"], L["tab_projects"], L["tab_site_ai"], L["tab_design_cost"]
-    ])
+    # 2. 頂部大選項 (讓使用者隨時可切換 戰情室 或 10 大表單操作)
+    action_idx = 0
+    if sub_action and str(sub_action).isdigit():
+        sub_num = int(sub_action) - 1
+        if 0 <= sub_num < len(L["actions"]):
+            action_idx = sub_num
+
+    selected_action = st.selectbox(L["lbl_sub_action"], L["actions"], index=action_idx)
+
+    st.markdown("---")
 
     # ----------------------------------------------------
-    # 📊 Tab 1: 主管手機版戰情室 (Executive Cockpit)
+    # 📊 功能 1: 工程主管戰情室 (Cockpit)
     # ----------------------------------------------------
-    with tab_cockpit:
-        m1, m2 = st.columns(2)
-        m1.metric(L["metric_active"], "3")
-        m2.metric(L["metric_progress"], "68.5%")
-
-        m3, m4 = st.columns(2)
-        m3.metric(L["metric_claim"], "1.25B VND")
-        m4.metric(L["metric_alert"], "2", delta_color="inverse", delta="Warning")
+    if "1." in selected_action:
+        st.markdown("### 📊 工程主管戰情室 (Executive Cockpit)")
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("在建工程案場", "3 案場")
+        m2.metric("平均施工進度", "68.5%")
+        m3.metric("本月請款金額", "1.25B VND")
+        m4.metric("證照/工安預警", "2 筆預警", delta_color="inverse", delta="待處置")
 
         st.markdown("---")
-        
-        # 修正：避免 f-string 內部雙重引號解析錯誤
-        t_budget_title = L["alert_budget_title"]
-        t_budget_desc = L["alert_budget_desc"]
-        t_cert_title = L["alert_cert_title"]
-        t_cert_desc = L["alert_cert_desc"]
-
-        st.markdown(f"""
+        st.markdown("""
         <div class="mobile-card" style="border-left: 6px solid #F59E0B;">
-            <h4 style="margin:0; color:#D97706;">{t_budget_title}</h4>
-            <p style="margin:4px 0 0 0; font-size:16px;">{t_budget_desc}</p>
-        </div>
-        <div class="mobile-card" style="border-left: 6px solid #3B82F6;">
-            <h4 style="margin:0; color:#2563EB;">{t_cert_title}</h4>
-            <p style="margin:4px 0 0 0; font-size:16px;">{t_cert_desc}</p>
+            <h4 style="margin:0; color:#D97706;">⚠️ 點工費用超額預警</h4>
+            <p style="margin:4px 0 0 0; font-size:16px;"><b>西寧二期水電工程</b>：點工請款超預算 8%，等待主管點擊確認。</p>
         </div>
         """, unsafe_allow_html=True)
-
-        if st.button(L["btn_approve"], type="primary"):
-            st.success(L["msg_approved"])
-
-    # ----------------------------------------------------
-    # 🏗️ Tab 2: 案場進度與工程日報表
-    # ----------------------------------------------------
-    with tab_projects:
-        st.markdown("### 🏗️ " + L["tab_projects"])
-        
-        st.selectbox(
-            L["lbl_project_select"],
-            ["PRJ-001 西寧廠高壓配電盤擴建工程 (Tay Ninh Plant Expansion)", "PRJ-002 西寧二期水電管線工程 (Tay Ninh Phase 2)"]
-        )
-
-        st.markdown("##### 📝 " + L["lbl_daily_summary"])
-        daily_log = st.text_area(L["lbl_daily_summary"], placeholder=L["placeholder_daily"], height=100)
-        
-        if st.button(L["btn_submit_daily"], type="primary"):
-            st.success(L["msg_submitted"])
+        if st.button("✅ 一鍵批次核准一般請款", type="primary"):
+            st.success("✅ 已順利完成核准！")
 
     # ----------------------------------------------------
-    # 📸 Tab 3: AI 現場照片拍攝與上傳
+    # ⚡ 功能 2: 配電盤與工程專案雙層報價上傳
     # ----------------------------------------------------
-    with tab_site_ai:
-        st.markdown("### 📸 " + L["tab_site_ai"])
-        
-        st.selectbox(L["lbl_project_select"], ["西寧廠高壓配電盤擴建工程", "西寧二期水電管線工程"], key="ai_proj")
-        
-        # 手機開鏡頭/挑照片
-        img_file = st.file_uploader("📸 Photo Upload:", type=["jpg", "jpeg", "png"])
-        
+    elif "2." in selected_action:
+        st.markdown("### ⚡ 配電盤與工程專案雙層報價系統")
+        with st.form("form_quote"):
+            c1, c2 = st.columns(2)
+            with c1:
+                q_code = st.text_input("報價單編號 *", placeholder="例: QUO-2026-008")
+                q_name = st.text_input("專案/工程名稱 *", placeholder="例: 西寧廠高壓配電盤擴建案")
+            with c2:
+                q_client = st.text_input("客戶名稱", placeholder="例: 台商越南造紙廠")
+                q_amount = st.number_input("預估總報價金額 (VND)", min_value=0.0, value=2500000000.0, step=100000000.0)
+            q_file = st.file_uploader("上傳詳細報價單 Excel / PDF", type=["xlsx", "pdf"])
+            if st.form_submit_button("📌 送出報價單並存檔", type="primary"):
+                st.success(f"🎉 成功建立報價單：{q_code} - {q_name}！")
+
+    # ----------------------------------------------------
+    # 📊 功能 3: 工程驗收與進度追蹤
+    # ----------------------------------------------------
+    elif "3." in selected_action:
+        st.markdown("### 📊 工程驗收與進度追蹤")
+        st.selectbox("選擇專案:", ["PRJ-2026-01 西寧廠高壓配電盤擴建工程", "PRJ-2026-02 西寧二期水電管線工程"])
+        st.slider("更新施工完成進度 %:", 0, 100, 68)
+        if st.button("💾 儲存進度更新", type="primary"):
+            st.success("✅ 專案進度已成功更新為 68%！")
+
+    # ----------------------------------------------------
+    # 📋 功能 4: 現場工程日報表與出工統計
+    # ----------------------------------------------------
+    elif "4." in selected_action:
+        st.markdown("### 📋 現場工程日報表與出工統計")
+        with st.form("form_daily"):
+            st.date_input("日報日期", datetime.date.today())
+            st.selectbox("施工案場", ["西寧廠高壓配電盤擴建工程", "西寧二期水電管線工程"])
+            st.number_input("今日現場點工人數 (人)", min_value=1, value=12)
+            st.text_area("今日施工內容與進度說明:", placeholder="完成 A 區主幹線拉線與配電盤定位。")
+            if st.form_submit_button("📤 提交工程日報表", type="primary"):
+                st.success("🎉 日報表已成功提交並存檔！")
+
+    # ----------------------------------------------------
+    # 📸 功能 5: AI 施工照片智慧辨識與歸檔
+    # ----------------------------------------------------
+    elif "5." in selected_action:
+        st.markdown("### 📸 AI 施工照片智慧辨識與歸檔")
+        st.selectbox("選擇案場:", ["西寧廠高壓配電盤擴建工程", "西寧二期水電管線工程"])
+        img_file = st.file_uploader("拍照或上傳現場施工照片 (JPG, PNG):", type=["jpg", "png"])
         if img_file:
-            st.image(img_file, caption="Preview", use_container_width=True)
-            if st.button(L["btn_ai_upload"], type="primary"):
-                st.success(L["msg_ai_success"])
+            st.image(img_file, caption="待歸檔照片預覽", use_container_width=True)
+            if st.button("🤖 開始 AI 智慧辨識並歸檔", type="primary"):
+                st.success("🤖 AI 已自動辨識為【配電盤內部接線】並自動歸檔！")
 
     # ----------------------------------------------------
-    # 📐 Tab 4: 配電盤 BOM 與外包結算
+    # ⚠️ 功能 6: 分包商與專業證照到期預警
     # ----------------------------------------------------
-    with tab_design_cost:
-        st.markdown("### 📐 " + L["tab_design_cost"])
-        msg_bom = "💡 Auto-synced with inventory & purchasing." if selected_lang == "English" else ("💡 系統已自動與倉庫備料及採購連動。" if selected_lang == "繁體中文" else "💡 Hệ thống tự động đồng bộ tồn kho vật tư.")
-        st.info(msg_bom)
+    elif "6." in selected_action:
+        st.markdown("### ⚠️ 分包商與專業證照到期預警")
+        st.dataframe(pd.DataFrame([
+            {"外包商/人員": "Nguyễn Văn A", "證照名稱": "高壓電焊作業證", "到期日": "2026-11-01", "狀態": "⚠️ 30天內到期"},
+            {"外包商/人員": "Trần Văn B", "證照名稱": "高空作業安全證", "到期日": "2027-05-15", "狀態": "🟢 有效"}
+        ]), use_container_width=True)
+
+    # ----------------------------------------------------
+    # 🎨 功能 7: 配電盤電氣與機構設計圖庫 Storage
+    # ----------------------------------------------------
+    elif "7." in selected_action:
+        st.markdown("### 🎨 配電盤電氣與機構設計圖庫 (Drawing Storage)")
+        with st.form("form_cad"):
+            st.text_input("圖紙/CAD 編號 *", placeholder="例: DWG-EP-2026-001")
+            st.text_input("圖紙名稱", placeholder="例: 110KV 變壓器二次側單線圖")
+            st.file_uploader("上傳 CAD / PDF 圖紙檔案:", type=["dwg", "dxf", "pdf"])
+            if st.form_submit_button("📁 上傳至 Storage 圖庫", type="primary"):
+                st.success("🎉 設計圖紙已成功歸檔至雲端圖庫！")
+
+    # ----------------------------------------------------
+    # 🔌 功能 8: 配電盤 BOM 零件自動展開與採購連動
+    # ----------------------------------------------------
+    elif "8." in selected_action:
+        st.markdown("### 🔌 配電盤 BOM 零件自動展開與採購連動")
+        st.file_uploader("匯入配電盤 BOM Excel (含元件清單與數量):", type=["xlsx", "csv"])
+        if st.button("⚙️ 執行 BOM 自動拆解並比對倉庫庫存", type="primary"):
+            st.info("💡 比對完畢：銅排剩餘 120KG（充足），斷路器 400A 缺 2 台，已自動拋轉請購單至採購模組！")
+
+    # ----------------------------------------------------
+    # 👷 功能 9: 外包商點工計價與越南勞動法計薪
+    # ----------------------------------------------------
+    elif "9." in selected_action:
+        st.markdown("### 👷 外包商點工計價與計薪")
+        st.text_input("外包商名稱", placeholder="例: 越南金屬結構工程工班")
+        st.number_input("本期點工總工時 (小時)", min_value=0.0, value=160.0)
+        st.number_input("時薪/日薪單價 (VND)", min_value=0.0, value=350000.0)
+        if st.button("💰 計算金額並拋轉應付帳款 (AP)", type="primary"):
+            st.success("✅ 點工費用 56,000,000 VND 已拋轉至【採購與應付帳款 AP】！")
+
+    # ----------------------------------------------------
+    # 🧪 功能 10: FAT/SAT 試驗報告與 QR Code 驗收
+    # ----------------------------------------------------
+    elif "10." in selected_action:
+        st.markdown("### 🧪 FAT/SAT 試驗報告與 QR Code 驗收")
+        st.text_input("設備出廠編號", placeholder="例: EQ-FAT-2026-88")
+        st.selectbox("試驗類別", ["工廠出廠試驗 (FAT)", "現場竣工試驗 (SAT)"])
+        st.file_uploader("上傳耐壓與動作試驗報告 PDF:", type=["pdf"])
+        if st.button("🏷️ 生成現場驗收 QR Code", type="primary"):
+            st.success("🎉 驗收報告已綁定，QR Code 已成功生成！")
 
 def render_engineering_management(engine=None, lang="繁體中文", **kwargs):
     render_engineering_management_page(engine=engine, lang=lang, **kwargs)
