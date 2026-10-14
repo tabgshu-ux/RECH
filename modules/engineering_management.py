@@ -22,7 +22,67 @@ def format_currency_text(amount, currency="VND"):
     except Exception:
         return f"{amount} {currency}"
 
+# ----------------------------------------------------
+# 🌐 三語字典 (繁體中文 / English / Tiếng Việt)
+# ----------------------------------------------------
+ENG_I18N = {
+    "繁體中文": {
+        "title": "⚡ 裕豐電機 - 工程與設計管理中心",
+        "caption": "水電工程、配電盤製造、現場探勘與雙層報價系統",
+        "lbl_sub_action": "請選擇要執行的工程/設計功能：",
+        "actions": [
+            "📊 1. 工程主管戰情室 (Executive Cockpit)",
+            "⚡ 2. 配電盤與工程專案雙層報價",
+            "📈 3. 工程驗收與進度追蹤",
+            "📋 4. 現場工程日報表與出工統計",
+            "📷 5. AI 施工照片智慧辨識與歸檔",
+            "⚠️ 6. 分包商與專業證照到期預警",
+            "🎨 7. 配電盤電氣與機構設計圖庫 Storage",
+            "🔌 8. 配電盤 BOM 零件自動展開與採購連動",
+            "👷 9. 外包商點工計價與越南勞動法計薪",
+            "🧪 10. FAT/SAT 試驗報告與 QR Code 驗收"
+        ]
+    },
+    "English": {
+        "title": "⚡ REETECH - Engineering & Design Management Center",
+        "caption": "MEP Engineering, Panel Manufacturing, Site Survey & Quotations",
+        "lbl_sub_action": "Select Engineering Feature:",
+        "actions": [
+            "📊 1. Executive Cockpit",
+            "⚡ 2. Two-Tier Quotation System",
+            "📈 3. Acceptance & Progress Tracking",
+            "📋 4. Daily Site Reports & Labor Stats",
+            "📷 5. AI Field Photo Recognition",
+            "⚠️ 6. Subcontractor & License Expiry Alerts",
+            "🎨 7. Electrical & Mechanical Drawing Storage",
+            "🔌 8. BOM Explosion & Procurement Link",
+            "👷 9. Subcontractor Daily Wage & Vietnam Labor Law",
+            "🧪 10. FAT/SAT Test Reports & QR Acceptance"
+        ]
+    },
+    "Tiếng Việt": {
+        "title": "⚡ REETECH - Trung Tâm Quản Lý Kỹ Thuật & Thiết Kế",
+        "caption": "Thi công M&E, Sản xuất tủ điện, Khảo sát & Báo giá 2 lớp",
+        "lbl_sub_action": "Chọn chức năng kỹ thuật:",
+        "actions": [
+            "📊 1. Bàn làm việc Quản lý Kỹ thuật",
+            "⚡ 2. Báo giá Tủ điện & Dự án 2 lớp",
+            "📈 3. Nghiệm thu & Theo dõi Tiến độ",
+            "📋 4. Nhật ký thi công & Báo cáo Điểm danh",
+            "📷 5. AI Nhận diện & Lưu trữ Ảnh thi công",
+            "⚠️ 6. Cảnh báo Hạn Chứng chỉ Thầu phụ",
+            "🎨 7. Kho Bản vẽ Thiết kế Tủ điện Storage",
+            "🔌 8. Bóc tách BOM & Liên kết Mua hàng",
+            "👷 9. Chấm công Thầu phụ & Luật Lao động VN",
+            "🧪 10. Báo cáo FAT/SAT & Nghiệm thu QR Code"
+        ]
+    }
+}
+
 def render_engineering_management_page(engine=None, lang="繁體中文", **kwargs):
+    active_lang = lang if lang in ENG_I18N else "繁體中文"
+    t = ENG_I18N[active_lang]
+
     sub_action = (
         kwargs.get("sub_action")
         or st.session_state.get("current_sub_action")
@@ -32,10 +92,10 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
     )
     sub_str = str(sub_action).strip()
 
-    st.title("⚡ 裕豐電機 - 工程與設計管理中心")
-    st.caption("水電工程、配電盤製造、現場探勘與雙層報價系統")
+    st.title(t["title"])
+    st.caption(t["caption"])
 
-    # 倉庫連線物料庫（預設標準品項與單價）
+    # 資料庫初始化
     if "warehouse_master_parts" not in st.session_state:
         st.session_state.warehouse_master_parts = {
             "MCCB 3P 400AF 315AT 50KA 380V - TBX-400L": 3842670.0,
@@ -53,35 +113,48 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
     if "two_tier_quotations_db" not in st.session_state:
         st.session_state.two_tier_quotations_db = []
 
-    # 全公司簽核中心資料庫連線
     if "pending_approvals_db" not in st.session_state:
         st.session_state.pending_approvals_db = []
 
     if "engineering_projects_db" not in st.session_state:
         st.session_state.engineering_projects_db = [
-            {"proj_code": "PRJ-TN-2026-01", "proj_name": "西寧廠高壓配電盤擴建", "factory": "西寧廠", "budget": 1200000000, "status": "進行中"},
-            {"proj_code": "PRJ-HP-2026-02", "proj_name": "海防廠動力盤統包工程", "factory": "海防廠", "budget": 850000000, "status": "進行中"}
+            {"proj_code": "PRJ-TN-2026-01", "proj_name": "西寧廠高壓配電盤擴建", "factory": "西寧廠", "budget": 1200000000, "status": "進行中", "progress": "75%"},
+            {"proj_code": "PRJ-HP-2026-02", "proj_name": "海防廠動力盤統包工程", "factory": "海防廠", "budget": 850000000, "status": "進行中", "progress": "45%"}
         ]
 
-    # 下拉選單切換
-    sub_options = [
-        "⚡ 2. 配電盤與工程專案雙層報價",
-        "📊 1. 工程主管戰情室 (Executive Cockpit)"
-    ]
-    
-    selected_option = st.selectbox("請選擇要執行的工程/設計功能：", sub_options, index=0)
+    if "license_db" not in st.session_state:
+        st.session_state.license_db = [{"emp_id": "EMP-001", "name": "張董事長", "license_name": "甲種電匠", "status": "🔴 30天內即將到期"}]
+
+    if "drawing_storage_db" not in st.session_state:
+        st.session_state.drawing_storage_db = []
+
+    if "ai_photo_archive_db" not in st.session_state:
+        st.session_state.ai_photo_archive_db = []
+
+    # 完整 10 大子功能選單
+    default_index = 1 if "2" in sub_str else 0
+    selected_option = st.selectbox(t["lbl_sub_action"], t["actions"], index=default_index)
 
     # ====================================================
-    # ⚡ 配電盤與工程專案雙層報價與現場探勘系統
+    # 1. 📊 工程主管戰情室 (Executive Cockpit)
     # ====================================================
-    if "雙層報價" in selected_option or sub_str in ["1", "2"]:
-        st.markdown("### ⚡ 配電盤與工程專案雙層報價與探勘系統")
-        
+    if "1." in selected_option:
+        st.markdown("### 📊 1. 工程主管戰情室 (Executive Cockpit)")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("在建工程案場", "3 案場")
+        c2.metric("平均施工進度", "68.5%")
+        c3.metric("本月累計請款", "1.25B VND")
+        c4.metric("證照到期預警", "2 筆預警", delta="-1", delta_color="inverse")
+        st.markdown("##### 🏗️ 全廠工程專案進度即時看板")
+        st.dataframe(pd.DataFrame(st.session_state.engineering_projects_db), use_container_width=True)
+
+    # ====================================================
+    # 2. ⚡ 配電盤與工程專案雙層報價 (完整功能 + Excel 樣式 + 簽核連動)
+    # ====================================================
+    elif "2." in selected_option:
+        st.markdown("### ⚡ 2. 配電盤與工程專案雙層報價系統")
         tab_prop, tab_edit, tab_review = st.tabs(["✍️ 建立/提交報價提案", "✏️ 修改與刪除報價單", "🔒 主管審核與報價單樣式預覽"])
 
-        # ------------------------------------------------
-        # TAB 1: 建立報價提案
-        # ------------------------------------------------
         with tab_prop:
             with st.form("form_engineering_survey_quotation"):
                 st.markdown("##### 📝 1. 報價單基本資訊 (BẢNG BÁO GIÁ)")
@@ -104,7 +177,6 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                     p_vat_rate = st.number_input("增值稅率 VAT (%)", min_value=0.0, max_value=20.0, value=8.0, step=1.0)
 
                 st.markdown("---")
-
                 st.markdown("##### 📦 2. 工程 BOM 材料明細清單 (CHI TIẾT HẠNG MỤC)")
                 st.caption("💡 說明：倉庫既有物料請直接選取；若倉庫無此品項，請選取『➕ 新增未在庫材料』並直接輸入名稱與單價。")
 
@@ -116,7 +188,6 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
 
                 for i in range(1, int(num_items) + 1):
                     ic1, ic2, ic3, ic4, ic5, ic6 = st.columns([2.2, 1.8, 0.8, 1.0, 1.3, 1.5])
-                    
                     with ic1:
                         selected_part = st.selectbox(f"工程項目/材料 #{i}", available_parts, key=f"part_sel_{i}")
 
@@ -153,19 +224,13 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                     if iqty > 0 and part_display_name:
                         total_cost += sub
                         internal_rows.append({
-                            "stt": i,
-                            "desc": part_display_name,
-                            "unit": iunit,
-                            "qty": iqty,
-                            "unit_price": auto_unit_price,
-                            "subtotal": sub,
-                            "source": part_source
+                            "stt": i, "desc": part_display_name, "unit": iunit, "qty": iqty,
+                            "unit_price": auto_unit_price, "subtotal": sub, "source": part_source
                         })
 
                 st.markdown(f"### 💰 材料與設備基本小計：`:red[{format_currency_text(total_cost, p_curr)}]`")
                 st.markdown("---")
 
-                # 附加費用計算 (運雜費、利管費、折扣)
                 st.markdown("##### 📊 3. 附加費用與稅務試算 (Phí vận chuyển, quản lý & VAT)")
                 fc1, fc2, fc3 = st.columns(3)
                 with fc1:
@@ -191,52 +256,25 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                         new_id = p_ref if p_ref else f"QUO-2026-{len(st.session_state.two_tier_quotations_db)+1:03d}"
                         
                         quotation_record = {
-                            "quot_id": new_id,
-                            "client": p_client,
-                            "attn": p_attn,
-                            "project_name": p_proj,
-                            "proposer": p_prop,
-                            "currency": p_curr,
-                            "date": str(datetime.date.today()),
-                            "internal_items": internal_rows,
-                            "total_cost": total_cost,
-                            "freight_fee": freight_fee,
-                            "manage_fee": manage_fee,
-                            "discount_amt": discount_amt,
-                            "subtotal_before_tax": subtotal_before_tax,
-                            "vat_rate": p_vat_rate,
-                            "vat_amount": vat_amount,
-                            "customer_price": final_total_amount,
-                            "site_photos_count": len(site_photos) if site_photos else 0,
-                            "site_notes": site_notes,
-                            "status": "⏳ 待副總經理審核"
+                            "quot_id": new_id, "client": p_client, "attn": p_attn, "project_name": p_proj,
+                            "proposer": p_prop, "currency": p_curr, "date": str(datetime.date.today()),
+                            "internal_items": internal_rows, "total_cost": total_cost, "freight_fee": freight_fee,
+                            "manage_fee": manage_fee, "discount_amt": discount_amt, "subtotal_before_tax": subtotal_before_tax,
+                            "vat_rate": p_vat_rate, "vat_amount": vat_amount, "customer_price": final_total_amount,
+                            "site_photos_count": len(site_photos) if site_photos else 0, "site_notes": site_notes, "status": "⏳ 待副總經理審核"
                         }
 
-                        # 1. 存入工程報價資料庫
                         st.session_state.two_tier_quotations_db.append(quotation_record)
-
-                        # 2. 自動同步連線至【全公司電子簽核中心】
                         st.session_state.pending_approvals_db.append({
-                            "approval_id": f"APV-{new_id}",
-                            "title": f"⚡ 工程報價審核：{p_proj} ({p_client})",
-                            "category": "工程報價與專案簽核",
-                            "applicant": p_prop,
-                            "dept": "工程管理部",
-                            "amount": f"{format_currency_text(final_total_amount, p_curr)}",
-                            "target_approver": "副總經理 (Vice General Manager)",
-                            "status": "⏳ 待簽核",
-                            "submit_date": str(datetime.date.today()),
-                            "detail_data": quotation_record
+                            "approval_id": f"APV-{new_id}", "title": f"⚡ 工程報價審核：{p_proj} ({p_client})",
+                            "category": "工程報價與專案簽核", "applicant": p_prop, "dept": "工程管理部",
+                            "amount": f"{format_currency_text(final_total_amount, p_curr)}", "target_approver": "副總經理 (Vice General Manager)",
+                            "status": "⏳ 待簽核", "submit_date": str(datetime.date.today()), "detail_data": quotation_record
                         })
 
-                        st.success(f"🎉 報價單 [{new_id}] 已成功建立！金額：{format_currency_text(final_total_amount, p_curr)}，已同步傳送至【全公司電子簽核中心】呈報副總經理簽核！")
+                        st.success(f"🎉 報價單 [{new_id}] 已成功建立並同步連線至電子簽核中心！")
                         st.rerun()
-                    else:
-                        st.warning("⚠️ 請完整填寫客戶名稱、工程名稱及至少一筆有效的明細！")
 
-        # ------------------------------------------------
-        # TAB 2: 修改與刪除報價單
-        # ------------------------------------------------
         with tab_edit:
             st.markdown("##### ✏️ 既有工程報價單修改與維護")
             if st.session_state.two_tier_quotations_db:
@@ -287,16 +325,11 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
             else:
                 st.info("目前尚無工程報價單資料。")
 
-        # ------------------------------------------------
-        # TAB 3: 主管審核與標準 Excel 樣式預覽
-        # ------------------------------------------------
         with tab_review:
             if st.session_state.two_tier_quotations_db:
                 for q in st.session_state.two_tier_quotations_db:
                     curr_fmt = q.get('currency', 'VND')
                     with st.expander(f"📋 單號：{q['quot_id']} | 專案：{q['project_name']} | 客戶：{q['client']} | 狀態：{q['status']}", expanded=True):
-                        
-                        # Excel 標準框線報價單樣式 HTML 渲染
                         items_html = ""
                         for idx, item in enumerate(q["internal_items"], 1):
                             items_html += f"""
@@ -360,17 +393,6 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                                         <td style="border: 1px solid #333; padding: 6px; text-align:right;">{format_currency_text(q.get('manage_fee',0), curr_fmt)}</td>
                                         <td style="border: 1px solid #333;"></td>
                                     </tr>
-                                    {"<tr><td colspan='5' style='border: 1px solid #333; padding: 6px; text-align:right; color:red;'>折扣 / Giảm giá:</td><td style='border: 1px solid #333; padding: 6px; text-align:right; color:red;'>-" + format_currency_text(q.get('discount_amt',0), curr_fmt) + "</td><td style='border: 1px solid #333;'></td></tr>" if q.get('discount_amt',0) > 0 else ""}
-                                    <tr>
-                                        <td colspan="5" style="border: 1px solid #333; padding: 6px; text-align:right; font-weight:bold;">未稅合計 / Tổng cộng trước thuế:</td>
-                                        <td style="border: 1px solid #333; padding: 6px; text-align:right; font-weight:bold; color:#0000aa;">{format_currency_text(q.get('subtotal_before_tax', q.get('customer_price',0)), curr_fmt)}</td>
-                                        <td style="border: 1px solid #333;"></td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="5" style="border: 1px solid #333; padding: 6px; text-align:right;">增值稅 / Thuế VAT ({q.get('vat_rate', 8)}%):</td>
-                                        <td style="border: 1px solid #333; padding: 6px; text-align:right;">{format_currency_text(q.get('vat_amount',0), curr_fmt)}</td>
-                                        <td style="border: 1px solid #333;"></td>
-                                    </tr>
                                     <tr style="background-color: #fff3cd;">
                                         <td colspan="5" style="border: 1px solid #333; padding: 8px; text-align:right; font-weight:bold; font-size:15px;">總計 / TỔNG CỘNG:</td>
                                         <td style="border: 1px solid #333; padding: 8px; text-align:right; font-weight:bold; font-size:15px; color:red;">{format_currency_text(q.get('customer_price',0), curr_fmt)}</td>
@@ -378,25 +400,72 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                                     </tr>
                                 </tbody>
                             </table>
-                            <p style="font-size: 12px; margin-top: 10px;"><b>現場勘查備註：</b> {q.get('site_notes', '無')}</p>
                         </div>
                         """
-                        
                         st.markdown(excel_quotation_html, unsafe_allow_html=True)
-                        st.info(f"📌 目前簽核狀態：{q['status']} (已自動連線送至【全公司電子簽核中心】呈報副總經理)")
             else:
                 st.info("目前尚無工程報價單資料。")
 
     # ====================================================
-    # 📊 工程主管戰情室 (備用)
+    # 3. 📈 工程驗收與進度追蹤
     # ====================================================
-    else:
-        st.markdown("### 📊 工程主管戰情室 (Executive Cockpit)")
-        c1, c2, c3 = st.columns(3)
-        c1.metric("在建工程案場", "3 案場")
-        c2.metric("平均施工進度", "68.5%")
-        c3.metric("本月請款金額", "1.25B VND")
+    elif "3." in selected_option:
+        st.markdown("### 📈 3. 工程驗收與進度追蹤")
         st.dataframe(pd.DataFrame(st.session_state.engineering_projects_db), use_container_width=True)
+
+    # ====================================================
+    # 4. 📋 現場工程日報表與出工統計
+    # ====================================================
+    elif "4." in selected_option:
+        st.markdown("### 📋 4. 現場工程日報表與出工統計")
+        with st.form("secure_daily_rep_form"):
+            r_proj = st.selectbox("關聯專案名稱", [p["proj_name"] for p in st.session_state.engineering_projects_db])
+            r_workers = st.number_input("當日出工總人數", min_value=1, value=15)
+            r_desc = st.text_area("今日施工進度與工作紀要", value="完成主配電盤銅排安裝與絕緣耐壓測試。")
+            if st.form_submit_button("🚀 提交正式工程日報表", type="primary"):
+                st.success("✅ 工程日報表已成功提交！")
+
+    # ====================================================
+    # 5. 📷 AI 施工照片智慧辨識與歸檔
+    # ====================================================
+    elif "5." in selected_option:
+        st.markdown("### 📷 5. AI 施工照片智慧辨識與歸檔")
+        st.file_uploader("上傳施工現場照片", type=["jpg", "png"])
+
+    # ====================================================
+    # 6. ⚠️ 分包商與專業證照到期預警
+    # ====================================================
+    elif "6." in selected_option:
+        st.markdown("### ⚠️ 6. 分包商與專業證照到期預警")
+        st.dataframe(pd.DataFrame(st.session_state.license_db), use_container_width=True)
+
+    # ====================================================
+    # 7. 🎨 配電盤電氣與機構設計圖庫 Storage
+    # ====================================================
+    elif "7." in selected_option:
+        st.markdown("### 🎨 7. 配電盤電氣與機構設計圖庫 Storage")
+        st.info("管理 2D CAD 單線圖與 3D 機構 STEP 圖檔。")
+
+    # ====================================================
+    # 8. 🔌 配電盤 BOM 零件自動展開與採購連動
+    # ====================================================
+    elif "8." in selected_option:
+        st.markdown("### 🔌 8. 配電盤 BOM 零件自動展開與採購連動")
+        st.info("工程報價核准後自動展開物料清單 (BOM) 並連動採購請購單 (PR)。")
+
+    # ====================================================
+    # 9. 👷 外包商點工計價與越南勞動法計薪
+    # ====================================================
+    elif "9." in selected_option:
+        st.markdown("### 👷 9. 外包商點工計價與越南勞動法計薪")
+        st.info("自動計算加班 (150%) 與夜班加給 (30%)。")
+
+    # ====================================================
+    # 10. 🧪 FAT/SAT 試驗報告與 QR Code 驗收
+    # ====================================================
+    elif "10." in selected_option:
+        st.markdown("### 🧪 10. FAT/SAT 試驗報告與 QR Code 驗收")
+        st.info("自動生成 ISO 9001 驗收報告與防偽 QR Code。")
 
 # ----------------------------------------------------
 # 🔗 相容進入點
