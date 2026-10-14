@@ -10,7 +10,7 @@ from sqlalchemy import text
 ASSETS_I18N = {
     "繁體中文": {
         "title": "🏢 固定資產與設備管理 (Fixed Assets & Equipment)",
-        "caption": "維護廠區機器設備、公務車輛，提供 5 年直線折舊試算與資產殘值查詢。",
+        "caption": "維護廠區機器設備與公務車輛，提供 5 年直線折舊試算與資產殘值查詢。",
         "tab_add": "➕ 新增固定資產與車輛",
         "tab_list": "📋 固定資產清冊與 5 年折舊攤分試算",
         "lbl_code": "資產/合約編號 *",
@@ -98,7 +98,7 @@ def format_vnd(amount):
         return f"{amount} VND"
 
 def calculate_5y_depreciation(cost, salvage, purchase_date_str):
-    """計算 5 年直線法折舊金額與目前殘值"""
+    """計算 5 年 (60個月) 直線法折舊金額與目前資產淨值"""
     try:
         cost_val = float(cost or 0)
         salvage_val = float(salvage or (cost_val * 0.1)) # 預設殘值 10%
@@ -110,15 +110,15 @@ def calculate_5y_depreciation(cost, salvage, purchase_date_str):
             
         today = datetime.date.today()
         
-        # 計算已使用月份
+        # 計算累計已使用月份
         months_used = (today.year - p_date.year) * 12 + (today.month - p_date.month)
         if months_used < 0:
             months_used = 0
             
-        total_depreciation_base = max(0.0, cost_val - salvage_val)
-        monthly_depreciation = total_depreciation_base / 60.0 # 5 年 = 60 個月
+        total_depreciable_base = max(0.0, cost_val - salvage_val)
+        monthly_depreciation = total_depreciable_base / 60.0 # 5 年 = 60 個月
         
-        accumulated_depr = min(total_depreciation_base, monthly_depreciation * months_used)
+        accumulated_depr = min(total_depreciable_base, monthly_depreciation * months_used)
         current_net_value = max(salvage_val, cost_val - accumulated_depr)
         
         return months_used, accumulated_depr, current_net_value
@@ -142,6 +142,13 @@ def inject_assets_css():
             border-radius: 8px;
             padding: 16px;
             margin-top: 10px;
+            margin-bottom: 15px;
+        }
+        .depr-box {
+            background-color: #FEF3C7;
+            border-left: 5px solid #D97706;
+            padding: 12px;
+            border-radius: 6px;
             margin-bottom: 15px;
         }
         </style>
@@ -215,18 +222,18 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 asset_name = st.text_input(L["lbl_name"], placeholder="例: 70LD-006.06 (公司總經理專車)")
                 purchase_dt = st.date_input(L["lbl_purchase_date"], datetime.date(2023, 1, 1))
             with c2:
-                site_loc = st.selectbox(L["lbl_site"], ["越南西寧廠 (Tay Ninh)", "海防辦事處 (Hai Phong)", "胡志明總部 (HCMC)"])
+                # 🏢 廠區選項僅保留【越南西寧廠 (Tay Ninh)】
+                site_loc = st.selectbox(L["lbl_site"], ["越南西寧廠 (Tay Ninh)"])
                 asset_status = st.selectbox(L["lbl_status"], ["🟢 在用/租賃中 (Active)", "🟡 維修保養中 (Maintenance)", "🔴 報廢/封存 (Retired)"])
                 
-                # 💰 越南千位點號格式輸入框 (取得原價成本)
+                # 💰 越南千位點號格式輸入框 (徹底替換 st.number_input)
                 cost_str = st.text_input(
                     L["lbl_cost"], 
                     value="850.000.000",
-                    help="自動轉換為越南千位點號格式 (例如: 850.000.000)"
+                    help="直接輸入數字即可，系統會自動轉換為越南千位點號格式 (例如: 850.000.000)"
                 )
                 cost_val = parse_formatted_amount(cost_str)
 
-                # 💰 越南千位點號格式輸入框 (預估 5 年後殘值)
                 salvage_str = st.text_input(
                     L["lbl_salvage"], 
                     value="85.000.000",
@@ -290,7 +297,14 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_list:
         st.markdown(f"### {L['tab_list']}")
-        st.caption("💡 依 5 年（60個月）直線法自動試算每項固定資產/車輛的『累計折舊』與『目前殘值金額』。")
+        st.markdown("""
+        <div class="depr-box">
+            <b>📊 5 年直線法折舊計算公式說明：</b><br>
+            • <b>每月折舊額</b> = (取得原價 - 預估殘值) ÷ 60 個月<br>
+            • <b>累計折舊</b> = 每月折舊額 × 購買至今已使用月份<br>
+            • <b>目前剩餘殘值 (資產淨值)</b> = 取得原價 - 累計折舊
+        </div>
+        """, unsafe_allow_html=True)
         
         search_kw = st.text_input(L["lbl_search"], placeholder="搜尋資產名稱、車牌號碼或編號...")
 
