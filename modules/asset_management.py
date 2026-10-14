@@ -4,26 +4,97 @@ import datetime
 from sqlalchemy import text
 
 # ----------------------------------------------------
-# 🌐 裕豐電機工業 (Reetech Industrial) 廠區連動規範
+# 🌐 三語系字典
 # ----------------------------------------------------
-DEFAULT_FACTORY = "越南西寧廠 (Tay Ninh)"
+ASSETS_I18N = {
+    "繁體中文": {
+        "title": "🏢 固定資產與設備管理 (Fixed Assets & Equipment)",
+        "caption": "維護廠區機器設備、公務車輛、廠房土地與租賃合約，並串聯派車與維修紀錄。",
+        "tab_add": "➕ 新增固定資產與租賃合約",
+        "tab_list": "📋 固定資產與車輛清冊",
+        "lbl_code": "資產/合約編號 *",
+        "lbl_name": "資產或合約名稱 *",
+        "lbl_brand": "品牌與型號 / 廠牌",
+        "lbl_status": "目前狀態",
+        "lbl_site": "存放廠區/據點 *",
+        "lbl_cost": "取得成本或月租金 (VND / USD)",
+        "lbl_cat": "資產類別 *",
+        "lbl_plate": "🚗 車牌號碼 (Biển số xe) *",
+        "lbl_v_model": "🚗 車輛廠牌與詳細型號 *",
+        "lbl_driver": "🚗 預設駕駛員 / 負責保管人",
+        "lbl_inspection_date": "🚗 車輛驗車/行照到期日",
+        "btn_submit": "📌 確認新增固定資產或車輛"
+    },
+    "English": {
+        "title": "🏢 Fixed Assets & Equipment Management",
+        "caption": "Manage plant equipment, vehicles, lands, and lease contracts.",
+        "tab_add": "➕ Add Asset / Vehicle",
+        "tab_list": "📋 Asset & Vehicle Inventory",
+        "lbl_code": "Asset Code *",
+        "lbl_name": "Asset Name *",
+        "lbl_brand": "Brand & Model",
+        "lbl_status": "Status",
+        "lbl_site": "Plant Location *",
+        "lbl_cost": "Cost or Monthly Rent",
+        "lbl_cat": "Asset Category *",
+        "lbl_plate": "🚗 License Plate No. *",
+        "lbl_v_model": "🚗 Vehicle Brand & Model *",
+        "lbl_driver": "🚗 Default Driver / Custodian",
+        "lbl_inspection_date": "🚗 Inspection Expiry Date",
+        "btn_submit": "📌 Save Asset / Vehicle"
+    },
+    "Tiếng Việt": {
+        "title": "🏢 Quản lý Tài sản cố định & Xe công tác",
+        "caption": "Quản lý máy móc, xe công ty, nhà xưởng và hợp đồng thuê.",
+        "tab_add": "➕ Thêm mới tài sản / Xe",
+        "tab_list": "📋 Danh sách tài sản & Xe",
+        "lbl_code": "Mã tài sản *",
+        "lbl_name": "Tên tài sản / Hợp đồng *",
+        "lbl_brand": "Nhãn hiệu & Model",
+        "lbl_status": "Trạng thái",
+        "lbl_site": "Nhà xưởng / Vị trí *",
+        "lbl_cost": "Nguyên giá / Tiền thuê hàng tháng",
+        "lbl_cat": "Phân loại tài sản *",
+        "lbl_plate": "🚗 Biển số xe *",
+        "lbl_v_model": "🚗 Hiệu xe & Dòng xe *",
+        "lbl_driver": "🚗 Tài xế / Người quản lý",
+        "lbl_inspection_date": "🚗 Hạn đăng kiểm xe",
+        "btn_submit": "📌 Lưu tài sản / Xe mới"
+    }
+}
 
-def get_active_factories(engine):
-    """從 public.factories 主表讀取最新廠區清單，預設僅保留西寧廠"""
-    if not engine:
-        return [DEFAULT_FACTORY]
-    try:
-        with engine.connect() as conn:
-            res = conn.execute(text("SELECT factory_name FROM public.factories WHERE factory_name NOT LIKE '%海防%' ORDER BY id ASC;"))
-            rows = res.fetchall()
-            if rows:
-                return [r[0] for r in rows if r[0]]
-    except Exception:
-        pass
-    return [DEFAULT_FACTORY]
+ASSET_CATEGORIES = [
+    "🚗 車輛 (公務車/卡車/堆高機)",
+    "🏭 機器設備與配電盤生產線",
+    "🏢 廠房土地與宿舍 (固定資產)",
+    "📄 辦公室租賃合約 / 廠房租賃",
+    "💻 資訊IT設備與伺服器",
+    "📦 辦公傢俱與其他資產"
+]
 
-def init_asset_db(engine):
-    """資料庫初始化與歷史資料校正 (自動將海防廠項目修正為西寧廠)"""
+def inject_assets_css():
+    st.markdown("""
+        <style>
+        html, body, [class*="css"] { font-size: 16px !important; }
+        div.stButton > button {
+            width: 100% !important;
+            height: 3rem !important;
+            font-size: 1.1rem !important;
+            font-weight: bold !important;
+            border-radius: 8px !important;
+        }
+        .vehicle-box {
+            background-color: #EFF6FF;
+            border: 2px dashed #3B82F6;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+def init_assets_db(engine):
     if not engine:
         return
     try:
@@ -33,209 +104,127 @@ def init_asset_db(engine):
                     id SERIAL PRIMARY KEY,
                     asset_code VARCHAR(50) UNIQUE NOT NULL,
                     asset_name VARCHAR(200) NOT NULL,
-                    category VARCHAR(100) DEFAULT '生產機具',
-                    factory VARCHAR(100) DEFAULT '越南西寧廠 (Tay Ninh)',
-                    brand_landlord VARCHAR(150),
-                    status VARCHAR(50) DEFAULT '🟢 在用/租賃中 (Active)',
-                    cost_amount NUMERIC(12,2) DEFAULT 0,
-                    start_date DATE,
-                    end_date DATE,
-                    notes TEXT,
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    category VARCHAR(100) NOT NULL,
+                    site_location VARCHAR(100) NOT NULL,
+                    brand_model VARCHAR(150),
+                    license_plate VARCHAR(50),
+                    driver_custodian VARCHAR(100),
+                    inspection_expiry DATE,
+                    cost_amount NUMERIC(15,2) DEFAULT 0,
+                    status VARCHAR(50) DEFAULT '🟢 在用/租賃中',
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
 
-            # 🛠️ 自動校正：把所有舊的海防廠資產與租賃合約資料，自動統一更正為『越南西寧廠 (Tay Ninh)』
-            conn.execute(text("""
-                UPDATE public.fixed_assets 
-                SET factory = '越南西寧廠 (Tay Ninh)' 
-                WHERE factory LIKE '%海防%' OR factory LIKE '%Hai Phong%' OR factory IS NULL;
-            """))
-    except Exception as e:
+            # 自動升級補齊車牌與維修欄位
+            try:
+                conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS license_plate VARCHAR(50);"))
+                conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS driver_custodian VARCHAR(100);"))
+                conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS inspection_expiry DATE;"))
+            except Exception:
+                pass
+    except Exception:
         pass
 
-def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
-    st.title("🏢 管理部 - 固定資產與設備/租賃合約管理中心")
-    st.caption("管理西寧廠生產機械、土地房屋租賃合約、車輛、網路、品管儀器與工安設施之完整生命週期。")
+def render_assets_page(engine=None, lang="繁體中文", **kwargs):
+    inject_assets_css()
 
-    init_asset_db(engine)
-    
-    # 動態取得最新廠區名冊
-    current_factories = get_active_factories(engine)
+    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
+    L = ASSETS_I18N.get(active_lang, ASSETS_I18N["繁體中文"])
 
-    tab_list, tab_add, tab_edit, tab_terminate, tab_history = st.tabs([
-        "📄 廠區資產總表與分項檢視",
-        "➕ 新增固定資產與租賃合約",
-        "✏️ 修改資產與租賃資料",
-        "🗑️ 辦理資產報廢或合約終止",
-        "📜 歷史報廢與停用資產紀錄"
-    ])
+    st.title(L["title"])
+    st.caption(L["caption"])
+
+    init_assets_db(engine)
+
+    tab_add, tab_list = st.tabs([L["tab_add"], L["tab_list"]])
 
     # ----------------------------------------------------
-    # 📊 頂部動態指標看板
-    # ----------------------------------------------------
-    if engine:
-        try:
-            with engine.connect() as conn:
-                res_total = conn.execute(text("SELECT COUNT(*) FROM public.fixed_assets WHERE status NOT LIKE '%報廢%';")).fetchone()
-                total_cnt = res_total[0] if res_total else 0
-                
-                res_retired = conn.execute(text("SELECT COUNT(*) FROM public.fixed_assets WHERE status LIKE '%報廢%';")).fetchone()
-                retired_cnt = res_retired[0] if res_retired else 0
-        except Exception:
-            total_cnt, retired_cnt = 0, 0
-    else:
-        total_cnt, retired_cnt = 4, 1
-
-    c_m1, c_m2, c_m3 = st.columns(3)
-    c_m1.metric("在用總項目數", f"{total_cnt} 項")
-    c_m2.metric("歷史報廢/封存數", f"{retired_cnt} 項")
-    c_m3.metric("廠區分布", " | ".join(current_factories))
-
-    st.markdown("---")
-
-    # ----------------------------------------------------
-    # 📄 Tab 1: 資產與合約清冊 (純西寧廠)
-    # ----------------------------------------------------
-    with tab_list:
-        st.markdown("### 📋 廠區固定資產與租賃合約清冊")
-        
-        filter_factory = st.selectbox("請選擇要檢視的廠區：", ["全部廠區 (All Plants)"] + current_factories)
-        
-        if engine:
-            try:
-                with engine.connect() as conn:
-                    query = "SELECT asset_code, asset_name, category, factory, brand_landlord, start_date, end_date, status FROM public.fixed_assets WHERE status NOT LIKE '%報廢%'"
-                    params = {}
-                    if filter_factory != "全部廠區 (All Plants)":
-                        query += " AND factory = :fac"
-                        params["fac"] = filter_factory
-                    query += " ORDER BY id ASC;"
-
-                    res = conn.execute(text(query), params)
-                    rows = res.fetchall()
-                    if rows:
-                        df = pd.DataFrame([dict(r._mapping) for r in rows])
-                        df.insert(0, "STT", range(len(df)))
-                        df.columns = ["STT", "編號", "名稱/合約", "類別", "廠區", "品牌/型號/房東", "租約起始", "租約到期", "狀態"]
-                        st.dataframe(df, use_container_width=True)
-                    else:
-                        st.info("目前尚無固定資產或租賃合約紀錄。")
-            except Exception as e:
-                st.error("讀取資產資料失敗: " + str(e))
-
-    # ----------------------------------------------------
-    # ➕ Tab 2: 新增固定資產 (連動廠區管理)
+    # ➕ 頁籤 1: 新增固定資產與車輛
     # ----------------------------------------------------
     with tab_add:
-        st.markdown("### ➕ 新增固定資產與租賃合約")
+        st.markdown(f"### {L['tab_add']}")
+        
         with st.form("form_add_asset"):
-            col1, col2 = st.columns(2)
-            with col1:
-                a_code = st.text_input("資產/合約編號 *", placeholder="例: AST-EQ-005")
-                a_name = st.text_input("資產或合約名稱 *", placeholder="例: CNC 數控母線排切加工機")
-                a_factory = st.selectbox("存放廠區/據點 *", current_factories)
-                a_cat = st.selectbox("資產類別", ["土地與房屋租賃", "生產機具", "車輛", "電腦與資訊設備", "辦公設備", "網路伺服器", "品管儀器", "倉儲物流", "消防工安"])
+            c1, c2 = st.columns(2)
+            with c1:
+                asset_code = st.text_input(L["lbl_code"], value="AST-VH-001", placeholder="例: AST-VH-001")
+                asset_cat = st.selectbox(L["lbl_cat"], ASSET_CATEGORIES)
+                asset_name = st.text_input(L["lbl_name"], placeholder="例: 70LD-006.06 (公司總經理專車)")
+            with c2:
+                site_loc = st.selectbox(L["lbl_site"], ["越南西寧廠 (Tay Ninh)", "海防辦事處 (Hai Phong)", "胡志明總部 (HCMC)"])
+                asset_status = st.selectbox(L["lbl_status"], ["🟢 在用/租賃中 (Active)", "🟡 維修保養中 (Maintenance)", "🔴 報廢/封存 (Retired)"])
+                cost_val = st.number_input(L["lbl_cost"], min_value=0.0, value=850000000.0, step=10000000.0)
 
-            with col2:
-                a_brand = st.text_input("品牌與型號 / 房東與出租方", placeholder="例: Amada - CNC Busbar 160T")
-                a_status = st.selectbox("目前狀態", ["🟢 在用/租賃中 (Active)", "🟡 租約將到期", "🔴 停用/維修中"])
-                a_cost = st.number_input("取得成本或月租金/總租金 (USD / VND)", min_value=0.0, value=1500.0, step=100.0)
+            # 🚗 動態檢測：若類別屬於「車輛」，自動展開車輛專用輸入框！
+            license_plate = ""
+            v_model = ""
+            driver_name = ""
+            inspection_date = None
 
-            st.markdown("##### 📅 租賃合約專用日期 (若非土地房屋租賃可不填)")
-            c_d1, c_d2 = st.columns(2)
-            with c_d1:
-                a_start = st.date_input("租約起始日期 (Lease Start Date)", datetime.date.today())
-            with c_d2:
-                a_end = st.date_input("租約到期日期 (Lease Expiry Date)", datetime.date.today() + datetime.timedelta(days=1095))
+            if "車輛" in asset_cat:
+                st.markdown("""
+                <div class="vehicle-box">
+                    <h5 style="color:#1E40AF; margin-top:0;">🚗 車輛專屬資料（自動同步至公務派車與保修模組）</h5>
+                """, unsafe_allow_html=True)
+                
+                v_c1, v_c2, v_c3 = st.columns(3)
+                with v_c1:
+                    license_plate = st.text_input(L["lbl_plate"], value="70LD-006.06", placeholder="例: 70LD-006.06 或 60A-888.99")
+                with v_c2:
+                    v_model = st.text_input(L["lbl_v_model"], value="Toyota Fortuner 2.7V", placeholder="例: Isuzu 3.5噸卡車 / Ford Transit 16座")
+                with v_c3:
+                    driver_name = st.text_input(L["lbl_driver"], value="Nguyễn Văn Tài", placeholder="例: 專職司機 / 廠長")
 
-            if st.form_submit_button("📌 確認新增固定資產或合約", type="primary", use_container_width=True):
-                if engine and a_code and a_name:
-                    try:
-                        with engine.begin() as conn:
-                            conn.execute(text("""
-                                INSERT INTO public.fixed_assets 
-                                (asset_code, asset_name, category, factory, brand_landlord, status, cost_amount, start_date, end_date)
-                                VALUES (:code, :name, :cat, :fac, :brand, :st, :cost, :start, :end)
-                                ON CONFLICT (asset_code) DO UPDATE
-                                SET asset_name = EXCLUDED.asset_name,
-                                    category = EXCLUDED.category,
-                                    factory = EXCLUDED.factory,
-                                    brand_landlord = EXCLUDED.brand_landlord,
-                                    status = EXCLUDED.status,
-                                    cost_amount = EXCLUDED.cost_amount,
-                                    start_date = EXCLUDED.start_date,
-                                    end_date = EXCLUDED.end_date;
-                            """), {
-                                "code": a_code, "name": a_name, "cat": a_cat, "fac": a_factory,
-                                "brand": a_brand, "st": a_status, "cost": a_cost, "start": a_start, "end": a_end
-                            })
-                        st.success(f"🎉 成功新增資產/合約：{a_name} ({a_code})，已綁定至【{a_factory}】！")
-                        st.rerun()
-                    except Exception as e:
-                        st.error("❌ 寫入資料庫失敗: " + str(e))
+                inspection_date = st.date_input(L["lbl_inspection_date"], datetime.date.today() + datetime.timedelta(days=365))
+                st.markdown("</div>", unsafe_allow_html=True)
+            else:
+                v_model = st.text_input(L["lbl_brand"], placeholder="例: Amada CNC Busbar 160T")
+
+            if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
+                if not asset_code or not asset_name:
+                    st.error("⚠️ 請填寫資產編號與名稱！")
+                elif "車輛" in asset_cat and not license_plate:
+                    st.error("⚠️ 請填寫車輛的【車牌號碼】！")
                 else:
-                    st.warning("⚠️ 請填寫資產編號與名稱！")
+                    if engine:
+                        try:
+                            with engine.begin() as conn:
+                                conn.execute(text("""
+                                    INSERT INTO public.fixed_assets 
+                                    (asset_code, asset_name, category, site_location, brand_model, license_plate, driver_custodian, inspection_expiry, cost_amount, status)
+                                    VALUES (:code, :name, :cat, :site, :bm, :plate, :driver, :exp, :cost, :status);
+                                """), {
+                                    "code": asset_code, "name": asset_name, "cat": asset_cat, "site": site_loc,
+                                    "bm": v_model, "plate": license_plate, "driver": driver_name, "exp": inspection_date,
+                                    "cost": cost_val, "status": asset_status
+                                })
+                            st.success(f"🎉 車輛/資產【{asset_name}】建立成功！車牌：{license_plate or '無'}")
+                            st.rerun()
+                        except Exception as e:
+                            st.error("寫入失敗: " + str(e))
+                    else:
+                        st.success(f"🎉 [展示模式] 車輛/資產【{asset_name}】（車牌: {license_plate}）建立成功！")
 
     # ----------------------------------------------------
-    # ✏️ Tab 3: 修改資產與租賃資料
+    # 📋 頁籤 2: 清冊查看
     # ----------------------------------------------------
-    with tab_edit:
-        st.markdown("### ✏️ 修改現有固定資產與租賃合約資料")
+    with tab_list:
+        st.markdown(f"### {L['tab_list']}")
         if engine:
             try:
                 with engine.connect() as conn:
-                    res_a = conn.execute(text("SELECT asset_code, asset_name, factory FROM public.fixed_assets WHERE status NOT LIKE '%報廢%' ORDER BY asset_code;"))
-                    ast_list = res_a.fetchall()
-                    if ast_list:
-                        ast_opts = {f"{r.asset_code} - {r.asset_name} ({r.factory})": r.asset_code for r in ast_list}
-                        selected_ast_label = st.selectbox("請選擇要修改的資產或合約：", list(ast_opts.keys()))
-                        target_ast_code = ast_opts[selected_ast_label]
-
-                        ast_detail = conn.execute(text("SELECT * FROM public.fixed_assets WHERE asset_code = :c;"), {"c": target_ast_code}).fetchone()
-                        if ast_detail:
-                            ad = dict(ast_detail._mapping)
-                            with st.form("form_edit_asset_full"):
-                                col_ea1, col_ea2 = st.columns(2)
-                                with col_ea1:
-                                    edit_a_name = st.text_input("資產/合約名稱", value=str(ad.get("asset_name") or ""))
-                                    curr_fac = str(ad.get("factory") or "")
-                                    fac_idx = current_factories.index(curr_fac) if curr_fac in current_factories else 0
-                                    edit_a_factory = st.selectbox("存放廠區/據點", current_factories, index=fac_idx)
-                                with col_ea2:
-                                    edit_a_brand = st.text_input("品牌與型號 / 房東", value=str(ad.get("brand_landlord") or ""))
-                                    edit_a_cost = st.number_input("金額 (USD / VND)", value=float(ad.get("cost_amount") or 0.0))
-
-                                if st.form_submit_button("💾 儲存修改內容", type="primary"):
-                                    with engine.begin() as conn_u:
-                                        conn_u.execute(text("""
-                                            UPDATE public.fixed_assets
-                                            SET asset_name = :name, factory = :fac, brand_landlord = :brand, cost_amount = :cost, updated_at = CURRENT_TIMESTAMP
-                                            WHERE asset_code = :code;
-                                        """), {"name": edit_a_name, "fac": edit_a_factory, "brand": edit_a_brand, "cost": edit_a_cost, "code": target_ast_code})
-                                    st.success(f"✅ 已成功更新資產【{edit_a_name}】資料！")
-                                    st.rerun()
+                    res = conn.execute(text("SELECT asset_code, asset_name, category, license_plate, brand_model, driver_custodian, site_location, status FROM public.fixed_assets ORDER BY id DESC;"))
+                    rows = res.fetchall()
+                    if rows:
+                        st.dataframe(pd.DataFrame([dict(r._mapping) for r in rows]), use_container_width=True)
+                    else:
+                        st.info("目前尚無固定資產與車輛資料。")
             except Exception as e:
                 st.error("讀取失敗: " + str(e))
 
-    # ----------------------------------------------------
-    # 🗑️ Tab 4: 辦理資產報廢或合約終止
-    # ----------------------------------------------------
-    with tab_terminate:
-        st.markdown("### 🗑️ 辦理資產報廢或租賃合約終止")
-
-    # ----------------------------------------------------
-    # 📜 Tab 5: 歷史報廢紀錄
-    # ----------------------------------------------------
-    with tab_history:
-        st.markdown("### 📜 歷史報廢與停用資產紀錄")
-
-def render_asset_management(engine=None, lang="繁體中文", **kwargs):
-    render_asset_management_page(engine=engine, lang=lang, **kwargs)
-
 def show(engine=None, lang="繁體中文", **kwargs):
-    render_asset_management_page(engine=engine, lang=lang, **kwargs)
+    render_assets_page(engine=engine, lang=lang, **kwargs)
 
 def main(engine=None, lang="繁體中文", **kwargs):
-    render_asset_management_page(engine=engine, lang=lang, **kwargs)
+    render_assets_page(engine=engine, lang=lang, **kwargs)
