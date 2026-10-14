@@ -70,7 +70,6 @@ NAV_STRUCTURE = {
                     "📊 越南稅務標準財務報表 (Thông tư 200)": "financial_tax",
                     "💰 員工薪資計算與保險扣除": "payroll_calc",
                     "📄 電子發票綜合管理與 XML 歸檔": "invoice_management",
-                    "📊 越南營建電子發票與稅務合規管家": "vn_tax_invoice",
                 }
             },
             "✍️ 全公司電子簽核中心 (Approval Center)": {
@@ -135,7 +134,6 @@ NAV_STRUCTURE = {
                     "📊 Báo cáo Tài chính chuẩn Thuế VN": "financial_tax",
                     "💰 Tính lương & Khấu trừ bảo hiểm": "payroll_calc",
                     "📄 Quản lý Hóa đơn điện tử": "invoice_management",
-                    "📊 Quản lý Hóa đơn điện tử & Tuân thủ Thuế": "vn_tax_invoice",
                 }
             },
             "✍️ Trung tâm Phê duyệt Điện tử (Approval Center)": {
@@ -200,7 +198,6 @@ NAV_STRUCTURE = {
                     "📊 Vietnamese Tax Financials": "financial_tax",
                     "💰 Payroll & Insurance Calculation": "payroll_calc",
                     "📄 E-Invoice Management": "invoice_management",
-                    "📊 Vietnam E-Invoice & Tax Manager": "vn_tax_invoice",
                 }
             },
             "✍️ E-Approval Center": {
@@ -438,23 +435,17 @@ elif target_route == "approval_center":
 elif target_route == "dorm_catering":
     load_module_safely("modules.dorm_catering", "render_dorm_catering_module", engine=engine, lang=curr_lang)
 
-# 🛠️ 【工程部核心】：向下相容所有新舊路由標籤，統一載入三語系重構模組
 elif target_route in [
     "eng_mgmt_center", "eng_quote", "eng_progress", "field_daily_report", 
     "eng_ai_photo", "eng_license", "eng_design", "eng_bom", "eng_labor", "eng_fat"
 ]:
     load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang)
 
-# 👉 【工程部現場打卡】：載入現場外勤打卡
 elif target_route == "eng_field_checkin":
     load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="field_worker")
 
-# 👉 【管理部主管端】：載入跨案場人數監控
 elif target_route == "field_attendance":
     load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="management")
-
-elif target_route == "vn_tax_invoice":
-    load_module_safely("modules.vietnam_tax_api_config", "render_vn_tax_invoice_page", engine=engine, lang=curr_lang)
 
 elif target_route == "procurement_ap":
     load_module_safely("modules.procurement_ap", "render_procurement_ap_page", engine=engine, lang=curr_lang)
