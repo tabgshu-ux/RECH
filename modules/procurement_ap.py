@@ -4,7 +4,7 @@ import datetime
 from sqlalchemy import text
 
 # ----------------------------------------------------
-# 🌐 三語系字典 (自動跟隨全域語系)
+# 🌐 三語系字典 (自動跟隨主程式全域語系)
 # ----------------------------------------------------
 PROC_I18N = {
     "繁體中文": {
@@ -15,9 +15,9 @@ PROC_I18N = {
         "tab_po": "🛒 3. 總務/採購詢比價與下單 (PO)",
         "tab_ap": "💰 4. 財務應付帳款與付款 (AP)",
         "tab_audit": "🔍 稽核軌跡與權限追蹤",
-        "info_pr": "💡 請購權放開給全體同仁；發起後自動依『金額與類別』送交對應主管及技術單位簽核。",
-        "lbl_requester": "請購人姓名 *",
-        "lbl_dept": "所屬部門",
+        "info_pr": "🔒 系統已自動綁定目前登入者身分，防止冒名申請。",
+        "lbl_requester": "請購人姓名 (系統綁定/不可修改) *",
+        "lbl_dept": "所屬部門 (系統綁定)",
         "lbl_proj": "歸屬工程/專案編號",
         "lbl_cat": "請購類別",
         "lbl_item": "物品/材料名稱與規格 *",
@@ -35,9 +35,9 @@ PROC_I18N = {
         "tab_po": "🛒 3. GA / Purchasing (PO)",
         "tab_ap": "💰 4. Finance & AP Payment",
         "tab_audit": "🔍 Audit Trail & Logs",
-        "info_pr": "💡 Requisition open to all employees; automatically routed to corresponding managers upon submission.",
-        "lbl_requester": "Requester Name *",
-        "lbl_dept": "Department",
+        "info_pr": "🔒 Locked to current logged-in user identity to prevent impersonation.",
+        "lbl_requester": "Requester Name (Locked) *",
+        "lbl_dept": "Department (Locked)",
         "lbl_proj": "Project Code",
         "lbl_cat": "Item Category",
         "lbl_item": "Item Name & Specs *",
@@ -55,9 +55,9 @@ PROC_I18N = {
         "tab_po": "🛒 3. Hành chính / Mua hàng (PO)",
         "tab_ap": "💰 4. Kế toán & Phải trả (AP)",
         "tab_audit": "🔍 Nhật ký Kiểm toán",
-        "info_pr": "💡 Nhân viên tạo yêu cầu; hệ thống tự động chuyển duyệt theo quy trình.",
-        "lbl_requester": "Người yêu cầu *",
-        "lbl_dept": "Bộ phận",
+        "info_pr": "🔒 Tự động khóa theo tài khoản đang đăng nhập để tránh mạo danh.",
+        "lbl_requester": "Tên người yêu cầu (Khóa) *",
+        "lbl_dept": "Bộ phận (Khóa)",
         "lbl_proj": "Mã dự án",
         "lbl_cat": "Loại vật tư",
         "lbl_item": "Tên & Quy cách vật tư *",
@@ -117,13 +117,13 @@ def init_procurement_db(engine):
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
-    except Exception as e:
+    except Exception:
         pass
 
 def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
     inject_procurement_css()
 
-    # 自動跟隨主程式側邊欄選擇的語系
+    # 自動跟隨主程式側邊欄選擇的語系（不再出現右上方重複 Dropdown）
     active_lang = lang or st.session_state.get("current_lang", "繁體中文")
     L = PROC_I18N.get(active_lang, PROC_I18N["繁體中文"])
 
@@ -137,17 +137,22 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
     ])
 
     # ----------------------------------------------------
-    # 📝 階段 1: 員工請購申請 (PR)
+    # 📝 階段 1: 員工請購申請 (PR) - 強制鎖定目前登入身分
     # ----------------------------------------------------
     with tab_pr:
         st.markdown(f"### {L['tab_pr']}")
         st.info(L["info_pr"])
         
+        # 取得登入者資訊
+        current_user_name = st.session_state.get("user_name", "admin")
+        current_user_role = str(st.session_state.get("user_role", "Staff")).upper()
+        
         with st.form("form_create_pr"):
             c1, c2, c3 = st.columns(3)
             with c1:
-                pr_user = st.text_input(L["lbl_requester"], value=st.session_state.get("user_name", "admin"))
-                pr_dept = st.text_input(L["lbl_dept"], value="工程與設計管理中心")
+                # 🔒 資安防護：disabled=True 灰色鎖定，防止冒用他人姓名或改名陷害
+                st.text_input(L["lbl_requester"], value=current_user_name, disabled=True)
+                st.text_input(L["lbl_dept"], value=f"部門角色: {current_user_role}", disabled=True)
                 pr_proj = st.text_input(L["lbl_proj"], placeholder="例: PRJ-2026-001 (西寧擴建案)")
             with c2:
                 pr_cat = st.selectbox(L["lbl_cat"], ["🔌 配電盤/水電工程材料 (需設計審核)", "🛠️ 工地現場耗材與工具", "🥗 幹部宿舍與總務用品", "💻 資訊與辦公設備"])
@@ -159,25 +164,28 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                 pr_reason = st.text_area(L["lbl_reason"], placeholder="例: 西寧廠 A 區配電盤主開關更換備料。")
 
             if st.form_submit_button(L["btn_submit_pr"], type="primary", use_container_width=True):
-                pr_code_gen = "PR-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-                if engine:
-                    try:
-                        with engine.begin() as conn:
-                            conn.execute(text("""
-                                INSERT INTO public.purchase_requisitions 
-                                (pr_code, requester_name, department, project_code, item_category, item_name, qty, unit, est_amount, audit_log)
-                                VALUES (:code, :req, :dept, :proj, :cat, :item, :qty, :unit, :amt, :log);
-                            """), {
-                                "code": pr_code_gen, "req": pr_user, "dept": pr_dept, "proj": pr_proj,
-                                "cat": pr_cat, "item": pr_item, "qty": pr_qty, "unit": pr_unit, "amt": pr_est_val,
-                                "log": f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}] {pr_user} 提出請購。"
-                            })
-                        st.success(f"🎉 請購單【{pr_code_gen}】已成功建立並送出！")
-                        st.rerun()
-                    except Exception as e:
-                        st.error("寫入失敗: " + str(e))
+                if not pr_item:
+                    st.error("⚠️ 請填寫物品/材料名稱與規格！")
                 else:
-                    st.success(f"🎉 [展示模式] 請購單【{pr_code_gen}】建立成功！")
+                    pr_code_gen = "PR-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+                    if engine:
+                        try:
+                            with engine.begin() as conn:
+                                conn.execute(text("""
+                                    INSERT INTO public.purchase_requisitions 
+                                    (pr_code, requester_name, department, project_code, item_category, item_name, qty, unit, est_amount, audit_log)
+                                    VALUES (:code, :req, :dept, :proj, :cat, :item, :qty, :unit, :amt, :log);
+                                """), {
+                                    "code": pr_code_gen, "req": current_user_name, "dept": current_user_role, "proj": pr_proj,
+                                    "cat": pr_cat, "item": pr_item, "qty": pr_qty, "unit": pr_unit, "amt": pr_est_val,
+                                    "log": f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}] {current_user_name} (身分驗證完成) 提出請購。"
+                                })
+                            st.success(f"🎉 請購單【{pr_code_gen}】已成功建立並送出！")
+                            st.rerun()
+                        except Exception as e:
+                            st.error("寫入失敗: " + str(e))
+                    else:
+                        st.success(f"🎉 [展示模式] 請購單【{pr_code_gen}】建立成功！")
 
     # ----------------------------------------------------
     # ✍️ 階段 2: 簽核中心與規格審查
@@ -196,7 +204,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                             pd_item = dict(p._mapping)
                             st.markdown(f"""
                             <div class="proc-card">
-                                <b>單號：{pd_item['pr_code']}</b> | 請購人：{pd_item['requester_name']} ({pd_item['department']})<br>
+                                <b>單號：{pd_item['pr_code']}</b> | 請購人：<b>{pd_item['requester_name']}</b> ({pd_item['department']})<br>
                                 物品：<b>{pd_item['item_name']}</b> x {pd_item['qty']} {pd_item['unit']} | 預估金額：<b>{pd_item['est_amount']:,} VND</b><br>
                                 專案：{pd_item['project_code'] or '無'} | 類別：{pd_item['item_category']}
                             </div>
@@ -243,7 +251,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                         for po in po_items:
                             p_dict = dict(po._mapping)
                             with st.form(f"form_po_{p_dict['pr_code']}"):
-                                st.markdown(f"##### 📦 請購單據：{p_dict['pr_code']} - {p_dict['item_name']}")
+                                st.markdown(f"##### 📦 請購單據：{p_dict['pr_code']} - {p_dict['item_name']} (請購人: {p_dict['requester_name']})")
                                 c_p1, c_p2 = st.columns(2)
                                 with c_p1:
                                     vendor = st.text_input("選定決標供應商 (Nhà cung cấp)", placeholder="例: ABB Vietnam / 施耐德代理商")
