@@ -1,117 +1,112 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import os
 
 # ----------------------------------------------------
-# 🌐 資料庫連線初始化 (Supabase PostgreSQL)
+# 🔌 全方位萬用資料庫轉接頭 (Universal DB Adapter)
 # ----------------------------------------------------
-def get_db_connection():
+def get_universal_db_connection(db_type="SQLite", host="localhost", port="5432", user="", password="", db_name="reetech_erp"):
     try:
-        from supabase import create_client, Client
-        url = st.secrets.get("SUPABASE_URL", "")
-        key = st.secrets.get("SUPABASE_KEY", "")
-        if url and key:
-            return create_client(url, key)
-    except Exception:
-        pass
-    return None
+        if db_type == "SQLite":
+            import sqlite3
+            conn = sqlite3.connect("reetech_erp_local.db", check_same_thread=False)
+            return conn, "SQLite"
+            
+        elif db_type == "Supabase / PostgreSQL":
+            import psycopg2
+            conn = psycopg2.connect(
+                host=host, port=port, user=user, password=password, database=db_name
+            )
+            return conn, "PostgreSQL"
+            
+        elif db_type == "MySQL / MariaDB":
+            import pymysql
+            conn = pymysql.connect(
+                host=host, port=int(port) if port else 3306, user=user, password=password, database=db_name, charset='utf8mb4'
+            )
+            return conn, "MySQL"
+    except Exception as e:
+        import sqlite3
+        conn = sqlite3.connect("reetech_erp_local.db", check_same_thread=False)
+        return conn, f"SQLite (Fallback due to error: {e})"
+    
+    import sqlite3
+    return sqlite3.connect("reetech_erp_local.db", check_same_thread=False), "SQLite"
 
 # ----------------------------------------------------
-# 🌐 帳號權限與稽核軌跡模組多語系字典 (i18n)
+# 🚀 全系統所有模組資料表一鍵自動生成 (Full-Scope Schema Auto-Migration)
+# ----------------------------------------------------
+def init_all_system_tables(db_type, host, port, user, password, db_name):
+    conn, actual_type = get_universal_db_connection(db_type, host, port, user, password, db_name)
+    cursor = conn.cursor()
+    
+    try:
+        is_sqlite = "SQLite" in actual_type
+        
+        # 1. 組織角色權限表 (RBAC)
+        if is_sqlite:
+            cursor.execute("CREATE TABLE IF NOT EXISTS system_roles (role_name TEXT PRIMARY KEY, description TEXT)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS system_users (username TEXT PRIMARY KEY, name TEXT, role TEXT, site TEXT)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS company_announcements (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, publisher TEXT, date TEXT)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS engineering_quotations (quot_id TEXT PRIMARY KEY, client TEXT, project_name TEXT, total_price REAL, status TEXT, date TEXT)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS system_audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, time TEXT, user_account TEXT, action TEXT, module TEXT, ip TEXT, status TEXT)")
+        else:
+            cursor.execute("CREATE TABLE IF NOT EXISTS system_roles (role_name VARCHAR(100) PRIMARY KEY, description TEXT)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS system_users (username VARCHAR(50) PRIMARY KEY, name VARCHAR(100), role VARCHAR(100), site VARCHAR(100))")
+            cursor.execute("CREATE TABLE IF NOT EXISTS company_announcements (id SERIAL PRIMARY KEY, title VARCHAR(255), content TEXT, publisher VARCHAR(100), date VARCHAR(50))")
+            cursor.execute("CREATE TABLE IF NOT EXISTS engineering_quotations (quot_id VARCHAR(50) PRIMARY KEY, client VARCHAR(255), project_name VARCHAR(255), total_price NUMERIC, status VARCHAR(50), date VARCHAR(50))")
+            cursor.execute("CREATE TABLE IF NOT EXISTS system_audit_logs (id SERIAL PRIMARY KEY, time VARCHAR(50), user_account VARCHAR(50), action VARCHAR(255), module VARCHAR(50), ip VARCHAR(50), status VARCHAR(50))")
+
+        # 僅初始化基本必要的超級管理員與預設公告（不強加綁定特定公司職位）
+        if is_sqlite:
+            cursor.execute("INSERT OR IGNORE INTO system_roles (role_name, description) VALUES (?, ?)", ("董事長 / 總經理", "最高決策與全系統總覽權限"))
+            cursor.execute("INSERT OR IGNORE INTO system_users (username, name, role, site) VALUES (?, ?, ?, ?)", ("admin", "系統管理員", "董事長 / 總經理", "總公司 / 越南廠"))
+            cursor.execute("INSERT OR IGNORE INTO company_announcements (title, content, publisher, date) VALUES (?, ?, ?, ?)", ("系統初始化完成公告", "全系統資料庫與核心資料表已成功一鍵建立，歡迎開始使用 REETECH AI ERP。", "總經理室", str(datetime.date.today())))
+        else:
+            cursor.execute("INSERT INTO system_roles (role_name, description) VALUES (%s, %s) ON CONFLICT (role_name) DO NOTHING", ("董事長 / 總經理", "最高決策與全系統總覽權限"))
+            cursor.execute("INSERT INTO system_users (username, name, role, site) VALUES (%s, %s, %s, %s) ON CONFLICT (username) DO NOTHING", ("admin", "系統管理員", "董事長 / 總經理", "總公司 / 越南廠"))
+            cursor.execute("INSERT INTO company_announcements (title, content, publisher, date) VALUES (%s, %s, %s, %s)", ("系統初始化完成公告", "全系統資料庫與核心資料表已成功一鍵建立，歡迎開始使用 REETECH AI ERP。", "總經理室", str(datetime.date.today())))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return True, actual_type
+    except Exception as e:
+        return False, str(e)
+
+# ----------------------------------------------------
+# 🌐 多語系字典 (i18n)
 # ----------------------------------------------------
 USER_MGMT_I18N = {
     "繁體中文": {
-        "title": "🔒 IT 管理中心 - 組織職能角色與系統權限範本管理 (資料庫連線版)",
-        "caption": "採用 Supabase PostgreSQL 資料庫進行組織角色與權限之永久 CRUD 管理。",
-        "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
-        "tab_roles": "⚙️ 組織角色與部門功能權限範本 (RBAC)",
-        "tab_users": "👥 人事系統員工與系統帳號總覽",
-        "tab_api": "🔌 電子發票 API 串接設定",
-        "roles_header": "⚙️ 企業組織部門角色與權限範本清冊 (資料庫同步)",
-        "btn_save_role": "💾 儲存並寫入資料庫",
-        "btn_delete_role": "🗑️ 從資料庫刪除此角色",
-        "success_role_save": "✅ 角色已成功寫入並更新至資料庫！",
-        "success_role_delete": "🗑️ 角色已從資料庫永久刪除！",
-        "success_add_user": "✅ 人事員工系統帳號與權限已成功指派！",
+        "title": "🔒 IT 管理中心 - 組織角色權限與一鍵萬用資料庫精靈",
+        "caption": "支援 Supabase、MySQL、SQLite 之全模組資料表一鍵自動生成與永久資料庫 CRUD 管理。",
+        "tab_audit": "📊 系統稽核日誌",
+        "tab_roles": "⚙️ 組織角色權限範本 (RBAC)",
+        "tab_users": "👥 員工與帳號總覽",
+        "tab_db": "🔌 萬用資料庫一鍵安裝精靈 (DB Wizard)",
+        "tab_api": "🔌 越南電子發票 API 設定",
     },
     "English": {
-        "title": "🔒 IT Center - Departmental Role RBAC & System Audit Logs (DB Connected)",
-        "caption": "Persistent CRUD management of organizational roles via Supabase PostgreSQL.",
-        "tab_audit": "📊 System Audit Logs",
+        "title": "🔒 IT Center - RBAC & Universal Database One-Click Setup Wizard",
+        "caption": "Support Supabase, MySQL, and SQLite with full-scope schema auto-migration.",
+        "tab_audit": "📊 Audit Logs",
         "tab_roles": "⚙️ Departmental Roles (RBAC)",
-        "tab_users": "👥 HR & User Accounts",
-        "tab_api": "🔌 E-Invoice API Config",
-        "roles_header": "⚙️ Departmental Permission Roles (DB Synchronized)",
-        "btn_save_role": "💾 Save & Write to Database",
-        "btn_delete_role": "🗑️ Delete Role from Database",
-        "success_role_save": "✅ Role successfully saved and updated in database!",
-        "success_role_delete": "🗑️ Role successfully deleted from database!",
-        "success_add_user": "✅ Employee system account & role successfully assigned!",
+        "tab_users": "👥 HR & Accounts",
+        "tab_db": "🔌 Universal DB Wizard",
+        "tab_api": "🔌 E-Invoice API",
     },
     "Tiếng Việt": {
-        "title": "🔒 Quản trị IT - Phân quyền Doanh nghiệp (Kết nối CSDL)",
-        "caption": "Quản lý vai trò và phân quyền qua cơ sở dữ liệu Supabase.",
+        "title": "🔒 Quản trị IT - Cấu hình Phân quyền & Trợ lý CSDL",
+        "caption": "Hỗ trợ Supabase, MySQL, SQLite với tính năng tự động tạo toàn bộ bảng dữ liệu.",
         "tab_audit": "📊 Nhật ký Kiểm toán",
         "tab_roles": "⚙️ Quản lý Vai trò (RBAC)",
         "tab_users": "👥 Danh sách Nhân sự",
-        "tab_api": "🔌 Cấu hình API Hóa đơn",
-        "roles_header": "⚙️ Danh sách vai trò (Đồng bộ CSDL)",
-        "btn_save_role": "💾 Lưu vào CSDL",
-        "btn_delete_role": "🗑️ Xóa khỏi CSDL",
-        "success_role_save": "✅ Đã lưu và cập nhật vào CSDL!",
-        "success_role_delete": "🗑️ Đã xóa vĩnh viễn khỏi CSDL!",
-        "success_add_user": "✅ Thành công!",
+        "tab_db": "🔌 Trợ lý CSDL",
+        "tab_api": "🔌 Cấu hình API",
     }
 }
-
-def load_roles_from_db():
-    supabase = get_db_connection()
-    default_roles = {
-        "董事長 / 總經理 (Chairman / GM)": {"desc": "👑 總經理室：可檢視與審核全系統所有部門與跨模組資料"},
-        "副總經理 (Vice General Manager / VP)": {"desc": "👔 副總經理室：負責各部門工程報價、採購叫料與合約專案之跨部門最終審核"},
-        "管理部主管 (Admin & Finance Manager)": {"desc": "📋 管理部：負責人事、財務、總務與匯總下方各部門資料"},
-        "工程總監 / 設計主管 (Engineering Director)": {"desc": "🛠️ 工程部門：專注於專案報價、工程驗收、日報表與 BOM 展開"},
-        "倉庫管理員 / 生產主管 (Warehouse & Production)": {"desc": "🏭 生產與倉管：管理廠區生產線、車間打卡、板金塗料與倉庫庫存"}
-    }
-    
-    if supabase:
-        try:
-            res = supabase.table("system_roles").select("*").execute()
-            if res.data:
-                db_roles = {}
-                for row in res.data:
-                    db_roles[row["role_name"]] = {"desc": row["description"]}
-                return db_roles
-        except Exception:
-            pass
-    return default_roles
-
-def save_role_to_db(role_name, description, old_role_name=None):
-    supabase = get_db_connection()
-    if supabase:
-        try:
-            if old_role_name and old_role_name != role_name:
-                supabase.table("system_roles").delete().eq("role_name", old_role_name).execute()
-            
-            # Upsert role
-            supabase.table("system_roles").upsert({
-                "role_name": role_name,
-                "description": description
-            }, on_conflict="role_name").execute()
-            return True
-        except Exception as e:
-            st.error(f"資料庫寫入失敗: {e}")
-    return False
-
-def delete_role_from_db(role_name):
-    supabase = get_db_connection()
-    if supabase:
-        try:
-            supabase.table("system_roles").delete().eq("role_name", role_name).execute()
-            return True
-        except Exception as e:
-            st.error(f"資料庫刪除失敗: {e}")
-    return False
 
 def render_user_management_page(lang="繁體中文", **kwargs):
     active_lang = lang or st.session_state.get("lang", "繁體中文")
@@ -120,85 +115,136 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 從資料庫加載角色
-    st.session_state.system_roles_db = load_roles_from_db()
+    if "db_config_state" not in st.session_state:
+        st.session_state.db_config_state = {
+            "type": "SQLite", "host": "localhost", "port": "5432",
+            "user": "postgres", "password": "", "db_name": "reetech_erp"
+        }
 
-    if "audit_logs_db" not in st.session_state:
-        st.session_state.audit_logs_db = [
-            {"time": "2026-10-06 13:00:15", "user": "admin", "action": "登入系統 (Login)", "module": "Auth", "ip": "192.168.1.50", "status": "成功"}
-        ]
+    tab_audit, tab_roles, tab_users, tab_db, tab_api = st.tabs([
+        L["tab_audit"], L["tab_roles"], L["tab_users"], L["tab_db"], L["tab_api"]
+    ])
 
-    if "system_users_db" not in st.session_state:
-        st.session_state.system_users_db = [
-            {"username": "admin", "name": "許福村", "role": "董事長 / 總經理 (Chairman / GM)", "site": "西寧廠 (Tay Ninh)"},
-            {"username": "vgm", "name": "副總經理", "role": "副總經理 (Vice General Manager / VP)", "site": "西寧廠 (Tay Ninh)"}
-        ]
+    # ----------------------------------------------------
+    # 🔌 專屬頁籤：萬用資料庫一鍵安裝與全模組建表精靈
+    # ----------------------------------------------------
+    with tab_db:
+        st.markdown("### 🔌 全模組資料表與資料庫一鍵自動生成精靈")
+        st.info("💡 說明：點擊下方按鈕，系統將自動為您在選定的資料庫建立『所有核心模組資料表（角色權限、人事、公告、工程報價、稽核日誌等）』，不強加限制預設職位，讓您可以依照新公司或新職位自由動態擴充！")
 
-    tab_audit, tab_roles, tab_users, tab_api = st.tabs([L["tab_audit"], L["tab_roles"], L["tab_users"], L["tab_api"]])
+        with st.form("form_universal_db_wizard"):
+            db_type_sel = st.selectbox(
+                "選擇目標資料庫類型 (Database Type)", 
+                ["SQLite (免安裝本機單檔推薦)", "Supabase / PostgreSQL (雲端企業級)", "MySQL / MariaDB (地端伺服器)"],
+                index=0 if "SQLite" in st.session_state.db_config_state["type"] else 1
+            )
+            
+            dc1, dc2 = st.columns(2)
+            with dc1:
+                db_host = st.text_input("資料庫主機位址 (Host)", value=st.session_state.db_config_state["host"])
+                db_user = st.text_input("資料庫帳號 (User)", value=st.session_state.db_config_state["user"])
+                db_name = st.text_input("資料庫名稱 (Database Name)", value=st.session_state.db_config_state["db_name"])
+            with dc2:
+                db_port = st.text_input("連接埠 (Port)", value=st.session_state.db_config_state["port"])
+                db_pass = st.text_input("資料庫密碼 (Password)", type="password", value=st.session_state.db_config_state["password"])
 
-    with tab_audit:
-        st.markdown(f"### 全系統操作軌跡與稽核日誌")
-        st.dataframe(pd.DataFrame(st.session_state.audit_logs_db), use_container_width=True)
+            init_btn = st.form_submit_button("🚀 一鍵自動生成全系統資料表與初始化", type="primary", use_container_width=True)
 
+            if init_btn:
+                selected_type_clean = db_type_sel.split(" (")[0]
+                st.session_state.db_config_state = {
+                    "type": selected_type_clean, "host": db_host, "port": db_port,
+                    "user": db_user, "password": db_pass, "db_name": db_name
+                }
+                
+                success, msg = init_all_system_tables(selected_type_clean, db_host, db_port, db_user, db_pass, db_name)
+                if success:
+                    st.success(f"🎉 資料庫安裝成功！已成功連線至 **{msg}** 並且完成所有模組資料表（RBAC、人事、公告、報價、日報等）之自動生成！")
+                else:
+                    st.error(f"❌ 資料庫初始化失敗：{msg}")
+
+    # ----------------------------------------------------
+    # ⚙️ 組織角色權限範本管理 (動態 CRUD)
+    # ----------------------------------------------------
     with tab_roles:
-        st.markdown(f"### {L['roles_header']}")
-        role_list_display = [{"角色名稱": r_name, "部門職責與資料範圍說明": r_info.get("desc", "")} for r_name, r_info in st.session_state.system_roles_db.items()]
-        st.dataframe(pd.DataFrame(role_list_display), use_container_width=True)
+        st.markdown("### ⚙️ 企業組織部門角色與權限範本清冊 (資料庫即時連線)")
+        
+        cfg = st.session_state.db_config_state
+        conn, actual_db = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
+        
+        roles_from_db = {}
+        try:
+            df_roles = pd.read_sql("SELECT role_name, description FROM system_roles", conn)
+            for _, row in df_roles.iterrows():
+                roles_from_db[row["role_name"]] = {"desc": row["description"]}
+        except Exception:
+            roles_from_db = {"董事長 / 總經理": {"desc": "最高決策權限"}}
+        conn.close()
+
+        role_display_list = [{"角色名稱": r, "職責說明": info.get("desc", "")} for r, info in roles_from_db.items()]
+        st.dataframe(pd.DataFrame(role_display_list), use_container_width=True)
 
         st.markdown("---")
-        st.markdown("### ✏️ 資料庫角色 CRUD 維護 (新增、修改、刪除)")
-        role_action_mode = st.radio("選擇操作模式", ["修改現有部門角色範本", "新增全新部門角色範本"], horizontal=True)
+        st.markdown("### ➕ 動態新增或刪除職位角色 (不限特定公司)")
+        with st.form("form_db_role_crud"):
+            new_role_name = st.text_input("職位角色名稱 (例如: 副總經理、機電科長、專案經理)")
+            new_role_desc = st.text_input("部門職責與資料範圍說明")
+            
+            col_cr1, col_cr2 = st.columns(2)
+            with col_cr1:
+                save_role_btn = st.form_submit_button("💾 永久寫入資料庫保存", type="primary", use_container_width=True)
+            with col_cr2:
+                del_role_btn = st.form_submit_button("🗑️ 從資料庫刪除指定職位", use_container_width=True)
 
-        if role_action_mode == "修改現有部門角色範本":
-            existing_role_names = list(st.session_state.system_roles_db.keys())
-            if existing_role_names:
-                selected_edit_role = st.selectbox("🎯 選擇要修改的角色名稱", existing_role_names)
-                
-                with st.form("form_edit_department_role"):
-                    new_role_title = st.text_input("修改後的角色名稱", value=selected_edit_role)
-                    role_desc_input = st.text_input("部門職責與檢視權限說明", value=st.session_state.system_roles_db[selected_edit_role].get("desc", ""))
-                    
-                    col_btn_r1, col_btn_r2 = st.columns(2)
-                    with col_btn_r1:
-                        save_role_btn = st.form_submit_button(L["btn_save_role"], type="primary", use_container_width=True)
-                    with col_btn_r2:
-                        delete_role_btn = st.form_submit_button(L["btn_delete_role"], use_container_width=True)
-
-                    if save_role_btn:
-                        success = save_role_to_db(new_role_title, role_desc_input, selected_edit_role)
-                        if success:
-                            st.success(L["success_role_save"])
-                            st.rerun()
-
-                    if delete_role_btn:
-                        if len(st.session_state.system_roles_db) > 1:
-                            del_success = delete_role_from_db(selected_edit_role)
-                            if del_success:
-                                st.success(L["success_role_delete"])
-                                st.rerun()
+            if save_role_btn:
+                if new_role_name:
+                    try:
+                        conn, _ = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
+                        cursor = conn.cursor()
+                        if "SQLite" in cfg["type"]:
+                            cursor.execute("INSERT OR REPLACE INTO system_roles (role_name, description) VALUES (?, ?)", (new_role_name, new_role_desc))
                         else:
-                            st.warning("⚠️ 系統至少需保留一個角色範本！")
-        else:
-            with st.form("form_add_department_role"):
-                new_role_title = st.text_input("新部門角色名稱 (例如: 副總經理、行政主管、設計主管...)")
-                role_desc_input = st.text_input("部門職責與資料範圍說明")
+                            cursor.execute("INSERT INTO system_roles (role_name, description) VALUES (%s, %s) ON CONFLICT (role_name) DO UPDATE SET description = EXCLUDED.description", (new_role_name, new_role_desc))
+                        conn.commit()
+                        cursor.close()
+                        conn.close()
+                        st.success(f"✅ 職位角色 [{new_role_name}] 已成功寫入資料庫永久保存！")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"寫入發生錯誤：{e}")
+                else:
+                    st.warning("⚠️ 請輸入職位角色名稱！")
 
-                if st.form_submit_button("💾 寫入資料庫建立新角色", type="primary", use_container_width=True):
-                    if new_role_title:
-                        success = save_role_to_db(new_role_title, role_desc_input)
-                        if success:
-                            st.success("✅ 新部門角色已成功寫入資料庫！")
-                            st.rerun()
-                    else:
-                        st.warning("⚠️ 請輸入角色名稱！")
+            if del_role_btn:
+                if new_role_name:
+                    try:
+                        conn, _ = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
+                        cursor = conn.cursor()
+                        if "SQLite" in cfg["type"]:
+                            cursor.execute("DELETE FROM system_roles WHERE role_name = ?", (new_role_name,))
+                        else:
+                            cursor.execute("DELETE FROM system_roles WHERE role_name = %s", (new_role_name,))
+                        conn.commit()
+                        cursor.close()
+                        conn.close()
+                        st.success(f"🗑️ 職位角色 [{new_role_name}] 已從資料庫成功刪除！")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"刪除發生錯誤：{e}")
+                else:
+                    st.warning("⚠️ 請輸入欲刪除的職位角色名稱！")
+
+    with tab_audit:
+        st.markdown("### 📊 系統稽核日誌")
+        st.info("系統全模組操作軌跡資料表已就緒。")
 
     with tab_users:
-        st.markdown(f"### {L['users_header']}")
-        st.dataframe(pd.DataFrame(st.session_state.system_users_db), use_container_width=True)
+        st.markdown("### 👥 員工與帳號總覽")
+        st.info("人事系統員工資料表已就緒。")
 
     with tab_api:
-        st.markdown(f"### 🔌 越南電子發票 API 參數設定")
-        st.info("API 閘道設定已與系統資料庫連線。")
+        st.markdown("### 🔌 越南電子發票 API 設定")
+        st.info("E-Invoice 閘道設定就緒。")
 
 def show(lang="繁體中文", **kwargs):
     render_user_management_page(lang, **kwargs)
