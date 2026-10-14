@@ -168,4 +168,86 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
     # ----------------------------------------------------
     # 📊 Tab 1: 主管手機版戰情室 (Executive Cockpit)
     # ----------------------------------------------------
-    with tab_cockpit
+    with tab_cockpit:
+        m1, m2 = st.columns(2)
+        m1.metric(L["metric_active"], "3")
+        m2.metric(L["metric_progress"], "68.5%")
+
+        m3, m4 = st.columns(2)
+        m3.metric(L["metric_claim"], "1.25B VND")
+        m4.metric(L["metric_alert"], "2", delta_color="inverse", delta="Warning")
+
+        st.markdown("---")
+        
+        # 修正：避免 f-string 內部雙重引號解析錯誤
+        t_budget_title = L["alert_budget_title"]
+        t_budget_desc = L["alert_budget_desc"]
+        t_cert_title = L["alert_cert_title"]
+        t_cert_desc = L["alert_cert_desc"]
+
+        st.markdown(f"""
+        <div class="mobile-card" style="border-left: 6px solid #F59E0B;">
+            <h4 style="margin:0; color:#D97706;">{t_budget_title}</h4>
+            <p style="margin:4px 0 0 0; font-size:16px;">{t_budget_desc}</p>
+        </div>
+        <div class="mobile-card" style="border-left: 6px solid #3B82F6;">
+            <h4 style="margin:0; color:#2563EB;">{t_cert_title}</h4>
+            <p style="margin:4px 0 0 0; font-size:16px;">{t_cert_desc}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button(L["btn_approve"], type="primary"):
+            st.success(L["msg_approved"])
+
+    # ----------------------------------------------------
+    # 🏗️ Tab 2: 案場進度與工程日報表
+    # ----------------------------------------------------
+    with tab_projects:
+        st.markdown("### 🏗️ " + L["tab_projects"])
+        
+        st.selectbox(
+            L["lbl_project_select"],
+            ["PRJ-001 西寧廠高壓配電盤擴建工程 (Tay Ninh Plant Expansion)", "PRJ-002 西寧二期水電管線工程 (Tay Ninh Phase 2)"]
+        )
+
+        st.markdown("##### 📝 " + L["lbl_daily_summary"])
+        daily_log = st.text_area(L["lbl_daily_summary"], placeholder=L["placeholder_daily"], height=100)
+        
+        if st.button(L["btn_submit_daily"], type="primary"):
+            st.success(L["msg_submitted"])
+
+    # ----------------------------------------------------
+    # 📸 Tab 3: AI 現場照片拍攝與上傳
+    # ----------------------------------------------------
+    with tab_site_ai:
+        st.markdown("### 📸 " + L["tab_site_ai"])
+        
+        st.selectbox(L["lbl_project_select"], ["西寧廠高壓配電盤擴建工程", "西寧二期水電管線工程"], key="ai_proj")
+        
+        # 手機開鏡頭/挑照片
+        img_file = st.file_uploader("📸 Photo Upload:", type=["jpg", "jpeg", "png"])
+        
+        if img_file:
+            st.image(img_file, caption="Preview", use_container_width=True)
+            if st.button(L["btn_ai_upload"], type="primary"):
+                st.success(L["msg_ai_success"])
+
+    # ----------------------------------------------------
+    # 📐 Tab 4: 配電盤 BOM 與外包結算
+    # ----------------------------------------------------
+    with tab_design_cost:
+        st.markdown("### 📐 " + L["tab_design_cost"])
+        msg_bom = "💡 Auto-synced with inventory & purchasing." if selected_lang == "English" else ("💡 系統已自動與倉庫備料及採購連動。" if selected_lang == "繁體中文" else "💡 Hệ thống tự động đồng bộ tồn kho vật tư.")
+        st.info(msg_bom)
+
+def render_engineering_management(engine=None, lang="繁體中文", **kwargs):
+    render_engineering_management_page(engine=engine, lang=lang, **kwargs)
+
+def render_engineering_profile_page(engine=None, lang="繁體中文", **kwargs):
+    render_engineering_management_page(engine=engine, lang=lang, **kwargs)
+
+def show(engine=None, lang="繁體中文", **kwargs):
+    render_engineering_management_page(engine=engine, lang=lang, **kwargs)
+
+def main(engine=None, lang="繁體中文", **kwargs):
+    render_engineering_management_page(engine=engine, lang=lang, **kwargs)
