@@ -376,19 +376,18 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                                     base_salary = EXCLUDED.base_salary;
                             """), {"code": rec["code"], "name": rec["name"], "dept": rec["dept"], "factory": rec["factory"], "bs": rec["bs"]})
 
-                    st.success(f"🎉 成功批次匯入 {len(parsed_records)} 評員工資料！")
+                    st.success(f"🎉 成功批次匯入 {len(parsed_records)} 筆員工資料！")
                     st.rerun()
             except Exception as e:
                 st.error("❌ 批次解析失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 📄 Tab 3: 電子薪資單總覽與列印中心 (精簡列表 + 單張詳情 + 批次列印)
+    # 📄 Tab 3: 電子薪資單總覽與列印中心 (下拉選單精準連動)
     # ----------------------------------------------------
     with tab_slip:
         st.markdown("### 📄 全公司員工電子薪資單總覽與列印中心")
-        st.caption("💡 預設以精簡表格顯示所有員工摘要。您可以點擊展開檢視詳細薪資條，或選擇單張補印、批次列印。")
+        st.caption("💡 透過下方下拉選單選擇特定員工，下方即會展開該員工的詳細薪資條與補印畫面。")
 
-        # 從資料庫撈取指定月份或所有員工薪資紀錄
         slip_records = []
         if engine:
             try:
@@ -398,7 +397,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             except Exception:
                 pass
 
-        # 若無資料庫或無資料，則使用當前 Tab 1 的暫存資料作為示範
         if not slip_records:
             slip_records = [{
                 "payroll_month": payroll_m, "emp_code": e_code, "emp_name": e_name,
@@ -411,20 +409,19 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 "bhyt_deduction": bhyt, "bhtn_deduction": bhtn, "advance_pay": advance_pay, "net_salary": net_pay
             }]
 
-        # 頂部操作列：批次列印按鈕與單張選擇
+        # 頂部操作列：批次列印與下拉選單選擇
         col_op1, col_op2 = st.columns([2, 2])
         with col_op1:
             if st.button("🖨️ 一鍵批次列印全公司薪資條 (Batch Print All)", type="primary", use_container_width=True):
                 st.success(f"✅ 已成功產生全公司共 {len(slip_records)} 張員工薪資條的批次列印檔！")
         with col_op2:
             emp_options = {f"{r['emp_code']} - {r['emp_name']} ({r.get('department','')})": r for r in slip_records}
-            selected_emp_key = st.selectbox("🎯 選擇特定員工補印單張薪資條", list(emp_options.keys()))
+            selected_emp_key = st.selectbox("🎯 選擇要檢視或補印薪資條的員工", list(emp_options.keys()))
             target_slip = emp_options[selected_emp_key]
 
         st.markdown("---")
-        st.markdown("#### 📋 員工薪資摘要清單 (點選下方可檢視或列印指定員工)")
-
-        # 呈現精簡版摘要表格供快速瀏覽
+        st.markdown("#### 📋 全公司員工薪資摘要清單 (快速總覽)")
+        
         summary_df_data = []
         for r in slip_records:
             summary_df_data.append({
@@ -436,12 +433,11 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 "扣款總計": fmt_vn_curr(float(r.get("bhxh_deduction", 0)) + float(r.get("bhyt_deduction", 0)) + float(r.get("bhtn_deduction", 0)) + float(r.get("advance_pay", 0))),
                 "本月實領 (Net)": fmt_vn_curr(r.get("net_salary", 0))
             })
-        st.dataframe(pd.DataFrame(summary_df_data), use_container_width=True)
+        st.dataframe(pd.DataFrame(summary_df_data), use_container_width=True, hide_index=True)
 
         st.markdown("---")
         st.markdown(f"#### 📄 員工詳細薪資條預覽：`{target_slip.get('emp_code')} - {target_slip.get('emp_name')}`")
 
-        # 渲染選定員工的詳細精美薪資條
         m_fmt = str(target_slip.get("payroll_month", "2026-09")).replace("-", ".")
         slip_html = f"""
         <div style="border: 2px solid #1E3A8A; padding: 25px; border-radius: 10px; background-color: #FFFFFF; font-family: sans-serif; max-width: 850px; margin: auto; color: #111;">
@@ -567,7 +563,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
 
                         df_p = pd.DataFrame(formatted_rows)[["payroll_month", "emp_code", "emp_name", "department", "factory", "底薪", "上班工資", "加班費", "應領總額", "保險扣除", "實發淨薪", "status"]]
                         df_p.columns = ["計薪月份", "工號", "姓名", "部門/職務", "廠區", "底薪", "上班工資", "加班費", "應領總額", "保險扣除", "實發淨薪", "狀態"]
-                        st.dataframe(df_p, use_container_width=True)
+                        st.dataframe(df_p, use_container_width=True, hide_index=True)
                     else:
                         st.info("目前尚無歷史薪資紀錄。")
             except Exception as e:
