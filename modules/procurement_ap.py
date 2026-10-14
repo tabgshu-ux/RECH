@@ -4,17 +4,28 @@ import datetime
 from sqlalchemy import text
 
 # ----------------------------------------------------
-# 🌐 三語系字典 (i18n)
+# 🌐 三語系字典 (自動跟隨全域語系)
 # ----------------------------------------------------
 PROC_I18N = {
     "繁體中文": {
-        "title": "🛒 採購與應付帳款 (AP) ",
+        "title": "🛒 採購與應付帳款 (AP) - 企業標準請購與動態簽核中心",
         "caption": "實施『請購 ➔ 規格/主管簽核 ➔ 總務採購 ➔ 財務請款』權責分離（SoD）合規流程。",
         "tab_pr": "📝 1. 員工請購申請 (PR)",
         "tab_approval": "✍️ 2. 簽核中心與規格審查",
         "tab_po": "🛒 3. 總務/採購詢比價與下單 (PO)",
         "tab_ap": "💰 4. 財務應付帳款與付款 (AP)",
-        "tab_audit": "🔍 稽核軌跡與權限追蹤"
+        "tab_audit": "🔍 稽核軌跡與權限追蹤",
+        "info_pr": "💡 請購權放開給全體同仁；發起後自動依『金額與類別』送交對應主管及技術單位簽核。",
+        "lbl_requester": "請購人姓名 *",
+        "lbl_dept": "所屬部門",
+        "lbl_proj": "歸屬工程/專案編號",
+        "lbl_cat": "請購類別",
+        "lbl_item": "物品/材料名稱與規格 *",
+        "lbl_qty": "需求數量",
+        "lbl_unit": "單位",
+        "lbl_amount": "預估總金額 (VND)",
+        "lbl_reason": "請購用途說明",
+        "btn_submit_pr": "📤 提交請購單並啟動簽核"
     },
     "English": {
         "title": "🛒 Procurement & AP - Enterprise PR/PO & Approval Workflow",
@@ -23,7 +34,18 @@ PROC_I18N = {
         "tab_approval": "✍️ 2. Approvals & Tech Specs",
         "tab_po": "🛒 3. GA / Purchasing (PO)",
         "tab_ap": "💰 4. Finance & AP Payment",
-        "tab_audit": "🔍 Audit Trail & Logs"
+        "tab_audit": "🔍 Audit Trail & Logs",
+        "info_pr": "💡 Requisition open to all employees; automatically routed to corresponding managers upon submission.",
+        "lbl_requester": "Requester Name *",
+        "lbl_dept": "Department",
+        "lbl_proj": "Project Code",
+        "lbl_cat": "Item Category",
+        "lbl_item": "Item Name & Specs *",
+        "lbl_qty": "Quantity",
+        "lbl_unit": "Unit",
+        "lbl_amount": "Est. Total Amount (VND)",
+        "lbl_reason": "Purpose / Description",
+        "btn_submit_pr": "📤 Submit PR & Start Workflow"
     },
     "Tiếng Việt": {
         "title": "🛒 Mua hàng & Phải trả (AP) - Quy trình Yêu cầu & Phê duyệt",
@@ -32,7 +54,18 @@ PROC_I18N = {
         "tab_approval": "✍️ 2. Duyệt & Kiểm tra Kỹ thuật",
         "tab_po": "🛒 3. Hành chính / Mua hàng (PO)",
         "tab_ap": "💰 4. Kế toán & Phải trả (AP)",
-        "tab_audit": "🔍 Nhật ký Kiểm toán"
+        "tab_audit": "🔍 Nhật ký Kiểm toán",
+        "info_pr": "💡 Nhân viên tạo yêu cầu; hệ thống tự động chuyển duyệt theo quy trình.",
+        "lbl_requester": "Người yêu cầu *",
+        "lbl_dept": "Bộ phận",
+        "lbl_proj": "Mã dự án",
+        "lbl_cat": "Loại vật tư",
+        "lbl_item": "Tên & Quy cách vật tư *",
+        "lbl_qty": "Số lượng",
+        "lbl_unit": "Đơn vị",
+        "lbl_amount": "Tổng tiền dự kiến (VND)",
+        "lbl_reason": "Mục đích sử dụng",
+        "btn_submit_pr": "📤 Gửi đơn yêu cầu mua hàng"
     }
 }
 
@@ -59,7 +92,6 @@ def inject_procurement_css():
     """, unsafe_allow_html=True)
 
 def init_procurement_db(engine):
-    """初始化採購與簽核資料表"""
     if not engine:
         return
     try:
@@ -91,11 +123,9 @@ def init_procurement_db(engine):
 def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
     inject_procurement_css()
 
-    c_title, c_lang = st.columns([2.5, 1])
-    with c_lang:
-        selected_lang = st.selectbox("🌐 Ngôn ngữ / Language", ["繁體中文", "English", "Tiếng Việt"], index=0)
-    
-    L = PROC_I18N.get(selected_lang, PROC_I18N["繁體中文"])
+    # 自動跟隨主程式側邊欄選擇的語系
+    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
+    L = PROC_I18N.get(active_lang, PROC_I18N["繁體中文"])
 
     st.title(L["title"])
     st.caption(L["caption"])
@@ -107,28 +137,28 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
     ])
 
     # ----------------------------------------------------
-    # 📝 階段 1: 員工請購申請 (PR) - 任何人員皆可提出
+    # 📝 階段 1: 員工請購申請 (PR)
     # ----------------------------------------------------
     with tab_pr:
-        st.markdown("### 📝 1. 提出請購申請單 (Purchase Requisition)")
-        st.info("💡 請購權放開給全體同仁；發起後自動依『金額與類別』送交對應主管及技術單位簽核。")
+        st.markdown(f"### {L['tab_pr']}")
+        st.info(L["info_pr"])
         
         with st.form("form_create_pr"):
             c1, c2, c3 = st.columns(3)
             with c1:
-                pr_user = st.text_input("請購人姓名 *", value=st.session_state.get("user_name", "員工"))
-                pr_dept = st.text_input("所屬部門", value="工程與設計管理中心")
-                pr_proj = st.text_input("歸屬工程/專案編號", placeholder="例: PRJ-2026-001 (西寧擴建案)")
+                pr_user = st.text_input(L["lbl_requester"], value=st.session_state.get("user_name", "admin"))
+                pr_dept = st.text_input(L["lbl_dept"], value="工程與設計管理中心")
+                pr_proj = st.text_input(L["lbl_proj"], placeholder="例: PRJ-2026-001 (西寧擴建案)")
             with c2:
-                pr_cat = st.selectbox("請購類別", ["🔌 配電盤/水電工程材料 (需設計審核)", "🛠️ 工地現場耗材與工具", "🥗 幹部宿舍與總務用品", "💻 資訊與辦公設備"])
-                pr_item = st.text_input("物品/材料名稱與規格 *", placeholder="例: Schneider 400A 空氣斷路器 (ACB)")
-                pr_qty = st.number_input("需求數量", min_value=1.0, value=2.0)
+                pr_cat = st.selectbox(L["lbl_cat"], ["🔌 配電盤/水電工程材料 (需設計審核)", "🛠️ 工地現場耗材與工具", "🥗 幹部宿舍與總務用品", "💻 資訊與辦公設備"])
+                pr_item = st.text_input(L["lbl_item"], placeholder="例: Schneider 400A 空氣斷路器 (ACB)")
+                pr_qty = st.number_input(L["lbl_qty"], min_value=1.0, value=2.0)
             with c3:
-                pr_unit = st.text_input("單位", value="台")
-                pr_est_val = st.number_input("預估總金額 (VND)", min_value=0.0, value=45000000.0, step=1000000.0)
-                pr_reason = st.text_area("請購用途說明", placeholder="例: 西寧廠 A 區配電盤主開關更換備料。")
+                pr_unit = st.text_input(L["lbl_unit"], value="台")
+                pr_est_val = st.number_input(L["lbl_amount"], min_value=0.0, value=45000000.0, step=1000000.0)
+                pr_reason = st.text_area(L["lbl_reason"], placeholder="例: 西寧廠 A 區配電盤主開關更換備料。")
 
-            if st.form_submit_button("📤 提交請購單並啟動簽核", type="primary", use_container_width=True):
+            if st.form_submit_button(L["btn_submit_pr"], type="primary", use_container_width=True):
                 pr_code_gen = "PR-" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
                 if engine:
                     try:
@@ -150,10 +180,10 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                     st.success(f"🎉 [展示模式] 請購單【{pr_code_gen}】建立成功！")
 
     # ----------------------------------------------------
-    # ✍️ 階段 2: 簽核中心與規格審查 - 權責分離 (設計主管只審規格)
+    # ✍️ 階段 2: 簽核中心與規格審查
     # ----------------------------------------------------
     with tab_approval:
-        st.markdown("### ✍️ 2. 請購關卡簽核與規格確認 (Approval Pipeline)")
+        st.markdown(f"### {L['tab_approval']}")
         st.caption("🔒 權責分離規範：設計主管僅審核規格與 BOM 相符性；行政與副總審核預算與必要性。")
         
         if engine:
@@ -198,10 +228,10 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                 st.error("讀取失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 🛒 階段 3: 總務/採購詢比價與下單 (PO) - 收回採購執行權
+    # 🛒 階段 3: 總務/採購詢比價與下單 (PO)
     # ----------------------------------------------------
     with tab_po:
-        st.markdown("### 🛒 3. 總務部 / 專職採購執行 (Purchase Order)")
+        st.markdown(f"### {L['tab_po']}")
         st.info("💡 簽核通過之單據在此集中由【總務/採購專員】進行廠商詢價、比價與建立 PO 採購單。")
         
         if engine:
@@ -245,7 +275,7 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
     # 💰 階段 4: 財務應付帳款與付款 (AP)
     # ----------------------------------------------------
     with tab_ap:
-        st.markdown("### 💰 4. 財務部應付帳款 (AP) 審核與付款沖銷")
+        st.markdown(f"### {L['tab_ap']}")
         st.caption("財務依據『簽核完整性 + 採購 PO + 到貨驗收發票』執行最終付款。")
         
         if engine:
@@ -264,10 +294,10 @@ def render_procurement_ap_page(engine=None, lang="繁體中文", **kwargs):
                 st.error("讀取失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 🔍 階段 5: 稽核軌跡 (Audit Trail) - 防止代理人或權限濫用
+    # 🔍 階段 5: 稽核軌跡 (Audit Trail)
     # ----------------------------------------------------
     with tab_audit:
-        st.markdown("### 🔍 全流程稽核軌跡與代理人簽核紀錄 (Audit Trail)")
+        st.markdown(f"### {L['tab_audit']}")
         st.caption("完整記錄『誰在什麼時間提出請購、規格誰審核、總務何時下單』，供董事長與稽核室查核。")
         if engine:
             try:
