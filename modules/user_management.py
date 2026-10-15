@@ -46,7 +46,7 @@ def log_system_action(action_desc, module_name="IT管理中心", status="成功"
         
         current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         user_acc = st.session_state.get("user_name", "admin")
-        ip_addr = "192.168.1.100" # 可擴充抓取來源 IP
+        ip_addr = "192.168.1.100"
         
         is_sqlite = "SQLite" in actual_type
         if is_sqlite:
@@ -66,77 +66,31 @@ def log_system_action(action_desc, module_name="IT管理中心", status="成功"
         print(f"寫入稽核日誌失敗: {e}")
 
 # ----------------------------------------------------
-# 🚀 全系統所有模組資料表一鍵自動生成 (Full-Scope Schema Auto-Migration)
-# ----------------------------------------------------
-def init_all_system_tables(db_type, host, port, user, password, db_name):
-    conn, actual_type = get_universal_db_connection(db_type, host, port, user, password, db_name)
-    cursor = conn.cursor()
-    
-    try:
-        is_sqlite = "SQLite" in actual_type
-        
-        # 1. 組織角色權限表與稽核日誌表
-        if is_sqlite:
-            cursor.execute("CREATE TABLE IF NOT EXISTS system_roles (role_name TEXT PRIMARY KEY, description TEXT)")
-            cursor.execute("CREATE TABLE IF NOT EXISTS system_users (username TEXT PRIMARY KEY, name TEXT, role TEXT, site TEXT)")
-            cursor.execute("CREATE TABLE IF NOT EXISTS company_announcements (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, publisher TEXT, date TEXT)")
-            cursor.execute("CREATE TABLE IF NOT EXISTS engineering_quotations (quot_id TEXT PRIMARY KEY, client TEXT, project_name TEXT, total_price REAL, status TEXT, date TEXT)")
-            cursor.execute("CREATE TABLE IF NOT EXISTS system_audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, time TEXT, user_account TEXT, action TEXT, module TEXT, ip TEXT, status TEXT)")
-        else:
-            cursor.execute("CREATE TABLE IF NOT EXISTS system_roles (role_name VARCHAR(100) PRIMARY KEY, description TEXT)")
-            cursor.execute("CREATE TABLE IF NOT EXISTS system_users (username VARCHAR(50) PRIMARY KEY, name VARCHAR(100), role VARCHAR(100), site VARCHAR(100))")
-            cursor.execute("CREATE TABLE IF NOT EXISTS company_announcements (id SERIAL PRIMARY KEY, title VARCHAR(255), content TEXT, publisher VARCHAR(100), date VARCHAR(50))")
-            cursor.execute("CREATE TABLE IF NOT EXISTS engineering_quotations (quot_id VARCHAR(50) PRIMARY KEY, client VARCHAR(255), project_name VARCHAR(255), total_price NUMERIC, status VARCHAR(50), date VARCHAR(50))")
-            cursor.execute("CREATE TABLE IF NOT EXISTS system_audit_logs (id SERIAL PRIMARY KEY, time VARCHAR(50), user_account VARCHAR(50), action VARCHAR(255), module VARCHAR(50), ip VARCHAR(50), status VARCHAR(50))")
-
-        if is_sqlite:
-            cursor.execute("INSERT OR IGNORE INTO system_roles (role_name, description) VALUES (?, ?)", ("董事長 / 總經理", "最高決策與全系統總覽權限"))
-            cursor.execute("INSERT OR IGNORE INTO system_users (username, name, role, site) VALUES (?, ?, ?, ?)", ("admin", "系統管理員", "董事長 / 總經理", "總公司 / 越南廠"))
-            cursor.execute("INSERT OR IGNORE INTO company_announcements (title, content, publisher, date) VALUES (?, ?, ?, ?)", ("系統初始化完成公告", "全系統資料庫與核心資料表已成功一鍵建立，歡迎開始使用 REETECH AI ERP。", "總經理室", str(datetime.date.today())))
-        else:
-            cursor.execute("INSERT INTO system_roles (role_name, description) VALUES (%s, %s) ON CONFLICT (role_name) DO NOTHING", ("董事長 / 總經理", "最高決策與全系統總覽權限"))
-            cursor.execute("INSERT INTO system_users (username, name, role, site) VALUES (%s, %s, %s, %s) ON CONFLICT (username) DO NOTHING", ("admin", "系統管理員", "董事長 / 總經理", "總公司 / 越南廠"))
-            cursor.execute("INSERT INTO company_announcements (title, content, publisher, date) VALUES (%s, %s, %s, %s)", ("系統初始化完成公告", "全系統資料庫與核心資料表已成功一鍵建立，歡迎開始使用 REETECH AI ERP。", "總經理室", str(datetime.date.today())))
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        # 記錄初始化動作到資料庫
-        log_system_action("一鍵初始化全系統資料庫與核心表格", "IT管理中心", "成功")
-        return True, actual_type
-    except Exception as e:
-        return False, str(e)
-
-# ----------------------------------------------------
 # 🌐 多語系字典 (i18n)
 # ----------------------------------------------------
 USER_MGMT_I18N = {
     "繁體中文": {
-        "title": "🔒 IT 管理中心 - 組織角色權限與一鍵萬用資料庫精靈",
-        "caption": "支援 Supabase、MySQL、SQLite 之全模組資料表一鍵自動生成與永久資料庫 CRUD 管理。",
+        "title": "🔒 IT 管理中心 - 組織角色權限與系統稽核總覽",
+        "caption": "支援組織角色權限控管 (RBAC)、雲端資料庫即時稽核追溯與企業營運管理。",
         "tab_audit": "📊 系統稽核日誌 (資料庫即時記錄)",
         "tab_roles": "⚙️ 組織角色權限範本 (RBAC)",
         "tab_users": "👥 員工與帳號總覽",
-        "tab_db": "🔌 萬用資料庫一鍵安裝精靈 (DB Wizard)",
         "tab_api": "🔌 越南電子發票 API 設定",
     },
     "English": {
-        "title": "🔒 IT Center - RBAC & Universal Database One-Click Setup Wizard",
-        "caption": "Support Supabase, MySQL, and SQLite with full-scope schema auto-migration.",
+        "title": "🔒 IT Center - RBAC & System Audit Overview",
+        "caption": "Support Departmental Roles (RBAC), database-backed audit logs, and enterprise management.",
         "tab_audit": "📊 Audit Logs (Database Logged)",
         "tab_roles": "⚙️ Departmental Roles (RBAC)",
         "tab_users": "👥 HR & Accounts",
-        "tab_db": "🔌 Universal DB Wizard",
         "tab_api": "🔌 E-Invoice API",
     },
     "Tiếng Việt": {
-        "title": "🔒 Quản trị IT - Cấu hình Phân quyền & Trợ lý CSDL",
-        "caption": "Hỗ trợ Supabase, MySQL, SQLite với tính năng tự động tạo toàn bộ bảng dữ liệu.",
+        "title": "🔒 Quản trị IT - Cấu hình Phân quyền & Nhật ký Kiểm toán",
+        "caption": "Hỗ trợ quản lý phân quyền (RBAC) và nhật ký kiểm toán hệ thống.",
         "tab_audit": "📊 Nhật ký Kiểm toán",
         "tab_roles": "⚙️ Quản lý Vai trò (RBAC)",
         "tab_users": "👥 Danh sách Nhân sự",
-        "tab_db": "🔌 Trợ lý CSDL",
         "tab_api": "🔌 Cấu hình API",
     }
 }
@@ -148,55 +102,19 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
+    # 預設直接對接 Supabase 雲端資料庫 (對應許大哥截圖中的設定)
     if "db_config_state" not in st.session_state:
         st.session_state.db_config_state = {
-            "type": "SQLite", "host": "localhost", "port": "5432",
-            "user": "postgres", "password": "", "db_name": "reetech_erp"
+            "type": "Supabase / PostgreSQL", "host": "aws-0-ap-southeast-1.pooler.supabase.com", "port": "5432",
+            "user": "postgres.wvsqbefyekmueffcbwd", "password": "", "db_name": "postgres"
         }
 
-    tab_audit, tab_roles, tab_users, tab_db, tab_api = st.tabs([
-        L["tab_audit"], L["tab_roles"], L["tab_users"], L["tab_db"], L["tab_api"]
+    # 已隱藏萬用資料庫安裝精靈，保留 4 大核心管理分頁
+    tab_audit, tab_roles, tab_users, tab_api = st.tabs([
+        L["tab_audit"], L["tab_roles"], L["tab_users"], L["tab_api"]
     ])
 
     cfg = st.session_state.db_config_state
-
-    # ----------------------------------------------------
-    # 🔌 專屬頁籤：萬用資料庫一鍵安裝與全模組建表精靈
-    # ----------------------------------------------------
-    with tab_db:
-        st.markdown("### 🔌 全模組資料表與資料庫一鍵自動生成精靈")
-        st.info("💡 說明：點擊下方按鈕，系統將自動為您在選定的資料庫建立『所有核心模組資料表（角色權限、人事、公告、工程報價、稽核日誌等）』。")
-
-        with st.form("form_universal_db_wizard"):
-            db_type_sel = st.selectbox(
-                "選擇目標資料庫類型 (Database Type)", 
-                ["SQLite (免安裝本機單檔推薦)", "Supabase / PostgreSQL (雲端企業級)", "MySQL / MariaDB (地端伺服器)"],
-                index=0 if "SQLite" in cfg["type"] else 1
-            )
-            
-            dc1, dc2 = st.columns(2)
-            with dc1:
-                db_host = st.text_input("資料庫主機位址 (Host)", value=cfg["host"])
-                db_user = st.text_input("資料庫帳號 (User)", value=cfg["user"])
-                db_name = st.text_input("資料庫名稱 (Database Name)", value=cfg["db_name"])
-            with dc2:
-                db_port = st.text_input("連接埠 (Port)", value=cfg["port"])
-                db_pass = st.text_input("資料庫密碼 (Password)", type="password", value=cfg["password"])
-
-            init_btn = st.form_submit_button("🚀 一鍵自動生成全系統資料表與初始化", type="primary", use_container_width=True)
-
-            if init_btn:
-                selected_type_clean = db_type_sel.split(" (")[0]
-                st.session_state.db_config_state = {
-                    "type": selected_type_clean, "host": db_host, "port": db_port,
-                    "user": db_user, "password": db_pass, "db_name": db_name
-                }
-                
-                success, msg = init_all_system_tables(selected_type_clean, db_host, db_port, db_user, db_pass, db_name)
-                if success:
-                    st.success(f"🎉 資料庫安裝成功！已成功連線至 **{msg}** 並且完成所有模組資料表之自動生成！")
-                else:
-                    st.error(f"❌ 資料庫初始化失敗：{msg}")
 
     # ----------------------------------------------------
     # ⚙️ 組織角色權限範本管理 (動態 CRUD + 寫入稽核日誌)
@@ -243,7 +161,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                         cursor.close()
                         conn.close()
 
-                        # 📝 自動記錄操作至資料庫稽核日誌
                         log_system_action(f"新增/更新組織角色權限: {new_role_name}", "IT管理中心", "成功")
 
                         st.success(f"✅ 職位角色 [{new_role_name}] 已成功寫入資料庫永久保存！")
@@ -266,7 +183,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                         cursor.close()
                         conn.close()
 
-                        # 📝 自動記錄操作至資料庫稽核日誌
                         log_system_action(f"刪除組織角色權限: {new_role_name}", "IT管理中心", "成功")
 
                         st.success(f"🗑️ 職位角色 [{new_role_name}] 已從資料庫成功刪除！")
@@ -281,7 +197,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_audit:
         st.markdown("### 📊 系統操作稽核日誌 (System Audit Logs)")
-        st.info("💡 說明：以下所有操作紀錄均直接讀取自資料庫中的 `system_audit_logs` 資料表，具備永久保存與資安稽核追溯能力。")
+        st.info("💡 說明：以下所有操作紀錄均直接存取自 Supabase 雲端資料庫中的具備永久保存與資安稽核追溯能力。")
 
         try:
             conn, _ = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
@@ -293,7 +209,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
             else:
                 st.info("目前尚無系統操作日誌紀錄。")
         except Exception as e:
-            st.warning(f"尚未建立稽核日誌資料表，請先至【萬用資料庫一鍵安裝精靈】點擊自動生成按鈕。 (錯誤: {e})")
+            st.warning(f"讀取稽核日誌發生錯誤：{e}")
 
     with tab_users:
         st.markdown("### 👥 員工與帳號總覽")
