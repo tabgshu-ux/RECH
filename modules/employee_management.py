@@ -18,16 +18,6 @@ DEPT_OPTIONS = [
     "工務與工地現場 (Site Operations)"
 ]
 
-SYSTEM_ROLES = [
-    "系統管理員 (Admin)",
-    "董事長 / 總經理 (Executive)",
-    "財務副理 / 財務主管 (Finance Manager)",
-    "廠長 / 工務經理 (Plant/Project Manager)",
-    "現場工地主任 / 組長 (Site Supervisor)",
-    "採購 / 倉管 / 兼任會計 (Purchasing/Inventory)",
-    "一般員工 (Staff)"
-]
-
 ATTENDANCE_TYPES = [
     "免打卡高階主管 (Exempt Executive)",
     "廠內固定員工 (Plant Fixed Staff)",
@@ -50,6 +40,34 @@ EMP_I18N = {
         "header_list": "📄 全公司現職員工名冊與廠區分流總覽"
     }
 }
+
+def get_system_roles_from_db(engine):
+    """🔌 核心連線：直接從 Supabase 資料庫中的 public.system_roles 讀取 IT 設定的所有動態角色"""
+    default_roles = [
+        "系統管理員 (Admin)",
+        "董事長 / 總經理 (Executive)",
+        "財務副理 / 財務主管 (Finance Manager)",
+        "廠長 / 工務經理 (Plant/Project Manager)",
+        "現場工地主任 / 組長 (Site Supervisor)",
+        "採購 / 倉管 / 兼任會計 (Purchasing/Inventory)",
+        "一般員工 (Staff)"
+    ]
+    if not engine:
+        return default_roles
+    try:
+        with engine.connect() as conn:
+            res = conn.execute(text("SELECT role_name FROM public.system_roles ORDER BY role_name;"))
+            rows = res.fetchall()
+            if rows:
+                db_roles = [r[0] for r in rows if r[0]]
+                # 確保基本預設選項也包含在內，避免舊資料比對失敗
+                for r in default_roles:
+                    if r not in db_roles:
+                        db_roles.append(r)
+                return db_roles
+    except Exception:
+        pass
+    return default_roles
 
 def get_factory_list(engine):
     """取得資料庫中定義的廠區，若只有西寧廠則預設傳回西寧廠"""
@@ -129,6 +147,9 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
 
     init_employee_db(engine)
     available_factories = get_factory_list(engine)
+    
+    # 🔌 動態連線：從 Supabase 資料庫即時撈取 IT 設定的所有系統權限角色
+    system_roles_options = get_system_roles_from_db(engine)
 
     tab_add_vn, tab_add_tw, tab_edit, tab_resign, tab_list, tab_resigned_list = st.tabs([
         L["tab_add_vn"], L["tab_add_tw"], L["tab_edit"], L["tab_resign"], L["tab_list"], L["tab_resigned_list"]
@@ -157,6 +178,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
 
             with col3:
                 v_sal = st.number_input("約定底薪 (Lương CB - VND)", min_value=0.0, value=5000000.0, step=100000.0)
+                v_role = st.selectbox("系統權限角色 (System Role)", system_roles_options, index=0)
                 v_perm_addr = st.text_input("戶籍地址 (Thường trú)", placeholder="例: Tây Ninh, Việt Nam")
                 v_curr_addr = st.text_input("現居地址 (Tạm trú)", placeholder="例: An Tịnh, Trảng Bàng, Tây Ninh")
                 v_hosp = st.text_input("看診登記醫院 (Bệnh viện KCB)", placeholder="例: BV Đa khoa Tây Ninh")
@@ -168,7 +190,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                             conn.execute(text("""
                                 INSERT INTO public.employee_profiles 
                                 (emp_code, emp_name, phone, id_card, tax_code, permanent_address, current_address, social_code, hospital_name, factory, department, position, attendance_type, system_role, base_salary, status)
-                                VALUES (:code, :name, :phone, :id, :tax, :perm, :curr, :social, :hosp, :factory, :dept, :pos, :att, '一般員工 (Staff)', :sal, '在職')
+                                VALUES (:code, :name, :phone, :id, :tax, :perm, :curr, :social, :hosp, :factory, :dept, :pos, :att, :role, :sal, '在職')
                                 ON CONFLICT (emp_code) DO UPDATE
                                 SET emp_name = EXCLUDED.emp_name,
                                     phone = EXCLUDED.phone,
@@ -182,12 +204,13 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                     department = EXCLUDED.department,
                                     position = EXCLUDED.position,
                                     attendance_type = EXCLUDED.attendance_type,
+                                    system_role = EXCLUDED.system_role,
                                     base_salary = EXCLUDED.base_salary,
                                     status = '在職';
                             """), {
                                 "code": v_code, "name": v_name, "phone": v_phone, "id": v_id, "tax": v_tax_code,
                                 "perm": v_perm_addr, "curr": v_curr_addr, "social": v_social_code, "hosp": v_hosp,
-                                "factory": v_factory, "dept": v_dept, "pos": v_pos, "att": v_att, "sal": v_sal
+                                "factory": v_factory, "dept": v_dept, "pos": v_pos, "att": v_att, "role": v_role, "sal": v_sal
                             })
                         st.success(f"🎉 成功新增/更新越南籍員工：{v_name} ({v_code})！")
                         st.rerun()
@@ -197,7 +220,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.warning("⚠️ 請務必填寫『工號』與『姓名』！")
 
     # ----------------------------------------------------
-    # 🇹🇼 Tab 2: 新增外派幹部 (包含免打卡選項、部門與完整系統權限角色)
+    # 🇹🇼 Tab 2: 新增外派幹部 (連動 IT 設定之系統權限角色)
     # ----------------------------------------------------
     with tab_add_tw:
         st.markdown("### 🇹🇼 TW/CN 新增外派幹部 / 台籍與中籍員工")
@@ -217,7 +240,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
 
             with col3:
                 t_sal = st.number_input("約定底薪 (VND / USD / TWD)", min_value=0.0, value=30000000.0, step=1000000.0)
-                t_role = st.selectbox("系統權限角色 (System Role)", SYSTEM_ROLES, index=2)
+                t_role = st.selectbox("系統權限角色 (System Role)", system_roles_options, index=0)
                 t_phone = st.text_input("聯絡電話", placeholder="例: +886-912345678")
 
             if st.form_submit_button("💾 儲存外派幹部檔案", type="primary", use_container_width=True):
@@ -251,7 +274,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.warning("⚠️ 請填寫外派工號與姓名！")
 
     # ----------------------------------------------------
-    # ✏️ Tab 3: 修改員工資料
+    # ✏️ Tab 3: 修改員工資料 (連動 Supabase 系統權限角色)
     # ----------------------------------------------------
     with tab_edit:
         st.markdown("### ✏️ 修改現職員工個人檔案與薪資保險資料")
@@ -286,8 +309,8 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                 with col_e3:
                                     edit_sal = st.number_input("底薪 (Lương CB - VND)", value=float(e.get("base_salary") or 0.0), step=100000.0)
                                     curr_role = str(e.get("system_role") or "")
-                                    role_idx = SYSTEM_ROLES.index(curr_role) if curr_role in SYSTEM_ROLES else 6
-                                    edit_role = st.selectbox("系統角色", SYSTEM_ROLES, index=role_idx)
+                                    role_idx = system_roles_options.index(curr_role) if curr_role in system_roles_options else 0
+                                    edit_role = st.selectbox("系統權限角色 (System Role)", system_roles_options, index=role_idx)
                                     edit_status = st.selectbox("在職狀態", ["在職", "離職"])
 
                                 st.markdown("##### 2️⃣ 身分證、稅號與地址 (Giấy tờ & Địa chỉ)")
