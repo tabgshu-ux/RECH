@@ -120,12 +120,13 @@ USER_MGMT_I18N = {
 }
 
 # ----------------------------------------------------
-# 🔌 Supabase 直連設定與 API 互動函式
+# 🔌 Supabase 直接綁定網址與免複雜金鑰連線
 # ----------------------------------------------------
 SUPABASE_URL = "https://wvsqbefyekmueffcbwd.supabase.co"
 
 def get_headers():
-    key = st.secrets.get("SUPABASE_ANON_KEY", "")
+    # 支援從 Secrets 讀取金鑰（若有），若無則直接使用標準標頭，避免卡住
+    key = st.secrets.get("SUPABASE_ANON_KEY", "sb_publishable_rFJjXbi9XlhAT_l_raV6CA_33zyysEp")
     headers = {
         "Content-Type": "application/json",
         "Prefer": "return=representation"
@@ -180,7 +181,7 @@ def delete_role(role_name):
         return False
 
 # ----------------------------------------------------
-# 🌳 水電工程部門模組清單 (不含海防廠，符合需求)
+# 🌳 水電工程部門模組清單
 # ----------------------------------------------------
 DEPARTMENT_MODULE_TREE = {
     "📈 總經理室 (Executive Office)": [
