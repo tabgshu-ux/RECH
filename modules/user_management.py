@@ -4,9 +4,7 @@ import datetime
 import requests
 import json
 
-# ----------------------------------------------------
-# 🔌 Supabase 雲端 REST API Gateway (Port 443 專利手機/雲端穿透連線)
-# ----------------------------------------------------
+# Supabase REST API Gateway
 SUPABASE_URL = "https://wvsqbefyekmueffcbwd.supabase.co"
 
 def get_supabase_headers():
@@ -21,7 +19,6 @@ def get_supabase_headers():
     return headers
 
 def fetch_roles_from_supabase_db():
-    """實時從 Supabase 雲端 public.system_roles 資料表讀取"""
     try:
         url = f"{SUPABASE_URL}/rest/v1/system_roles?select=*"
         resp = requests.get(url, headers=get_supabase_headers(), timeout=5)
@@ -39,7 +36,6 @@ def fetch_roles_from_supabase_db():
     return {}, False
 
 def save_role_to_supabase_db(role_name, description, allowed_modules):
-    """實時 UPSERT 寫入 Supabase 雲端 PostgreSQL"""
     try:
         headers = get_supabase_headers()
         headers["Prefer"] = "resolution=merge-duplicates"
@@ -50,12 +46,14 @@ def save_role_to_supabase_db(role_name, description, allowed_modules):
             "allowed_modules": allowed_modules
         }]
         resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=5)
-        return resp.status_code in [200, 201, 204]
+        if resp.status_code in [200, 201, 204]:
+            return True, "成功寫入 Supabase 資料庫"
+        else:
+            return False, f"API 回應錯誤 ({resp.status_code}): {resp.text}"
     except Exception as e:
-        return False
+        return False, f"連線異常: {e}"
 
 def delete_role_from_supabase_db(role_name):
-    """實時從 Supabase 雲端資料庫刪除"""
     try:
         url = f"{SUPABASE_URL}/rest/v1/system_roles?role_name=eq.{role_name}"
         resp = requests.delete(url, headers=get_supabase_headers(), timeout=5)
@@ -63,68 +61,13 @@ def delete_role_from_supabase_db(role_name):
     except Exception as e:
         return False
 
-def get_system_roles_from_db():
-    """給人事模組 (employee_management.py) 呼叫：動態取得 Supabase 最新角色清單"""
-    default_roles = [
-        "系統管理員 (Admin)",
-        "董事長 / 總經理 (Executive)",
-        "副總經理 (Vice President)",
-        "財務副理 / 財務主管 (Finance Manager)",
-        "廠長 / 工務經理 (Plant/Project Manager)",
-        "現場工地主任 / 組長 (Site Supervisor)",
-        "採購 / 倉管 / 兼任會計 (Purchasing/Inventory)",
-        "一般員工 (Staff)"
-    ]
-    roles_dict, ok = fetch_roles_from_supabase_db()
-    if ok and roles_dict:
-        return list(roles_dict.keys())
-    return default_roles
-
-# ----------------------------------------------------
-# 🌳 依水電工程部門分類之全系統樹狀功能模組
-# ----------------------------------------------------
 DEPARTMENT_MODULE_TREE = {
-    "📈 總經理室 (Executive Office)": [
-        "📢 公司重要公告與簡報",
-        "📊 全公司 KPI 營運績效與決策儀表板",
-        "📑 高階主管審核與拍板中心"
-    ],
-    "🏢 管理部 (Management Dept)": [
-        "👥 員工個人檔案與人事管理",
-        "🕒 廠內員工固定打卡與出勤紀錄",
-        "🏗️ 外勤出勤統計與工地人數監控",
-        "🍱 幹部宿舍伙食與採購控管",
-        "🏢 廠區與工作廠區管理",
-        "🚧 廠區車輛進出口門禁與派車審核",
-        "🔧 車輛維修保養紀錄",
-        "💻 固定資產與設備管理",
-        "🛒 採購與應付帳款 (AP)",
-        "💰 應收帳款與對帳管理中心",
-        "🧾 越南稅務標準財務報表 (Thông tư 200)",
-        "💵 員工薪資計算與保險扣除",
-        "🧾 電子發票綜合管理與 XML 報檔"
-    ],
-    "📑 全公司電子簽核中心 (Approval Center)": [
-        "✍️ 跨部門電子表單簽核與呈核系統",
-        "📋 雙層報價單高階拍板簽核佇列"
-    ],
-    "🛠️ 工程與設計管理中心 (Engineering & Design Center)": [
-        "📐 工程 BOM 零件自動展開與採購/庫存連動",
-        "📑 工程報價單與雙層利潤分析/合約簽核",
-        "⚡ 配電盤組裝配線組與拍照入庫模組",
-        "👷 現場工地主任日報表與點工點料扣減",
-        "🛠️ 外包商請款與估驗進度比對"
-    ],
-    "🏭 生產部 (Production Dept)": [
-        "⚡ 配電盤組裝配線組與拍照入庫",
-        "📦 越南廠（西寧/海防）倉庫庫存盤點與領料"
-    ],
-    "💻 資訊管理部 (IT & System)": [
-        "🔒 帳號權限與全系統稽核軌跡",
-        "🔌 客戶 ERP 模組授權與功能開關",
-        "萬用資料庫一鍵安裝精靈 (DB Wizard)",
-        "🔌 越南電子發票與系統 SMTP 信箱 API 設定"
-    ]
+    "📈 總經理室 (Executive Office)": ["📢 公司重要公告與簡報", "📊 全公司 KPI 營運績效與決策儀表板", "📑 高階主管審核與拍板中心"],
+    "🏢 管理部 (Management Dept)": ["👥 員工個人檔案與人事管理", "🕒 廠內員工固定打卡與出勤紀錄", "🏗️ 外勤出勤統計與工地人數監控", "🍱 幹部宿舍伙食與採購控管", "🏢 廠區與工作廠區管理", "🚧 廠區車輛進出口門禁與派車審核", "🔧 車輛維修保養紀錄", "💻 固定資產與設備管理", "🛒 採購與應付帳款 (AP)", "💰 應收帳款與對帳管理中心", "🧾 越南稅務標準財務報表 (Thông tư 200)", "💵 員工薪資計算與保險扣除", "🧾 電子發票綜合管理與 XML 報檔"],
+    "📑 全公司電子簽核中心 (Approval Center)": ["✍️ 跨部門電子表單簽核與呈核系統", "📋 雙層報價單高階拍板簽核佇列"],
+    "🛠️ 工程與設計管理中心 (Engineering & Design Center)": ["📐 工程 BOM 零件自動展開與採購/庫存連動", "📑 工程報價單與雙層利潤分析/合約簽核", "⚡ 配電盤組裝配線組與拍照入庫模組", "👷 現場工地主任日報表與點工點料扣減", "🛠️ 外包商請款與估驗進度比對"],
+    "🏭 生產部 (Production Dept)": ["⚡ 配電盤組裝配線組與拍照入庫", "📦 越南廠（西寧/海防）倉庫庫存盤點與領料"],
+    "💻 資訊管理部 (IT & System)": ["🔒 帳號權限與全系統稽核軌跡", "🔌 客戶 ERP 模組授權與功能開關", "萬用資料庫一鍵安裝精靈 (DB Wizard)", "🔌 越南電子發票與系統 SMTP 信箱 API 設定"]
 }
 
 ALL_MODULE_LIST = [mod for dept in DEPARTMENT_MODULE_TREE.values() for mod in dept]
@@ -177,50 +120,51 @@ def render_user_management_page(lang="繁體中文", **kwargs):
 
         curr_set = set(ALL_MODULE_LIST) if (is_edit and roles_dict[sel_role]["allowed_modules"] == "ALL") else (set(roles_dict[sel_role]["allowed_modules"].split(",")) if is_edit else set(ALL_MODULE_LIST))
 
-        with st.form("form_cloud_role_crud_final"):
-            c1, c2 = st.columns(2)
-            with c1:
-                in_name = st.text_input("職位角色名稱", value=default_name, placeholder="例如: 現場工地主任、工務經理")
-            with c2:
-                in_desc = st.text_input("部門職責與資料範圍說明", value=default_desc, placeholder="例如: 負責西寧案場點工點料扣減")
+        # 使用獨立欄位設計，避免鍵盤 Enter 沒按導致輸入失效
+        st.markdown("#### 1. 輸入角色名稱與說明")
+        in_name = st.text_input("職位角色名稱", value=default_name, placeholder="例如: 協理、現場工地主任")
+        in_desc = st.text_input("部門職責與資料範圍說明", value=default_desc, placeholder="例如: 協助總經理工程支援指派，以及生產車間管理")
 
-            st.markdown("🌐 **勾選該職位角色可以開啟與操作的網頁功能（依一級部門與工程部分組）：**")
-            selected_mods = []
-            for dept, mods in DEPARTMENT_MODULE_TREE.items():
-                st.markdown(f"##### {dept}")
-                cols = st.columns(3)
-                for idx, m in enumerate(mods):
-                    with cols[idx % 3]:
-                        chk = st.checkbox(m, value=(m in curr_set), key=f"chk_cloud_{sel_role}_{dept}_{idx}_{m}")
-                        if chk:
-                            selected_mods.append(m)
-                st.markdown("---")
+        st.markdown("#### 2. 勾選該職位角色可操作功能：")
+        selected_mods = []
+        for dept, mods in DEPARTMENT_MODULE_TREE.items():
+            st.markdown(f"##### {dept}")
+            cols = st.columns(3)
+            for idx, m in enumerate(mods):
+                with cols[idx % 3]:
+                    chk = st.checkbox(m, value=(m in curr_set), key=f"chk_f3_{sel_role}_{dept}_{idx}_{m}")
+                    if chk:
+                        selected_mods.append(m)
+            st.markdown("---")
 
-            cb1, cb2 = st.columns(2)
-            with cb1:
-                btn_save = st.form_submit_button("💾 永久寫入 Supabase 雲端資料庫", type="primary", use_container_width=True)
-            with cb2:
-                btn_del = st.form_submit_button("🗑️ 從雲端資料庫刪除此角色", use_container_width=True)
+        cb1, cb2 = st.columns(2)
+        with cb1:
+            btn_save = st.button("💾 永久寫入 Supabase 雲端資料庫", type="primary", use_container_width=True)
+        with cb2:
+            btn_del = st.button("🗑️ 從雲端資料庫刪除此角色", use_container_width=True)
 
-            if btn_save:
-                t_name = in_name.strip()
-                if t_name:
-                    mod_str = "ALL" if len(selected_mods) == len(ALL_MODULE_LIST) else (",".join(selected_mods) if selected_mods else "")
-                    save_role_to_supabase_db(t_name, in_desc, mod_str)
-                    st.success(f"🎉 角色 [{t_name}] 已成功同步寫入 Supabase 雲端資料庫！")
+        if btn_save:
+            t_name = in_name.strip()
+            if t_name:
+                mod_str = "ALL" if len(selected_mods) == len(ALL_MODULE_LIST) else (",".join(selected_mods) if selected_mods else "")
+                ok, msg = save_role_to_supabase_db(t_name, in_desc, mod_str)
+                if ok:
+                    st.success(f"🎉 角色 [{t_name}] 已成功寫入 Supabase 雲端資料庫！")
                     st.rerun()
                 else:
-                    st.warning("⚠️ 請輸入角色名稱！")
+                    st.error(f"❌ 寫入失敗: {msg}")
+            else:
+                st.warning("⚠️ 請輸入角色名稱！")
 
-            if btn_del:
-                t_name = in_name.strip() or (sel_role if is_edit else "")
-                if t_name and t_name != "🆕 建立新角色 (Create New)":
-                    if t_name == "董事長 / 總經理":
-                        st.error("🚫 系統保護：不可刪除最高階角色 [董事長 / 總經理]！")
-                    else:
-                        delete_role_from_supabase_db(t_name)
-                        st.success(f"🗑️ 角色 [{t_name}] 已從 Supabase 雲端成功刪除！")
-                        st.rerun()
+        if btn_del:
+            t_name = in_name.strip() or (sel_role if is_edit else "")
+            if t_name and t_name != "🆕 建立新角色 (Create New)":
+                if t_name == "董事長 / 總經理":
+                    st.error("🚫 系統保護：不可刪除最高階角色 [董事長 / 總經理]！")
+                else:
+                    delete_role_from_supabase_db(t_name)
+                    st.success(f"🗑️ 角色 [{t_name}] 已從 Supabase 雲端成功刪除！")
+                    st.rerun()
 
     with tab_db:
         st.markdown("### 🔌 雲端資料庫連線狀態")
@@ -229,11 +173,9 @@ def render_user_management_page(lang="繁體中文", **kwargs):
 
     with tab_audit:
         st.markdown("### 📊 系統操作稽核日誌")
-        st.info("紀錄全系統操作軌跡。")
 
     with tab_users:
         st.markdown("### 👥 員工帳號總覽")
-        st.info("連動 Supabase public.system_users 帳號清冊。")
 
 def show(lang="繁體中文", **kwargs):
     render_user_management_page(lang, **kwargs)
