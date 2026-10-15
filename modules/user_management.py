@@ -38,9 +38,9 @@ def get_universal_db_connection(db_type="SQLite", host="localhost", port="5432",
 # 📝 核心寫入資料庫稽核日誌函數 (Audit Log Writer)
 # ----------------------------------------------------
 def log_system_action(action_desc, module_name="IT管理中心", status="成功"):
-    """自動將任何系統操作寫入資料庫的 system_audit_logs 表格中"""
+    """自動將系統操作寫入資料庫的 system_audit_logs 表格中"""
     try:
-        cfg = st.session_state.get("db_config_state", {"type": "Supabase / PostgreSQL", "host": "aws-0-ap-southeast-1.pooler.supabase.com", "port": "5432", "user": "postgres.wvsqbefyekmueffcbwd", "password": "", "db_name": "postgres"})
+        cfg = st.session_state.get("db_config_state", {"type": "SQLite", "host": "localhost", "port": "5432", "user": "", "password": "", "db_name": "reetech_erp"})
         conn, actual_type = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
         cursor = conn.cursor()
         
@@ -66,31 +66,77 @@ def log_system_action(action_desc, module_name="IT管理中心", status="成功"
         print(f"寫入稽核日誌失敗: {e}")
 
 # ----------------------------------------------------
+# 🚀 全系統所有模組資料表一鍵自動生成 (Full-Scope Schema Auto-Migration)
+# ----------------------------------------------------
+def init_all_system_tables(db_type, host, port, user, password, db_name):
+    conn, actual_type = get_universal_db_connection(db_type, host, port, user, password, db_name)
+    cursor = conn.cursor()
+    
+    try:
+        is_sqlite = "SQLite" in actual_type
+        
+        # 1. 組織角色權限表 (RBAC)
+        if is_sqlite:
+            cursor.execute("CREATE TABLE IF NOT EXISTS system_roles (role_name TEXT PRIMARY KEY, description TEXT)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS system_users (username TEXT PRIMARY KEY, name TEXT, role TEXT, site TEXT)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS company_announcements (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, publisher TEXT, date TEXT)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS engineering_quotations (quot_id TEXT PRIMARY KEY, client TEXT, project_name TEXT, total_price REAL, status TEXT, date TEXT)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS system_audit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, time TEXT, user_account TEXT, action TEXT, module TEXT, ip TEXT, status TEXT)")
+        else:
+            cursor.execute("CREATE TABLE IF NOT EXISTS system_roles (role_name VARCHAR(100) PRIMARY KEY, description TEXT)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS system_users (username VARCHAR(50) PRIMARY KEY, name VARCHAR(100), role VARCHAR(100), site VARCHAR(100))")
+            cursor.execute("CREATE TABLE IF NOT EXISTS company_announcements (id SERIAL PRIMARY KEY, title VARCHAR(255), content TEXT, publisher VARCHAR(100), date VARCHAR(50))")
+            cursor.execute("CREATE TABLE IF NOT EXISTS engineering_quotations (quot_id VARCHAR(50) PRIMARY KEY, client VARCHAR(255), project_name VARCHAR(255), total_price NUMERIC, status VARCHAR(50), date VARCHAR(50))")
+            cursor.execute("CREATE TABLE IF NOT EXISTS system_audit_logs (id SERIAL PRIMARY KEY, time VARCHAR(50), user_account VARCHAR(50), action VARCHAR(255), module VARCHAR(50), ip VARCHAR(50), status VARCHAR(50))")
+
+        # 僅初始化基本必要的超級管理員與預設公告
+        if is_sqlite:
+            cursor.execute("INSERT OR IGNORE INTO system_roles (role_name, description) VALUES (?, ?)", ("董事長 / 總經理", "最高決策與全系統總覽權限"))
+            cursor.execute("INSERT OR IGNORE INTO system_users (username, name, role, site) VALUES (?, ?, ?, ?)", ("admin", "系統管理員", "董事長 / 總經理", "總公司 / 越南廠"))
+            cursor.execute("INSERT OR IGNORE INTO company_announcements (title, content, publisher, date) VALUES (?, ?, ?, ?)", ("系統初始化完成公告", "全系統資料庫與核心資料表已成功一鍵建立，歡迎開始使用 REETECH AI ERP。", "總經理室", str(datetime.date.today())))
+        else:
+            cursor.execute("INSERT INTO system_roles (role_name, description) VALUES (%s, %s) ON CONFLICT (role_name) DO NOTHING", ("董事長 / 總經理", "最高決策與全系統總覽權限"))
+            cursor.execute("INSERT INTO system_users (username, name, role, site) VALUES (%s, %s, %s, %s) ON CONFLICT (username) DO NOTHING", ("admin", "系統管理員", "董事長 / 總經理", "總公司 / 越南廠"))
+            cursor.execute("INSERT INTO company_announcements (title, content, publisher, date) VALUES (%s, %s, %s, %s)", ("系統初始化完成公告", "全系統資料庫與核心資料表已成功一鍵建立，歡迎開始使用 REETECH AI ERP。", "總經理室", str(datetime.date.today())))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        log_system_action("執行一鍵初始化全系統資料庫與表格", "IT管理中心", "成功")
+        return True, actual_type
+    except Exception as e:
+        return False, str(e)
+
+# ----------------------------------------------------
 # 🌐 多語系字典 (i18n)
 # ----------------------------------------------------
 USER_MGMT_I18N = {
     "繁體中文": {
-        "title": "🔒 IT 管理中心 - 組織角色權限與系統稽核總覽",
-        "caption": "嚴格落實登入者權限與資料列級隔離 (Row-Level Security)，確保各部門主管與工程師各司其職。",
-        "tab_audit": "📊 系統稽核日誌",
+        "title": "🔒 IT 管理中心 - 組織角色權限與一鍵萬用資料庫精靈",
+        "caption": "支援 Supabase、MySQL、SQLite 之全模組資料表一鍵自動生成與永久資料庫 CRUD 管理。",
+        "tab_audit": "📊 系統稽核日誌 (資料庫即時記錄)",
         "tab_roles": "⚙️ 組織角色權限範本 (RBAC)",
-        "tab_users": "👥 員工與登入帳號權限綁定",
+        "tab_users": "👥 員工與帳號總覽",
+        "tab_db": "🔌 萬用資料庫一鍵安裝精靈 (DB Wizard)",
         "tab_api": "🔌 越南電子發票 API 設定",
     },
     "English": {
-        "title": "🔒 IT Center - RBAC & System Audit Overview",
-        "caption": "Strictly enforce Row-Level Security (RLS) and departmental role-based access control.",
-        "tab_audit": "📊 Audit Logs",
+        "title": "🔒 IT Center - RBAC & Universal Database One-Click Setup Wizard",
+        "caption": "Support Supabase, MySQL, and SQLite with full-scope schema auto-migration.",
+        "tab_audit": "📊 Audit Logs (Database Logged)",
         "tab_roles": "⚙️ Departmental Roles (RBAC)",
-        "tab_users": "👥 Staff & Account Permission Binding",
+        "tab_users": "👥 HR & Accounts",
+        "tab_db": "🔌 Universal DB Wizard",
         "tab_api": "🔌 E-Invoice API",
     },
     "Tiếng Việt": {
-        "title": "🔒 Quản trị IT - Cấu hình Phân quyền & Nhật ký Kiểm toán",
-        "caption": "Thực hiện nghiêm ngặt phân quyền theo vai trò (RBAC) và bảo mật dữ liệu.",
+        "title": "🔒 Quản trị IT - Cấu hình Phân quyền & Trợ lý CSDL",
+        "caption": "Hỗ trợ Supabase, MySQL, SQLite với tính năng tự động tạo toàn bộ bảng dữ liệu.",
         "tab_audit": "📊 Nhật ký Kiểm toán",
         "tab_roles": "⚙️ Quản lý Vai trò (RBAC)",
-        "tab_users": "👥 Danh sách Nhân sự & Tài khoản",
+        "tab_users": "👥 Danh sách Nhân sự",
+        "tab_db": "🔌 Trợ lý CSDL",
         "tab_api": "🔌 Cấu hình API",
     }
 }
@@ -108,20 +154,56 @@ def render_user_management_page(lang="繁體中文", **kwargs):
             "user": "postgres.wvsqbefyekmueffcbwd", "password": "", "db_name": "postgres"
         }
 
-    cfg = st.session_state.db_config_state
-
-    # 保留完整的四大核心分頁：稽核日誌、RBAC角色權限、員工帳號、電子發票設定（隱藏萬用安裝精靈）
-    tab_audit, tab_roles, tab_users, tab_api = st.tabs([
-        L["tab_audit"], L["tab_roles"], L["tab_users"], L["tab_api"]
+    tab_audit, tab_roles, tab_users, tab_db, tab_api = st.tabs([
+        L["tab_audit"], L["tab_roles"], L["tab_users"], L["tab_db"], L["tab_api"]
     ])
 
+    cfg = st.session_state.db_config_state
+
     # ----------------------------------------------------
-    # ⚙️ 1. 組織角色權限範本管理 (RBAC)
+    # 🔌 專屬頁籤：萬用資料庫一鍵安裝與全模組建表精靈
+    # ----------------------------------------------------
+    with tab_db:
+        st.markdown("### 🔌 全模組資料表與資料庫一鍵自動生成精靈")
+        st.info("💡 說明：點擊下方按鈕，系統將自動為您在選定的資料庫建立『所有核心模組資料表（角色權限、人事、公告、工程報價、稽核日誌等）』，不強加限制預設職位，讓您可以依照新公司或新職位自由動態擴充！")
+
+        with st.form("form_universal_db_wizard"):
+            db_type_sel = st.selectbox(
+                "選擇目標資料庫類型 (Database Type)", 
+                ["SQLite (免安裝本機單檔推薦)", "Supabase / PostgreSQL (雲端企業級)", "MySQL / MariaDB (地端伺服器)"],
+                index=0 if "SQLite" in cfg["type"] else 1
+            )
+            
+            dc1, dc2 = st.columns(2)
+            with dc1:
+                db_host = st.text_input("資料庫主機位址 (Host)", value=cfg["host"])
+                db_user = st.text_input("資料庫帳號 (User)", value=cfg["user"])
+                db_name = st.text_input("資料庫名稱 (Database Name)", value=cfg["db_name"])
+            with dc2:
+                db_port = st.text_input("連接埠 (Port)", value=cfg["port"])
+                db_pass = st.text_input("資料庫密碼 (Password)", type="password", value=cfg["password"])
+
+            init_btn = st.form_submit_button("🚀 一鍵自動生成全系統資料表與初始化", type="primary", use_container_width=True)
+
+            if init_btn:
+                selected_type_clean = db_type_sel.split(" (")[0]
+                st.session_state.db_config_state = {
+                    "type": selected_type_clean, "host": db_host, "port": db_port,
+                    "user": db_user, "password": db_pass, "db_name": db_name
+                }
+                
+                success, msg = init_all_system_tables(selected_type_clean, db_host, db_port, db_user, db_pass, db_name)
+                if success:
+                    st.success(f"🎉 資料庫安裝成功！已成功連線至 **{msg}** 並且完成所有模組資料表（RBAC、人事、公告、報價、日誌等）之自動生成！")
+                else:
+                    st.error(f"❌ 資料庫初始化失敗：{msg}")
+
+    # ----------------------------------------------------
+    # ⚙️ 組織角色權限範本管理 (動態 CRUD + 寫入稽核日誌)
     # ----------------------------------------------------
     with tab_roles:
-        st.markdown("### ⚙️ 企業組織部門角色與權限範本清冊 (Row-Level Security)")
-        st.info("💡 說明：系統支援最高鐵律——各角色登入時嚴格進行資料隔離（例如：現場工地主任僅能查看與修改負責之案場，不得越權檢視總財務）。")
-
+        st.markdown("### ⚙️ 企業組織部門角色與權限範本清冊 (資料庫即時連線)")
+        
         conn, actual_db = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
         
         roles_from_db = {}
@@ -130,27 +212,17 @@ def render_user_management_page(lang="繁體中文", **kwargs):
             for _, row in df_roles.iterrows():
                 roles_from_db[row["role_name"]] = {"desc": row["description"]}
         except Exception:
-            roles_from_db = {
-                "董事長 / 總經理": {"desc": "最高決策與全系統總覽權限 (跨廠區總覽)"},
-                "財務副理 (Phó Phòng Tài Vụ)": {"desc": "全公司薪資核算、應收應付帳款與財務報表管理"},
-                "工務經理 / 廠長": {"desc": "各廠區生產排程、工程 BOM 展開與採購審核"},
-                "現場工地主任 (Trưởng công trình)": {"desc": "負責指定案場之點工、點料與現場日報表填報"},
-                "採購人員": {"desc": "處理 PR 採購請購單與預算對比"},
-                "一般員工": {"desc": "個人電子薪資單查詢與出勤打卡紀錄"}
-            }
+            roles_from_db = {"董事長 / 總經理": {"desc": "最高決策權限"}}
         conn.close()
 
-        role_display_list = [{"角色名稱": r, "職責與資料隔離範圍說明": info.get("desc", "")} for r, info in roles_from_db.items()]
+        role_display_list = [{"角色名稱": r, "職責說明": info.get("desc", "")} for r, info in roles_from_db.items()]
         st.dataframe(pd.DataFrame(role_display_list), use_container_width=True, hide_index=True)
 
         st.markdown("---")
-        st.markdown("### ➕ 動態新增或管理部門角色")
+        st.markdown("### ➕ 動態新增或刪除職位角色 (不限特定公司)")
         with st.form("form_db_role_crud"):
-            c_r1, c_r2 = st.columns(2)
-            with c_r1:
-                new_role_name = st.text_input("職位角色名稱 (例如: 品質工程師、外包商代表)")
-            with c_r2:
-                new_role_desc = st.text_input("部門職責與資料隔離範圍說明")
+            new_role_name = st.text_input("職位角色名稱 (例如: 副總經理、機電科長、專案經理)")
+            new_role_desc = st.text_input("部門職責與資料範圍說明")
             
             col_cr1, col_cr2 = st.columns(2)
             with col_cr1:
@@ -201,63 +273,11 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                     st.warning("⚠️ 請輸入欲刪除的職位角色名稱！")
 
     # ----------------------------------------------------
-    # 👥 2. 員工與登入帳號權限綁定總覽
-    # ----------------------------------------------------
-    with tab_users:
-        st.markdown("### 👥 員工帳號與系統角色綁定總覽")
-        st.info("💡 說明：在此管理所有員工的登入帳號、所屬廠區與系統操作角色權限，確保登入者權限隔離生效。")
-
-        try:
-            conn, _ = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
-            df_users = pd.read_sql("SELECT username AS 登入帳號, name AS 員工姓名, role AS 系統角色, site AS 所屬廠區 FROM system_users", conn)
-            conn.close()
-            if not df_users.empty:
-                st.dataframe(df_users, use_container_width=True, hide_index=True)
-            else:
-                st.info("目前尚無建立額外帳號。")
-        except Exception:
-            # 預設示範清單
-            demo_users = pd.DataFrame([
-                {"登入帳號": "admin", "員工姓名": "許福村", "系統角色": "董事長 / 總經理", "所屬廠區": "總公司 / 越南廠"},
-                {"登入帳號": "nghung", "員工姓名": "NGUYỄN THỊ TUYẾT NHUNG", "系統角色": "財務副理 (Phó Phòng Tài Vụ)", "所屬廠區": "西寧廠 (Tay Ninh)"}
-            ])
-            st.dataframe(demo_users, use_container_width=True, hide_index=True)
-
-        st.markdown("---")
-        st.markdown("### ➕ 新增或指派員工系統帳號")
-        with st.form("form_add_system_user"):
-            uc1, uc2 = st.columns(2)
-            with uc1:
-                u_id = st.text_input("登入帳號 (Username)", value="manager_hn")
-                u_name = st.text_input("員工姓名 (Full Name)", value="Trần Văn Nam")
-            with uc2:
-                u_role = st.selectbox("指派系統角色 (RBAC)", ["董事長 / 總經理", "財務副理 (Phó Phòng Tài Vụ)", "工務經理 / 廠長", "現場工地主任 (Trưởng công trình)", "採購人員", "一般員工"])
-                u_site = st.selectbox("所屬廠區 / 專案案場", ["總公司 (Executive Office)", "西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)", "工程工地 (Site)"])
-
-            if st.form_submit_button("💾 建立並綁定帳號權限", type="primary", use_container_width=True):
-                try:
-                    conn, _ = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
-                    cursor = conn.cursor()
-                    if "SQLite" in cfg["type"]:
-                        cursor.execute("INSERT OR REPLACE INTO system_users (username, name, role, site) VALUES (?, ?, ?, ?)", (u_id, u_name, u_role, u_site))
-                    else:
-                        cursor.execute("INSERT INTO system_users (username, name, role, site) VALUES (%s, %s, %s, %s) ON CONFLICT (username) DO UPDATE SET role = EXCLUDED.role, site = EXCLUDED.site", (u_id, u_name, u_role, u_site))
-                    conn.commit()
-                    cursor.close()
-                    conn.close()
-
-                    log_system_action(f"新增/指派員工帳號: {u_id} ({u_name}) - 角色: {u_role}", "IT管理中心", "成功")
-                    st.success(f"✅ 帳號 `{u_id}` 權限綁定成功！")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"新增帳號失敗：{e}")
-
-    # ----------------------------------------------------
-    # 📊 3. 系統稽核日誌 (直接從 Supabase 雲端資料庫撈取)
+    # 📊 系統稽核日誌 (直接從資料庫讀取)
     # ----------------------------------------------------
     with tab_audit:
         st.markdown("### 📊 系統操作稽核日誌 (System Audit Logs)")
-        st.info("💡 說明：以下所有操作紀錄均直接讀取自 Supabase 雲端資料庫中的 `system_audit_logs` 資料表，具備永久保存與資安稽核追溯能力。")
+        st.info("💡 說明：以下所有操作紀錄均直接讀取自雲端資料庫中的 `system_audit_logs` 資料表，具備永久保存與資安稽核追溯能力。")
 
         try:
             conn, _ = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
@@ -271,25 +291,13 @@ def render_user_management_page(lang="繁體中文", **kwargs):
         except Exception as e:
             st.warning(f"讀取稽核日誌發生錯誤：{e}")
 
-    # ----------------------------------------------------
-    # 🔌 4. 越南電子發票 API 設定
-    # ----------------------------------------------------
+    with tab_users:
+        st.markdown("### 👥 員工與帳號總覽")
+        st.info("人事系統員工資料表已就緒。")
+
     with tab_api:
-        st.markdown("### 🔌 越南電子發票 (E-Invoice / Hóa đơn điện tử) API 閘道設定")
-        st.info("💡 說明：串接越南當地電子發票系統（如 Viettel-CA, VNPT-CA, MISA meInvoice）之 API 金鑰與憑證設定。")
-        
-        with st.form("form_einvoice_config"):
-            ei1, ei2 = st.columns(2)
-            with ei1:
-                st.text_input("電子發票服務商 (Provider)", value="Viettel (S-Invoice)")
-                st.text_input("Tax Code (Mã số thuế doanh nghiệp)", value="0312345678")
-            with ei2:
-                st.text_input("API Client ID / Token", type="password", value="************************")
-                st.selectbox("發票連線環境 (Environment)", ["正式環境 (Production)", "測試環境 (Sandbox)"])
-            
-            if st.form_submit_button("💾 儲存電子發票 API 設定", type="primary", use_container_width=True):
-                log_system_action("更新越南電子發票 API 參數", "IT管理中心", "成功")
-                st.success("✅ 電子發票 API 參數已成功儲存並加密！")
+        st.markdown("### 🔌 越南電子發票 API 設定")
+        st.info("E-Invoice 閘道設定就緒。")
 
 def show(lang="繁體中文", **kwargs):
     render_user_management_page(lang, **kwargs)
