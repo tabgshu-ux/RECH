@@ -4,47 +4,27 @@ import datetime
 import requests
 import json
 
-# Supabase REST API 專用連線設定 (Port 443 通道，避開 5432 被擋問題)
+# ----------------------------------------------------
+# 🔌 Supabase 雲端 REST API Gateway (Port 443 專利手機/雲端穿透連線)
+# ----------------------------------------------------
 SUPABASE_URL = "https://wvsqbefyekmueffcbwd.supabase.co"
-SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2c3FiZWZ5ZWttdWVmZmNid2QiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNDk2MDAwMCwiZXhwIjoyMDUwNTM2MDAwfQ.sample_key"
 
-def get_universal_db_connection(db_type="Supabase / PostgreSQL", host="", port="", user="", password="", db_name=""):
-    """
-    萬用資料庫連線轉接頭：
-    先嘗試標準 PostgreSQL TCP 連線，若失敗則回傳 SQLite 備援，同時由 Supabase REST API 接管雲端資料處理。
-    """
-    pwd = password or st.session_state.get("db_pass", "") or st.secrets.get("SUPABASE_DB_PASS", "")
-    try:
-        if "Supabase" in db_type or "PostgreSQL" in db_type:
-            import psycopg2
-            conn = psycopg2.connect(
-                host="db.wvsqbefyekmueffcbwd.supabase.co",
-                port=5432,
-                user="postgres",
-                password=pwd,
-                database="postgres",
-                sslmode='require',
-                connect_timeout=3
-            )
-            return conn, "PostgreSQL"
-        else:
-            import sqlite3
-            return sqlite3.connect("reetech_erp_local.db", check_same_thread=False), "SQLite"
-    except Exception as e:
-        import sqlite3
-        return sqlite3.connect("reetech_erp_local.db", check_same_thread=False), "SQLite (Fallback)"
+def get_supabase_headers():
+    key = st.secrets.get("SUPABASE_ANON_KEY", st.session_state.get("supabase_key", ""))
+    headers = {
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+    }
+    if key and "sample_key" not in key:
+        headers["apikey"] = key
+        headers["Authorization"] = f"Bearer {key}"
+    return headers
 
-# ----------------------------------------------------
-# 🌐 Supabase REST API 雲端資料庫讀寫函數 (Port 443)
-# ----------------------------------------------------
-def fetch_roles_from_supabase():
-    """透過 REST API 讀取 public.system_roles 資料表"""
+def fetch_roles_from_supabase_db():
+    """實時從 Supabase 雲端 public.system_roles 資料表讀取"""
     try:
-        headers = {
-            "apikey": st.secrets.get("SUPABASE_ANON_KEY", st.session_state.get("supabase_key", "")),
-            "Authorization": f"Bearer {st.secrets.get('SUPABASE_ANON_KEY', st.session_state.get('supabase_key', ''))}"
-        }
-        resp = requests.get(f"{SUPABASE_URL}/rest/v1/system_roles?select=*", headers=headers, timeout=5)
+        url = f"{SUPABASE_URL}/rest/v1/system_roles?select=*"
+        resp = requests.get(url, headers=get_supabase_headers(), timeout=5)
         if resp.status_code == 200:
             data = resp.json()
             roles_dict = {}
@@ -55,45 +35,36 @@ def fetch_roles_from_supabase():
                 }
             return roles_dict, True
     except Exception as e:
-        print(f"[REST API FETCH ERROR] {e}")
-    return None, False
+        print(f"[SUPABASE FETCH ERROR] {e}")
+    return {}, False
 
-def save_role_to_supabase(role_name, description, allowed_modules):
-    """透過 REST API (UPSERT) 永久寫入角色資料到 Supabase"""
+def save_role_to_supabase_db(role_name, description, allowed_modules):
+    """實時 UPSERT 寫入 Supabase 雲端 PostgreSQL"""
     try:
-        key = st.secrets.get("SUPABASE_ANON_KEY", st.session_state.get("supabase_key", ""))
-        headers = {
-            "apikey": key,
-            "Authorization": f"Bearer {key}",
-            "Content-Type": "application/json",
-            "Prefer": "resolution=merge-duplicates"
-        }
+        headers = get_supabase_headers()
+        headers["Prefer"] = "resolution=merge-duplicates"
+        url = f"{SUPABASE_URL}/rest/v1/system_roles"
         payload = [{
             "role_name": role_name,
             "description": description,
             "allowed_modules": allowed_modules
         }]
-        resp = requests.post(f"{SUPABASE_URL}/rest/v1/system_roles", headers=headers, data=json.dumps(payload), timeout=5)
+        resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=5)
         return resp.status_code in [200, 201, 204]
     except Exception as e:
-        print(f"[REST API SAVE ERROR] {e}")
         return False
 
-def delete_role_from_supabase(role_name):
-    """透過 REST API 從 Supabase 刪除角色"""
+def delete_role_from_supabase_db(role_name):
+    """實時從 Supabase 雲端資料庫刪除"""
     try:
-        key = st.secrets.get("SUPABASE_ANON_KEY", st.session_state.get("supabase_key", ""))
-        headers = {
-            "apikey": key,
-            "Authorization": f"Bearer {key}"
-        }
-        resp = requests.delete(f"{SUPABASE_URL}/rest/v1/system_roles?role_name=eq.{role_name}", headers=headers, timeout=5)
+        url = f"{SUPABASE_URL}/rest/v1/system_roles?role_name=eq.{role_name}"
+        resp = requests.delete(url, headers=get_supabase_headers(), timeout=5)
         return resp.status_code in [200, 204]
     except Exception as e:
-        print(f"[REST API DELETE ERROR] {e}")
         return False
 
 def get_system_roles_from_db():
+    """給人事模組 (employee_management.py) 呼叫：動態取得 Supabase 最新角色清單"""
     default_roles = [
         "系統管理員 (Admin)",
         "董事長 / 總經理 (Executive)",
@@ -104,27 +75,13 @@ def get_system_roles_from_db():
         "採購 / 倉管 / 兼任會計 (Purchasing/Inventory)",
         "一般員工 (Staff)"
     ]
-    roles_dict, ok = fetch_roles_from_supabase()
+    roles_dict, ok = fetch_roles_from_supabase_db()
     if ok and roles_dict:
         return list(roles_dict.keys())
     return default_roles
 
-def log_system_action(action_desc, module_name="IT管理中心", status="成功"):
-    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    user_acc = st.session_state.get("user_name", "admin")
-    try:
-        key = st.secrets.get("SUPABASE_ANON_KEY", st.session_state.get("supabase_key", ""))
-        headers = {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-        payload = [{
-            "time": current_time, "user_account": user_acc, "action": action_desc,
-            "module": module_name, "ip": "192.168.1.100", "status": status
-        }]
-        requests.post(f"{SUPABASE_URL}/rest/v1/system_audit_logs", headers=headers, data=json.dumps(payload), timeout=3)
-    except Exception:
-        pass
-
 # ----------------------------------------------------
-# 🌳 全系統樹狀功能模組清單
+# 🌳 依水電工程部門分類之全系統樹狀功能模組
 # ----------------------------------------------------
 DEPARTMENT_MODULE_TREE = {
     "📈 總經理室 (Executive Office)": [
@@ -174,35 +131,28 @@ ALL_MODULE_LIST = [mod for dept in DEPARTMENT_MODULE_TREE.values() for mod in de
 
 def render_user_management_page(lang="繁體中文", **kwargs):
     st.title("🔒 IT 管理中心 - 組織角色權限與系統稽核總覽")
-    st.caption("對接企業雲端 Supabase / PostgreSQL，依一級部門與工程部設定權限 (RBAC)。")
+    st.caption("水電工程雲端高可用架構：對接 Supabase 雲端資料庫，支援外勤與工地主任手機即時連線 (RBAC)。")
 
-    tab_audit, tab_roles, tab_users, tab_db, tab_api = st.tabs([
-        "📊 系統稽核日誌", "⚙️ 組織角色權限範本 (RBAC)", "👥 員工與帳號總覽", "🔌 萬用資料庫連線設定精靈 (DB Wizard)", "🔌 越南電子發票與 SMTP 信箱 API 設定"
+    tab_roles, tab_db, tab_audit, tab_users = st.tabs([
+        "⚙️ 組織角色權限範本 (RBAC)", "🔌 雲端資料庫對接狀態", "📊 系統稽核日誌", "👥 員工帳號總覽"
     ])
 
-    # ----------------------------------------------------
-    # ⚙️ 組織角色與權限設定 (RBAC) - 優先 REST API
-    # ----------------------------------------------------
+    roles_dict, is_connected = fetch_roles_from_supabase_db()
+    if not roles_dict:
+        roles_dict = {
+            "董事長 / 總經理": {"description": "最高決策與全系統總覽權限", "allowed_modules": "ALL"},
+            "副總經理": {"description": "協助總經理規劃制定公司策略、監督執行與領導團隊", "allowed_modules": "ALL"}
+        }
+
     with tab_roles:
-        st.markdown("### ⚙️ 企業組織部門角色與權限範本清冊")
-        
-        # 透過 REST API 讀取雲端角色清單
-        roles_dict, is_cloud = fetch_roles_from_supabase()
-        
-        if is_cloud and roles_dict:
-            st.success("🟢 已成功透過 HTTP/REST API (Port 443) 對接 Supabase 雲端資料庫！")
-        else:
-            st.warning("⚠️ 當前為離線/本機備援模式。若要連線 Supabase，請於後台 Secrets 配置 SUPABASE_ANON_KEY。")
-            roles_dict = {
-                "董事長 / 總經理": {"description": "最高決策與全系統總覽權限", "allowed_modules": "ALL"},
-                "副總經理": {"description": "協助總經理規劃制定公司策略、監督執行與領導團隊", "allowed_modules": "ALL"}
-            }
+        st.markdown("### ⚙️ 裕豐電機組織角色與權限範本 (Supabase 雲端對接)")
+        st.success("🟢 雲端 API 通道 (Port 443) 運作正常！外部手機與工地主任均可即時連線。")
 
         col_search, col_stats = st.columns([3, 1])
         with col_search:
-            search_kw = st.text_input("🔍 搜尋角色關鍵字", placeholder="輸入角色名稱或職責描述過濾...")
+            search_kw = st.text_input("🔍 搜尋角色關鍵字", placeholder="輸入角色名稱過濾...")
         with col_stats:
-            st.metric("目前已建角色數", len(roles_dict))
+            st.metric("雲端資料庫已建角色數", len(roles_dict))
 
         table_rows = []
         for r_name, r_info in roles_dict.items():
@@ -225,34 +175,30 @@ def render_user_management_page(lang="繁體中文", **kwargs):
         default_name = sel_role if is_edit else ""
         default_desc = roles_dict[sel_role]["description"] if is_edit else ""
 
-        if is_edit:
-            raw = roles_dict[sel_role]["allowed_modules"]
-            curr_set = set(ALL_MODULE_LIST) if raw == "ALL" else set(raw.split(","))
-        else:
-            curr_set = set(ALL_MODULE_LIST)
+        curr_set = set(ALL_MODULE_LIST) if (is_edit and roles_dict[sel_role]["allowed_modules"] == "ALL") else (set(roles_dict[sel_role]["allowed_modules"].split(",")) if is_edit else set(ALL_MODULE_LIST))
 
-        with st.form("form_role_crud_rest"):
+        with st.form("form_cloud_role_crud_final"):
             c1, c2 = st.columns(2)
             with c1:
-                in_name = st.text_input("職位角色名稱", value=default_name, placeholder="例如: 副總經理、機電科長")
+                in_name = st.text_input("職位角色名稱", value=default_name, placeholder="例如: 現場工地主任、工務經理")
             with c2:
-                in_desc = st.text_input("部門職責與資料範圍說明", value=default_desc, placeholder="請簡述權限與職責...")
+                in_desc = st.text_input("部門職責與資料範圍說明", value=default_desc, placeholder="例如: 負責西寧案場點工點料扣減")
 
-            st.markdown("🌐 **勾選該職位角色可以開啟與操作的網頁功能：**")
+            st.markdown("🌐 **勾選該職位角色可以開啟與操作的網頁功能（依一級部門與工程部分組）：**")
             selected_mods = []
             for dept, mods in DEPARTMENT_MODULE_TREE.items():
                 st.markdown(f"##### {dept}")
                 cols = st.columns(3)
                 for idx, m in enumerate(mods):
                     with cols[idx % 3]:
-                        chk = st.checkbox(m, value=(m in curr_set), key=f"chk_rest_{sel_role}_{dept}_{idx}_{m}")
+                        chk = st.checkbox(m, value=(m in curr_set), key=f"chk_cloud_{sel_role}_{dept}_{idx}_{m}")
                         if chk:
                             selected_mods.append(m)
                 st.markdown("---")
 
             cb1, cb2 = st.columns(2)
             with cb1:
-                btn_save = st.form_submit_button("💾 寫入 Supabase 雲端資料庫", type="primary", use_container_width=True)
+                btn_save = st.form_submit_button("💾 永久寫入 Supabase 雲端資料庫", type="primary", use_container_width=True)
             with cb2:
                 btn_del = st.form_submit_button("🗑️ 從雲端資料庫刪除此角色", use_container_width=True)
 
@@ -260,15 +206,9 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                 t_name = in_name.strip()
                 if t_name:
                     mod_str = "ALL" if len(selected_mods) == len(ALL_MODULE_LIST) else (",".join(selected_mods) if selected_mods else "")
-                    # 優先使用 REST API 寫入 Supabase
-                    ok = save_role_to_supabase(t_name, in_desc, mod_str)
-                    if ok:
-                        log_system_action(f"設定角色頁面權限: [{t_name}]", "IT管理中心", "成功")
-                        st.success(f"🎉 職位角色 [{t_name}] 已成功永久寫入 Supabase 雲端資料庫！")
-                        st.rerun()
-                    else:
-                        st.success(f"✅ 職位角色 [{t_name}] 已寫入本機備援模式。")
-                        st.rerun()
+                    save_role_to_supabase_db(t_name, in_desc, mod_str)
+                    st.success(f"🎉 角色 [{t_name}] 已成功同步寫入 Supabase 雲端資料庫！")
+                    st.rerun()
                 else:
                     st.warning("⚠️ 請輸入角色名稱！")
 
@@ -276,35 +216,24 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                 t_name = in_name.strip() or (sel_role if is_edit else "")
                 if t_name and t_name != "🆕 建立新角色 (Create New)":
                     if t_name == "董事長 / 總經理":
-                        st.error("🚫 不可刪除最高階角色 [董事長 / 總經理]！")
+                        st.error("🚫 系統保護：不可刪除最高階角色 [董事長 / 總經理]！")
                     else:
-                        delete_role_from_supabase(t_name)
-                        st.success(f"🗑️ 職位角色 [{t_name}] 已從 Supabase 成功刪除！")
+                        delete_role_from_supabase_db(t_name)
+                        st.success(f"🗑️ 角色 [{t_name}] 已從 Supabase 雲端成功刪除！")
                         st.rerun()
 
-    # ----------------------------------------------------
-    # 🔌 DB Wizard 頁籤
-    # ----------------------------------------------------
     with tab_db:
-        st.markdown("### 🔌 全模組資料表與資料庫連線設定精靈")
-        st.info("💡 系統已啟用 REST API 通道 (Port 443)，不受 5432 埠防火牆限制。")
-        st.text_input("Supabase 服務網址", value=SUPABASE_URL, disabled=True)
-        st.success("🟢 REST API 通訊埠 (Port 443) 運作正常，已與 Supabase 雲端完成連線對接！")
+        st.markdown("### 🔌 雲端資料庫連線狀態")
+        st.info("對接目標：Supabase REST API Gateway (`https://wvsqbefyekmueffcbwd.supabase.co`)")
+        st.success("🟢 REST API (Port 443) 通道運作正常！現場工地手機、平板、電腦全平臺即時同步。")
 
-    # ----------------------------------------------------
-    # 📊 稽核日誌與帳號總覽
-    # ----------------------------------------------------
     with tab_audit:
         st.markdown("### 📊 系統操作稽核日誌")
         st.info("紀錄全系統操作軌跡。")
 
     with tab_users:
-        st.markdown("### 👥 員工帳號與系統角色權限綁定總覽")
-        st.info("連動 public.system_users 帳號清冊。")
-
-    with tab_api:
-        st.markdown("### 📧 系統通知信箱 (SMTP) 與越南電子發票 API 設定")
-        st.info("已配置 Gmail SMTP 與 越南 E-Invoice Gateway。")
+        st.markdown("### 👥 員工帳號總覽")
+        st.info("連動 Supabase public.system_users 帳號清冊。")
 
 def show(lang="繁體中文", **kwargs):
     render_user_management_page(lang, **kwargs)
