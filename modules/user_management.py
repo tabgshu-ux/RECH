@@ -4,21 +4,36 @@ import datetime
 import os
 
 # ----------------------------------------------------
-# 🔌 全方位萬用資料庫轉接頭 (含 sslmode='require' 防拒絕連線)
+# 🔌 全方位萬用資料庫轉接頭 (直連 Host + SSL 強制連線機制)
 # ----------------------------------------------------
-def get_universal_db_connection(db_type="Supabase / PostgreSQL", host="aws-0-ap-southeast-1.pooler.supabase.com", port="5432", user="postgres.wvsqbefyekmueffcbwd", password="", db_name="postgres"):
+def get_universal_db_connection(
+    db_type="Supabase / PostgreSQL", 
+    host="db.wvsqbefyekmueffcbwd.supabase.co",  # 👈 修正為 Supabase 官方直連域名 (避免 IPv6 阻斷)
+    port="5432", 
+    user="postgres",                            # 👈 直連模式專用帳號
+    password="", 
+    db_name="postgres"
+):
     pwd = password or st.session_state.get("db_pass", "") or st.secrets.get("SUPABASE_DB_PASS", "")
     try:
         if "Supabase" in db_type or "PostgreSQL" in db_type:
             import psycopg2
+            
+            # 若使用者輸入舊 Pooler 網址，自動轉接為可相容的直連主機
+            actual_host = host
+            actual_user = user
+            if "pooler.supabase.com" in host:
+                actual_host = "db.wvsqbefyekmueffcbwd.supabase.co"
+                actual_user = "postgres"
+
             conn = psycopg2.connect(
-                host=host,
-                port=port,
-                user=user,
+                host=actual_host,
+                port=5432,
+                user=actual_user,
                 password=pwd,
                 database=db_name,
-                sslmode='require',  # 👈 核心關鍵：強制 SSL 模式，避免被 Supabase 拒絕連線
-                connect_timeout=10
+                sslmode='require',       # 👈 強制 SSL 模式，避免被 Supabase 防火牆拒絕
+                connect_timeout=8
             )
             return conn, "PostgreSQL"
         elif "MySQL" in db_type:
@@ -51,8 +66,12 @@ def get_system_roles_from_db():
     ]
     try:
         cfg = st.session_state.get("db_config_state", {
-            "type": "Supabase / PostgreSQL", "host": "aws-0-ap-southeast-1.pooler.supabase.com", 
-            "port": "5432", "user": "postgres.wvsqbefyekmueffcbwd", "password": "", "db_name": "postgres"
+            "type": "Supabase / PostgreSQL", 
+            "host": "db.wvsqbefyekmueffcbwd.supabase.co", 
+            "port": "5432", 
+            "user": "postgres", 
+            "password": "", 
+            "db_name": "postgres"
         })
         conn, actual_type = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg.get("password", ""), cfg["db_name"])
         cursor = conn.cursor()
@@ -97,8 +116,12 @@ def ensure_tables_exist(conn, actual_type):
 def log_system_action(action_desc, module_name="IT管理中心", status="成功"):
     try:
         cfg = st.session_state.get("db_config_state", {
-            "type": "Supabase / PostgreSQL", "host": "aws-0-ap-southeast-1.pooler.supabase.com", 
-            "port": "5432", "user": "postgres.wvsqbefyekmueffcbwd", "password": "", "db_name": "postgres"
+            "type": "Supabase / PostgreSQL", 
+            "host": "db.wvsqbefyekmueffcbwd.supabase.co", 
+            "port": "5432", 
+            "user": "postgres", 
+            "password": "", 
+            "db_name": "postgres"
         })
         conn, actual_type = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg.get("password", ""), cfg["db_name"])
         ensure_tables_exist(conn, actual_type)
@@ -195,9 +218,9 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     if "db_config_state" not in st.session_state:
         st.session_state.db_config_state = {
             "type": "Supabase / PostgreSQL", 
-            "host": "aws-0-ap-southeast-1.pooler.supabase.com", 
+            "host": "db.wvsqbefyekmueffcbwd.supabase.co", 
             "port": "5432", 
-            "user": "postgres.wvsqbefyekmueffcbwd", 
+            "user": "postgres", 
             "password": "", 
             "db_name": "postgres"
         }
@@ -213,7 +236,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_db:
         st.markdown("### 🔌 全模組資料表與資料庫連線設定精靈")
-        st.info("💡 說明：請在此輸入與確認資料庫主機位址、連接埠、帳號、密碼與資料庫名稱。")
+        st.info("💡 說明：請在此確認資料庫主機位址、連接埠、帳號與密碼。")
 
         with st.form("form_universal_db_wizard"):
             db_type_sel = st.selectbox(
@@ -500,7 +523,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                 st.session_state["smtp_port"] = smtp_port
                 st.session_state["smtp_pass"] = smtp_pass
                 st.success("✅ 系統通知信箱與電子發票 API 設定已成功保存！")
-                log_system_action("更新系統 SMTP 信箱與電子发票 API 設定", "IT管理中心", "成功")
+                log_system_action("更新系統 SMTP 信箱與電子發票 API 設定", "IT管理中心", "成功")
 
 def show(lang="繁體中文", **kwargs):
     render_user_management_page(lang, **kwargs)
