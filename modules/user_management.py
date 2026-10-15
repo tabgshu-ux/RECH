@@ -5,10 +5,9 @@ import requests
 import json
 
 # ----------------------------------------------------
-# 🔌 Supabase 雲端 REST API Gateway
+# 🔌 Supabase 雲端 REST API Gateway (完整含 https:// 協定)
 # ----------------------------------------------------
-# 請確認您的 Supabase Project URL，若有變更請於 Secrets 或此處更新
-SUPABASE_URL = st.secrets.get("SUPABASE_URL", "https://wvsqbefyekmueffcbwd.supabase.co").rstrip("/")
+SUPABASE_URL = "https://wvsqbefyekmueffcbwd.supabase.co"
 
 def get_supabase_headers():
     key = st.secrets.get("SUPABASE_ANON_KEY", st.session_state.get("supabase_key", ""))
@@ -33,11 +32,11 @@ def fetch_roles_from_supabase_db():
                     "description": item.get("description", ""),
                     "allowed_modules": item.get("allowed_modules", "ALL")
                 }
-            return roles_dict, True, "成功連線至 Supabase 雲端資料庫"
+            return roles_dict, True, "成功連線至 Supabase 雲端資料庫！"
         else:
-            return {}, False, f"API 錯誤 ({resp.status_code}): {resp.text}"
+            return {}, False, f"Supabase 回應錯誤 ({resp.status_code}): {resp.text}"
     except Exception as e:
-        return {}, False, f"網址解析或連線異常: {e}"
+        return {}, False, f"連線異常: {e}"
 
 def save_role_to_supabase_db(role_name, description, allowed_modules):
     try:
@@ -66,7 +65,7 @@ def delete_role_from_supabase_db(role_name):
         return False
 
 # ----------------------------------------------------
-# 🌳 依水電工程部門分類之全系統樹狀功能模組 (已移除海防廠)
+# 🌳 依水電工程部門分類之全系統樹狀功能模組 (已完全移除海防廠)
 # ----------------------------------------------------
 DEPARTMENT_MODULE_TREE = {
     "📈 總經理室 (Executive Office)": [
@@ -136,7 +135,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
             st.success(f"🟢 {conn_msg}")
         else:
             st.error(f"❌ 雲端資料庫連線失敗：{conn_msg}")
-            st.info("💡 提示：請確認 Supabase Dashboard 中的 Project URL 是否仍為 `https://wvsqbefyekmueffcbwd.supabase.co`。若有重建專案，請於 Secrets 中更新 `SUPABASE_URL`。")
 
         col_search, col_stats = st.columns([3, 1])
         with col_search:
@@ -178,7 +176,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
             cols = st.columns(3)
             for idx, m in enumerate(mods):
                 with cols[idx % 3]:
-                    chk = st.checkbox(m, value=(m in curr_set), key=f"chk_f4_{sel_role}_{dept}_{idx}_{m}")
+                    chk = st.checkbox(m, value=(m in curr_set), key=f"chk_f5_{sel_role}_{dept}_{idx}_{m}")
                     if chk:
                         selected_mods.append(m)
             st.markdown("---")
