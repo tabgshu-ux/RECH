@@ -1,16 +1,17 @@
 import streamlit as st
 import pandas as pd
 import datetime
-import os
+import requests
+import json
 
 # ----------------------------------------------------
-# 🔌 全方位萬用資料庫轉接頭 (直連 Host + SSL 強制連線機制)
+# 🔌 全方位萬用資料庫轉接頭 (PostgreSQL TCP + Supabase REST API 雙模組)
 # ----------------------------------------------------
 def get_universal_db_connection(
     db_type="Supabase / PostgreSQL", 
-    host="db.wvsqbefyekmueffcbwd.supabase.co",  # 👈 修正為 Supabase 官方直連域名 (避免 IPv6 阻斷)
+    host="db.wvsqbefyekmueffcbwd.supabase.co", 
     port="5432", 
-    user="postgres",                            # 👈 直連模式專用帳號
+    user="postgres", 
     password="", 
     db_name="postgres"
 ):
@@ -18,13 +19,9 @@ def get_universal_db_connection(
     try:
         if "Supabase" in db_type or "PostgreSQL" in db_type:
             import psycopg2
-            
-            # 若使用者輸入舊 Pooler 網址，自動轉接為可相容的直連主機
-            actual_host = host
-            actual_user = user
-            if "pooler.supabase.com" in host:
-                actual_host = "db.wvsqbefyekmueffcbwd.supabase.co"
-                actual_user = "postgres"
+            # 優先使用直連主機，避免 IPv6/Pooler 阻斷
+            actual_host = "db.wvsqbefyekmueffcbwd.supabase.co" if "pooler.supabase.com" in host else host
+            actual_user = "postgres" if "pooler.supabase.com" in host else user
 
             conn = psycopg2.connect(
                 host=actual_host,
@@ -32,16 +29,10 @@ def get_universal_db_connection(
                 user=actual_user,
                 password=pwd,
                 database=db_name,
-                sslmode='require',       # 👈 強制 SSL 模式，避免被 Supabase 防火牆拒絕
-                connect_timeout=8
+                sslmode='require',
+                connect_timeout=5
             )
             return conn, "PostgreSQL"
-        elif "MySQL" in db_type:
-            import pymysql
-            conn = pymysql.connect(
-                host=host, port=int(port) if port else 3306, user=user, password=pwd, database=db_name, charset='utf8mb4'
-            )
-            return conn, "MySQL"
         else:
             import sqlite3
             conn = sqlite3.connect("reetech_erp_local.db", check_same_thread=False)
@@ -53,7 +44,7 @@ def get_universal_db_connection(
         return conn, "SQLite (Fallback)"
 
 def get_system_roles_from_db():
-    """專門給人事模組呼叫：即時從資料庫取得所有 IT 設定的角色名稱列表"""
+    """專門給人事模組呼叫：即時取得所有 IT 設定的角色名稱列表"""
     default_roles = [
         "系統管理員 (Admin)",
         "董事長 / 總經理 (Executive)",
@@ -215,15 +206,15 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    if "db_config_state" not in st.session_state:
-        st.session_state.db_config_state = {
-            "type": "Supabase / PostgreSQL", 
-            "host": "db.wvsqbefyekmueffcbwd.supabase.co", 
-            "port": "5432", 
-            "user": "postgres", 
-            "password": "", 
-            "db_name": "postgres"
-        }
+    # 硬性覆蓋預設連線為直連 Host
+    st.session_state.db_config_state = {
+        "type": "Supabase / PostgreSQL", 
+        "host": "db.wvsqbefyekmueffcbwd.supabase.co", 
+        "port": "5432", 
+        "user": "postgres", 
+        "password": st.session_state.get("db_pass", "") or st.secrets.get("SUPABASE_DB_PASS", ""), 
+        "db_name": "postgres"
+    }
 
     tab_audit, tab_roles, tab_users, tab_db, tab_api = st.tabs([
         L["tab_audit"], L["tab_roles"], L["tab_users"], L["tab_db"], L["tab_api"]
@@ -236,7 +227,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_db:
         st.markdown("### 🔌 全模組資料表與資料庫連線設定精靈")
-        st.info("💡 說明：請在此確認資料庫主機位址、連接埠、帳號與密碼。")
+        st.info("💡 說明：系統已自動為您帶入 Supabase 直連主機位址。")
 
         with st.form("form_universal_db_wizard"):
             db_type_sel = st.selectbox(
@@ -247,11 +238,11 @@ def render_user_management_page(lang="繁體中文", **kwargs):
             
             dc1, dc2 = st.columns(2)
             with dc1:
-                db_host = st.text_input("資料庫主機位址 (Host)", value=cfg["host"])
-                db_user = st.text_input("資料庫帳號 (User)", value=cfg["user"])
-                db_name = st.text_input("資料庫名稱 (Database Name)", value=cfg["db_name"])
+                db_host = st.text_input("資料庫主機位址 (Host)", value="db.wvsqbefyekmueffcbwd.supabase.co")
+                db_user = st.text_input("資料庫帳號 (User)", value="postgres")
+                db_name = st.text_input("資料庫名稱 (Database Name)", value="postgres")
             with dc2:
-                db_port = st.text_input("連接埠 (Port)", value=cfg["port"])
+                db_port = st.text_input("連接埠 (Port)", value="5432")
                 db_pass = st.text_input("資料庫密碼 (Password / Secret)", type="password", value=st.session_state.get("db_pass", cfg.get("password", "")))
 
             init_btn = st.form_submit_button("🚀 測試連線並自動驗證全系統資料表", type="primary", use_container_width=True)
