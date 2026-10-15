@@ -1,71 +1,65 @@
 import streamlit as st
 import pandas as pd
 import datetime
-import requests
-import json
 
-# ----------------------------------------------------
-# 🔌 Supabase 雲端 REST API Gateway (完整含 https:// 協定)
-# ----------------------------------------------------
-SUPABASE_URL = "https://wvsqbefyekmueffcbwd.supabase.co"
-
-def get_supabase_headers():
-    key = st.secrets.get("SUPABASE_ANON_KEY", st.session_state.get("supabase_key", ""))
-    headers = {
-        "Content-Type": "application/json",
-        "Prefer": "return=representation"
-    }
-    if key and "sample_key" not in key:
-        headers["apikey"] = key
-        headers["Authorization"] = f"Bearer {key}"
-    return headers
+# 初始化 Supabase 官方連線
+@st.cache_resource
+def init_supabase():
+    try:
+        from supabase import create_client, Client
+        url = st.secrets.get("SUPABASE_URL", "https://wvsqbefyekmueffcbwd.supabase.co")
+        # 如果有設定 Service Key 或 Anon Key 都可以自動對接
+        key = st.secrets.get("SUPABASE_ANON_KEY", st.secrets.get("SUPABASE_SERVICE_KEY", "public-fallback-key"))
+        client: Client = create_client(url, key)
+        return client, True
+    except Exception as e:
+        print(f"[SUPABASE INIT ERROR] {e}")
+        return None, False
 
 def fetch_roles_from_supabase_db():
+    client, ok = init_supabase()
+    if not ok or not client:
+        return {}, False, "初始化 Supabase 用戶端失敗"
     try:
-        url = f"{SUPABASE_URL}/rest/v1/system_roles?select=*"
-        resp = requests.get(url, headers=get_supabase_headers(), timeout=5)
-        if resp.status_code == 200:
-            data = resp.json()
-            roles_dict = {}
-            for item in data:
-                roles_dict[item["role_name"]] = {
-                    "description": item.get("description", ""),
-                    "allowed_modules": item.get("allowed_modules", "ALL")
-                }
-            return roles_dict, True, "成功連線至 Supabase 雲端資料庫！"
-        else:
-            return {}, False, f"Supabase 回應錯誤 ({resp.status_code}): {resp.text}"
+        response = client.table("system_roles").select("*").execute()
+        data = response.data
+        roles_dict = {}
+        for item in data:
+            roles_dict[item["role_name"]] = {
+                "description": item.get("description", ""),
+                "allowed_modules": item.get("allowed_modules", "ALL")
+            }
+        return roles_dict, True, "成功連線至 Supabase 雲端資料庫！"
     except Exception as e:
-        return {}, False, f"連線異常: {e}"
+        return {}, False, f"讀取資料表異常: {e}"
 
 def save_role_to_supabase_db(role_name, description, allowed_modules):
+    client, ok = init_supabase()
+    if not ok or not client:
+        return False, "未連線"
     try:
-        headers = get_supabase_headers()
-        headers["Prefer"] = "resolution=merge-duplicates"
-        url = f"{SUPABASE_URL}/rest/v1/system_roles"
-        payload = [{
+        payload = {
             "role_name": role_name,
             "description": description,
             "allowed_modules": allowed_modules
-        }]
-        resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=5)
-        if resp.status_code in [200, 201, 204]:
-            return True, "成功寫入 Supabase 資料庫"
-        else:
-            return False, f"寫入失敗 ({resp.status_code}): {resp.text}"
+        }
+        client.table("system_roles").upsert(payload).execute()
+        return True, "成功寫入 Supabase"
     except Exception as e:
-        return False, f"連線異常: {e}"
+        return False, f"寫入異常: {e}"
 
 def delete_role_from_supabase_db(role_name):
+    client, ok = init_supabase()
+    if not ok or not client:
+        return False
     try:
-        url = f"{SUPABASE_URL}/rest/v1/system_roles?role_name=eq.{role_name}"
-        resp = requests.delete(url, headers=get_supabase_headers(), timeout=5)
-        return resp.status_code in [200, 204]
+        client.table("system_roles").delete().eq("role_name", role_name).execute()
+        return True
     except Exception as e:
         return False
 
 # ----------------------------------------------------
-# 🌳 依水電工程部門分類之全系統樹狀功能模組 (已完全移除海防廠)
+# 🌳 水電工程部門樹狀功能模組 (已完全移除海防廠)
 # ----------------------------------------------------
 DEPARTMENT_MODULE_TREE = {
     "📈 總經理室 (Executive Office)": [
@@ -101,7 +95,7 @@ DEPARTMENT_MODULE_TREE = {
     ],
     "🏭 生產部 (Production Dept)": [
         "⚡ 配電盤組裝配線組與拍照入庫",
-        "📦 越南西寧廠倉庫庫存盤點與領料"  # 👈 已精準移除海防廠，僅保留西寧廠
+        "📦 越南西寧廠倉庫庫存盤點與領料"  # 已移除海防廠
     ],
     "💻 資訊管理部 (IT & System)": [
         "🔒 帳號權限與全系統稽核軌跡",
@@ -176,7 +170,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
             cols = st.columns(3)
             for idx, m in enumerate(mods):
                 with cols[idx % 3]:
-                    chk = st.checkbox(m, value=(m in curr_set), key=f"chk_f5_{sel_role}_{dept}_{idx}_{m}")
+                    chk = st.checkbox(m, value=(m in curr_set), key=f"chk_f7_{sel_role}_{dept}_{idx}_{m}")
                     if chk:
                         selected_mods.append(m)
             st.markdown("---")
@@ -212,11 +206,11 @@ def render_user_management_page(lang="繁體中文", **kwargs):
 
     with tab_db:
         st.markdown("### 🔌 雲端資料庫連線狀態")
-        st.text_input("目前對接端點 (SUPABASE_URL)", value=SUPABASE_URL, disabled=True)
+        st.text_input("目前對接端點 (SUPABASE_URL)", value="https://wvsqbefyekmueffcbwd.supabase.co", disabled=True)
         if is_connected:
-            st.success("🟢 REST API (Port 443) 通道連線正常！")
+            st.success("🟢 Supabase 官方客戶端通道連線正常！")
         else:
-            st.error(f"❌ 無法連線至 Supabase: {conn_msg}")
+            st.error(f"❌ 無法連線: {conn_msg}")
 
     with tab_audit:
         st.markdown("### 📊 系統操作稽核日誌")
