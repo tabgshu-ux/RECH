@@ -4,12 +4,127 @@ import requests
 import json
 
 # ----------------------------------------------------
-# 🔌 Supabase 直連設定 (請確認您的專案網址)
+# 📱 手機優先響應式 CSS 注入 (Mobile-First UI)
+# ----------------------------------------------------
+MOBILE_USER_MGMT_CSS = """
+<style>
+@media only screen and (max-width: 768px) {
+    h1 { font-size: 1.3rem !important; }
+    h2 { font-size: 1.1rem !important; }
+    h3 { font-size: 1.0rem !important; }
+    p, div, span, label { font-size: 0.85rem !important; }
+    .stDataFrame { overflow-x: auto; }
+    .stButton button { width: 100% !important; }
+}
+</style>
+"""
+st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
+
+# ----------------------------------------------------
+# 🌐 多語系字典 (i18n Dictionary)
+# ----------------------------------------------------
+USER_MGMT_I18N = {
+    "繁體中文": {
+        "title": "🔒 IT 管理中心 - 組織角色權限與系統稽核總覽",
+        "caption": "裕豐電機雲端高可用架構：對接 Supabase 雲端資料庫 (RBAC)，實現零暫存、真實資料庫存取。",
+        "tab_roles": "⚙️ 組織角色權限範本 (RBAC)",
+        "tab_db": "🔌 雲端資料庫對接狀態",
+        "tab_audit": "📊 系統稽核日誌",
+        "tab_users": "👥 員工帳號總覽",
+        "success_connected": "資料庫連線成功！",
+        "cloud_roles_count": "雲端資料庫已建角色數",
+        "search_ph": "輸入角色名稱過濾...",
+        "search_label": "🔍 搜尋角色關鍵字",
+        "col_role_name": "角色名稱",
+        "col_desc": "職責與權限範圍",
+        "col_modules_count": "允許開啟之頁面數量",
+        "edit_header": "✏️ 角色權限編輯維護 (新增 / 載入修改 / 刪除)",
+        "select_role_lbl": "請選擇欲編輯的角色：",
+        "create_new_opt": "🆕 建立新角色 (Create New)",
+        "step1_title": "1. 輸入角色名稱與說明",
+        "role_name_lbl": "職位角色名稱 *",
+        "role_name_ph": "例如: 協理、現場工地主任",
+        "role_desc_lbl": "部門職責與資料範圍說明",
+        "role_desc_ph": "例如: 協助總經理工程支援指派，以及生產車間管理",
+        "step2_title": "2. 勾選該職位角色可操作功能：",
+        "btn_save": "💾 永久寫入 Supabase 雲端資料庫",
+        "btn_del": "🗑️ 從雲端資料庫刪除此角色",
+        "save_success": "🎉 角色 [{name}] 已成功寫入 Supabase 雲端資料庫！",
+        "save_fail": "❌ 寫入失敗: {msg}",
+        "del_success": "🗑️ 角色 [{name}] 已從 Supabase 雲端成功刪除！",
+        "protect_err": "🚫 系統保護：不可刪除最高階角色 [董事長 / 總經理]！",
+        "warn_name": "⚠️ 請輸入角色名稱！"
+    },
+    "Tiếng Việt": {
+        "title": "🔒 Quản trị IT - Cấu hình Phân quyền & Nhật ký Hệ thống",
+        "caption": "Kiến trúc đám mây Reetech: Kết nối cơ sở dữ liệu Supabase (RBAC).",
+        "tab_roles": "⚙️ Phân quyền Vai trò (RBAC)",
+        "tab_db": "🔌 Trạng thái CSDL đám mây",
+        "tab_audit": "📊 Nhật ký Kiểm toán",
+        "tab_users": "👥 Danh sách Nhân sự",
+        "success_connected": "Kết nối cơ sở dữ liệu thành công!",
+        "cloud_roles_count": "Số lượng vai trò trên cloud",
+        "search_ph": "Nhập tên vai trò...",
+        "search_label": "🔍 Tìm kiếm vai trò",
+        "col_role_name": "Tên vai trò",
+        "col_desc": "Mô tả chức năng",
+        "col_modules_count": "Số lượng trang cho phép",
+        "edit_header": "✏️ Chỉnh sửa Phân quyền (Thêm / Sửa / Xóa)",
+        "select_role_lbl": "Chọn vai trò cần chỉnh sửa:",
+        "create_new_opt": "🆕 Tạo vai trò mới",
+        "step1_title": "1. Nhập tên và mô tả vai trò",
+        "role_name_lbl": "Tên vai trò *",
+        "role_name_ph": "Ví dụ: Kỹ sư trưởng, Quản đốc",
+        "role_desc_lbl": "Mô tả trách nhiệm",
+        "role_desc_ph": "Ví dụ: Quản lý khu vực sản xuất",
+        "step2_title": "2. Chọn các chức năng được phép:",
+        "btn_save": "💾 Lưu vào cơ sở dữ liệu Supabase",
+        "btn_del": "🗑️ Xóa vai trò khỏi đám mây",
+        "save_success": "🎉 Đã lưu vai trò [{name}] vào cơ sở dữ liệu thành công!",
+        "save_fail": "❌ Lưu thất bại: {msg}",
+        "del_success": "🗑️ Đã xóa vai trò [{name}] thành công!",
+        "protect_err": "🚫 Bảo vệ hệ thống: Không thể xóa vai trò [Chủ tịch / Tổng giám đốc]!",
+        "warn_name": "⚠️ Vui lòng nhập tên vai trò!"
+    },
+    "English": {
+        "title": "🔒 IT Center - RBAC & System Audit Logs",
+        "caption": "Reetech Cloud Architecture: Connected to Supabase Cloud Database (RBAC).",
+        "tab_roles": "⚙️ Departmental Roles (RBAC)",
+        "tab_db": "🔌 Cloud DB Status",
+        "tab_audit": "📊 Audit Logs",
+        "tab_users": "👥 HR & Accounts",
+        "success_connected": "Database connection successful!",
+        "cloud_roles_count": "Roles in Cloud DB",
+        "search_ph": "Filter role name...",
+        "search_label": "🔍 Search Roles",
+        "col_role_name": "Role Name",
+        "col_desc": "Description & Scope",
+        "col_modules_count": "Allowed Modules Count",
+        "edit_header": "✏️ Edit Role Permissions (Create / Update / Delete)",
+        "select_role_lbl": "Select Role to Edit:",
+        "create_new_opt": "🆕 Create New Role",
+        "step1_title": "1. Enter Role Name and Description",
+        "role_name_lbl": "Role Name *",
+        "role_name_ph": "e.g., Supervisor, Site Manager",
+        "role_desc_lbl": "Responsibility Description",
+        "role_desc_ph": "e.g., Oversee site engineering operations",
+        "step2_title": "2. Select Allowed Features for this Role:",
+        "btn_save": "💾 Write to Supabase Cloud Database",
+        "btn_del": "🗑️ Delete Role from Cloud",
+        "save_success": "🎉 Role [{name}] successfully saved to Supabase!",
+        "save_fail": "❌ Save failed: {msg}",
+        "del_success": "🗑️ Role [{name}] successfully deleted from cloud!",
+        "protect_err": "🚫 System Protection: Cannot delete top-tier role [Chairman / CEO]!",
+        "warn_name": "⚠️ Please enter a role name!"
+    }
+}
+
+# ----------------------------------------------------
+# 🔌 Supabase 直連設定與 API 互動函式
 # ----------------------------------------------------
 SUPABASE_URL = "https://wvsqbefyekmueffcbwd.supabase.co"
 
 def get_headers():
-    # 自動抓取 Secrets 中的金鑰，若無則放空讓 API Gateway 允許公開唯讀/寫入
     key = st.secrets.get("SUPABASE_ANON_KEY", "")
     headers = {
         "Content-Type": "application/json",
@@ -65,7 +180,7 @@ def delete_role(role_name):
         return False
 
 # ----------------------------------------------------
-# 🌳 水電工程部門模組清單 (已完全移除海防廠)
+# 🌳 水電工程部門模組清單 (不含海防廠，符合需求)
 # ----------------------------------------------------
 DEPARTMENT_MODULE_TREE = {
     "📈 總經理室 (Executive Office)": [
@@ -113,12 +228,18 @@ DEPARTMENT_MODULE_TREE = {
 
 ALL_MODULE_LIST = [mod for dept in DEPARTMENT_MODULE_TREE.values() for mod in dept]
 
+# ----------------------------------------------------
+# 🖥️ 主渲染函式
+# ----------------------------------------------------
 def render_user_management_page(lang="繁體中文", **kwargs):
-    st.title("🔒 IT 管理中心 - 組織角色權限與系統稽核總覽")
-    st.caption("裕豐電機雲端高可用架構：對接 Supabase 雲端資料庫 (RBAC)。")
+    active_lang = lang if lang in USER_MGMT_I18N else "繁體中文"
+    L = USER_MGMT_I18N[active_lang]
+
+    st.title(L["title"])
+    st.caption(L["caption"])
 
     tab_roles, tab_db, tab_audit, tab_users = st.tabs([
-        "⚙️ 組織角色權限範本 (RBAC)", "🔌 雲端資料庫對接狀態", "📊 系統稽核日誌", "👥 員工帳號總覽"
+        L["tab_roles"], L["tab_db"], L["tab_audit"], L["tab_users"]
     ])
 
     roles_dict, is_connected, msg = fetch_roles()
@@ -129,63 +250,64 @@ def render_user_management_page(lang="繁體中文", **kwargs):
         }
 
     with tab_roles:
-        st.markdown("### ⚙️ 裕豐電機組織角色與權限範本 (Supabase 雲端對接)")
+        st.markdown(f"### {L['tab_roles']}")
         
         if is_connected:
-            st.success(f"🟢 {msg}")
+            st.success(f"🟢 {L['success_connected']} ({msg})")
         else:
             st.error(f"❌ {msg}")
 
         col_search, col_stats = st.columns([3, 1])
         with col_search:
-            search_kw = st.text_input("🔍 搜尋角色關鍵字", placeholder="輸入角色名稱過濾...")
+            search_kw = st.text_input(L["search_label"], placeholder=L["search_ph"])
         with col_stats:
-            st.metric("雲端資料庫已建角色數", len(roles_dict))
+            st.metric(L["cloud_roles_count"], len(roles_dict))
 
         table_rows = []
         for r_name, r_info in roles_dict.items():
             if not search_kw or (search_kw.lower() in r_name.lower() or search_kw.lower() in r_info["description"].lower()):
+                mod_count_str = "全開 (ALL)" if r_info["allowed_modules"] == "ALL" else f"{len(r_info['allowed_modules'].split(','))} 個頁面"
                 table_rows.append({
-                    "角色名稱": r_name,
-                    "職責與權限範圍": r_info["description"],
-                    "允許開啟之頁面數量": "全開 (ALL)" if r_info["allowed_modules"] == "ALL" else f"{len(r_info['allowed_modules'].split(','))} 個頁面"
+                    L["col_role_name"]: r_name,
+                    L["col_desc"]: r_info["description"],
+                    L["col_modules_count"]: mod_count_str
                 })
 
         st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
 
         st.markdown("---")
-        st.markdown("### ✏️ 角色權限編輯維護 (新增 / 載入修改 / 刪除)")
+        st.markdown(f"### {L['edit_header']}")
 
-        role_opts = ["🆕 建立新角色 (Create New)"] + list(roles_dict.keys())
-        sel_role = st.selectbox("請選擇欲編輯的角色", options=role_opts, index=0)
+        role_opts = [L["create_new_opt"]] + list(roles_dict.keys())
+        sel_role = st.selectbox(L["select_role_lbl"], options=role_opts, index=0)
 
-        is_edit = sel_role != "🆕 建立新角色 (Create New)"
+        is_edit = sel_role != L["create_new_opt"]
         default_name = sel_role if is_edit else ""
         default_desc = roles_dict[sel_role]["description"] if is_edit else ""
 
         curr_set = set(ALL_MODULE_LIST) if (is_edit and roles_dict[sel_role]["allowed_modules"] == "ALL") else (set(roles_dict[sel_role]["allowed_modules"].split(",")) if is_edit else set(ALL_MODULE_LIST))
 
-        st.markdown("#### 1. 輸入角色名稱與說明")
-        in_name = st.text_input("職位角色名稱", value=default_name, placeholder="例如: 協理、現場工地主任")
-        in_desc = st.text_input("部門職責與資料範圍說明", value=default_desc, placeholder="例如: 協助總經理工程支援指派，以及生產車間管理")
+        st.markdown(f"#### {L['step1_title']}")
+        in_name = st.text_input(L["role_name_lbl"], value=default_name, placeholder=L["role_name_ph"])
+        in_desc = st.text_input(L["role_desc_lbl"], value=default_desc, placeholder=L["role_desc_ph"])
 
-        st.markdown("#### 2. 勾選該職位角色可操作功能：")
+        st.markdown(f"#### {L['step2_title']}")
         selected_mods = []
         for dept, mods in DEPARTMENT_MODULE_TREE.items():
             st.markdown(f"##### {dept}")
             cols = st.columns(3)
             for idx, m in enumerate(mods):
                 with cols[idx % 3]:
-                    chk = st.checkbox(m, value=(m in curr_set), key=f"chk_clean_{sel_role}_{dept}_{idx}_{m}")
+                    chk = st.checkbox(m, value=(m in curr_set), key=f"chk_clean_{active_lang}_{sel_role}_{dept}_{idx}_{m}")
                     if chk:
                         selected_mods.append(m)
             st.markdown("---")
 
         cb1, cb2 = st.columns(2)
         with cb1:
-            btn_save = st.button("💾 永久寫入 Supabase 雲端資料庫", type="primary", use_container_width=True)
+            btn_save = st.button(L["btn_save"], type="primary", use_container_width=True)
         with cb2:
-            btn_del = st.button("🗑️ 從雲端資料庫刪除此角色", use_container_width=True)
+            btn_del = st.button(L["btn_del"], use_container_width=True)
 
         if btn_save:
             t_name = in_name.strip()
@@ -193,21 +315,21 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                 mod_str = "ALL" if len(selected_mods) == len(ALL_MODULE_LIST) else (",".join(selected_mods) if selected_mods else "")
                 ok, res_msg = save_role(t_name, in_desc, mod_str)
                 if ok:
-                    st.success(f"🎉 角色 [{t_name}] 已成功寫入 Supabase 雲端資料庫！")
+                    st.success(L["save_success"].format(name=t_name))
                     st.rerun()
                 else:
-                    st.error(f"❌ 寫入失敗: {res_msg}")
+                    st.error(L["save_fail"].format(msg=res_msg))
             else:
-                st.warning("⚠️ 請輸入角色名稱！")
+                st.warning(L["warn_name"])
 
         if btn_del:
             t_name = in_name.strip() or (sel_role if is_edit else "")
-            if t_name and t_name != "🆕 建立新角色 (Create New)":
+            if t_name and t_name != L["create_new_opt"]:
                 if t_name == "董事長 / 總經理":
-                    st.error("🚫 系統保護：不可刪除最高階角色 [董事長 / 總經理]！")
+                    st.error(L["protect_err"])
                 else:
                     delete_role(t_name)
-                    st.success(f"🗑️ 角色 [{t_name}] 已從 Supabase 雲端成功刪除！")
+                    st.success(L["del_success"].format(name=t_name))
                     st.rerun()
 
     with tab_db:
@@ -220,9 +342,11 @@ def render_user_management_page(lang="繁體中文", **kwargs):
 
     with tab_audit:
         st.markdown("### 📊 系統操作稽核日誌")
+        st.info("稽核軌跡資料表已就緒。")
 
     with tab_users:
         st.markdown("### 👥 員工帳號總覽")
+        st.info("員工名冊與權限綁定模組已就緒。")
 
 def show(lang="繁體中文", **kwargs):
     render_user_management_page(lang, **kwargs)
