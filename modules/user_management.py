@@ -4,10 +4,9 @@ import datetime
 import os
 
 # ----------------------------------------------------
-# 🔌 Supabase / PostgreSQL 全方位轉接頭
+# 🔌 Supabase / PostgreSQL 轉接頭 (含動態連線憑證)
 # ----------------------------------------------------
 def get_universal_db_connection(db_type="Supabase / PostgreSQL", host="aws-0-ap-southeast-1.pooler.supabase.com", port="5432", user="postgres.wvsqbefyekmueffcbwd", password="", db_name="postgres"):
-    # 優先從 st.secrets 或 session_state 讀取密碼
     pwd = password or st.session_state.get("db_pass", "") or st.secrets.get("SUPABASE_DB_PASS", "")
     try:
         if "Supabase" in db_type or "PostgreSQL" in db_type:
@@ -27,13 +26,31 @@ def get_universal_db_connection(db_type="Supabase / PostgreSQL", host="aws-0-ap-
             conn = sqlite3.connect("reetech_erp_local.db", check_same_thread=False)
             return conn, "SQLite"
     except Exception as e:
-        # 若連線失敗，回傳 SQLite 作為備援，並帶出錯誤訊息
         import sqlite3
         conn = sqlite3.connect("reetech_erp_local.db", check_same_thread=False)
         return conn, f"SQLite (Fallback Error: {e})"
 
+def get_system_roles_from_db():
+    """專門給人事模組呼叫：從 Supabase 或全域資料庫取得所有 IT 設定的角色名稱列表"""
+    try:
+        cfg = st.session_state.get("db_config_state", {
+            "type": "Supabase / PostgreSQL", "host": "aws-0-ap-southeast-1.pooler.supabase.com", 
+            "port": "5432", "user": "postgres.wvsqbefyekmueffcbwd", "password": "", "db_name": "postgres"
+        })
+        conn, actual_type = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
+        cursor = conn.cursor()
+        table_prefix = "public." if "PostgreSQL" in actual_type else ""
+        cursor.execute(f"SELECT role_name FROM {table_prefix}system_roles")
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        roles = [r[0] for r in rows if r[0]]
+        return roles if roles else ["董事長 / 總經理", "財務副理 / 財務主管", "廠長 / 工務經理", "現場工地主任 / 組長", "採購 / 倉管 / 兼任會計", "一般員工"]
+    except Exception:
+        return ["董事長 / 總經理", "財務副理 / 財務主管", "廠長 / 工務經理", "現場工地主任 / 組長", "採購 / 倉管 / 兼任會計", "一般員工"]
+
 # ----------------------------------------------------
-# 🛠️ 自動在資料庫中建表 (包含 allowed_modules 權限欄位)
+# 🛠️ 自動確保 Supabase 資料表存在
 # ----------------------------------------------------
 def ensure_tables_exist(conn, actual_type):
     cursor = conn.cursor()
@@ -137,9 +154,6 @@ DEPARTMENT_MODULE_TREE = {
     ]
 }
 
-# ----------------------------------------------------
-# 🌐 多語系字典 (i18n)
-# ----------------------------------------------------
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 組織角色權限與系統稽核總覽",
@@ -176,11 +190,11 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     cfg = st.session_state.db_config_state
 
     # ----------------------------------------------------
-    # 🔌 萬用資料庫精靈 (可設定與儲存 Supabase 密碼)
+    # 🔌 萬用資料庫精靈 (設定 Supabase 密碼)
     # ----------------------------------------------------
     with tab_db:
         st.markdown("### 🔌 全模組資料表與 Supabase 資料庫連線精靈")
-        st.info("💡 說明：若連線至 Supabase，請確保輸入正確的 Database Password。")
+        st.info("💡 說明：連線至 Supabase 雲端資料庫時，請在此輸入您的資料庫密碼 (Database Password)。")
 
         with st.form("form_universal_db_wizard"):
             db_type_sel = st.selectbox(
@@ -196,9 +210,9 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                 db_name = st.text_input("資料庫名稱 (Database Name)", value=cfg["db_name"])
             with dc2:
                 db_port = st.text_input("連接埠 (Port)", value=cfg["port"])
-                db_pass = st.text_input("資料庫密碼 (Password)", type="password", value=cfg.get("password", ""))
+                db_pass = st.text_input("資料庫密碼 (Password)", type="password", value=st.session_state.get("db_pass", ""))
 
-            init_btn = st.form_submit_button("🚀 測試連線並自動生成全系統資料表", type="primary", use_container_width=True)
+            init_btn = st.form_submit_button("🚀 測試 Supabase 連線並自動初始化資料表", type="primary", use_container_width=True)
 
             if init_btn:
                 selected_type_clean = db_type_sel.split(" (")[0]
@@ -210,26 +224,25 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                 
                 conn, actual_type = get_universal_db_connection(selected_type_clean, db_host, db_port, db_user, db_pass, db_name)
                 if "Fallback" in actual_type:
-                    st.error(f"❌Supabase 連線失敗：{actual_type}")
+                    st.error(f"❌ 連線失敗：{actual_type}")
                 else:
                     ensure_tables_exist(conn, actual_type)
                     conn.close()
-                    st.success("🎉 Supabase 資料庫連線成功！`system_roles` 等核心資料表已自動確認！")
+                    st.success("🎉 Supabase 連線成功！`system_roles` 等核心資料表已自動驗證完畢！")
                     st.rerun()
 
     # ----------------------------------------------------
-    # ⚙️ 組織角色與【依部門選單開關】權限設定 (RBAC)
+    # ⚙️ 組織角色權限範本 (RBAC)
     # ----------------------------------------------------
     with tab_roles:
         st.markdown("### ⚙️ 企業組織部門角色與權限範本清冊 (Supabase 即時連線)")
         
         conn, actual_type = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
         
-        # 顯示當前連線狀態警告標籤
         if "SQLite" in actual_type:
-            st.warning(f"⚠️ 當前模式：{actual_type} (如需同步至 Supabase 雲端，請至【萬用資料庫精靈】輸入資料庫密碼)")
+            st.warning(f"⚠️ 當前處於本機暫存模式 ({actual_type})。若要同步至 Supabase 雲端，請至【萬用資料庫精靈】輸入資料庫密碼。")
         else:
-            st.success("🟢 已成功連線至 Supabase 雲端 PostgreSQL 資料庫")
+            st.success("🟢 已成功連線至 Supabase 雲端 PostgreSQL 資料庫！")
 
         ensure_tables_exist(conn, actual_type)
         
@@ -247,7 +260,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                 })
             cursor.close()
         except Exception as e:
-            st.error(f"撈取角色失敗: {e}")
             roles_from_db = [{"角色名稱": "董事長 / 總經理", "職責說明": "最高決策權限", "允許開啟之頁面": "全部頁面 (ALL)"}]
         conn.close()
 
@@ -267,7 +279,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
             
             selected_modules = []
             
-            # 按部門分組呈現勾選方塊
             for dept_name, mod_list in DEPARTMENT_MODULE_TREE.items():
                 st.markdown(f"##### {dept_name}")
                 cols = st.columns(3)
@@ -311,10 +322,10 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                         conn.close()
 
                         log_system_action(f"設定角色部門頁面權限: [{new_role_name}] 允許 {len(selected_modules)} 個功能頁面", "IT管理中心", "成功")
-                        st.success(f"✅ 職位角色 [{new_role_name}] 及其 {len(selected_modules)} 個部門頁面權限已成功寫入資料庫！")
+                        st.success(f"✅ 職位角色 [{new_role_name}] 及其部門頁面權限已成功寫入 Supabase！")
                         st.rerun()
                     except Exception as e:
-                        st.error(f"❌ 寫入 Supabase 失敗，完整原因：{e}")
+                        st.error(f"❌ 寫入失敗原因：{e}")
                 else:
                     st.warning("⚠️ 請輸入職位角色名稱！")
 
@@ -336,7 +347,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                         conn.close()
 
                         log_system_action(f"刪除組織角色權限: {new_role_name}", "IT管理中心", "成功")
-                        st.success(f"🗑️ 職位角色 [{new_role_name}] 已成功從資料庫刪除！")
+                        st.success(f"🗑️ 職位角色 [{new_role_name}] 已成功刪除！")
                         st.rerun()
                     except Exception as e:
                         st.error(f"❌ 刪除失敗：{e}")
@@ -348,8 +359,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_audit:
         st.markdown("### 📊 系統操作稽核日誌 (System Audit Logs)")
-        st.info("💡 說明：以下所有操作紀錄均直接讀取自 Supabase 雲端資料庫中的 `system_audit_logs` 資料表。")
-
         try:
             conn, actual_type = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
             ensure_tables_exist(conn, actual_type)
