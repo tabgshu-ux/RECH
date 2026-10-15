@@ -120,12 +120,11 @@ USER_MGMT_I18N = {
 }
 
 # ----------------------------------------------------
-# 🔌 Supabase 直接綁定網址與免複雜金鑰連線
+# 🔌 Supabase 連線設定與防呆容錯
 # ----------------------------------------------------
 SUPABASE_URL = "https://wvsqbefyekmueffcbwd.supabase.co"
 
 def get_headers():
-    # 支援從 Secrets 讀取金鑰（若有），若無則直接使用標準標頭，避免卡住
     key = st.secrets.get("SUPABASE_ANON_KEY", "sb_publishable_rFJjXbi9XlhAT_l_raV6CA_33zyysEp")
     headers = {
         "Content-Type": "application/json",
@@ -139,7 +138,7 @@ def get_headers():
 def fetch_roles():
     try:
         url = f"{SUPABASE_URL}/rest/v1/system_roles?select=*"
-        resp = requests.get(url, headers=get_headers(), timeout=5)
+        resp = requests.get(url, headers=get_headers(), timeout=3)
         if resp.status_code == 200:
             data = resp.json()
             roles_dict = {}
@@ -150,9 +149,15 @@ def fetch_roles():
                 }
             return roles_dict, True, "資料庫連線成功！"
         else:
-            return {}, False, f"連線回應代碼 {resp.status_code}: {resp.text}"
+            return {}, False, f"伺服器回應代碼 {resp.status_code}"
     except Exception as e:
-        return {}, False, f"連線異常: {e}"
+        # 當 DNS 解析失敗或網路逾時時，提供預設組織角色結構確保系統不當機
+        fallback_roles = {
+            "董事長 / 總經理": {"description": "最高決策與全系統總覽權限", "allowed_modules": "ALL"},
+            "副總經理": {"description": "協助總經理規劃制定公司策略、監督執行與領導團隊", "allowed_modules": "ALL"},
+            "資訊管理員 (IT)": {"description": "系統架構維護與權限配置", "allowed_modules": "ALL"}
+        }
+        return fallback_roles, False, f"網域解析異常 (DNS Error)，目前為離線安全檢視模式: {e}"
 
 def save_role(role_name, description, allowed_modules):
     try:
@@ -164,18 +169,18 @@ def save_role(role_name, description, allowed_modules):
             "description": description,
             "allowed_modules": allowed_modules
         }]
-        resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=5)
+        resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=3)
         if resp.status_code in [200, 201, 204]:
             return True, "儲存成功"
         else:
             return False, f"儲存失敗 ({resp.status_code}): {resp.text}"
     except Exception as e:
-        return False, f"儲存異常: {e}"
+        return False, f"寫入異常 (請檢查網路與 DNS): {e}"
 
 def delete_role(role_name):
     try:
         url = f"{SUPABASE_URL}/rest/v1/system_roles?role_name=eq.{role_name}"
-        resp = requests.delete(url, headers=get_headers(), timeout=5)
+        resp = requests.delete(url, headers=get_headers(), timeout=3)
         return resp.status_code in [200, 204]
     except Exception as e:
         return False
@@ -244,11 +249,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     ])
 
     roles_dict, is_connected, msg = fetch_roles()
-    if not roles_dict:
-        roles_dict = {
-            "董事長 / 總經理": {"description": "最高決策與全系統總覽權限", "allowed_modules": "ALL"},
-            "副總經理": {"description": "協助總經理規劃制定公司策略、監督執行與領導團隊", "allowed_modules": "ALL"}
-        }
 
     with tab_roles:
         st.markdown(f"### {L['tab_roles']}")
@@ -256,7 +256,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
         if is_connected:
             st.success(f"🟢 {L['success_connected']} ({msg})")
         else:
-            st.error(f"❌ {msg}")
+            st.warning(f"⚠️ {msg}")
 
         col_search, col_stats = st.columns([3, 1])
         with col_search:
@@ -284,9 +284,9 @@ def render_user_management_page(lang="繁體中文", **kwargs):
 
         is_edit = sel_role != L["create_new_opt"]
         default_name = sel_role if is_edit else ""
-        default_desc = roles_dict[sel_role]["description"] if is_edit else ""
+        default_desc = roles_dict.get(sel_role, {}).get("description", "") if is_edit else ""
 
-        curr_set = set(ALL_MODULE_LIST) if (is_edit and roles_dict[sel_role]["allowed_modules"] == "ALL") else (set(roles_dict[sel_role]["allowed_modules"].split(",")) if is_edit else set(ALL_MODULE_LIST))
+        curr_set = set(ALL_MODULE_LIST) if (is_edit and roles_dict.get(sel_role, {}).get("allowed_modules") == "ALL") else (set(roles_dict.get(sel_role, {}).get("allowed_modules", "").split(",")) if is_edit else set(ALL_MODULE_LIST))
 
         st.markdown(f"#### {L['step1_title']}")
         in_name = st.text_input(L["role_name_lbl"], value=default_name, placeholder=L["role_name_ph"])
@@ -339,7 +339,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
         if is_connected:
             st.success("🟢 雲端資料庫連線正常！")
         else:
-            st.error(f"❌ 連線失敗: {msg}")
+            st.warning(f"⚠️ 網路或 DNS 解析異常: {msg}")
 
     with tab_audit:
         st.markdown("### 📊 系統操作稽核日誌")
