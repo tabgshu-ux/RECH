@@ -4,7 +4,7 @@ import datetime
 import os
 
 # ----------------------------------------------------
-# 🔌 全方位萬用資料庫轉接頭 (Supabase / PostgreSQL 優先)
+# 🔌 全方位萬用資料庫轉接頭 (Supabase / PostgreSQL)
 # ----------------------------------------------------
 def get_universal_db_connection(db_type="Supabase / PostgreSQL", host="aws-0-ap-southeast-1.pooler.supabase.com", port="5432", user="postgres.wvsqbefyekmueffcbwd", password="", db_name="postgres"):
     try:
@@ -30,7 +30,7 @@ def get_universal_db_connection(db_type="Supabase / PostgreSQL", host="aws-0-ap-
         return conn, f"SQLite (Fallback: {e})"
 
 # ----------------------------------------------------
-# 🛠️ 自動在 Supabase 中確保表格存在 (防止 no such table)
+# 🛠️ 自動在 Supabase 中確保表格存在
 # ----------------------------------------------------
 def ensure_tables_exist(conn, actual_type):
     cursor = conn.cursor()
@@ -88,37 +88,61 @@ def log_system_action(action_desc, module_name="IT管理中心", status="成功"
         print(f"寫入稽核日誌失敗: {e}")
 
 # ----------------------------------------------------
-# 🌐 全系統功能網頁頁面清單 (用於角色權限勾選)
+# 🌳 依部門分類之全系統樹狀功能模組清單
 # ----------------------------------------------------
-SYSTEM_ALL_MODULES = [
-    "📢 公司重要公告與簡報",
-    "👥 員工個人檔案與人事管理",
-    "🕒 廠內員工固定打卡與出勤紀錄",
-    "🏗️ 外勤出勤統計與工地人數監控",
-    "🍱 幹部宿舍伙食與採購控管",
-    "🏢 廠區與工作廠區管理",
-    "🚧 廠區車輛進出口門禁與派車審核",
-    "🔧 車輛維修保養紀錄",
-    "💻 固定資產與設備管理",
-    "🛒 採購與應付帳款 (AP)",
-    "💰 應收帳款與對帳管理中心",
-    "🧾 越南稅務標準財務報表 (Thông tư 200)",
-    "💵 員工薪資計算與保險扣除",
-    "🧾 電子發票綜合管理與 XML 報檔",
-    "⚡ 配電盤組裝配線組與拍照入庫",
-    "📐 工程 BOM 零件自動展開與採購",
-    "📑 工程報價單與合約簽核"
-]
+DEPARTMENT_MODULE_TREE = {
+    "📈 總經理室 (Executive Office)": [
+        "📢 公司重要公告與簡報",
+        "📊 全公司 KPI 營運績效與決策儀表板",
+        "📑 高階主管審核與拍板中心"
+    ],
+    "🏢 管理部 (Management Dept)": [
+        "👥 員工個人檔案與人事管理",
+        "🕒 廠內員工固定打卡與出勤紀錄",
+        "🏗️ 外勤出勤統計與工地人數監控",
+        "🍱 幹部宿舍伙食與採購控管",
+        "🏢 廠區與工作廠區管理",
+        "🚧 廠區車輛進出口門禁與派車審核",
+        "🔧 車輛維修保養紀錄",
+        "💻 固定資產與設備管理",
+        "🛒 採購與應付帳款 (AP)",
+        "💰 應收帳款與對帳管理中心",
+        "🧾 越南稅務標準財務報表 (Thông tư 200)",
+        "💵 員工薪資計算與保險扣除",
+        "🧾 電子發票綜合管理與 XML 報檔"
+    ],
+    "📑 全公司電子簽核中心 (Approval Center)": [
+        "✍️ 跨部門電子表單簽核與呈核系統",
+        "📋 雙層報價單高階拍板簽核佇列"
+    ],
+    "🛠️ 工程與設計管理中心 (Engineering & Design Center)": [
+        "📐 工程 BOM 零件自動展開與採購/庫存連動",
+        "📑 工程報價單與雙層利潤分析/合約簽核",
+        "⚡ 配電盤組裝配線組與拍照入庫模組",
+        "👷 現場工地主任日報表與點工點料扣減",
+        "🛠️ 外包商請款與估驗進度比對"
+    ],
+    "🏭 生產部 (Production Dept)": [
+        "⚡ 配電盤組裝配線組與拍照入庫",
+        "📦 越南廠（西寧/海防）倉庫庫存盤點與領料"
+    ],
+    "💻 資訊管理部 (IT & System)": [
+        "🔒 帳號權限與全系統稽核軌跡",
+        "🔌 客戶 ERP 模組授權與功能開關",
+        "萬用資料庫一鍵安裝精靈 (DB Wizard)",
+        "🔌 越南電子發票 API 設定"
+    ]
+}
 
 # ----------------------------------------------------
 # 🌐 多語系字典 (i18n)
 # ----------------------------------------------------
 USER_MGMT_I18N = {
     "繁體中文": {
-        "title": "🔒 IT 管理中心 - 組織角色權限與一鍵萬用資料庫精靈",
-        "caption": "對接 Supabase 雲端資料庫，提供全模組資料表自動生成與權限控管 (RBAC)。",
+        "title": "🔒 IT 管理中心 - 組織角色權限與系統稽核總覽",
+        "caption": "對接 Supabase 雲端資料庫，依一級部門樹狀結構設定各職位角色可開啟之頁面權限 (RBAC)。",
         "tab_audit": "📊 系統稽核日誌 (Supabase 即時記錄)",
-        "tab_roles": "⚙️ 組織角色與功能頁面權限設定 (RBAC)",
+        "tab_roles": "⚙️ 組織角色權限範本 (RBAC)",
         "tab_users": "👥 員工與帳號總覽",
         "tab_db": "🔌 萬用資料庫一鍵安裝精靈 (DB Wizard)",
         "tab_api": "🔌 越南電子發票 API 設定",
@@ -132,7 +156,6 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 預設直接對接 Supabase
     if "db_config_state" not in st.session_state:
         st.session_state.db_config_state = {
             "type": "Supabase / PostgreSQL", "host": "aws-0-ap-southeast-1.pooler.supabase.com", 
@@ -146,7 +169,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     cfg = st.session_state.db_config_state
 
     # ----------------------------------------------------
-    # 🔌 專屬頁籤：萬用資料庫一鍵安裝精靈
+    # 🔌 萬用資料庫精靈
     # ----------------------------------------------------
     with tab_db:
         st.markdown("### 🔌 全模組資料表與資料庫一鍵自動生成精靈")
@@ -183,12 +206,11 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                 st.rerun()
 
     # ----------------------------------------------------
-    # ⚙️ 組織角色與「點選功能頁面」權限設定 (RBAC)
+    # ⚙️ 組織角色與【依部門選單開關】權限設定 (RBAC)
     # ----------------------------------------------------
     with tab_roles:
-        st.markdown("### ⚙️ 企業組織部門角色與可開啟之頁面權限設定 (Supabase 連線)")
-        st.info("💡 說明：在這裡為每個職位（如副總經理、財務副理、現場主任）動態勾選『允許開啟與操作的頁面功能』。")
-
+        st.markdown("### ⚙️ 企業組織部門角色與權限範本清冊 (資料庫即時連線)")
+        
         conn, actual_type = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
         ensure_tables_exist(conn, actual_type)
         
@@ -201,7 +223,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                     "職責說明": row["description"],
                     "允許開啟之頁面": row["allowed_modules"] if row["allowed_modules"] else "全部頁面 (ALL)"
                 })
-        except Exception as e:
+        except Exception:
             roles_from_db = [{"角色名稱": "董事長 / 總經理", "職責說明": "最高決策權限", "允許開啟之頁面": "全部頁面 (ALL)"}]
         conn.close()
 
@@ -210,29 +232,32 @@ def render_user_management_page(lang="繁體中文", **kwargs):
         st.markdown("---")
         st.markdown("### ➕ 設定 / 新增職位角色及其可開啟之網頁功能")
         
-        with st.form("form_db_role_crud_with_permissions"):
+        with st.form("form_db_role_crud_by_dept"):
             c_r1, c_r2 = st.columns(2)
             with c_r1:
                 new_role_name = st.text_input("職位角色名稱", value="副總經理", placeholder="例如: 副總經理、機電科長、專案經理")
             with c_r2:
                 new_role_desc = st.text_input("部門職責與資料範圍說明", value="負責公司所有業務執行及工程管報與報價")
 
-            st.markdown("#### 🌐 勾選該職位角色可以開啟與操作的網頁功能 (頁面權限隔離)：")
+            st.markdown("🌐 **勾選該職位角色可以開啟與操作的網頁功能（依一級部門與工程部分組）：**")
             
-            # 以 3 欄顯示所有選單模組供勾選
-            col_m1, col_m2, col_m3 = st.columns(3)
             selected_modules = []
             
-            for idx, mod_name in enumerate(SYSTEM_ALL_MODULES):
-                target_col = col_m1 if idx % 3 == 0 else (col_m2 if idx % 3 == 1 else col_m3)
-                with target_col:
-                    if st.checkbox(mod_name, value=True, key=f"chk_mod_{idx}"):
-                        selected_modules.append(mod_name)
+            # 按部門分組折疊或分區呈現
+            for dept_name, mod_list in DEPARTMENT_MODULE_TREE.items():
+                st.markdown(f"##### {dept_name}")
+                cols = st.columns(3)
+                for i, mod in enumerate(mod_list):
+                    c = cols[i % 3]
+                    with c:
+                        chk_key = f"chk_{dept_name}_{i}_{mod}"
+                        if st.checkbox(mod, value=True, key=chk_key):
+                            selected_modules.append(mod)
+                st.markdown("---")
 
-            st.markdown("---")
             col_cr1, col_cr2 = st.columns(2)
             with col_cr1:
-                save_role_btn = st.form_submit_button("💾 永久寫入 Supabase 保存角色與頁面權限", type="primary", use_container_width=True)
+                save_role_btn = st.form_submit_button("💾 永久寫入 Supabase 保存角色與部門頁面權限", type="primary", use_container_width=True)
             with col_cr2:
                 del_role_btn = st.form_submit_button("🗑️ 從 Supabase 刪除指定職位", use_container_width=True)
 
@@ -261,8 +286,8 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                         cursor.close()
                         conn.close()
 
-                        log_system_action(f"設定角色頁面權限: [{new_role_name}] 允許 {len(selected_modules)} 個功能網頁", "IT管理中心", "成功")
-                        st.success(f"✅ 職位角色 [{new_role_name}] 及其 {len(selected_modules)} 項頁面權限已成功寫入 Supabase！")
+                        log_system_action(f"設定角色部門頁面權限: [{new_role_name}] 允許 {len(selected_modules)} 個功能頁面", "IT管理中心", "成功")
+                        st.success(f"✅ 職位角色 [{new_role_name}] 及其部門頁面權限已成功寫入 Supabase！")
                         st.rerun()
                     except Exception as e:
                         st.error(f"寫入發生錯誤：{e}")
@@ -295,7 +320,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                     st.warning("⚠️ 請輸入欲刪除的職位角色名稱！")
 
     # ----------------------------------------------------
-    # 📊 系統稽核日誌 (直接讀取 Supabase)
+    # 📊 系統稽核日誌
     # ----------------------------------------------------
     with tab_audit:
         st.markdown("### 📊 系統操作稽核日誌 (System Audit Logs)")
