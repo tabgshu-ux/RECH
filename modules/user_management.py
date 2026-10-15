@@ -35,7 +35,7 @@ def get_universal_db_connection(db_type="SQLite", host="localhost", port="5432",
     return sqlite3.connect("reetech_erp_local.db", check_same_thread=False), "SQLite"
 
 # ----------------------------------------------------
-# 📝 核心寫入資料庫稽核日誌函數 (Audit Log Writer)
+# 📝 核心寫入資料庫稽核日誌函數 (智慧適應 SQL 語法)
 # ----------------------------------------------------
 def log_system_action(action_desc, module_name="IT管理中心", status="成功"):
     """自動將系統操作寫入資料庫的 system_audit_logs 表格中"""
@@ -75,7 +75,6 @@ def init_all_system_tables(db_type, host, port, user, password, db_name):
     try:
         is_sqlite = "SQLite" in actual_type
         
-        # 1. 組織角色權限表 (RBAC)
         if is_sqlite:
             cursor.execute("CREATE TABLE IF NOT EXISTS system_roles (role_name TEXT PRIMARY KEY, description TEXT)")
             cursor.execute("CREATE TABLE IF NOT EXISTS system_users (username TEXT PRIMARY KEY, name TEXT, role TEXT, site TEXT)")
@@ -89,7 +88,6 @@ def init_all_system_tables(db_type, host, port, user, password, db_name):
             cursor.execute("CREATE TABLE IF NOT EXISTS engineering_quotations (quot_id VARCHAR(50) PRIMARY KEY, client VARCHAR(255), project_name VARCHAR(255), total_price NUMERIC, status VARCHAR(50), date VARCHAR(50))")
             cursor.execute("CREATE TABLE IF NOT EXISTS system_audit_logs (id SERIAL PRIMARY KEY, time VARCHAR(50), user_account VARCHAR(50), action VARCHAR(255), module VARCHAR(50), ip VARCHAR(50), status VARCHAR(50))")
 
-        # 僅初始化基本必要的超級管理員與預設公告
         if is_sqlite:
             cursor.execute("INSERT OR IGNORE INTO system_roles (role_name, description) VALUES (?, ?)", ("董事長 / 總經理", "最高決策與全系統總覽權限"))
             cursor.execute("INSERT OR IGNORE INTO system_users (username, name, role, site) VALUES (?, ?, ?, ?)", ("admin", "系統管理員", "董事長 / 總經理", "總公司 / 越南廠"))
@@ -150,8 +148,8 @@ def render_user_management_page(lang="繁體中文", **kwargs):
 
     if "db_config_state" not in st.session_state:
         st.session_state.db_config_state = {
-            "type": "Supabase / PostgreSQL", "host": "aws-0-ap-southeast-1.pooler.supabase.com", "port": "5432",
-            "user": "postgres.wvsqbefyekmueffcbwd", "password": "", "db_name": "postgres"
+            "type": "SQLite", "host": "localhost", "port": "5432",
+            "user": "postgres", "password": "", "db_name": "reetech_erp"
         }
 
     tab_audit, tab_roles, tab_users, tab_db, tab_api = st.tabs([
@@ -165,7 +163,7 @@ def render_user_management_page(lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_db:
         st.markdown("### 🔌 全模組資料表與資料庫一鍵自動生成精靈")
-        st.info("💡 說明：點擊下方按鈕，系統將自動為您在選定的資料庫建立『所有核心模組資料表（角色權限、人事、公告、工程報價、稽核日誌等）』，不強加限制預設職位，讓您可以依照新公司或新職位自由動態擴充！")
+        st.info("💡 說明：點擊下方按鈕，系統將自動為您在選定的資料庫建立『所有核心模組資料表』。")
 
         with st.form("form_universal_db_wizard"):
             db_type_sel = st.selectbox(
@@ -194,12 +192,12 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                 
                 success, msg = init_all_system_tables(selected_type_clean, db_host, db_port, db_user, db_pass, db_name)
                 if success:
-                    st.success(f"🎉 資料庫安裝成功！已成功連線至 **{msg}** 並且完成所有模組資料表（RBAC、人事、公告、報價、日誌等）之自動生成！")
+                    st.success(f"🎉 資料庫安裝成功！已成功連線至 **{msg}** 並且完成所有模組資料表之自動生成！")
                 else:
                     st.error(f"❌ 資料庫初始化失敗：{msg}")
 
     # ----------------------------------------------------
-    # ⚙️ 組織角色權限範本管理 (動態 CRUD + 寫入稽核日誌)
+    # ⚙️ 組織角色權限範本管理 (動態 CRUD + 智慧適應 SQL)
     # ----------------------------------------------------
     with tab_roles:
         st.markdown("### ⚙️ 企業組織部門角色與權限範本清冊 (資料庫即時連線)")
@@ -233,12 +231,15 @@ def render_user_management_page(lang="繁體中文", **kwargs):
             if save_role_btn:
                 if new_role_name:
                     try:
-                        conn, _ = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
+                        conn, actual_type = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
                         cursor = conn.cursor()
-                        if "SQLite" in cfg["type"]:
+                        is_sqlite = "SQLite" in actual_type
+                        
+                        if is_sqlite:
                             cursor.execute("INSERT OR REPLACE INTO system_roles (role_name, description) VALUES (?, ?)", (new_role_name, new_role_desc))
                         else:
                             cursor.execute("INSERT INTO system_roles (role_name, description) VALUES (%s, %s) ON CONFLICT (role_name) DO UPDATE SET description = EXCLUDED.description", (new_role_name, new_role_desc))
+                        
                         conn.commit()
                         cursor.close()
                         conn.close()
@@ -254,12 +255,15 @@ def render_user_management_page(lang="繁體中文", **kwargs):
             if del_role_btn:
                 if new_role_name:
                     try:
-                        conn, _ = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
+                        conn, actual_type = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
                         cursor = conn.cursor()
-                        if "SQLite" in cfg["type"]:
+                        is_sqlite = "SQLite" in actual_type
+                        
+                        if is_sqlite:
                             cursor.execute("DELETE FROM system_roles WHERE role_name = ?", (new_role_name,))
                         else:
                             cursor.execute("DELETE FROM system_roles WHERE role_name = %s", (new_role_name,))
+                        
                         conn.commit()
                         cursor.close()
                         conn.close()
@@ -273,11 +277,11 @@ def render_user_management_page(lang="繁體中文", **kwargs):
                     st.warning("⚠️ 請輸入欲刪除的職位角色名稱！")
 
     # ----------------------------------------------------
-    # 📊 系統稽核日誌 (直接從資料庫讀取)
+    # 📊 系統稽核日誌
     # ----------------------------------------------------
     with tab_audit:
         st.markdown("### 📊 系統操作稽核日誌 (System Audit Logs)")
-        st.info("💡 說明：以下所有操作紀錄均直接讀取自雲端資料庫中的 `system_audit_logs` 資料表，具備永久保存與資安稽核追溯能力。")
+        st.info("💡 說明：以下所有操作紀錄均直接讀取自資料庫中的 `system_audit_logs` 資料表。")
 
         try:
             conn, _ = get_universal_db_connection(cfg["type"], cfg["host"], cfg["port"], cfg["user"], cfg["password"], cfg["db_name"])
