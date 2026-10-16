@@ -23,7 +23,7 @@ st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 組織角色權限與系統模組授權",
-        "caption": "裕豐電機（越南西寧廠）雲端架構：專注於系統權限範本配置與安全性稽核軌跡。",
+        "caption": "裕豐電機（越南西寧廠）組織架構對照：嚴格對應公司組織圖編號與權限範本。",
         "tab_roles": "⚙️ 組織角色與模組權限設定 (RBAC)",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
         "tab_db": "🔌 資料庫連線狀態",
@@ -32,46 +32,68 @@ USER_MGMT_I18N = {
         "cloud_roles_count": "已建角色數",
         "search_ph": "輸入角色名稱過濾...",
         "search_label": "🔍 搜尋角色關鍵字",
-        "col_stt": "序號",
-        "col_role_name": "角色名稱",
-        "col_desc": "職責與權限範圍",
+        "col_stt": "組織編號",
+        "col_role_name": "職位角色名稱",
+        "col_desc": "部門職責與組織架構範圍",
         "col_modules_count": "允許開啟之頁面數量",
-        "edit_header": "✏️ 角色權限編輯維護 (新增 / 載入修改 / 刪除)",
+        "edit_header": "✏️ 組織角色權限編輯維護 (依組織圖編號對照)",
         "select_role_lbl": "請選擇欲編輯的角色：",
         "create_new_opt": "🆕 建立新角色 (Create New)",
-        "step1_title": "1. 輸入角色名稱與說明",
-        "role_name_lbl": "職位角色代碼與名稱 *",
-        "role_name_ph": "例如: 董事長/總經理, 廠長",
-        "role_desc_lbl": "部門職責與資料範圍說明",
-        "role_desc_ph": "例如: 協助西寧廠工程支援指派",
+        "step1_title": "1. 輸入組織職位名稱與說明",
+        "role_name_lbl": "職位名稱 (對應組織圖) *",
+        "role_name_ph": "例如: 1. 董事長, 4. 廠長 / 副協理",
+        "role_desc_lbl": "組織職責與權限範圍說明",
+        "role_desc_ph": "例如: 公司經營方向規劃與戰略定奪",
         "step2_title": "2. 勾選該職位角色可操作功能頁面：",
-        "btn_save_role": "💾 儲存角色權限設定",
+        "btn_save_role": "💾 儲存組織角色設定",
         "btn_del_role": "🗑️ 刪除此角色",
-        "save_role_success": "🎉 角色權限設定已成功儲存！",
+        "save_role_success": "🎉 組織角色權限已成功儲存！",
         "del_role_success": "🗑️ 角色已成功刪除！"
     }
 }
 
-# 👑 裕豐電機標準企業組織階級對照權重排序
+# 👑 嚴格對應您提供的「裕豐電機工業有限公司組織架構圖」完整 20 個編號順序
 HIERARCHY_ORDER = [
-    "董事長", "總經理", "副總經理", "協理廠長", 
-    "廠長", "工務經理", "財務副理", "財務主管", 
-    "管理部主管", "工程主管", "現場工地主任", "組長", 
-    "倉庫管理員", "採購", "倉管", "兼任會計", 
-    "人事", "精算主管", "系統管理員", "一般員工"
+    "1. 董事長",
+    "2. 總經理",
+    "3. 副總經理",
+    "4. 廠長 / 副協理",
+    "5. 管理部經理",
+    "6. 行政主管",
+    "7. 人事",
+    "8. 財務副理",
+    "9. 設計經理",
+    "10. 設計主管",
+    "11. 設計人員",
+    "12. 精算主管",
+    "13. 精算助理",
+    "14. 生產主管",
+    "15. 生產組長",
+    "16. 工程人員",
+    "17. 生產組",
+    "18. 板金組",
+    "19. 烤漆組",
+    "20. 配電組裝",
+    "系統管理員 (Admin)",
+    "一般員工 (Staff)"
 ]
 
 def get_role_sort_weight(role_name):
-    """計算角色在組織階級中的排序權重"""
+    """嚴格依照組織架構圖編號進行排序權重計算"""
     for idx, h_role in enumerate(HIERARCHY_ORDER):
-        if h_role in role_name:
+        # 比對關鍵字或編號
+        clean_h = h_role.split(". ")[-1] if ". " in h_role else h_role
+        if h_role in role_name or clean_h in role_name:
             return idx
     return 999  # 未在清單內的排在最後
 
 def fetch_roles(engine, lang_dict):
     fallback_roles = {
-        "董事長 / 總經理 (Executive)": {"description": "最高決策與全系統總覽權限", "allowed_modules": "ALL"},
-        "廠長 / 工務經理 (Plant/Project Manager)": {"description": "西寧廠主管，負責考勤審核與日常營運", "allowed_modules": "ALL"}
+        "1. 董事長": {"description": "公司經營方向規劃與戰略定奪", "allowed_modules": "ALL"},
+        "2. 總經理": {"description": "董事長指示的公司經營方向執行與公司管理", "allowed_modules": "ALL"},
+        "3. 副總經理": {"description": "工程報價及現場探勘、人員調配與督導", "allowed_modules": "ALL"},
+        "4. 廠長 / 副協理": {"description": "生產車間管理、工程支援與人事管理", "allowed_modules": "ALL"},
+        "5. 管理部經理": {"description": "行政、財務、總務管理、ERP規劃與資訊管理", "allowed_modules": "ALL"}
     }
     if engine is None:
         return fallback_roles, False, lang_dict["db_not_connected"]
@@ -202,7 +224,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         with col_stats:
             st.metric(L["cloud_roles_count"], len(roles_dict))
 
-        # 👑 依據企業組織階級權重進行排序
+        # 👑 嚴格依照組織架構圖編號權重進行排序
         sorted_role_names = sorted(roles_dict.keys(), key=get_role_sort_weight)
 
         table_rows = []
@@ -263,12 +285,12 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.success(L["save_role_success"])
                 st.rerun()
             else:
-                st.warning("⚠️ 請輸入角色名稱！")
+                st.warning("⚠️ 請輸入組織角色名稱！")
 
         if btn_del:
             t_name = in_name.strip() or sel_role_key
             if t_name and t_name != L["create_new_opt"]:
-                if "董事長" in t_name or "總經理" in t_name:
+                if "1. 董事長" in t_name or "2. 總經理" in t_name:
                     st.error("🚫 系統保護：最高主管角色無法被刪除！")
                 else:
                     delete_role_db(engine, t_name)
