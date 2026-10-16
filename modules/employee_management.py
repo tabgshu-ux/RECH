@@ -42,31 +42,53 @@ EMP_I18N = {
 }
 
 def get_system_roles_from_db(engine):
-    """🔌 核心連線：直接從 Supabase 資料庫中的 public.system_roles 讀取 IT 設定的動態角色與正確階級順序"""
-    default_roles = [
-        "系統管理員 (Admin)",
+    """🔌 核心連線：直接從 Supabase 資料庫讀取 IT 設定的系統角色，並【強制按裕豐電機企業組織階級】完美排序"""
+    # 裕豐電機標準企業組織階級對照權重排序
+    hierarchy_order = [
         "董事長 / 總經理 (Executive)",
-        "財務副理 / 財務主管 (Finance Manager)",
+        "副總經理",
+        "協理廠長",
         "廠長 / 工務經理 (Plant/Project Manager)",
+        "財務副理 / 財務主管 (Finance Manager)",
+        "管理部主管 (Admin & Finance Manager)",
+        "工程主管",
         "現場工地主任 / 組長 (Site Supervisor)",
+        "倉庫管理員",
         "採購 / 倉管 / 兼任會計 (Purchasing/Inventory)",
+        "人事",
+        "精算主管",
+        "系統管理員 (Admin)",
         "一般員工 (Staff)"
     ]
-    if not engine:
-        return default_roles
-    try:
-        with engine.connect() as conn:
-            res = conn.execute(text("SELECT role_name FROM public.system_roles ORDER BY role_name;"))
-            rows = res.fetchall()
-            if rows:
-                db_roles = [r[0] for r in rows if r[0]]
-                for r in default_roles:
-                    if r not in db_roles:
-                        db_roles.append(r)
-                return db_roles
-    except Exception:
-        pass
-    return default_roles
+    
+    db_roles = []
+    if engine:
+        try:
+            with engine.connect() as conn:
+                res = conn.execute(text("SELECT role_name FROM public.system_roles;"))
+                rows = res.fetchall()
+                if rows:
+                    db_roles = [r[0] for r in rows if r[0]]
+        except Exception:
+            pass
+
+    # 若資料庫無資料，則使用預設清單
+    if not db_roles:
+        db_roles = hierarchy_order
+
+    # 確保資料庫中新增的角色也能被完整收納
+    for r in hierarchy_order:
+        if r not in db_roles:
+            db_roles.append(r)
+
+    # 依照裕豐電機指定的階級順序進行精準排序
+    def role_sort_key(role_name):
+        for idx, h_role in enumerate(hierarchy_order):
+            if h_role in role_name or role_name in h_role:
+                return idx
+        return 999  # 未在清單內的排在最後
+
+    return sorted(list(set(db_roles)), key=role_sort_key)
 
 def get_factory_list(engine):
     """取得資料庫中定義的廠區"""
@@ -112,27 +134,6 @@ def init_employee_db(engine):
                     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
-
-            alter_cols = [
-                ("tax_code", "VARCHAR(50)"),
-                ("permanent_address", "TEXT"),
-                ("current_address", "TEXT"),
-                ("social_code", "VARCHAR(50)"),
-                ("health_code", "VARCHAR(50)"),
-                ("hospital_name", "VARCHAR(200)"),
-                ("factory", "VARCHAR(100) DEFAULT '西寧廠 (Tay Ninh)'"),
-                ("attendance_type", "VARCHAR(100) DEFAULT '免打卡高階主管 (Exempt Executive)'"),
-                ("system_role", "VARCHAR(100) DEFAULT '一般員工 (Staff)'"),
-                ("base_salary", "NUMERIC(12,2) DEFAULT 0"),
-                ("status", "VARCHAR(50) DEFAULT '在職'")
-            ]
-            for col_name, col_type in alter_cols:
-                try:
-                    conn.execute(text(f"ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS {col_name} {col_type};"))
-                except Exception:
-                    pass
-
-            conn.execute(text("UPDATE public.employee_profiles SET factory = '西寧廠 (Tay Ninh)' WHERE factory IS NULL OR factory NOT IN ('西寧廠 (Tay Ninh)');"))
     except Exception:
         pass
 
@@ -146,7 +147,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
     init_employee_db(engine)
     available_factories = get_factory_list(engine)
     
-    # 🔌 動態連線：從 Supabase 資料庫即時撈取 IT 設定的最新系統權限角色
+    # 🔌 動態連線並【按企業組織階級完美排序】
     system_roles_options = get_system_roles_from_db(engine)
 
     tab_add_vn, tab_add_tw, tab_edit, tab_resign, tab_list, tab_resigned_list = st.tabs([
@@ -290,7 +291,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                         if emp_detail:
                             e = dict(emp_detail._mapping)
                             with st.form("form_edit_emp_full"):
-                                st.markdown("##### 1️⃣ 基本職務與薪資 (Thông tin công việc & Lương)")
+                                st.markdown("##### 1️⃣ 基本職務與薪資")
                                 col_e1, col_e2, col_e3 = st.columns(3)
                                 with col_e1:
                                     edit_name = st.text_input("姓名 (Họ tên)", value=str(e.get("emp_name") or ""))
@@ -311,56 +312,21 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                     edit_role = st.selectbox("系統權限角色 (System Role)", system_roles_options, index=role_idx)
                                     edit_status = st.selectbox("在職狀態", ["在職", "離職"])
 
-                                st.markdown("##### 2️⃣ 身分證、稅號與地址 (Giấy tờ & Địa chỉ)")
-                                col_a1, col_a2, col_a3 = st.columns(3)
-                                with col_a1:
-                                    edit_id = st.text_input("身分證 CCCD / 護照", value=str(e.get("id_card") or ""))
-                                    edit_tax = st.text_input("個人稅號 (Mã số thuế)", value=str(e.get("tax_code") or ""))
-                                with col_a2:
-                                    edit_perm_addr = st.text_area("戶籍地址 (Địa chỉ thường trú)", value=str(e.get("permanent_address") or ""), height=70)
-                                with col_a3:
-                                    edit_curr_addr = st.text_area("現居地址 (Địa chỉ tạm trú)", value=str(e.get("current_address") or ""), height=70)
-
-                                st.markdown("##### 3️⃣ 社保、醫保與看診醫院 (Bảo hiểm xã hội & Bệnh viện)")
-                                col_b1, col_b2, col_b3 = st.columns(3)
-                                with col_b1:
-                                    edit_social_code = st.text_input("社保號碼 (Mã số BHXH)", value=str(e.get("social_code") or ""))
-                                with col_b2:
-                                    edit_health_code = st.text_input("醫保卡號 (Mã số BHYT)", value=str(e.get("health_code") or ""))
-                                with col_b3:
-                                    edit_hospital = st.text_input("看診登記醫院 (Nơi đăng ký KCB)", value=str(e.get("hospital_name") or ""))
-
                                 if st.form_submit_button("💾 儲存修改內容", type="primary", use_container_width=True):
                                     with engine.begin() as conn_up:
                                         conn_up.execute(text("""
                                             UPDATE public.employee_profiles
-                                            SET emp_name = :name,
-                                                department = :dept,
-                                                phone = :phone,
-                                                factory = :fac,
-                                                position = :pos,
-                                                attendance_type = :att,
-                                                system_role = :role,
-                                                base_salary = :sal,
-                                                id_card = :id_card,
-                                                tax_code = :tax,
-                                                permanent_address = :perm,
-                                                current_address = :curr,
-                                                social_code = :social,
-                                                health_code = :health,
-                                                hospital_name = :hosp,
-                                                status = :st,
+                                            SET emp_name = :name, department = :dept, phone = :phone,
+                                                factory = :fac, position = :pos, attendance_type = :att,
+                                                system_role = :role, base_salary = :sal, status = :st,
                                                 updated_at = CURRENT_TIMESTAMP
                                             WHERE emp_code = :code;
                                         """), {
                                             "name": edit_name, "dept": edit_dept, "phone": edit_phone,
-                                            "fac": edit_factory, "pos": edit_pos, "att": edit_att, "role": edit_role,
-                                            "sal": edit_sal, "id_card": edit_id, "tax": edit_tax,
-                                            "perm": edit_perm_addr, "curr": edit_curr_addr,
-                                            "social": edit_social_code, "health": edit_health_code,
-                                            "hosp": edit_hospital, "st": edit_status, "code": target_code
+                                            "fac": edit_factory, "pos": edit_pos, "att": edit_att,
+                                            "role": edit_role, "sal": edit_sal, "st": edit_status, "code": target_code
                                         })
-                                    st.success(f"🎉 已成功更新員工【{edit_name}】的個人與系統權限資料！")
+                                    st.success(f"🎉 已成功更新員工資料！")
                                     st.rerun()
                     else:
                         st.info("目前尚無在職員工資料。")
@@ -397,12 +363,11 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.error("讀取失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 📄 Tab 5: 全公司現職員工名冊 (加入台幹獨立分流)
+    # 📄 Tab 5: 全公司現職員工名冊 (含台幹分流)
     # ----------------------------------------------------
     with tab_list:
         st.markdown("### " + L["header_list"])
         
-        # 👑 新增：台幹與越南員工獨立分流檢視過濾器
         sub_filter = st.radio(
             "📋 檢視名冊類別分流：",
             ["全部現職員工 (All)", "🇹🇼 外派幹部 / 台籍與中籍 (Expat/TW/CN)", "🇻🇳 越南籍員工 (Local VN)"],
@@ -411,10 +376,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
 
         c1, c2 = st.columns([1, 2])
         with c1:
-            selected_factory = st.selectbox(
-                L["lbl_filter_factory"],
-                available_factories
-            )
+            selected_factory = st.selectbox(L["lbl_filter_factory"], available_factories)
         with c2:
             search_keyword = st.text_input(L["lbl_search"], value="")
 
@@ -444,7 +406,6 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                     if rows:
                         df = pd.DataFrame([dict(r._mapping) for r in rows])
                         
-                        # 依據上方分流按鈕進行資料篩選
                         if "外派" in sub_filter:
                             df = df[df["emp_code"].str.upper().str.startswith("TW") | df["emp_code"].str.upper().str.startswith("CN") | df["position"].str.contains("廠長|經理|副理|主任|董事長|外派", na=False)]
                         elif "越南" in sub_filter:
