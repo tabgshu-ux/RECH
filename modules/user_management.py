@@ -22,94 +22,102 @@ st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 
 USER_MGMT_I18N = {
     "繁體中文": {
-        "title": "🔒 IT 管理中心 - 組織角色權限與系統模組授權",
-        "caption": "裕豐電機（越南西寧廠）組織架構與部門職位權限管理。",
-        "tab_roles": "⚙️ 組織角色與模組權限設定 (RBAC)",
+        "title": "🔒 IT 管理中心 - 組織角色權限與部門模組授權",
+        "caption": "裕豐電機（越南西寧廠）組織架構與部門動態管理中心。",
+        "tab_roles": "⚙️ 組織角色與部門權限設定 (RBAC)",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
         "tab_db": "🔌 資料庫連線狀態",
         "success_connected": "PostgreSQL / Supabase 資料庫連線正常！",
         "db_not_connected": "ℹ️ 提示：目前使用安全記憶體模式運行。",
         "cloud_roles_count": "已建角色數",
-        "search_ph": "輸入角色名稱過濾...",
-        "search_label": "🔍 搜尋角色關鍵字",
+        "search_ph": "輸入角色或部門名稱過濾...",
+        "search_label": "🔍 搜尋關鍵字",
         "col_stt": "序號",
         "col_dept": "所屬部門",
         "col_role_name": "職位角色名稱",
         "col_desc": "部門職責與組織架構範圍",
         "col_modules_count": "允許開啟之頁面數量",
-        "edit_header": "✏️ 組織角色權限編輯維護",
+        "edit_header": "✏️ 組織角色與部門權限編輯維護",
         "select_role_lbl": "請選擇欲編輯的角色：",
-        "create_new_opt": "🆕 建立新角色 (Create New)",
-        "step1_title": "1. 輸入職位名稱與說明",
+        "create_new_opt": "🆕 建立新職位角色 (Create New)",
+        "step1_title": "1. 設定所屬部門與職位名稱",
+        "dept_select_lbl": "選擇或新增所屬部門 *",
+        "add_new_dept_opt": "➕ 【新增自訂部門...】",
+        "new_dept_input_lbl": "輸入新部門名稱",
         "role_name_lbl": "職位名稱 *",
         "role_name_ph": "例如: 董事長, 總經理, 倉庫管理員",
         "role_desc_lbl": "組織職責與權限範圍說明",
         "role_desc_ph": "例如: 倉庫庫存與資材管理",
         "step2_title": "2. 勾選該職位角色可操作功能頁面：",
-        "btn_save_role": "💾 儲存組織角色設定",
+        "btn_save_role": "💾 儲存組織角色與部門設定",
         "btn_del_role": "🗑️ 刪除此角色",
-        "save_role_success": "🎉 組織角色權限已成功儲存！",
+        "save_role_success": "🎉 組織角色與部門設定已成功儲存！",
         "del_role_success": "🗑️ 角色已成功刪除！"
     }
 }
 
-# 👑 完整精準對應裕豐電機各部門與真實職位名稱
-DEPARTMENT_ROLE_MAPPING = {
-    "📈 總經理室 (Executive Office)": [
-        "董事長", "總經理", "副總經理"
-    ],
-    "👔 管理部 (Management Dept)": [
-        "廠長 / 副協理", "管理部經理", "行政主管", "人事", "財務副理"
-    ],
-    "🛠️ 工程與設計管理中心 (Engineering & Design Center)": [
-        "工程主管", "設計經理", "設計主管", "設計", "精算主管", "精算助理"
-    ],
-    "🏭 生產部 (Production Dept)": [
-        "倉庫管理員", "生產主管", "生產組長", "工程人員", "生產組", "板金組", "烤漆組", "配電組裝"
-    ],
-    "💻 資訊管理部 (IT & System)": [
-        "系統管理員 (Admin)", "資訊管理員", "一般員工 (Staff)"
-    ]
-}
+DEFAULT_DEPARTMENTS = [
+    "📈 總經理室 (Executive Office)",
+    "👔 管理部 (Management Dept)",
+    "🛠️ 工程與設計管理中心 (Engineering & Design Center)",
+    "🏭 生產部 (Production Dept)",
+    "💻 資訊管理部 (IT & System)"
+]
 
-def get_role_department_and_weight(role_name):
-    """精準對應職位與所屬部門及內部排序"""
-    clean_name = str(role_name).strip()
-    for dept, roles in DEPARTMENT_ROLE_MAPPING.items():
-        for idx, r in enumerate(roles):
-            # 支援關鍵字精準匹配（例如「倉庫管理員」對應生產部，「工程主管」對應工程中心）
-            if r in clean_name or clean_name in r:
-                return dept, idx
-    return "🌐 其他/未分類部門", 99
+def init_system_roles_table(engine):
+    """確保 system_roles 資料表具備 department 欄位"""
+    if engine is None:
+        return
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS system_roles (
+                    id SERIAL PRIMARY KEY,
+                    role_name VARCHAR(100) UNIQUE NOT NULL,
+                    department VARCHAR(150) DEFAULT '管理部 (Management Dept)',
+                    description TEXT,
+                    allowed_modules TEXT,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+            conn.execute(text("ALTER TABLE system_roles ADD COLUMN IF NOT EXISTS department VARCHAR(150) DEFAULT '管理部 (Management Dept)';"))
+    except Exception:
+        pass
 
 def fetch_roles(engine, lang_dict):
+    init_system_roles_table(engine)
     fallback_roles = {
-        "董事長": {"description": "公司經營方向規劃與戰略定奪", "allowed_modules": "ALL"},
-        "總經理": {"description": "董事長指示的公司經營方向執行與公司管理", "allowed_modules": "ALL"},
-        "倉庫管理員": {"description": "倉庫庫存與資材條碼管理", "allowed_modules": "📦 [倉儲] 倉庫庫存與資材條碼管理"},
-        "工程主管": {"description": "工程專案與現場督導管理", "allowed_modules": "⚡ [工程] 配電盤與工程專案雙層報價"}
+        "董事長": {"department": "📈 總經理室 (Executive Office)", "description": "公司經營方向規劃與戰略定奪", "allowed_modules": "ALL"},
+        "總經理": {"department": "📈 總經理室 (Executive Office)", "description": "董事長指示的公司經營方向執行與公司管理", "allowed_modules": "ALL"},
+        "倉庫管理員": {"department": "🏭 生產部 (Production Dept)", "description": "倉庫庫存與資材條碼管理", "allowed_modules": "📦 [倉儲] 倉庫庫存與資材條碼管理"},
+        "工程主管": {"department": "🛠️ 工程與設計管理中心 (Engineering & Design Center)", "description": "工程專案與現場督導管理", "allowed_modules": "⚡ [工程] 配電盤與工程專案雙層報價"}
     }
     if engine is None:
-        return fallback_roles, False, lang_dict["db_not_connected"]
+        return fallback_roles, DEFAULT_DEPARTMENTS, False, lang_dict["db_not_connected"]
     
     try:
-        df = pd.read_sql("SELECT role_name, description, allowed_modules FROM system_roles", con=engine)
+        df = pd.read_sql("SELECT role_name, department, description, allowed_modules FROM system_roles", con=engine)
         if df.empty:
-            return fallback_roles, True, lang_dict["success_connected"]
+            return fallback_roles, DEFAULT_DEPARTMENTS, True, lang_dict["success_connected"]
         
         roles_dict = {}
+        departments_set = set(DEFAULT_DEPARTMENTS)
+        
         for _, row in df.iterrows():
             r_name = str(row["role_name"]).strip()
+            dept = str(row.get("department") or "管理部 (Management Dept)").strip()
+            departments_set.add(dept)
             desc = row.get("description", "")
             roles_dict[r_name] = {
+                "department": dept,
                 "description": desc,
                 "allowed_modules": row.get("allowed_modules", "ALL")
             }
-        return roles_dict, True, lang_dict["success_connected"]
+        return roles_dict, sorted(list(departments_set)), True, lang_dict["success_connected"]
     except Exception as e:
-        return fallback_roles, False, f"{lang_dict['db_not_connected']} ({e})"
+        return fallback_roles, DEFAULT_DEPARTMENTS, False, f"{lang_dict['db_not_connected']} ({e})"
 
-def save_role_db(engine, role_name, description, allowed_modules):
+def save_role_db(engine, role_name, department, description, allowed_modules):
     if engine is None:
         return False
     clean_name = role_name.strip()
@@ -117,12 +125,12 @@ def save_role_db(engine, role_name, description, allowed_modules):
         with engine.begin() as conn:
             conn.execute(
                 text("""
-                    INSERT INTO system_roles (role_name, description, allowed_modules) 
-                    VALUES (:r, :d, :m) 
+                    INSERT INTO system_roles (role_name, department, description, allowed_modules) 
+                    VALUES (:r, :dept, :d, :m) 
                     ON CONFLICT (role_name) 
-                    DO UPDATE SET description = :d, allowed_modules = :m
+                    DO UPDATE SET department = :dept, description = :d, allowed_modules = :m
                 """),
-                {"r": clean_name, "d": description, "m": allowed_modules}
+                {"r": clean_name, "dept": department, "d": description, "m": allowed_modules}
             )
         return True
     except Exception:
@@ -201,7 +209,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
             {"time": "2026-10-06 13:00:15", "user": "admin", "action": "登入系統 (Login)", "module": "Auth", "ip": "192.168.1.50", "status": "成功"}
         ]
 
-    roles_dict, is_connected, msg = fetch_roles(engine, L)
+    roles_dict, available_depts, is_connected, msg = fetch_roles(engine, L)
 
     tab_roles, tab_audit, tab_db = st.tabs([
         L["tab_roles"], L["tab_audit"], L["tab_db"]
@@ -220,18 +228,13 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         with col_stats:
             st.metric(L["cloud_roles_count"], len(roles_dict))
 
-        def multi_level_sort(role_name):
-            dept, weight = get_role_department_and_weight(role_name)
-            dept_keys = list(DEPARTMENT_ROLE_MAPPING.keys())
-            dept_idx = dept_keys.index(dept) if dept in dept_keys else 99
-            return (dept_idx, weight)
-
-        sorted_role_names = sorted(roles_dict.keys(), key=multi_level_sort)
+        # 排序：依所屬部門排序
+        sorted_role_names = sorted(roles_dict.keys(), key=lambda r: (roles_dict[r].get("department", ""), r))
 
         table_rows = []
         for idx, r_name in enumerate(sorted_role_names, start=1):
             r_info = roles_dict[r_name]
-            dept_name, _ = get_role_department_and_weight(r_name)
+            dept_name = r_info.get("department", "未分類部門")
             if not search_kw or (search_kw.lower() in r_name.lower() or search_kw.lower() in r_info["description"].lower() or search_kw.lower() in dept_name.lower()):
                 mod_count_str = "全開 (ALL)" if r_info["allowed_modules"] == "ALL" else f"{len(r_info['allowed_modules'].split(','))} 個頁面"
                 table_rows.append({
@@ -255,21 +258,35 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         is_edit = sel_role_display != L["create_new_opt"]
         default_name = sel_role_key if is_edit else ""
         default_desc = roles_dict.get(sel_role_key, {}).get("description", "") if is_edit else ""
+        default_dept = roles_dict.get(sel_role_key, {}).get("department", available_depts[0]) if is_edit else available_depts[0]
 
         curr_set = set(ALL_MODULE_LIST) if (is_edit and roles_dict.get(sel_role_key, {}).get("allowed_modules") == "ALL") else (set(roles_dict.get(sel_role_key, {}).get("allowed_modules", "").split(",")) if is_edit else set(ALL_MODULE_LIST))
 
         st.markdown(f"#### {L['step1_title']}")
+        
+        # 🏢 部門選擇與新增部門功能
+        dept_options_list = available_depts + [L["add_new_dept_opt"]]
+        curr_dept_idx = dept_options_list.index(default_dept) if default_dept in dept_options_list else 0
+        
+        selected_dept_option = st.selectbox(L["dept_select_lbl"], options=dept_options_list, index=curr_dept_idx)
+        
+        if selected_dept_option == L["add_new_dept_opt"]:
+            new_dept_name = st.text_input(L["new_dept_input_lbl"], placeholder="例如: 採購部 (Procurement Dept)")
+            final_department = new_dept_name.strip() if new_dept_name else "未命名部門"
+        else:
+            final_department = selected_dept_option
+
         in_name = st.text_input(L["role_name_lbl"], value=default_name, placeholder=L["role_name_ph"])
         in_desc = st.text_input(L["role_desc_lbl"], value=default_desc, placeholder=L["role_desc_ph"])
 
         st.markdown(f"#### {L['step2_title']}")
         selected_mods = []
-        for dept, mods in DEPARTMENT_MODULE_TREE.items():
-            st.markdown(f"##### {dept}")
+        for dept_tree_name, mods in DEPARTMENT_MODULE_TREE.items():
+            st.markdown(f"##### {dept_tree_name}")
             cols = st.columns(3)
             for idx, m in enumerate(mods):
                 with cols[idx % 3]:
-                    chk = st.checkbox(m, value=(m in curr_set), key=f"chk_rbac_{active_lang}_{sel_role_key}_{dept}_{idx}_{m}")
+                    chk = st.checkbox(m, value=(m in curr_set), key=f"chk_rbac_{active_lang}_{sel_role_key}_{dept_tree_name}_{idx}_{m}")
                     if chk:
                         selected_mods.append(m)
             st.markdown("---")
@@ -282,13 +299,13 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
 
         if btn_save:
             t_name = in_name.strip()
-            if t_name:
+            if t_name and final_department:
                 mod_str = "ALL" if len(selected_mods) == len(ALL_MODULE_LIST) else (",".join(selected_mods) if selected_mods else "")
-                save_role_db(engine, t_name, in_desc, mod_str)
+                save_role_db(engine, t_name, final_department, in_desc, mod_str)
                 st.success(L["save_role_success"])
                 st.rerun()
             else:
-                st.warning("⚠️ 請輸入職位名稱！")
+                st.warning("⚠️ 請完整填寫『所屬部門』與『職位名稱』！")
 
         if btn_del:
             t_name = in_name.strip() or sel_role_key
