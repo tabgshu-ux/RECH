@@ -109,15 +109,6 @@ def init_dorm_db(engine):
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
-            conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS public.manager_allowances (
-                    id SERIAL PRIMARY KEY,
-                    manager_name VARCHAR(100) UNIQUE NOT NULL,
-                    total_allowance NUMERIC(15,2) DEFAULT 8000000.0,
-                    used_amount NUMERIC(15,2) DEFAULT 0.0,
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
-            """))
     except Exception:
         pass
 
@@ -133,10 +124,10 @@ def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
     if "dorm_daily_rate" not in st.session_state:
         st.session_state.dorm_daily_rate = 100000.0
 
-    # 初始化台幹名冊與預設每月額度 (預設 8,000,000 VND，可在 5M~10M 之間)
+    # 配合員工名冊更新您的標準姓名與英文名
     if "managers_allowance_db" not in st.session_state:
         st.session_state.managers_allowance_db = {
-            "許福村 (Alex)": {"total": 8000000.0, "used": 1200000.0},
+            "許福村 (Tassos / Hsu Fu Tsun)": {"total": 8000000.0, "used": 1200000.0},
             "Nguyễn Văn Tài": {"total": 6000000.0, "used": 0.0},
             "Trần Văn Minh": {"total": 10000000.0, "used": 3500000.0},
             "Le Van Nam": {"total": 5000000.0, "used": 0.0}
@@ -144,7 +135,7 @@ def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
 
     if "dorm_records_db" not in st.session_state:
         st.session_state.dorm_records_db = [
-            {"date": str(datetime.date.today()), "site": "越南西寧廠 (Tay Ninh)", "diner": "許福村 (Alex)", "count": 1, "amount": 1200000.0, "owner": "admin"}
+            {"date": str(datetime.date.today()), "site": "越南西寧廠 (Tay Ninh)", "diner": "許福村 (Tassos / Hsu Fu Tsun)", "count": 1, "amount": 1200000.0, "owner": "admin"}
         ]
 
     # ----------------------------------------------------
@@ -205,10 +196,9 @@ def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
         with c4:
             meal_date = st.date_input(L["date_lbl"], value=datetime.date.today())
         with c5:
-            # 讓使用者勾選或指定今天實際在公司用餐的台幹
             selected_diner = st.selectbox(L["diner_lbl"], list(st.session_state.managers_allowance_db.keys()))
         with c6:
-            headcount = st.number_input(L["count_lbl"], min_value=1, value=1, step=1, help="雖然多人在外跑，但若僅1人在公司，請填1")
+            headcount = st.number_input(L["count_lbl"], min_value=1, value=1, step=1)
 
         notes = st.text_input(L["note_lbl"], placeholder=L["note_ph"])
 
@@ -218,7 +208,6 @@ def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
 
         submitted = st.form_submit_button(L["submit_btn"], type="primary", use_container_width=True)
         if submitted:
-            # 精準扣除該名台幹的個人額度
             if selected_diner in st.session_state.managers_allowance_db:
                 st.session_state.managers_allowance_db[selected_diner]["used"] += daily_budget
 
