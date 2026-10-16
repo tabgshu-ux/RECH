@@ -273,6 +273,13 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                             "amount": f"{format_currency_text(final_total_amount, p_curr)}", "target_approver": "副總經理 (Vice General Manager)",
                             "status": "⏳ 待簽核", "submit_date": str(datetime.date.today()), "detail_data": quotation_record
                         })
+                        # 🚀 新增：自動將報價單的內部材料明細展開為 BOM 並連動至第 8 項
+                        st.session_state.bom_procurement_db.append({
+                            "quot_id": new_id,
+                            "project_name": p_proj,
+                            "client": p_client,
+                            "bom_items": internal_rows
+                        })
 
                         st.success(f"🎉 報價單 [{new_id}] 已成功建立並同步連線至電子簽核中心！")
                         st.rerun()
