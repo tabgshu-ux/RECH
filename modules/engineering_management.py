@@ -441,12 +441,131 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
         st.markdown("### ⚠️ 6. 分包商與專業證照到期預警")
         st.dataframe(pd.DataFrame(st.session_state.license_db), use_container_width=True)
 
+   # ====================================================
+    # 🎨 7. 配電盤電氣與機構設計圖庫 Storage (含一鍵傳送生產部功能)
     # ====================================================
-    # 🎨 7. 配電盤電氣與機構設計圖庫 Storage
-    # ====================================================
-    elif "7." in selected_option:
-        st.markdown("### 🎨 7. 配電盤電氣與機構設計圖庫 Storage")
-        st.info("管理 2D CAD 單線圖與 3D 機構 STEP 圖檔。")
+    elif "7." in selected_option or "圖庫" in selected_option or "Storage" in selected_option:
+        st.markdown("### 🎨 7. 配電盤電氣與機構設計圖庫 Storage 與生產下發中心")
+        st.info("💡 管理所有配電盤 2D/3D 設計圖檔、CAD 藍圖與機構規格書，並可一鍵將設計規格傳送至生產部門進行排程與備料。")
+
+        # 初始化圖庫預設範例資料（如果空的）
+        if "drawing_storage_db" not in st.session_state:
+            st.session_state.drawing_storage_db = [
+                {
+                    "drawing_id": "DRW-2026-001",
+                    "project": "西寧廠高壓配電盤擴建",
+                    "title": "2000A 主配電盤單線圖與配置藍圖",
+                    "type": "2D 電氣單線圖 (SLD)",
+                    "version": "v1.2",
+                    "filename": "TN_Main_Switchgear_2000A_SLD.dwg",
+                    "uploader": "陳總工程師",
+                    "date": "2026-10-01",
+                    "transfer_status": "🟢 已下發生產部"
+                }
+            ]
+
+        # 初始化生產部門接收清單（如果空的）
+        if "production_dispatch_db" not in st.session_state:
+            st.session_state.production_dispatch_db = [
+                {
+                    "dispatch_id": "DISP-2026-001",
+                    "project": "西寧廠高壓配電盤擴建",
+                    "spec_title": "2000A 主配電盤單線圖與配置藍圖",
+                    "source_dept": "工程與設計管理中心",
+                    "target_dept": "生產部 (板金組 / 配電組)",
+                    "status": "🟢 生產備料中",
+                    "date": "2026-10-01"
+                }
+            ]
+
+        tab_drw_list, tab_drw_upload, tab_dispatch = st.tabs(["📁 設計圖庫總表與一鍵下發", "📤 上傳新藍圖與圖檔", "🏭 生產部門接收狀態追蹤"])
+
+        with tab_drw_list:
+            dc1, dc2 = st.columns([1, 2])
+            with dc1:
+                drw_type_filter = st.selectbox("依圖面類型篩選", ["全部類型", "2D 電氣單線圖 (SLD)", "3D 機構配置圖 (STEP)", "控制邏輯電路圖 (CAD)", "銅排加工與折彎圖"])
+            with dc2:
+                drw_search = st.text_input("🔍 搜尋專案名稱、圖面標題或檔名...", key="drw_search_box")
+
+            filtered_drw = st.session_state.drawing_storage_db
+            if drw_type_filter != "全部類型":
+                filtered_drw = [d for d in filtered_drw if d["type"] == drw_type_filter]
+            if drw_search:
+                filtered_drw = [d for d in filtered_drw if drw_search.lower() in d["project"].lower() or drw_search.lower() in d["title"].lower() or drw_search.lower() in d["filename"].lower()]
+
+            if filtered_drw:
+                for drw in filtered_drw:
+                    with st.expander(f"📌 [{drw['drawing_id']}] {drw['project']} - {drw['title']} ({drw['version']})"):
+                        col_d1, col_d2, col_d3 = st.columns(3)
+                        with col_d1:
+                            st.write(f"**圖面類型**：{drw['type']}")
+                            st.write(f"**檔案名稱**：{drw['filename']}")
+                        with col_d2:
+                            st.write(f"**上傳者**：{drw['uploader']}")
+                            st.write(f"**上傳日期**：{drw['date']}")
+                        with col_d3:
+                            current_status = drw.get("transfer_status", "⏳ 尚未下發")
+                            st.write(f"**下發狀態**：{current_status}")
+
+                        # 🚀 關鍵功能：一鍵將設計規格與圖面傳送到生產部門
+                        if st.button(f"🚀 一鍵下發設計規格至生產部 ({drw['drawing_id']})", key=f"dispatch_btn_{drw['drawing_id']}"):
+                            drw["transfer_status"] = "🟢 已下發生產部"
+                            
+                            # 檢查是否已經存在於生產下發清單中，避免重複
+                            existing_disp = next((d for d in st.session_state.production_dispatch_db if d["dispatch_id"] == f"DISP-{drw['drawing_id'].split('-')[-1]}"), None)
+                            if not existing_disp:
+                                disp_id = f"DISP-{drw['drawing_id'].split('-')[-1]}"
+                                st.session_state.production_dispatch_db.insert(0, {
+                                    "dispatch_id": disp_id,
+                                    "project": drw["project"],
+                                    "spec_title": drw["title"],
+                                    "source_dept": "工程與設計管理中心",
+                                    "target_dept": "生產部 (板金組 / 配電組)",
+                                    "status": "🟢 生產備料與排程中",
+                                    "date": str(datetime.date.today())
+                                })
+                            st.success(f"🎉 成功！設計圖面與規格 [{drw['title']}] 已即時傳送至【生產部門】！")
+                            st.rerun()
+            else:
+                st.info("⚠️ 找不到符合條件的設計圖檔紀錄。")
+
+        with tab_drw_upload:
+            with st.form("form_upload_drawing"):
+                uc1, uc2 = st.columns(2)
+                with uc1:
+                    d_proj = st.selectbox("關聯工程專案", [p["proj_name"] for p in st.session_state.engineering_projects_db])
+                    d_title = st.text_input("圖面與規格說明標題 *", value="西寧廠低壓控制盤二次迴路配線圖")
+                    d_type = st.selectbox("圖面技術分類", ["2D 電氣單線圖 (SLD)", "3D 機構配置圖 (STEP)", "控制邏輯電路圖 (CAD)", "銅排加工與折彎圖"])
+                with uc2:
+                    d_ver = st.text_input("圖面版本 (Version)", value="v1.0")
+                    d_file = st.file_uploader("上傳設計圖檔 (DWG, STEP, PDF, ZIP)", type=["dwg", "step", "pdf", "zip", "png"])
+                    d_uploader = st.text_input("上傳工程師 / 設計師姓名", value="陳明華")
+
+                if st.form_submit_button("🚀 確認上傳並存入 Storage 圖庫", type="primary"):
+                    if d_title and d_file:
+                        new_d_id = f"DRW-2026-{len(st.session_state.drawing_storage_db)+1:03d}"
+                        st.session_state.drawing_storage_db.insert(0, {
+                            "drawing_id": new_d_id,
+                            "project": d_proj,
+                            "title": d_title,
+                            "type": d_type,
+                            "version": d_ver,
+                            "filename": d_file.name,
+                            "uploader": d_uploader,
+                            "date": str(datetime.date.today()),
+                            "transfer_status": "⏳ 尚未下發"
+                        })
+                        st.success(f"🎉 成功上傳設計圖檔 [{d_file.name}]！圖面編號：`{new_d_id}`")
+                        st.rerun()
+                    else:
+                        st.warning("⚠️ 請完整填寫圖面標題並上傳設計檔案！")
+
+        with tab_dispatch:
+            st.markdown("##### 🏭 生產部門接收與製造排程狀態追蹤")
+            if st.session_state.production_dispatch_db:
+                st.dataframe(pd.DataFrame(st.session_state.production_dispatch_db), use_container_width=True)
+            else:
+                st.info("目前尚無下發至生產部的設計規格紀錄。")
 
     # ====================================================
     # 🔌 8. 配電盤 BOM 零件自動展開與採購連動
