@@ -23,7 +23,7 @@ st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 組織角色權限與系統模組授權",
-        "caption": "裕豐電機（越南西寧廠）組織架構與職位權限範本管理。",
+        "caption": "裕豐電機（越南西寧廠）組織架構與部門職位權限管理。",
         "tab_roles": "⚙️ 組織角色與模組權限設定 (RBAC)",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
         "tab_db": "🔌 資料庫連線狀態",
@@ -33,6 +33,7 @@ USER_MGMT_I18N = {
         "search_ph": "輸入角色名稱過濾...",
         "search_label": "🔍 搜尋角色關鍵字",
         "col_stt": "序號",
+        "col_dept": "所屬部門",
         "col_role_name": "職位角色名稱",
         "col_desc": "部門職責與組織架構範圍",
         "col_modules_count": "允許開啟之頁面數量",
@@ -41,7 +42,7 @@ USER_MGMT_I18N = {
         "create_new_opt": "🆕 建立新角色 (Create New)",
         "step1_title": "1. 輸入職位名稱與說明",
         "role_name_lbl": "職位名稱 *",
-        "role_name_ph": "例如: 董事長, 總經理, 廠長",
+        "role_name_ph": "例如: 董事長, 總經理, 管理部經理",
         "role_desc_lbl": "組織職責與權限範圍說明",
         "role_desc_ph": "例如: 公司經營方向規劃與戰略定奪",
         "step2_title": "2. 勾選該職位角色可操作功能頁面：",
@@ -52,48 +53,40 @@ USER_MGMT_I18N = {
     }
 }
 
-ORGANIZATION_HIERARCHY = [
-    "董事長",
-    "總經理",
-    "副總經理",
-    "廠長 / 副協理",
-    "管理部經理",
-    "行政主管",
-    "人事",
-    "財務副理",
-    "設計經理",
-    "設計主管",
-    "設計人員",
-    "精算主管",
-    "精算助理",
-    "生產主管",
-    "生產組長",
-    "工程人員",
-    "生產組",
-    "板金組",
-    "烤漆組",
-    "配電組裝",
-    "系統管理員 (Admin)",
-    "一般員工 (Staff)"
-]
+# 👑 依部門與組織架構定義完整的職位歸屬與排序對照
+DEPARTMENT_ROLE_MAPPING = {
+    "📈 總經理室 (Executive Office)": [
+        "董事長", "總經理", "副總經理"
+    ],
+    "👔 管理部 (Management Dept)": [
+        "廠長 / 副協理", "管理部經理", "行政主管", "人事", "財務副理"
+    ],
+    "🛠️ 工程與設計管理中心 (Engineering & Design Center)": [
+        "設計經理", "設計主管", "設計人員", "精算主管", "精算助理"
+    ],
+    "🏭 生產部 (Production Dept)": [
+        "生產主管", "生產組長", "工程人員", "生產組", "板金組", "烤漆組", "配電組裝"
+    ],
+    "💻 資訊管理部 (IT & System)": [
+        "系統管理員 (Admin)", "資訊管理員", "一般員工 (Staff)"
+    ]
+}
 
-def get_role_sort_weight(role_name):
+def get_role_department_and_weight(role_name):
+    """根據職位名稱判斷所屬部門與內部階級權重"""
     clean_name = str(role_name).strip()
-    for prefix in ["1. ", "2. ", "3. ", "4. ", "5. ", "6. ", "7. ", "8. ", "9. ", "10. ",
-                   "11. ", "12. ", "13. ", "14. ", "15. ", "16. ", "17. ", "18. ", "19. ", "20. "]:
-        if clean_name.startswith(prefix):
-            clean_name = clean_name[len(prefix):]
-
-    for idx, h_role in enumerate(ORGANIZATION_HIERARCHY):
-        if h_role in clean_name or clean_name in h_role:
-            return idx
-    return 999
+    for dept, roles in DEPARTMENT_ROLE_MAPPING.items():
+        for idx, r in enumerate(roles):
+            if r in clean_name or clean_name in r:
+                # 回傳 (部門名稱, 該部門內的職位排序權重)
+                return dept, idx
+    return "🌐 其他/未分類部門", 99
 
 def fetch_roles(engine, lang_dict):
     fallback_roles = {
         "董事長": {"description": "公司經營方向規劃與戰略定奪", "allowed_modules": "ALL"},
         "總經理": {"description": "董事長指示的公司經營方向執行與公司管理", "allowed_modules": "ALL"},
-        "副總經理": {"description": "工程報價及現場探勘、人員調配與督導", "allowed_modules": "ALL"}
+        "管理部經理": {"description": "行政、財務、總務管理、ERP規劃與資訊管理", "allowed_modules": "ALL"}
     }
     if engine is None:
         return fallback_roles, False, lang_dict["db_not_connected"]
@@ -226,15 +219,25 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         with col_stats:
             st.metric(L["cloud_roles_count"], len(roles_dict))
 
-        sorted_role_names = sorted(roles_dict.keys(), key=get_role_sort_weight)
+        # 👑 依據部門層級與部門內職位順序進行智慧排序
+        def multi_level_sort(role_name):
+            dept, weight = get_role_department_and_weight(role_name)
+            # 取得部門在大方向中的順序索引
+            dept_keys = list(DEPARTMENT_ROLE_MAPPING.keys())
+            dept_idx = dept_keys.index(dept) if dept in dept_keys else 99
+            return (dept_idx, weight)
+
+        sorted_role_names = sorted(roles_dict.keys(), key=multi_level_sort)
 
         table_rows = []
         for idx, r_name in enumerate(sorted_role_names, start=1):
             r_info = roles_dict[r_name]
-            if not search_kw or (search_kw.lower() in r_name.lower() or search_kw.lower() in r_info["description"].lower()):
+            dept_name, _ = get_role_department_and_weight(r_name)
+            if not search_kw or (search_kw.lower() in r_name.lower() or search_kw.lower() in r_info["description"].lower() or search_kw.lower() in dept_name.lower()):
                 mod_count_str = "全開 (ALL)" if r_info["allowed_modules"] == "ALL" else f"{len(r_info['allowed_modules'].split(','))} 個頁面"
                 table_rows.append({
                     L["col_stt"]: idx,
+                    L["col_dept"]: dept_name,
                     L["col_role_name"]: r_name,
                     L["col_desc"]: r_info["description"],
                     L["col_modules_count"]: mod_count_str
@@ -291,7 +294,6 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         if btn_del:
             t_name = in_name.strip() or sel_role_key
             if t_name and t_name != L["create_new_opt"]:
-                # 僅針對系統最核心的管理員做保護，其他重複或舊的職位皆可自由刪除
                 if t_name in ["系統管理員 (Admin)"]:
                     st.error("🚫 系統保護：核心管理員角色無法被刪除！")
                 else:
