@@ -442,13 +442,13 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
         st.dataframe(pd.DataFrame(st.session_state.license_db), use_container_width=True)
 
   # ====================================================
-    # 🎨 7. 配電盤電氣與機構設計圖庫 Storage (含一鍵傳送生產部 & 自訂分類)
+    # 🎨 7. 配電盤電氣與機構設計圖庫 Storage (含分類管理與一鍵下發)
     # ====================================================
     elif "7." in selected_option or "圖庫" in selected_option or "Storage" in selected_option:
         st.markdown("### 🎨 7. 配電盤電氣與機構設計圖庫 Storage 與生產下發中心")
         st.info("💡 管理所有配電盤 2D/3D 設計圖檔、CAD 藍圖與機構規格書，並可一鍵將設計規格傳送至生產部門進行排程與備料。")
 
-        # 初始化圖庫預設範例資料（如果空的）
+        # 初始化圖庫預設範例資料
         if "drawing_storage_db" not in st.session_state:
             st.session_state.drawing_storage_db = [
                 {
@@ -464,7 +464,7 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                 }
             ]
 
-        # 初始化生產部門接收清單（如果空的）
+        # 初始化生產部門接收清單
         if "production_dispatch_db" not in st.session_state:
             st.session_state.production_dispatch_db = [
                 {
@@ -478,7 +478,7 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                 }
             ]
 
-        # 初始化圖面分類清單
+        # 🛠️ 初始化圖面技術分類清單 (確保全域共享)
         if "drawing_categories_list" not in st.session_state:
             st.session_state.drawing_categories_list = [
                 "2D 電氣單線圖 (SLD)", 
@@ -487,7 +487,12 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                 "銅排加工與折彎圖"
             ]
 
-        tab_drw_list, tab_drw_upload, tab_dispatch = st.tabs(["📁 設計圖庫總表與一鍵下發", "📤 上傳新藍圖與圖檔", "🏭 生產部門接收狀態追踪"])
+        tab_drw_list, tab_drw_upload, tab_cat_mgmt, tab_dispatch = st.tabs([
+            "📁 設計圖庫總表與一鍵下發", 
+            "📤 上傳新藍圖與圖檔", 
+            "⚙️ 圖面技術分類維護",
+            "🏭 生產部門接收狀態追蹤"
+        ])
 
         with tab_drw_list:
             dc1, dc2 = st.columns([1, 2])
@@ -516,7 +521,6 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                             current_status = drw.get("transfer_status", "⏳ 尚未下發")
                             st.write(f"**下發狀態**：{current_status}")
 
-                        # 🚀 關鍵功能：一鍵將設計規格與圖面傳送到生產部門
                         if st.button(f"🚀 一鍵下發設計規格至生產部 ({drw['drawing_id']})", key=f"dispatch_btn_{drw['drawing_id']}"):
                             drw["transfer_status"] = "🟢 已下發生產部"
                             
@@ -544,15 +548,8 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                     d_proj = st.selectbox("關聯工程專案", [p["proj_name"] for p in st.session_state.engineering_projects_db])
                     d_title = st.text_input("圖面與規格說明標題 *", value="西寧廠低壓控制盤二次迴路配線圖")
                     
-                    # 🛠️ 支援動態新增與自訂圖面技術分類
-                    cat_options = st.session_state.drawing_categories_list + ["➕ 【自訂新增圖面分類...】"]
-                    selected_cat_opt = st.selectbox("圖面技術分類", cat_options)
-                    
-                    if selected_cat_opt == "➕ 【自訂新增圖面分類...】":
-                        custom_cat_input = st.text_input("輸入新的圖面分類名稱", placeholder="例如: 弱電與消防系統佈局圖")
-                        d_type = custom_cat_input.strip() if custom_cat_input else "未命名圖面分類"
-                    else:
-                        d_type = selected_cat_opt
+                    # 🛠️ 直接從動態清單中選取圖面技術分類
+                    d_type = st.selectbox("圖面技術分類 *", st.session_state.drawing_categories_list)
 
                 with uc2:
                     d_ver = st.text_input("圖面版本 (Version)", value="v1.0")
@@ -561,9 +558,6 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
 
                 if st.form_submit_button("🚀 確認上傳並存入 Storage 圖庫", type="primary"):
                     if d_title and d_file and d_type:
-                        if d_type not in st.session_state.drawing_categories_list:
-                            st.session_state.drawing_categories_list.append(d_type)
-
                         new_d_id = f"DRW-2026-{len(st.session_state.drawing_storage_db)+1:03d}"
                         st.session_state.drawing_storage_db.insert(0, {
                             "drawing_id": new_d_id,
@@ -579,7 +573,42 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                         st.success(f"🎉 成功上傳設計圖檔 [{d_file.name}]！分類：【{d_type}】 圖面編號：`{new_d_id}`")
                         st.rerun()
                     else:
-                        st.warning("⚠️ 請完整填寫圖面標題、選擇或輸入分類，並上傳設計檔案！")
+                        st.warning("⚠️ 請完整填寫圖面標題、選擇分類，並上傳設計檔案！")
+
+        with tab_cat_mgmt:
+            st.markdown("##### ⚙️ 圖面技術分類維護（新增、修改與刪除）")
+            st.info("💡 在此處您可以隨時新增工程上需要的圖面技術分類，或刪除不需要的分類項目。")
+
+            # 新增分類表單
+            with st.form("form_add_drawing_category"):
+                new_cat_name = st.text_input("新增圖面技術分類名稱", placeholder="例如: 弱電與消防系統佈局圖")
+                if st.form_submit_button("➕ 確認新增技術分類", type="primary"):
+                    if new_cat_name.strip():
+                        clean_name = new_cat_name.strip()
+                        if clean_name not in st.session_state.drawing_categories_list:
+                            st.session_state.drawing_categories_list.append(clean_name)
+                            st.success(f"🎉 成功新增圖面技術分類：【{clean_name}】！")
+                            st.rerun()
+                        else:
+                            st.warning("⚠️ 此分類名稱已存在！")
+                    else:
+                        st.warning("⚠️ 請輸入有效的分類名稱！")
+
+            st.markdown("---")
+            st.markdown("##### 📋 目前現有技術分類清單")
+            for idx, cat_item in enumerate(st.session_state.drawing_categories_list, 1):
+                cc1, cc2 = st.columns([4, 1])
+                with cc1:
+                    st.text(f"{idx}. {cat_item}")
+                with cc2:
+                    # 避免刪除預設核心分類
+                    if len(st.session_state.drawing_categories_list) > 1:
+                        if st.button("🗑️ 刪除", key=f"del_cat_{idx}"):
+                            st.session_state.drawing_categories_list.remove(cat_item)
+                            st.success(f"🗑️ 已刪除分類：{cat_item}")
+                            st.rerun()
+                    else:
+                        st.text("保留中")
 
         with tab_dispatch:
             st.markdown("##### 🏭 生產部門接收與製造排程狀態追蹤")
@@ -587,6 +616,7 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                 st.dataframe(pd.DataFrame(st.session_state.production_dispatch_db), use_container_width=True)
             else:
                 st.info("目前尚無下發至生產部的設計規格紀錄。")
+                
     # ====================================================
     # 🔌 8. 配電盤 BOM 零件自動展開與採購連動
     # ====================================================
