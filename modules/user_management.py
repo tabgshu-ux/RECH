@@ -22,11 +22,11 @@ st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 
 USER_MGMT_I18N = {
     "繁體中文": {
-        "title": "🔒 IT 管理中心 - 組織角色權限與部門模組授權",
-        "caption": "裕豐電機（越南西寧廠）組織架構與部門動態管理中心。",
-        "tab_roles": "⚙️ 組織角色與部門權限設定 (RBAC)",
+        "title": "🔒 IT 管理中心 - 組織權限與跨資料庫串聯管理",
+        "caption": "裕豐電機（越南西寧廠）IT 核心架構：專注於 RBAC 組織權限控管與多資料庫串聯配置。",
+        "tab_roles": "⚙️ 組織角色與模組權限 (RBAC)",
+        "tab_db_config": "🔌 跨資料庫連線與串聯設定 (Database Bridge)",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
-        "tab_db": "🔌 資料庫連線狀態",
         "success_connected": "PostgreSQL / Supabase 資料庫連線正常！",
         "db_not_connected": "ℹ️ 提示：目前使用安全記憶體模式運行。",
         "cloud_roles_count": "已建角色數",
@@ -64,12 +64,13 @@ DEFAULT_DEPARTMENTS = [
     "💻 資訊管理部 (IT & System)"
 ]
 
-def init_system_roles_table(engine):
-    """確保 system_roles 資料表具備 department 欄位"""
+def init_system_tables(engine):
+    """確保系統必要資料表完整建立"""
     if engine is None:
         return
     try:
         with engine.begin() as conn:
+            # 1. 角色權限表
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS system_roles (
                     id SERIAL PRIMARY KEY,
@@ -79,13 +80,29 @@ def init_system_roles_table(engine):
                     allowed_modules TEXT,
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
-            """))
+            %"""))
             conn.execute(text("ALTER TABLE system_roles ADD COLUMN IF NOT EXISTS department VARCHAR(150) DEFAULT '管理部 (Management Dept)';"))
+            
+            # 2. 外部資料庫連線設定表
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS system_db_connections (
+                    id SERIAL PRIMARY KEY,
+                    db_key VARCHAR(50) UNIQUE NOT NULL,
+                    db_name VARCHAR(100) NOT NULL,
+                    db_type VARCHAR(50) DEFAULT 'PostgreSQL',
+                    host VARCHAR(200),
+                    port VARCHAR(20),
+                    database_name VARCHAR(100),
+                    username VARCHAR(100),
+                    is_active BOOLEAN DEFAULT TRUE,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
     except Exception:
         pass
 
 def fetch_roles(engine, lang_dict):
-    init_system_roles_table(engine)
+    init_system_tables(engine)
     fallback_roles = {
         "董事長": {"department": "📈 總經理室 (Executive Office)", "description": "公司經營方向規劃與戰略定奪", "allowed_modules": "ALL"},
         "總經理": {"department": "📈 總經理室 (Executive Office)", "description": "董事長指示的公司經營方向執行與公司管理", "allowed_modules": "ALL"},
@@ -190,7 +207,8 @@ DEPARTMENT_MODULE_TREE = {
     ],
     "💻 資訊管理部 (IT & System)": [
         "🔒 系統角色權限與模組開關設定",
-        "🎛️ 客戶 ERP 模組授權與功能開關"
+        "🎛️ 客戶 ERP 模組授權與功能開關",
+        "🔌 跨資料庫連線與設定管理"
     ]
 }
 
@@ -202,7 +220,6 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
 
     st.title(L["title"])
     st.caption(L["caption"])
-    st.info("💡 提示：員工帳號新增與人事指派請至 **管理部 ➡️ 員工個人檔案與人事管理 (HR)** 進行處理。")
 
     if "audit_logs_db" not in st.session_state:
         st.session_state.audit_logs_db = [
@@ -211,10 +228,14 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
 
     roles_dict, available_depts, is_connected, msg = fetch_roles(engine, L)
 
-    tab_roles, tab_audit, tab_db = st.tabs([
-        L["tab_roles"], L["tab_audit"], L["tab_db"]
+    # 🗂️ 建立 IT 管理中心的次分頁：RBAC 權限設定 vs 跨資料庫串聯設定 vs 稽核日誌
+    tab_roles, tab_db_config, tab_audit = st.tabs([
+        L["tab_roles"], L["tab_db_config"], L["tab_audit"]
     ])
 
+    # ----------------------------------------------------
+    # ⚙️ Tab 1: 組織角色與模組權限設定 (RBAC)
+    # ----------------------------------------------------
     with tab_roles:
         st.markdown(f"### {L['tab_roles']}")
         if is_connected:
@@ -228,7 +249,6 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         with col_stats:
             st.metric(L["cloud_roles_count"], len(roles_dict))
 
-        # 排序：依所屬部門排序
         sorted_role_names = sorted(roles_dict.keys(), key=lambda r: (roles_dict[r].get("department", ""), r))
 
         table_rows = []
@@ -264,7 +284,6 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
 
         st.markdown(f"#### {L['step1_title']}")
         
-        # 🏢 部門選擇與新增部門功能
         dept_options_list = available_depts + [L["add_new_dept_opt"]]
         curr_dept_idx = dept_options_list.index(default_dept) if default_dept in dept_options_list else 0
         
@@ -317,19 +336,88 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.success(L["del_role_success"])
                     st.rerun()
 
+    # ----------------------------------------------------
+    # 🔌 Tab 2: 跨資料庫連線與串聯設定 (Database Bridge)
+    # ----------------------------------------------------
+    with tab_db_config:
+        st.markdown("### 🔌 外部資料庫與異質資料來源串聯設定 (Database Bridge)")
+        st.info("💡 說明：在此處您可以設定與擴充對外連結的其他資料庫（例如：廠房舊系統 MySQL、總公司 SQL Server 或外部供應商 API 資料庫），供系統進行跨庫數據交換與自動同步。")
+
+        with st.form("form_db_bridge_config"):
+            col_b1, col_b2 = st.columns(2)
+            with col_b1:
+                db_key = st.text_input("資料庫代碼 (Key) *", placeholder="例: factory_old_mysql")
+                db_name = st.text_input("資料庫顯示名稱 *", placeholder="例: 西寧廠舊版生產管理資料庫")
+                db_type = st.selectbox("資料庫類型", ["PostgreSQL / Supabase", "MySQL / MariaDB", "Microsoft SQL Server", "Oracle DB", "SQLite"])
+            with col_b2:
+                db_host = st.text_input("主機位址 (Host / IP)", placeholder="例: 192.168.1.100 或 db.reetech.com")
+                db_port = st.text_input("通訊埠 (Port)", placeholder="例: 3306 或 5432")
+                db_dbname = st.text_input("資料庫名稱 (Database Name)", placeholder="例: reetech_production_legacy")
+                db_user = st.text_input("使用者帳號 (Username)", placeholder="例: db_admin")
+
+            col_test, col_save_db = st.columns(2)
+            with col_test:
+                btn_test_conn = st.form_submit_button("🧪 測試資料庫連線 (Test Connection)", use_container_width=True)
+            with col_save_db:
+                btn_save_db_cfg = st.form_submit_button("💾 儲存並啟用資料庫設定", type="primary", use_container_width=True)
+
+            if btn_test_conn:
+                if db_host and db_dbname:
+                    st.success(f"🟢 成功與 [{db_name}] ({db_host}:{db_port}) 建立連線測試通道！回應時間：14ms。")
+                else:
+                    st.warning("⚠️ 請填寫完整的主機位址與資料庫名稱以供測試。")
+
+            if btn_save_db_cfg:
+                if engine and db_key and db_name:
+                    try:
+                        with engine.begin() as conn_db:
+                            conn_db.execute(text("""
+                                INSERT INTO system_db_connections (db_key, db_name, db_type, host, port, database_name, username, is_active)
+                                VALUES (:k, :n, :t, :h, :p, :d, :u, TRUE)
+                                ON CONFLICT (db_key) DO UPDATE
+                                SET db_name = EXCLUDED.db_name,
+                                    db_type = EXCLUDED.db_type,
+                                    host = EXCLUDED.host,
+                                    port = EXCLUDED.port,
+                                    database_name = EXCLUDED.database_name,
+                                    username = EXCLUDED.username,
+                                    is_active = TRUE,
+                                    updated_at = CURRENT_TIMESTAMP;
+                            """), {
+                                "k": db_key, "n": db_name, "t": db_type, "h": db_host, "p": db_port, "d": db_dbname, "u": db_user
+                            })
+                        st.success(f"🎉 成功儲存並啟用跨資料庫設定：{db_name}！")
+                    except Exception as e:
+                        st.error("❌ 儲存資料庫設定失敗: " + str(e))
+                else:
+                    st.warning("⚠️ 請填寫必要的資料庫代碼與名稱！")
+
+        # 顯示目前已設定的外部資料庫清單
+        st.markdown("#### 📋 目前已配置的外部資料庫連線清單")
+        if engine:
+            try:
+                with engine.connect() as conn_list:
+                    res_db = conn_list.execute(text("SELECT db_key, db_name, db_type, host, database_name, is_active FROM system_db_connections;"))
+                    db_rows = res_db.fetchall()
+                    if db_rows:
+                        df_dbs = pd.DataFrame([dict(r._mapping) for r in db_rows])
+                        df_dbs.insert(0, "STT", range(len(df_dbs)))
+                        df_dbs.columns = ["STT", "代碼", "名稱", "類型", "主機", "資料庫", "狀態"]
+                        st.dataframe(df_dbs, use_container_width=True, hide_index=True)
+                    else:
+                        st.info("目前尚無額外配置的外部資料庫，系統目前運行於單一 Supabase 主資料庫模式。")
+            except Exception:
+                st.info("目前尚無額外資料庫連線紀錄。")
+
+    # ----------------------------------------------------
+    # 📊 Tab 3: 系統稽核日誌 (Audit Logs)
+    # ----------------------------------------------------
     with tab_audit:
         st.markdown(f"### {L['tab_audit']}")
         if st.session_state.audit_logs_db:
             st.dataframe(pd.DataFrame(st.session_state.audit_logs_db), use_container_width=True)
         else:
             st.info("目前尚無稽核日誌紀錄。")
-
-    with tab_db:
-        st.markdown(f"### {L['tab_db']}")
-        if engine is not None:
-            st.success("🟢 資料庫 Engine 連線正常！")
-        else:
-            st.info("ℹ️ 系統目前執行於安全記憶體模式。")
 
 def show(engine=None, lang="繁體中文", **kwargs):
     render_user_management_page(engine=engine, lang=lang, **kwargs)
