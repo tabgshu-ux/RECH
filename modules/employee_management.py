@@ -42,53 +42,23 @@ EMP_I18N = {
 }
 
 def get_system_roles_from_db(engine):
-    """🔌 核心連線：直接從 Supabase 資料庫讀取 IT 設定的系統角色，並【強制按裕豐電機企業組織階級】完美排序"""
-    # 裕豐電機標準企業組織階級對照權重排序
-    hierarchy_order = [
-        "董事長 / 總經理 (Executive)",
-        "副總經理",
-        "協理廠長",
-        "廠長 / 工務經理 (Plant/Project Manager)",
-        "財務副理 / 財務主管 (Finance Manager)",
-        "管理部主管 (Admin & Finance Manager)",
-        "工程主管",
-        "現場工地主任 / 組長 (Site Supervisor)",
-        "倉庫管理員",
-        "採購 / 倉管 / 兼任會計 (Purchasing/Inventory)",
-        "人事",
-        "精算主管",
-        "系統管理員 (Admin)",
-        "一般員工 (Staff)"
-    ]
-    
+    """🔌 嚴格純淨連線：僅從 Supabase 資料庫的 public.system_roles 讀取，絕不混入任何程式碼預設值"""
     db_roles = []
     if engine:
         try:
             with engine.connect() as conn:
-                res = conn.execute(text("SELECT role_name FROM public.system_roles;"))
+                res = conn.execute(text("SELECT role_name FROM public.system_roles ORDER BY role_name ASC;"))
                 rows = res.fetchall()
                 if rows:
                     db_roles = [r[0] for r in rows if r[0]]
         except Exception:
             pass
 
-    # 若資料庫無資料，則使用預設清單
+    # 若資料庫抓不到任何資料時的絕對防護預設
     if not db_roles:
-        db_roles = hierarchy_order
+        db_roles = ["系統管理員 (Admin)", "一般員工 (Staff)"]
 
-    # 確保資料庫中新增的角色也能被完整收納
-    for r in hierarchy_order:
-        if r not in db_roles:
-            db_roles.append(r)
-
-    # 依照裕豐電機指定的階級順序進行精準排序
-    def role_sort_key(role_name):
-        for idx, h_role in enumerate(hierarchy_order):
-            if h_role in role_name or role_name in h_role:
-                return idx
-        return 999  # 未在清單內的排在最後
-
-    return sorted(list(set(db_roles)), key=role_sort_key)
+    return db_roles
 
 def get_factory_list(engine):
     """取得資料庫中定義的廠區"""
@@ -147,7 +117,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
     init_employee_db(engine)
     available_factories = get_factory_list(engine)
     
-    # 🔌 動態連線並【按企業組織階級完美排序】
+    # 🔌 完全純淨：只抓取資料庫中設定好的角色
     system_roles_options = get_system_roles_from_db(engine)
 
     tab_add_vn, tab_add_tw, tab_edit, tab_resign, tab_list, tab_resigned_list = st.tabs([
@@ -191,21 +161,13 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                 (emp_code, emp_name, phone, id_card, tax_code, permanent_address, current_address, social_code, hospital_name, factory, department, position, attendance_type, system_role, base_salary, status)
                                 VALUES (:code, :name, :phone, :id, :tax, :perm, :curr, :social, :hosp, :factory, :dept, :pos, :att, :role, :sal, '在職')
                                 ON CONFLICT (emp_code) DO UPDATE
-                                SET emp_name = EXCLUDED.emp_name,
-                                    phone = EXCLUDED.phone,
-                                    id_card = EXCLUDED.id_card,
-                                    tax_code = EXCLUDED.tax_code,
-                                    permanent_address = EXCLUDED.permanent_address,
-                                    current_address = EXCLUDED.current_address,
-                                    social_code = EXCLUDED.social_code,
-                                    hospital_name = EXCLUDED.hospital_name,
-                                    factory = EXCLUDED.factory,
-                                    department = EXCLUDED.department,
-                                    position = EXCLUDED.position,
-                                    attendance_type = EXCLUDED.attendance_type,
-                                    system_role = EXCLUDED.system_role,
-                                    base_salary = EXCLUDED.base_salary,
-                                    status = '在職';
+                                SET emp_name = EXCLUDED.emp_name, phone = EXCLUDED.phone, id_card = EXCLUDED.id_card,
+                                    tax_code = EXCLUDED.tax_code, permanent_address = EXCLUDED.permanent_address,
+                                    current_address = EXCLUDED.current_address, social_code = EXCLUDED.social_code,
+                                    hospital_name = EXCLUDED.hospital_name, factory = EXCLUDED.factory,
+                                    department = EXCLUDED.department, position = EXCLUDED.position,
+                                    attendance_type = EXCLUDED.attendance_type, system_role = EXCLUDED.system_role,
+                                    base_salary = EXCLUDED.base_salary, status = '在職';
                             """), {
                                 "code": v_code, "name": v_name, "phone": v_phone, "id": v_id, "tax": v_tax_code,
                                 "perm": v_perm_addr, "curr": v_curr_addr, "social": v_social_code, "hosp": v_hosp,
@@ -219,7 +181,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.warning("⚠️ 請務必填寫『工號』與『姓名』！")
 
     # ----------------------------------------------------
-    # 🇹🇼 Tab 2: 新增外派幹部 (連動 IT 設定之系統權限角色)
+    # 🇹🇼 Tab 2: 新增外派幹部
     # ----------------------------------------------------
     with tab_add_tw:
         st.markdown("### 🇹🇼 TW/CN 新增外派幹部 / 台籍與中籍員工")
@@ -251,16 +213,10 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                 (emp_code, emp_name, phone, id_card, factory, department, position, attendance_type, system_role, base_salary, status)
                                 VALUES (:code, :name, :phone, :id, :factory, :dept, :pos, :att, :role, :sal, '在職')
                                 ON CONFLICT (emp_code) DO UPDATE
-                                SET emp_name = EXCLUDED.emp_name,
-                                    phone = EXCLUDED.phone,
-                                    id_card = EXCLUDED.id_card,
-                                    factory = EXCLUDED.factory,
-                                    department = EXCLUDED.department,
-                                    position = EXCLUDED.position,
-                                    attendance_type = EXCLUDED.attendance_type,
-                                    system_role = EXCLUDED.system_role,
-                                    base_salary = EXCLUDED.base_salary,
-                                    status = '在職';
+                                SET emp_name = EXCLUDED.emp_name, phone = EXCLUDED.phone, id_card = EXCLUDED.id_card,
+                                    factory = EXCLUDED.factory, department = EXCLUDED.department, position = EXCLUDED.position,
+                                    attendance_type = EXCLUDED.attendance_type, system_role = EXCLUDED.system_role,
+                                    base_salary = EXCLUDED.base_salary, status = '在職';
                             """), {
                                 "code": t_code, "name": t_name, "phone": t_phone, "id": f"護照:{t_passport} / TRC:{t_trc}",
                                 "factory": t_factory, "dept": t_dept, "pos": t_pos, "att": t_att, "role": t_role, "sal": t_sal
