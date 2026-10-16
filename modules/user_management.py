@@ -1,8 +1,7 @@
 import streamlit as st
 import pandas as pd
-import requests
-import json
 import datetime
+from sqlalchemy import text
 
 # ----------------------------------------------------
 # 📱 手機優先響應式 CSS 紋理 (Mobile-First UI)
@@ -22,17 +21,17 @@ MOBILE_USER_MGMT_CSS = """
 st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# 🌐 多語系字典 (i18n Dictionary)
+# 🌐 多語系字典與角色中英越對照表 (i18n & RBAC Localization)
 # ----------------------------------------------------
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 組織角色權限與員工帳號總控台",
-        "caption": "裕豐電機雲端高可用架構：對接 Supabase 雲端資料庫 (RBAC & 使用者帳號管理)。",
+        "caption": "裕豐電機雲端高可用架構：RBAC 角色權限管理與系統員工帳號 CRUD。",
         "tab_roles": "⚙️ 組織角色與模組權限設定 (RBAC)",
         "tab_users": "👥 系統員工帳號管理 (CRUD)",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
-        "tab_db": "🔌 雲端資料庫連線狀態",
-        "success_connected": "Supabase 資料庫連線成功！",
+        "tab_db": "🔌 資料庫連線狀態",
+        "success_connected": "PostgreSQL / Supabase 資料庫連線正常！",
         "cloud_roles_count": "已建角色數",
         "search_ph": "輸入角色名稱過濾...",
         "search_label": "🔍 搜尋角色關鍵字",
@@ -61,11 +60,17 @@ USER_MGMT_I18N = {
         "site_opts": ["台灣總部 (Taiwan HQ)", "越南西寧廠 (Tay Ninh)", "越南海防廠 (Hai Phong)"],
         "btn_add_user": "💾 建立使用者帳號",
         "success_add_user": "✅ 系統帳號 `{username}` 已成功建立！",
-        "fill_warning": "⚠️ 請完整填寫帳號與姓名！"
+        "fill_warning": "⚠️ 請完整填寫帳號與姓名！",
+        "default_roles": {
+            "admin": {"description": "最高決策與全系統總覽權限 (Admin)", "allowed_modules": "ALL"},
+            "manager": {"description": "廠區主管，負責考勤審核與日常營運 (Manager)", "allowed_modules": "ALL"},
+            "security": {"description": "大門保全組，負責車輛進出登記 (Security)", "allowed_modules": "車輛門禁"},
+            "staff": {"description": "一般員工，個人打卡與請假申請 (Staff)", "allowed_modules": "個人打卡"}
+        }
     },
     "Tiếng Việt": {
         "title": "🔒 Quản trị IT - Phân quyền Vai trò & Quản lý Tài khoản",
-        "caption": "Kiến trúc đám mây Reetech: Kết nối CSDL Supabase (RBAC & Tài khoản).",
+        "caption": "Kiến trúc đám mây Reetech: Quản lý phân quyền RBAC & Tài khoản nhân sự.",
         "tab_roles": "⚙️ Phân quyền Vai trò & Module (RBAC)",
         "tab_users": "👥 Quản lý Tài khoản Nhân sự",
         "tab_audit": "📊 Nhật ký Kiểm toán",
@@ -99,16 +104,22 @@ USER_MGMT_I18N = {
         "site_opts": ["Trụ sở Đài Loan (HQ)", "Nhà máy Tây Ninh", "Nhà máy Hải Phòng"],
         "btn_add_user": "💾 Tạo tài khoản",
         "success_add_user": "✅ Đã tạo tài khoản `{username}`!",
-        "fill_warning": "⚠️ Vui lòng điền đầy đủ thông tin!"
+        "fill_warning": "⚠️ Vui lòng điền đầy đủ thông tin!",
+        "default_roles": {
+            "admin": {"description": "Quản trị viên hệ thống tối cao (Admin)", "allowed_modules": "ALL"},
+            "manager": {"description": "Quản đốc nhà máy, duyệt chấm công và vận hành (Manager)", "allowed_modules": "ALL"},
+            "security": {"description": "Bảo vệ cổng, đăng ký xe ra vào (Security)", "allowed_modules": "車輛門禁"},
+            "staff": {"description": "Nhân viên, chấm công và xin nghỉ phép (Staff)", "allowed_modules": "個人打卡"}
+        }
     },
     "English": {
         "title": "🔒 IT Center - RBAC Roles & User Accounts Management",
-        "caption": "Reetech Cloud Architecture: Connected to Supabase Cloud Database.",
+        "caption": "Reetech Cloud Architecture: RBAC Role Permissions & User CRUD.",
         "tab_roles": "⚙️ RBAC Roles & Permissions",
         "tab_users": "👥 User Accounts (CRUD)",
         "tab_audit": "📊 System Audit Logs",
-        "tab_db": "🔌 Cloud DB Status",
-        "success_connected": "Database connection successful!",
+        "tab_db": "🔌 Database Status",
+        "success_connected": "PostgreSQL Database Connected Successfully!",
         "cloud_roles_count": "Total Roles",
         "search_ph": "Filter roles...",
         "search_label": "🔍 Search Roles",
@@ -137,70 +148,68 @@ USER_MGMT_I18N = {
         "site_opts": ["Taiwan HQ", "Tay Ninh Plant", "Hai Phong Plant"],
         "btn_add_user": "💾 Create User Account",
         "success_add_user": "✅ User account `{username}` created successfully!",
-        "fill_warning": "⚠️ Please fill in username and full name!"
+        "fill_warning": "⚠️ Please fill in username and full name!",
+        "default_roles": {
+            "admin": {"description": "Highest system administration & decision making (Admin)", "allowed_modules": "ALL"},
+            "manager": {"description": "Plant manager, attendance approval & daily ops (Manager)", "allowed_modules": "ALL"},
+            "security": {"description": "Gate security guard, vehicle access logging (Security)", "allowed_modules": "車輛門禁"},
+            "staff": {"description": "General employee, attendance & leave requests (Staff)", "allowed_modules": "個人打卡"}
+        }
     }
 }
 
 # ----------------------------------------------------
-# 🔌 Supabase API 連線設定與備援
+# 🔌 使用 SQLAlchemy 進行資料庫存取 (無 DNS 錯誤)
 # ----------------------------------------------------
-SUPABASE_URL = "https://wvsqbefyekmueffcbwd.supabase.co"
-
-def get_headers():
-    key = st.secrets.get("SUPABASE_ANON_KEY", "sb_publishable_rFJjXbi9XlhAT_l_raV6CA_33zyysEp")
-    headers = {
-        "Content-Type": "application/json",
-        "Prefer": "return=representation"
-    }
-    if key and "sample_key" not in key:
-        headers["apikey"] = key
-        headers["Authorization"] = f"Bearer {key}"
-    return headers
-
-def fetch_roles():
+def fetch_roles(engine, lang_dict):
+    fallback_roles = lang_dict["default_roles"]
+    if engine is None:
+        return fallback_roles, False, "資料庫 Engine 未建立（目前為安全記憶體模式）"
+    
     try:
-        url = f"{SUPABASE_URL}/rest/v1/system_roles?select=*"
-        resp = requests.get(url, headers=get_headers(), timeout=3)
-        if resp.status_code == 200:
-            data = resp.json()
-            roles_dict = {}
-            for item in data:
-                roles_dict[item["role_name"]] = {
-                    "description": item.get("description", ""),
-                    "allowed_modules": item.get("allowed_modules", "ALL")
-                }
-            return roles_dict, True, "資料庫連線成功！"
-        else:
-            return {}, False, f"伺服器回應代碼 {resp.status_code}"
+        df = pd.read_sql("SELECT role_name, description, allowed_modules FROM system_roles", con=engine)
+        if df.empty:
+            return fallback_roles, True, "資料庫連線正常，目前載入多語系預設角色。"
+        roles_dict = {}
+        for _, row in df.iterrows():
+            r_name = row["role_name"]
+            # 若資料庫中的角色符合預設角色，優先採用多語系翻譯的說明
+            desc = row.get("description", "")
+            if r_name in fallback_roles and not desc:
+                desc = fallback_roles[r_name]["description"]
+            roles_dict[r_name] = {
+                "description": desc,
+                "allowed_modules": row.get("allowed_modules", "ALL")
+            }
+        return roles_dict, True, "PostgreSQL 資料庫連線正常！"
     except Exception as e:
-        fallback_roles = {
-            "admin": {"description": "最高決策與全系統總覽權限", "allowed_modules": "ALL"},
-            "manager": {"description": "廠區主管，負責考勤審核與日常營運", "allowed_modules": "ALL"},
-            "security": {"description": "大門保全組，負責車輛進出登記", "allowed_modules": "車輛門禁"},
-            "staff": {"description": "一般員工，個人打卡與請假申請", "allowed_modules": "個人打卡"}
-        }
-        return fallback_roles, False, f"離線安全檢視模式: {e}"
+        return fallback_roles, False, f"資料庫表格尚未建立（已自動載入多語系預設角色）: {e}"
 
-def save_role_db(role_name, description, allowed_modules):
+def save_role_db(engine, role_name, description, allowed_modules):
+    if engine is None:
+        return False
     try:
-        headers = get_headers()
-        headers["Prefer"] = "resolution=merge-duplicates"
-        url = f"{SUPABASE_URL}/rest/v1/system_roles"
-        payload = [{
-            "role_name": role_name,
-            "description": description,
-            "allowed_modules": allowed_modules
-        }]
-        resp = requests.post(url, headers=headers, data=json.dumps(payload), timeout=3)
-        return resp.status_code in [200, 201, 204]
+        with engine.begin() as conn:
+            conn.execute(
+                text("""
+                    INSERT INTO system_roles (role_name, description, allowed_modules) 
+                    VALUES (:r, :d, :m) 
+                    ON CONFLICT (role_name) 
+                    DO UPDATE SET description = :d, allowed_modules = :m
+                """),
+                {"r": role_name, "d": description, "m": allowed_modules}
+            )
+        return True
     except Exception:
         return False
 
-def delete_role_db(role_name):
+def delete_role_db(engine, role_name):
+    if engine is None:
+        return False
     try:
-        url = f"{SUPABASE_URL}/rest/v1/system_roles?role_name=eq.{role_name}"
-        resp = requests.delete(url, headers=get_headers(), timeout=3)
-        return resp.status_code in [200, 204]
+        with engine.begin() as conn:
+            conn.execute(text("DELETE FROM system_roles WHERE role_name = :r"), {"r": role_name})
+        return True
     except Exception:
         return False
 
@@ -280,7 +289,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
             {"time": "2026-10-06 13:00:15", "user": "admin", "action": "登入系統 (Login)", "module": "Auth", "ip": "192.168.1.50", "status": "成功"}
         ]
 
-    roles_dict, is_connected, msg = fetch_roles()
+    roles_dict, is_connected, msg = fetch_roles(engine, L)
 
     tab_roles, tab_users, tab_audit, tab_db = st.tabs([
         L["tab_roles"], L["tab_users"], L["tab_audit"], L["tab_db"]
@@ -294,7 +303,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         if is_connected:
             st.success(f"🟢 {L['success_connected']} ({msg})")
         else:
-            st.warning(f"⚠️ {msg}")
+            st.info(f"ℹ️ {msg}")
 
         col_search, col_stats = st.columns([3, 1])
         with col_search:
@@ -352,7 +361,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
             t_name = in_name.strip()
             if t_name:
                 mod_str = "ALL" if len(selected_mods) == len(ALL_MODULE_LIST) else (",".join(selected_mods) if selected_mods else "")
-                save_role_db(t_name, in_desc, mod_str)
+                save_role_db(engine, t_name, in_desc, mod_str)
                 st.success(L["save_role_success"].format(name=t_name))
                 st.rerun()
             else:
@@ -364,7 +373,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                 if t_name in ["admin", "董事長 / 總經理"]:
                     st.error("🚫 系統保護：最高管理者角色無法被刪除！")
                 else:
-                    delete_role_db(t_name)
+                    delete_role_db(engine, t_name)
                     st.success(L["del_role_success"].format(name=t_name))
                     st.rerun()
 
@@ -399,7 +408,6 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                             "role": role,
                             "site": site
                         })
-                        # 同步寫入稽核日誌
                         st.session_state.audit_logs_db.insert(0, {
                             "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                             "user": st.session_state.get("user_name", "admin"),
@@ -468,15 +476,14 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
             st.info("目前尚無稽核日誌紀錄。")
 
     # ----------------------------------------------------
-    # Tab 4: 雲端資料庫連線狀態
+    # Tab 4: 資料庫連線狀態
     # ----------------------------------------------------
     with tab_db:
         st.markdown(f"### {L['tab_db']}")
-        st.text_input("目前對接端點 (SUPABASE_URL)", value=SUPABASE_URL, disabled=True)
         if is_connected:
-            st.success("🟢 雲端資料庫連線正常！")
+            st.success("🟢 PostgreSQL 資料庫連線正常！")
         else:
-            st.warning(f"⚠️ 網路或 DNS 解析異常: {msg}")
+            st.info(f"ℹ️ 系統狀態提示: {msg}")
 
 def show(engine=None, lang="繁體中文", **kwargs):
     render_user_management_page(engine=engine, lang=lang, **kwargs)
