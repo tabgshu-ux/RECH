@@ -83,14 +83,12 @@ ASSET_CATEGORIES = [
 ]
 
 def parse_formatted_amount(val_str):
-    """將點或逗號千分位字串還原為純數字，例: '850.000.000' -> 850000000"""
     if not val_str:
         return 0.0
     clean_str = re.sub(r"[^\d]", "", str(val_str))
     return float(clean_str) if clean_str else 0.0
 
 def format_vnd(amount):
-    """將數字格式化為越南點號千分位格式，例: 850.000.000 VND"""
     try:
         val = float(amount)
         return f"{val:,.0f}".replace(",", ".") + " VND"
@@ -98,10 +96,9 @@ def format_vnd(amount):
         return f"{amount} VND"
 
 def calculate_5y_depreciation(cost, salvage, purchase_date_str):
-    """計算 5 年 (60個月) 直線法折舊金額與目前資產淨值"""
     try:
         cost_val = float(cost or 0)
-        salvage_val = float(salvage or (cost_val * 0.1)) # 預設殘值 10%
+        salvage_val = float(salvage or (cost_val * 0.1))
         
         if isinstance(purchase_date_str, (datetime.date, datetime.datetime)):
             p_date = purchase_date_str
@@ -109,13 +106,12 @@ def calculate_5y_depreciation(cost, salvage, purchase_date_str):
             p_date = datetime.datetime.strptime(str(purchase_date_str)[:10], "%Y-%m-%d").date()
             
         today = datetime.date.today()
-        
         months_used = (today.year - p_date.year) * 12 + (today.month - p_date.month)
         if months_used < 0:
             months_used = 0
             
         total_depreciable_base = max(0.0, cost_val - salvage_val)
-        monthly_depreciation = total_depreciable_base / 60.0 # 5 年 = 60 個月
+        monthly_depreciation = total_depreciable_base / 60.0
         
         accumulated_depr = min(total_depreciable_base, monthly_depreciation * months_used)
         current_net_value = max(salvage_val, cost_val - accumulated_depr)
@@ -217,7 +213,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
         with st.form("form_add_asset"):
             c1, c2 = st.columns(2)
             with c1:
-                asset_code = st.text_input(L["lbl_code"], value="AST-VH-001", placeholder="例: AST-VH-001")
+                asset_code = st.text_input(L["lbl_code"], value="AST-VH-002", placeholder="例: AST-VH-001")
                 asset_cat = st.selectbox(L["lbl_cat"], ASSET_CATEGORIES)
                 asset_name = st.text_input(L["lbl_name"], placeholder="例: 賓士 S450")
                 purchase_dt = st.date_input(L["lbl_purchase_date"], datetime.date(2023, 1, 1))
@@ -225,18 +221,10 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 site_loc = st.selectbox(L["lbl_site"], ["越南西寧廠 (Tay Ninh)"])
                 asset_status = st.selectbox(L["lbl_status"], ["🟢 在用/租賃中 (Active)", "🟡 維修保養中 (Maintenance)", "🔴 報廢/封存 (Retired)"])
                 
-                cost_str = st.text_input(
-                    L["lbl_cost"], 
-                    value="5.039.000.000",
-                    help="直接輸入數字即可，系統會自動轉換為越南千位點號格式"
-                )
+                cost_str = st.text_input(L["lbl_cost"], value="5.039.000.000")
                 cost_val = parse_formatted_amount(cost_str)
 
-                salvage_str = st.text_input(
-                    L["lbl_salvage"], 
-                    value="85.000.000",
-                    help="預設為原價 10%，可手動調整殘值"
-                )
+                salvage_str = st.text_input(L["lbl_salvage"], value="85.000.000")
                 salvage_val = parse_formatted_amount(salvage_str)
 
             license_plate = ""
@@ -252,11 +240,11 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 
                 v_c1, v_c2, v_c3 = st.columns(3)
                 with v_c1:
-                    license_plate = st.text_input(L["lbl_plate"], value="70A-492.14", placeholder="例: 70A-492.14")
+                    license_plate = st.text_input(L["lbl_plate"], value="70A-492.14")
                 with v_c2:
-                    v_model = st.text_input(L["lbl_v_model"], value="Mercedes-Benz S450", placeholder="例: Toyota Fortuner")
+                    v_model = st.text_input(L["lbl_v_model"], value="Mercedes-Benz S450")
                 with v_c3:
-                    driver_name = st.text_input(L["lbl_driver"], value="Nguyễn Văn Tài", placeholder="例: 專職司機")
+                    driver_name = st.text_input(L["lbl_driver"], value="Nguyễn Văn Tài")
 
                 inspection_date = st.date_input(L["lbl_inspection_date"], datetime.date(2027, 10, 16))
                 st.markdown("</div>", unsafe_allow_html=True)
@@ -271,7 +259,6 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 elif cost_val <= 0:
                     st.error("⚠️ 請填寫正確的取得原價成本！")
                 else:
-                    # 防呆檢查：檢查編號是否重複
                     is_duplicate = False
                     if engine:
                         try:
@@ -304,7 +291,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                             st.success(f"🎉 [展示模式] 車輛/資產【{asset_name}】建立成功！")
 
     # ----------------------------------------------------
-    # 📋 頁籤 2: 清冊查看與 5 年直線折舊攤分試算
+    # 📋 頁籤 2: 清冊查看、5 年直線折舊攤分試算、修改與刪除
     # ----------------------------------------------------
     with tab_list:
         st.markdown(f"### {L['tab_list']}")
@@ -327,6 +314,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                     rows = res.fetchall()
                     if rows:
                         data_list = []
+                        raw_items = []
                         for r in rows:
                             item = dict(r._mapping)
                             
@@ -338,6 +326,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                 if not (match_code or match_name or match_plate):
                                     continue
 
+                            raw_items.append(item)
                             cost_amt = float(item.get("cost_amount", 0) or 0)
                             salvage_amt = float(item.get("salvage_amount", 0) or (cost_amt * 0.1))
                             p_date = item.get("purchase_date") or datetime.date(2023, 1, 1)
@@ -360,6 +349,60 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
                         if data_list:
                             st.dataframe(pd.DataFrame(data_list), use_container_width=True)
+                            
+                            st.markdown("---")
+                            st.markdown("### ✏️ 固定資產與車輛資料修改 / 刪除管理")
+                            asset_options = [f"{item['asset_code']} - {item['asset_name'] or item['license_plate']}" for item in raw_items]
+                            selected_target = st.selectbox("選擇要修改或刪除的資產", asset_options)
+                            
+                            if selected_target:
+                                target_code = selected_target.split(" - ")[0]
+                                target_item = next((i for i in raw_items if i["asset_code"] == target_code), None)
+                                
+                                if target_item:
+                                    with st.form("form_edit_asset"):
+                                        ec1, ec2 = st.columns(2)
+                                        with ec1:
+                                            ed_name = st.text_input("資產或車輛名稱", value=target_item.get("asset_name", ""))
+                                            ed_plate = st.text_input("車牌號碼", value=target_item.get("license_plate", ""))
+                                            ed_brand = st.text_input("廠牌型號", value=target_item.get("brand_model", ""))
+                                        with ec2:
+                                            ed_driver = st.text_input("保管人/駕駛員", value=target_item.get("driver_custodian", ""))
+                                            ed_cost = st.text_input("取得原價成本 (VND)", value=str(target_item.get("cost_amount", 0)))
+                                            ed_salvage = st.text_input("預估殘值 (VND)", value=str(target_item.get("sal_amount", target_item.get("salvage_amount", 0))))
+
+                                        eb1, eb2 = st.columns(2)
+                                        with eb1:
+                                            btn_update = st.form_submit_button("💾 儲存資產變更", type="primary", use_container_width=True)
+                                        with eb2:
+                                            btn_delete = st.form_submit_button("🔥 刪除此筆資產", type="secondary", use_container_width=True)
+
+                                        if btn_update:
+                                            try:
+                                                with engine.begin() as conn:
+                                                    conn.execute(text("""
+                                                        UPDATE public.fixed_assets 
+                                                        SET asset_name = :name, license_plate = :plate, brand_model = :bm, 
+                                                            driver_custodian = :driver, cost_amount = :cost, salvage_amount = :sal
+                                                        WHERE asset_code = :code;
+                                                    """), {
+                                                        "name": ed_name, "plate": ed_plate, "bm": ed_brand,
+                                                        "driver": ed_driver, "cost": parse_formatted_amount(ed_cost),
+                                                        "sal": parse_formatted_amount(ed_salvage), "code": target_code
+                                                    })
+                                                st.success(f"🎉 資產編號 [{target_code}] 資料更新成功！")
+                                                st.rerun()
+                                            except Exception as e:
+                                                st.error("更新失敗: " + str(e))
+
+                                        if btn_delete:
+                                            try:
+                                                with engine.begin() as conn:
+                                                    conn.execute(text("DELETE FROM public.fixed_assets WHERE asset_code = :code;"), {"code": target_code})
+                                                st.success(f"🗑️ 資產編號 [{target_code}] 已成功刪除！")
+                                                st.rerun()
+                                            except Exception as e:
+                                                st.error("刪除失敗: " + str(e))
                         else:
                             st.warning("查無符合關鍵字的資產或車輛紀錄。")
                     else:
