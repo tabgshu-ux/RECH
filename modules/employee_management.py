@@ -33,16 +33,16 @@ EMP_I18N = {
         "tab_add_tw": "🇹🇼 新增外派幹部",
         "tab_edit": "✏️ 修改員工資料",
         "tab_resign": "🚪 員工離職與刪除",
-        "tab_list": "📄 現職員工名冊",
+        "tab_list": "📄 現職員工名冊 (含台幹分流)",
         "tab_resigned_list": "📋 離職名冊",
         "lbl_filter_factory": "依廠區篩選",
         "lbl_search": "搜尋員工姓名、工號或證件號...",
-        "header_list": "📄 全公司現職員工名冊與廠區分流總覽"
+        "header_list": "📄 全公司現職員工名冊與外派幹部獨立分流總覽"
     }
 }
 
 def get_system_roles_from_db(engine):
-    """🔌 核心連線：直接從 Supabase 資料庫中的 public.system_roles 讀取 IT 設定的所有動態角色"""
+    """🔌 核心連線：直接從 Supabase 資料庫中的 public.system_roles 讀取 IT 設定的動態角色與正確階級順序"""
     default_roles = [
         "系統管理員 (Admin)",
         "董事長 / 總經理 (Executive)",
@@ -60,7 +60,6 @@ def get_system_roles_from_db(engine):
             rows = res.fetchall()
             if rows:
                 db_roles = [r[0] for r in rows if r[0]]
-                # 確保基本預設選項也包含在內，避免舊資料比對失敗
                 for r in default_roles:
                     if r not in db_roles:
                         db_roles.append(r)
@@ -70,7 +69,7 @@ def get_system_roles_from_db(engine):
     return default_roles
 
 def get_factory_list(engine):
-    """取得資料庫中定義的廠區，若只有西寧廠則預設傳回西寧廠"""
+    """取得資料庫中定義的廠區"""
     if not engine:
         return [DEFAULT_FACTORY]
     try:
@@ -84,7 +83,7 @@ def get_factory_list(engine):
     return [DEFAULT_FACTORY]
 
 def init_employee_db(engine):
-    """確保員工表具備完整欄位，並校正歷史廠區"""
+    """確保員工表具備完整欄位"""
     if not engine:
         return
     try:
@@ -133,9 +132,8 @@ def init_employee_db(engine):
                 except Exception:
                     pass
 
-            # 校正所有舊資料廠區為西寧廠
             conn.execute(text("UPDATE public.employee_profiles SET factory = '西寧廠 (Tay Ninh)' WHERE factory IS NULL OR factory NOT IN ('西寧廠 (Tay Ninh)');"))
-    except Exception as e:
+    except Exception:
         pass
 
 def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
@@ -148,7 +146,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
     init_employee_db(engine)
     available_factories = get_factory_list(engine)
     
-    # 🔌 動態連線：從 Supabase 資料庫即時撈取 IT 設定的所有系統權限角色
+    # 🔌 動態連線：從 Supabase 資料庫即時撈取 IT 設定的最新系統權限角色
     system_roles_options = get_system_roles_from_db(engine)
 
     tab_add_vn, tab_add_tw, tab_edit, tab_resign, tab_list, tab_resigned_list = st.tabs([
@@ -228,7 +226,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
             col1, col2, col3 = st.columns(3)
             with col1:
                 t_code = st.text_input("外派工號 *", placeholder="例: TW-005")
-                t_name = st.text_input("中文/英文姓名 *", placeholder="例: 王大明 Wang Ta Ming")
+                t_name = st.text_input("中文/英文姓名 *", placeholder="例: 王大明 Wang Ta Ming / Tassos")
                 t_passport = st.text_input("護照號碼 (Passport No.)", placeholder="例: 312345678")
                 t_trc = st.text_input("暫住證 TRC 號碼", placeholder="例: TRC-888999")
 
@@ -274,7 +272,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.warning("⚠️ 請填寫外派工號與姓名！")
 
     # ----------------------------------------------------
-    # ✏️ Tab 3: 修改員工資料 (連動 Supabase 系統權限角色)
+    # ✏️ Tab 3: 修改員工資料
     # ----------------------------------------------------
     with tab_edit:
         st.markdown("### ✏️ 修改現職員工個人檔案與薪資保險資料")
@@ -399,11 +397,18 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.error("讀取失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 📄 Tab 5: 全公司現職員工名冊
+    # 📄 Tab 5: 全公司現職員工名冊 (加入台幹獨立分流)
     # ----------------------------------------------------
     with tab_list:
         st.markdown("### " + L["header_list"])
         
+        # 👑 新增：台幹與越南員工獨立分流檢視過濾器
+        sub_filter = st.radio(
+            "📋 檢視名冊類別分流：",
+            ["全部現職員工 (All)", "🇹🇼 外派幹部 / 台籍與中籍 (Expat/TW/CN)", "🇻🇳 越南籍員工 (Local VN)"],
+            horizontal=True
+        )
+
         c1, c2 = st.columns([1, 2])
         with c1:
             selected_factory = st.selectbox(
@@ -423,6 +428,10 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                     """
                     params = {}
                     
+                    if selected_factory:
+                        query += " AND factory = :fac"
+                        params["fac"] = selected_factory
+
                     if search_keyword.strip():
                         query += " AND (emp_code ILIKE :kw OR emp_name ILIKE :kw OR id_card ILIKE :kw)"
                         params["kw"] = f"%{search_keyword.strip()}%"
@@ -434,15 +443,25 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
 
                     if rows:
                         df = pd.DataFrame([dict(r._mapping) for r in rows])
-                        df.insert(0, "STT", range(len(df)))
-                        df.columns = ["STT", "工號", "姓名", "電話", "身份證/護照與居留證", "廠區", "部門", "職稱", "出勤性質", "系統角色", "狀態"]
-                        st.dataframe(df, use_container_width=True)
+                        
+                        # 依據上方分流按鈕進行資料篩選
+                        if "外派" in sub_filter:
+                            df = df[df["emp_code"].str.upper().str.startswith("TW") | df["emp_code"].str.upper().str.startswith("CN") | df["position"].str.contains("廠長|經理|副理|主任|董事長|外派", na=False)]
+                        elif "越南" in sub_filter:
+                            df = df[df["emp_code"].str.upper().str.startswith("VN") | ~df["emp_code"].str.upper().str.startswith("TW") & ~df["emp_code"].str.upper().str.startswith("CN")]
+
+                        if not df.empty:
+                            df.insert(0, "STT", range(len(df)))
+                            df.columns = ["STT", "工號", "姓名", "電話", "身份證/護照與居留證", "廠區", "部門", "職稱", "出勤性質", "系統角色", "狀態"]
+                            st.dataframe(df, use_container_width=True)
+                        else:
+                            st.info("ℹ️ 此分流類別目前尚無符合的員工資料。")
                     else:
-                        st.warning("⚠️ 目前資料庫尚無符合條件的員工資料，請至【員工薪資計算】頁面完成批次匯入 Excel。")
+                        st.warning("⚠️ 目前資料庫尚無符合條件的員工資料。")
             except Exception as e:
                 st.error("❌ 讀取員工名冊失敗: " + str(e))
         else:
-            st.info("目前為展示模式，連線至資料庫後即可自動同步呈現名冊。")
+            st.info("目前為展示模式。")
 
     # ----------------------------------------------------
     # 📋 Tab 6: 離職名冊歷史封存
