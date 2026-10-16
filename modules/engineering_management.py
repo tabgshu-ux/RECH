@@ -12,13 +12,30 @@ def parse_formatted_amount(val_str):
     clean_str = re.sub(r"[^\d]", "", str(val_str))
     return float(clean_str) if clean_str else 0.0
 
+def convert_currency(amount, from_curr="VND", to_curr="VND"):
+    # 簡易預設匯率換算基準 (可依實際需求調整)
+    # 1 USD = 25,000 VND, 1 RMB = 3,500 VND, 1 TWD = 780 VND
+    rates_to_vnd = {
+        "VND": 1.0,
+        "USD": 25000.0,
+        "RMB": 3500.0,
+        "TWD": 780.0
+    }
+    val_in_vnd = amount * rates_to_vnd.get(from_curr, 1.0)
+    converted_val = val_in_vnd / rates_to_vnd.get(to_curr, 1.0)
+    return converted_val
+
 def format_currency_text(amount, currency="VND"):
     try:
         val = float(amount)
-        if currency in ["VND", "TWD"]:
-            return f"{val:,.0f} {currency}"
-        elif currency in ["USD", "RMB"]:
-            return f"{val:,.2f} {currency}"
+        if currency == "VND":
+            return f"{val:,.0f} ₫ (VND)"
+        elif currency == "USD":
+            return f"$ {val:,.2f} USD"
+        elif currency == "RMB":
+            return f"¥ {val:,.2f} RMB"
+        elif currency == "TWD":
+            return f"$ {val:,.2f} TWD"
         else:
             return f"{val:,.2f} {currency}"
     except:
@@ -37,7 +54,6 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
             {"proj_id": "PRJ-2026-001", "proj_name": "西寧廠高壓配電盤擴建", "client": "CÔNG TY TNHH LEADER ART INDUSTRIES (VIETNAM)", "status": "進行中", "manager": "陳明華"}
         ]
 
-    # 1. 導覽列選單：工程中心 10 大子功能
     sub_options = [
         "1. 工程主管戰情室與案場管理",
         "2. 配電盤與工程專案雙層報價系統",
@@ -75,7 +91,7 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
         st.dataframe(proj_df, use_container_width=True)
 
     # ====================================================
-    # 📋 2. 配電盤與工程專案雙層報價系統 (含真實匯入資料與自動 BOM 連動)
+    # 📋 2. 配電盤與工程專案雙層報價系統 (含千分位、操作引導與多幣別總計)
     # ====================================================
     elif "2." in selected_option or "雙層報價" in selected_option or "報價" in selected_option:
         st.markdown("### 📋 2. 配電盤與工程專案雙層報價系統 (內部成本估算 vs 對外報價)")
@@ -115,7 +131,7 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                 }
             ]
 
-        tab_q_create, tab_q_list = st.tabs(["📝 建立 / 提交報價與自動BOM展開", "📊 報價單總表與審核紀錄"])
+        tab_q_create, tab_q_list = st.tabs(["📝 建立 / 提交報價與自動BOM展開", "📊 報價單總表與審核紀錄 (支援多幣別總計)"])
 
         with tab_q_create:
             with st.form("form_create_quotation"):
@@ -139,10 +155,26 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
 
                 st.markdown("---")
                 st.markdown("##### 📦 工程 BOM 材料與工資明細清單 (CHI TIẾT HẠNG MỤC)")
-                st.info("💡 您可以直接編輯下方 108 項機電與配電盤明細，或自由新增項目。")
+                
+                st.success("👉 **【操作指引說明】**\n"
+                           "1. **修改現有資料**：直接用滑鼠點擊下方表格內的任何文字或數字格子即可直接修改。\n"
+                           "2. **新增一列材料**：請點擊下方表格的最末行空白處直接輸入，或點選表格左上角/右上角的 `+` 號新增列。\n"
+                           "3. **金額千分位**：系統已自動套用越南盾千分位與貨幣格式 (`₫`)，方便核對金額。")
 
                 default_items_df = pd.DataFrame(st.session_state.two_tier_quotations_db[0]["items"])
-                edited_items_df = st.data_editor(default_items_df, num_rows="dynamic", use_container_width=True)
+                
+                edited_items_df = st.data_editor(
+                    default_items_df, 
+                    num_rows="dynamic", 
+                    use_container_width=True,
+                    column_config={
+                        "item": st.column_config.TextColumn("材料與工項名稱 (Item)", width="medium"),
+                        "unit": st.column_config.TextColumn("單位 (Unit)", width="small"),
+                        "qty": st.column_config.NumberColumn("數量 (Qty)", format="%.1f"),
+                        "unit_price": st.column_config.NumberColumn("單價 (Unit Price)", format="%,.0f ₫"),
+                        "total_price": st.column_config.NumberColumn("複價 (Total Price)", format="%,.0f ₫")
+                    }
+                )
 
                 if st.form_submit_button("🚀 確認送出報價單並【自動展開BOM連動採購】", type="primary"):
                     if p_client and p_proj and p_ref:
@@ -179,10 +211,34 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                         st.warning("⚠️ 請完整填寫客戶名稱、工程名稱與報價單號！")
 
         with tab_q_list:
-            st.markdown("##### 📊 已建立之雙層報價單總表")
+            st.markdown("##### 📊 已建立之雙層報價單總表與多幣別總計切換")
+            
+            # 🌐 總經理室 / 主管審核端的多幣別檢視切換工具列
+            view_curr = st.selectbox("🌐 選擇總計顯示幣別（支援主管審核與總經理室檢視）", ["VND", "USD", "RMB", "TWD"], key="view_curr_select")
+
             for q in st.session_state.two_tier_quotations_db:
-                with st.expander(f"📌 報價單號: {q['quot_id']} | 客戶: {q['client']} | 專案: {q['project_name']} ({q['currency']})"):
-                    st.write(f"**提案人**：{q['author']} | **日期**：{q['date']} | **VAT**：{q['vat']}% | **狀態**：{q['status']}")
+                # 計算該筆報價單的總金額 (原始幣別)
+                subtotal_orig = sum([item.get("total_price", 0) for item in q["items"]])
+                vat_amount = subtotal_orig * (q["vat"] / 100.0)
+                grand_total_orig = subtotal_orig + vat_amount
+
+                # 轉換為使用者選擇的幣別
+                subtotal_converted = convert_currency(subtotal_orig, from_curr=q["currency"], to_curr=view_curr)
+                vat_converted = convert_currency(vat_amount, from_curr=q["currency"], to_curr=view_curr)
+                grand_total_converted = convert_currency(grand_total_orig, from_curr=q["currency"], to_curr=view_curr)
+
+                with st.expander(f"📌 報價單號: {q['quot_id']} | 客戶: {q['client']} | 專案: {q['project_name']} (原幣別: {q['currency']})"):
+                    col_info1, col_info2, col_info3 = st.columns(3)
+                    with col_info1:
+                        st.write(f"**提案人**：{q['author']}")
+                        st.write(f"**建立日期**：{q['date']}")
+                    with col_info2:
+                        st.write(f"**審核狀態**：{q['status']}")
+                        st.write(f"**增值稅 VAT**：{q['vat']}%")
+                    with col_info3:
+                        st.markdown(f"**💰 項目小計 ({view_curr})**：`{format_currency_text(subtotal_converted, view_curr)}`")
+                        st.markdown(f"**🔥 含稅總計 ({view_curr})**：`{format_currency_text(grand_total_converted, view_curr)}`")
+
                     st.dataframe(pd.DataFrame(q["items"]), use_container_width=True)
 
     # ====================================================
