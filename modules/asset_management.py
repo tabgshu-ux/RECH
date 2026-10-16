@@ -89,7 +89,6 @@ def parse_formatted_amount(val_str):
     return float(clean_str) if clean_str else 0.0
 
 def format_vnd_input(amount):
-    """將數字轉換為越南點號千分位輸入字串，例: 5039000000 -> '5.039.000.000'"""
     try:
         val = float(amount)
         return f"{val:,.0f}".replace(",", ".")
@@ -180,26 +179,8 @@ def init_assets_db(engine):
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
-
-            # 自動確保數值欄位足夠大 (NUMERIC(18,2)) 避免數十億金額溢位
             conn.execute(text("ALTER TABLE public.fixed_assets ALTER COLUMN cost_amount TYPE NUMERIC(18,2);"))
             conn.execute(text("ALTER TABLE public.fixed_assets ALTER COLUMN salvage_amount TYPE NUMERIC(18,2);"))
-
-            cols = [
-                ("brand_model", "VARCHAR(150)"),
-                ("license_plate", "VARCHAR(50)"),
-                ("driver_custodian", "VARCHAR(100)"),
-                ("purchase_date", "DATE DEFAULT CURRENT_DATE"),
-                ("inspection_expiry", "DATE"),
-                ("cost_amount", "NUMERIC(18,2) DEFAULT 0"),
-                ("salvage_amount", "NUMERIC(18,2) DEFAULT 0"),
-                ("site_location", "VARCHAR(100)")
-            ]
-            for col_name, col_type in cols:
-                try:
-                    conn.execute(text(f"ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS {col_name} {col_type};"))
-                except Exception:
-                    pass
     except Exception:
         pass
 
@@ -375,13 +356,25 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                     with st.form("form_edit_asset"):
                                         ec1, ec2 = st.columns(2)
                                         with ec1:
+                                            # 讓「資產編號」與「購買日期」也能在修改時調整
+                                            ed_code = st.text_input("資產/合約編號 (可修改)", value=target_item.get("asset_code", ""))
                                             ed_name = st.text_input("資產或車輛名稱", value=target_item.get("asset_name", ""))
                                             ed_plate = st.text_input("車牌號碼", value=target_item.get("license_plate", ""))
-                                            ed_brand = st.text_input("廠牌型號", value=target_item.get("brand_model", ""))
+                                            
+                                            raw_pdate = target_item.get("purchase_date")
+                                            if isinstance(raw_pdate, (datetime.date, datetime.datetime)):
+                                                default_date = raw_pdate
+                                            else:
+                                                try:
+                                                    default_date = datetime.datetime.strptime(str(raw_pdate)[:10], "%Y-%m-%d").date()
+                                                except Exception:
+                                                    default_date = datetime.date(2023, 1, 1)
+                                            ed_pdate = st.date_input("購買/取得日期", value=default_date)
+
                                         with ec2:
+                                            ed_brand = st.text_input("廠牌型號", value=target_item.get("brand_model", ""))
                                             ed_driver = st.text_input("保管人/駕駛員", value=target_item.get("driver_custodian", ""))
                                             
-                                            # 修改區塊套用越南點號千分位格式化
                                             default_cost_str = format_vnd_input(target_item.get("cost_amount", 0))
                                             ed_cost = st.text_input("取得原價成本 (VND)", value=default_cost_str)
                                             
@@ -401,18 +394,19 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                                 with engine.begin() as conn:
                                                     conn.execute(text("""
                                                         UPDATE public.fixed_assets 
-                                                        SET asset_name = :name, license_plate = :plate, brand_model = :bm, 
-                                                            driver_custodian = :driver, cost_amount = :cost, salvage_amount = :sal
-                                                        WHERE asset_code = :code;
+                                                        SET asset_code = :new_code, asset_name = :name, license_plate = :plate, 
+                                                            brand_model = :bm, driver_custodian = :driver, 
+                                                            purchase_date = :pdate, cost_amount = :cost, salvage_amount = :sal
+                                                        WHERE asset_code = :old_code;
                                                     """), {
-                                                        "name": ed_name, "plate": ed_plate, "bm": ed_brand,
-                                                        "driver": ed_driver, "cost": final_cost,
-                                                        "sal": final_salvage, "code": target_code
+                                                        "new_code": ed_code.strip(), "name": ed_name, "plate": ed_plate, 
+                                                        "bm": ed_brand, "driver": ed_driver, "pdate": ed_pdate,
+                                                        "cost": final_cost, "sal": final_salvage, "old_code": target_code
                                                     })
-                                                st.success(f"🎉 資產編號 [{target_code}] 資料更新成功！")
+                                                st.success(f"🎉 資產編號 [{ed_code}] 資料更新成功！")
                                                 st.rerun()
                                             except Exception as e:
-                                                st.error("更新失敗: " + str(e))
+                                                st.error("更新失敗 (可能是編號與其他資產重複): " + str(e))
 
                                         if btn_delete:
                                             try:
