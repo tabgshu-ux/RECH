@@ -23,7 +23,7 @@ st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 組織角色權限與系統模組授權",
-        "caption": "裕豐電機（越南西寧廠）組織架構對照：嚴格對應公司組織圖編號與權限範本。",
+        "caption": "裕豐電機（越南西寧廠）組織架構與職位權限範本管理。",
         "tab_roles": "⚙️ 組織角色與模組權限設定 (RBAC)",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
         "tab_db": "🔌 資料庫連線狀態",
@@ -32,16 +32,16 @@ USER_MGMT_I18N = {
         "cloud_roles_count": "已建角色數",
         "search_ph": "輸入角色名稱過濾...",
         "search_label": "🔍 搜尋角色關鍵字",
-        "col_stt": "組織編號",
+        "col_stt": "序號",
         "col_role_name": "職位角色名稱",
         "col_desc": "部門職責與組織架構範圍",
         "col_modules_count": "允許開啟之頁面數量",
-        "edit_header": "✏️ 組織角色權限編輯維護 (依組織圖編號對照)",
+        "edit_header": "✏️ 組織角色權限編輯維護",
         "select_role_lbl": "請選擇欲編輯的角色：",
         "create_new_opt": "🆕 建立新角色 (Create New)",
-        "step1_title": "1. 輸入組織職位名稱與說明",
-        "role_name_lbl": "職位名稱 (對應組織圖) *",
-        "role_name_ph": "例如: 1. 董事長, 2. 總經理",
+        "step1_title": "1. 輸入職位名稱與說明",
+        "role_name_lbl": "職位名稱 *",
+        "role_name_ph": "例如: 董事長, 總經理, 廠長",
         "role_desc_lbl": "組織職責與權限範圍說明",
         "role_desc_ph": "例如: 公司經營方向規劃與戰略定奪",
         "step2_title": "2. 勾選該職位角色可操作功能頁面：",
@@ -52,55 +52,71 @@ USER_MGMT_I18N = {
     }
 }
 
-# 👑 嚴格對應您提供的「裕豐電機工業有限公司組織架構圖」完整 20 個編號順序
-HIERARCHY_MAP = {
-    "1. 董事長": {"desc": "公司經營方向規劃與戰略定奪", "mod": "ALL"},
-    "2. 總經理": {"desc": "董事長指示的公司經營方向執行與公司管理", "mod": "ALL"},
-    "3. 副總經理": {"desc": "工程報價及現場探勘、人員調配與督導", "mod": "ALL"},
-    "4. 廠長 / 副協理": {"desc": "生產車間管理、工程支援與人事管理", "mod": "ALL"},
-    "5. 管理部經理": {"desc": "行政、財務、總務管理、ERP規劃與資訊管理", "mod": "ALL"},
-    "6. 行政主管": {"desc": "人事薪資核算、招募、總務與廠務公安環保", "mod": "ALL"},
-    "7. 人事": {"desc": "人員招募與招募作業、員工餐廳廠商管理", "mod": "👤 員工個人檔案與人事管理"},
-    "8. 財務副理": {"desc": "稅務報告、會計帳目、發票開立與合約簽審", "mod": "📊 越南稅務標準財務報表 (Thông tư 200)"},
-    "9. 設計經理": {"desc": "工程所需設計圖繪畫及材料配置、設計人員管理", "mod": "🎨 [設計] 配電盤電氣與機構設計圖庫 Storage"},
-    "10. 設計主管": {"desc": "設計圖管理與歸檔、設計部門進度整合", "mod": "🎨 [設計] 配電盤電氣與機構設計圖庫 Storage"},
-    "11. 設計人員": {"desc": "開立生產派工單、物料管理與採購協調", "mod": "🔌 [工程] 配電盤 BOM 零件自動展開與採購連動"},
-    "12. 精算主管": {"desc": "精算材料費用", "mod": "⚡ [工程] 配電盤與工程專案雙層報價"},
-    "13. 精算助理": {"desc": "協助精算主管做材料分類及精算", "mod": "⚡ [工程] 配電盤與工程專案雙層報價"},
-    "14. 生產主管": {"desc": "電控與繪圖、設備與品質管理、生產調度", "mod": "📦 [倉儲] 倉庫庫存與資材條碼管理"},
-    "15. 生產組長": {"desc": "生產排程與進度控管、產品品質控管", "mod": "📦 [倉儲] 倉庫庫存與資材條碼管理"},
-    "16. 工程人員": {"desc": "現場工程施工與回報", "mod": "⚡ [工程] 現場工程日報表與出工統計"},
-    "17. 生產組": {"desc": "車間生產作業", "mod": "📦 [倉儲] 倉庫庫存與資材條碼管理"},
-    "18. 板金組": {"desc": "板金加工組工單與條碼", "mod": "✂️ [板金] 板金加工組工單與條碼"},
-    "19. 烤漆組": {"desc": "粉體塗裝烤漆組品管", "mod": "🎨 [塗料] 粉體塗裝烤漆組品管"},
-    "20. 配電組裝": {"desc": "配電盤組裝配線組", "mod": "⚡ [配盤] 配電盤組裝配線組"}
-}
+# 👑 依照您的組織架構圖由高到低的標準排序清單（純職位名稱，不加數字編號）
+ORGANIZATION_HIERARCHY = [
+    "董事長",
+    "總經理",
+    "副總經理",
+    "廠長 / 副協理",
+    "管理部經理",
+    "行政主管",
+    "人事",
+    "財務副理",
+    "設計經理",
+    "設計主管",
+    "設計人員",
+    "精算主管",
+    "精算助理",
+    "生產主管",
+    "生產組長",
+    "工程人員",
+    "生產組",
+    "板金組",
+    "烤漆組",
+    "配電組裝",
+    "系統管理員 (Admin)",
+    "一般員工 (Staff)"
+]
 
 def get_role_sort_weight(role_name):
-    """嚴格依照組織架構圖編號進行排序權重計算"""
-    for idx, h_role in enumerate(HIERARCHY_MAP.keys()):
-        if h_role in role_name or role_name in h_role:
+    """依照組織架構圖的順序進行精準權重排序"""
+    # 清理名稱中的數字編號（若資料庫仍殘留數字）
+    clean_name = role_name.strip()
+    for prefix in ["1. ", "2. ", "3. ", "4. ", "5. ", "6. ", "7. ", "8. ", "9. ", "10. ",
+                   "11. ", "12. ", "13. ", "14. ", "15. ", "16. ", "17. ", "18. ", "19. ", "20. "]:
+        if clean_name.startswith(prefix):
+            clean_name = clean_name[len(prefix):]
+
+    for idx, h_role in enumerate(ORGANIZATION_HIERARCHY):
+        if h_role in clean_name or clean_name in h_role:
             return idx
     return 999
 
 def fetch_roles(engine, lang_dict):
+    fallback_roles = {
+        "董事長": {"description": "公司經營方向規劃與戰略定奪", "allowed_modules": "ALL"},
+        "總經理": {"description": "董事長指示的公司經營方向執行與公司管理", "allowed_modules": "ALL"},
+        "副總經理": {"description": "工程報價及現場探勘、人員調配與督導", "allowed_modules": "ALL"},
+        "廠長 / 副協理": {"description": "生產車間管理、工程支援與人事管理", "allowed_modules": "ALL"},
+        "管理部經理": {"description": "行政、財務、總務管理、ERP規劃與資訊管理", "allowed_modules": "ALL"}
+    }
     if engine is None:
-        return {k: {"description": v["desc"], "allowed_modules": v["mod"]} for k, v in HIERARCHY_MAP.items()}, False, lang_dict["db_not_connected"]
+        return fallback_roles, False, lang_dict["db_not_connected"]
     
     try:
-        # 自動檢查並確保資料庫擁有標準 20 個編號職位
-        with engine.begin() as conn:
-            for r_name, info in HIERARCHY_MAP.items():
-                conn.execute(text("""
-                    INSERT INTO system_roles (role_name, description, allowed_modules) 
-                    VALUES (:r, :d, :m) 
-                    ON CONFLICT (role_name) DO NOTHING;
-                """), {"r": r_name, "d": info["desc"], "m": info["mod"]})
-
         df = pd.read_sql("SELECT role_name, description, allowed_modules FROM system_roles", con=engine)
+        if df.empty:
+            return fallback_roles, True, lang_dict["success_connected"]
+        
         roles_dict = {}
         for _, row in df.iterrows():
-            r_name = row["role_name"]
+            r_name = str(row["role_name"]).strip()
+            # 自動過濾並去除名稱前面可能殘留的舊數字編號
+            for prefix in ["1. ", "2. ", "3. ", "4. ", "5. ", "6. ", "7. ", "8. ", "9. ", "10. ",
+                           "11. ", "12. ", "13. ", "14. ", "15. ", "16. ", "17. ", "18. ", "19. ", "20. "]:
+                if r_name.startswith(prefix):
+                    r_name = r_name[len(prefix):]
+
             desc = row.get("description", "")
             roles_dict[r_name] = {
                 "description": desc,
@@ -108,12 +124,12 @@ def fetch_roles(engine, lang_dict):
             }
         return roles_dict, True, lang_dict["success_connected"]
     except Exception as e:
-        fallback = {k: {"description": v["desc"], "allowed_modules": v["mod"]} for k, v in HIERARCHY_MAP.items()}
-        return fallback, False, f"{lang_dict['db_not_connected']} ({e})"
+        return fallback_roles, False, f"{lang_dict['db_not_connected']} ({e})"
 
 def save_role_db(engine, role_name, description, allowed_modules):
     if engine is None:
         return False
+    clean_name = role_name.strip()
     try:
         with engine.begin() as conn:
             conn.execute(
@@ -123,7 +139,7 @@ def save_role_db(engine, role_name, description, allowed_modules):
                     ON CONFLICT (role_name) 
                     DO UPDATE SET description = :d, allowed_modules = :m
                 """),
-                {"r": role_name, "d": description, "m": allowed_modules}
+                {"r": clean_name, "d": description, "m": allowed_modules}
             )
         return True
     except Exception:
@@ -221,7 +237,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         with col_stats:
             st.metric(L["cloud_roles_count"], len(roles_dict))
 
-        # 👑 嚴格依照組織架構圖編號權重進行排序
+        # 👑 嚴格依組織圖階級排序，並自動給予乾淨的流水序號 (STT)
         sorted_role_names = sorted(roles_dict.keys(), key=get_role_sort_weight)
 
         table_rows = []
@@ -282,12 +298,12 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.success(L["save_role_success"])
                 st.rerun()
             else:
-                st.warning("⚠️ 請輸入組織角色名稱！")
+                st.warning("⚠️ 請輸入職位名稱！")
 
         if btn_del:
             t_name = in_name.strip() or sel_role_key
             if t_name and t_name != L["create_new_opt"]:
-                if "1. 董事長" in t_name or "2. 總經理" in t_name:
+                if "董事長" in t_name or "總經理" in t_name:
                     st.error("🚫 系統保護：最高主管角色無法被刪除！")
                 else:
                     delete_role_db(engine, t_name)
