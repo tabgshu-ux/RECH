@@ -11,8 +11,9 @@ DORM_I18N = {
         "title": "🥗 幹部宿舍伙食、物價比對與 AI 收據識別中心",
         "caption": "裕豐電機（越南西寧廠）專用：幹部宿舍用餐人數登記、西寧市場物價行情比對、採購預算控管與收據 AI 識別。",
         "config_header": "⚙️ 伙食標準預算與單價設定 (Budget Configuration)",
-        "std_rate_lbl": "每人每日伙食標準預算 (VND)",
-        "btn_save_config": "💾 儲存伙食標準設定",
+        "config_desc": "在此設定每人每日標準伙食預算額度，系統將自動連動下方每日採購總上限。",
+        "std_rate_lbl": "每人每日伙食標準預算 (VND) *",
+        "btn_save_config": "💾 立即更新伙食標準設定",
         "reg_header": "🥗 幹部宿舍每日用餐人數登記",
         "site_lbl": "選擇廠區",
         "meal_type_lbl": "餐別",
@@ -38,8 +39,9 @@ DORM_I18N = {
         "title": "🥗 Quản lý Bếp ăn, So sánh Giá cả & AI Nhận diện Hóa đơn",
         "caption": "Nhà máy Tây Ninh Reetech: Đăng ký suất ăn, so sánh giá chợ Tây Ninh, kiểm soát ngân sách và AI hóa đơn.",
         "config_header": "⚙️ Cài đặt Tiêu chuẩn Ngân sách Bếp ăn",
-        "std_rate_lbl": "Tiêu chuẩn ăn mỗi người/ngày (VND)",
-        "btn_save_config": "💾 Lưu cài đặt tiêu chuẩn",
+        "config_desc": "Cài đặt định mức ăn mỗi người/ngày, hệ thống sẽ tự động tính toán hạn mức mua sắm.",
+        "std_rate_lbl": "Tiêu chuẩn ăn mỗi người/ngày (VND) *",
+        "btn_save_config": "💾 Cập nhật tiêu chuẩn",
         "reg_header": "🥗 Đăng ký Suất ăn Ký túc xá Hàng ngày",
         "site_lbl": "Chọn nhà máy",
         "meal_type_lbl": "Buổi ăn",
@@ -65,7 +67,8 @@ DORM_I18N = {
         "title": "🥗 Dorm Catering, Market Price Comparison & AI Receipt Scanner",
         "caption": "Tay Ninh Plant: Headcount registration, local market price comparison, budget control and AI receipts.",
         "config_header": "⚙️ Meal Budget & Rate Configuration",
-        "std_rate_lbl": "Standard Daily Budget per Person (VND)",
+        "config_desc": "Configure the standard daily budget per person to automatically control procurement limits.",
+        "std_rate_lbl": "Standard Daily Budget per Person (VND) *",
         "btn_save_config": "💾 Save Budget Configuration",
         "reg_header": "🥗 Daily Dormitory Headcount Registration",
         "site_lbl": "Plant Location",
@@ -136,15 +139,21 @@ def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
         ]
 
     # ----------------------------------------------------
-    # ⚙️ 伙食標準預算設定區塊
+    # ⚙️ 伙食標準預算設定專用卡片區塊（醒目呈現）
     # ----------------------------------------------------
-    with st.expander(L["config_header"], expanded=False):
-        with st.form("form_dorm_config"):
-            new_rate = st.number_input(L["std_rate_lbl"], min_value=10000.0, value=float(st.session_state.dorm_daily_rate), step=5000.0, format="%.2f")
-            if st.form_submit_button(L["btn_save_config"], type="secondary"):
-                st.session_state.dorm_daily_rate = new_rate
-                st.success(f"🎉 伙食標準預算已成功更新為：{format_vnd(new_rate)} / 人 / 天")
-                st.rerun()
+    st.markdown(f"""
+        <div style="background-color: #F8FAFC; border: 2px solid #3B82F6; border-radius: 10px; padding: 20px; margin-bottom: 25px;">
+            <h4 style="color: #1E40AF; margin-top: 0;">{L['config_header']}</h4>
+            <p style="color: #4B5563; font-size: 0.95rem;">{L['config_desc']}</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    with st.form("form_dorm_config"):
+        new_rate = st.number_input(L["std_rate_lbl"], min_value=10000.0, value=float(st.session_state.dorm_daily_rate), step=5000.0, format="%.2f")
+        if st.form_submit_button(L["btn_save_config"], type="primary", use_container_width=True):
+            st.session_state.dorm_daily_rate = new_rate
+            st.success(f"🎉 伙食標準預算已成功更新為：{format_vnd(new_rate)} / 人 / 天")
+            st.rerun()
 
     st.markdown("---")
     st.markdown(f"### {L['reg_header']}")
@@ -210,7 +219,7 @@ def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
     market_data = [
         {"食材品項 (Thực phẩm)": "上等豬肉 / Thịt heo ba chỉ (1kg)", "西寧傳統市場行情": "115.000 VND", "Co.opmart 西寧超市": "125.000 VND", "本廠採購參考價": "115.000 VND", "趨勢與建議": "🟢 價格穩定"},
         {"食材品項 (Thực phẩm)": "新鮮雞肉 / Thịt gà ta (1kg)", "西寧傳統市場行情": "85.000 VND", "Co.opmart 西寧超市": "92.000 VND", "本廠採購參考價": "85.000 VND", "趨勢與建議": "🟢 建議傳統市場採購"},
-        {"食材品項 (Thực phẩm)": "大成白米 / Gạo Jasmine (10kg)", "std": "180.000 VND", "Co.opmart 西寧超市": "195.000 VND", "本廠採購參考價": "175.000 VND", "趨勢與建議": "🔵 批發合約價優惠"},
+        {"食材品項 (Thực phẩm)": "大成白米 / Gạo Jasmine (10kg)", "西寧傳統市場行情": "180.000 VND", "Co.opmart 西寧超市": "195.000 VND", "本廠採購參考價": "175.000 VND", "趨勢與建議": "🔵 批發合約價優惠"},
         {"食材品項 (Thực phẩm)": "時令蔬菜 / Rau xanh tổng hợp (1kg)", "西寧傳統市場行情": "25.000 VND", "Co.opmart 西寧超市": "32.000 VND", "本廠採購參考價": "25.000 VND", "趨勢與建議": "🟢 產地直供穩定"}
     ]
     st.dataframe(pd.DataFrame(market_data), use_container_width=True, hide_index=True)
