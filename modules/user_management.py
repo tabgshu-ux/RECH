@@ -52,7 +52,6 @@ USER_MGMT_I18N = {
     }
 }
 
-# 👑 依照您的組織架構圖由高到低的標準排序清單（純職位名稱，不加數字編號）
 ORGANIZATION_HIERARCHY = [
     "董事長",
     "總經理",
@@ -79,9 +78,7 @@ ORGANIZATION_HIERARCHY = [
 ]
 
 def get_role_sort_weight(role_name):
-    """依照組織架構圖的順序進行精準權重排序"""
-    # 清理名稱中的數字編號（若資料庫仍殘留數字）
-    clean_name = role_name.strip()
+    clean_name = str(role_name).strip()
     for prefix in ["1. ", "2. ", "3. ", "4. ", "5. ", "6. ", "7. ", "8. ", "9. ", "10. ",
                    "11. ", "12. ", "13. ", "14. ", "15. ", "16. ", "17. ", "18. ", "19. ", "20. "]:
         if clean_name.startswith(prefix):
@@ -96,9 +93,7 @@ def fetch_roles(engine, lang_dict):
     fallback_roles = {
         "董事長": {"description": "公司經營方向規劃與戰略定奪", "allowed_modules": "ALL"},
         "總經理": {"description": "董事長指示的公司經營方向執行與公司管理", "allowed_modules": "ALL"},
-        "副總經理": {"description": "工程報價及現場探勘、人員調配與督導", "allowed_modules": "ALL"},
-        "廠長 / 副協理": {"description": "生產車間管理、工程支援與人事管理", "allowed_modules": "ALL"},
-        "管理部經理": {"description": "行政、財務、總務管理、ERP規劃與資訊管理", "allowed_modules": "ALL"}
+        "副總經理": {"description": "工程報價及現場探勘、人員調配與督導", "allowed_modules": "ALL"}
     }
     if engine is None:
         return fallback_roles, False, lang_dict["db_not_connected"]
@@ -111,12 +106,6 @@ def fetch_roles(engine, lang_dict):
         roles_dict = {}
         for _, row in df.iterrows():
             r_name = str(row["role_name"]).strip()
-            # 自動過濾並去除名稱前面可能殘留的舊數字編號
-            for prefix in ["1. ", "2. ", "3. ", "4. ", "5. ", "6. ", "7. ", "8. ", "9. ", "10. ",
-                           "11. ", "12. ", "13. ", "14. ", "15. ", "16. ", "17. ", "18. ", "19. ", "20. "]:
-                if r_name.startswith(prefix):
-                    r_name = r_name[len(prefix):]
-
             desc = row.get("description", "")
             roles_dict[r_name] = {
                 "description": desc,
@@ -237,7 +226,6 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         with col_stats:
             st.metric(L["cloud_roles_count"], len(roles_dict))
 
-        # 👑 嚴格依組織圖階級排序，並自動給予乾淨的流水序號 (STT)
         sorted_role_names = sorted(roles_dict.keys(), key=get_role_sort_weight)
 
         table_rows = []
@@ -303,8 +291,9 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         if btn_del:
             t_name = in_name.strip() or sel_role_key
             if t_name and t_name != L["create_new_opt"]:
-                if "董事長" in t_name or "總經理" in t_name:
-                    st.error("🚫 系統保護：最高主管角色無法被刪除！")
+                # 僅針對系統最核心的管理員做保護，其他重複或舊的職位皆可自由刪除
+                if t_name in ["系統管理員 (Admin)"]:
+                    st.error("🚫 系統保護：核心管理員角色無法被刪除！")
                 else:
                     delete_role_db(engine, t_name)
                     st.success(L["del_role_success"])
