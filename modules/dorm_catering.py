@@ -50,7 +50,7 @@ DORM_I18N = {
         "note_lbl": "Ghi chú",
         "note_ph": "Ví dụ: Mua thực phẩm...",
         "submit_btn": "🚀 Gửi đăng ký & Trừ hạn mức",
-        "budget_info": "💡 Kiểm soát ngân sách Tây Ninh: Hôm nay có {count} người ➡️ Hạn mức tối đa **{budget} VND**.",
+        "budget_info": "💡 Kiểm soát ngân sách Tây Ninh: Hôm hôm nay có {count} người ➡️ Hạn mức tối đa **{budget} VND**.",
         "market_header": "📊 Cơ sở dữ liệu Giá thị trường Tây Ninh",
         "receipt_header": "🤖 AI Nhận diện Hóa đơn & Kiểm tra Chống gian lận",
         "receipt_uploader": "Tải lên ảnh hóa đơn (JPG / PNG)",
@@ -109,8 +109,62 @@ def init_dorm_db(engine):
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS public.manager_allowances (
+                    id SERIAL PRIMARY KEY,
+                    manager_name VARCHAR(150) UNIQUE NOT NULL,
+                    total_allowance NUMERIC(15,2) DEFAULT 8000000.0,
+                    used_amount NUMERIC(15,2) DEFAULT 0.0,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
     except Exception:
         pass
+
+def get_managers_list(engine):
+    """從資料庫讀取台幹名冊，若無則回填預設台幹名單（含許福村 Tassos / Hsu Fu Tsun）"""
+    default_managers = {
+        "許福村 (Tassos / Hsu Fu Tsun)": {"total": 8000000.0, "used": 1200000.0},
+        "吳經理 (Manager Wu)": {"total": 10000000.0, "used": 0.0},
+        "陳副理 (Assistant Manager Chen)": {"total": 6000000.0, "used": 0.0}
+    }
+    if not engine:
+        return default_managers
+    try:
+        df_mgr = pd.read_sql("SELECT * FROM public.manager_allowances", con=engine)
+        if df_mgr.empty:
+            # 寫入預設台幹
+            with engine.begin() as conn:
+                for name, info in default_managers.items():
+                    conn.execute(text("""
+                        INSERT INTO public.manager_allowances (manager_name, total_allowance, used_amount)
+                        VALUES (:name, :total, :used)
+                        ON CONFLICT (manager_name) DO NOTHING;
+                    """), {"name": name, "total": info["total"], "used": info["used"]})
+            return default_managers
+        else:
+            mgr_dict = {}
+            for _, r in df_mgr.iterrows():
+                mgr_dict[r["manager_name"]] = {"total": float(r["total_allowance"]), "used": float(r["used_amount"])}
+            return mgr_dict
+    except Exception:
+        return default_managers
+
+def update_manager_usage(engine, manager_name, added_amount):
+    """更新資料庫中台幹已使用的津貼金額"""
+    if "managers_allowance_db" in st.session_state:
+        if manager_name in st.session_state.managers_allowance_db:
+            st.session_state.managers_allowance_db[manager_name]["used"] += added_amount
+    if engine:
+        try:
+            with engine.begin() as conn:
+                conn.execute(text("""
+                    UPDATE public.manager_allowances 
+                    SET used_amount = used_amount + :amt, updated_at = CURRENT_TIMESTAMP
+                    WHERE manager_name = :name;
+                """), {"amt": added_amount, "name": manager_name})
+        except Exception:
+            pass
 
 def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
     active_lang = lang or st.session_state.get("current_lang", "繁體中文")
@@ -124,14 +178,8 @@ def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
     if "dorm_daily_rate" not in st.session_state:
         st.session_state.dorm_daily_rate = 100000.0
 
-    # 配合員工名冊更新您的標準姓名與英文名
-    if "managers_allowance_db" not in st.session_state:
-        st.session_state.managers_allowance_db = {
-            "許福村 (Tassos / Hsu Fu Tsun)": {"total": 8000000.0, "used": 1200000.0},
-            "Nguyễn Văn Tài": {"total": 6000000.0, "used": 0.0},
-            "Trần Văn Minh": {"total": 10000000.0, "used": 3500000.0},
-            "Le Van Nam": {"total": 5000000.0, "used": 0.0}
-        }
+    # 取得台幹名冊與額度
+    st.session_state.managers_allowance_db = get_managers_list(engine)
 
     if "dorm_records_db" not in st.session_state:
         st.session_state.dorm_records_db = [
@@ -208,8 +256,7 @@ def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
 
         submitted = st.form_submit_button(L["submit_btn"], type="primary", use_container_width=True)
         if submitted:
-            if selected_diner in st.session_state.managers_allowance_db:
-                st.session_state.managers_allowance_db[selected_diner]["used"] += daily_budget
+            update_manager_usage(engine, selected_diner, daily_budget)
 
             st.session_state.dorm_records_db.insert(0, {
                 "date": str(meal_date),
