@@ -1,203 +1,204 @@
 import streamlit as st
 import pandas as pd
 import datetime
+from sqlalchemy import text
 
 # ----------------------------------------------------
-# 🌐 幹部宿舍伙食與採購管控模組多語系字典 (i18n)
+# 🌐 多語系字典 (i18n)
 # ----------------------------------------------------
 DORM_I18N = {
     "繁體中文": {
-        "title": "🏢 管理部 - 幹部宿舍伙食與採購管控中心",
-        "caption": "實施每人每日 100,000 VND 防回扣預算控管！比對西寧傳統市場物價，上傳採購憑證。",
-        "tab_catering": "🍱 每日伙食登記",
-        "tab_purchase": "🛒 食材採購與收據請款 (10萬/人/日防套利)",
-        "tab_price_ref": "🥬 西寧當地傳統市場物價行情表",
-        "tab_inventory": "📦 宿舍物資庫存",
-        "tab_reports": "📊 費用稽核與月度分析",
-        "lbl_plant": "選擇廠區",
-        "lbl_date": "選擇用餐日期",
-        "lbl_meal_type": "餐別",
-        "lbl_people_cnt": "用餐人數",
-        "btn_submit": "🚀 提交登記",
-        "msg_success": "✅ 登記成功！已寫入系統。"
+        "title": "🥗 幹部宿舍伙食與採購控管中心",
+        "caption": "裕豐電機（越南西寧廠）專用：幹部宿舍每日用餐人數登記、伙食預算控管與採購金額連動。",
+        "reg_header": "🥗 幹部宿舍每日用餐人數登記",
+        "site_lbl": "選擇廠區",
+        "meal_type_lbl": "餐別",
+        "registrar_lbl": "登記人 / 會監",
+        "date_lbl": "選擇用餐日期",
+        "count_lbl": "用餐人數",
+        "note_lbl": "備註 / 特別菜單需求",
+        "note_ph": "如: 不吃牛肉、素食人數...",
+        "submit_btn": "🚀 提交登記",
+        "budget_info": "💡 越南西寧廠伙食預算控管：今天登記入住/用餐人數 {count} 人 ➡️ 今日全廠食材採購上限額度為 **{budget} VND**（標準：100,000 VND / 人 / 天）。",
+        "list_header": "📋 本週宿舍搭夥人數與採購上限預估",
+        "col_date": "日期",
+        "col_site": "廠區",
+        "col_count": "用餐人數",
+        "col_budget": "單日採購預算上限",
+        "col_owner": "負責人"
     },
     "Tiếng Việt": {
-        "title": "🏢 Phòng Quản lý - Quản lý Cơm Ký túc xá & Mua sắm",
-        "caption": "Khống chế ngân sách 100,000 VND/người/ngày phòng chống nâng giá! So sánh giá thị trường Tây Ninh.",
-        "tab_catering": "🍱 Đăng ký suất ăn",
-        "tab_purchase": "🛒 Mua thực phẩm & Hóa đơn (Hạn mức 100k/ngày)",
-        "tab_price_ref": "🥬 Bảng giá thị trường Tây Ninh",
-        "tab_inventory": "📦 Kho vật tư KTX",
-        "tab_reports": "📊 Kiếm toán & Báo cáo chi phí",
-        "lbl_plant": "Chọn nhà máy",
-        "lbl_date": "Chọn ngày",
-        "lbl_meal_type": "Bữa ăn",
-        "lbl_people_cnt": "Số người",
-        "btn_submit": "🚀 Lưu đăng ký",
-        "msg_success": "✅ Đã lưu thành công!"
+        "title": "🥗 Quản lý Bếp ăn Ký túc xá & Mua sắm Thực phẩm",
+        "caption": "Nhà máy Tây Ninh Reetech: Đăng ký suất ăn, kiểm soát ngân sách thực phẩm ký túc xá.",
+        "reg_header": "🥗 Đăng ký Suất ăn Ký túc xá Hàng ngày",
+        "site_lbl": "Chọn nhà máy",
+        "meal_type_lbl": "Buổi ăn",
+        "registrar_lbl": "Người đăng ký",
+        "date_lbl": "Ngày dùng bữa",
+        "count_lbl": "Số lượng người ăn",
+        "note_lbl": "Ghi chú / Yêu cầu thực đơn",
+        "note_ph": "Ví dụ: Không ăn thịt bò...",
+        "submit_btn": "🚀 Gửi đăng ký",
+        "budget_info": "💡 Kiểm soát ngân sách Tây Ninh: Hôm nay có {count} người ➡️ Hạn mức mua sắm tối đa **{budget} VND** (Tiêu chuẩn: 100,000 VND/người/ngày).",
+        "list_header": "📋 Dự báo số lượng & Ngân sách tuần này",
+        "col_date": "Ngày",
+        "col_site": "Nhà máy",
+        "col_count": "Số người",
+        "col_budget": "Hạn mức ngân sách",
+        "col_owner": "Phụ trách"
     },
     "English": {
-        "title": "🏢 Management - Dormitory Catering & Anti-Rebate Procurement",
-        "caption": "Enforce 100,000 VND/person/day budget cap to prevent fraud. Compare Tay Ninh local market prices.",
-        "tab_catering": "🍱 Daily Meal Registration",
-        "tab_purchase": "🛒 Food Procurement & Receipt (100k Cap)",
-        "tab_price_ref": "🥬 Tay Ninh Market Benchmark Prices",
-        "tab_inventory": "📦 Supplies Inventory",
-        "tab_reports": "📊 Expenses Audit & Reports",
-        "lbl_plant": "Select Plant",
-        "lbl_date": "Select Date",
-        "lbl_meal_type": "Meal Type",
-        "lbl_people_cnt": "Headcount",
-        "btn_submit": "🚀 Submit Entry",
-        "msg_success": "✅ Submitted successfully!"
+        "title": "🥗 Dormitory Catering & Food Procurement Control",
+        "caption": "Tay Ninh Plant: Daily headcount registration, meal budget control and procurement tracking.",
+        "reg_header": "🥗 Daily Dormitory Headcount Registration",
+        "site_lbl": "Plant Location",
+        "meal_type_lbl": "Meal Type",
+        "registrar_lbl": "Registrar",
+        "date_lbl": "Meal Date",
+        "count_lbl": "Headcount",
+        "note_lbl": "Remarks / Special Menu",
+        "note_ph": "e.g., No beef, vegetarian...",
+        "submit_btn": "🚀 Submit Registration",
+        "budget_info": "💡 Tay Ninh Plant Budget Control: Today's headcount is {count} ➡️ Procurement limit is **{budget} VND** (Standard: 100,000 VND / person / day).",
+        "list_header": "📋 Weekly Headcount & Budget Forecast",
+        "col_date": "Date",
+        "col_site": "Plant",
+        "col_count": "Headcount",
+        "col_budget": "Daily Budget Limit",
+        "col_owner": "Owner"
     }
 }
 
+def format_vnd(amount):
+    try:
+        val = float(amount)
+        return f"{val:,.0f}".replace(",", ".") + " VND"
+    except Exception:
+        return f"{amount} VND"
+
+def init_dorm_db(engine):
+    if not engine:
+        return
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS public.dorm_catering (
+                    id SERIAL PRIMARY KEY,
+                    meal_date DATE NOT NULL,
+                    site_location VARCHAR(100) NOT NULL,
+                    meal_type VARCHAR(50) NOT NULL,
+                    headcount INT NOT NULL,
+                    budget_limit NUMERIC(15,2) NOT NULL,
+                    registrar VARCHAR(100),
+                    notes TEXT,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+    except Exception:
+        pass
+
 def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
-    active_lang = lang if lang in DORM_I18N else "繁體中文"
-    L = DORM_I18N[active_lang]
+    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
+    L = DORM_I18N.get(active_lang, DORM_I18N["繁體中文"])
 
     st.title(L["title"])
     st.caption(L["caption"])
 
-    # 常態設定：一人一天上限 10 萬越盾 (100,000 VND)
-    DAILY_BUDGET_PER_PERSON = 100000.0
+    init_dorm_db(engine)
 
-    tab_catering, tab_purchase, tab_price_ref, tab_inventory, tab_reports = st.tabs([
-        L["tab_catering"],
-        L["tab_purchase"],
-        L["tab_price_ref"],
-        L["tab_inventory"],
-        L["tab_reports"]
-    ])
-
-    # ----------------------------------------------------
-    # 🍱 Tab 1: 每日伙食登記
-    # ----------------------------------------------------
-    with tab_catering:
-        st.markdown("### 🍱 幹部宿舍每日用餐人數登記")
-        with st.form("form_dorm_meal"):
-            c1, c2, c3 = st.columns(3)
-            with c1:
-                plant = st.selectbox(L["lbl_plant"], ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"])
-                meal_date = st.date_input(L["lbl_date"], value=datetime.date.today())
-            with c2:
-                meal_type = st.selectbox(L["lbl_meal_type"], ["全天三餐 (All Day)", "午餐 (Lunch)", "晚餐 (Dinner)", "早餐 (Breakfast)"])
-                people_cnt = st.number_input(L["lbl_people_cnt"], min_value=1, max_value=100, value=12)
-            with c3:
-                applicant = st.text_input("登記人 / 舍監", value=st.session_state.get("user_name", "許福村"))
-                note = st.text_input("備註 / 特別菜單需求", placeholder="如：不吃牛肉、素食人數...")
-
-            # 計算當日額度上限
-            max_daily_limit = people_cnt * DAILY_BUDGET_PER_PERSON
-            st.info(f"💡 **西寧廠伙食預算控管**：今天登記入住/用餐人數 `{people_cnt} 人` ➔ **今日全廠食材採購上限金額為 `{max_daily_limit:,.0f} VND`**（標準：`100,000 VND / 人 / 天`）。")
-
-            if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
-                st.success(L["msg_success"])
-
-        st.markdown("---")
-        st.markdown("##### 📋 本週宿舍搭夥人數與預算上限預估")
-        sample_catering = [
-            {"日期": str(datetime.date.today()), "廠區": "西寧廠", "用餐人數": 12, "單日採購預算上限": f"{12 * DAILY_BUDGET_PER_PERSON:,.0f} VND", "負責人": "許福村"},
-            {"日期": str(datetime.date.today()), "廠區": "海防廠", "用餐人數": 8, "單日採購預算上限": f"{8 * DAILY_BUDGET_PER_PERSON:,.0f} VND", "負責人": "Nguyễn Văn Quý"}
+    # 初始化 session_state 備援
+    if "dorm_records_db" not in st.session_state:
+        st.session_state.dorm_records_db = [
+            {"date": str(datetime.date.today()), "site": "越南西寧廠 (Tay Ninh)", "count": 12, "budget": 1200000.0, "owner": st.session_state.get("user_name", "admin")}
         ]
-        st.dataframe(pd.DataFrame(sample_catering), use_container_width=True)
 
-    # ----------------------------------------------------
-    # 🛒 Tab 2: 食材採購與收據請款 (10萬/人/日防套利)
-    # ----------------------------------------------------
-    with tab_purchase:
-        st.markdown("### 🛒 煮菜阿姨 / 採購食材收據請款與防回扣稽核")
-        st.caption("嚴格執行：報帳金額不得超過『用餐人數 × 100,000 VND』，且必須強制上傳傳統市場收據憑證照片。")
+    st.markdown(f"### {L['reg_header']}")
+    
+    with st.form("form_dorm_catering"):
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            # 廠區嚴格限定為【越南西寧廠 (Tay Ninh)】
+            site_loc = st.selectbox(L["site_lbl"], ["越南西寧廠 (Tay Ninh)"])
+        with c2:
+            meal_type = st.selectbox(L["meal_type_lbl"], ["全天三餐 (All Day)", "早餐 (Breakfast)", "午餐 (Lunch)", "晚餐 (Dinner)"])
+        with c3:
+            registrar = st.text_input(L["registrar_lbl"], value=st.session_state.get("user_name", "admin"))
 
-        with st.form("form_dorm_purchase"):
-            pc1, pc2 = st.columns(2)
-            with pc1:
-                p_date = st.date_input("採購日期", value=datetime.date.today())
-                p_people = st.number_input("當日用餐人數", min_value=1, value=12, help="系統將自動乘以 10 萬越盾算出上限")
-                p_item = st.text_input("採購食材品項說明", placeholder="例如：豬五花 3kg、高麗菜 5kg、空心菜、雞蛋 20 顆...")
-                p_vendor = st.text_input("採購地點 / 傳統市場名稱", value="Chợ Trảng Bàng (西寧省𤅶樟市場)")
-            
-            with pc2:
-                p_amount = st.number_input("報帳總金額 (VND)", min_value=0, value=1150000, step=10000, help="請依據收據真實金額填寫")
-                p_receipt = st.file_uploader("📸 強制上傳市場收據 / 拍照憑證 (JPG/PNG)", type=["jpg", "png", "jpeg", "pdf"])
-                p_buyer = st.text_input("買菜阿姨 / 採購人員姓名", value="Cô Ba (煮菜阿姨)")
+        c4, c5 = st.columns(2)
+        with c4:
+            meal_date = st.date_input(L["date_lbl"], value=datetime.date.today())
+        with c5:
+            headcount = st.number_input(L["count_lbl"], min_value=1, value=12, step=1)
 
-            # 即時預算防回扣檢核
-            budget_cap = p_people * DAILY_BUDGET_PER_PERSON
-            is_over = p_amount > budget_cap
+        notes = st.text_input(L["note_lbl"], placeholder=L["note_ph"])
 
-            st.markdown("##### 🚨 防套利稽核即時比對：")
-            col_k1, col_k2, col_k3 = st.columns(3)
-            col_k1.metric("今日預算上限 (Cap)", f"{budget_cap:,.0f} VND")
-            col_k2.metric("阿姨本次報帳金額", f"{p_amount:,.0f} VND")
-            
-            diff = budget_cap - p_amount
-            if is_over:
-                col_k3.metric("稽核結果", f"超額 {-diff:,.0f} VND", delta=f"-{-diff:,.0f} VND 超標", delta_color="inverse")
-                st.error(f"⚠️ **防回扣警示**：阿姨報帳金額 (`{p_amount:,.0f} VND`) 已超過今日 {p_people} 人上限 (`{budget_cap:,.0f} VND`)！系統已自動鎖定並轉呈管理部二次核實。")
-            else:
-                col_k3.metric("稽核結果", f"剩餘 {diff:,.0f} VND", delta="🟢 合規未超標")
-                st.success(f"✅ 金額合規！在今日上限 `{budget_cap:,.0f} VND` 範圍內。")
+        # 每人每日伙食標準：100,000 VND
+        daily_budget = float(headcount) * 100000.0
+        st.info(L["budget_info"].format(count=headcount, budget=format_vnd(daily_budget)))
 
-            if st.form_submit_button("🚀 提交食材採購請款單並上傳憑證", type="primary", use_container_width=True):
-                if not p_receipt:
-                    st.warning("⚠️ 警告：必須上傳市場傳統收據照片憑證才能送出請款！")
-                else:
-                    status_text = "⚠️ 超額稽核中 (待管理部特批)" if is_over else "🟢 稽核通過 (准予撥款)"
-                    st.success(f"🎉 請款單已送出！稽核狀態：`{status_text}`")
+        submitted = st.form_submit_button(L["submit_btn"], type="primary", use_container_width=True)
+        if submitted:
+            success_saved = False
+            if engine is not None:
+                try:
+                    with engine.begin() as conn:
+                        conn.execute(
+                            text("""
+                                INSERT INTO public.dorm_catering 
+                                (meal_date, site_location, meal_type, headcount, budget_limit, registrar, notes)
+                                VALUES (:mdate, :site, :mtype, :cnt, :budget, :reg, :notes);
+                            """),
+                            {
+                                "mdate": meal_date, "site": site_loc, "mtype": meal_type,
+                                "cnt": headcount, "budget": daily_budget, "reg": registrar, "notes": notes
+                            }
+                        )
+                    success_saved = True
+                except Exception as e:
+                    st.error(f"⚠️ 資料庫寫入異常: {str(e)}")
 
-    # ----------------------------------------------------
-    # 🥬 Tab 3: 西寧當地傳統市場物價行情參考 (Trảng Bàng / Tây Ninh)
-    # ----------------------------------------------------
-    with tab_price_ref:
-        st.markdown("### 🥬 西寧（Trảng Bàng / Tây Ninh）傳統市場食材參考物價行情")
-        st.caption("管理人員審核阿姨採購單時之基準參考，防止阿姨以高於市場的價格開立報帳單收取回扣。")
+            # 同時寫入 session_state 確保雙軌順暢
+            st.session_state.dorm_records_db.insert(0, {
+                "date": str(meal_date),
+                "site": site_loc,
+                "count": headcount,
+                "budget": daily_budget,
+                "owner": registrar
+            })
 
-        market_prices = [
-            {"食材類別": "🥩 肉類", "品名規格": "豬五花肉 (Thịt ba rọi)", "西寧市場行情區間 (VND)": "110,000 - 130,000 / kg", "備註參考": "𤅶樟傳統市場當日溫體肉價格"},
-            {"食材類別": "🥩 肉類", "品名規格": "豬梅花肉 / 瘦肉 (Thịt nạc)", "西寧市場行情區間 (VND)": "95,000 - 110,000 / kg", "備註參考": "適合炒菜、煮湯"},
-            {"食材類別": "🍗 禽肉類", "品名規格": "全雞 / 土雞 (Gà ta)", "西寧市場行情區間 (VND)": "120,000 - 140,000 / kg", "備註參考": "含內臟處理清理"},
-            {"食材類別": "🐟 水產類", "品名規格": "羅非魚 / 吴郭魚 (Cá diêu hồng)", "西寧市場行情區間 (VND)": "55,000 - 65,000 / kg", "備註參考": "鮮活現殺"},
-            {"食材類別": "🥚 蛋類", "品名規格": "雞蛋 (Trứng gà)", "西寧市場行情區間 (VND)": "28,000 - 32,000 / 10顆", "備註參考": "大顆洗選或散裝"},
-            {"食材類別": "🥬 蔬菜類", "品名規格": "高麗菜 / 包心菜 (Bắp cải)", "西寧市場行情區間 (VND)": "18,000 - 25,000 / kg", "備註參考": "依季節有所波動"},
-            {"食材類別": "🥬 蔬菜類", "品名規格": "空心菜 / 芥藍菜 (Rau muống)", "西寧市場行情區間 (VND)": "12,000 - 18,000 / kg", "備註參考": "西寧當地產蔬果"},
-            {"食材類別": "🌾 主食類", "品名規格": "優質香米 (Gạo ST25 / Hương Lài)", "西寧市場行情區間 (VND)": "22,000 - 28,000 / kg", "備註參考": "50kg 大包裝採購更優惠"}
-        ]
-        df_prices = pd.DataFrame(market_prices)
-        st.dataframe(df_prices, use_container_width=True)
+            st.success(f"🎉 成功登記 {meal_date} 越南西寧廠宿舍用餐人數：{headcount} 人！預算上限：{format_vnd(daily_budget)}")
+            st.rerun()
 
-    # ----------------------------------------------------
-    # 📦 Tab 4: 宿舍物資與廚房耗材庫存盤點
-    # ----------------------------------------------------
-    with tab_inventory:
-        st.markdown("### 📦 宿舍物資與廚房耗材庫存盤點")
-        inventory_data = [
-            {"品名": "ST25 優質香米 (50kg)", "分類": "主食", "目前庫存": "2 包", "安全庫存": "2 包", "狀態": "🟢 正常"},
-            {"品名": "Cooking Oil 沙拉油 (5L)", "分類": "調味料", "目前庫存": "1 瓶", "安全庫存": "2 瓶", "狀態": "🟡 請儘速補貨"},
-            {"品名": "桶裝飲用水 (20L)", "分類": "飲水", "目前庫存": "8 桶", "安全庫存": "5 桶", "狀態": "🟢 正常"}
-        ]
-        st.dataframe(pd.DataFrame(inventory_data), use_container_width=True)
+    st.markdown("---")
+    st.markdown(f"### {L['list_header']}")
 
-    # ----------------------------------------------------
-    # 📊 Tab 5: 費用稽核與月度分析
-    # ----------------------------------------------------
-    with tab_reports:
-        st.markdown("### 📊 幹部宿舍伙食費用與回扣稽核月度分析")
-        rc1, rc2, rc3 = st.columns(3)
-        with rc1:
-            st.metric("本月累計伙食請款 (VND)", "16,800,000 VND", delta="-8% 低於預算上限")
-        with rc2:
-            st.metric("平均每人每日餐費", "93,333 VND", delta="🟢 低於 10 萬上限")
-        with rc3:
-            st.metric("異常超額請款筆數", "1 筆", delta="⚠️ 已攔截扣除")
+    records_list = []
+    if engine is not None:
+        try:
+            df_dorm = pd.read_sql("SELECT * FROM public.dorm_catering ORDER BY meal_date DESC, id DESC", con=engine)
+            if not df_dorm.empty:
+                for _, r in df_dorm.iterrows():
+                    records_list.append({
+                        L["col_date"]: str(r["meal_date"])[:10],
+                        L["col_site"]: r["site_location"],
+                        L["col_count"]: r["headcount"],
+                        L["col_budget"]: format_vnd(r["budget_limit"]),
+                        L["col_owner"]: r["registrar"]
+                    })
+        except Exception:
+            pass
 
-# 相容性進入點別名
-def render_dorm_catering_page(engine=None, lang="繁體中文", **kwargs):
-    render_dorm_catering_module(engine=engine, lang=lang, **kwargs)
+    if not records_list and "dorm_records_db" in st.session_state:
+        for item in st.session_state.dorm_records_db:
+            records_list.append({
+                L["col_date"]: item["date"],
+                L["col_site"]: item["site"],
+                L["col_count"]: item["count"],
+                L["col_budget"]: format_vnd(item["budget"]),
+                L["col_owner"]: item["owner"]
+            })
 
-def show(engine=None, lang="繁體中文", **kwargs):
-    render_dorm_catering_module(engine=engine, lang=lang, **kwargs)
-
-def main(engine=None, lang="繁體中文", **kwargs):
-    render_dorm_catering_module(engine=engine, lang=lang, **kwargs)
+    if records_list:
+        st.dataframe(pd.DataFrame(records_list), use_container_width=True, hide_index=True)
+    else:
+        st.info("目前尚無宿舍用餐登記紀錄。")
