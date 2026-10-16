@@ -25,10 +25,9 @@ st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 # ----------------------------------------------------
 USER_MGMT_I18N = {
     "繁體中文": {
-        "title": "🔒 IT 管理中心 - 組織角色權限與員工帳號總控台",
-        "caption": "裕豐電機雲端高可用架構：RBAC 角色權限管理與系統員工帳號 CRUD。",
+        "title": "🔒 IT 管理中心 - 組織角色權限與系統模組授權",
+        "caption": "裕豐電機（越南西寧廠）雲端架構：專注於系統權限範本配置與安全性稽核軌跡。",
         "tab_roles": "⚙️ 組織角色與模組權限設定 (RBAC)",
-        "tab_users": "👥 系統員工帳號管理 (CRUD)",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
         "tab_db": "🔌 資料庫連線狀態",
         "success_connected": "PostgreSQL / Supabase 資料庫連線正常！",
@@ -46,40 +45,29 @@ USER_MGMT_I18N = {
         "role_name_lbl": "職位角色代碼與名稱 *",
         "role_name_ph": "例如: admin, manager, supervisor",
         "role_desc_lbl": "部門職責與資料範圍說明",
-        "role_desc_ph": "例如: 協助總經理工程支援指派",
+        "role_desc_ph": "例如: 協助西寧廠工程支援指派",
         "step2_title": "2. 勾選該職位角色可操作功能頁面：",
         "btn_save_role": "💾 儲存角色權限設定",
         "btn_del_role": "🗑️ 刪除此角色",
         "save_role_success": "🎉 角色權限設定已成功儲存！",
         "del_role_success": "🗑️ 角色已成功刪除！",
-        "users_header": "📋 系統現有使用者與員工清冊",
-        "add_user_header": "➕ 新增系統使用者與權限指派",
-        "lbl_username": "登入帳號 (工號) *",
-        "lbl_name": "使用者姓名 *",
-        "lbl_role": "指派角色 (RBAC) *",
-        "lbl_site": "所屬廠區 *",
-        "site_opts": ["台灣總部 (Taiwan HQ)", "越南西寧廠 (Tay Ninh)", "越南海防廠 (Hai Phong)"],
-        "btn_add_user": "💾 建立使用者帳號",
-        "success_add_user": "✅ 系統帳號 `{username}` 已成功建立！",
-        "fill_warning": "⚠️ 請完整填寫帳號與姓名！",
         "role_display_names": {
             "admin": "最高管理者 (Admin / 總經理)",
-            "manager": "廠區主管 (Manager / 經理)",
-            "security": "大門保全組 (Security)",
-            "staff": "一般員工 / 現場人員 (Staff)"
+            "manager": "西寧廠廠區主管 (Manager / 經理)",
+            "security": "西寧廠大門保全組 (Security)",
+            "staff": "西寧廠一般員工 / 現場人員 (Staff)"
         },
         "default_roles": {
             "admin": {"description": "最高決策與全系統總覽權限", "allowed_modules": "ALL"},
-            "manager": {"description": "廠區主管，負責考勤審核與日常營運", "allowed_modules": "ALL"},
-            "security": {"description": "大門保全組，負責車輛進出登記", "allowed_modules": "車輛門禁"},
-            "staff": {"description": "一般員工，個人打卡與請假申請", "allowed_modules": "個人打卡"}
+            "manager": {"description": "西寧廠主管，負責考勤審核與日常營運", "allowed_modules": "ALL"},
+            "security": {"description": "西寧廠大門保全組，負責車輛進出登記", "allowed_modules": "車輛門禁"},
+            "staff": {"description": "西寧廠一般員工，個人打卡與請假申請", "allowed_modules": "個人打卡"}
         }
     },
     "Tiếng Việt": {
-        "title": "🔒 Quản trị IT - Phân quyền Vai trò & Quản lý Tài khoản",
-        "caption": "Kiến trúc đám mây Reetech: Quản lý phân quyền RBAC & Tài khoản nhân sự.",
+        "title": "🔒 Quản trị IT - Phân quyền Vai trò & Quản lý Hệ thống",
+        "caption": "Kiến trúc đám mây Nhà máy Tây Ninh Reetech: Cấu hình phân quyền hệ thống.",
         "tab_roles": "⚙️ Phân quyền Vai trò & Module (RBAC)",
-        "tab_users": "👥 Quản lý Tài khoản Nhân sự",
         "tab_audit": "📊 Nhật ký Kiểm toán",
         "tab_db": "🔌 Trạng thái CSDL",
         "success_connected": "Kết nối CSDL thành công!",
@@ -103,34 +91,23 @@ USER_MGMT_I18N = {
         "btn_del_role": "🗑️ Xóa vai trò",
         "save_role_success": "🎉 Đã lưu phân quyền thành công!",
         "del_role_success": "🗑️ Đã xóa vai trò thành công!",
-        "users_header": "📋 Danh sách tài khoản",
-        "add_user_header": "➕ Thêm tài khoản nhân sự mới",
-        "lbl_username": "Tài khoản (Mã NV) *",
-        "lbl_name": "Họ tên *",
-        "lbl_role": "Vai trò (RBAC) *",
-        "lbl_site": "Nhà máy trực thuộc *",
-        "site_opts": ["Trụ sở Đài Loan (HQ)", "Nhà máy Tây Ninh", "Nhà máy Hải Phòng"],
-        "btn_add_user": "💾 Tạo tài khoản",
-        "success_add_user": "✅ Đã tạo tài khoản `{username}`!",
-        "fill_warning": "⚠️ Vui lòng điền đầy đủ thông tin!",
         "role_display_names": {
             "admin": "Quản trị viên tối cao (Admin)",
-            "manager": "Quản đốc nhà máy (Manager)",
-            "security": "Bảo vệ cổng (Security)",
-            "staff": "Nhân viên / Công nhân (Staff)"
+            "manager": "Quản đốc Nhà máy Tây Ninh (Manager)",
+            "security": "Bảo vệ cổng Nhà máy Tây Ninh (Security)",
+            "staff": "Nhân viên / Công nhân Nhà máy Tây Ninh (Staff)"
         },
         "default_roles": {
             "admin": {"description": "Quản trị viên hệ thống tối cao", "allowed_modules": "ALL"},
-            "manager": {"description": "Quản đốc nhà máy, duyệt chấm công", "allowed_modules": "ALL"},
-            "security": {"description": "Bảo vệ cổng, đăng ký xe ra vào", "allowed_modules": "車輛門禁"},
-            "staff": {"description": "Nhân viên, chấm công và xin nghỉ phép", "allowed_modules": "個人打卡"}
+            "manager": {"description": "Quản đốc Nhà máy Tây Ninh, duyệt chấm công", "allowed_modules": "ALL"},
+            "security": {"description": "Bảo vệ cổng Tây Ninh, đăng ký xe ra vào", "allowed_modules": "車輛門禁"},
+            "staff": {"description": "Nhân viên Nhà máy Tây Ninh, chấm công và xin nghỉ phép", "allowed_modules": "個人打卡"}
         }
     },
     "English": {
-        "title": "🔒 IT Center - RBAC Roles & User Accounts Management",
-        "caption": "Reetech Cloud Architecture: RBAC Role Permissions & User CRUD.",
+        "title": "🔒 IT Center - RBAC Roles & System Authorization",
+        "caption": "Reetech Tay Ninh Plant Cloud Architecture: RBAC Role Configuration & System Security.",
         "tab_roles": "⚙️ RBAC Roles & Permissions",
-        "tab_users": "👥 User Accounts (CRUD)",
         "tab_audit": "📊 System Audit Logs",
         "tab_db": "🔌 Database Status",
         "success_connected": "PostgreSQL Database Connected Successfully!",
@@ -154,34 +131,21 @@ USER_MGMT_I18N = {
         "btn_del_role": "🗑️ Delete Role",
         "save_role_success": "🎉 Role saved successfully!",
         "del_role_success": "🗑️ Role deleted successfully!",
-        "users_header": "📋 Active User Accounts",
-        "add_user_header": "➕ Register New User Account",
-        "lbl_username": "Username (Emp ID) *",
-        "lbl_name": "Full Name *",
-        "lbl_role": "Permission Role (RBAC) *",
-        "lbl_site": "Plant Location *",
-        "site_opts": ["Taiwan HQ", "Tay Ninh Plant", "Hai Phong Plant"],
-        "btn_add_user": "💾 Create User Account",
-        "success_add_user": "✅ User account `{username}` created successfully!",
-        "fill_warning": "⚠️ Please fill in username and full name!",
         "role_display_names": {
             "admin": "Highest Administrator (Admin)",
-            "manager": "Plant Manager",
-            "security": "Gate Security",
-            "staff": "General Staff"
+            "manager": "Tay Ninh Plant Manager",
+            "security": "Tay Ninh Gate Security",
+            "staff": "Tay Ninh General Staff"
         },
         "default_roles": {
             "admin": {"description": "Highest system administration & decision making", "allowed_modules": "ALL"},
-            "manager": {"description": "Plant manager, attendance approval & daily ops", "allowed_modules": "ALL"},
-            "security": {"description": "Gate security guard, vehicle access logging", "allowed_modules": "車輛門禁"},
-            "staff": {"description": "General employee, attendance & leave requests", "allowed_modules": "個人打卡"}
+            "manager": {"description": "Tay Ninh Plant manager, attendance approval & daily ops", "allowed_modules": "ALL"},
+            "security": {"description": "Tay Ninh Gate security guard, vehicle access logging", "allowed_modules": "車輛門禁"},
+            "staff": {"description": "Tay Ninh General employee, attendance & leave requests", "allowed_modules": "個人打卡"}
         }
     }
 }
 
-# ----------------------------------------------------
-# 🔌 安全資料庫讀寫函式
-# ----------------------------------------------------
 def fetch_roles(engine, lang_dict):
     fallback_roles = lang_dict["default_roles"]
     if engine is None:
@@ -233,9 +197,6 @@ def delete_role_db(engine, role_name):
     except Exception:
         return False
 
-# ----------------------------------------------------
-# 🌳 水電工程部門模組清單樹狀結構
-# ----------------------------------------------------
 DEPARTMENT_MODULE_TREE = {
     "📈 總經理室 (Executive Office)": [
         "🔴 原料價格與 Gemini 智慧採購顧問",
@@ -279,29 +240,20 @@ DEPARTMENT_MODULE_TREE = {
         "⚡ [配盤] 配電盤組裝配線組"
     ],
     "💻 資訊管理部 (IT & System)": [
-        "🔒 帳號權限與全系統稽核軌跡",
+        "🔒 系統角色權限與模組開關設定",
         "🎛️ 客戶 ERP 模組授權與功能開關"
     ]
 }
 
 ALL_MODULE_LIST = [mod for dept in DEPARTMENT_MODULE_TREE.values() for mod in dept]
 
-# ----------------------------------------------------
-# 🖥️ 主渲染函式
-# ----------------------------------------------------
 def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
     active_lang = lang if lang in USER_MGMT_I18N else "繁體中文"
     L = USER_MGMT_I18N[active_lang]
 
     st.title(L["title"])
     st.caption(L["caption"])
-
-    if "system_users_db" not in st.session_state or not isinstance(st.session_state.system_users_db, list):
-        st.session_state.system_users_db = [
-            {"username": "admin", "name": "系統管理員", "role": "admin", "site": "台灣總部"},
-            {"username": "manager", "name": "陳經理", "role": "manager", "site": "越南西寧廠"},
-            {"username": "security", "name": "大門保全組", "role": "security", "site": "越南西寧廠"}
-        ]
+    st.info("💡 提示：員工帳號新增與人事指派請至 **管理部 ➡️ 員工個人檔案與人事管理 (HR)** 進行處理。資訊管理部僅負責系統模組權限範本 (RBAC) 設定。")
 
     if "audit_logs_db" not in st.session_state:
         st.session_state.audit_logs_db = [
@@ -311,13 +263,10 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
     roles_dict, is_connected, msg = fetch_roles(engine, L)
     role_display_map = L["role_display_names"]
 
-    tab_roles, tab_users, tab_audit, tab_db = st.tabs([
-        L["tab_roles"], L["tab_users"], L["tab_audit"], L["tab_db"]
+    tab_roles, tab_audit, tab_db = st.tabs([
+        L["tab_roles"], L["tab_audit"], L["tab_db"]
     ])
 
-    # ----------------------------------------------------
-    # Tab 1: 組織角色與模組權限設定 (RBAC)
-    # ----------------------------------------------------
     with tab_roles:
         st.markdown(f"### {L['tab_roles']}")
         if is_connected:
@@ -350,7 +299,6 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         role_opts = [L["create_new_opt"]] + [role_display_map.get(k, k) for k in roles_dict.keys()]
         sel_role_display = st.selectbox(L["select_role_lbl"], options=role_opts, index=0)
 
-        # 反向對回英文 key
         sel_role_key = next((k for k, v in role_display_map.items() if v == sel_role_display), sel_role_display)
         if sel_role_display == L["create_new_opt"]:
             sel_role_key = ""
@@ -403,97 +351,6 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.success(L["del_role_success"])
                     st.rerun()
 
-    # ----------------------------------------------------
-    # Tab 2: 系統員工帳號管理 (CRUD)
-    # ----------------------------------------------------
-    with tab_users:
-        st.markdown(f"### {L['users_header']}")
-        st.dataframe(pd.DataFrame(st.session_state.system_users_db), use_container_width=True)
-
-        st.markdown("---")
-        st.markdown(f"### {L['add_user_header']}")
-        with st.form("form_add_system_user_crud"):
-            c1, c2 = st.columns(2)
-            with c1:
-                username = st.text_input(L["lbl_username"], value="staff02")
-                name = st.text_input(L["lbl_name"], placeholder="例如: Nguyễn Văn A")
-            with c2:
-                available_roles = list(roles_dict.keys()) if roles_dict else ["admin", "manager", "security", "staff"]
-                role = st.selectbox(L["lbl_role"], available_roles, format_func=lambda x: role_display_map.get(x, x))
-                site = st.selectbox(L["lbl_site"], L["site_opts"])
-
-            if st.form_submit_button(L["btn_add_user"], type="primary", use_container_width=True):
-                if username and name:
-                    existing_usernames = [u["username"] for u in st.session_state.system_users_db]
-                    if username in existing_usernames:
-                        st.error(f"⚠️ 錯誤：帳號 `{username}` 已經存在！")
-                    else:
-                        st.session_state.system_users_db.append({
-                            "username": username,
-                            "name": name,
-                            "role": role,
-                            "site": site
-                        })
-                        st.session_state.audit_logs_db.insert(0, {
-                            "time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                            "user": st.session_state.get("user_name", "admin"),
-                            "action": f"新增系統帳號 [{username}] {name}",
-                            "module": "UserMgmt",
-                            "ip": "192.168.1.50",
-                            "status": "成功"
-                        })
-                        st.success(L["success_add_user"].format(username=username))
-                        st.rerun()
-                else:
-                    st.warning(L["fill_warning"])
-
-        st.markdown("---")
-        st.markdown("### ✏️ 修改與刪除現有使用者帳號")
-        if st.session_state.system_users_db:
-            user_options = [f"{u['username']} - {u['name']} ({role_display_map.get(u['role'], u['role'])})" for u in st.session_state.system_users_db]
-            sel_target_user = st.selectbox("選擇要修改或刪除的員工帳號", user_options)
-            target_uname = sel_target_user.split(" - ")[0]
-            target_user_obj = next((u for u in st.session_state.system_users_db if u["username"] == target_uname), None)
-
-            if target_user_obj:
-                with st.form("form_edit_system_user_crud"):
-                    ec1, ec2 = st.columns(2)
-                    with ec1:
-                        ed_name = st.text_input("使用者姓名", value=target_user_obj["name"])
-                        available_roles = list(roles_dict.keys()) if roles_dict else ["admin", "manager", "security", "staff"]
-                        current_role_idx = available_roles.index(target_user_obj["role"]) if target_user_obj["role"] in available_roles else 0
-                        ed_role = st.selectbox("權限角色", available_roles, index=current_role_idx, format_func=lambda x: role_display_map.get(x, x))
-                    with ec2:
-                        site_list = L["site_opts"]
-                        current_site_idx = site_list.index(target_user_obj["site"]) if target_user_obj["site"] in site_list else 0
-                        ed_site = st.selectbox("所屬廠區", site_list, index=current_site_idx)
-
-                    col_b1, col_b2 = st.columns(2)
-                    with col_b1:
-                        update_user_btn = st.form_submit_button("💾 儲存帳號變更", type="primary", use_container_width=True)
-                    with col_b2:
-                        delete_user_btn = st.form_submit_button("🔥 刪除此員工帳號", type="secondary", use_container_width=True)
-
-                    if update_user_btn:
-                        target_user_obj["name"] = ed_name
-                        target_user_obj["role"] = ed_role
-                        target_user_obj["site"] = ed_site
-                        st.success(f"🎉 員工帳號 [{target_uname}] 資料已更新！")
-                        st.rerun()
-
-                    if delete_user_btn:
-                        if target_uname == "admin":
-                            st.error("⚠️ 系統安全保護：最高管理者帳號 [admin] 無法被刪除！")
-                        else:
-                            st.session_state.system_users_db = [u for u in st.session_state.system_users_db if u["username"] != target_uname]
-                            st.success(f"🗑️ 帳號 [{target_uname}] 已刪除！")
-                            st.rerun()
-        else:
-            st.info("目前尚無員工帳號可供修改。")
-
-    # ----------------------------------------------------
-    # Tab 3: 系統稽核日誌 (Audit Logs)
-    # ----------------------------------------------------
     with tab_audit:
         st.markdown(f"### {L['tab_audit']}")
         if st.session_state.audit_logs_db:
@@ -501,9 +358,6 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         else:
             st.info("目前尚無稽核日誌紀錄。")
 
-    # ----------------------------------------------------
-    # Tab 4: 資料庫連線狀態
-    # ----------------------------------------------------
     with tab_db:
         st.markdown(f"### {L['tab_db']}")
         if engine is not None:
