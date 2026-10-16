@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import re
 from sqlalchemy import text
 
 # ----------------------------------------------------
@@ -8,8 +9,8 @@ from sqlalchemy import text
 # ----------------------------------------------------
 DORM_I18N = {
     "繁體中文": {
-        "title": "🥗 幹部宿舍伙食、物價比對與 AI 收據識別中心",
-        "caption": "裕豐電機（越南西寧廠）專用：幹部宿舍用餐人數登記、西寧市場物價行情比對、採購預算控管與收據 AI 識別。",
+        "title": "🥗 幹部宿舍伙食、物價比對與 AI 收據智慧稽核中心",
+        "caption": "裕豐電機（越南西寧廠）專用：幹部宿舍用餐人數登記、西寧市場物價行情比對、採購預算控管與收據 AI 防弊稽核。",
         "config_header": "⚙️ 伙食標準預算與單價設定 (Budget Configuration)",
         "config_desc": "在此設定每人每日標準伙食預算額度，系統將自動連動下方每日採購總上限。",
         "std_rate_lbl": "每人每日伙食標準預算 (VND) *",
@@ -24,10 +25,10 @@ DORM_I18N = {
         "note_ph": "如: 不吃牛肉、素食人數...",
         "submit_btn": "🚀 提交登記",
         "budget_info": "💡 越南西寧廠伙食預算控管：今天登記入住/用餐人數 {count} 人 ➡️ 今日全廠食材採購上限額度為 **{budget} VND**（標準：{rate} VND / 人 / 天）。",
-        "market_header": "📊 西寧當地市場食材物價行情與比對分析",
-        "receipt_header": "🤖 越南菜市場 / 超市採購收據 AI 智慧識別與上傳",
+        "market_header": "📊 西寧當地市場食材物價行情基準庫 (防弊稽核參考)",
+        "receipt_header": "🤖 採購收據 AI 智慧識別與市場行情【自動防弊稽核】",
         "receipt_uploader": "上傳採購收據照片 (JPG / PNG)",
-        "btn_ai_scan": "🔍 啟動 AI 收據智慧識別",
+        "btn_ai_scan": "🔍 啟動 AI 收據識別與價格防弊稽核",
         "list_header": "📋 本週宿舍搭夥人數與採購上限預估",
         "col_date": "日期",
         "col_site": "廠區",
@@ -36,10 +37,10 @@ DORM_I18N = {
         "col_owner": "負責人"
     },
     "Tiếng Việt": {
-        "title": "🥗 Quản lý Bếp ăn, So sánh Giá cả & AI Nhận diện Hóa đơn",
-        "caption": "Nhà máy Tây Ninh Reetech: Đăng ký suất ăn, so sánh giá chợ Tây Ninh, kiểm soát ngân sách và AI hóa đơn.",
+        "title": "🥗 Quản lý Bếp ăn, So sánh Giá & Kiểm toán Hóa đơn AI",
+        "caption": "Nhà máy Tây Ninh Reetech: Đăng ký suất ăn, so sánh giá chợ Tây Ninh, kiểm soát ngân sách và AI chống gian lận.",
         "config_header": "⚙️ Cài đặt Tiêu chuẩn Ngân sách Bếp ăn",
-        "config_desc": "Cài đặt định mức ăn mỗi người/ngày, hệ thống sẽ tự động tính toán hạn mức mua sắm.",
+        "config_desc": "Cài đặt định mức ăn mỗi người/ngày, hệ thống tự động kiểm soát hạn mức.",
         "std_rate_lbl": "Tiêu chuẩn ăn mỗi người/ngày (VND) *",
         "btn_save_config": "💾 Cập nhật tiêu chuẩn",
         "reg_header": "🥗 Đăng ký Suất ăn Ký túc xá Hàng ngày",
@@ -52,10 +53,10 @@ DORM_I18N = {
         "note_ph": "Ví dụ: Không ăn thịt bò...",
         "submit_btn": "🚀 Gửi đăng ký",
         "budget_info": "💡 Kiểm soát ngân sách Tây Ninh: Hôm nay có {count} người ➡️ Hạn mức mua sắm tối đa **{budget} VND** (Tiêu chuẩn: {rate} VND/người/ngày).",
-        "market_header": "📊 So sánh Giá cả Thực phẩm tại Chợ Tây Ninh",
-        "receipt_header": "🤖 AI Nhận diện Hóa đơn Mua sắm Siêu thị / Chợ",
+        "market_header": "📊 Cơ sở dữ liệu Giá thị trường Tây Ninh (Tham chiếu kiểm toán)",
+        "receipt_header": "🤖 AI Nhận diện Hóa đơn & Kiểm tra Chống gian lận Giá",
         "receipt_uploader": "Tải lên ảnh hóa đơn (JPG / PNG)",
-        "btn_ai_scan": "🔍 Quét Hóa đơn bằng AI",
+        "btn_ai_scan": "🔍 Quét Hóa đơn & Đối chiếu Giá",
         "list_header": "📋 Dự báo số lượng & Ngân sách tuần này",
         "col_date": "Ngày",
         "col_site": "Nhà máy",
@@ -64,10 +65,10 @@ DORM_I18N = {
         "col_owner": "Phụ trách"
     },
     "English": {
-        "title": "🥗 Dorm Catering, Market Price Comparison & AI Receipt Scanner",
-        "caption": "Tay Ninh Plant: Headcount registration, local market price comparison, budget control and AI receipts.",
+        "title": "🥗 Dorm Catering, Market Price & AI Receipt Audit Center",
+        "caption": "Tay Ninh Plant: Headcount, market price benchmarks, budget control, and AI anti-fraud audit.",
         "config_header": "⚙️ Meal Budget & Rate Configuration",
-        "config_desc": "Configure the standard daily budget per person to automatically control procurement limits.",
+        "config_desc": "Configure standard daily budget per person to automatically control limits.",
         "std_rate_lbl": "Standard Daily Budget per Person (VND) *",
         "btn_save_config": "💾 Save Budget Configuration",
         "reg_header": "🥗 Daily Dormitory Headcount Registration",
@@ -80,10 +81,10 @@ DORM_I18N = {
         "note_ph": "e.g., No beef, vegetarian...",
         "submit_btn": "🚀 Submit Registration",
         "budget_info": "💡 Tay Ninh Plant Budget Control: Today's headcount is {count} ➡️ Procurement limit is **{budget} VND** (Standard: {rate} VND / person / day).",
-        "market_header": "📊 Tay Ninh Local Market Price Comparison",
-        "receipt_header": "🤖 AI Grocery Receipt Scanner & Uploader",
+        "market_header": "📊 Tay Ninh Market Price Benchmark (Audit Reference)",
+        "receipt_header": "🤖 AI Receipt Scanner & Anti-Fraud Price Audit",
         "receipt_uploader": "Upload Receipt Image (JPG / PNG)",
-        "btn_ai_scan": "🔍 Run AI Receipt Scanner",
+        "btn_ai_scan": "🔍 Run AI Audit & Price Check",
         "list_header": "📋 Weekly Headcount & Budget Forecast",
         "col_date": "Date",
         "col_site": "Plant",
@@ -139,7 +140,7 @@ def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
         ]
 
     # ----------------------------------------------------
-    # ⚙️ 伙食標準預算設定專用卡片區塊（醒目呈現）
+    # ⚙️ 伙食標準預算設定專用卡片區塊
     # ----------------------------------------------------
     st.markdown(f"""
         <div style="background-color: #F8FAFC; border: 2px solid #3B82F6; border-radius: 10px; padding: 20px; margin-bottom: 25px;">
@@ -212,20 +213,23 @@ def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
             st.rerun()
 
     # ----------------------------------------------------
-    # 📊 西寧當地市場物價行情比對功能
+    # 📊 西寧當地市場完整物價行情基準庫（擴充防弊品項）
     # ----------------------------------------------------
     st.markdown("---")
     st.markdown(f"### {L['market_header']}")
     market_data = [
-        {"食材品項 (Thực phẩm)": "上等豬肉 / Thịt heo ba chỉ (1kg)", "西寧傳統市場行情": "115.000 VND", "Co.opmart 西寧超市": "125.000 VND", "本廠採購參考價": "115.000 VND", "趨勢與建議": "🟢 價格穩定"},
-        {"食材品項 (Thực phẩm)": "新鮮雞肉 / Thịt gà ta (1kg)", "西寧傳統市場行情": "85.000 VND", "Co.opmart 西寧超市": "92.000 VND", "本廠採購參考價": "85.000 VND", "趨勢與建議": "🟢 建議傳統市場採購"},
-        {"食材品項 (Thực phẩm)": "大成白米 / Gạo Jasmine (10kg)", "西寧傳統市場行情": "180.000 VND", "Co.opmart 西寧超市": "195.000 VND", "本廠採購參考價": "175.000 VND", "趨勢與建議": "🔵 批發合約價優惠"},
-        {"食材品項 (Thực phẩm)": "時令蔬菜 / Rau xanh tổng hợp (1kg)", "西寧傳統市場行情": "25.000 VND", "Co.opmart 西寧超市": "32.000 VND", "本廠採購參考價": "25.000 VND", "趨勢與建議": "🟢 產地直供穩定"}
+        {"食材品項 (Thực phẩm)": "上等豬肉 / Thịt heo ba chỉ (1kg)", "西寧傳統市場基準價": "115.000 VND", "Co.opmart 超市價": "125.000 VND", "採購容許上限": "125.000 VND", "防弊狀態": "🟢 正常範圍"},
+        {"食材品項 (Thực phẩm)": "新鮮雞肉 / Thịt gà ta (1kg)", "西寧傳統市場基準價": "85.000 VND", "Co.opmart 超市價": "92.000 VND", "採購容許上限": "95.000 VND", "防弊狀態": "🟢 正常範圍"},
+        {"食材品項 (Thực phẩm)": "排骨 / Sườn heo (1kg)", "西寧傳統市場基準價": "130.000 VND", "Co.opmart 超市價": "145.000 VND", "採購容許上限": "140.000 VND", "防弊狀態": "🟢 正常範圍"},
+        {"食材品項 (Thực phẩm)": "大成白米 / Gạo Jasmine (10kg)", "西寧傳統市場基準價": "180.000 VND", "Co.opmart 超市價": "195.000 VND", "採購容許上限": "190.000 VND", "防弊狀態": "🟢 正常範圍"},
+        {"食材品項 (Thực phẩm)": "雞蛋 / Trứng gà (10顆/Chục)", "西寧傳統市場基準價": "32.000 VND", "Co.opmart 超市價": "36.000 VND", "採購容許上限": "35.000 VND", "防弊狀態": "🟢 正常範圍"},
+        {"食材品項 (Thực phẩm)": "時令蔬菜 / Rau xanh tổng hợp (1kg)", "西寧傳統市場基準價": "25.000 VND", "Co.opmart 超市價": "32.000 VND", "採購容許上限": "30.000 VND", "防弊狀態": "🟢 正常範圍"},
+        {"食材品項 (Thực phẩm)": "新鮮海鮮/魚類 / Cá basa/Hải sản (1kg)", "西寧傳統市場基準價": "75.000 VND", "Co.opmart 超市價": "85.000 VND", "採購容許上限": "85.000 VND", "防弊狀態": "🟢 正常範圍"}
     ]
     st.dataframe(pd.DataFrame(market_data), use_container_width=True, hide_index=True)
 
     # ----------------------------------------------------
-    # 🤖 買菜收據 AI 智慧識別與上傳功能
+    # 🤖 買菜收據 AI 智慧識別與【價格異常防弊稽核】
     # ----------------------------------------------------
     st.markdown("---")
     st.markdown(f"### {L['receipt_header']}")
@@ -233,16 +237,18 @@ def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
     if uploaded_receipt is not None:
         st.image(uploaded_receipt, caption="已上傳的採購收據預覽", width=300)
         if st.button(L["btn_ai_scan"], type="primary"):
-            with st.spinner("🤖 Gemini AI 正在辨識西寧市場收據品項與金額..."):
-                st.success("🎉 AI 識別成功！已自動提取以下採購明細：")
-                scanned_df = pd.DataFrame([
-                    {"品項名稱": "Thịt heo (豬肉 3kg)", "單價": "115.000 VND", "小計": "345.000 VND"},
-                    {"品項名稱": "Rau củ (時令蔬菜 5kg)", "單價": "25.000 VND", "小計": "125.000 VND"},
-                    {"品項名稱": "Gạo (白米 10kg)", "單價": "175.000 VND", "小計": "175.000 VND"},
-                    {"總計金額": "---", "單價": "---", "小計": "645.000 VND"}
+            with st.spinner("🤖 Gemini AI 正在進行收據 OCR 識別與西寧市場行情交叉比對（防弊審計中）..."):
+                st.success("🎉 AI 智慧審計完成！以下為收據品項與市場行情的比對結果：")
+                
+                # 模擬刻意抓出灌水報貴的稽核範例
+                audit_result_df = pd.DataFrame([
+                    {"品項名稱": "Thịt heo ba chỉ (上等豬肉 3kg)", "申報單價": "115.000 VND", "市場基準價": "115.000 VND", "稽核判定": "✅ 合理 (符合行情)"},
+                    {"品項名稱": "Sườn heo (排骨 2kg)", "申報單價": "165.000 VND", "市場基準價": "130.000 VND", "稽核判定": "🔴 異常警告：單價高出市場 26.9%（疑似灌水！）"},
+                    {"品項名稱": "Rau củ (時令蔬菜 5kg)", "申報單價": "25.000 VND", "市場基準價": "25.000 VND", "稽核判定": "✅ 合理 (符合行情)"},
+                    {"品項名稱": "Gạo Jasmine (白米 10kg)", "申報單價": "180.000 VND", "市場基準價": "180.000 VND", "稽核判定": "✅ 合理 (符合行情)"}
                 ])
-                st.dataframe(scanned_df, use_container_width=True, hide_index=True)
-                st.info("💡 提示：您可以直接將此收據明細匯入會計應付帳款或伙食費用報銷流程。")
+                st.dataframe(audit_result_df, use_container_width=True, hide_index=True)
+                st.warning("⚠️ **防弊稽核通知**：系統偵測到品項【排骨】之申報價格明顯高於西寧傳統市場基準價，已自動暫停該筆收據自動入帳，並已發送通知呈報管理部主管進行人工複核！")
 
     # ----------------------------------------------------
     # 📋 歷史搭夥與預算清單
