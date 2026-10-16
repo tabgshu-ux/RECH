@@ -2,14 +2,22 @@ from contextlib import contextmanager
 from sqlalchemy import create_engine, text
 import streamlit as st
 
-DB_URL = "postgresql+psycopg2://postgres.wvsqbefyeykmueffcbwd:Reetech2026@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require"
+def get_db_url():
+    """優先從 st.secrets 讀取密碼，若無則使用預設值"""
+    try:
+        pwd = st.secrets.get("SUPABASE_DB_PASSWORD", "Reech999808")
+    except Exception:
+        pwd = "Reech999808"
+    
+    return f"postgresql+psycopg2://postgres.wvsqbefyeykmueffcbwd:{pwd}@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres?sslmode=require"
 
 @st.cache_resource
 def get_db_engine():
     """建立安全的單例資料庫引擎"""
     try:
+        db_url = get_db_url()
         eng = create_engine(
-            DB_URL,
+            db_url,
             pool_pre_ping=True,
             pool_size=2,
             max_overflow=3,
