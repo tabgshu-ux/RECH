@@ -110,7 +110,6 @@ def calculate_5y_depreciation(cost, salvage, purchase_date_str):
             
         today = datetime.date.today()
         
-        # 計算累計已使用月份
         months_used = (today.year - p_date.year) * 12 + (today.month - p_date.month)
         if months_used < 0:
             months_used = 0
@@ -185,7 +184,8 @@ def init_assets_db(engine):
                 ("purchase_date", "DATE DEFAULT CURRENT_DATE"),
                 ("inspection_expiry", "DATE"),
                 ("cost_amount", "NUMERIC(15,2) DEFAULT 0"),
-                ("salvage_amount", "NUMERIC(15,2) DEFAULT 0")
+                ("salvage_amount", "NUMERIC(15,2) DEFAULT 0"),
+                ("site_location", "VARCHAR(100)")
             ]
             for col_name, col_type in cols:
                 try:
@@ -219,25 +219,23 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
             with c1:
                 asset_code = st.text_input(L["lbl_code"], value="AST-VH-001", placeholder="例: AST-VH-001")
                 asset_cat = st.selectbox(L["lbl_cat"], ASSET_CATEGORIES)
-                asset_name = st.text_input(L["lbl_name"], placeholder="例: 70LD-006.06 (公司總經理專車)")
+                asset_name = st.text_input(L["lbl_name"], placeholder="例: 賓士 S450")
                 purchase_dt = st.date_input(L["lbl_purchase_date"], datetime.date(2023, 1, 1))
             with c2:
-                # 🏢 廠區選項僅保留【越南西寧廠 (Tay Ninh)】
                 site_loc = st.selectbox(L["lbl_site"], ["越南西寧廠 (Tay Ninh)"])
                 asset_status = st.selectbox(L["lbl_status"], ["🟢 在用/租賃中 (Active)", "🟡 維修保養中 (Maintenance)", "🔴 報廢/封存 (Retired)"])
                 
-                # 💰 越南千位點號格式輸入框 (徹底替換 st.number_input)
                 cost_str = st.text_input(
                     L["lbl_cost"], 
-                    value="850.000.000",
-                    help="直接輸入數字即可，系統會自動轉換為越南千位點號格式 (例如: 850.000.000)"
+                    value="5.039.000.000",
+                    help="直接輸入數字即可，系統會自動轉換為越南千位點號格式"
                 )
                 cost_val = parse_formatted_amount(cost_str)
 
                 salvage_str = st.text_input(
                     L["lbl_salvage"], 
                     value="85.000.000",
-                    help="預設為原價 10%，自動轉換為越南點號格式"
+                    help="預設為原價 10%，可手動調整殘值"
                 )
                 salvage_val = parse_formatted_amount(salvage_str)
 
@@ -254,16 +252,16 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 
                 v_c1, v_c2, v_c3 = st.columns(3)
                 with v_c1:
-                    license_plate = st.text_input(L["lbl_plate"], value="70LD-006.06", placeholder="例: 70LD-006.06 或 60A-888.99")
+                    license_plate = st.text_input(L["lbl_plate"], value="70A-492.14", placeholder="例: 70A-492.14")
                 with v_c2:
-                    v_model = st.text_input(L["lbl_v_model"], value="Toyota Fortuner 2.7V", placeholder="例: Isuzu 3.5噸卡車 / Ford Transit 16座")
+                    v_model = st.text_input(L["lbl_v_model"], value="Mercedes-Benz S450", placeholder="例: Toyota Fortuner")
                 with v_c3:
-                    driver_name = st.text_input(L["lbl_driver"], value="Nguyễn Văn Tài", placeholder="例: 專職司機 / 廠長")
+                    driver_name = st.text_input(L["lbl_driver"], value="Nguyễn Văn Tài", placeholder="例: 專職司機")
 
-                inspection_date = st.date_input(L["lbl_inspection_date"], datetime.date.today() + datetime.timedelta(days=365))
+                inspection_date = st.date_input(L["lbl_inspection_date"], datetime.date(2027, 10, 16))
                 st.markdown("</div>", unsafe_allow_html=True)
             else:
-                v_model = st.text_input(L["lbl_brand"], placeholder="例: Amada CNC Busbar 160T")
+                v_model = st.text_input(L["lbl_brand"], placeholder="例: 500KVA 變壓器")
 
             if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
                 if not asset_code or not asset_name:
@@ -273,24 +271,37 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 elif cost_val <= 0:
                     st.error("⚠️ 請填寫正確的取得原價成本！")
                 else:
+                    # 防呆檢查：檢查編號是否重複
+                    is_duplicate = False
                     if engine:
                         try:
-                            with engine.begin() as conn:
-                                conn.execute(text("""
-                                    INSERT INTO public.fixed_assets 
-                                    (asset_code, asset_name, category, site_location, brand_model, license_plate, driver_custodian, purchase_date, inspection_expiry, cost_amount, salvage_amount, status)
-                                    VALUES (:code, :name, :cat, :site, :bm, :plate, :driver, :pdate, :exp, :cost, :sal, :status);
-                                """), {
-                                    "code": asset_code, "name": asset_name, "cat": asset_cat, "site": site_loc,
-                                    "bm": v_model, "plate": license_plate, "driver": driver_name, "pdate": purchase_dt,
-                                    "exp": inspection_date, "cost": cost_val, "sal": salvage_val, "status": asset_status
-                                })
-                            st.success(f"🎉 車輛/資產【{asset_name}】建立成功！原價：{format_vnd(cost_val)}")
-                            st.rerun()
-                        except Exception as e:
-                            st.error("寫入失敗: " + str(e))
+                            df_check = pd.read_sql("SELECT asset_code FROM public.fixed_assets WHERE asset_code = :code", con=engine, params={"code": asset_code})
+                            if not df_check.empty:
+                                is_duplicate = True
+                        except Exception:
+                            pass
+
+                    if is_duplicate:
+                        st.warning(f"⚠️ **資料重複提示**：系統中已經存在資產編號 `{asset_code}`！請更換新的資產編號後再試一次。")
                     else:
-                        st.success(f"🎉 [展示模式] 車輛/資產【{asset_name}】建立成功！")
+                        if engine:
+                            try:
+                                with engine.begin() as conn:
+                                    conn.execute(text("""
+                                        INSERT INTO public.fixed_assets 
+                                        (asset_code, asset_name, category, site_location, brand_model, license_plate, driver_custodian, purchase_date, inspection_expiry, cost_amount, salvage_amount, status)
+                                        VALUES (:code, :name, :cat, :site, :bm, :plate, :driver, :pdate, :exp, :cost, :sal, :status);
+                                    """), {
+                                        "code": asset_code, "name": asset_name, "cat": asset_cat, "site": site_loc,
+                                        "bm": v_model, "plate": license_plate, "driver": driver_name, "pdate": purchase_dt,
+                                        "exp": inspection_date, "cost": cost_val, "sal": salvage_val, "status": asset_status
+                                    })
+                                st.success(f"🎉 車輛/資產【{asset_name}】建立成功！原價：{format_vnd(cost_val)}")
+                                st.rerun()
+                            except Exception as e:
+                                st.error("寫入失敗: " + str(e))
+                        else:
+                            st.success(f"🎉 [展示模式] 車輛/資產【{asset_name}】建立成功！")
 
     # ----------------------------------------------------
     # 📋 頁籤 2: 清冊查看與 5 年直線折舊攤分試算
@@ -327,8 +338,8 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                 if not (match_code or match_name or match_plate):
                                     continue
 
-                            cost_amt = item.get("cost_amount", 0) or 0
-                            salvage_amt = item.get("salvage_amount", 0) or (cost_amt * 0.1)
+                            cost_amt = float(item.get("cost_amount", 0) or 0)
+                            salvage_amt = float(item.get("salvage_amount", 0) or (cost_amt * 0.1))
                             p_date = item.get("purchase_date") or datetime.date(2023, 1, 1)
 
                             months_used, accum_depr, net_value = calculate_5y_depreciation(cost_amt, salvage_amt, p_date)
