@@ -22,9 +22,9 @@ st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 
 USER_MGMT_I18N = {
     "繁體中文": {
-        "title": "🔒 IT 管理中心 - 組織權限與跨資料庫串聯管理",
-        "caption": "裕豐電機（越南西寧廠）IT 核心架構：專注於 RBAC 組織權限控管與多資料庫串聯配置。",
-        "tab_roles": "⚙️ 組織角色與模組權限 (RBAC)",
+        "title": "🔒 IT 管理中心 - 組織權限與部門模組授權",
+        "caption": "裕豐電機（越南西寧廠）組織架構與部門動態管理中心。",
+        "tab_roles": "⚙️ 組織角色與部門權限設定 (RBAC)",
         "tab_db_config": "🔌 跨資料庫連線與串聯設定 (Database Bridge)",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
         "success_connected": "PostgreSQL / Supabase 資料庫連線正常！",
@@ -41,8 +41,8 @@ USER_MGMT_I18N = {
         "select_role_lbl": "請選擇欲編輯的角色：",
         "create_new_opt": "🆕 建立新職位角色 (Create New)",
         "step1_title": "1. 設定所屬部門與職位名稱",
-        "dept_select_lbl": "選擇或新增所屬部門 *",
-        "add_new_dept_opt": "➕ 【新增自訂部門...】",
+        "dept_select_lbl": "點選所屬部門 *",
+        "add_new_dept_opt": "➕ 【新增自訂部門】",
         "new_dept_input_lbl": "輸入新部門名稱",
         "role_name_lbl": "職位名稱 *",
         "role_name_ph": "例如: 董事長, 總經理, 倉庫管理員",
@@ -70,7 +70,6 @@ def init_system_tables(engine):
         return
     try:
         with engine.begin() as conn:
-            # 1. 角色權限表
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS system_roles (
                     id SERIAL PRIMARY KEY,
@@ -80,10 +79,9 @@ def init_system_tables(engine):
                     allowed_modules TEXT,
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
-            %"""))
+            """))
             conn.execute(text("ALTER TABLE system_roles ADD COLUMN IF NOT EXISTS department VARCHAR(150) DEFAULT '管理部 (Management Dept)';"))
             
-            # 2. 外部資料庫連線設定表
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS system_db_connections (
                     id SERIAL PRIMARY KEY,
@@ -228,14 +226,10 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
 
     roles_dict, available_depts, is_connected, msg = fetch_roles(engine, L)
 
-    # 🗂️ 建立 IT 管理中心的次分頁：RBAC 權限設定 vs 跨資料庫串聯設定 vs 稽核日誌
     tab_roles, tab_db_config, tab_audit = st.tabs([
         L["tab_roles"], L["tab_db_config"], L["tab_audit"]
     ])
 
-    # ----------------------------------------------------
-    # ⚙️ Tab 1: 組織角色與模組權限設定 (RBAC)
-    # ----------------------------------------------------
     with tab_roles:
         st.markdown(f"### {L['tab_roles']}")
         if is_connected:
@@ -284,10 +278,12 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
 
         st.markdown(f"#### {L['step1_title']}")
         
+        # 🔘 將部門選擇改為「用點的」單選按鈕 (Radio Buttons)
         dept_options_list = available_depts + [L["add_new_dept_opt"]]
         curr_dept_idx = dept_options_list.index(default_dept) if default_dept in dept_options_list else 0
         
-        selected_dept_option = st.selectbox(L["dept_select_lbl"], options=dept_options_list, index=curr_dept_idx)
+        st.markdown(f"**{L['dept_select_lbl']}**")
+        selected_dept_option = st.radio("dept_radio_group", options=dept_options_list, index=curr_dept_idx, label_visibility="collapsed")
         
         if selected_dept_option == L["add_new_dept_opt"]:
             new_dept_name = st.text_input(L["new_dept_input_lbl"], placeholder="例如: 採購部 (Procurement Dept)")
@@ -392,7 +388,6 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                 else:
                     st.warning("⚠️ 請填寫必要的資料庫代碼與名稱！")
 
-        # 顯示目前已設定的外部資料庫清單
         st.markdown("#### 📋 目前已配置的外部資料庫連線清單")
         if engine:
             try:
