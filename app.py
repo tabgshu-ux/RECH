@@ -1,505 +1,375 @@
 import streamlit as st
 import pandas as pd
-import importlib
+import datetime
 from sqlalchemy import text
 
-st.set_page_config(
-    page_title="裕豐電機工業 REETECH INDUSTRIAL AI ERP",
-    page_icon="⚡",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
-MOBILE_CSS_AND_JS = """
+# ----------------------------------------------------
+# 📱 手機優先響應式 CSS 紋理 (Mobile-First UI)
+# ----------------------------------------------------
+MOBILE_USER_MGMT_CSS = """
 <style>
 @media only screen and (max-width: 768px) {
-    h1 { font-size: 1.35rem !important; font-weight: 700 !important; }
-    h2 { font-size: 1.15rem !important; }
-    h3, .stSubheader { font-size: 1.05rem !important; }
-    p, div, span, label { font-size: 0.9rem !important; }
-    .block-container { padding: 1rem 0.5rem !important; }
+    h1 { font-size: 1.3rem !important; }
+    h2 { font-size: 1.1rem !important; }
+    h3 { font-size: 1.0rem !important; }
+    p, div, span, label { font-size: 0.85rem !important; }
+    .stDataFrame { overflow-x: auto; }
+    .stButton button { width: 100% !important; }
 }
 </style>
 """
-st.markdown(MOBILE_CSS_AND_JS, unsafe_allow_html=True)
+st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 
-RECH_LOGO_HTML = """
-<div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; padding: 6px 8px; background: transparent;">
-    <div style="font-size: 32px; font-weight: 900; color: #000055; letter-spacing: -1px; line-height: 1;">RECH</div>
-    <div style="border-left: 2px solid #000055; padding-left: 8px; line-height: 1.15; text-align: left;">
-        <div style="font-size: 14px; font-weight: 800; color: #000055;">裕豐電機工業有限公司</div>
-        <div style="font-size: 9px; font-weight: 700; color: #1E293B;">REETECH INDUSTRIAL CO., LTD</div>
-        <div style="font-size: 8.5px; font-weight: 700; color: #334155;">CÔNG TY TNHH CN DŨ PHONG</div>
-    </div>
-</div>
-"""
-
-NAV_STRUCTURE = {
+# ----------------------------------------------------
+# 🌐 多語系字典與 RBAC 角色名稱在地化轉譯
+# ----------------------------------------------------
+USER_MGMT_I18N = {
     "繁體中文": {
-        "company_name": "裕豐電機工業有限公司",
-        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
-        "login_title": "⚡ 裕豐電機工業系統登入",
-        "username": "帳號 (工號)",
-        "password": "密碼",
-        "login_btn": "🔑 登入系統",
-        "logout_btn": "🚪 登出系統",
-        "lang_selector": "🌐 選擇系統語系 / Select Language",
-        "parent_header": "請選擇一級部門 / 系統：",
-        "sub_header": "選擇子部門與功能：",
-        "departments": {
-            "📈 總經理室 (Executive Office)": {
-                "features": {
-                    "🔴 原料價格與 Gemini 智慧採購顧問": "commodities_fx",
-                    "📊 財務類顯示資料 (AR/AP & P&L)": "financials_pl",
-                    "⚡ 工程專案進度與現場異常監控": "project_progress_exec",
-                }
-            },
-            "👔 管理部 (Management Dept)": {
-                "features": {
-                    "📢 公司重要公告與佈告欄": "company_announcements",
-                    "👤 員工個人檔案與人事管理": "hr_employee",
-                    "🏢 廠內員工固定打卡與出勤紀錄": "internal_attendance",
-                    "📍 外勤出勤統計與工地人數監控": "field_attendance",
-                    "🥗 幹部宿舍伙食與採購控管": "dorm_catering",
-                    "🏭 廠區與工作廠區管理": "factory_mgmt",
-                    "🚗 廠區車輛進出口門禁與派車審核": "vehicle_gate",
-                    "🛠️ 車輛維修保養紀錄": "vehicle_maintenance",
-                    "🏢 固定資產與設備管理": "asset_mgmt",
-                    "🛒 採購與應付帳款 (AP)": "procurement_ap",
-                    "📋 應收帳款與對帳管理中心": "sales_order_ar",
-                    "📊 越南稅務標準財務報表 (Thông tư 200)": "financial_tax",
-                    "💰 員工薪資計算與保險扣除": "payroll_calc",
-                    "📄 電子發票綜合管理與 XML 歸檔": "invoice_management",
-                }
-            },
-            "✍️ 全公司電子簽核中心 (Approval Center)": {
-                "features": {
-                    "✍️ 提交請假/採購與即時進度追蹤 / 審核": "approval_center",
-                }
-            },
-            "🛠️ 工程與設計管理中心 (Engineering & Design Center)": {
-                "features": {
-                    "⚡ 工程主管戰情室與案場管理": "eng_mgmt_center",
-                    "📍 [工程] 現場外勤打卡與作業登記": "eng_field_checkin",
-                }
-            },
-            "🏭 生產部 (Production Dept)": {
-                "features": {
-                    "📦 [倉儲] 倉庫庫存與資材條碼管理": "wh_management",
-                    "✂️ [板金] 板金加工組工單與條碼": "sheet_metal",
-                    "🎨 [塗料] 粉體塗裝烤漆組品管": "painting",
-                    "⚡ [配盤] 配電盤組裝配線組": "assembly",
-                }
-            },
-            "💻 資訊管理部 (IT & System)": {
-                "features": {
-                    "🔒 帳號權限與全系統稽核軌跡": "it_admin",
-                    "🎛️ 客戶 ERP 模組授權與功能開關": "it_licensing",
-                }
-            },
+        "title": "🔒 IT 管理中心 - 組織角色權限與系統模組授權",
+        "caption": "裕豐電機（越南西寧廠）雲端架構：專注於系統權限範本配置與安全性稽核軌跡。",
+        "tab_roles": "⚙️ 組織角色與模組權限設定 (RBAC)",
+        "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
+        "tab_db": "🔌 資料庫連線狀態",
+        "success_connected": "PostgreSQL / Supabase 資料庫連線正常！",
+        "db_not_connected": "ℹ️ 提示：目前使用安全記憶體模式運行（如需對接雲端請確認 engine 設定）。",
+        "cloud_roles_count": "已建角色數",
+        "search_ph": "輸入角色名稱過濾...",
+        "search_label": "🔍 搜尋角色關鍵字",
+        "col_role_name": "角色名稱",
+        "col_desc": "職責與權限範圍",
+        "col_modules_count": "允許開啟之頁面數量",
+        "edit_header": "✏️ 角色權限編輯維護 (新增 / 載入修改 / 刪除)",
+        "select_role_lbl": "請選擇欲編輯的角色：",
+        "create_new_opt": "🆕 建立新角色 (Create New)",
+        "step1_title": "1. 輸入角色名稱與說明",
+        "role_name_lbl": "職位角色代碼與名稱 *",
+        "role_name_ph": "例如: admin, manager, supervisor",
+        "role_desc_lbl": "部門職責與資料範圍說明",
+        "role_desc_ph": "例如: 協助西寧廠工程支援指派",
+        "step2_title": "2. 勾選該職位角色可操作功能頁面：",
+        "btn_save_role": "💾 儲存角色權限設定",
+        "btn_del_role": "🗑️ 刪除此角色",
+        "save_role_success": "🎉 角色權限設定已成功儲存！",
+        "del_role_success": "🗑️ 角色已成功刪除！",
+        "role_display_names": {
+            "admin": "最高管理者 (Admin / 總經理)",
+            "manager": "西寧廠廠區主管 (Manager / 經理)",
+            "security": "西寧廠大門保全組 (Security)",
+            "staff": "西寧廠一般員工 / 現場人員 (Staff)"
         },
+        "default_roles": {
+            "admin": {"description": "最高決策與全系統總覽權限", "allowed_modules": "ALL"},
+            "manager": {"description": "西寧廠主管，負責考勤審核與日常營運", "allowed_modules": "ALL"},
+            "security": {"description": "西寧廠大門保全組，負責車輛進出登記", "allowed_modules": "車輛門禁"},
+            "staff": {"description": "西寧廠一般員工，個人打卡與請假申請", "allowed_modules": "個人打卡"}
+        }
     },
     "Tiếng Việt": {
-        "company_name": "CÔNG TY TNHH CN DŨ PHONG",
-        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
-        "login_title": "⚡ REETECH INDUSTRIAL - Đăng nhập hệ thống",
-        "username": "Tài khoản (Mã NV)",
-        "password": "Mật khẩu",
-        "login_btn": "🔑 Đăng nhập",
-        "logout_btn": "🚪 Đăng xuất",
-        "lang_selector": "🌐 Chọn ngôn ngữ / Select Language",
-        "parent_header": "Chọn phòng ban chính:",
-        "sub_header": "Chọn bộ phận trực thuộc:",
-        "departments": {
-            "📈 Ban Giám đốc (Executive Office)": {
-                "features": {
-                    "🔴 Giá Nguyên liệu & Cố vấn Gemini": "commodities_fx",
-                    "📊 Dữ liệu Tài chính": "financials_pl",
-                    "⚡ Tiến độ Dự án Kỹ thuật": "project_progress_exec",
-                }
-            },
-            "👔 Phòng Quản lý (Management Dept)": {
-                "features": {
-                    "📢 Thông báo công ty": "company_announcements",
-                    "👤 Hồ sơ nhân sự": "hr_employee",
-                    "🏢 Chấm công nội bộ": "internal_attendance",
-                    "📍 Giám sát quân số công trường": "field_attendance",
-                    "🥗 Quản lý Ký túc xá & Mua thực phẩm": "dorm_catering",
-                    "🏭 Quản lý Nhà máy": "factory_mgmt",
-                    "🚗 Quản lý xe ra vào & Phê duyệt": "vehicle_gate",
-                    "🛠️ Bảo trì xe": "vehicle_maintenance",
-                    "🏢 Quản lý Tài sản cố định": "asset_mgmt",
-                    "🛒 Mua hàng & Phải trả (AP)": "procurement_ap",
-                    "📋 Quản lý Phải thu": "sales_order_ar",
-                    "📊 Báo cáo Tài chính chuẩn Thuế VN": "financial_tax",
-                    "💰 Tính lương & Khấu trừ bảo hiểm": "payroll_calc",
-                    "📄 Quản lý Hóa đơn điện tử": "invoice_management",
-                }
-            },
-            "✍️ Trung tâm Phê duyệt Điện tử (Approval Center)": {
-                "features": {
-                    "✍️ Gửi đơn nghỉ phép/mua hàng & Theo dõi tiến độ": "approval_center",
-                }
-            },
-            "🛠️ Trung tâm Quản lý Kỹ thuật & Thiết kế": {
-                "features": {
-                    "⚡ Quản lý Kỹ thuật & Dự án": "eng_mgmt_center",
-                    "📍 Chấm công ngoài công trường": "eng_field_checkin",
-                }
-            },
-            "🏭 Phòng Sản xuất (Production Dept)": {
-                "features": {
-                    "📦 [Kho] Quản lý Kho & Mã vạch": "wh_management",
-                    "✂️ [Gia công] Tổ Gia công Cơ khí": "sheet_metal",
-                    "🎨 [Sơn] Tổ Sơn tĩnh điện": "painting",
-                    "⚡ [Lắp ráp] Tổ Lắp ráp Tủ điện": "assembly",
-                }
-            },
-            "💻 Phòng IT (IT & System)": {
-                "features": {
-                    "🔒 Quản lý Phân quyền": "it_admin",
-                    "🎛️ Phân quyền Bản quyền ERP": "it_licensing",
-                }
-            },
+        "title": "🔒 Quản trị IT - Phân quyền Vai trò & Quản lý Hệ thống",
+        "caption": "Kiến trúc đám mây Nhà máy Tây Ninh Reetech: Cấu hình phân quyền hệ thống.",
+        "tab_roles": "⚙️ Phân quyền Vai trò & Module (RBAC)",
+        "tab_audit": "📊 Nhật ký Kiểm toán",
+        "tab_db": "🔌 Trạng thái CSDL",
+        "success_connected": "Kết nối CSDL thành công!",
+        "db_not_connected": "ℹ️ Đang chạy ở chế độ bộ nhớ an toàn.",
+        "cloud_roles_count": "Số lượng vai trò",
+        "search_ph": "Nhập tên vai trò...",
+        "search_label": "🔍 Tìm kiếm",
+        "col_role_name": "Tên vai trò",
+        "col_desc": "Mô tả",
+        "col_modules_count": "Số trang cho phép",
+        "edit_header": "✏️ Chỉnh sửa Phân quyền",
+        "select_role_lbl": "Chọn vai trò:",
+        "create_new_opt": "🆕 Tạo mới",
+        "step1_title": "1. Nhập tên và mô tả",
+        "role_name_lbl": "Mã và Tên vai trò *",
+        "role_name_ph": "Ví dụ: manager, supervisor",
+        "role_desc_lbl": "Mô tả",
+        "role_desc_ph": "Mô tả chức năng",
+        "step2_title": "2. Chọn chức năng được phép:",
+        "btn_save_role": "💾 Lưu phân quyền",
+        "btn_del_role": "🗑️ Xóa vai trò",
+        "save_role_success": "🎉 Đã lưu phân quyền thành công!",
+        "del_role_success": "🗑️ Đã xóa vai trò thành công!",
+        "role_display_names": {
+            "admin": "Quản trị viên tối cao (Admin)",
+            "manager": "Quản đốc Nhà máy Tây Ninh (Manager)",
+            "security": "Bảo vệ cổng Nhà máy Tây Ninh (Security)",
+            "staff": "Nhân viên / Công nhân Nhà máy Tây Ninh (Staff)"
         },
+        "default_roles": {
+            "admin": {"description": "Quản trị viên hệ thống tối cao", "allowed_modules": "ALL"},
+            "manager": {"description": "Quản đốc Nhà máy Tây Ninh, duyệt chấm công", "allowed_modules": "ALL"},
+            "security": {"description": "Bảo vệ cổng Tây Ninh, đăng ký xe ra vào", "allowed_modules": "車輛門禁"},
+            "staff": {"description": "Nhân viên Nhà máy Tây Ninh, chấm công và xin nghỉ phép", "allowed_modules": "個人打卡"}
+        }
     },
     "English": {
-        "company_name": "REETECH INDUSTRIAL CO., LTD",
-        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
-        "login_title": "⚡ REETECH INDUSTRIAL - System Login",
-        "username": "Username (Emp ID)",
-        "password": "Password",
-        "login_btn": "🔑 Login",
-        "logout_btn": "🚪 Logout",
-        "lang_selector": "🌐 Select Language",
-        "parent_header": "Select Department:",
-        "sub_header": "Select Unit & Features:",
-        "departments": {
-            "📈 Executive Office": {
-                "features": {
-                    "🔴 Raw Materials & Gemini Advisor": "commodities_fx",
-                    "📊 Financial Analytics": "financials_pl",
-                    "⚡ Engineering Project Progress": "project_progress_exec",
-                }
-            },
-            "👔 Management Dept (GA & Finance)": {
-                "features": {
-                    "📢 Company Announcements": "company_announcements",
-                    "👤 HR Records": "hr_employee",
-                    "🏢 Internal Attendance": "internal_attendance",
-                    "📍 Site Workforce Monitoring": "field_attendance",
-                    "🥗 Dormitory Catering & Food Procurement": "dorm_catering",
-                    "🏭 Factory Management": "factory_mgmt",
-                    "🚗 Vehicle Gate & Dispatch Log": "vehicle_gate",
-                    "🛠️ Vehicle Maintenance": "vehicle_maintenance",
-                    "🏢 Fixed Asset Management": "asset_mgmt",
-                    "🛒 Procurement & AP": "procurement_ap",
-                    "📋 Accounts Receivable": "sales_order_ar",
-                    "📊 Vietnamese Tax Financials": "financial_tax",
-                    "💰 Payroll & Insurance Calculation": "payroll_calc",
-                    "📄 E-Invoice Management": "invoice_management",
-                }
-            },
-            "✍️ E-Approval Center": {
-                "features": {
-                    "✍️ Submit Leave/Purchase & Track Workflow": "approval_center",
-                }
-            },
-            "🛠️ Engineering & Design Management Center": {
-                "features": {
-                    "⚡ Engineering Executive Center": "eng_mgmt_center",
-                    "📍 Field Check-in Log": "eng_field_checkin",
-                }
-            },
-            "🏭 Production Dept": {
-                "features": {
-                    "📦 [Warehouse] Material Barcodes": "wh_management",
-                    "✂️ [Sheet Metal] Processing Dept": "sheet_metal",
-                    "🎨 [Coating] Powder Coating Dept": "painting",
-                    "⚡ [Assembly] Switchgear Assembly": "assembly",
-                }
-            },
-            "💻 Information Technology (IT)": {
-                "features": {
-                    "🔒 User Permissions": "it_admin",
-                    "🎛️ Client ERP Licensing": "it_licensing",
-                }
-            },
+        "title": "🔒 IT Center - RBAC Roles & System Authorization",
+        "caption": "Reetech Tay Ninh Plant Cloud Architecture: RBAC Role Configuration & System Security.",
+        "tab_roles": "⚙️ RBAC Roles & Permissions",
+        "tab_audit": "📊 System Audit Logs",
+        "tab_db": "🔌 Database Status",
+        "success_connected": "PostgreSQL Database Connected Successfully!",
+        "db_not_connected": "ℹ️ Running in safe memory mode.",
+        "cloud_roles_count": "Total Roles",
+        "search_ph": "Filter roles...",
+        "search_label": "🔍 Search Roles",
+        "col_role_name": "Role Name",
+        "col_desc": "Description",
+        "col_modules_count": "Allowed Modules",
+        "edit_header": "✏️ Edit Role Permissions",
+        "select_role_lbl": "Select Role:",
+        "create_new_opt": "🆕 Create New Role",
+        "step1_title": "1. Enter Role Name & Description",
+        "role_name_lbl": "Role Code & Name *",
+        "role_name_ph": "e.g., manager, supervisor",
+        "role_desc_lbl": "Description",
+        "role_desc_ph": "e.g., Oversee operations",
+        "step2_title": "2. Select Allowed Features:",
+        "btn_save_role": "💾 Save Role Permissions",
+        "btn_del_role": "🗑️ Delete Role",
+        "save_role_success": "🎉 Role saved successfully!",
+        "del_role_success": "🗑️ Role deleted successfully!",
+        "role_display_names": {
+            "admin": "Highest Administrator (Admin)",
+            "manager": "Tay Ninh Plant Manager",
+            "security": "Tay Ninh Gate Security",
+            "staff": "Tay Ninh General Staff"
         },
-    },
+        "default_roles": {
+            "admin": {"description": "Highest system administration & decision making", "allowed_modules": "ALL"},
+            "manager": {"description": "Tay Ninh Plant manager, attendance approval & daily ops", "allowed_modules": "ALL"},
+            "security": {"description": "Tay Ninh Gate security guard, vehicle access logging", "allowed_modules": "車輛門禁"},
+            "staff": {"description": "Tay Ninh General employee, attendance & leave requests", "allowed_modules": "個人打卡"}
+        }
+    }
 }
 
-if "current_lang" not in st.session_state:
-    st.session_state.current_lang = "繁體中文"
-
-try:
-    db_conn = importlib.import_module("modules.db_connection")
-    engine = db_conn.get_db_engine()
-except Exception:
-    engine = None
-
-def load_module_safely(mod_name, func_name, *args, **kwargs):
+def fetch_roles(engine, lang_dict):
+    fallback_roles = lang_dict["default_roles"]
+    if engine is None:
+        return fallback_roles, False, lang_dict["db_not_connected"]
+    
     try:
-        mod = importlib.import_module(mod_name)
-        func = getattr(mod, func_name, None)
-        if callable(func):
-            func(*args, **kwargs)
-        else:
-            st.error(f"模組 {mod_name} 中找不到方法 {func_name}")
+        df = pd.read_sql("SELECT role_name, description, allowed_modules FROM system_roles", con=engine)
+        if df.empty:
+            return fallback_roles, True, lang_dict["success_connected"]
+        roles_dict = {}
+        for _, row in df.iterrows():
+            r_name = row["role_name"]
+            desc = row.get("description", "")
+            if r_name in fallback_roles and not desc:
+                desc = fallback_roles[r_name]["description"]
+            roles_dict[r_name] = {
+                "description": desc,
+                "allowed_modules": row.get("allowed_modules", "ALL")
+            }
+        return roles_dict, True, lang_dict["success_connected"]
     except Exception as e:
-        st.error(f"載入模組 {mod_name} 發生異常: {str(e)}")
+        return fallback_roles, False, f"{lang_dict['db_not_connected']} ({e})"
 
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-    st.session_state.user_role = ""
-    st.session_state.user_name = ""
-    st.session_state.must_change_pwd = False
+def save_role_db(engine, role_name, description, allowed_modules):
+    if engine is None:
+        return False
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                text("""
+                    INSERT INTO system_roles (role_name, description, allowed_modules) 
+                    VALUES (:r, :d, :m) 
+                    ON CONFLICT (role_name) 
+                    DO UPDATE SET description = :d, allowed_modules = :m
+                """),
+                {"r": role_name, "d": description, "m": allowed_modules}
+            )
+        return True
+    except Exception:
+        return False
 
-lang_dict = NAV_STRUCTURE.get(
-    st.session_state.current_lang, NAV_STRUCTURE["繁體中文"]
-)
+def delete_role_db(engine, role_name):
+    if engine is None:
+        return False
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("DELETE FROM system_roles WHERE role_name = :r"), {"r": role_name})
+        return True
+    except Exception:
+        return False
 
-# ----------------------------------------------------
-# 🔐 1. 登入介面
-# ----------------------------------------------------
-if not st.session_state.logged_in:
-    _, center_col, _ = st.columns([1, 1.5, 1])
-    with center_col:
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
-        st.markdown(f"<h2 style='text-align: center;'>{lang_dict['login_title']}</h2>", unsafe_allow_html=True)
-        st.markdown(f"<p style='text-align: center; color: gray;'>{lang_dict['company_sub']}</p>", unsafe_allow_html=True)
+DEPARTMENT_MODULE_TREE = {
+    "📈 總經理室 (Executive Office)": [
+        "🔴 原料價格與 Gemini 智慧採購顧問",
+        "📊 財務類顯示資料 (AR/AP & P&L)",
+        "⚡ 工程專案進度與現場異常監控"
+    ],
+    "👔 管理部 (Management Dept)": [
+        "📢 公司重要公告與佈告欄",
+        "👤 員工個人檔案與人事管理",
+        "🏢 廠內員工固定打卡與出勤紀錄",
+        "📍 外勤位置驗證與工地即時人數",
+        "🏭 廠區與工作廠區管理",
+        "🚗 廠區車輛進出口門禁與派車審核",
+        "🛠️ 車輛維修保養紀錄",
+        "🏢 固定資產與設備管理",
+        "🛒 採購與應付帳款 (AP)",
+        "📋 應收帳款",
+        "📊 越南稅務標準財務報表 (Thông tư 200)",
+        "💰 員工薪資計算與保險扣除",
+        "📄 電子發票綜合管理"
+    ],
+    "✍️ 全公司電子簽核中心 (Approval Center)": [
+        "✍️ 提交請假/採購與即時進度追蹤 / 審核"
+    ],
+    "🛠️ 工程與設計管理中心 (Engineering & Design Center)": [
+        "⚡ [工程] 配電盤與工程專案雙層報價",
+        "📊 [工程] 工程驗收與進度追蹤",
+        "📋 [工程] 現場工程日報表與出工統計",
+        "🤖 [工程] AI 施工照片智慧辨識與歸檔",
+        "⚠️ [工程] 分包商與專業證照到期預警",
+        "🎨 [設計] 配電盤電氣與機構設計圖庫 Storage",
+        "🔌 [工程] 配電盤 BOM 零件自動展開與採購連動",
+        "👷 [工程] 外包商點工計價與越南勞動法計薪",
+        "🧪 [工程] FAT/SAT 試驗報告與 QR Code 驗收",
+        "📊 [工程] 越南營建電子發票與稅務合規管家"
+    ],
+    "🏭 生產部 (Production Dept)": [
+        "📦 [倉儲] 倉庫庫存與資材條碼管理",
+        "✂️ [板金] 板金加工組工單與條碼",
+        "🎨 [塗料] 粉體塗裝烤漆組品管",
+        "⚡ [配盤] 配電盤組裝配線組"
+    ],
+    "💻 資訊管理部 (IT & System)": [
+        "🔒 系統角色權限與模組開關設定",
+        "🎛️ 客戶 ERP 模組授權與功能開關"
+    ]
+}
+
+ALL_MODULE_LIST = [mod for dept in DEPARTMENT_MODULE_TREE.values() for mod in dept]
+
+def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
+    active_lang = lang if lang in USER_MGMT_I18N else "繁體中文"
+    L = USER_MGMT_I18N[active_lang]
+
+    st.title(L["title"])
+    st.caption(L["caption"])
+    st.info("💡 提示：員工帳號新增與人事指派請至 **管理部 ➡️ 員工個人檔案與人事管理 (HR)** 進行處理。資訊管理部僅負責系統模組權限範本 (RBAC) 設定。")
+
+    if "audit_logs_db" not in st.session_state:
+        st.session_state.audit_logs_db = [
+            {"time": "2026-10-06 13:00:15", "user": "admin", "action": "登入系統 (Login)", "module": "Auth", "ip": "192.168.1.50", "status": "成功"}
+        ]
+
+    roles_dict, is_connected, msg = fetch_roles(engine, L)
+    role_display_map = L["role_display_names"]
+
+    tab_roles, tab_audit, tab_db = st.tabs([
+        L["tab_roles"], L["tab_audit"], L["tab_db"]
+    ])
+
+    with tab_roles:
+        st.markdown(f"### {L['tab_roles']}")
+        if is_connected:
+            st.success(f"🟢 {msg}")
+        else:
+            st.info(f"{msg}")
+
+        col_search, col_stats = st.columns([3, 1])
+        with col_search:
+            search_kw = st.text_input(L["search_label"], placeholder=L["search_ph"])
+        with col_stats:
+            st.metric(L["cloud_roles_count"], len(roles_dict))
+
+        table_rows = []
+        for r_name, r_info in roles_dict.items():
+            display_name = role_display_map.get(r_name, r_name)
+            if not search_kw or (search_kw.lower() in display_name.lower() or search_kw.lower() in r_info["description"].lower()):
+                mod_count_str = "全開 (ALL)" if r_info["allowed_modules"] == "ALL" else f"{len(r_info['allowed_modules'].split(','))} 個頁面"
+                table_rows.append({
+                    L["col_role_name"]: display_name,
+                    L["col_desc"]: r_info["description"],
+                    L["col_modules_count"]: mod_count_str
+                })
+
+        st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
+
         st.markdown("---")
-        
-        username_input = st.text_input(lang_dict["username"])
-        password_input = st.text_input(lang_dict["password"], type="password")
-        
-        lang_list = ["繁體中文", "Tiếng Việt", "English"]
-        current_lang_idx = lang_list.index(st.session_state.current_lang) if st.session_state.current_lang in lang_list else 0
-        selected_login_lang = st.selectbox(lang_dict["lang_selector"], lang_list, index=current_lang_idx)
-        
-        if selected_login_lang != st.session_state.current_lang:
-            st.session_state.current_lang = selected_login_lang
-            st.rerun()
+        st.markdown(f"### {L['edit_header']}")
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        if st.button(lang_dict["login_btn"], use_container_width=True):
-            u_clean = username_input.strip()
-            
-            if u_clean.lower() == "admin" and password_input == "123":
-                st.session_state.logged_in = True
-                st.session_state.user_role = "admin"
-                st.session_state.user_name = "admin"
-                st.session_state.must_change_pwd = False
+        role_opts = [L["create_new_opt"]] + [role_display_map.get(k, k) for k in roles_dict.keys()]
+        sel_role_display = st.selectbox(L["select_role_lbl"], options=role_opts, index=0)
+
+        sel_role_key = next((k for k, v in role_display_map.items() if v == sel_role_display), sel_role_display)
+        if sel_role_display == L["create_new_opt"]:
+            sel_role_key = ""
+
+        is_edit = sel_role_display != L["create_new_opt"]
+        default_name = sel_role_key if is_edit else ""
+        default_desc = roles_dict.get(sel_role_key, {}).get("description", "") if is_edit else ""
+
+        curr_set = set(ALL_MODULE_LIST) if (is_edit and roles_dict.get(sel_role_key, {}).get("allowed_modules") == "ALL") else (set(roles_dict.get(sel_role_key, {}).get("allowed_modules", "").split(",")) if is_edit else set(ALL_MODULE_LIST))
+
+        st.markdown(f"#### {L['step1_title']}")
+        in_name = st.text_input(L["role_name_lbl"], value=default_name, placeholder=L["role_name_ph"])
+        in_desc = st.text_input(L["role_desc_lbl"], value=default_desc, placeholder=L["role_desc_ph"])
+
+        st.markdown(f"#### {L['step2_title']}")
+        selected_mods = []
+        for dept, mods in DEPARTMENT_MODULE_TREE.items():
+            st.markdown(f"##### {dept}")
+            cols = st.columns(3)
+            for idx, m in enumerate(mods):
+                with cols[idx % 3]:
+                    chk = st.checkbox(m, value=(m in curr_set), key=f"chk_rbac_{active_lang}_{sel_role_key}_{dept}_{idx}_{m}")
+                    if chk:
+                        selected_mods.append(m)
+            st.markdown("---")
+
+        cb1, cb2 = st.columns(2)
+        with cb1:
+            btn_save = st.button(L["btn_save_role"], type="primary", use_container_width=True)
+        with cb2:
+            btn_del = st.button(L["btn_del_role"], use_container_width=True)
+
+        if btn_save:
+            t_name = in_name.strip()
+            if t_name:
+                mod_str = "ALL" if len(selected_mods) == len(ALL_MODULE_LIST) else (",".join(selected_mods) if selected_mods else "")
+                save_role_db(engine, t_name, in_desc, mod_str)
+                st.success(L["save_role_success"])
                 st.rerun()
             else:
-                matched_emp = None
-                if "employee_db" in st.session_state:
-                    matched_emp = next((e for e in st.session_state.employee_db if e["工號"].lower() == u_clean.lower()), None)
-                
-                stored_pwd = matched_emp.get("密碼", "123456") if matched_emp else "123456"
-                
-                if matched_emp and password_input == stored_pwd:
-                    st.session_state.logged_in = True
-                    st.session_state.user_name = matched_emp["姓名"]
-                    st.session_state.user_role = matched_emp.get("角色", "Staff")
-                    st.session_state.must_change_pwd = matched_emp.get("must_change_password", False)
-                    st.session_state.current_emp_code = matched_emp["工號"]
-                    st.rerun()
+                st.warning("⚠️ 請輸入角色名稱！")
+
+        if btn_del:
+            t_name = in_name.strip() or sel_role_key
+            if t_name and t_name != L["create_new_opt"]:
+                if t_name == "admin":
+                    st.error("🚫 系統保護：最高管理者角色無法被刪除！")
                 else:
-                    st.error("⚠️ 帳號或初始密碼錯誤 / Incorrect username or password")
-    st.stop()
-
-# ----------------------------------------------------
-# 🔐 2. 首次登入強制修改密碼
-# ----------------------------------------------------
-if st.session_state.get("must_change_pwd", False):
-    _, center_col, _ = st.columns([1, 1.5, 1])
-    with center_col:
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
-        st.warning("⚠️ **首次登入安全設定 / Lần đầu đăng nhập - Đổi mật khẩu**：為符合企業資安規範，請您立即變更由人事分派的初始密碼。")
-        
-        with st.form("force_change_pwd_form"):
-            new_pwd = st.text_input("請輸入您的新密碼 (Mật khẩu mới) *", type="password")
-            confirm_pwd = st.text_input("再次確認新密碼 (Nhập lại mật khẩu mới) *", type="password")
-            
-            if st.form_submit_button("💾 確認修改密碼並進入系統", type="primary", use_container_width=True):
-                if new_pwd and new_pwd == confirm_pwd:
-                    if "employee_db" in st.session_state:
-                        for emp_item in st.session_state.employee_db:
-                            if emp_item["工號"] == st.session_state.get("current_emp_code"):
-                                emp_item["密碼"] = new_pwd
-                                emp_item["must_change_password"] = False
-                    st.session_state.must_change_pwd = False
-                    st.success("🎉 密碼修改成功！正在進入系統...")
+                    delete_role_db(engine, t_name)
+                    st.success(L["del_role_success"])
                     st.rerun()
-                else:
-                    st.error("⚠️ 兩次輸入的新密碼不相符或未填寫，請重新檢查！")
-    st.stop()
 
-# ----------------------------------------------------
-# 🚀 3. 已登入側邊欄與功能選單
-# ----------------------------------------------------
-st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
+    with tab_audit:
+        st.markdown(f"### {L['tab_audit']}")
+        if st.session_state.audit_logs_db:
+            st.dataframe(pd.DataFrame(st.session_state.audit_logs_db), use_container_width=True)
+        else:
+            st.info("目前尚無稽核日誌紀錄。")
 
-lang_list = ["繁體中文", "Tiếng Việt", "English"]
-selected_lang = st.sidebar.selectbox(
-    lang_dict["lang_selector"],
-    lang_list,
-    index=(lang_list.index(st.session_state.current_lang) if st.session_state.current_lang in lang_list else 0),
-)
+    with tab_db:
+        st.markdown(f"### {L['tab_db']}")
+        if engine is not None:
+            st.success("🟢 資料庫 Engine 連線正常！")
+        else:
+            st.info("ℹ️ 系統目前執行於安全記憶體模式。")
 
-if selected_lang != st.session_state.current_lang:
-    st.session_state.current_lang = selected_lang
-    st.rerun()
+def show(engine=None, lang="繁體中文", **kwargs):
+    render_user_management_page(engine=engine, lang=lang, **kwargs)
 
-u_name_display = st.session_state.get("user_name", "User")
-u_role_display = str(st.session_state.get("user_role", "Staff")).upper()
-st.sidebar.markdown(f"**👤 {u_name_display}** ({u_role_display})")
+def main(engine=None, lang="繁體中文", **kwargs):
+    render_user_management_page(engine=engine, lang=lang, **kwargs)
 
-if st.sidebar.button(lang_dict["logout_btn"], use_container_width=True):
-    st.session_state.logged_in = False
-    st.session_state.must_change_pwd = False
-    st.rerun()
-
-st.sidebar.markdown("---")
-
-dept_options = list(lang_dict["departments"].keys())
-current_role_clean = str(st.session_state.get("user_role", "")).strip().lower()
-
-if current_role_clean == "security":
-    dept_options = ["👔 管理部 (Management Dept)"]
-    selected_parent_dept = dept_options[0]
-    st.sidebar.markdown(f"**{lang_dict['parent_header']}**")
-    feature_labels = ["🚗 廠區車輛進出口門禁與派車審核"] if st.session_state.current_lang == "繁體中文" else ["🚗 Quản lý xe ra vào & Phê duyệt"]
-    selected_feature_label = feature_labels[0]
-    target_route = "vehicle_gate"
-else:
-    is_executive_access = (
-        current_role_clean in ["admin", "chairman", "generalmanager", "vicemanager", "executive", "manager", "finance_manager"]
-    )
-
-    if not is_executive_access:
-        dept_options = [d for d in dept_options if "總經理室" not in d and "Executive" not in d and "Ban Giám đốc" not in d]
-
-    if current_role_clean != "admin":
-        dept_options = [d for d in dept_options if "資訊管理部" not in d and "IT" not in d and "Phòng IT" not in d]
-
-    selected_parent_dept = st.sidebar.radio(lang_dict["parent_header"], dept_options, index=0)
-
-    st.sidebar.markdown("---")
-    features_dict = lang_dict["departments"][selected_parent_dept]["features"]
-    feature_labels = list(features_dict.keys())
-
-    st.sidebar.caption(f"**{selected_parent_dept.split('(')[0].strip()}**")
-    selected_feature_label = st.sidebar.radio(lang_dict["sub_header"], feature_labels)
-    target_route = features_dict[selected_feature_label]
-
-curr_lang = st.session_state.current_lang
-
-# ----------------------------------------------------
-# 📢 公司公告跑馬燈
-# ----------------------------------------------------
-if "announcements_db" not in st.session_state:
-    st.session_state.announcements_db = [
-        {
-            "ann_id": "ANN-2026-001",
-            "title": "⚡ 關於越南全國連假與西寧/海防廠安全生產之重要通知",
-            "category": "🔴 緊急公告 (Urgent)",
-            "content": "請各部門主管務必於連假前落實廠區斷電巡檢、消防設備盤點，並確保留守人員通訊暢通。",
-            "publisher": "總經理室 / 董事長辦公室",
-            "date": "2026-10-09",
-            "status": "🟢 發布中 (Active)"
-        }
-    ]
-
-active_anns = [a for a in st.session_state.announcements_db if "發布中" in a["status"]]
-if active_anns:
-    latest_ann = active_anns[0]
-    st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
-
-# ----------------------------------------------------
-# 🔀 動態安全路由分流
-# ----------------------------------------------------
-if target_route == "company_announcements":
-    load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
-
-elif target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
-    load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route=target_route, lang=curr_lang)
-
-elif target_route == "approval_center":
-    load_module_safely("modules.approval_workflow", "render_approval_center", lang=curr_lang)
-
-elif target_route == "dorm_catering":
-    load_module_safely("modules.dorm_catering", "render_dorm_catering_module", engine=engine, lang=curr_lang)
-
-elif target_route in [
-    "eng_mgmt_center", "eng_quote", "eng_progress", "field_daily_report", 
-    "eng_ai_photo", "eng_license", "eng_design", "eng_bom", "eng_labor", "eng_fat"
-]:
-    load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang)
-
-elif target_route == "eng_field_checkin":
-    load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="field_worker")
-
-elif target_route == "field_attendance":
-    load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="management")
-
-elif target_route == "procurement_ap":
-    load_module_safely("modules.procurement_ap", "render_procurement_ap_page", engine=engine, lang=curr_lang)
-
-elif target_route == "sales_order_ar":
-    load_module_safely("modules.sales_order_ar", "render_sales_order_ar_page", engine=engine, lang=curr_lang)
-
-elif target_route == "financial_tax":
-    load_module_safely("modules.financial_tax_reports", "render_financial_tax_reports_page", engine=engine, lang=curr_lang)
-
-elif target_route == "asset_mgmt":
-    load_module_safely("modules.asset_management", "render_asset_management_page", engine=engine, lang=curr_lang)
-
-elif target_route == "payroll_calc":
-    load_module_safely("modules.payroll_management", "render_payroll_management_page", engine=engine, lang=curr_lang)
-
-elif target_route == "invoice_management":
-    load_module_safely("modules.invoice_management", "render_invoice_management_page", engine=engine, lang=curr_lang)
-
-elif target_route == "internal_attendance":
-    load_module_safely("modules.internal_attendance", "render_internal_attendance_page", engine=engine, lang=curr_lang)
-
-elif target_route == "factory_mgmt":
-    load_module_safely("modules.factory_management", "render_factory_management_page", engine=engine, lang=curr_lang)
-
-elif target_route == "hr_employee":
-    load_module_safely("modules.employee_management", "render_employee_management", engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route == "vehicle_gate":
-    load_module_safely("modules.vehicle_gate_log", "render_vehicle_gate_log_page", engine=engine, lang=curr_lang)
-
-elif target_route == "vehicle_maintenance":
-    load_module_safely("modules.vehicle_maintenance", "render_vehicle_maintenance_page", engine=engine, lang=curr_lang)
-
-elif target_route == "wh_management":
-    load_module_safely("modules.warehouse_management", "render_warehouse_management", engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route == "sheet_metal":
-    load_module_safely("modules.sheet_metal", "render_sheet_metal_module", engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route == "painting":
-    load_module_safely("modules.painting", "render_painting_module", engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route == "assembly":
-    load_module_safely("modules.assembly", "render_assembly_module", engine=engine, t=lang_dict, lang=curr_lang)
-
-elif target_route == "it_admin":
-    if current_role_clean == "admin":
-        load_module_safely("modules.user_management", "render_user_management_page", lang=curr_lang)
-    else:
-        st.error("⚠️ 權限不足：本系統無資訊管理部，僅限系統管理員 (admin) 登入檢視。")
-
-elif target_route == "it_licensing":
-    if current_role_clean == "admin":
-        load_module_safely("modules.system_licensing", "render_licensing_control_page", lang=curr_lang)
-    else:
-        st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
+def render_user_management(*args, **kwargs):
+    render_user_management_page(*args, **kwargs)
