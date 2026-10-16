@@ -20,9 +20,6 @@ MOBILE_USER_MGMT_CSS = """
 """
 st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 
-# ----------------------------------------------------
-# 🌐 多語系字典與 RBAC 角色名稱在地化轉譯
-# ----------------------------------------------------
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 組織角色權限與系統模組授權",
@@ -31,10 +28,11 @@ USER_MGMT_I18N = {
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
         "tab_db": "🔌 資料庫連線狀態",
         "success_connected": "PostgreSQL / Supabase 資料庫連線正常！",
-        "db_not_connected": "ℹ️ 提示：目前使用安全記憶體模式運行（如需對接雲端請確認 engine 設定）。",
+        "db_not_connected": "ℹ️ 提示：目前使用安全記憶體模式運行。",
         "cloud_roles_count": "已建角色數",
         "search_ph": "輸入角色名稱過濾...",
         "search_label": "🔍 搜尋角色關鍵字",
+        "col_stt": "序號",
         "col_role_name": "角色名稱",
         "col_desc": "職責與權限範圍",
         "col_modules_count": "允許開啟之頁面數量",
@@ -43,111 +41,38 @@ USER_MGMT_I18N = {
         "create_new_opt": "🆕 建立新角色 (Create New)",
         "step1_title": "1. 輸入角色名稱與說明",
         "role_name_lbl": "職位角色代碼與名稱 *",
-        "role_name_ph": "例如: admin, manager, supervisor",
+        "role_name_ph": "例如: 董事長/總經理, 廠長",
         "role_desc_lbl": "部門職責與資料範圍說明",
         "role_desc_ph": "例如: 協助西寧廠工程支援指派",
         "step2_title": "2. 勾選該職位角色可操作功能頁面：",
         "btn_save_role": "💾 儲存角色權限設定",
         "btn_del_role": "🗑️ 刪除此角色",
         "save_role_success": "🎉 角色權限設定已成功儲存！",
-        "del_role_success": "🗑️ 角色已成功刪除！",
-        "role_display_names": {
-            "admin": "最高管理者 (Admin / 總經理)",
-            "manager": "西寧廠廠區主管 (Manager / 經理)",
-            "security": "西寧廠大門保全組 (Security)",
-            "staff": "西寧廠一般員工 / 現場人員 (Staff)"
-        },
-        "default_roles": {
-            "admin": {"description": "最高決策與全系統總覽權限", "allowed_modules": "ALL"},
-            "manager": {"description": "西寧廠主管，負責考勤審核與日常營運", "allowed_modules": "ALL"},
-            "security": {"description": "西寧廠大門保全組，負責車輛進出登記", "allowed_modules": "車輛門禁"},
-            "staff": {"description": "西寧廠一般員工，個人打卡與請假申請", "allowed_modules": "個人打卡"}
-        }
-    },
-    "Tiếng Việt": {
-        "title": "🔒 Quản trị IT - Phân quyền Vai trò & Quản lý Hệ thống",
-        "caption": "Kiến trúc đám mây Nhà máy Tây Ninh Reetech: Cấu hình phân quyền hệ thống.",
-        "tab_roles": "⚙️ Phân quyền Vai trò & Module (RBAC)",
-        "tab_audit": "📊 Nhật ký Kiểm toán",
-        "tab_db": "🔌 Trạng thái CSDL",
-        "success_connected": "Kết nối CSDL thành công!",
-        "db_not_connected": "ℹ️ Đang chạy ở chế độ bộ nhớ an toàn.",
-        "cloud_roles_count": "Số lượng vai trò",
-        "search_ph": "Nhập tên vai trò...",
-        "search_label": "🔍 Tìm kiếm",
-        "col_role_name": "Tên vai trò",
-        "col_desc": "Mô tả",
-        "col_modules_count": "Số trang cho phép",
-        "edit_header": "✏️ Chỉnh sửa Phân quyền",
-        "select_role_lbl": "Chọn vai trò:",
-        "create_new_opt": "🆕 Tạo mới",
-        "step1_title": "1. Nhập tên và mô tả",
-        "role_name_lbl": "Mã và Tên vai trò *",
-        "role_name_ph": "Ví dụ: manager, supervisor",
-        "role_desc_lbl": "Mô tả",
-        "role_desc_ph": "Mô tả chức năng",
-        "step2_title": "2. Chọn chức năng được phép:",
-        "btn_save_role": "💾 Lưu phân quyền",
-        "btn_del_role": "🗑️ Xóa vai trò",
-        "save_role_success": "🎉 Đã lưu phân quyền thành công!",
-        "del_role_success": "🗑️ Đã xóa vai trò thành công!",
-        "role_display_names": {
-            "admin": "Quản trị viên tối cao (Admin)",
-            "manager": "Quản đốc Nhà máy Tây Ninh (Manager)",
-            "security": "Bảo vệ cổng Nhà máy Tây Ninh (Security)",
-            "staff": "Nhân viên / Công nhân Nhà máy Tây Ninh (Staff)"
-        },
-        "default_roles": {
-            "admin": {"description": "Quản trị viên hệ thống tối cao", "allowed_modules": "ALL"},
-            "manager": {"description": "Quản đốc Nhà máy Tây Ninh, duyệt chấm công", "allowed_modules": "ALL"},
-            "security": {"description": "Bảo vệ cổng Tây Ninh, đăng ký xe ra vào", "allowed_modules": "車輛門禁"},
-            "staff": {"description": "Nhân viên Nhà máy Tây Ninh, chấm công và xin nghỉ phép", "allowed_modules": "個人打卡"}
-        }
-    },
-    "English": {
-        "title": "🔒 IT Center - RBAC Roles & System Authorization",
-        "caption": "Reetech Tay Ninh Plant Cloud Architecture: RBAC Role Configuration & System Security.",
-        "tab_roles": "⚙️ RBAC Roles & Permissions",
-        "tab_audit": "📊 System Audit Logs",
-        "tab_db": "🔌 Database Status",
-        "success_connected": "PostgreSQL Database Connected Successfully!",
-        "db_not_connected": "ℹ️ Running in safe memory mode.",
-        "cloud_roles_count": "Total Roles",
-        "search_ph": "Filter roles...",
-        "search_label": "🔍 Search Roles",
-        "col_role_name": "Role Name",
-        "col_desc": "Description",
-        "col_modules_count": "Allowed Modules",
-        "edit_header": "✏️ Edit Role Permissions",
-        "select_role_lbl": "Select Role:",
-        "create_new_opt": "🆕 Create New Role",
-        "step1_title": "1. Enter Role Name & Description",
-        "role_name_lbl": "Role Code & Name *",
-        "role_name_ph": "e.g., manager, supervisor",
-        "role_desc_lbl": "Description",
-        "role_desc_ph": "e.g., Oversee operations",
-        "step2_title": "2. Select Allowed Features:",
-        "btn_save_role": "💾 Save Role Permissions",
-        "btn_del_role": "🗑️ Delete Role",
-        "save_role_success": "🎉 Role saved successfully!",
-        "del_role_success": "🗑️ Role deleted successfully!",
-        "role_display_names": {
-            "admin": "Highest Administrator (Admin)",
-            "manager": "Tay Ninh Plant Manager",
-            "security": "Tay Ninh Gate Security",
-            "staff": "Tay Ninh General Staff"
-        },
-        "default_roles": {
-            "admin": {"description": "Highest system administration & decision making", "allowed_modules": "ALL"},
-            "manager": {"description": "Tay Ninh Plant manager, attendance approval & daily ops", "allowed_modules": "ALL"},
-            "security": {"description": "Tay Ninh Gate security guard, vehicle access logging", "allowed_modules": "車輛門禁"},
-            "staff": {"description": "Tay Ninh General employee, attendance & leave requests", "allowed_modules": "個人打卡"}
-        }
+        "del_role_success": "🗑️ 角色已成功刪除！"
     }
 }
 
+# 👑 裕豐電機標準企業組織階級對照權重排序
+HIERARCHY_ORDER = [
+    "董事長", "總經理", "副總經理", "協理廠長", 
+    "廠長", "工務經理", "財務副理", "財務主管", 
+    "管理部主管", "工程主管", "現場工地主任", "組長", 
+    "倉庫管理員", "採購", "倉管", "兼任會計", 
+    "人事", "精算主管", "系統管理員", "一般員工"
+]
+
+def get_role_sort_weight(role_name):
+    """計算角色在組織階級中的排序權重"""
+    for idx, h_role in enumerate(HIERARCHY_ORDER):
+        if h_role in role_name:
+            return idx
+    return 999  # 未在清單內的排在最後
+
 def fetch_roles(engine, lang_dict):
-    fallback_roles = lang_dict["default_roles"]
+    fallback_roles = {
+        "董事長 / 總經理 (Executive)": {"description": "最高決策與全系統總覽權限", "allowed_modules": "ALL"},
+        "廠長 / 工務經理 (Plant/Project Manager)": {"description": "西寧廠主管，負責考勤審核與日常營運", "allowed_modules": "ALL"}
+    }
     if engine is None:
         return fallback_roles, False, lang_dict["db_not_connected"]
     
@@ -159,8 +84,6 @@ def fetch_roles(engine, lang_dict):
         for _, row in df.iterrows():
             r_name = row["role_name"]
             desc = row.get("description", "")
-            if r_name in fallback_roles and not desc:
-                desc = fallback_roles[r_name]["description"]
             roles_dict[r_name] = {
                 "description": desc,
                 "allowed_modules": row.get("allowed_modules", "ALL")
@@ -253,7 +176,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
 
     st.title(L["title"])
     st.caption(L["caption"])
-    st.info("💡 提示：員工帳號新增與人事指派請至 **管理部 ➡️ 員工個人檔案與人事管理 (HR)** 進行處理。資訊管理部僅負責系統模組權限範本 (RBAC) 設定。")
+    st.info("💡 提示：員工帳號新增與人事指派請至 **管理部 ➡️ 員工個人檔案與人事管理 (HR)** 進行處理。")
 
     if "audit_logs_db" not in st.session_state:
         st.session_state.audit_logs_db = [
@@ -261,7 +184,6 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         ]
 
     roles_dict, is_connected, msg = fetch_roles(engine, L)
-    role_display_map = L["role_display_names"]
 
     tab_roles, tab_audit, tab_db = st.tabs([
         L["tab_roles"], L["tab_audit"], L["tab_db"]
@@ -280,29 +202,31 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         with col_stats:
             st.metric(L["cloud_roles_count"], len(roles_dict))
 
+        # 👑 依據企業組織階級權重進行排序
+        sorted_role_names = sorted(roles_dict.keys(), key=get_role_sort_weight)
+
         table_rows = []
-        for r_name, r_info in roles_dict.items():
-            display_name = role_display_map.get(r_name, r_name)
-            if not search_kw or (search_kw.lower() in display_name.lower() or search_kw.lower() in r_info["description"].lower()):
+        for idx, r_name in enumerate(sorted_role_names, start=1):
+            r_info = roles_dict[r_name]
+            if not search_kw or (search_kw.lower() in r_name.lower() or search_kw.lower() in r_info["description"].lower()):
                 mod_count_str = "全開 (ALL)" if r_info["allowed_modules"] == "ALL" else f"{len(r_info['allowed_modules'].split(','))} 個頁面"
                 table_rows.append({
-                    L["col_role_name"]: display_name,
+                    L["col_stt"]: idx,
+                    L["col_role_name"]: r_name,
                     L["col_desc"]: r_info["description"],
                     L["col_modules_count"]: mod_count_str
                 })
 
-        st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
+        if table_rows:
+            st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
 
         st.markdown("---")
         st.markdown(f"### {L['edit_header']}")
 
-        role_opts = [L["create_new_opt"]] + [role_display_map.get(k, k) for k in roles_dict.keys()]
+        role_opts = [L["create_new_opt"]] + sorted_role_names
         sel_role_display = st.selectbox(L["select_role_lbl"], options=role_opts, index=0)
 
-        sel_role_key = next((k for k, v in role_display_map.items() if v == sel_role_display), sel_role_display)
-        if sel_role_display == L["create_new_opt"]:
-            sel_role_key = ""
-
+        sel_role_key = "" if sel_role_display == L["create_new_opt"] else sel_role_display
         is_edit = sel_role_display != L["create_new_opt"]
         default_name = sel_role_key if is_edit else ""
         default_desc = roles_dict.get(sel_role_key, {}).get("description", "") if is_edit else ""
@@ -344,8 +268,8 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         if btn_del:
             t_name = in_name.strip() or sel_role_key
             if t_name and t_name != L["create_new_opt"]:
-                if t_name == "admin":
-                    st.error("🚫 系統保護：最高管理者角色無法被刪除！")
+                if "董事長" in t_name or "總經理" in t_name:
+                    st.error("🚫 系統保護：最高主管角色無法被刪除！")
                 else:
                     delete_role_db(engine, t_name)
                     st.success(L["del_role_success"])
