@@ -88,6 +88,14 @@ def parse_formatted_amount(val_str):
     clean_str = re.sub(r"[^\d]", "", str(val_str))
     return float(clean_str) if clean_str else 0.0
 
+def format_vnd_input(amount):
+    """將數字轉換為越南點號千分位輸入字串，例: 5039000000 -> '5.039.000.000'"""
+    try:
+        val = float(amount)
+        return f"{val:,.0f}".replace(",", ".")
+    except Exception:
+        return str(amount)
+
 def format_vnd(amount):
     try:
         val = float(amount)
@@ -166,12 +174,16 @@ def init_assets_db(engine):
                     driver_custodian VARCHAR(100),
                     purchase_date DATE DEFAULT CURRENT_DATE,
                     inspection_expiry DATE,
-                    cost_amount NUMERIC(15,2) DEFAULT 0,
-                    salvage_amount NUMERIC(15,2) DEFAULT 0,
+                    cost_amount NUMERIC(18,2) DEFAULT 0,
+                    salvage_amount NUMERIC(18,2) DEFAULT 0,
                     status VARCHAR(50) DEFAULT '🟢 在用/租賃中',
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
+
+            # 自動確保數值欄位足夠大 (NUMERIC(18,2)) 避免數十億金額溢位
+            conn.execute(text("ALTER TABLE public.fixed_assets ALTER COLUMN cost_amount TYPE NUMERIC(18,2);"))
+            conn.execute(text("ALTER TABLE public.fixed_assets ALTER COLUMN salvage_amount TYPE NUMERIC(18,2);"))
 
             cols = [
                 ("brand_model", "VARCHAR(150)"),
@@ -179,8 +191,8 @@ def init_assets_db(engine):
                 ("driver_custodian", "VARCHAR(100)"),
                 ("purchase_date", "DATE DEFAULT CURRENT_DATE"),
                 ("inspection_expiry", "DATE"),
-                ("cost_amount", "NUMERIC(15,2) DEFAULT 0"),
-                ("salvage_amount", "NUMERIC(15,2) DEFAULT 0"),
+                ("cost_amount", "NUMERIC(18,2) DEFAULT 0"),
+                ("salvage_amount", "NUMERIC(18,2) DEFAULT 0"),
                 ("site_location", "VARCHAR(100)")
             ]
             for col_name, col_type in cols:
@@ -368,8 +380,13 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                             ed_brand = st.text_input("廠牌型號", value=target_item.get("brand_model", ""))
                                         with ec2:
                                             ed_driver = st.text_input("保管人/駕駛員", value=target_item.get("driver_custodian", ""))
-                                            ed_cost = st.text_input("取得原價成本 (VND)", value=str(target_item.get("cost_amount", 0)))
-                                            ed_salvage = st.text_input("預估殘值 (VND)", value=str(target_item.get("sal_amount", target_item.get("salvage_amount", 0))))
+                                            
+                                            # 修改區塊套用越南點號千分位格式化
+                                            default_cost_str = format_vnd_input(target_item.get("cost_amount", 0))
+                                            ed_cost = st.text_input("取得原價成本 (VND)", value=default_cost_str)
+                                            
+                                            default_sal_str = format_vnd_input(target_item.get("salvage_amount", 0))
+                                            ed_salvage = st.text_input("預估殘值 (VND)", value=default_sal_str)
 
                                         eb1, eb2 = st.columns(2)
                                         with eb1:
@@ -379,6 +396,8 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
                                         if btn_update:
                                             try:
+                                                final_cost = parse_formatted_amount(ed_cost)
+                                                final_salvage = parse_formatted_amount(ed_salvage)
                                                 with engine.begin() as conn:
                                                     conn.execute(text("""
                                                         UPDATE public.fixed_assets 
@@ -387,8 +406,8 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                                         WHERE asset_code = :code;
                                                     """), {
                                                         "name": ed_name, "plate": ed_plate, "bm": ed_brand,
-                                                        "driver": ed_driver, "cost": parse_formatted_amount(ed_cost),
-                                                        "sal": parse_formatted_amount(ed_salvage), "code": target_code
+                                                        "driver": ed_driver, "cost": final_cost,
+                                                        "sal": final_salvage, "code": target_code
                                                     })
                                                 st.success(f"🎉 資產編號 [{target_code}] 資料更新成功！")
                                                 st.rerun()
