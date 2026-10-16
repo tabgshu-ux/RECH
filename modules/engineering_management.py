@@ -441,8 +441,8 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
         st.markdown("### ⚠️ 6. 分包商與專業證照到期預警")
         st.dataframe(pd.DataFrame(st.session_state.license_db), use_container_width=True)
 
-   # ====================================================
-    # 🎨 7. 配電盤電氣與機構設計圖庫 Storage (含一鍵傳送生產部功能)
+  # ====================================================
+    # 🎨 7. 配電盤電氣與機構設計圖庫 Storage (含一鍵傳送生產部 & 自訂分類)
     # ====================================================
     elif "7." in selected_option or "圖庫" in selected_option or "Storage" in selected_option:
         st.markdown("### 🎨 7. 配電盤電氣與機構設計圖庫 Storage 與生產下發中心")
@@ -478,12 +478,21 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                 }
             ]
 
-        tab_drw_list, tab_drw_upload, tab_dispatch = st.tabs(["📁 設計圖庫總表與一鍵下發", "📤 上傳新藍圖與圖檔", "🏭 生產部門接收狀態追蹤"])
+        # 初始化圖面分類清單
+        if "drawing_categories_list" not in st.session_state:
+            st.session_state.drawing_categories_list = [
+                "2D 電氣單線圖 (SLD)", 
+                "3D 機構配置圖 (STEP)", 
+                "控制邏輯電路圖 (CAD)", 
+                "銅排加工與折彎圖"
+            ]
+
+        tab_drw_list, tab_drw_upload, tab_dispatch = st.tabs(["📁 設計圖庫總表與一鍵下發", "📤 上傳新藍圖與圖檔", "🏭 生產部門接收狀態追踪"])
 
         with tab_drw_list:
             dc1, dc2 = st.columns([1, 2])
             with dc1:
-                drw_type_filter = st.selectbox("依圖面類型篩選", ["全部類型", "2D 電氣單線圖 (SLD)", "3D 機構配置圖 (STEP)", "控制邏輯電路圖 (CAD)", "銅排加工與折彎圖"])
+                drw_type_filter = st.selectbox("依圖面類型篩選", ["全部類型"] + st.session_state.drawing_categories_list)
             with dc2:
                 drw_search = st.text_input("🔍 搜尋專案名稱、圖面標題或檔名...", key="drw_search_box")
 
@@ -511,7 +520,6 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                         if st.button(f"🚀 一鍵下發設計規格至生產部 ({drw['drawing_id']})", key=f"dispatch_btn_{drw['drawing_id']}"):
                             drw["transfer_status"] = "🟢 已下發生產部"
                             
-                            # 檢查是否已經存在於生產下發清單中，避免重複
                             existing_disp = next((d for d in st.session_state.production_dispatch_db if d["dispatch_id"] == f"DISP-{drw['drawing_id'].split('-')[-1]}"), None)
                             if not existing_disp:
                                 disp_id = f"DISP-{drw['drawing_id'].split('-')[-1]}"
@@ -535,14 +543,27 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                 with uc1:
                     d_proj = st.selectbox("關聯工程專案", [p["proj_name"] for p in st.session_state.engineering_projects_db])
                     d_title = st.text_input("圖面與規格說明標題 *", value="西寧廠低壓控制盤二次迴路配線圖")
-                    d_type = st.selectbox("圖面技術分類", ["2D 電氣單線圖 (SLD)", "3D 機構配置圖 (STEP)", "控制邏輯電路圖 (CAD)", "銅排加工與折彎圖"])
+                    
+                    # 🛠️ 支援動態新增與自訂圖面技術分類
+                    cat_options = st.session_state.drawing_categories_list + ["➕ 【自訂新增圖面分類...】"]
+                    selected_cat_opt = st.selectbox("圖面技術分類", cat_options)
+                    
+                    if selected_cat_opt == "➕ 【自訂新增圖面分類...】":
+                        custom_cat_input = st.text_input("輸入新的圖面分類名稱", placeholder="例如: 弱電與消防系統佈局圖")
+                        d_type = custom_cat_input.strip() if custom_cat_input else "未命名圖面分類"
+                    else:
+                        d_type = selected_cat_opt
+
                 with uc2:
                     d_ver = st.text_input("圖面版本 (Version)", value="v1.0")
                     d_file = st.file_uploader("上傳設計圖檔 (DWG, STEP, PDF, ZIP)", type=["dwg", "step", "pdf", "zip", "png"])
                     d_uploader = st.text_input("上傳工程師 / 設計師姓名", value="陳明華")
 
                 if st.form_submit_button("🚀 確認上傳並存入 Storage 圖庫", type="primary"):
-                    if d_title and d_file:
+                    if d_title and d_file and d_type:
+                        if d_type not in st.session_state.drawing_categories_list:
+                            st.session_state.drawing_categories_list.append(d_type)
+
                         new_d_id = f"DRW-2026-{len(st.session_state.drawing_storage_db)+1:03d}"
                         st.session_state.drawing_storage_db.insert(0, {
                             "drawing_id": new_d_id,
@@ -555,10 +576,10 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                             "date": str(datetime.date.today()),
                             "transfer_status": "⏳ 尚未下發"
                         })
-                        st.success(f"🎉 成功上傳設計圖檔 [{d_file.name}]！圖面編號：`{new_d_id}`")
+                        st.success(f"🎉 成功上傳設計圖檔 [{d_file.name}]！分類：【{d_type}】 圖面編號：`{new_d_id}`")
                         st.rerun()
                     else:
-                        st.warning("⚠️ 請完整填寫圖面標題並上傳設計檔案！")
+                        st.warning("⚠️ 請完整填寫圖面標題、選擇或輸入分類，並上傳設計檔案！")
 
         with tab_dispatch:
             st.markdown("##### 🏭 生產部門接收與製造排程狀態追蹤")
@@ -566,7 +587,6 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                 st.dataframe(pd.DataFrame(st.session_state.production_dispatch_db), use_container_width=True)
             else:
                 st.info("目前尚無下發至生產部的設計規格紀錄。")
-
     # ====================================================
     # 🔌 8. 配電盤 BOM 零件自動展開與採購連動
     # ====================================================
