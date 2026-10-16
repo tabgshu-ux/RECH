@@ -42,9 +42,9 @@ USER_MGMT_I18N = {
         "create_new_opt": "🆕 建立新角色 (Create New)",
         "step1_title": "1. 輸入職位名稱與說明",
         "role_name_lbl": "職位名稱 *",
-        "role_name_ph": "例如: 董事長, 總經理, 管理部經理",
+        "role_name_ph": "例如: 董事長, 總經理, 倉庫管理員",
         "role_desc_lbl": "組織職責與權限範圍說明",
-        "role_desc_ph": "例如: 公司經營方向規劃與戰略定奪",
+        "role_desc_ph": "例如: 倉庫庫存與資材管理",
         "step2_title": "2. 勾選該職位角色可操作功能頁面：",
         "btn_save_role": "💾 儲存組織角色設定",
         "btn_del_role": "🗑️ 刪除此角色",
@@ -53,7 +53,7 @@ USER_MGMT_I18N = {
     }
 }
 
-# 👑 依部門與組織架構定義完整的職位歸屬與排序對照
+# 👑 完整精準對應裕豐電機各部門與真實職位名稱
 DEPARTMENT_ROLE_MAPPING = {
     "📈 總經理室 (Executive Office)": [
         "董事長", "總經理", "副總經理"
@@ -62,10 +62,10 @@ DEPARTMENT_ROLE_MAPPING = {
         "廠長 / 副協理", "管理部經理", "行政主管", "人事", "財務副理"
     ],
     "🛠️ 工程與設計管理中心 (Engineering & Design Center)": [
-        "設計經理", "設計主管", "設計人員", "精算主管", "精算助理"
+        "工程主管", "設計經理", "設計主管", "設計", "精算主管", "精算助理"
     ],
     "🏭 生產部 (Production Dept)": [
-        "生產主管", "生產組長", "工程人員", "生產組", "板金組", "烤漆組", "配電組裝"
+        "倉庫管理員", "生產主管", "生產組長", "工程人員", "生產組", "板金組", "烤漆組", "配電組裝"
     ],
     "💻 資訊管理部 (IT & System)": [
         "系統管理員 (Admin)", "資訊管理員", "一般員工 (Staff)"
@@ -73,12 +73,12 @@ DEPARTMENT_ROLE_MAPPING = {
 }
 
 def get_role_department_and_weight(role_name):
-    """根據職位名稱判斷所屬部門與內部階級權重"""
+    """精準對應職位與所屬部門及內部排序"""
     clean_name = str(role_name).strip()
     for dept, roles in DEPARTMENT_ROLE_MAPPING.items():
         for idx, r in enumerate(roles):
+            # 支援關鍵字精準匹配（例如「倉庫管理員」對應生產部，「工程主管」對應工程中心）
             if r in clean_name or clean_name in r:
-                # 回傳 (部門名稱, 該部門內的職位排序權重)
                 return dept, idx
     return "🌐 其他/未分類部門", 99
 
@@ -86,7 +86,8 @@ def fetch_roles(engine, lang_dict):
     fallback_roles = {
         "董事長": {"description": "公司經營方向規劃與戰略定奪", "allowed_modules": "ALL"},
         "總經理": {"description": "董事長指示的公司經營方向執行與公司管理", "allowed_modules": "ALL"},
-        "管理部經理": {"description": "行政、財務、總務管理、ERP規劃與資訊管理", "allowed_modules": "ALL"}
+        "倉庫管理員": {"description": "倉庫庫存與資材條碼管理", "allowed_modules": "📦 [倉儲] 倉庫庫存與資材條碼管理"},
+        "工程主管": {"description": "工程專案與現場督導管理", "allowed_modules": "⚡ [工程] 配電盤與工程專案雙層報價"}
     }
     if engine is None:
         return fallback_roles, False, lang_dict["db_not_connected"]
@@ -219,10 +220,8 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         with col_stats:
             st.metric(L["cloud_roles_count"], len(roles_dict))
 
-        # 👑 依據部門層級與部門內職位順序進行智慧排序
         def multi_level_sort(role_name):
             dept, weight = get_role_department_and_weight(role_name)
-            # 取得部門在大方向中的順序索引
             dept_keys = list(DEPARTMENT_ROLE_MAPPING.keys())
             dept_idx = dept_keys.index(dept) if dept in dept_keys else 99
             return (dept_idx, weight)
