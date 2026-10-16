@@ -41,7 +41,7 @@ USER_MGMT_I18N = {
         "create_new_opt": "🆕 建立新角色 (Create New)",
         "step1_title": "1. 輸入組織職位名稱與說明",
         "role_name_lbl": "職位名稱 (對應組織圖) *",
-        "role_name_ph": "例如: 1. 董事長, 4. 廠長 / 副協理",
+        "role_name_ph": "例如: 1. 董事長, 2. 總經理",
         "role_desc_lbl": "組織職責與權限範圍說明",
         "role_desc_ph": "例如: 公司經營方向規劃與戰略定奪",
         "step2_title": "2. 勾選該職位角色可操作功能頁面：",
@@ -53,55 +53,51 @@ USER_MGMT_I18N = {
 }
 
 # 👑 嚴格對應您提供的「裕豐電機工業有限公司組織架構圖」完整 20 個編號順序
-HIERARCHY_ORDER = [
-    "1. 董事長",
-    "2. 總經理",
-    "3. 副總經理",
-    "4. 廠長 / 副協理",
-    "5. 管理部經理",
-    "6. 行政主管",
-    "7. 人事",
-    "8. 財務副理",
-    "9. 設計經理",
-    "10. 設計主管",
-    "11. 設計人員",
-    "12. 精算主管",
-    "13. 精算助理",
-    "14. 生產主管",
-    "15. 生產組長",
-    "16. 工程人員",
-    "17. 生產組",
-    "18. 板金組",
-    "19. 烤漆組",
-    "20. 配電組裝",
-    "系統管理員 (Admin)",
-    "一般員工 (Staff)"
-]
+HIERARCHY_MAP = {
+    "1. 董事長": {"desc": "公司經營方向規劃與戰略定奪", "mod": "ALL"},
+    "2. 總經理": {"desc": "董事長指示的公司經營方向執行與公司管理", "mod": "ALL"},
+    "3. 副總經理": {"desc": "工程報價及現場探勘、人員調配與督導", "mod": "ALL"},
+    "4. 廠長 / 副協理": {"desc": "生產車間管理、工程支援與人事管理", "mod": "ALL"},
+    "5. 管理部經理": {"desc": "行政、財務、總務管理、ERP規劃與資訊管理", "mod": "ALL"},
+    "6. 行政主管": {"desc": "人事薪資核算、招募、總務與廠務公安環保", "mod": "ALL"},
+    "7. 人事": {"desc": "人員招募與招募作業、員工餐廳廠商管理", "mod": "👤 員工個人檔案與人事管理"},
+    "8. 財務副理": {"desc": "稅務報告、會計帳目、發票開立與合約簽審", "mod": "📊 越南稅務標準財務報表 (Thông tư 200)"},
+    "9. 設計經理": {"desc": "工程所需設計圖繪畫及材料配置、設計人員管理", "mod": "🎨 [設計] 配電盤電氣與機構設計圖庫 Storage"},
+    "10. 設計主管": {"desc": "設計圖管理與歸檔、設計部門進度整合", "mod": "🎨 [設計] 配電盤電氣與機構設計圖庫 Storage"},
+    "11. 設計人員": {"desc": "開立生產派工單、物料管理與採購協調", "mod": "🔌 [工程] 配電盤 BOM 零件自動展開與採購連動"},
+    "12. 精算主管": {"desc": "精算材料費用", "mod": "⚡ [工程] 配電盤與工程專案雙層報價"},
+    "13. 精算助理": {"desc": "協助精算主管做材料分類及精算", "mod": "⚡ [工程] 配電盤與工程專案雙層報價"},
+    "14. 生產主管": {"desc": "電控與繪圖、設備與品質管理、生產調度", "mod": "📦 [倉儲] 倉庫庫存與資材條碼管理"},
+    "15. 生產組長": {"desc": "生產排程與進度控管、產品品質控管", "mod": "📦 [倉儲] 倉庫庫存與資材條碼管理"},
+    "16. 工程人員": {"desc": "現場工程施工與回報", "mod": "⚡ [工程] 現場工程日報表與出工統計"},
+    "17. 生產組": {"desc": "車間生產作業", "mod": "📦 [倉儲] 倉庫庫存與資材條碼管理"},
+    "18. 板金組": {"desc": "板金加工組工單與條碼", "mod": "✂️ [板金] 板金加工組工單與條碼"},
+    "19. 烤漆組": {"desc": "粉體塗裝烤漆組品管", "mod": "🎨 [塗料] 粉體塗裝烤漆組品管"},
+    "20. 配電組裝": {"desc": "配電盤組裝配線組", "mod": "⚡ [配盤] 配電盤組裝配線組"}
+}
 
 def get_role_sort_weight(role_name):
     """嚴格依照組織架構圖編號進行排序權重計算"""
-    for idx, h_role in enumerate(HIERARCHY_ORDER):
-        # 比對關鍵字或編號
-        clean_h = h_role.split(". ")[-1] if ". " in h_role else h_role
-        if h_role in role_name or clean_h in role_name:
+    for idx, h_role in enumerate(HIERARCHY_MAP.keys()):
+        if h_role in role_name or role_name in h_role:
             return idx
-    return 999  # 未在清單內的排在最後
+    return 999
 
 def fetch_roles(engine, lang_dict):
-    fallback_roles = {
-        "1. 董事長": {"description": "公司經營方向規劃與戰略定奪", "allowed_modules": "ALL"},
-        "2. 總經理": {"description": "董事長指示的公司經營方向執行與公司管理", "allowed_modules": "ALL"},
-        "3. 副總經理": {"description": "工程報價及現場探勘、人員調配與督導", "allowed_modules": "ALL"},
-        "4. 廠長 / 副協理": {"description": "生產車間管理、工程支援與人事管理", "allowed_modules": "ALL"},
-        "5. 管理部經理": {"description": "行政、財務、總務管理、ERP規劃與資訊管理", "allowed_modules": "ALL"}
-    }
     if engine is None:
-        return fallback_roles, False, lang_dict["db_not_connected"]
+        return {k: {"description": v["desc"], "allowed_modules": v["mod"]} for k, v in HIERARCHY_MAP.items()}, False, lang_dict["db_not_connected"]
     
     try:
+        # 自動檢查並確保資料庫擁有標準 20 個編號職位
+        with engine.begin() as conn:
+            for r_name, info in HIERARCHY_MAP.items():
+                conn.execute(text("""
+                    INSERT INTO system_roles (role_name, description, allowed_modules) 
+                    VALUES (:r, :d, :m) 
+                    ON CONFLICT (role_name) DO NOTHING;
+                """), {"r": r_name, "d": info["desc"], "m": info["mod"]})
+
         df = pd.read_sql("SELECT role_name, description, allowed_modules FROM system_roles", con=engine)
-        if df.empty:
-            return fallback_roles, True, lang_dict["success_connected"]
         roles_dict = {}
         for _, row in df.iterrows():
             r_name = row["role_name"]
@@ -112,7 +108,8 @@ def fetch_roles(engine, lang_dict):
             }
         return roles_dict, True, lang_dict["success_connected"]
     except Exception as e:
-        return fallback_roles, False, f"{lang_dict['db_not_connected']} ({e})"
+        fallback = {k: {"description": v["desc"], "allowed_modules": v["mod"]} for k, v in HIERARCHY_MAP.items()}
+        return fallback, False, f"{lang_dict['db_not_connected']} ({e})"
 
 def save_role_db(engine, role_name, description, allowed_modules):
     if engine is None:
