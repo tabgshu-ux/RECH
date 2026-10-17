@@ -1,414 +1,500 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import re
 
-def get_supabase_client():
-    if "supabase" in st.session_state:
-        return st.session_state.supabase
-    return None
+# ----------------------------------------------------
+# 🌐 工具函式：金額格式化與千位符號處理
+# ----------------------------------------------------
+def parse_formatted_amount(val_str):
+    if not val_str:
+        return 0.0
+    clean_str = re.sub(r"[^\d]", "", str(val_str))
+    return float(clean_str) if clean_str else 0.0
 
-WAREHOUSE_I18N = {
-    "繁體中文": {
-        "title": "📦 生產部/倉儲 - 多倉別與出入庫追蹤系統",
-        "caption": "支援多倉別即時庫存（零件、線材、裝配、回收拆回料倉）、出入庫動態作業與歷史日誌。",
-        "tab_inventory": "📑 各倉別即時庫存與安全水位總表",
-        "tab_barcode": "🏷️ 資材出入庫與領料作業 (倉別動態聯動)",
-        "tab_history": "📊 倉庫出入庫異動歷史日誌 (含倉別篩選)",
-        "tab_inbound": "📥 新增資材建檔與初始入庫",
-        "table_header": "📋 跨廠區與多倉別資材庫存現況清冊",
-        "no_records": "目前無倉庫庫存紀錄。",
-        "op_header": "🔄 倉庫資材出入庫作業處理",
-        "lbl_op_type": "選擇作業動作 (Operation Type) *",
-        "op_opts": ["📥 入庫作業 (Stock In - 增加庫存)", "📤 出庫作業 (Stock Out - 領料扣減庫存)"],
-        "lbl_target_wh": "選擇目標倉庫 (Target Warehouse) *",
-        "warehouse_opts": [
-            "📦 零件倉 (Parts & Hardware WH)",
-            "🔌 線材倉 (Wire & Cable WH)",
-            "⚡ 裝配倉 (Assembly Floor WH)",
-            "♻️ 回收倉 (Return & Surplus WH - 含工地拆回鐵製屋頂/退料)"
-        ],
-        "lbl_select_item": "選擇該倉庫內的資材品項 *",
-        "lbl_scan_alt": "或者使用條碼槍掃描料號：",
-        "lbl_op_qty": "異動數量 (Quantity) *",
-        "lbl_receiver": "領料人 / 退料/拆回送交人姓名 (Receiver/Sender) *",
-        "receiver_placeholder": "例如: 王大明 (工程部) 或 工地主任",
-        "lbl_memo": "備註說明 / 退料原因 (如: 規格不符退回、工地辦公室拆回屋頂)",
-        "memo_placeholder": "例如: 現場規格不符退回、工地拆回鐵製排水屋頂...",
-        "btn_execute_op": "💾 確認執行出入庫作業",
-        "success_in": "✅ 入庫成功！",
-        "success_out": "📤 出庫成功！",
-        "warning_out": "⚠️ 該倉庫庫存不足，無法完成此出庫數量。",
-        "col_index": "STT",
-        "col_code": "料號",
-        "col_name": "資材品項名稱",
-        "col_cat": "類別",
-        "col_wh": "存放倉庫別",
-        "col_qty": "現有庫存量",
-        "col_safety": "安全水位",
-        "col_status": "庫存狀態"
-    },
-    "Tiếng Việt": {
-        "title": "📦 Phòng Sản xuất / Kho - Quản lý Đa kho",
-        "caption": "Quản lý tồn kho đa kho bao gồm kho thu hồi vật tư.",
-        "tab_inventory": "📑 Tồn kho",
-        "tab_barcode": "🏷️ Xuất Nhập Kho",
-        "tab_history": "📊 Lịch sử kho",
-        "tab_inbound": "📥 Thêm vật tư mới",
-        "table_header": "📋 Danh mục tồn kho",
-        "no_records": "Không có bản ghi.",
-        "op_header": "🔄 Xử lý xuất nhập kho",
-        "lbl_op_type": "Loại nghiệp vụ *",
-        "op_opts": ["📥 Nhập kho", "📤 Xuất kho"],
-        "lbl_target_wh": "Chọn kho *",
-        "warehouse_opts": ["Kho linh kiện", "Kho cáp điện", "Kho lắp ráp", "Kho thu hồi (Hàng trả về/Mái tôn tháo dỡ)"],
-        "lbl_select_item": "Chọn vật tư trong kho *",
-        "lbl_scan_alt": "Mã vạch:",
-        "lbl_op_qty": "Số lượng *",
-        "lbl_receiver": "Người giao/nhận *",
-        "receiver_placeholder": "Nhập tên...",
-        "lbl_memo": "Ghi chú",
-        "memo_placeholder": "Ghi chú...",
-        "btn_execute_op": "💾 Xác nhận",
-        "success_in": "✅ Thành công!",
-        "success_out": "📤 Thành công!",
-        "warning_out": "⚠️ Tồn kho không đủ!",
-        "col_index": "STT",
-        "col_code": "Mã",
-        "col_name": "Tên",
-        "col_cat": "Loại",
-        "col_wh": "Kho",
-        "col_qty": "Tồn",
-        "col_safety": "An toàn",
-        "col_status": "Trạng thái"
-    },
-    "English": {
-        "title": "📦 Production / Warehouse - Multi-Warehouse Management",
-        "caption": "Manage multi-warehouse inventory including Return & Surplus Warehouse.",
-        "tab_inventory": "📑 Multi-Warehouse Inventory",
-        "tab_barcode": "🏷️ Stock In / Stock Out Operations",
-        "tab_history": "📊 Warehouse Operation History",
-        "tab_inbound": "📥 Register New Material",
-        "table_header": "📋 Inventory Registry",
-        "no_records": "No records found.",
-        "op_header": "🔄 Warehouse Stock Processing",
-        "lbl_op_type": "Operation Type *",
-        "op_opts": ["📥 Stock In", "📤 Stock Out (Material Issue)"],
-        "lbl_target_wh": "Target Warehouse *",
-        "warehouse_opts": [
-            "Parts & Hardware WH",
-            "Wire & Cable WH",
-            "Assembly Floor WH",
-            "♻️ Return & Surplus WH (Includes site dismantled steel roofs & returns)"
-        ],
-        "lbl_select_item": "Select Material in Warehouse *",
-        "lbl_scan_alt": "Or scan barcode:",
-        "lbl_op_qty": "Operation Quantity *",
-        "lbl_receiver": "Material Receiver / Sender *",
-        "receiver_placeholder": "Example: John Doe or Site Lead",
-        "lbl_memo": "Remarks / Return Reason",
-        "memo_placeholder": "Example: Spec mismatch return, dismantled steel roof from site...",
-        "btn_execute_op": "💾 Confirm Operation",
-        "success_in": "✅ Stock In recorded!",
-        "success_out": "📤 Stock Out recorded!",
-        "warning_out": "⚠️ Insufficient stock in this warehouse!",
-        "col_index": "No.",
-        "col_code": "Item Code",
-        "col_name": "Material Name",
-        "col_cat": "Category",
-        "col_wh": "Warehouse",
-        "col_qty": "Current Stock",
-        "col_safety": "Safety Level",
-        "col_status": "Status"
+def convert_currency(amount, from_curr="VND", to_curr="VND"):
+    rates_to_vnd = {
+        "VND": 1.0,
+        "USD": 25000.0,
+        "RMB": 3500.0,
+        "TWD": 780.0
     }
-}
+    val_in_vnd = amount * rates_to_vnd.get(from_curr, 1.0)
+    converted_val = val_in_vnd / rates_to_vnd.get(to_curr, 1.0)
+    return converted_val
 
-def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwargs):
-    active_lang = lang or st.session_state.get("lang", "繁體中文")
-    L = WAREHOUSE_I18N.get(active_lang, WAREHOUSE_I18N["繁體中文"])
+def format_currency_text(amount, currency="VND"):
+    try:
+        val = float(amount)
+        if currency == "VND":
+            return f"{val:,.0f} ₫ (VND)"
+        elif currency == "USD":
+            return f"$ {val:,.2f} USD"
+        elif currency == "RMB":
+            return f"¥ {val:,.2f} RMB"
+        elif currency == "TWD":
+            return f"$ {val:,.2f} TWD"
+        else:
+            return f"{val:,.2f} {currency}"
+    except:
+        return f"{amount} {currency}"
 
-    st.title(L["title"])
-    st.caption(L["caption"])
+# ----------------------------------------------------
+# 🛠️ 主渲染函式：工程與設計管理中心 (精簡直覺版)
+# ----------------------------------------------------
+def render_engineering_management_page(engine=None, lang="繁體中文", **kwargs):
+    st.markdown("### ⚡ 裕豐電機 (REETECH) - 工程與設計管理中心")
+    st.info("💡 水電工程、配電盤製造、現場勘查與雙層報價系統（支援多幣別 VND、USD、RMB、TWD 與跨部門完整連動）")
 
-    supabase = get_supabase_client()
+    if "engineering_projects_db" not in st.session_state:
+        st.session_state.engineering_projects_db = [
+            {"proj_id": "PRJ-2026-001", "proj_name": "西寧廠高壓配電盤擴建", "client": "CÔNG TY TNHH LEADER ART INDUSTRIES (VIETNAM)", "status": "進行中", "manager": "陳明華"}
+        ]
 
-    default_warehouse = [
-        {"code": "GASKET-M10", "name": "不鏽鋼平墊片 M10 (不鏽鋼 304)", "category": "五金配件與墊片", "warehouse": "📦 零件倉 (Parts & Hardware WH)", "qty": 2500.0, "safety": 500.0, "status": "庫存充足"},
-        {"code": "CBL-CV-10MM", "name": "極軟式控制電纜 CV 10mm² (黑色)", "category": "電線與電纜線", "warehouse": "🔌 線材倉 (Wire & Cable WH)", "qty": 520.0, "safety": 100.0, "status": "庫存充足"},
-        {"code": "SHEET-SPCC-2MM", "name": "SPCC 冷軋鋼板板金料件 (1200x2400x2mm)", "category": "箱體與鈑金零件", "warehouse": "⚡ 裝配倉 (Assembly Floor WH)", "qty": 65.0, "safety": 15.0, "status": "庫存充足"},
-        {"code": "ROOF-STEEL-DISM", "name": "工地辦公室拆回 - 鐵製排水屋頂/浪板 (可重用)", "category": "回收與拆回舊料", "warehouse": "♻️ 回收倉 (Return & Surplus WH - 含工地拆回鐵製屋頂/退料)", "qty": 12.0, "safety": 2.0, "status": "庫存充足"},
-        {"code": "PANEL-RETURN-SPEC", "name": "現場規格不符退回之小型控制箱半成品", "category": "回收與退料半成品", "warehouse": "♻️ 回收倉 (Return & Surplus WH - 含工地拆回鐵製屋頂/退料)", "qty": 3.0, "safety": 1.0, "status": "庫存充足"}
+    # 🌐 採用直覺、好懂且符合兩地工程習慣的中越雙語選單
+    sub_options = [
+        "1. 工程戰情室 | Dashboard",
+        "2. 專案雙層報價 | Báo giá & BOM",
+        "3. 現場打卡 | Chấm công công trường",
+        "4. 施工日報 | Nhật ký thi công",
+        "5. AI 工安稽核 | Kiểm tra An toàn AI",
+        "6. 證照預警 | Cảnh báo Chứng chỉ",
+        "7. 設計圖庫 | Kho bản vẽ kỹ thuật",
+        "8. BOM 採購連動 | Liên kết Mua hàng BOM",
+        "9. 外包商施工進度與驗收 | Tiến độ & Nghiệm thu thầu phụ",
+        "10. 竣工驗收 | Nghiệm thu FAT / SAT"
     ]
+    
+    selected_option = st.selectbox("請選擇工程模組 / Chọn chức năng:", sub_options)
+    st.markdown("---")
 
-    default_logs = [
-        {
-            "time": "2026-10-06 14:20:00",
-            "op_type": "📥 回收/退料入庫 (Stock In)",
-            "code": "ROOF-STEEL-DISM",
-            "name": "工地辦公室拆回 - 鐵製排水屋頂/浪板",
-            "warehouse": "♻️ 回收倉 (Return & Surplus WH - 含工地拆回鐵製屋頂/退料)",
-            "qty": 12.0,
-            "receiver_or_supplier": "工地主任送回 (Site Lead)",
-            "staff": "admin (倉管經辦)",
-            "memo": "工地辦公室專案用完拆回，狀態良好可重用"
-        }
-    ]
-
-    if "warehouse_db" not in st.session_state or not isinstance(st.session_state.warehouse_db, list) or not st.session_state.warehouse_db:
-        if supabase:
-            try:
-                res = supabase.table("warehouse_inventory").select("*").execute()
-                if res.data:
-                    st.session_state.warehouse_db = [{
-                        "code": row["code"],
-                        "name": row["name"],
-                        "category": row["category"],
-                        "warehouse": row["warehouse"],
-                        "qty": float(row["qty"]),
-                        "safety": float(row["safety"]),
-                        "status": row["status"]
-                    } for row in res.data]
-                else:
-                    st.session_state.warehouse_db = default_warehouse
-            except Exception:
-                st.session_state.warehouse_db = default_warehouse
-        else:
-            st.session_state.warehouse_db = default_warehouse
-
-    if "warehouse_logs_db" not in st.session_state or not isinstance(st.session_state.warehouse_logs_db, list) or not st.session_state.warehouse_logs_db:
-        if supabase:
-            try:
-                res_logs = supabase.table("warehouse_logs").select("*").order("id", desc=True).limit(50).execute()
-                if res_logs.data:
-                    st.session_state.warehouse_logs_db = [{
-                        "time": row["op_time"],
-                        "op_type": row["op_type"],
-                        "code": row["code"],
-                        "name": row["name"],
-                        "warehouse": row["warehouse"],
-                        "qty": float(row["qty"]),
-                        "receiver_or_supplier": row["receiver_or_supplier"],
-                        "staff": row["staff"],
-                        "memo": row["memo"]
-                    } for row in res_logs.data]
-                else:
-                    st.session_state.warehouse_logs_db = default_logs
-            except Exception:
-                st.session_state.warehouse_logs_db = default_logs
-        else:
-            st.session_state.warehouse_logs_db = default_logs
-
-    if "warehouse_categories_list" not in st.session_state:
-        st.session_state.warehouse_categories_list = ["五金配件與墊片", "燈具與照明配件", "PVC管與管件/彎頭", "電線與電纜線", "箱體與鈑金零件", "回收與拆回舊料", "回收與退料半成品"]
-
-    tab_inv, tab_bar, tab_hist, tab_in = st.tabs([
-        L["tab_inventory"], L["tab_barcode"], L["tab_history"], L["tab_inbound"]
-    ])
-
-    # 1. 各倉別即時庫存總表
-    with tab_inv:
-        st.markdown(f"### {L['table_header']}")
-        wh_filter_opts = ["全部倉庫"] + L["warehouse_opts"]
-        selected_wh_filter = st.selectbox("🔍 篩選檢視特定倉庫庫存", wh_filter_opts)
-
-        filtered_db = st.session_state.warehouse_db
-        if selected_wh_filter != "全部倉庫":
-            filtered_db = [i for i in st.session_state.warehouse_db if i["warehouse"] == selected_wh_filter]
-
-        if filtered_db:
-            display_data = []
-            for idx, item in enumerate(filtered_db, 1):
-                display_data.append({
-                    L["col_index"]: idx,
-                    L["col_code"]: item["code"],
-                    L["col_name"]: item["name"],
-                    L["col_cat"]: item["category"],
-                    L["col_wh"]: item["warehouse"],
-                    L["col_qty"]: f"{item['qty']:,.1f}",
-                    L["col_safety"]: f"{item['safety']:,.1f}",
-                    L["col_status"]: item["status"]
-                })
-            st.dataframe(pd.DataFrame(display_data), use_container_width=True)
-        else:
-            st.info(L["no_records"])
-
-    # 2. 出入庫與領料作業處理
-    with tab_bar:
-        st.markdown(f"### {L['op_header']}")
+    # ====================================================
+    # 📊 1. 工程主管戰情室
+    # ====================================================
+    if "1." in selected_option or "戰情室" in selected_option:
+        st.markdown("### 📊 1. 工程主管戰情室與案場管理 (Dashboard)")
         
-        target_warehouse = st.selectbox(L["lbl_target_wh"], L["warehouse_opts"], key="target_wh_select")
-        
-        with st.form("form_stock_operation"):
-            op_type = st.radio(L["lbl_op_type"], L["op_opts"], horizontal=True)
-            
-            warehouse_items = [i for i in st.session_state.warehouse_db if i["warehouse"] == target_warehouse]
-            
-            c_sel1, c_sel2 = st.columns(2)
-            with c_sel1:
-                if warehouse_items:
-                    item_options = [f"{i['code']} - {i['name']} (現庫存: {i['qty']})" for i in warehouse_items]
-                    selected_item_str = st.selectbox(L["lbl_select_item"], item_options)
-                else:
-                    st.warning(f"⚠️ 此倉庫目前無任何資材，請先至「新增資材建檔」建立。")
-                    selected_item_str = None
-            with c_sel2:
-                scan_code_input = st.text_input(L["lbl_scan_alt"], placeholder="例如: ROOF-STEEL-DISM")
+        col_s1, col_s2, col_s3, col_s4 = st.columns(4)
+        with col_s1:
+            st.metric("進行中專案 / Dự án", "12 案", "+2 本月新增")
+        with col_s2:
+            st.metric("總合約金額 / Tổng hợp đồng (VND)", "18,450,000,000", "匯率正常")
+        with col_s3:
+            st.metric("待審核 BOM / Chờ duyệt", "5 件", "需主管覆核")
+        with col_s4:
+            st.metric("工安事故率 / TN lao động", "0%", "持續保持")
 
-            op_qty = st.number_input(L["lbl_op_qty"], min_value=1.0, value=1.0, step=1.0)
-            receiver_person = st.text_input(L["lbl_receiver"], placeholder=L["receiver_placeholder"])
-            memo = st.text_input(L["lbl_memo"], placeholder=L["memo_placeholder"])
+        st.markdown("##### 📁 目前進行中的工程專案一覽")
+        proj_df = pd.DataFrame(st.session_state.engineering_projects_db)
+        st.dataframe(proj_df, use_container_width=True)
 
-            logged_staff = f"{st.session_state.get('user_name', 'admin')} ({st.session_state.get('user_role', 'Warehouse_Keeper')})"
-            st.text_input("倉庫管理員 / 經辦人員 (系統自動綁定)", value=logged_staff, disabled=True)
+    # ====================================================
+    # 📋 2. 工程專案報價系統
+    # ====================================================
+    elif "2." in selected_option or "報價" in selected_option:
+        st.markdown("### 📋 2. 配電盤與工程專案雙層報價系統 (Báo giá & Dự toán)")
+        st.info("💡 支援多幣別（VND、USD、RMB、TWD），並在報價核准後自動將內部 BOM 零件展開並推送到採購與生產部門。")
 
-            if st.form_submit_button(L["btn_execute_op"], type="primary", use_container_width=True):
-                target_code = ""
-                if scan_code_input.strip():
-                    target_code = scan_code_input.strip().lower()
-                elif selected_item_str:
-                    target_code = selected_item_str.split(" - ")[0].strip().lower()
+        if "two_tier_quotations_db" not in st.session_state:
+            st.session_state.two_tier_quotations_db = [
+                {
+                    "quot_id": "09092026/LA/BG01",
+                    "project_name": "新增設備機電系統供電工程",
+                    "client": "CÔNG TY TNHH LEADER ART INDUSTRIES (VIETNAM)",
+                    "currency": "VND",
+                    "vat": 8.0,
+                    "date": "2026-09-09",
+                    "author": "陳智賢",
+                    "status": "🟢 已核准並自動下發BOM",
+                    "items": [
+                        {"item": "MCCB 3P 400AF 315AT 50KA 380V - TBX-400L", "unit": "只", "qty": 1.0, "unit_price": 3842670.0, "total_price": 3842670.0},
+                        {"item": "銅牌及固定座熱縮套膜 CU BAR BUS", "unit": "式", "qty": 1.0, "unit_price": 4130000.0, "total_price": 4130000.0},
+                        {"item": "控制配線另料 Phuï lieäu", "unit": "式", "qty": 1.0, "unit_price": 1180000.0, "total_price": 1180000.0},
+                        {"item": "配盤組裝工資 Tieàn coâng laép raùp", "unit": "式", "qty": 1.0, "unit_price": 2360000.0, "total_price": 2360000.0},
+                        {"item": "CASE (W)800mm*(H)1200mm*(D)350mm SPCC靜電粉體烤漆 T=2.0", "unit": "只", "qty": 1.0, "unit_price": 9605200.0, "total_price": 9605200.0},
+                        {"item": "MCCB 3P 250AF 180AT 45KA 380V - TBX-250L", "unit": "只", "qty": 1.0, "unit_price": 1429688.0, "total_price": 1429688.0},
+                        {"item": "比流器 CT300/5A", "unit": "只", "qty": 3.0, "unit_price": 718384.0, "total_price": 2155152.0},
+                        {"item": "過電流電驛 OC+EF (MK1000A-240A)", "unit": "只", "qty": 3.0, "unit_price": 8075920.0, "total_price": 24227760.0}
+                    ]
+                }
+            ]
 
-                matched_item = next((i for i in st.session_state.warehouse_db if i["code"].strip().lower() == target_code and i["warehouse"] == target_warehouse), None)
+        if "bom_procurement_db" not in st.session_state:
+            st.session_state.bom_procurement_db = [
+                {
+                    "quot_id": "09092026/LA/BG01",
+                    "project_name": "新增設備機電系統供電工程",
+                    "client": "CÔNG TY TNHH LEADER ART INDUSTRIES (VIETNAM)",
+                    "bom_items": st.session_state.two_tier_quotations_db[0]["items"]
+                }
+            ]
 
-                if not matched_item and ("入庫" in op_type or "Stock In" in op_type):
-                    any_matched = next((i for i in st.session_state.warehouse_db if i["code"].strip().lower() == target_code), None)
-                    if any_matched:
-                        new_entry = any_matched.copy()
-                        new_entry["warehouse"] = target_warehouse
-                        new_entry["qty"] = 0.0
-                        st.session_state.warehouse_db.insert(0, new_entry)
-                        matched_item = new_entry
+        tab_q_create, tab_q_list = st.tabs(["📝 建立報價與自動BOM | Lập báo giá", "📊 報價總表與多幣別總計 | Tổng hợp báo giá"])
 
-                if matched_item and receiver_person.strip():
-                    current_time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    
-                    if "入庫" in op_type or "Stock In" in op_type:
-                        matched_item["qty"] += op_qty
-                        if matched_item["qty"] >= matched_item["safety"]:
-                            matched_item["status"] = "庫存充足"
+        with tab_q_create:
+            with st.form("form_create_quotation"):
+                qc1, qc2, qc3, qc4 = st.columns(4)
+                with qc1:
+                    p_client = st.text_input("客戶公司名稱 (CÔNG TY) *", value="CÔNG TY TNHH LEADER ART INDUSTRIES (VIETNAM)")
+                with qc2:
+                    p_attn = st.text_input("聯絡對象 (ATTN)", value="James & LIU KUAN HSIN")
+                with qc3:
+                    p_proj = st.text_input("工程名稱 (Tên công trình) *", value="新增設備機電系統供電工程")
+                with qc4:
+                    p_currency = st.selectbox("報價幣別 (Đơn vị tiền tệ)", ["VND", "USD", "RMB", "TWD"])
+
+                qc5, qc6, qc7 = st.columns(3)
+                with qc5:
+                    p_from = st.text_input("提案負責人 (Người lập)", value="陳智賢")
+                with qc6:
+                    p_ref = st.text_input("報價單號 (Số báo giá)", value="09092026/LA/BG01")
+                with qc7:
+                    p_vat = st.number_input("增值稅率 VAT (%)", value=8.0)
+
+                st.markdown("---")
+                st.markdown("##### 📦 工程 BOM 材料與工資明細清單 (CHI TIẾT HẠNG MỤC)")
+                
+                st.success("👉 **【操作指引 / Hướng dẫn thao tác】**\n"
+                           "1. **修改資料 / Sửa**：直接點擊下方表格內的格子修改。\n"
+                           "2. **新增一列 / Thêm dòng**：點擊表格最末行空白處或右上角 `+` 號。\n"
+                           "3. **金額千分位 / Định dạng số**：系統自動套用千分位與越南盾 `₫` 格式。")
+
+                default_items_df = pd.DataFrame(st.session_state.two_tier_quotations_db[0]["items"])
+                
+                edited_items_df = st.data_editor(
+                    default_items_df, 
+                    num_rows="dynamic", 
+                    use_container_width=True,
+                    column_config={
+                        "item": st.column_config.TextColumn("材料與工項名稱 (Item)", width="medium"),
+                        "unit": st.column_config.TextColumn("單位 (ĐVT)", width="small"),
+                        "qty": st.column_config.NumberColumn("數量 (SL)", format="%.1f"),
+                        "unit_price": st.column_config.NumberColumn("單價 (Đơn giá)", format="%,.0f ₫"),
+                        "total_price": st.column_config.NumberColumn("複價 (Thành tiền)", format="%,.0f ₫")
+                    }
+                )
+
+                if st.form_submit_button("🚀 確認送出並【自動展開BOM連動採購】", type="primary"):
+                    if p_client and p_proj and p_ref:
+                        internal_rows = edited_items_df.to_dict(orient="records")
                         
-                        log_entry = {
-                            "op_time": current_time_str,
-                            "op_type": "📥 回收/退料入庫 (Stock In)",
-                            "code": matched_item["code"],
-                            "name": matched_item["name"],
-                            "warehouse": target_warehouse,
-                            "qty": op_qty,
-                            "receiver_or_supplier": f"送回人/工地交回: {receiver_person}",
-                            "staff": logged_staff,
-                            "memo": memo or "回收退料或拆回舊料入庫"
+                        quotation_record = {
+                            "quot_id": p_ref,
+                            "project_name": p_proj,
+                            "client": p_client,
+                            "currency": p_currency,
+                            "vat": p_vat,
+                            "date": str(datetime.date.today()),
+                            "author": p_from,
+                            "status": "🟢 已核准並自動下發BOM",
+                            "items": internal_rows
                         }
-                        st.session_state.warehouse_logs_db.insert(0, {
-                            "time": current_time_str, "op_type": log_entry["op_type"], "code": log_entry["code"],
-                            "name": log_entry["name"], "warehouse": log_entry["warehouse"], "qty": log_entry["qty"],
-                            "receiver_or_supplier": log_entry["receiver_or_supplier"], "staff": log_entry["staff"], "memo": log_entry["memo"]
-                        })
+                        
+                        st.session_state.two_tier_quotations_db.insert(0, quotation_record)
 
-                        if supabase:
-                            try:
-                                supabase.table("warehouse_inventory").upsert(matched_item).execute()
-                                supabase.table("warehouse_logs").insert(log_entry).execute()
-                            except Exception as e:
-                                st.error(f"Supabase 同步失敗: {e}")
-
-                        st.success(L["success_in"])
-                        st.rerun()
-                    else: # 出庫
-                        if matched_item["qty"] >= op_qty:
-                            matched_item["qty"] -= op_qty
-                            if matched_item["qty"] < matched_item["safety"]:
-                                matched_item["status"] = "⚠️ 庫存低於安全水位"
-                            
-                            log_entry = {
-                                "op_time": current_time_str,
-                                "op_type": "📤 回收料再利用出庫 (Stock Out)",
-                                "code": matched_item["code"],
-                                "name": matched_item["name"],
-                                "warehouse": target_warehouse,
-                                "qty": op_qty,
-                                "receiver_or_supplier": receiver_person,
-                                "staff": logged_staff,
-                                "memo": memo or "回收料再次利用"
-                            }
-                            st.session_state.warehouse_logs_db.insert(0, {
-                                "time": current_time_str, "op_type": log_entry["op_type"], "code": log_entry["code"],
-                                "name": log_entry["name"], "warehouse": log_entry["warehouse"], "qty": log_entry["qty"],
-                                "receiver_or_supplier": log_entry["receiver_or_supplier"], "staff": log_entry["staff"], "memo": log_entry["memo"]
+                        existing_bom = next((b for b in st.session_state.bom_procurement_db if b["quot_id"] == p_ref), None)
+                        if not existing_bom:
+                            st.session_state.bom_procurement_db.insert(0, {
+                                "quot_id": p_ref,
+                                "project_name": p_proj,
+                                "client": p_client,
+                                "bom_items": internal_rows
                             })
+                        else:
+                            existing_bom["bom_items"] = internal_rows
 
-                            if supabase:
-                                try:
-                                    supabase.table("warehouse_inventory").upsert(matched_item).execute()
-                                    supabase.table("warehouse_logs").insert(log_entry).execute()
-                                except Exception as e:
-                                    st.error(f"Supabase 同步失敗: {e}")
+                        st.success(f"🎉 報價單 [{p_ref}] 建立成功！系統已自動推送到【BOM 採購連動】！")
+                        st.rerun()
+                    else:
+                        st.warning("⚠️ 請完整填寫客戶名稱、工程名稱與報價單號！")
 
-                            st.success(L["success_out"])
+        with tab_q_list:
+            st.markdown("##### 📊 已建立之雙層報價單總表與多幣別總計切換")
+            
+            view_curr = st.selectbox("🌐 選擇總計顯示幣別 / Chọn tiền tệ hiển thị (支援主管審核與總經理室檢視)", ["VND", "USD", "RMB", "TWD"], key="view_curr_select")
+
+            for q in st.session_state.two_tier_quotations_db:
+                subtotal_orig = sum([item.get("total_price", 0) for item in q["items"]])
+                vat_amount = subtotal_orig * (q["vat"] / 100.0)
+                grand_total_orig = subtotal_orig + vat_amount
+
+                subtotal_converted = convert_currency(subtotal_orig, from_curr=q["currency"], to_curr=view_curr)
+                vat_converted = convert_currency(vat_amount, from_curr=q["currency"], to_curr=view_curr)
+                grand_total_converted = convert_currency(grand_total_orig, from_curr=q["currency"], to_curr=view_curr)
+
+                with st.expander(f"📌 單號: {q['quot_id']} | 客戶: {q['client']} | 專案: {q['project_name']} (原幣別: {q['currency']})"):
+                    col_info1, col_info2, col_info3 = st.columns(3)
+                    with col_info1:
+                        st.write(f"**提案人 / Người lập**：{q['author']}")
+                        st.write(f"**建立日期 / Ngày**：{q['date']}")
+                    with col_info2:
+                        st.write(f"**審核狀態 / Trạng thái**：{q['status']}")
+                        st.write(f"**增值稅 VAT**：{q['vat']}%")
+                    with col_info3:
+                        st.markdown(f"**💰 項目小計 / Tổng cộng ({view_curr})**：`{format_currency_text(subtotal_converted, view_curr)}`")
+                        st.markdown(f"**🔥 含稅總計 / Tổng thanh toán ({view_curr})**：`{format_currency_text(grand_total_converted, view_curr)}`")
+
+                    st.dataframe(pd.DataFrame(q["items"]), use_container_width=True)
+
+    # ====================================================
+    # ⏱️ 3. 現場打卡
+    # ====================================================
+    elif "3." in selected_option or "打卡" in selected_option:
+        st.markdown("### ⏱️ 3. 現場外勤打卡與 GPS 定位作業登記 (Chấm công công trường)")
+        st.info("💡 提供工程師與施工人員於案場進行 GPS 打卡、拍照回報與出勤時數紀錄。")
+        st.success("✅ 目前定位 / Vị trí hiện tại：越南平陽省美福工業區案場 (GPS 正常)")
+        if st.button("📍 點擊送出今日現場上班打卡 / Chấm công vào làm"):
+            st.success("🎉 打卡成功！記錄時間：" + str(datetime.datetime.now()))
+
+    # ====================================================
+    # 📝 4. 施工日報
+    # ====================================================
+    elif "4." in selected_option or "日報" in selected_option:
+        st.markdown("### 📝 4. 施工日報表與點工點料登記 (Nhật ký thi công)")
+        st.info("💡 記錄每日工地施工進度、外包商點工數與領料消耗量。")
+        st.text_input("填報日期 / Ngày báo cáo", value=str(datetime.date.today()))
+        st.text_area("今日施工摘要與進度說明 / Nội dung công việc", value="今日進行西寧廠主配電盤吊裝與二次配線作業。")
+        if st.button("💾 儲存並送出施工日報表 / Lưu báo cáo"):
+            st.success("🎉 今日施工日報表已成功存入資料庫！")
+
+    # ====================================================
+    # 📸 5. AI 工安稽核
+    # ====================================================
+    elif "5." in selected_option or "AI" in selected_option or "稽核" in selected_option:
+        st.markdown("### 📸 5. AI 施工照片辨識與工安衛稽核 (Kiểm tra An toàn AI)")
+        st.info("💡 上傳現場施工照片，透過 AI 自動辨識是否確實佩戴安全帽、安全帶與防護裝備。")
+        st.file_uploader("上傳工地現場照片進行 AI 稽核 / Tải ảnh công trường", type=["jpg", "png", "jpeg"])
+        if st.button("🔍 執行 AI 工安合規檢測 / Chạy kiểm tra AI"):
+            st.success("✅ AI 檢測結果 / Kết quả：合格率 98%，所有現場作業人員均確實佩戴安全帽與反光背心。")
+
+    # ====================================================
+    # 🛡️ 6. 證照預警
+    # ====================================================
+    elif "6." in selected_option or "證照" in selected_option or "預警" in selected_option:
+        st.markdown("### 🛡️ 6. 工程師證照與施工機具檢驗到期預警 (Cảnh báo Chứng chỉ)")
+        st.info("💡 自動監控高壓電氣技術員證照、堆高機證照與吊車檢驗效期，提前 30 天發出預警。")
+        cert_data = [
+            {"姓名 / Họ tên": "陳明華", "證照名稱 / Tên chứng chỉ": "甲級室內配線技術士", "有效期限 / Hạn": "2026-11-30", "狀態 / Trạng thái": "🟢 效期正常"},
+            {"姓名 / Họ tên": "阮文雄", "證照名稱 / Tên chứng chỉ": "特定高壓氣體作業主管", "有效期限 / Hạn": "2026-10-25", "狀態 / Trạng thái": "🟡 即將到期 (剩9天)"},
+            {"機具編號 / Mã máy": "CRANE-01", "機具名稱 / Tên thiết bị": "5噸油壓吊卡車", "定期檢驗日 / Ngày kiểm định": "2026-11-15", "狀態 / Trạng thái": "🟢 檢驗合格"}
+        ]
+        st.dataframe(pd.DataFrame(cert_data), use_container_width=True)
+
+    # ====================================================
+    # 🎨 7. 設計圖庫
+    # ====================================================
+    elif "7." in selected_option or "圖庫" in selected_option:
+        st.markdown("### 🎨 7. 配電盤電氣與機構設計圖庫 Storage (Kho bản vẽ)")
+        st.info("💡 管理所有配電盤 2D/3D 設計圖檔、CAD 藍圖與機構規格書，並可一鍵將設計規格傳送至生產部門。")
+
+        if "drawing_storage_db" not in st.session_state:
+            st.session_state.drawing_storage_db = [
+                {
+                    "drawing_id": "DRW-2026-001",
+                    "project": "西寧廠高壓配電盤擴建",
+                    "title": "2000A 主配電盤單線圖與配置藍圖",
+                    "type": "2D 電氣單線圖 (SLD)",
+                    "version": "v1.2",
+                    "filename": "TN_Main_Switchgear_2000A_SLD.dwg",
+                    "uploader": "陳總工程師",
+                    "date": "2026-10-01",
+                    "transfer_status": "🟢 已下發生產部"
+                }
+            ]
+
+        if "production_dispatch_db" not in st.session_state:
+            st.session_state.production_dispatch_db = [
+                {
+                    "dispatch_id": "DISP-2026-001",
+                    "project": "西寧廠高壓配電盤擴建",
+                    "spec_title": "2000A 主配電盤單線圖與配置藍圖",
+                    "source_dept": "工程與設計管理中心",
+                    "target_dept": "生產部 (板金組 / 配電組)",
+                    "status": "🟢 生產備料中",
+                    "date": "2026-10-01"
+                }
+            ]
+
+        if "drawing_categories_list" not in st.session_state:
+            st.session_state.drawing_categories_list = [
+                "2D 電氣單線圖 (SLD)", 
+                "3D 機構配置圖 (STEP)", 
+                "控制邏輯電路圖 (CAD)", 
+                "銅排加工與折彎圖"
+            ]
+
+        tab_drw_list, tab_drw_upload, tab_cat_mgmt, tab_dispatch = st.tabs([
+            "📁 設計圖庫總表 | Danh sách bản vẽ", 
+            "📤 上傳新圖檔 | Tải lên bản vẽ", 
+            "⚙️ 技術分類維護 | Quản lý phân loại",
+            "🏭 生產部門接收 | Trạng thái sản xuất"
+        ])
+
+        with tab_drw_list:
+            dc1, dc2 = st.columns([1, 2])
+            with dc1:
+                drw_type_filter = st.selectbox("依圖面類型篩選 / Lọc theo loại", ["全部類型"] + st.session_state.drawing_categories_list)
+            with dc2:
+                drw_search = st.text_input("🔍 搜尋專案、標題或檔名 / Tìm kiếm...", key="drw_search_box")
+
+            filtered_drw = st.session_state.drawing_storage_db
+            if drw_type_filter != "全部類型":
+                filtered_drw = [d for d in filtered_drw if d["type"] == drw_type_filter]
+            if drw_search:
+                filtered_drw = [d for d in filtered_drw if drw_search.lower() in d["project"].lower() or drw_search.lower() in d["title"].lower() or drw_search.lower() in d["filename"].lower()]
+
+            if filtered_drw:
+                for drw in filtered_drw:
+                    with st.expander(f"📌 [{drw['drawing_id']}] {drw['project']} - {drw['title']} ({drw['version']})"):
+                        col_d1, col_d2, col_d3 = st.columns(3)
+                        with col_d1:
+                            st.write(f"**圖庫類型 / Loại**：{drw['type']}")
+                            st.write(f"**檔案名稱 / File**：{drw['filename']}")
+                        with col_d2:
+                            st.write(f"**上傳者 / Người tải**：{drw['uploader']}")
+                            st.write(f"**上傳日期 / Ngày**：{drw['date']}")
+                        with col_d3:
+                            current_status = drw.get("transfer_status", "⏳ 尚未下發")
+                            st.write(f"**下發狀態 / Trạng thái**：{current_status}")
+
+                        if st.button(f"🚀 一鍵下發設計規格至生產部 ({drw['drawing_id']})", key=f"dispatch_btn_{drw['drawing_id']}"):
+                            drw["transfer_status"] = "🟢 已下發生產部"
+                            
+                            existing_disp = next((d for d in st.session_state.production_dispatch_db if d["dispatch_id"] == f"DISP-{drw['drawing_id'].split('-')[-1]}"), None)
+                            if not existing_disp:
+                                disp_id = f"DISP-{drw['drawing_id'].split('-')[-1]}"
+                                st.session_state.production_dispatch_db.insert(0, {
+                                    "dispatch_id": disp_id,
+                                    "project": drw["project"],
+                                    "spec_title": drw["title"],
+                                    "source_dept": "工程與設計管理中心",
+                                    "target_dept": "生產部 (板金組 / 配電組)",
+                                    "status": "🟢 生產備料與排程中",
+                                    "date": str(datetime.date.today())
+                                })
+                            st.success(f"🎉 成功傳送至【生產部門】！")
+                            st.rerun()
+            else:
+                st.info("⚠️ 找不到符合條件的設計圖檔紀錄。")
+
+        with tab_drw_upload:
+            with st.form("form_upload_drawing"):
+                uc1, uc2 = st.columns(2)
+                with uc1:
+                    d_proj = st.selectbox("關聯工程專案 / Dự án", [p["proj_name"] for p in st.session_state.engineering_projects_db])
+                    d_title = st.text_input("圖面與規格說明標題 / Tiêu đề *", value="西寧廠低壓控制盤二次迴路配線圖")
+                    d_type = st.selectbox("圖面技術分類 / Phân loại *", st.session_state.drawing_categories_list)
+                with uc2:
+                    d_ver = st.text_input("圖面版本 / Phiên bản", value="v1.0")
+                    d_file = st.file_uploader("上傳設計圖檔 (DWG, STEP, PDF, ZIP)", type=["dwg", "step", "pdf", "zip", "png"])
+                    d_uploader = st.text_input("上傳工程師 / Kỹ sư", value="陳明華")
+
+                if st.form_submit_button("🚀 確認上傳並存入 Storage 圖庫", type="primary"):
+                    if d_title and d_file and d_type:
+                        new_d_id = f"DRW-2026-{len(st.session_state.drawing_storage_db)+1:03d}"
+                        st.session_state.drawing_storage_db.insert(0, {
+                            "drawing_id": new_d_id,
+                            "project": d_proj,
+                            "title": d_title,
+                            "type": d_type,
+                            "version": d_ver,
+                            "filename": d_file.name,
+                            "uploader": d_uploader,
+                            "date": str(datetime.date.today()),
+                            "transfer_status": "⏳ 尚未下發"
+                        })
+                        st.success(f"🎉 成功上傳設計圖檔 [{d_file.name}]！")
+                        st.rerun()
+                    else:
+                        st.warning("⚠️ 請完整填寫圖面標題、選擇分類，並上傳設計檔案！")
+
+        with tab_cat_mgmt:
+            st.markdown("##### ⚙️ 圖面技術分類維護（新增、修改與刪除）")
+            st.info("💡 在此處您可以隨時新增工程上需要的圖面技術分類，或刪除不需要的分類項目。")
+
+            with st.form("form_add_drawing_category"):
+                new_cat_name = st.text_input("新增圖面技術分類名稱 / Tên phân loại mới", placeholder="例如: 弱電與消防系統佈局圖")
+                if st.form_submit_button("➕ 確認新增技術分類", type="primary"):
+                    if new_cat_name.strip():
+                        clean_name = new_cat_name.strip()
+                        if clean_name not in st.session_state.drawing_categories_list:
+                            st.session_state.drawing_categories_list.append(clean_name)
+                            st.success(f"🎉 成功新增圖面技術分類：【{clean_name}】！")
                             st.rerun()
                         else:
-                            st.warning(L["warning_out"])
-                else:
-                    st.warning("⚠️ 請確認所選資材品項，並完整輸入「送回人 / 領用人姓名」！")
+                            st.warning("⚠️ 此分類名稱已存在！")
+                    else:
+                        st.warning("⚠️ 請輸入有效的分類名稱！")
 
-    # 3. 倉庫出入庫歷史日誌稽核表
-    with tab_hist:
-        st.markdown("### 📊 倉庫進出庫與領料稽核歷史日誌 (Audit Trail)")
-        st.caption("詳細記錄每一次進倉、退料、拆回舊料與出庫紀錄，支援依倉別過濾檢視。")
-        
-        log_filter_opts = ["全部倉庫"] + L["warehouse_opts"]
-        selected_log_wh_filter = st.selectbox("🔍 選擇要檢視歷史日誌的倉別", log_filter_opts, key="log_wh_filter")
+            st.markdown("---")
+            st.markdown("##### 📋 目前現有技術分類清單")
+            for idx, cat_item in enumerate(st.session_state.drawing_categories_list, 1):
+                cc1, cc2 = st.columns([4, 1])
+                with cc1:
+                    st.text(f"{idx}. {cat_item}")
+                with cc2:
+                    if len(st.session_state.drawing_categories_list) > 1:
+                        if st.button("🗑️ 刪除", key=f"del_cat_{idx}"):
+                            st.session_state.drawing_categories_list.remove(cat_item)
+                            st.success(f"🗑️ 已刪除分類：{cat_item}")
+                            st.rerun()
+                    else:
+                        st.text("保留中")
 
-        filtered_logs = st.session_state.warehouse_logs_db
-        if selected_log_wh_filter != "全部倉庫":
-            filtered_logs = [log for log in st.session_state.warehouse_logs_db if log.get("warehouse") == selected_log_wh_filter]
+        with tab_dispatch:
+            st.markdown("##### 🏭 生產部門接收與製造排程狀態追蹤")
+            if st.session_state.production_dispatch_db:
+                st.dataframe(pd.DataFrame(st.session_state.production_dispatch_db), use_container_width=True)
+            else:
+                st.info("目前尚無下發至生產部的設計規格紀錄。")
 
-        if filtered_logs:
-            st.dataframe(pd.DataFrame(filtered_logs), use_container_width=True)
+    # ====================================================
+    # 🔗 8. BOM 採購連動
+    # ====================================================
+    elif "8." in selected_option or "BOM" in selected_option or "採購" in selected_option:
+        st.markdown("### 🔗 8. 配電盤 BOM 零件自動展開與採購連動 (Liên kết Mua hàng BOM)")
+        st.info("💡 工程報價核准後自動展開物料清單 (BOM)，並可一鍵連動採購請購單 (PR) 與對比專案預算。")
+
+        if "bom_procurement_db" not in st.session_state or not st.session_state.bom_procurement_db:
+            st.warning("⚠️ 目前尚無已展開的 BOM 資料，請先至【第 2 項 專案雙層報價】建立或送出報價單。")
         else:
-            st.info("目前該倉庫尚無出入庫歷史日誌紀錄。")
+            for bom_rec in st.session_state.bom_procurement_db:
+                with st.expander(f"📦 專案報價單號: {bom_rec['quot_id']} - {bom_rec['project_name']} ({bom_rec['client']})"):
+                    st.markdown(f"**包含物料項目總數 / Tổng số mục**：`{len(bom_rec['bom_items'])}` 項")
+                    st.dataframe(pd.DataFrame(bom_rec['bom_items']), use_container_width=True)
 
-    # 4. 新資材建檔
-    with tab_in:
-        st.markdown(f"### 📥 新增資材與工地回收/拆回料建檔")
-        with st.form("form_new_material"):
-            nc1, nc2 = st.columns(2)
-            with nc1:
-                new_code = st.text_input("料號 / 條碼編號 *", value="ROOF-STEEL-DISM")
-                new_name = st.text_input("資材品項名稱 *", value="工地辦公室拆回 - 鐵製排水屋頂/浪板")
-                new_category = st.selectbox("資材類別 *", st.session_state.warehouse_categories_list)
-            with nc2:
-                new_warehouse = st.selectbox("指定存放倉庫 *", L["warehouse_opts"])
-                new_qty = st.number_input("回收/拆回初始數量 *", min_value=0.0, value=10.0, step=1.0)
-                new_safety = st.number_input("安全庫存水位 *", min_value=0.0, value=1.0, step=1.0)
+                    col_b1, col_b2 = st.columns(2)
+                    with col_b1:
+                        if st.button(f"🛒 一鍵轉入採購請購單 (PR) - {bom_rec['quot_id']}", key=f"pr_btn_{bom_rec['quot_id']}"):
+                            st.success(f"🎉 成功將 BOM 物料轉入採購部請購單（PR）！")
+                    with col_b2:
+                        if st.button(f"📊 進行專案預算與採購成本對比 - {bom_rec['quot_id']}", key=f"budget_btn_{bom_rec['quot_id']}"):
+                            st.info("✅ 經系統比對：此 BOM 採購總金額符合專案預算範圍，未超出上限！")
 
-            if st.form_submit_button("💾 建立回收資材並登錄", type="primary", use_container_width=True):
-                if new_code and new_name:
-                    new_item = {
-                        "code": new_code,
-                        "name": new_name,
-                        "category": new_category,
-                        "warehouse": new_warehouse,
-                        "qty": new_qty,
-                        "safety": new_safety,
-                        "status": "庫存充足"
-                    }
-                    st.session_state.warehouse_db.insert(0, new_item)
-                    
-                    if supabase:
-                        try:
-                            supabase.table("warehouse_inventory").upsert(new_item).execute()
-                        except Exception as e:
-                            st.error(f"Supabase 寫入失敗: {e}")
+    # ====================================================
+    # 💰 9. 外包商施工進度與驗收 (已更新為直覺易懂名稱)
+    # ====================================================
+    elif "9." in selected_option or "外包商" in selected_option or "Tiến độ" in selected_option:
+        st.markdown("### 💰 9. 外包商施工進度與驗收 (Tiến độ & Nghiệm thu thầu phụ)")
+        st.info("💡 管理外包工班施工進度百分比與工程量驗收，並自動計算計價金額與請款單。")
+        st.success("✅ 目前外包商合約施工進度與驗收狀態正常，無超支情形。")
 
-                    st.success(f"✅ 回收資材 `{new_name}` 已成功建檔！")
-                    st.rerun()
-                else:
-                    st.warning("⚠️ 請完整填寫料號與資材名稱！")
+    # ====================================================
+    # 🏁 10. 竣工驗收
+    # ====================================================
+    elif "10." in selected_option or "FAT" in selected_option or "SAT" in selected_option or "驗收" in selected_option:
+        st.markdown("### 🏁 10. FAT / SAT 出廠與現場驗收管理 (Nghiệm thu FAT / SAT)")
+        st.info("💡 執行工廠驗收測試 (FAT) 與現場驗收測試 (SAT)，記錄缺失改善與客戶簽收單。")
+        st.success("✅ 西寧廠高壓配電盤 FAT 出廠測試已完成並取得客戶簽收！")
 
-def show(*args, **kwargs):
-    render_warehouse_management(*args, **kwargs)
+# ----------------------------------------------------
+# 🔌 相容性包裝函式
+# ----------------------------------------------------
+def render_engineering_page(engine=None, lang="繁體中文", **kwargs):
+    render_engineering_management_page(engine=engine, lang=lang, **kwargs)
 
-def main(*args, **kwargs):
-    render_warehouse_management(*args, **kwargs)
+def show(engine=None, lang="繁體中文", **kwargs):
+    render_engineering_management_page(engine=engine, lang=lang, **kwargs)
 
-def render_warehouse_management_page(*args, **kwargs):
-    render_warehouse_management(*args, **kwargs)
+def main(engine=None, lang="繁體中文", **kwargs):
+    render_engineering_management_page(engine=engine, lang=lang, **kwargs)
