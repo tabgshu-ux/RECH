@@ -208,7 +208,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
             with col3:
                 st.markdown("##### 💰 外派人員雙軌薪資設定")
                 
-                t_sal_str = st.text_input("越南盾在地底薪 (VND Salary)", value="30,000,000", placeholder="例: 30,000,000")
+                t_sal_str = st.text_input("越南盾在地底薪 (Lương CB - VND)", value="30,000,000", placeholder="例: 30,000,000")
                 try:
                     t_sal_vnd = float(t_sal_str.replace(",", "").replace(" ", ""))
                 except:
@@ -252,7 +252,6 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
         if engine:
             try:
                 with engine.connect() as conn:
-                    # 1. 身份分流選擇
                     edit_identity_filter = st.radio(
                         "🔍 選擇修改對象身分過濾：",
                         ["🇹🇼 外派幹部 / 台籍與中籍 (Expat/TW/CN)", "🇻🇳 越南籍員工 (Local VN)", "全部現職員工 (All)"],
@@ -260,14 +259,12 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                         key="edit_identity_radio"
                     )
 
-                    # 2. 部門篩選器
                     edit_dept_filter = st.selectbox(
                         "📂 依部門過濾員工：",
                         ["全部部門 (All Departments)"] + DEPT_OPTIONS,
                         key="edit_dept_select"
                     )
 
-                    # 動態組合 SQL 查詢條件
                     base_sql = """
                         SELECT emp_code, emp_name, department, position 
                         FROM public.employee_profiles 
@@ -361,21 +358,53 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.error("讀取員工列表失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 🚪 Tab 4: 員工離職辦理
+    # 🚪 Tab 4: 員工離職辦理 (加入身份分流與部門篩選)
     # ----------------------------------------------------
     with tab_resign:
         st.markdown("### 🚪 員工辦理離職與檔案封存")
         if engine:
             try:
                 with engine.connect() as conn:
-                    res_r = conn.execute(text("SELECT emp_code, emp_name, department FROM public.employee_profiles WHERE (status IS NULL OR status = '在職') ORDER BY emp_code;"))
+                    resign_identity_filter = st.radio(
+                        "🔍 選擇離職對象身分過濾：",
+                        ["🇹🇼 外派幹部 / 台籍與中籍 (Expat/TW/CN)", "🇻🇳 越南籍員工 (Local VN)", "全部現職員工 (All)"],
+                        horizontal=True,
+                        key="resign_identity_radio"
+                    )
+
+                    resign_dept_filter = st.selectbox(
+                        "📂 依部門過濾離職對象：",
+                        ["全部部門 (All Departments)"] + DEPT_OPTIONS,
+                        key="resign_dept_select"
+                    )
+
+                    resign_sql = """
+                        SELECT emp_code, emp_name, department, position 
+                        FROM public.employee_profiles 
+                        WHERE (status IS NULL OR status = '在職')
+                    """
+                    resign_params = {}
+
+                    if "外派" in resign_identity_filter:
+                        resign_sql += " AND (emp_code ILIKE 'TW%' OR emp_code ILIKE 'CN%' OR position ~* '廠長|經理|副理|主任|董事長|外派')"
+                    elif "越南" in resign_identity_filter:
+                        resign_sql += " AND (emp_code ILIKE 'VN%' OR (emp_code NOT ILIKE 'TW%' AND emp_code NOT ILIKE 'CN%'))"
+
+                    if resign_dept_filter != "全部部門 (All Departments)":
+                        resign_sql += " AND department = :dept_val"
+                        resign_params["dept_val"] = resign_dept_filter
+
+                    resign_sql += " ORDER BY emp_code ASC;"
+
+                    res_r = conn.execute(text(resign_sql), resign_params)
                     r_list = res_r.fetchall()
+
                     if r_list:
-                        r_options = {f"{r.emp_code} - {r.emp_name} ({r.department})": r.emp_code for r in r_list}
-                        resign_target = st.selectbox("選擇要辦理離職的員工：", list(r_options.keys()), key="resign_select")
+                        r_options = {f"{r.emp_code} - {r.emp_name} ({r.department}) [{r.position}]": r.emp_code for r in r_list}
+                        resign_target = st.selectbox("📌 請從篩選結果中選擇要辦理離職的員工：", list(r_options.keys()), key="resign_select")
                         resign_code = r_options[resign_target]
 
-                        if st.button("⚠️ 確認辦理離職並歸檔", type="primary"):
+                        if st.button("⚠️ 確認辦理離職並歸檔", type="primary", key="btn_confirm_resign"):
                             with engine.begin() as conn_r:
                                 conn_r.execute(text("""
                                     UPDATE public.employee_profiles
@@ -385,7 +414,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                             st.success(f"✅ 已成功辦理離職歸檔！")
                             st.rerun()
                     else:
-                        st.info("目前尚無可辦理離職的在職員工。")
+                        st.info("ℹ️ 依照目前的過濾條件，目前尚無可辦理離職的在職員工。")
             except Exception as e:
                 st.error("讀取失敗: " + str(e))
 
