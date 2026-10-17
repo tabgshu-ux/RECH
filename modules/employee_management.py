@@ -30,7 +30,7 @@ EMP_I18N = {
         "title": "👤 管理部 - 員工個人檔案與人事管理中心",
         "caption": "管理全公司在職員工名冊、離職歷史檔案、越南勞動法合規與外籍幹部簽證/居留證件管理。",
         "tab_add_vn": "🇻🇳 新增越南員工",
-        "tab_add_tw": "🇹🇼 新增外派幹部",
+        "tab_add_tw": "🇹🇼 新增外派幹部 (支援雙薪)",
         "tab_edit": "✏️ 修改員工資料",
         "tab_resign": "🚪 員工離職與刪除",
         "tab_list": "📄 現職員工名冊 (含台幹分流)",
@@ -54,7 +54,6 @@ def get_system_roles_from_db(engine):
         except Exception:
             pass
 
-    # 若資料庫抓不到任何資料時的絕對防護預設
     if not db_roles:
         db_roles = ["系統管理員 (Admin)", "一般員工 (Staff)"]
 
@@ -75,7 +74,7 @@ def get_factory_list(engine):
     return [DEFAULT_FACTORY]
 
 def init_employee_db(engine):
-    """確保員工表具備完整欄位"""
+    """確保員工表具備完整欄位（支援雙薪欄位）"""
     if not engine:
         return
     try:
@@ -99,10 +98,17 @@ def init_employee_db(engine):
                     attendance_type VARCHAR(100) DEFAULT '免打卡高階主管 (Exempt Executive)',
                     system_role VARCHAR(100) DEFAULT '一般員工 (Staff)',
                     base_salary NUMERIC(12,2) DEFAULT 0,
+                    second_currency VARCHAR(10) DEFAULT 'USD',
+                    second_salary NUMERIC(12,2) DEFAULT 0,
                     status VARCHAR(50) DEFAULT '在職',
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
+            """))
+            # 若表格已存在但無 second_salary 欄位，自動補上
+            conn.execute(text("""
+                ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS second_currency VARCHAR(10) DEFAULT 'USD';
+                ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS second_salary NUMERIC(12,2) DEFAULT 0;
             """))
     except Exception:
         pass
@@ -116,8 +122,6 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
 
     init_employee_db(engine)
     available_factories = get_factory_list(engine)
-    
-    # 🔌 完全純淨：只抓取資料庫中設定好的角色
     system_roles_options = get_system_roles_from_db(engine)
 
     tab_add_vn, tab_add_tw, tab_edit, tab_resign, tab_list, tab_resigned_list = st.tabs([
@@ -139,15 +143,18 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                 v_tax_code = st.text_input("個人稅號 (Mã số thuế)", placeholder="例: 8012345678")
 
             with col2:
-                v_factory = st.selectbox("駐點廠區 (Nhà máy)", available_factories)
-                v_dept = st.selectbox("部門 (Bộ phận)", DEPT_OPTIONS, index=4)
-                v_pos = st.text_input("職稱 (Chức vụ)", value="廠內固定員工")
-                v_att = st.selectbox("出勤性質", ["廠內固定員工 (Plant Fixed Staff)", "外勤施工人員 (Site Staff)", "免打卡高階主管 (Exempt Executive)"])
+                v_factory = st.selectbox("駐點廠區 (Nhà máy)", available_factories, key="vn_fac")
+                v_dept = st.selectbox("部門 (Bộ phận)", DEPT_OPTIONS, index=4, key="vn_dept")
+                v_pos = st.text_input("職稱 (Chức vụ)", value="廠內固定員工", key="vn_pos")
+                v_att = st.selectbox("出勤性質", ["廠內固定員工 (Plant Fixed Staff)", "外勤施工人員 (Site Staff)", "免打卡高階主管 (Exempt Executive)"], key="vn_att")
                 v_social_code = st.text_input("社保號碼 (Mã số BHXH)", placeholder="例: 7912345678")
 
             with col3:
-                v_sal = st.number_input("約定底薪 (Lương CB - VND)", min_value=0.0, value=5000000.0, step=100000.0)
-                v_role = st.selectbox("系統權限角色 (System Role)", system_roles_options, index=0)
+                # 越南盾薪資（強制千分位與 ₫ 格式）
+                v_sal = st.number_input("越南盾約定底薪 (Lương CB - VND)", min_value=0.0, value=5000000.0, step=100000.0, format="%,.0f")
+                st.caption(f"💲 顯示金額：`{v_sal:,.0f} ₫ (VND)`")
+                
+                v_role = st.selectbox("系統權限角色 (System Role)", system_roles_options, index=0, key="vn_role")
                 v_perm_addr = st.text_input("戶籍地址 (Thường trú)", placeholder="例: Tây Ninh, Việt Nam")
                 v_curr_addr = st.text_input("現居地址 (Tạm trú)", placeholder="例: An Tịnh, Trảng Bàng, Tây Ninh")
                 v_hosp = st.text_input("看診登記醫院 (Bệnh viện KCB)", placeholder="例: BV Đa khoa Tây Ninh")
@@ -158,8 +165,8 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                         with engine.begin() as conn:
                             conn.execute(text("""
                                 INSERT INTO public.employee_profiles 
-                                (emp_code, emp_name, phone, id_card, tax_code, permanent_address, current_address, social_code, hospital_name, factory, department, position, attendance_type, system_role, base_salary, status)
-                                VALUES (:code, :name, :phone, :id, :tax, :perm, :curr, :social, :hosp, :factory, :dept, :pos, :att, :role, :sal, '在職')
+                                (emp_code, emp_name, phone, id_card, tax_code, permanent_address, current_address, social_code, hospital_name, factory, department, position, attendance_type, system_role, base_salary, second_currency, second_salary, status)
+                                VALUES (:code, :name, :phone, :id, :tax, :perm, :curr, :social, :hosp, :factory, :dept, :pos, :att, :role, :sal, 'VND', 0, '在職')
                                 ON CONFLICT (emp_code) DO UPDATE
                                 SET emp_name = EXCLUDED.emp_name, phone = EXCLUDED.phone, id_card = EXCLUDED.id_card,
                                     tax_code = EXCLUDED.tax_code, permanent_address = EXCLUDED.permanent_address,
@@ -181,10 +188,10 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.warning("⚠️ 請務必填寫『工號』與『姓名』！")
 
     # ----------------------------------------------------
-    # 🇹🇼 Tab 2: 新增外派幹部
+    # 🇹🇼 Tab 2: 新增外派幹部 (支援外派雙薪與多幣別)
     # ----------------------------------------------------
     with tab_add_tw:
-        st.markdown("### 🇹🇼 TW/CN 新增外派幹部 / 台籍與中籍員工")
+        st.markdown("### 🇹🇼 TW/CN 新增外派幹部 / 台籍與中籍員工 (支援外派雙薪)")
         with st.form("form_add_tw_emp_full"):
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -192,34 +199,46 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                 t_name = st.text_input("中文/英文姓名 *", placeholder="例: 王大明 Wang Ta Ming / Tassos")
                 t_passport = st.text_input("護照號碼 (Passport No.)", placeholder="例: 312345678")
                 t_trc = st.text_input("暫住證 TRC 號碼", placeholder="例: TRC-888999")
-
-            with col2:
-                t_factory = st.selectbox("駐點廠區", available_factories)
-                t_dept = st.selectbox("所屬部門", DEPT_OPTIONS, index=0)
-                t_pos = st.text_input("職稱 (Chức vụ)", value="廠長 / 專案經理")
-                t_att = st.selectbox("出勤性質 (考勤打卡)", ATTENDANCE_TYPES, index=0)
-
-            with col3:
-                t_sal = st.number_input("約定底薪 (VND / USD / TWD)", min_value=0.0, value=30000000.0, step=1000000.0)
-                t_role = st.selectbox("系統權限角色 (System Role)", system_roles_options, index=0)
                 t_phone = st.text_input("聯絡電話", placeholder="例: +886-912345678")
 
-            if st.form_submit_button("💾 儲存外派幹部檔案", type="primary", use_container_width=True):
+            with col2:
+                t_factory = st.selectbox("駐點廠區", available_factories, key="tw_fac")
+                t_dept = st.selectbox("所屬部門", DEPT_OPTIONS, index=0, key="tw_dept")
+                t_pos = st.text_input("職稱 (Chức vụ)", value="廠長 / 專案經理", key="tw_pos")
+                t_att = st.selectbox("出勤性質 (考勤打卡)", ATTENDANCE_TYPES, index=0, key="tw_att")
+                t_role = st.selectbox("系統權限角色 (System Role)", system_roles_options, index=0, key="tw_role")
+
+            with col3:
+                st.markdown("##### 💰 外派人員雙軌薪資設定")
+                # 第一軌：越南盾在地薪資（強制千分位）
+                t_sal_vnd = st.number_input("越南盾在地底薪 (VND Salary)", min_value=0.0, value=30000000.0, step=1000000.0, format="%,.0f")
+                st.caption(f"💲 越南盾：`{t_sal_vnd:,.0f} ₫ (VND)`")
+                
+                # 第二軌：外派第二薪資（支援 USD / TWD / RMB 自由選擇）
+                sc_col1, sc_col2 = st.columns([1, 2])
+                with sc_col1:
+                    t_sec_curr = st.selectbox("第二幣別", ["USD", "TWD", "RMB"], key="tw_sec_curr")
+                with sc_col2:
+                    t_sec_sal = st.number_input(f"外派第二薪資 ({t_sec_curr})", min_value=0.0, value=1500.0, step=100.0, format="%,.2f")
+                st.caption(f"💲 選擇外派薪資：`{t_sec_sal:,.2f} {t_sec_curr}`")
+
+            if st.form_submit_button("💾 儲存外派幹部檔案 (含雙薪設定)", type="primary", use_container_width=True):
                 if engine and t_code and t_name:
                     try:
                         with engine.begin() as conn:
                             conn.execute(text("""
                                 INSERT INTO public.employee_profiles 
-                                (emp_code, emp_name, phone, id_card, factory, department, position, attendance_type, system_role, base_salary, status)
-                                VALUES (:code, :name, :phone, :id, :factory, :dept, :pos, :att, :role, :sal, '在職')
+                                (emp_code, emp_name, phone, id_card, factory, department, position, attendance_type, system_role, base_salary, second_currency, second_salary, status)
+                                VALUES (:code, :name, :phone, :id, :factory, :dept, :pos, :att, :role, :sal_vnd, :sec_curr, :sec_sal, '在職')
                                 ON CONFLICT (emp_code) DO UPDATE
                                 SET emp_name = EXCLUDED.emp_name, phone = EXCLUDED.phone, id_card = EXCLUDED.id_card,
                                     factory = EXCLUDED.factory, department = EXCLUDED.department, position = EXCLUDED.position,
                                     attendance_type = EXCLUDED.attendance_type, system_role = EXCLUDED.system_role,
-                                    base_salary = EXCLUDED.base_salary, status = '在職';
+                                    base_salary = EXCLUDED.base_salary, second_currency = EXCLUDED.second_currency, second_salary = EXCLUDED.second_salary, status = '在職';
                             """), {
                                 "code": t_code, "name": t_name, "phone": t_phone, "id": f"護照:{t_passport} / TRC:{t_trc}",
-                                "factory": t_factory, "dept": t_dept, "pos": t_pos, "att": t_att, "role": t_role, "sal": t_sal
+                                "factory": t_factory, "dept": t_dept, "pos": t_pos, "att": t_att, "role": t_role,
+                                "sal_vnd": t_sal_vnd, "sec_curr": t_sec_curr, "sec_sal": t_sec_sal
                             })
                         st.success(f"🎉 成功新增外派幹部：{t_name} ({t_code})！")
                         st.rerun()
@@ -229,10 +248,10 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.warning("⚠️ 請填寫外派工號與姓名！")
 
     # ----------------------------------------------------
-    # ✏️ Tab 3: 修改員工資料
+    # ✏️ Tab 3: 修改員工資料 (支援雙薪與千分位)
     # ----------------------------------------------------
     with tab_edit:
-        st.markdown("### ✏️ 修改現職員工個人檔案與薪資保險資料")
+        st.markdown("### ✏️ 修改現職員工個人檔案與雙薪保險資料")
         if engine:
             try:
                 with engine.connect() as conn:
@@ -247,7 +266,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                         if emp_detail:
                             e = dict(emp_detail._mapping)
                             with st.form("form_edit_emp_full"):
-                                st.markdown("##### 1️⃣ 基本職務與薪資")
+                                st.markdown("##### 1️⃣ 基本職務與雙薪結構設定")
                                 col_e1, col_e2, col_e3 = st.columns(3)
                                 with col_e1:
                                     edit_name = st.text_input("姓名 (Họ tên)", value=str(e.get("emp_name") or ""))
@@ -256,17 +275,32 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                     edit_dept = st.selectbox("部門 (Bộ phận)", DEPT_OPTIONS, index=dept_idx)
                                     edit_phone = st.text_input("電話 (Số ĐT)", value=str(e.get("phone") or ""))
                                 with col_e2:
-                                    edit_factory = st.selectbox("廠區 (Nhà máy)", available_factories)
+                                    edit_factory = st.selectbox("廠區 (Nhà máy)", available_factories, key="edit_fac")
                                     edit_pos = st.text_input("職稱 (Chức vụ)", value=str(e.get("position") or "廠內固定員工"))
                                     curr_att = str(e.get("attendance_type") or "")
                                     att_idx = ATTENDANCE_TYPES.index(curr_att) if curr_att in ATTENDANCE_TYPES else 0
                                     edit_att = st.selectbox("出勤性質", ATTENDANCE_TYPES, index=att_idx)
                                 with col_e3:
-                                    edit_sal = st.number_input("底薪 (Lương CB - VND)", value=float(e.get("base_salary") or 0.0), step=100000.0)
+                                    edit_status = st.selectbox("在職狀態", ["在職", "離職"])
                                     curr_role = str(e.get("system_role") or "")
                                     role_idx = system_roles_options.index(curr_role) if curr_role in system_roles_options else 0
                                     edit_role = st.selectbox("系統權限角色 (System Role)", system_roles_options, index=role_idx)
-                                    edit_status = st.selectbox("在職狀態", ["在職", "離職"])
+
+                                st.markdown("##### 2️⃣ 薪資結構調整 (支援越南盾與外派雙薪)")
+                                col_sal1, col_sal2 = st.columns(2)
+                                with col_sal1:
+                                    edit_sal = st.number_input("越南盾底薪 (Lương CB - VND)", value=float(e.get("base_salary") or 0.0), step=100000.0, format="%,.0f")
+                                    st.caption(f"💲 越南盾：`{edit_sal:,.0f} ₫ (VND)`")
+                                with col_sal2:
+                                    curr_sec_curr = str(e.get("second_currency") or "USD")
+                                    sec_curr_idx = ["USD", "TWD", "RMB"].index(curr_sec_curr) if curr_sec_curr in ["USD", "TWD", "RMB"] else 0
+                                    
+                                    sc_e1, sc_e2 = st.columns([1, 2])
+                                    with sc_e1:
+                                        edit_sec_curr = st.selectbox("第二幣別", ["USD", "TWD", "RMB"], index=sec_curr_idx, key="edit_sec_curr")
+                                    with sc_e2:
+                                        edit_sec_sal = st.number_input(f"外派第二薪資 ({edit_sec_curr})", value=float(e.get("second_salary") or 0.0), step=100.0, format="%,.2f")
+                                    st.caption(f"💲 外派金額：`{edit_sec_sal:,.2f} {edit_sec_curr}`")
 
                                 if st.form_submit_button("💾 儲存修改內容", type="primary", use_container_width=True):
                                     with engine.begin() as conn_up:
@@ -274,15 +308,18 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                             UPDATE public.employee_profiles
                                             SET emp_name = :name, department = :dept, phone = :phone,
                                                 factory = :fac, position = :pos, attendance_type = :att,
-                                                system_role = :role, base_salary = :sal, status = :st,
-                                                updated_at = CURRENT_TIMESTAMP
+                                                system_role = :role, base_salary = :sal, 
+                                                second_currency = :sec_curr, second_salary = :sec_sal, 
+                                                status = :st, updated_at = CURRENT_TIMESTAMP
                                             WHERE emp_code = :code;
                                         """), {
                                             "name": edit_name, "dept": edit_dept, "phone": edit_phone,
                                             "fac": edit_factory, "pos": edit_pos, "att": edit_att,
-                                            "role": edit_role, "sal": edit_sal, "st": edit_status, "code": target_code
+                                            "role": edit_role, "sal": edit_sal, 
+                                            "sec_curr": edit_sec_curr, "sec_sal": edit_sec_sal,
+                                            "st": edit_status, "code": target_code
                                         })
-                                    st.success(f"🎉 已成功更新員工資料！")
+                                    st.success(f"🎉 已成功更新員工資料與雙薪結構！")
                                     st.rerun()
                     else:
                         st.info("目前尚無在職員工資料。")
@@ -332,15 +369,15 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
 
         c1, c2 = st.columns([1, 2])
         with c1:
-            selected_factory = st.selectbox(L["lbl_filter_factory"], available_factories)
+            selected_factory = st.selectbox(L["lbl_filter_factory"], available_factories, key="list_fac")
         with c2:
-            search_keyword = st.text_input(L["lbl_search"], value="")
+            search_keyword = st.text_input(L["lbl_search"], value="", key="list_search")
 
         if engine:
             try:
                 with engine.connect() as conn:
                     query = """
-                        SELECT emp_code, emp_name, phone, id_card, factory, department, position, attendance_type, system_role, status
+                        SELECT emp_code, emp_name, phone, id_card, factory, department, position, attendance_type, system_role, base_salary, second_currency, second_salary, status
                         FROM public.employee_profiles
                         WHERE (status IS NULL OR status = '在職')
                     """
@@ -368,9 +405,15 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                             df = df[df["emp_code"].str.upper().str.startswith("VN") | ~df["emp_code"].str.upper().str.startswith("TW") & ~df["emp_code"].str.upper().str.startswith("CN")]
 
                         if not df.empty:
+                            # 格式化薪資顯示（帶有千分位與幣別）
+                            df["base_salary_fmt"] = df["base_salary"].apply(lambda x: f"{float(x):,.0f} ₫" if pd.notnull(x) else "0 ₫")
+                            df["second_salary_fmt"] = df.apply(lambda r: f"{float(r['second_salary']):,.2f} {r['second_currency']}" if pd.notnull(r['second_salary']) and float(r['second_salary']) > 0 else "-", axis=1)
+                            
                             df.insert(0, "STT", range(len(df)))
-                            df.columns = ["STT", "工號", "姓名", "電話", "身份證/護照與居留證", "廠區", "部門", "職稱", "出勤性質", "系統角色", "狀態"]
-                            st.dataframe(df, use_container_width=True)
+                            # 保留完整欄位
+                            display_df = df[["STT", "emp_code", "emp_name", "phone", "id_card", "factory", "department", "position", "attendance_type", "base_salary_fmt", "second_salary_fmt", "system_role", "status"]].copy()
+                            display_df.columns = ["STT", "工號", "姓名", "電話", "身份證/護照與居留證", "廠區", "部門", "職稱", "出勤性質", "越南盾底薪", "外派第二薪資", "系統角色", "狀態"]
+                            st.dataframe(display_df, use_container_width=True)
                         else:
                             st.info("ℹ️ 此分流類別目前尚無符合的員工資料。")
                     else:
