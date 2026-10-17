@@ -300,8 +300,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                     sec_curr_idx = ["USD", "TWD", "RMB"].index(curr_sec_curr) if curr_sec_curr in ["USD", "TWD", "RMB"] else 0
                                     
                                     edit_sec_curr = st.selectbox("第二幣別選擇", ["USD", "TWD", "RMB"], index=sec_curr_idx, key="edit_sec_curr")
-                                    edit_sec_sal = st.number_input(f"外派第二薪資金額 ({edit_sec_curr})", value=float(e.get("second_salary") or 0.0), step=100.0, format="%.2f")
-                                    st.markdown(f"**💲 外派薪資即時預覽：`{edit_sec_sal:,.2f} {edit_sec_curr}`**")
+                                    edit_sec_sal = st.number_input(f"外派第二薪資金額 ")
 
                                 if st.form_submit_button("💾 儲存修改內容", type="primary", use_container_width=True):
                                     with engine.begin() as conn_up:
