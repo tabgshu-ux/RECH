@@ -11,11 +11,11 @@ ASSETS_I18N = {
     "繁體中文": {
         "title": "🏢 固定資產與設備管理 (Fixed Assets & Equipment)",
         "caption": "維護廠區機器設備與公務車輛，提供 5 年直線折舊試算、資產殘值查詢與 Excel 智慧批次匯入。",
-        "tab_add": "➕ 新增固定資產與車輛",
+        "tab_add": "➕ 新增固定資產",
         "tab_excel": "📊 Excel 智慧批次匯入",
         "tab_list": "📋 固定資產清冊與 5 年折舊攤分試算",
         "lbl_code": "資產/合約編號 *",
-        "lbl_name": "資產或車輛名稱 *",
+        "lbl_name": "資產名稱 *",
         "lbl_brand": "品牌與型號 / 廠牌",
         "lbl_status": "目前狀態",
         "lbl_site": "存放廠區/據點 *",
@@ -27,13 +27,13 @@ ASSETS_I18N = {
         "lbl_plate": "🚗 車牌號碼 (Biển số xe) *",
         "lbl_v_model": "🚗 車輛廠牌與詳細型號 *",
         "lbl_inspection_date": "🚗 車輛驗車/行照到期日",
-        "btn_submit": "📌 確認新增固定資產或車輛",
+        "btn_submit": "📌 確認新增固定資產",
         "lbl_search": "🔍 輸入關鍵字查詢資產/車牌/編號/保管人："
     },
     "English": {
         "title": "🏢 Fixed Assets & Equipment Management",
         "caption": "Manage plant equipment and vehicles with depreciation and Excel batch import.",
-        "tab_add": "➕ Add Asset / Vehicle",
+        "tab_add": "➕ Add Asset",
         "tab_excel": "📊 Excel Batch Import",
         "tab_list": "📋 Asset Inventory & 5-Year Depreciation",
         "lbl_code": "Asset Code *",
@@ -49,17 +49,17 @@ ASSETS_I18N = {
         "lbl_plate": "🚗 License Plate No. *",
         "lbl_v_model": "🚗 Vehicle Brand & Model *",
         "lbl_inspection_date": "🚗 Inspection Expiry Date",
-        "btn_submit": "📌 Save Asset / Vehicle",
+        "btn_submit": "📌 Save Asset",
         "lbl_search": "🔍 Search Asset / Plate / Code / Custodian:"
     },
     "Tiếng Việt": {
         "title": "🏢 Quản lý Tài sản cố định & Xe công tác",
         "caption": "Quản lý máy móc, xe công ty, tính khấu hao và nhập Excel tự động.",
-        "tab_add": "➕ Thêm mới tài sản / Xe",
+        "tab_add": "➕ Thêm mới tài sản",
         "tab_excel": "📊 Nhập Excel hàng loạt",
         "tab_list": "📋 Danh sách tài sản & Khấu hao 5 năm",
         "lbl_code": "Mã tài sản *",
-        "lbl_name": "Tên tài sản / Hợp đồng *",
+        "lbl_name": "Tên tài sản *",
         "lbl_brand": "Nhãn hiệu & Model",
         "lbl_status": "Trạng thái",
         "lbl_site": "Nhà xưởng / Vị trí *",
@@ -71,7 +71,7 @@ ASSETS_I18N = {
         "lbl_plate": "🚗 Biển số xe *",
         "lbl_v_model": "🚗 Hiệu xe & Dòng xe *",
         "lbl_inspection_date": "🚗 Hạn đăng kiểm xe",
-        "btn_submit": "📌 Lưu tài sản / Xe mới",
+        "btn_submit": "📌 Lưu tài sản mới",
         "lbl_search": "🔍 Tìm kiếm tài sản / Biển số / Mã / Người quản lý:"
     }
 }
@@ -217,17 +217,17 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     tab_add, tab_excel, tab_list = st.tabs([L["tab_add"], L["tab_excel"], L["tab_list"]])
 
     # ----------------------------------------------------
-    # ➕ 頁籤 1: 新增固定資產與車輛
+    # ➕ 頁籤 1: 新增固定資產
     # ----------------------------------------------------
     with tab_add:
-        st.markdown(f"### {L['tab_add']}")
+        st.markdown(f"### ➕ 新增固定資產")
         
         with st.form("form_add_asset"):
             c1, c2 = st.columns(2)
             with c1:
                 asset_code = st.text_input(L["lbl_code"], value="AST-VH-002", placeholder="例: AST-VH-001")
                 asset_cat = st.selectbox(L["lbl_cat"], ASSET_CATEGORIES)
-                asset_name = st.text_input(L["lbl_name"], placeholder="例: 賓士 S450")
+                asset_name = st.text_input(L["lbl_name"], placeholder="例: 賓士 S450 / 500KVA變壓器")
                 purchase_dt = st.date_input(L["lbl_purchase_date"], datetime.date(2023, 1, 1))
             with c2:
                 site_loc = st.selectbox(L["lbl_site"], ["越南西寧廠 (Tay Ninh)"])
@@ -239,7 +239,6 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 salvage_str = st.text_input(L["lbl_salvage"], value="85.000.000")
                 salvage_val = parse_formatted_amount(salvage_str)
 
-            # 共同欄位：保管人姓名 / 負責人
             general_custodian = st.text_input(L["lbl_custodian"], value="Nguyễn Văn Tài", placeholder="例: 阮文財 / 王大明")
 
             license_plate = ""
@@ -261,7 +260,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 inspection_date = st.date_input(L["lbl_inspection_date"], datetime.date(2027, 10, 16))
                 st.markdown("</div>", unsafe_allow_html=True)
             else:
-                v_model = st.text_input(L["lbl_brand"], placeholder="例: 500KVA 變壓器 / 品牌型號")
+                v_model = st.text_input(L["lbl_brand"], placeholder="例: 廠牌型號 / 規格")
 
             if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
                 if not asset_code or not asset_name:
@@ -297,19 +296,19 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                         "bm": v_model, "plate": license_plate, "driver": general_custodian, "pdate": purchase_dt,
                                         "exp": inspection_date, "cost": cost_val, "sal": salvage_val, "status": asset_status
                                     })
-                                st.success(f"🎉 成功新增資產【{asset_name}】 | 保管人：{general_custodian} | 原價：{format_vnd(cost_val)}")
+                                st.success(f"🎉 成功新增固定資產【{asset_name}】 | 保管人：{general_custodian} | 原價：{format_vnd(cost_val)}")
                                 st.rerun()
                             except Exception as e:
                                 st.error("寫入失敗: " + str(e))
                         else:
-                            st.success(f"🎉 [展示模式] 車輛/資產【{asset_name}】建立成功！")
+                            st.success(f"🎉 [展示模式] 固定資產【{asset_name}】建立成功！")
 
     # ----------------------------------------------------
     # 📊 頁籤 2: Excel 智慧批次匯入
     # ----------------------------------------------------
     with tab_excel:
-        st.markdown("### 📊 固定資產與車輛 Excel 智慧批次匯入")
-        st.info("請上傳包含資產資料的 Excel 檔案 (.xlsx)。支援欄位包含：資產編號、資產名稱、資產類別、車牌號碼、廠牌型號、保管人、取得原價等。")
+        st.markdown(f"### {L['tab_excel']}")
+        st.info("請上傳包含固定資產資料的 Excel 檔案 (.xlsx)。支援欄位包含：資產編號、資產名稱、資產類別、廠牌型號、保管人、取得原價等。")
         
         uploaded_file = st.file_uploader("選擇 Excel 檔案上傳", type=["xlsx", "xls"])
         if uploaded_file is not None:
@@ -400,8 +399,8 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                             months_used, accum_depr, net_value = calculate_5y_depreciation(cost_amt, salvage_amt, p_date)
 
                             data_list.append({
-                                "資產/車輛編號": item.get("asset_code"),
-                                "名稱/車牌號碼": item.get("asset_name") or item.get("license_plate"),
+                                "資產編號": item.get("asset_code"),
+                                "資產名稱": item.get("asset_name") or item.get("license_plate"),
                                 "資產類別": item.get("category"),
                                 "廠牌/型號": item.get("brand_model") or "無",
                                 "保管人/負責人": item.get("driver_custodian") or "未指定",
@@ -418,7 +417,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                             st.dataframe(pd.DataFrame(data_list), use_container_width=True)
                             
                             st.markdown("---")
-                            st.markdown("### ✏️ 固定資產與車輛資料修改 / 刪除管理")
+                            st.markdown("### ✏️ 固定資產資料修改 / 刪除管理")
                             asset_options = [f"{item['asset_code']} - {item['asset_name'] or item['license_plate']} (保管人: {item.get('driver_custodian', '無')})" for item in raw_items]
                             selected_target = st.selectbox("選擇要修改或刪除的資產", asset_options)
                             
@@ -431,8 +430,8 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                         ec1, ec2 = st.columns(2)
                                         with ec1:
                                             ed_code = st.text_input("資產/合約編號 (可修改)", value=target_item.get("asset_code", ""))
-                                            ed_name = st.text_input("資產或車輛名稱", value=target_item.get("asset_name", ""))
-                                            ed_plate = st.text_input("車牌號碼", value=target_item.get("license_plate", ""))
+                                            ed_name = st.text_input("資產名稱", value=target_item.get("asset_name", ""))
+                                            ed_plate = st.text_input("車牌號碼 (若為車輛)", value=target_item.get("license_plate", ""))
                                             ed_driver = st.text_input("保管人姓名 / 負責人", value=target_item.get("driver_custodian", ""))
                                             
                                             raw_pdate = target_item.get("purchase_date")
@@ -476,7 +475,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                                         "bm": ed_brand, "driver": ed_driver, "pdate": ed_pdate,
                                                         "cost": final_cost, "sal": final_salvage, "old_code": target_code
                                                     })
-                                                st.success(f"🎉 資產編號 [{ed_code}] 資料更新成功！")
+                                                st.success(f"🎉 固定資產編號 [{ed_code}] 資料更新成功！")
                                                 st.rerun()
                                             except Exception as e:
                                                 st.error("更新失敗 (可能是編號與其他資產重複): " + str(e))
@@ -485,14 +484,14 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                             try:
                                                 with engine.begin() as conn:
                                                     conn.execute(text("DELETE FROM public.fixed_assets WHERE asset_code = :code;"), {"code": target_code})
-                                                st.success(f"🗑️ 資產編號 [{target_code}] 已成功刪除！")
+                                                st.success(f"🗑️ 固定資產編號 [{target_code}] 已成功刪除！")
                                                 st.rerun()
                                             except Exception as e:
                                                 st.error("刪除失敗: " + str(e))
                         else:
-                            st.warning("查無符合關鍵字的資產或車輛紀錄。")
+                            st.warning("查無符合關鍵字的固定資產紀錄。")
                     else:
-                        st.info("目前尚無固定資產與車輛資料。")
+                        st.info("目前尚無固定資產資料。")
             except Exception as e:
                 st.error("讀取失敗: " + str(e))
 
