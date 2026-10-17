@@ -219,8 +219,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                 t_sec_curr = st.selectbox("第二幣別選擇", ["USD", "TWD", "RMB"], key="tw_sec_curr")
                 
                 # 動態帶入所選幣別，絕不寫死 USD
-                t_sec_sal = st.number_input(f"外派第二薪資金額 ({t_sec_curr})", min_value=0.0, value=1500.0, step=100.0, format="%.2f")
-                st.markdown(f"**💲 外派薪資即時預覽：`{t_sec_sal:,.2f} {t_sec_curr}`**")
+                t_sec_sal = st.number_input(f"外派第二薪資金額 ")
 
             if st.form_submit_button("💾 儲存外派幹部檔案 (含雙薪設定)", type="primary", use_container_width=True):
                 if engine and t_code and t_name:
