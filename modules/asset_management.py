@@ -257,7 +257,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     with tab_add:
         st.markdown(f"### {L['tab_add']}")
         
-        # 🔄 即時類別選擇（移至 form 外部以實現即時頁面刷新）
+        # 🔄 即時類別選擇（表單外部，確保切換時畫面立即反應）
         asset_cat = st.selectbox(L["lbl_cat"], ASSET_CATEGORIES, key="dynamic_asset_cat_selector")
 
         with st.form("form_add_asset"):
@@ -560,4 +560,4 @@ def show(engine=None, lang="繁體中文", **kwargs):
     render_asset_management_page(engine=engine, lang=lang, **kwargs)
 
 def main(engine=None, lang="繁體中文", **kwargs):
-    render_asset_management_page(
+    render_asset_management_page(engine=engine, lang=lang, **kwargs)
