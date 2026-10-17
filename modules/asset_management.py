@@ -11,7 +11,7 @@ ASSETS_I18N = {
     "繁體中文": {
         "title": "🏢 固定資產與設備管理 (Fixed Assets & Equipment)",
         "caption": "維護廠區機器設備與公務車輛，提供 5 年直線折舊試算、資產殘值查詢與 Excel 智慧批次匯入。",
-        "tab_add": "➕ 新增固定資產",
+        "tab_add": "➕ 新增固定資產與車輛",
         "tab_excel": "📊 Excel 智慧批次匯入",
         "tab_list": "📋 固定資產清冊與 5 年折舊攤分試算",
         "lbl_code": "資產/合約編號 *",
@@ -23,17 +23,17 @@ ASSETS_I18N = {
         "lbl_cost": "💰 取得原價成本 (VND) *",
         "lbl_salvage": "💰 預估 5 年後殘值 (VND) [預設 10%]",
         "lbl_cat": "資產類別 *",
+        "lbl_custodian": "👤 保管人姓名 / 負責人 *",
         "lbl_plate": "🚗 車牌號碼 (Biển số xe) *",
         "lbl_v_model": "🚗 車輛廠牌與詳細型號 *",
-        "lbl_driver": "🚗 預設駕駛員 / 負責保管人",
         "lbl_inspection_date": "🚗 車輛驗車/行照到期日",
-        "btn_submit": "📌 確認新增固定資產",
-        "lbl_search": "🔍 輸入關鍵字查詢資產/車牌/編號："
+        "btn_submit": "📌 確認新增固定資產或車輛",
+        "lbl_search": "🔍 輸入關鍵字查詢資產/車牌/編號/保管人："
     },
     "English": {
         "title": "🏢 Fixed Assets & Equipment Management",
         "caption": "Manage plant equipment and vehicles with depreciation and Excel batch import.",
-        "tab_add": "➕ Add Asset ",
+        "tab_add": "➕ Add Asset / Vehicle",
         "tab_excel": "📊 Excel Batch Import",
         "tab_list": "📋 Asset Inventory & 5-Year Depreciation",
         "lbl_code": "Asset Code *",
@@ -45,17 +45,17 @@ ASSETS_I18N = {
         "lbl_cost": "💰 Cost Price (VND) *",
         "lbl_salvage": "💰 Est. Residual Value (VND)",
         "lbl_cat": "Asset Category *",
+        "lbl_custodian": "👤 Custodian / Responsible Person *",
         "lbl_plate": "🚗 License Plate No. *",
         "lbl_v_model": "🚗 Vehicle Brand & Model *",
-        "lbl_driver": "🚗 Default Driver / Custodian",
         "lbl_inspection_date": "🚗 Inspection Expiry Date",
-        "btn_submit": "📌 Save Asset ",
-        "lbl_search": "🔍 Search Asset / Plate / Code:"
+        "btn_submit": "📌 Save Asset / Vehicle",
+        "lbl_search": "🔍 Search Asset / Plate / Code / Custodian:"
     },
     "Tiếng Việt": {
         "title": "🏢 Quản lý Tài sản cố định & Xe công tác",
         "caption": "Quản lý máy móc, xe công ty, tính khấu hao và nhập Excel tự động.",
-        "tab_add": "➕ Thêm mới tài sản ",
+        "tab_add": "➕ Thêm mới tài sản / Xe",
         "tab_excel": "📊 Nhập Excel hàng loạt",
         "tab_list": "📋 Danh sách tài sản & Khấu hao 5 năm",
         "lbl_code": "Mã tài sản *",
@@ -67,12 +67,12 @@ ASSETS_I18N = {
         "lbl_cost": "💰 Nguyên giá (VND) *",
         "lbl_salvage": "💰 Giá trị thanh lý dự kiến (VND)",
         "lbl_cat": "Phân loại tài sản *",
+        "lbl_custodian": "👤 Người quản lý / Trách nhiệm *",
         "lbl_plate": "🚗 Biển số xe *",
         "lbl_v_model": "🚗 Hiệu xe & Dòng xe *",
-        "lbl_driver": "🚗 Tài xế / Người quản lý",
         "lbl_inspection_date": "🚗 Hạn đăng kiểm xe",
-        "btn_submit": "📌 Lưu tài sản / ",
-        "lbl_search": "🔍 Tìm kiếm tài sản / Biển số / Mã:"
+        "btn_submit": "📌 Lưu tài sản / Xe mới",
+        "lbl_search": "🔍 Tìm kiếm tài sản / Biển số / Mã / Người quản lý:"
     }
 }
 
@@ -184,6 +184,7 @@ def init_assets_db(engine):
             """))
             conn.execute(text("ALTER TABLE public.fixed_assets ALTER COLUMN cost_amount TYPE NUMERIC(18,2);"))
             conn.execute(text("ALTER TABLE public.fixed_assets ALTER COLUMN salvage_amount TYPE NUMERIC(18,2);"))
+            conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS driver_custodian VARCHAR(100);"))
     except Exception:
         pass
 
@@ -238,33 +239,35 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 salvage_str = st.text_input(L["lbl_salvage"], value="85.000.000")
                 salvage_val = parse_formatted_amount(salvage_str)
 
+            # 共同欄位：保管人姓名 / 負責人
+            general_custodian = st.text_input(L["lbl_custodian"], value="Nguyễn Văn Tài", placeholder="例: 阮文財 / 王大明")
+
             license_plate = ""
             v_model = ""
-            driver_name = ""
             inspection_date = None
 
             if "車輛" in asset_cat:
                 st.markdown("""
                 <div class="vehicle-box">
-                    <h5 style="color:#1E40AF; margin-top:0;">🚗 車輛專屬資料（自動同步至公務派車與保修模組）</h5>
+                    <h5 style="color:#1E40AF; margin-top:0;">🚗 車輛專屬補充資料（自動同步至公務派車與保修模組）</h5>
                 """, unsafe_allow_html=True)
                 
-                v_c1, v_c2, v_c3 = st.columns(3)
+                v_c1, v_c2 = st.columns(2)
                 with v_c1:
                     license_plate = st.text_input(L["lbl_plate"], value="70A-492.14")
                 with v_c2:
                     v_model = st.text_input(L["lbl_v_model"], value="Mercedes-Benz S450")
-                with v_c3:
-                    driver_name = st.text_input(L["lbl_driver"], value="Nguyễn Văn Tài")
 
                 inspection_date = st.date_input(L["lbl_inspection_date"], datetime.date(2027, 10, 16))
                 st.markdown("</div>", unsafe_allow_html=True)
             else:
-                v_model = st.text_input(L["lbl_brand"], placeholder="例: 500KVA 變壓器")
+                v_model = st.text_input(L["lbl_brand"], placeholder="例: 500KVA 變壓器 / 品牌型號")
 
             if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
                 if not asset_code or not asset_name:
                     st.error("⚠️ 請填寫資產編號與名稱！")
+                elif not general_custodian:
+                    st.error("⚠️ 請填寫資產保管人姓名！")
                 elif "車輛" in asset_cat and not license_plate:
                     st.error("⚠️ 請填寫車輛的【車牌號碼】！")
                 elif cost_val <= 0:
@@ -291,10 +294,10 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                         VALUES (:code, :name, :cat, :site, :bm, :plate, :driver, :pdate, :exp, :cost, :sal, :status);
                                     """), {
                                         "code": asset_code, "name": asset_name, "cat": asset_cat, "site": site_loc,
-                                        "bm": v_model, "plate": license_plate, "driver": driver_name, "pdate": purchase_dt,
+                                        "bm": v_model, "plate": license_plate, "driver": general_custodian, "pdate": purchase_dt,
                                         "exp": inspection_date, "cost": cost_val, "sal": salvage_val, "status": asset_status
                                     })
-                                st.success(f"🎉 車輛/資產【{asset_name}】建立成功！原價：{format_vnd(cost_val)}")
+                                st.success(f"🎉 成功新增資產【{asset_name}】 | 保管人：{general_custodian} | 原價：{format_vnd(cost_val)}")
                                 st.rerun()
                             except Exception as e:
                                 st.error("寫入失敗: " + str(e))
@@ -306,7 +309,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_excel:
         st.markdown("### 📊 固定資產與車輛 Excel 智慧批次匯入")
-        st.info("請上傳包含資產資料的 Excel 檔案 (.xlsx)。系統會自動識別欄位，並將資料寫入資料庫主表中。")
+        st.info("請上傳包含資產資料的 Excel 檔案 (.xlsx)。支援欄位包含：資產編號、資產名稱、資產類別、車牌號碼、廠牌型號、保管人、取得原價等。")
         
         uploaded_file = st.file_uploader("選擇 Excel 檔案上傳", type=["xlsx", "xls"])
         if uploaded_file is not None:
@@ -321,7 +324,6 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                     with engine.begin() as conn:
                         for _, row in df_upload.iterrows():
                             try:
-                                # 智慧對應欄位名稱（支援中文與英文表頭）
                                 code = str(row.get("資產編號") or row.get("Asset Code") or row.get("Mã tài sản") or f"AST-{datetime.datetime.now().strftime('%H%M%S%f')}")
                                 name = str(row.get("資產名稱") or row.get("Asset Name") or row.get("Tên tài sản") or "未命名資產")
                                 raw_cat = str(row.get("資產類別") or row.get("Category") or "")
@@ -329,7 +331,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                 site = str(row.get("廠區") or row.get("Location") or "越南西寧廠 (Tay Ninh)")
                                 plate = str(row.get("車牌號碼") or row.get("License Plate") or "")
                                 brand = str(row.get("廠牌型號") or row.get("Brand") or "")
-                                driver = str(row.get("保管人") or row.get("Driver") or "")
+                                driver = str(row.get("保管人") or row.get("Driver") or row.get("Custodian") or "管理部")
                                 
                                 cost = float(row.get("取得原價") or row.get("Cost") or 0)
                                 salvage = float(row.get("預估殘值") or row.get("Salvage") or (cost * 0.1))
@@ -342,7 +344,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                 """), {
                                     "code": code.strip(), "name": name, "cat": cat, "site": site,
                                     "bm": brand, "plate": plate if plate != "nan" else "", 
-                                    "driver": driver if driver != "nan" else "", "cost": cost, "sal": salvage
+                                    "driver": driver if driver != "nan" else "管理部", "cost": cost, "sal": salvage
                                 })
                                 success_count += 1
                             except Exception:
@@ -367,7 +369,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
         </div>
         """, unsafe_allow_html=True)
         
-        search_kw = st.text_input(L["lbl_search"], placeholder="搜尋資產名稱、車牌號碼或編號...")
+        search_kw = st.text_input(L["lbl_search"], placeholder="搜尋資產名稱、車牌號碼、編號或保管人...")
 
         if engine:
             try:
@@ -386,7 +388,8 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                 match_code = kw in str(item.get("asset_code", "")).lower()
                                 match_name = kw in str(item.get("asset_name", "")).lower()
                                 match_plate = kw in str(item.get("license_plate", "")).lower()
-                                if not (match_code or match_name or match_plate):
+                                match_driver = kw in str(item.get("driver_custodian", "")).lower()
+                                if not (match_code or match_name or match_plate or match_driver):
                                     continue
 
                             raw_items.append(item)
@@ -401,6 +404,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                 "名稱/車牌號碼": item.get("asset_name") or item.get("license_plate"),
                                 "資產類別": item.get("category"),
                                 "廠牌/型號": item.get("brand_model") or "無",
+                                "保管人/負責人": item.get("driver_custodian") or "未指定",
                                 "購買日期": str(p_date)[:10],
                                 "取得原價": format_vnd(cost_amt),
                                 "已使用月份": f"{months_used} 個月 / 60",
@@ -415,7 +419,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                             
                             st.markdown("---")
                             st.markdown("### ✏️ 固定資產與車輛資料修改 / 刪除管理")
-                            asset_options = [f"{item['asset_code']} - {item['asset_name'] or item['license_plate']}" for item in raw_items]
+                            asset_options = [f"{item['asset_code']} - {item['asset_name'] or item['license_plate']} (保管人: {item.get('driver_custodian', '無')})" for item in raw_items]
                             selected_target = st.selectbox("選擇要修改或刪除的資產", asset_options)
                             
                             if selected_target:
@@ -429,6 +433,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                             ed_code = st.text_input("資產/合約編號 (可修改)", value=target_item.get("asset_code", ""))
                                             ed_name = st.text_input("資產或車輛名稱", value=target_item.get("asset_name", ""))
                                             ed_plate = st.text_input("車牌號碼", value=target_item.get("license_plate", ""))
+                                            ed_driver = st.text_input("保管人姓名 / 負責人", value=target_item.get("driver_custodian", ""))
                                             
                                             raw_pdate = target_item.get("purchase_date")
                                             if isinstance(raw_pdate, (datetime.date, datetime.datetime)):
@@ -442,7 +447,6 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
                                         with ec2:
                                             ed_brand = st.text_input("廠牌型號", value=target_item.get("brand_model", ""))
-                                            ed_driver = st.text_input("保管人/駕駛員", value=target_item.get("driver_custodian", ""))
                                             
                                             default_cost_str = format_vnd_input(target_item.get("cost_amount", 0))
                                             ed_cost = st.text_input("取得原價成本 (VND)", value=default_cost_str)
