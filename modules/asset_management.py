@@ -10,8 +10,9 @@ from sqlalchemy import text
 ASSETS_I18N = {
     "繁體中文": {
         "title": "🏢 固定資產與設備管理 (Fixed Assets & Equipment)",
-        "caption": "維護廠區機器設備與公務車輛，提供 5 年直線折舊試算與資產殘值查詢。",
+        "caption": "維護廠區機器設備與公務車輛，提供 5 年直線折舊試算、資產殘值查詢與 Excel 智慧批次匯入。",
         "tab_add": "➕ 新增固定資產與車輛",
+        "tab_excel": "📊 Excel 智慧批次匯入",
         "tab_list": "📋 固定資產清冊與 5 年折舊攤分試算",
         "lbl_code": "資產/合約編號 *",
         "lbl_name": "資產或車輛名稱 *",
@@ -31,8 +32,9 @@ ASSETS_I18N = {
     },
     "English": {
         "title": "🏢 Fixed Assets & Equipment Management",
-        "caption": "Manage plant equipment and vehicles with 5-year depreciation calculation.",
+        "caption": "Manage plant equipment and vehicles with depreciation and Excel batch import.",
         "tab_add": "➕ Add Asset / Vehicle",
+        "tab_excel": "📊 Excel Batch Import",
         "tab_list": "📋 Asset Inventory & 5-Year Depreciation",
         "lbl_code": "Asset Code *",
         "lbl_name": "Asset Name *",
@@ -52,8 +54,9 @@ ASSETS_I18N = {
     },
     "Tiếng Việt": {
         "title": "🏢 Quản lý Tài sản cố định & Xe công tác",
-        "caption": "Quản lý máy móc, xe công ty và tính khấu hao 5 năm.",
+        "caption": "Quản lý máy móc, xe công ty, tính khấu hao và nhập Excel tự động.",
         "tab_add": "➕ Thêm mới tài sản / Xe",
+        "tab_excel": "📊 Nhập Excel hàng loạt",
         "tab_list": "📋 Danh sách tài sản & Khấu hao 5 năm",
         "lbl_code": "Mã tài sản *",
         "lbl_name": "Tên tài sản / Hợp đồng *",
@@ -184,6 +187,21 @@ def init_assets_db(engine):
     except Exception:
         pass
 
+def auto_detect_category(name_str):
+    name_lower = str(name_str).lower()
+    if any(k in name_lower for k in ["車", "car", "benz", "toyota", "ford", "truck", "堆高機", "卡車"]):
+        return ASSET_CATEGORIES[0]
+    elif any(k in name_lower for k in ["機", "設備", "線", "變壓器", "transformer", "generator"]):
+        return ASSET_CATEGORIES[1]
+    elif any(k in name_lower for k in ["廠房", "土地", "宿舍", "building", "land"]):
+        return ASSET_CATEGORIES[2]
+    elif any(k in name_lower for k in ["租賃", "合約", "lease", "contract"]):
+        return ASSET_CATEGORIES[3]
+    elif any(k in name_lower for k in ["電腦", "伺服器", "it", "server", "pc", "laptop"]):
+        return ASSET_CATEGORIES[4]
+    else:
+        return ASSET_CATEGORIES[5]
+
 def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     inject_assets_css()
 
@@ -195,7 +213,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
     init_assets_db(engine)
 
-    tab_add, tab_list = st.tabs([L["tab_add"], L["tab_list"]])
+    tab_add, tab_excel, tab_list = st.tabs([L["tab_add"], L["tab_excel"], L["tab_list"]])
 
     # ----------------------------------------------------
     # ➕ 頁籤 1: 新增固定資產與車輛
@@ -284,7 +302,59 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                             st.success(f"🎉 [展示模式] 車輛/資產【{asset_name}】建立成功！")
 
     # ----------------------------------------------------
-    # 📋 頁籤 2: 清冊查看、5 年直線折舊攤分試算、修改與刪除
+    # 📊 頁籤 2: Excel 智慧批次匯入
+    # ----------------------------------------------------
+    with tab_excel:
+        st.markdown("### 📊 固定資產與車輛 Excel 智慧批次匯入")
+        st.info("請上傳包含資產資料的 Excel 檔案 (.xlsx)。系統會自動識別欄位，並將資料寫入資料庫主表中。")
+        
+        uploaded_file = st.file_uploader("選擇 Excel 檔案上傳", type=["xlsx", "xls"])
+        if uploaded_file is not None:
+            try:
+                df_upload = pd.read_excel(uploaded_file)
+                st.markdown("##### 📄 預覽上傳的 Excel 數據內容：")
+                st.dataframe(df_upload.head(5), use_container_width=True)
+
+                if st.button("🚀 確認執行 Excel 智慧識別並寫入資料庫", type="primary"):
+                    success_count = 0
+                    error_count = 0
+                    with engine.begin() as conn:
+                        for _, row in df_upload.iterrows():
+                            try:
+                                # 智慧對應欄位名稱（支援中文與英文表頭）
+                                code = str(row.get("資產編號") or row.get("Asset Code") or row.get("Mã tài sản") or f"AST-{datetime.datetime.now().strftime('%H%M%S%f')}")
+                                name = str(row.get("資產名稱") or row.get("Asset Name") or row.get("Tên tài sản") or "未命名資產")
+                                raw_cat = str(row.get("資產類別") or row.get("Category") or "")
+                                cat = raw_cat if raw_cat in ASSET_CATEGORIES else auto_detect_category(name)
+                                site = str(row.get("廠區") or row.get("Location") or "越南西寧廠 (Tay Ninh)")
+                                plate = str(row.get("車牌號碼") or row.get("License Plate") or "")
+                                brand = str(row.get("廠牌型號") or row.get("Brand") or "")
+                                driver = str(row.get("保管人") or row.get("Driver") or "")
+                                
+                                cost = float(row.get("取得原價") or row.get("Cost") or 0)
+                                salvage = float(row.get("預估殘值") or row.get("Salvage") or (cost * 0.1))
+                                
+                                conn.execute(text("""
+                                    INSERT INTO public.fixed_assets 
+                                    (asset_code, asset_name, category, site_location, brand_model, license_plate, driver_custodian, cost_amount, salvage_amount, status)
+                                    VALUES (:code, :name, :cat, :site, :bm, :plate, :driver, :cost, :sal, '🟢 在用/租賃中')
+                                    ON CONFLICT (asset_code) DO NOTHING;
+                                """), {
+                                    "code": code.strip(), "name": name, "cat": cat, "site": site,
+                                    "bm": brand, "plate": plate if plate != "nan" else "", 
+                                    "driver": driver if driver != "nan" else "", "cost": cost, "sal": salvage
+                                })
+                                success_count += 1
+                            except Exception:
+                                error_count += 1
+                    
+                    st.success(f"🎉 Excel 批次匯入完成！成功寫入：{success_count} 筆，略過/錯誤：{error_count} 筆。")
+                    st.rerun()
+            except Exception as e:
+                st.error("❌ 解析 Excel 失敗: " + str(e))
+
+    # ----------------------------------------------------
+    # 📋 頁籤 3: 清冊查看、5 年直線折舊攤分試算、修改與刪除
     # ----------------------------------------------------
     with tab_list:
         st.markdown(f"### {L['tab_list']}")
@@ -356,7 +426,6 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                     with st.form("form_edit_asset"):
                                         ec1, ec2 = st.columns(2)
                                         with ec1:
-                                            # 讓「資產編號」與「購買日期」也能在修改時調整
                                             ed_code = st.text_input("資產/合約編號 (可修改)", value=target_item.get("asset_code", ""))
                                             ed_name = st.text_input("資產或車輛名稱", value=target_item.get("asset_name", ""))
                                             ed_plate = st.text_input("車牌號碼", value=target_item.get("license_plate", ""))
