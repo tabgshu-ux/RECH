@@ -11,7 +11,7 @@ ASSETS_I18N = {
     "繁體中文": {
         "title": "🏢 固定資產與設備管理 (Fixed Assets & Equipment)",
         "caption": "維護廠區機器設備與公務車輛，提供 5 年直線折舊試算、資產殘值查詢與 Excel 智慧批次匯入。",
-        "tab_add": "➕ 新增固定資產與車輛",
+        "tab_add": "➕ 新增固定資產",
         "tab_excel": "📊 Excel 智慧批次匯入",
         "tab_list": "📋 固定資產清冊與 5 年折舊攤分試算",
         "lbl_code": "資產/合約編號 *",
@@ -27,13 +27,13 @@ ASSETS_I18N = {
         "lbl_v_model": "🚗 車輛廠牌與詳細型號 *",
         "lbl_driver": "🚗 預設駕駛員 / 負責保管人",
         "lbl_inspection_date": "🚗 車輛驗車/行照到期日",
-        "btn_submit": "📌 確認新增固定資產或車輛",
+        "btn_submit": "📌 確認新增固定資產",
         "lbl_search": "🔍 輸入關鍵字查詢資產/車牌/編號："
     },
     "English": {
         "title": "🏢 Fixed Assets & Equipment Management",
         "caption": "Manage plant equipment and vehicles with depreciation and Excel batch import.",
-        "tab_add": "➕ Add Asset / Vehicle",
+        "tab_add": "➕ Add Asset ",
         "tab_excel": "📊 Excel Batch Import",
         "tab_list": "📋 Asset Inventory & 5-Year Depreciation",
         "lbl_code": "Asset Code *",
@@ -49,13 +49,13 @@ ASSETS_I18N = {
         "lbl_v_model": "🚗 Vehicle Brand & Model *",
         "lbl_driver": "🚗 Default Driver / Custodian",
         "lbl_inspection_date": "🚗 Inspection Expiry Date",
-        "btn_submit": "📌 Save Asset / Vehicle",
+        "btn_submit": "📌 Save Asset ",
         "lbl_search": "🔍 Search Asset / Plate / Code:"
     },
     "Tiếng Việt": {
         "title": "🏢 Quản lý Tài sản cố định & Xe công tác",
         "caption": "Quản lý máy móc, xe công ty, tính khấu hao và nhập Excel tự động.",
-        "tab_add": "➕ Thêm mới tài sản / Xe",
+        "tab_add": "➕ Thêm mới tài sản ",
         "tab_excel": "📊 Nhập Excel hàng loạt",
         "tab_list": "📋 Danh sách tài sản & Khấu hao 5 năm",
         "lbl_code": "Mã tài sản *",
@@ -71,7 +71,7 @@ ASSETS_I18N = {
         "lbl_v_model": "🚗 Hiệu xe & Dòng xe *",
         "lbl_driver": "🚗 Tài xế / Người quản lý",
         "lbl_inspection_date": "🚗 Hạn đăng kiểm xe",
-        "btn_submit": "📌 Lưu tài sản / Xe mới",
+        "btn_submit": "📌 Lưu tài sản / ",
         "lbl_search": "🔍 Tìm kiếm tài sản / Biển số / Mã:"
     }
 }
