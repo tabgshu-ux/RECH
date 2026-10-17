@@ -42,7 +42,6 @@ EMP_I18N = {
 }
 
 def get_system_roles_from_db(engine):
-    """🔌 嚴格純淨連線：僅從 Supabase 資料庫的 public.system_roles 讀取"""
     db_roles = []
     if engine:
         try:
@@ -53,14 +52,11 @@ def get_system_roles_from_db(engine):
                     db_roles = [r[0] for r in rows if r[0]]
         except Exception:
             pass
-
     if not db_roles:
         db_roles = ["系統管理員 (Admin)", "一般員工 (Staff)"]
-
     return db_roles
 
 def get_factory_list(engine):
-    """取得資料庫中定義的廠區"""
     if not engine:
         return [DEFAULT_FACTORY]
     try:
@@ -74,7 +70,6 @@ def get_factory_list(engine):
     return [DEFAULT_FACTORY]
 
 def init_employee_db(engine):
-    """確保員工表具備完整欄位（支援雙薪欄位）"""
     if not engine:
         return
     try:
@@ -220,12 +215,11 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                     t_sal_vnd = 30000000.0
                 st.markdown(f"**💡 越南盾確認金額：`{t_sal_vnd:,.0f} ₫ (VND)`**")
                 
-                sc_col1, sc_col2 = st.columns([1, 2])
-                with sc_col1:
-                    t_sec_curr = st.selectbox("第二幣別", ["USD", "TWD", "RMB"], key="tw_sec_curr")
-                with sc_col2:
-                    # 徹底移除寫死的 USD，標題完全依據所選幣別動態顯示
-                    t_sec_sal = st.number_input(f"外派第二薪資 ({t_sec_curr})", min_value=0.0, value=1500.0, step=100.0, format="%.2f")
+                # 先選擇幣別，讓下方輸入框與預覽文字動態讀取
+                t_sec_curr = st.selectbox("第二幣別選擇", ["USD", "TWD", "RMB"], key="tw_sec_curr")
+                
+                # 動態帶入所選幣別，絕不寫死 USD
+                t_sec_sal = st.number_input(f"外派第二薪資金額 ({t_sec_curr})", min_value=0.0, value=1500.0, step=100.0, format="%.2f")
                 st.markdown(f"**💲 外派薪資即時預覽：`{t_sec_sal:,.2f} {t_sec_curr}`**")
 
             if st.form_submit_button("💾 儲存外派幹部檔案 (含雙薪設定)", type="primary", use_container_width=True):
@@ -306,11 +300,8 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                     curr_sec_curr = str(e.get("second_currency") or "USD")
                                     sec_curr_idx = ["USD", "TWD", "RMB"].index(curr_sec_curr) if curr_sec_curr in ["USD", "TWD", "RMB"] else 0
                                     
-                                    sc_e1, sc_e2 = st.columns([1, 2])
-                                    with sc_e1:
-                                        edit_sec_curr = st.selectbox("第二幣別", ["USD", "TWD", "RMB"], index=sec_curr_idx, key="edit_sec_curr")
-                                    with sc_e2:
-                                        edit_sec_sal = st.number_input(f"外派第二薪資 ({edit_sec_curr})", value=float(e.get("second_salary") or 0.0), step=100.0, format="%.2f")
+                                    edit_sec_curr = st.selectbox("第二幣別選擇", ["USD", "TWD", "RMB"], index=sec_curr_idx, key="edit_sec_curr")
+                                    edit_sec_sal = st.number_input(f"外派第二薪資金額 ({edit_sec_curr})", value=float(e.get("second_salary") or 0.0), step=100.0, format="%.2f")
                                     st.markdown(f"**💲 外派薪資即時預覽：`{edit_sec_sal:,.2f} {edit_sec_curr}`**")
 
                                 if st.form_submit_button("💾 儲存修改內容", type="primary", use_container_width=True):
