@@ -10,16 +10,15 @@ from sqlalchemy import text
 ASSETS_I18N = {
     "繁體中文": {
         "title": "🏢 固定資產與設備管理 (Fixed Assets & Equipment)",
-        "caption": "支援車輛車牌、一般資產條碼掃描認證、以及越南土地/廠房平方公尺 ($\text{m}^2$) 租賃與續約管理。",
+        "caption": "支援車輛車牌、條碼掃描認證、以及越南土地/廠房平方公尺 (m²) 租賃管理。",
         "tab_add": "➕ 新增固定資產",
         "tab_excel": "📊 Excel 智慧批次匯入",
         "tab_list": "📋 固定資產清冊與動態過濾",
         "lbl_code": "資產/合約編號 *",
         "lbl_name": "資產名稱 *",
-        "lbl_brand": "品牌與型號 / 廠牌",
         "lbl_status": "目前狀態",
         "lbl_site": "存放廠區 *",
-        "lbl_sub_location": "詳細位置 (如: 辦公室/線材倉庫等) *",
+        "lbl_sub_location": "詳細位置 *",
         "lbl_dept": "使用/權責部門 *",
         "lbl_purchase_date": "📅 購買/取得/合約起日 *",
         "lbl_cost": "💰 取得原價成本 / 初始總金額 (VND) *",
@@ -31,13 +30,12 @@ ASSETS_I18N = {
     },
     "English": {
         "title": "🏢 Fixed Assets & Equipment Management",
-        "caption": "Supports vehicles, barcodes, and Vietnam land/building sqm ($m^2$) leasing & renewal management.",
+        "caption": "Supports vehicles, barcodes, and Vietnam land/building sqm (m²) leasing.",
         "tab_add": "➕ Add Asset",
         "tab_excel": "📊 Excel Batch Import",
         "tab_list": "📋 Asset Inventory",
         "lbl_code": "Asset Code *",
         "lbl_name": "Asset Name *",
-        "lbl_brand": "Brand & Model",
         "lbl_status": "Status",
         "lbl_site": "Plant Location *",
         "lbl_sub_location": "Specific Location *",
@@ -52,13 +50,12 @@ ASSETS_I18N = {
     },
     "Tiếng Việt": {
         "title": "🏢 Quản lý Tài sản cố định & Nhà xưởng",
-        "caption": "Quản lý xe, mã vạch tài sản, và đất đai/nhà xưởng theo mét vuông ($m^2$), hợp đồng thuê.",
+        "caption": "Quản lý xe, mã vạch, và đất đai/nhà xưởng theo mét vuông (m²), hợp đồng thuê.",
         "tab_add": "➕ Thêm mới tài sản",
         "tab_excel": "📊 Nhập Excel hàng loạt",
         "tab_list": "📋 Danh sách tài sản",
         "lbl_code": "Mã tài sản *",
         "lbl_name": "Tên tài sản *",
-        "lbl_brand": "Nhãn hiệu & Model",
         "lbl_status": "Trạng thái",
         "lbl_site": "Nhà xưởng *",
         "lbl_sub_location": "Vị trí chi tiết *",
@@ -88,17 +85,6 @@ DEPT_OPTIONS = [
     "工程與設計管理中心 / Trung tâm Kỹ thuật & Thiết kế (Engineering Center)",
     "生產部 / Phòng Sản xuất (Production Dept)",
     "工務與工地現場 / Bộ phận công trường (Site Operations)"
-]
-
-DEFAULT_SUB_LOCATIONS = [
-    "辦公室 / Văn phòng (Office)",
-    "線材倉庫 / Kho dây điện (Wire Warehouse)",
-    "板金組 / Nhóm Chấn dập - 板金 (Sheet Metal)",
-    "塗裝組 / Nhóm Sơn tĩnh điện (Coating)",
-    "裝配組 / Nhóm Lắp ráp (Assembly)",
-    "台灣宿舍 / Ký túc xá Đài Loan",
-    "越南西寧廠區土地 / Đất nhà máy Tây Ninh",
-    "停車場 / Bãi đỗ xe (Parking Lot)"
 ]
 
 STATUS_OPTIONS = [
@@ -175,7 +161,6 @@ def init_assets_db(engine):
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
-            # 確保欄位完整
             columns_to_add = [
                 ("license_plate", "VARCHAR(50)"),
                 ("barcode_serial", "VARCHAR(100)"),
@@ -248,13 +233,6 @@ def inject_assets_css():
             margin-top: 10px;
             margin-bottom: 15px;
         }
-        .depr-box {
-            background-color: #EFF6FF;
-            border-left: 5px solid #3B82F6;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-        }
         </style>
     """, unsafe_allow_html=True)
 
@@ -274,16 +252,18 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     tab_add, tab_excel, tab_list = st.tabs([L["tab_add"], L["tab_excel"], L["tab_list"]])
 
     # ----------------------------------------------------
-    # ➕ 頁籤 1: 新增固定資產 (動態欄位連動)
+    # ➕ 頁籤 1: 新增固定資產 (即時動態欄位連動)
     # ----------------------------------------------------
     with tab_add:
         st.markdown(f"### {L['tab_add']}")
         
+        # 🔄 即時類別選擇（移至 form 外部以實現即時頁面刷新）
+        asset_cat = st.selectbox(L["lbl_cat"], ASSET_CATEGORIES, key="dynamic_asset_cat_selector")
+
         with st.form("form_add_asset"):
             c1, c2 = st.columns(2)
             with c1:
                 asset_code = st.text_input(L["lbl_code"], value="AST-001", placeholder="例: CAR-001 / LAND-001 / IT-001")
-                asset_cat = st.selectbox(L["lbl_cat"], ASSET_CATEGORIES)
                 asset_name = st.text_input(L["lbl_name"], placeholder="例: 賓士 S450 / 西寧廠廠房土地 / 研發部伺服器")
                 site_loc = st.selectbox(L["lbl_site"], site_options)
                 sub_loc = st.text_input(L["lbl_sub_location"], value="辦公室 / Văn phòng (Office)")
@@ -292,7 +272,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 asset_dept = st.selectbox(L["lbl_dept"], DEPT_OPTIONS)
                 asset_status = st.selectbox(L["lbl_status"], STATUS_OPTIONS)
                 
-                cost_str = st.text_input(L["lbl_cost"], value="5.039.000.000", help="輸入數字時系統會自動格式化顯示")
+                cost_str = st.text_input(L["lbl_cost"], value="5.039.000.000")
                 cost_val = parse_formatted_amount(cost_str)
                 st.caption(f"💡 金額即時預覽: **{cost_val:,.0f} VND**".replace(",", "."))
 
@@ -300,7 +280,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 salvage_val = parse_formatted_amount(salvage_str)
                 st.caption(f"💡 殘值即時預覽: **{salvage_val:,.0f} VND**".replace(",", "."))
 
-            general_custodian = st.text_input(L["lbl_custodian"], value="Nguyễn Văn Tài", placeholder="例: 阮文財 / 王大明")
+            general_custodian = st.text_input(L["lbl_custodian"], value="Nguyễn Văn Tài")
 
             # 🚗 變數宣告初始化
             license_plate = ""
@@ -364,7 +344,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                     <h5 style="color:#047857; margin-top:0;">📦 財產條碼與序號認證 / Mã vạch & Serial Number</h5>
                 """, unsafe_allow_html=True)
                 barcode_serial = st.text_input("資產條碼 / 序號 (Barcode / Serial No.)", value="BC-IT-2026-9988", placeholder="可用條碼槍直接掃描輸入...")
-                v_model = st.text_input(L["lbl_brand"], placeholder="例: Dell PowerEdge R750 / 廠牌型號")
+                v_model = st.text_input("品牌與型號 / Brand & Model", placeholder="例: Dell PowerEdge R750")
                 st.markdown("</div>", unsafe_allow_html=True)
 
             if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
@@ -412,7 +392,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_excel:
         st.markdown(f"### {L['tab_excel']}")
-        st.info("請上傳包含固定資產資料的 Excel 檔案 (.xlsx)。支援自動辨識車牌、地號面積 ($m^2$) 與條碼。")
+        st.info("請上傳包含固定資產資料的 Excel 檔案 (.xlsx)。")
         
         uploaded_file = st.file_uploader("選擇 Excel 檔案上傳", type=["xlsx", "xls"])
         if uploaded_file is not None:
@@ -476,7 +456,6 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
                             months_used, accum_depr, net_value = calculate_5y_depreciation(cost_amt, salvage_amt, p_date)
 
-                            # 識別附加資訊
                             extra_info = "-"
                             if item.get("license_plate"):
                                 extra_info = f"🚗 車牌: {item['license_plate']}"
@@ -581,4 +560,4 @@ def show(engine=None, lang="繁體中文", **kwargs):
     render_asset_management_page(engine=engine, lang=lang, **kwargs)
 
 def main(engine=None, lang="繁體中文", **kwargs):
-    render_asset_management_page(engine=engine, lang=lang, **kwargs)
+    render_asset_management_page(
