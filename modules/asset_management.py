@@ -88,25 +88,21 @@ ASSET_CATEGORIES = [
     "📦 辦公傢俱與其他資產"
 ]
 
+# 🔗 實際營運部門清單（已排除資訊管理部）
 DEPT_OPTIONS = [
     "總經理室 (Executive Office)",
     "管理部 (Management Dept)",
     "財務部 (Finance Dept)",
     "工程與設計管理中心 (Engineering & Design Center)",
     "生產部 (Production Dept)",
-    "資訊管理部 (IT & System)",
     "工務與工地現場 (Site Operations)"
 ]
 
 def get_factory_options_from_db(engine):
-    """
-    🔗 全模組主動連動：從資料庫動態讀取廠區設定主檔 (例如 factories 或是 factory_locations)
-    """
-    factories = ["西寧廠 (Tay Ninh)"] # 預設保底廠區
+    factories = ["西寧廠 (Tay Ninh)"]
     if engine:
         try:
             with engine.connect() as conn:
-                # 嘗試從常見的廠區資料表抓取資料
                 res = conn.execute(text("SELECT factory_name FROM public.factories UNION SELECT factory_name FROM public.factory_management;"))
                 rows = res.fetchall()
                 if rows:
@@ -115,7 +111,6 @@ def get_factory_options_from_db(engine):
                         factories = db_facs
         except Exception:
             try:
-                # 備援：若表格名稱不同，嘗試從 fixed_assets 歷史紀錄中抓取現有廠區
                 with engine.connect() as conn:
                     res = conn.execute(text("SELECT DISTINCT site_location FROM public.fixed_assets WHERE site_location IS NOT NULL;"))
                     rows = res.fetchall()
@@ -259,7 +254,6 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
     init_assets_db(engine)
 
-    # 🔗 動態從資料庫抓取廠區清單
     site_options = get_factory_options_from_db(engine)
 
     tab_add, tab_excel, tab_list = st.tabs([L["tab_add"], L["tab_excel"], L["tab_list"]])
@@ -345,7 +339,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                         "bm": v_model, "plate": license_plate, "driver": general_custodian, "pdate": purchase_dt,
                                         "exp": inspection_date, "cost": cost_val, "sal": salvage_val, "status": asset_status
                                     })
-                                st.success(f"🎉 成功新增固定資產【{asset_name}】 | 廠區：{site_loc} | 保管人：{general_custodian}")
+                                st.success(f"🎉 成功新增固定資產【{asset_name}】 | 部門：{asset_dept} | 保管人：{general_custodian}")
                                 st.rerun()
                             except Exception as e:
                                 st.error("寫入失敗: " + str(e))
@@ -357,7 +351,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_excel:
         st.markdown(f"### {L['tab_excel']}")
-        st.info("請上傳包含固定資產資料的 Excel 檔案 (.xlsx)。支援欄位包含：資產編號、資產名稱、資產類別、廠區、部門、保管人、取得原價等。")
+        st.info("請上傳包含固定資產資料的 Excel 檔案 (.xlsx)。支援欄位包含：資產編號、資產名稱、資產類別、部門、保管人、取得原價等。")
         
         uploaded_file = st.file_uploader("選擇 Excel 檔案上傳", type=["xlsx", "xls"])
         if uploaded_file is not None:
@@ -419,7 +413,6 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
         </div>
         """, unsafe_allow_html=True)
         
-        # 📂 廠區與部門過濾器
         col_f1, col_f2 = st.columns(2)
         with col_f1:
             filter_site = st.selectbox("📍 依存放廠區過濾", ["全部廠區 (All Locations)"] + site_options)
@@ -545,7 +538,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                                             cost_amount = :cost, salvage_amount = :sal
                                                         WHERE asset_code = :old_code;
                                                     """), {
-                                                        "new_code": ed_code.strip(), "name": name if 'name' in locals() else ed_name, "site": ed_site, "dept": ed_dept,
+                                                        "new_code": ed_code.strip(), "name": ed_name, "site": ed_site, "dept": ed_dept,
                                                         "plate": ed_plate, "bm": ed_brand, "driver": ed_driver, "pdate": ed_pdate,
                                                         "cost": final_cost, "sal": final_salvage, "old_code": target_code
                                                     })
