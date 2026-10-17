@@ -229,6 +229,7 @@ NAV_STRUCTURE = {
     },
 }
 
+# 🔄 初始化 Session State 狀態記憶
 if "current_lang" not in st.session_state:
     st.session_state.current_lang = "繁體中文"
 
@@ -276,7 +277,7 @@ if not st.session_state.logged_in:
         
         lang_list = ["繁體中文", "Tiếng Việt", "English"]
         current_lang_idx = lang_list.index(st.session_state.current_lang) if st.session_state.current_lang in lang_list else 0
-        selected_login_lang = st.selectbox(lang_dict["lang_selector"], lang_list, index=current_lang_idx)
+        selected_login_lang = st.selectbox(lang_dict["lang_selector"], lang_list, index=current_lang_idx, key="login_lang_select")
         
         if selected_login_lang != st.session_state.current_lang:
             st.session_state.current_lang = selected_login_lang
@@ -340,7 +341,7 @@ if st.session_state.get("must_change_pwd", False):
     st.stop()
 
 # ----------------------------------------------------
-# 🚀 3. 已登入側邊欄與功能選單
+# 🚀 3. 已登入側邊欄與功能選單 (加入 key 鎖定導覽狀態)
 # ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
@@ -349,6 +350,7 @@ selected_lang = st.sidebar.selectbox(
     lang_dict["lang_selector"],
     lang_list,
     index=(lang_list.index(st.session_state.current_lang) if st.session_state.current_lang in lang_list else 0),
+    key="sidebar_lang_select"
 )
 
 if selected_lang != st.session_state.current_lang:
@@ -387,14 +389,26 @@ else:
     if current_role_clean != "admin":
         dept_options = [d for d in dept_options if "資訊管理部" not in d and "IT" not in d and "Phòng IT" not in d]
 
-    selected_parent_dept = st.sidebar.radio(lang_dict["parent_header"], dept_options, index=0)
+    # 🔗 關鍵修復：為一級部門 radio 加上 key="selected_parent_dept"
+    selected_parent_dept = st.sidebar.radio(
+        lang_dict["parent_header"], 
+        dept_options, 
+        index=0, 
+        key="selected_parent_dept"
+    )
 
     st.sidebar.markdown("---")
     features_dict = lang_dict["departments"][selected_parent_dept]["features"]
     feature_labels = list(features_dict.keys())
 
     st.sidebar.caption(f"**{selected_parent_dept.split('(')[0].strip()}**")
-    selected_feature_label = st.sidebar.radio(lang_dict["sub_header"], feature_labels)
+    
+    # 🔗 關鍵修復：為二級功能 radio 加上 key="selected_feature_label"
+    selected_feature_label = st.sidebar.radio(
+        lang_dict["sub_header"], 
+        feature_labels, 
+        key="selected_feature_label"
+    )
     target_route = features_dict[selected_feature_label]
 
 curr_lang = st.session_state.current_lang
@@ -421,7 +435,7 @@ if active_anns:
     st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
 
 # ----------------------------------------------------
-# 🔀 動態安全路由分流（已帶入 engine 參數供 Supabase 串聯）
+# 🔀 動態安全路由分流
 # ----------------------------------------------------
 if target_route == "company_announcements":
     load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
