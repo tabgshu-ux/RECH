@@ -105,7 +105,6 @@ def init_employee_db(engine):
                     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
-            # 若表格已存在但無 second_salary 欄位，自動補上
             conn.execute(text("""
                 ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS second_currency VARCHAR(10) DEFAULT 'USD';
                 ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS second_salary NUMERIC(12,2) DEFAULT 0;
@@ -150,8 +149,8 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                 v_social_code = st.text_input("社保號碼 (Mã số BHXH)", placeholder="例: 7912345678")
 
             with col3:
-                # 越南盾薪資（強制千分位與 ₫ 格式）
-                v_sal = st.number_input("越南盾約定底薪 (Lương CB - VND)", min_value=0.0, value=5000000.0, step=100000.0, format="%,.0f")
+                # 修正：使用合法的 printf 格式 "%.0f"
+                v_sal = st.number_input("越南盾約定底薪 (Lương CB - VND)", min_value=0.0, value=5000000.0, step=100000.0, format="%.0f")
                 st.caption(f"💲 顯示金額：`{v_sal:,.0f} ₫ (VND)`")
                 
                 v_role = st.selectbox("系統權限角色 (System Role)", system_roles_options, index=0, key="vn_role")
@@ -210,16 +209,16 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
 
             with col3:
                 st.markdown("##### 💰 外派人員雙軌薪資設定")
-                # 第一軌：越南盾在地薪資（強制千分位）
-                t_sal_vnd = st.number_input("越南盾在地底薪 (VND Salary)", min_value=0.0, value=30000000.0, step=1000000.0, format="%,.0f")
+                # 修正：使用合法的 printf 格式 "%.0f"
+                t_sal_vnd = st.number_input("越南盾在地底薪 (VND Salary)", min_value=0.0, value=30000000.0, step=1000000.0, format="%.0f")
                 st.caption(f"💲 越南盾：`{t_sal_vnd:,.0f} ₫ (VND)`")
                 
-                # 第二軌：外派第二薪資（支援 USD / TWD / RMB 自由選擇）
                 sc_col1, sc_col2 = st.columns([1, 2])
                 with sc_col1:
                     t_sec_curr = st.selectbox("第二幣別", ["USD", "TWD", "RMB"], key="tw_sec_curr")
                 with sc_col2:
-                    t_sec_sal = st.number_input(f"外派第二薪資 ({t_sec_curr})", min_value=0.0, value=1500.0, step=100.0, format="%,.2f")
+                    # 修正：使用合法的 printf 格式 "%.2f"
+                    t_sec_sal = st.number_input(f"外派第二薪資 ({t_sec_curr})", min_value=0.0, value=1500.0, step=100.0, format="%.2f")
                 st.caption(f"💲 選擇外派薪資：`{t_sec_sal:,.2f} {t_sec_curr}`")
 
             if st.form_submit_button("💾 儲存外派幹部檔案 (含雙薪設定)", type="primary", use_container_width=True):
@@ -289,7 +288,8 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                 st.markdown("##### 2️⃣ 薪資結構調整 (支援越南盾與外派雙薪)")
                                 col_sal1, col_sal2 = st.columns(2)
                                 with col_sal1:
-                                    edit_sal = st.number_input("越南盾底薪 (Lương CB - VND)", value=float(e.get("base_salary") or 0.0), step=100000.0, format="%,.0f")
+                                    # 修正：使用合法的 printf 格式 "%.0f"
+                                    edit_sal = st.number_input("越南盾底薪 (Lương CB - VND)", value=float(e.get("base_salary") or 0.0), step=100000.0, format="%.0f")
                                     st.caption(f"💲 越南盾：`{edit_sal:,.0f} ₫ (VND)`")
                                 with col_sal2:
                                     curr_sec_curr = str(e.get("second_currency") or "USD")
@@ -299,7 +299,8 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                     with sc_e1:
                                         edit_sec_curr = st.selectbox("第二幣別", ["USD", "TWD", "RMB"], index=sec_curr_idx, key="edit_sec_curr")
                                     with sc_e2:
-                                        edit_sec_sal = st.number_input(f"外派第二薪資 ({edit_sec_curr})", value=float(e.get("second_salary") or 0.0), step=100.0, format="%,.2f")
+                                        # 修正：使用合法的 printf 格式 "%.2f"
+                                        edit_sec_sal = st.number_input(f"外派第二薪資 ({edit_sec_curr})", value=float(e.get("second_salary") or 0.0), step=100.0, format="%.2f")
                                     st.caption(f"💲 外派金額：`{edit_sec_sal:,.2f} {edit_sec_curr}`")
 
                                 if st.form_submit_button("💾 儲存修改內容", type="primary", use_container_width=True):
@@ -405,12 +406,10 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                             df = df[df["emp_code"].str.upper().str.startswith("VN") | ~df["emp_code"].str.upper().str.startswith("TW") & ~df["emp_code"].str.upper().str.startswith("CN")]
 
                         if not df.empty:
-                            # 格式化薪資顯示（帶有千分位與幣別）
                             df["base_salary_fmt"] = df["base_salary"].apply(lambda x: f"{float(x):,.0f} ₫" if pd.notnull(x) else "0 ₫")
                             df["second_salary_fmt"] = df.apply(lambda r: f"{float(r['second_salary']):,.2f} {r['second_currency']}" if pd.notnull(r['second_salary']) and float(r['second_salary']) > 0 else "-", axis=1)
                             
                             df.insert(0, "STT", range(len(df)))
-                            # 保留完整欄位
                             display_df = df[["STT", "emp_code", "emp_name", "phone", "id_card", "factory", "department", "position", "attendance_type", "base_salary_fmt", "second_salary_fmt", "system_role", "status"]].copy()
                             display_df.columns = ["STT", "工號", "姓名", "電話", "身份證/護照與居留證", "廠區", "部門", "職稱", "出勤性質", "越南盾底薪", "外派第二薪資", "系統角色", "狀態"]
                             st.dataframe(display_df, use_container_width=True)
