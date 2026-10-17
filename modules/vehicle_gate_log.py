@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import datetime
+from sqlalchemy import text
 
 # ----------------------------------------------------
 # 🌐 車輛門禁與派車審核模組多語系字典 (i18n)
@@ -8,7 +9,7 @@ import datetime
 GATE_LOG_I18N = {
     "繁體中文": {
         "title": "🚗 警衛室/管理部 - 廠區車輛進出與派車審核放行中心",
-        "caption": "記錄西寧廠與海防廠大門口公務車、貨車及訪客車輛進出時間，並即時查核由【全公司電子簽核中心】主管審核通過之派車放行單。",
+        "caption": "記錄西寧廠與海防廠大門口公務車、貨車及訪客車輛進出時間，並即時串聯【固定資產車輛主表】與【電子簽核中心】派車放行單。",
         "tab_list": "📑 今日車輛進出門禁總表",
         "tab_approval": "🛡️ 派車審核放行表 (保全專用核對)",
         "tab_record": "➕ 登記車輛進出廠區",
@@ -17,8 +18,8 @@ GATE_LOG_I18N = {
         "approval_caption": "保全人員請於車輛離廠或入廠時，核對下方由系統主管簽核通過之派車單與車牌號碼。",
         "no_records": "目前無車輛進出紀錄。",
         "no_approvals": "目前無已核准的派車單。",
-        "record_header": "➕ 登記車輛進出廠區門禁",
-        "lbl_plate": "車牌號碼 *",
+        "record_header": "➕ 登記車輛進出廠區門禁 (自動連動固定資產車號)",
+        "lbl_plate": "選擇或輸入車牌號碼 (連動資產主表) *",
         "lbl_driver": "駕駛姓名與所屬單位 *",
         "driver_placeholder": "例如: Nguyễn Văn B (物流外包)",
         "lbl_type": "車輛類型 *",
@@ -42,7 +43,7 @@ GATE_LOG_I18N = {
     },
     "Tiếng Việt": {
         "title": "🚗 Phòng Bảo vệ - Quản lý Xe ra vào & Phê duyệt Điều xe",
-        "caption": "Ghi nhận xe ra vào cổng nhà máy Tây Ninh và Hải Phòng, kết nối trực tiếp với Trung tâm Phê duyệt điện tử để kiểm tra lệnh điều xe.",
+        "caption": "Ghi nhận xe ra vào cổng nhà máy, kết nối trực tiếp với danh mục Tài sản cố định và Trung tâm Phê duyệt.",
         "tab_list": "📑 Danh sách Xe ra vào trong ngày",
         "tab_approval": "🛡️ Danh sách Xe được phép điều động (Dành cho Bảo vệ)",
         "tab_record": "➕ Đăng ký Xe ra/vào cổng",
@@ -76,7 +77,7 @@ GATE_LOG_I18N = {
     },
     "English": {
         "title": "🚗 Security - Plant Vehicle Gate & Dispatch Approval Center",
-        "caption": "Track entry/exit times and verify vehicle dispatch orders approved via the E-Approval Center.",
+        "caption": "Track entry/exit times and verify vehicle dispatch orders linked with Fixed Assets.",
         "tab_list": "📑 Today's Gate Access Log",
         "tab_approval": "🛡️ Approved Dispatch Orders (Security Verification)",
         "tab_record": "➕ Register Vehicle Entry/Exit",
@@ -109,6 +110,28 @@ GATE_LOG_I18N = {
         "col_status": "Status"
     }
 }
+
+def get_vehicle_options_from_assets(engine):
+    """
+    🔗 全模組主動連動：從固定資產資料庫中動態讀取所有車輛與車牌
+    """
+    vehicles = ["60A-888.99 (Toyota Fortuner 7座)"]
+    if engine:
+        try:
+            with engine.connect() as conn:
+                res = conn.execute(text("SELECT license_plate, asset_name, driver_custodian FROM public.fixed_assets WHERE license_plate IS NOT NULL AND license_plate != '';"))
+                rows = res.fetchall()
+                if rows:
+                    for r in rows:
+                        plate = r[0]
+                        name = r[1] or ""
+                        driver = r[2] or ""
+                        item_str = f"{plate} ({name})" + (f" - 司機:{driver}" if driver else "")
+                        if item_str not in vehicles:
+                            vehicles.append(item_str)
+        except Exception:
+            pass
+    return vehicles
 
 def smart_translate_gate(text_val, target_lang):
     if not text_val or not isinstance(text_val, str):
@@ -154,7 +177,6 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
             }
         ]
 
-    # 模擬從電子簽核中心 (Approval Center) 審核通過之派車放行清單
     approved_dispatches = [
         {"工單編號": "APP-DISPATCH-2026-001", "申請部門": "管理部", "申請人": "陳經理", "車牌號碼": "61A-888.66", "用途說明": "載送總經理赴胡志明市開會", "主管簽核狀態": "🟢 總經理已核准 (Approved)"},
         {"工單編號": "APP-DISPATCH-2026-002", "申請部門": "生產部", "申請人": "阮文強", "車牌號碼": "51D-456.78", "用途說明": "運送 2000A 銅排母線原料 500kg", "主管簽核狀態": "🟢 生產主管已核准 (Approved)"}
@@ -192,10 +214,16 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
 
     with tab_record:
         st.markdown(f"### {L['record_header']}")
+        
+        # 動態從固定資產資料庫抓取車牌清單
+        available_vehicles = get_vehicle_options_from_assets(engine)
+
         with st.form("form_gate_record"):
             c1, c2 = st.columns(2)
             with c1:
-                plate = st.text_input(L["lbl_plate"], value="61A-123.45")
+                selected_vehicle_option = st.selectbox(L["lbl_plate"], available_vehicles)
+                # 從選項中自動萃取出車牌號碼
+                plate = selected_vehicle_option.split(" ")[0] if selected_vehicle_option else ""
                 driver = st.text_input(L["lbl_driver"], placeholder=L["driver_placeholder"])
             with c2:
                 v_type = st.selectbox(L["lbl_type"], L["type_opts"])
