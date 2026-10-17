@@ -13,12 +13,12 @@ ASSETS_I18N = {
         "caption": "維護廠區機器設備與公務車輛，提供 5 年直線折舊試算、資產殘值查詢與 Excel 智慧批次匯入。",
         "tab_add": "➕ 新增固定資產",
         "tab_excel": "📊 Excel 智慧批次匯入",
-        "tab_list": "📋 固定資產清冊與 5 年折舊攤分試算",
+        "tab_list": "📋 固定資產清冊",
         "lbl_code": "資產/合約編號 *",
         "lbl_name": "資產名稱 *",
         "lbl_brand": "品牌與型號 / 廠牌",
         "lbl_status": "目前狀態",
-        "lbl_site": "存放廠區/據點 *",
+        "lbl_site": "存放廠區/據點 (連動廠區主檔) *",
         "lbl_dept": "使用/權責部門 *",
         "lbl_purchase_date": "📅 購買/取得日期 *",
         "lbl_cost": "💰 取得原價成本 (VND) *",
@@ -36,12 +36,12 @@ ASSETS_I18N = {
         "caption": "Manage plant equipment and vehicles with depreciation and Excel batch import.",
         "tab_add": "➕ Add Asset",
         "tab_excel": "📊 Excel Batch Import",
-        "tab_list": "📋 Asset Inventory & 5-Year Depreciation",
+        "tab_list": "📋 Fixed Asset Inventory",
         "lbl_code": "Asset Code *",
         "lbl_name": "Asset Name *",
         "lbl_brand": "Brand & Model",
         "lbl_status": "Status",
-        "lbl_site": "Plant Location *",
+        "lbl_site": "Plant Location (Linked to Factory Master) *",
         "lbl_dept": "Department *",
         "lbl_purchase_date": "📅 Purchase Date *",
         "lbl_cost": "💰 Cost Price (VND) *",
@@ -59,12 +59,12 @@ ASSETS_I18N = {
         "caption": "Quản lý máy móc, xe công ty, tính khấu hao và nhập Excel tự động.",
         "tab_add": "➕ Thêm mới tài sản",
         "tab_excel": "📊 Nhập Excel hàng loạt",
-        "tab_list": "📋 Danh sách tài sản & Khấu hao 5 năm",
+        "tab_list": "📋 Danh sách tài sản cố định",
         "lbl_code": "Mã tài sản *",
         "lbl_name": "Tên tài sản *",
         "lbl_brand": "Nhãn hiệu & Model",
         "lbl_status": "Trạng thái",
-        "lbl_site": "Nhà xưởng / Vị trí *",
+        "lbl_site": "Nhà xưởng / Vị trí (Liên kết danh mục nhà máy) *",
         "lbl_dept": "Bộ phận sử dụng *",
         "lbl_purchase_date": "📅 Ngày mua *",
         "lbl_cost": "💰 Nguyên giá (VND) *",
@@ -98,11 +98,34 @@ DEPT_OPTIONS = [
     "工務與工地現場 (Site Operations)"
 ]
 
-SITE_OPTIONS = [
-    "越南西寧廠 (Tay Ninh)",
-    "越南海防廠 (Hai Phong)",
-    "胡志明辦公室 (HCMC Office)"
-]
+def get_factory_options_from_db(engine):
+    """
+    🔗 全模組主動連動：從資料庫動態讀取廠區設定主檔 (例如 factories 或是 factory_locations)
+    """
+    factories = ["西寧廠 (Tay Ninh)"] # 預設保底廠區
+    if engine:
+        try:
+            with engine.connect() as conn:
+                # 嘗試從常見的廠區資料表抓取資料
+                res = conn.execute(text("SELECT factory_name FROM public.factories UNION SELECT factory_name FROM public.factory_management;"))
+                rows = res.fetchall()
+                if rows:
+                    db_facs = [r[0] for r in rows if r[0]]
+                    if db_facs:
+                        factories = db_facs
+        except Exception:
+            try:
+                # 備援：若表格名稱不同，嘗試從 fixed_assets 歷史紀錄中抓取現有廠區
+                with engine.connect() as conn:
+                    res = conn.execute(text("SELECT DISTINCT site_location FROM public.fixed_assets WHERE site_location IS NOT NULL;"))
+                    rows = res.fetchall()
+                    if rows:
+                        db_facs = [r[0] for r in rows if r[0]]
+                        if db_facs:
+                            factories = db_facs
+            except Exception:
+                pass
+    return factories
 
 def parse_formatted_amount(val_str):
     if not val_str:
@@ -189,7 +212,7 @@ def init_assets_db(engine):
                     asset_code VARCHAR(50) UNIQUE NOT NULL,
                     asset_name VARCHAR(200) NOT NULL,
                     category VARCHAR(100) NOT NULL,
-                    site_location VARCHAR(100) NOT NULL,
+                    site_location VARCHAR(100) DEFAULT '西寧廠 (Tay Ninh)',
                     department VARCHAR(100) DEFAULT '管理部 (Management Dept)',
                     brand_model VARCHAR(150),
                     license_plate VARCHAR(50),
@@ -206,6 +229,7 @@ def init_assets_db(engine):
             conn.execute(text("ALTER TABLE public.fixed_assets ALTER COLUMN salvage_amount TYPE NUMERIC(18,2);"))
             conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS driver_custodian VARCHAR(100);"))
             conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT '管理部 (Management Dept)';"))
+            conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS site_location VARCHAR(100) DEFAULT '西寧廠 (Tay Ninh)';"))
     except Exception:
         pass
 
@@ -235,6 +259,9 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
     init_assets_db(engine)
 
+    # 🔗 動態從資料庫抓取廠區清單
+    site_options = get_factory_options_from_db(engine)
+
     tab_add, tab_excel, tab_list = st.tabs([L["tab_add"], L["tab_excel"], L["tab_list"]])
 
     # ----------------------------------------------------
@@ -249,7 +276,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 asset_code = st.text_input(L["lbl_code"], value="AST-VH-002", placeholder="例: AST-VH-001")
                 asset_cat = st.selectbox(L["lbl_cat"], ASSET_CATEGORIES)
                 asset_name = st.text_input(L["lbl_name"], placeholder="例: 賓士 S450 / 500KVA變壓器")
-                site_loc = st.selectbox(L["lbl_site"], SITE_OPTIONS)
+                site_loc = st.selectbox(L["lbl_site"], site_options)
                 purchase_dt = st.date_input(L["lbl_purchase_date"], datetime.date(2023, 1, 1))
             with c2:
                 asset_dept = st.selectbox(L["lbl_dept"], DEPT_OPTIONS)
@@ -318,7 +345,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                         "bm": v_model, "plate": license_plate, "driver": general_custodian, "pdate": purchase_dt,
                                         "exp": inspection_date, "cost": cost_val, "sal": salvage_val, "status": asset_status
                                     })
-                                st.success(f"🎉 成功新增固定資產【{asset_name}】 | 部門：{asset_dept} | 保管人：{general_custodian}")
+                                st.success(f"🎉 成功新增固定資產【{asset_name}】 | 廠區：{site_loc} | 保管人：{general_custodian}")
                                 st.rerun()
                             except Exception as e:
                                 st.error("寫入失敗: " + str(e))
@@ -350,7 +377,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                     name = str(row.get("資產名稱") or row.get("Asset Name") or row.get("Tên tài sản") or "未命名資產")
                                     raw_cat = str(row.get("資產類別") or row.get("Category") or "")
                                     cat = raw_cat if raw_cat in ASSET_CATEGORIES else auto_detect_category(name)
-                                    site = str(row.get("廠區") or row.get("Location") or "越南西寧廠 (Tay Ninh)")
+                                    site = str(row.get("廠區") or row.get("Location") or site_options[0])
                                     dept = str(row.get("部門") or row.get("Department") or "管理部 (Management Dept)")
                                     plate = str(row.get("車牌號碼") or row.get("License Plate") or "")
                                     brand = str(row.get("廠牌型號") or row.get("Brand") or "")
@@ -379,7 +406,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.error("❌ 解析 Excel 失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 📋 頁籤 3: 清冊查看、5 年直線折舊攤分試算、修改與刪除
+    # 📋 頁籤 3: 固定資產清冊與管理
     # ----------------------------------------------------
     with tab_list:
         st.markdown(f"### {L['tab_list']}")
@@ -392,9 +419,10 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
         </div>
         """, unsafe_allow_html=True)
         
+        # 📂 廠區與部門過濾器
         col_f1, col_f2 = st.columns(2)
         with col_f1:
-            filter_site = st.selectbox("📍 依存放位置/廠區過濾", ["全部廠區 (All Locations)"] + SITE_OPTIONS)
+            filter_site = st.selectbox("📍 依存放廠區過濾", ["全部廠區 (All Locations)"] + site_options)
         with col_f2:
             filter_dept = st.selectbox("📂 依使用部門過濾", ["全部部門 (All Departments)"] + DEPT_OPTIONS)
 
@@ -454,7 +482,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                             
                             st.markdown("---")
                             st.markdown("### ✏️ 固定資產資料修改 / 刪除管理")
-                            asset_options = [f"{item['asset_code']} - {item['asset_name'] or item['license_plate']} [部門: {item.get('department','無')}] (保管人: {item.get('driver_custodian', '無')})" for item in raw_items]
+                            asset_options = [f"{item['asset_code']} - {item['asset_name'] or item['license_plate']} [廠區: {item.get('site_location','無')} | 部門: {item.get('department','無')}] (保管人: {item.get('driver_custodian', '無')})" for item in raw_items]
                             selected_target = st.selectbox("選擇要修改或刪除的資產", asset_options)
                             
                             if selected_target:
@@ -468,9 +496,9 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                             ed_code = st.text_input("資產/合約編號 (可修改)", value=target_item.get("asset_code", ""))
                                             ed_name = st.text_input("資產名稱", value=target_item.get("asset_name", ""))
                                             
-                                            curr_site = target_item.get("site_location", SITE_OPTIONS[0])
-                                            site_idx = SITE_OPTIONS.index(curr_site) if curr_site in SITE_OPTIONS else 0
-                                            ed_site = st.selectbox("存放廠區/據點", SITE_OPTIONS, index=site_idx)
+                                            curr_site = target_item.get("site_location", site_options[0])
+                                            site_idx = site_options.index(curr_site) if curr_site in site_options else 0
+                                            ed_site = st.selectbox("存放廠區/據點", site_options, index=site_idx)
 
                                             curr_dept = target_item.get("department", DEPT_OPTIONS[0])
                                             dept_idx = DEPT_OPTIONS.index(curr_dept) if curr_dept in DEPT_OPTIONS else 0
@@ -517,7 +545,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                                             cost_amount = :cost, salvage_amount = :sal
                                                         WHERE asset_code = :old_code;
                                                     """), {
-                                                        "new_code": ed_code.strip(), "name": ed_name, "site": ed_site, "dept": ed_dept,
+                                                        "new_code": ed_code.strip(), "name": name if 'name' in locals() else ed_name, "site": ed_site, "dept": ed_dept,
                                                         "plate": ed_plate, "bm": ed_brand, "driver": ed_driver, "pdate": ed_pdate,
                                                         "cost": final_cost, "sal": final_salvage, "old_code": target_code
                                                     })
