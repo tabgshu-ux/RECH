@@ -42,7 +42,7 @@ EMP_I18N = {
 }
 
 def get_system_roles_from_db(engine):
-    """🔌 嚴格純淨連線：僅從 Supabase 資料庫的 public.system_roles 讀取，絕不混入任何程式碼預設值"""
+    """🔌 嚴格純淨連線：僅從 Supabase 資料庫的 public.system_roles 讀取"""
     db_roles = []
     if engine:
         try:
@@ -150,7 +150,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
 
             with col3:
                 v_sal = st.number_input("越南盾約定底薪 (Lương CB - VND)", min_value=0.0, value=5000000.0, step=100000.0, format="%.0f")
-                st.markdown(f"**💲 即時千分位預覽：`{v_sal:,.0f} ₫ (VND)`**")
+                st.markdown(f"**💲 越南盾千分位預覽：`{v_sal:,.0f} ₫ (VND)`**")
                 
                 v_role = st.selectbox("系統權限角色 (System Role)", system_roles_options, index=0, key="vn_role")
                 v_perm_addr = st.text_input("戶籍地址 (Thường trú)", placeholder="例: Tây Ninh, Việt Nam")
@@ -186,7 +186,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.warning("⚠️ 請務必填寫『工號』與『姓名』！")
 
     # ----------------------------------------------------
-    # 🇹🇼 Tab 2: 新增外派幹部 (支援外派雙薪與多幣別)
+    # 🇹🇼 Tab 2: 新增外派幹部 (支援外派雙薪與動態幣別)
     # ----------------------------------------------------
     with tab_add_tw:
         st.markdown("### 🇹🇼 TW/CN 新增外派幹部 / 台籍與中籍員工 (支援外派雙薪)")
@@ -215,6 +215,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                 with sc_col1:
                     t_sec_curr = st.selectbox("第二幣別", ["USD", "TWD", "RMB"], key="tw_sec_curr")
                 with sc_col2:
+                    # 標題動態顯示所選幣別，不再寫死 USD
                     t_sec_sal = st.number_input(f"外派第二薪資 ({t_sec_curr})", min_value=0.0, value=1500.0, step=100.0, format="%.2f")
                 st.markdown(f"**💲 外派薪資即時預覽：`{t_sec_sal:,.2f} {t_sec_curr}`**")
 
@@ -244,7 +245,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.warning("⚠️ 請填寫外派工號與姓名！")
 
     # ----------------------------------------------------
-    # ✏️ Tab 3: 修改員工資料 (支援雙薪與千分位)
+    # ✏️ Tab 3: 修改員工資料 (支援雙薪與動態幣別)
     # ----------------------------------------------------
     with tab_edit:
         st.markdown("### ✏️ 修改現職員工個人檔案與雙薪保險資料")
