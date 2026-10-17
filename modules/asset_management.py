@@ -87,6 +87,17 @@ DEPT_OPTIONS = [
     "工務與工地現場 / Bộ phận công trường (Site Operations)"
 ]
 
+DEFAULT_SUB_LOCATIONS = [
+    "辦公室 / Văn phòng (Office)",
+    "線材倉庫 / Kho dây điện (Wire Warehouse)",
+    "板金組 / Nhóm Chấn dập - 板金 (Sheet Metal)",
+    "塗裝組 / Nhóm Sơn tĩnh điện (Coating)",
+    "裝配組 / Nhóm Lắp ráp (Assembly)",
+    "台灣宿舍 / Ký túc xá Đài Loan",
+    "越南西寧廠區土地 / Đất nhà máy Tây Ninh",
+    "停車場 / Bãi đỗ xe (Parking Lot)"
+]
+
 STATUS_OPTIONS = [
     "🟢 在用/租賃中 / Đang sử dụng / Đang thuê (Active)",
     "🟡 維修保養中 / Đang bảo trì bảo dưỡng (Maintenance)",
@@ -266,7 +277,15 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 asset_code = st.text_input(L["lbl_code"], value="AST-001", placeholder="例: CAR-001 / LAND-001 / IT-001")
                 asset_name = st.text_input(L["lbl_name"], placeholder="例: 賓士 S450 / 西寧廠廠房土地 / 研發部伺服器")
                 site_loc = st.selectbox(L["lbl_site"], site_options)
-                sub_loc = st.text_input(L["lbl_sub_location"], value="辦公室 / Văn phòng (Office)")
+                
+                # 🔄 恢復「詳細位置」的智慧下拉選單與自訂選項
+                sub_loc_choice = st.selectbox(L["lbl_sub_location"], DEFAULT_SUB_LOCATIONS + ["➕ 自訂新位置 / Thêm vị trí mới..."])
+                if sub_loc_choice == "➕ 自訂新位置 / Thêm vị trí mới...":
+                    custom_sub_loc = st.text_input("請輸入自訂詳細位置 (中越文):")
+                    sub_loc = custom_sub_loc if custom_sub_loc else DEFAULT_SUB_LOCATIONS[0]
+                else:
+                    sub_loc = sub_loc_choice
+
                 purchase_dt = st.date_input(L["lbl_purchase_date"], datetime.date(2023, 1, 1))
             with c2:
                 asset_dept = st.selectbox(L["lbl_dept"], DEPT_OPTIONS)
@@ -534,30 +553,4 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
                                         if btn_delete:
                                             try:
-                                                with engine.begin() as conn:
-                                                    conn.execute(text("DELETE FROM public.fixed_assets WHERE asset_code = :code;"), {"code": target_code})
-                                                st.success(f"🗑️ 資產編號 [{target_code}] 已成功刪除！")
-                                                st.rerun()
-                                            except Exception as e:
-                                                st.error("刪除失敗: " + str(e))
-                        else:
-                            st.warning("⚠️ 查無符合的固定資產紀錄。")
-                    else:
-                        st.info("目前尚無固定資產資料。")
-            except Exception as e:
-                st.error("讀取失敗: " + str(e))
-
-# ----------------------------------------------------
-# 🔗 相容性進入點
-# ----------------------------------------------------
-def render_assets_page(engine=None, lang="繁體中文", **kwargs):
-    render_asset_management_page(engine=engine, lang=lang, **kwargs)
-
-def render_fixed_assets(engine=None, lang="繁體中文", **kwargs):
-    render_asset_management_page(engine=engine, lang=lang, **kwargs)
-
-def show(engine=None, lang="繁體中文", **kwargs):
-    render_asset_management_page(engine=engine, lang=lang, **kwargs)
-
-def main(engine=None, lang="繁體中文", **kwargs):
-    render_asset_management_page(engine=engine, lang=lang, **kwargs)
+                                                with engine.begin
