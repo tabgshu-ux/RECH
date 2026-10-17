@@ -5,7 +5,7 @@ import re
 from sqlalchemy import text
 
 # ----------------------------------------------------
-# 🌐 三語系字典 (i18n)
+# 🌐 三語系字典 (i18n - 支援繁體中文與越南語完整雙語)
 # ----------------------------------------------------
 ASSETS_I18N = {
     "繁體中文": {
@@ -19,7 +19,7 @@ ASSETS_I18N = {
         "lbl_brand": "品牌與型號 / 廠牌",
         "lbl_status": "目前狀態",
         "lbl_site": "存放廠區 *",
-        "lbl_sub_location": "詳細位置 (如: 辦公室/線材倉庫/板金組/宿舍等) *",
+        "lbl_sub_location": "詳細位置 (如: 辦公室/線材倉庫等) *",
         "lbl_dept": "使用/權責部門 *",
         "lbl_purchase_date": "📅 購買/取得日期 *",
         "lbl_cost": "💰 取得原價成本 (VND) *",
@@ -83,38 +83,43 @@ ASSETS_I18N = {
 }
 
 ASSET_CATEGORIES = [
-    "🚗 車輛 (公務車/卡車/堆高機)",
-    "🏭 機器設備與配電盤生產線",
-    "🏢 廠房土地與宿舍 (固定資產)",
-    "📄 辦公室租賃合約 / 廠房租賃",
-    "💻 資訊IT設備與伺服器",
-    "📦 辦公傢俱與其他資產"
+    "🚗 車輛 (Xe công tác / Xe tải / Xe nâng)",
+    "🏭 機器設備與配電盤生產線 (Máy móc & Dây chuyền tủ điện)",
+    "🏢 廠房土地與宿舍 (Nhà xưởng, đất đai & Ký túc xá)",
+    "📄 辦公室租賃合約 (Hợp đồng thuê văn phòng / nhà xưởng)",
+    "💻 資訊IT設備與伺服器 (Thiết bị IT & Server)",
+    "📦 辦公傢俱與其他資產 (Nội thất văn phòng & Tài sản khác)"
 ]
 
 DEPT_OPTIONS = [
-    "總經理室 (Executive Office)",
-    "管理部 (Management Dept)",
-    "財務部 (Finance Dept)",
-    "工程與設計管理中心 (Engineering & Design Center)",
-    "生產部 (Production Dept)",
-    "工務與工地現場 (Site Operations)"
+    "總經理室 / Ban Giám đốc (Executive Office)",
+    "管理部 / Phòng Quản lý (Management Dept)",
+    "財務部 / Phòng Tài chính (Finance Dept)",
+    "工程與設計管理中心 / Trung tâm Kỹ thuật & Thiết kế (Engineering Center)",
+    "生產部 / Phòng Sản xuất (Production Dept)",
+    "工務與工地現場 / Bộ phận công trường (Site Operations)"
 ]
 
-# 預設預設詳細位置清單（允許擴充）
 DEFAULT_SUB_LOCATIONS = [
-    "辦公室 (Office)",
-    "線材倉庫 (Wire Warehouse)",
-    "板金組 (Sheet Metal)",
-    "塗裝組 (Coating)",
-    "烤漆組 (Painting)",
-    "裝配組 (Assembly)",
-    "台灣宿舍 (Taiwan Dormitory)",
-    "越南宿舍 (Vietnam Dormitory)",
-    "停車場 (Parking Lot)"
+    "辦公室 / Văn phòng (Office)",
+    "線材倉庫 / Kho dây điện (Wire Warehouse)",
+    "板金組 / Nhóm Chấn dập - 板金 (Sheet Metal)",
+    "塗裝組 / Nhóm Sơn tĩnh điện (Coating)",
+    "烤漆組 / Nhóm Sơn dầu (Painting)",
+    "裝配組 / Nhóm Lắp ráp (Assembly)",
+    "台灣宿舍 / Ký túc xá Đài Loan (Taiwan Dormitory)",
+    "越南宿舍 / Ký túc xá Việt Nam (Vietnam Dormitory)",
+    "停車場 / Bãi đỗ xe (Parking Lot)"
+]
+
+STATUS_OPTIONS = [
+    "🟢 在用/租賃中 / Đang sử dụng / Đang thuê (Active)",
+    "🟡 維修保養中 / Đang bảo trì bảo dưỡng (Maintenance)",
+    "🔴 報廢/封存 / Đã thanh lý / Lưu kho (Retired)"
 ]
 
 def get_factory_options_from_db(engine):
-    factories = ["西寧廠 (Tay Ninh)"]
+    factories = ["西寧廠 / Nhà máy Tây Ninh"]
     if engine:
         try:
             with engine.connect() as conn:
@@ -129,9 +134,6 @@ def get_factory_options_from_db(engine):
     return factories
 
 def get_sub_location_options_from_db(engine):
-    """
-    動態從資料庫讀取詳細位置清單，若無則初始化預設選項
-    """
     locations = DEFAULT_SUB_LOCATIONS.copy()
     if engine:
         try:
@@ -231,10 +233,10 @@ def init_assets_db(engine):
                     id SERIAL PRIMARY KEY,
                     asset_code VARCHAR(50) UNIQUE NOT NULL,
                     asset_name VARCHAR(200) NOT NULL,
-                    category VARCHAR(100) NOT NULL,
-                    site_location VARCHAR(100) DEFAULT '西寧廠 (Tay Ninh)',
-                    sub_location VARCHAR(100) DEFAULT '辦公室 (Office)',
-                    department VARCHAR(100) DEFAULT '管理部 (Management Dept)',
+                    category VARCHAR(150) NOT NULL,
+                    site_location VARCHAR(100) DEFAULT '西寧廠 / Nhà máy Tây Ninh',
+                    sub_location VARCHAR(150) DEFAULT '辦公室 / Văn phòng (Office)',
+                    department VARCHAR(150) DEFAULT '管理部 / Phòng Quản lý (Management Dept)',
                     brand_model VARCHAR(150),
                     license_plate VARCHAR(50),
                     driver_custodian VARCHAR(100),
@@ -242,16 +244,16 @@ def init_assets_db(engine):
                     inspection_expiry DATE,
                     cost_amount NUMERIC(18,2) DEFAULT 0,
                     salvage_amount NUMERIC(18,2) DEFAULT 0,
-                    status VARCHAR(50) DEFAULT '🟢 在用/租賃中',
+                    status VARCHAR(100) DEFAULT '🟢 在用/租賃中 / Đang sử dụng (Active)',
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
             conn.execute(text("ALTER TABLE public.fixed_assets ALTER COLUMN cost_amount TYPE NUMERIC(18,2);"))
             conn.execute(text("ALTER TABLE public.fixed_assets ALTER COLUMN salvage_amount TYPE NUMERIC(18,2);"))
             conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS driver_custodian VARCHAR(100);"))
-            conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT '管理部 (Management Dept)';"))
-            conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS site_location VARCHAR(100) DEFAULT '西寧廠 (Tay Ninh)';"))
-            conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS sub_location VARCHAR(100) DEFAULT '辦公室 (Office)';"))
+            conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS department VARCHAR(150) DEFAULT '管理部 / Phòng Quản lý (Management Dept)';"))
+            conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS site_location VARCHAR(100) DEFAULT '西寧廠 / Nhà máy Tây Ninh';"))
+            conn.execute(text("ALTER TABLE public.fixed_assets ADD COLUMN IF NOT EXISTS sub_location VARCHAR(150) DEFAULT '辦公室 / Văn phòng (Office)';"))
     except Exception:
         pass
 
@@ -290,7 +292,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     # ➕ 頁籤 1: 新增固定資產
     # ----------------------------------------------------
     with tab_add:
-        st.markdown("### ➕ 新增固定資產")
+        st.markdown(f"### {L['tab_add']}")
         
         with st.form("form_add_asset"):
             c1, c2 = st.columns(2)
@@ -300,18 +302,17 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 asset_name = st.text_input(L["lbl_name"], placeholder="例: 賓士 S450 / 500KVA變壓器")
                 site_loc = st.selectbox(L["lbl_site"], site_options)
                 
-                # 允許自訂或選擇詳細位置
-                sub_loc_choice = st.selectbox(L["lbl_sub_location"], sub_location_options + ["➕ 自訂輸入新位置..."])
-                if sub_loc_choice == "➕ 自訂輸入新位置...":
-                    custom_sub_loc = st.text_input("請輸入新的詳細位置名稱 (例: 焊接車間A區)")
-                    sub_loc = custom_sub_loc if custom_sub_loc else "辦公室 (Office)"
+                sub_loc_choice = st.selectbox(L["lbl_sub_location"], sub_location_options + ["➕ 自訂新位置 / Thêm vị trí mới..."])
+                if sub_loc_choice == "➕ 自訂新位置 / Thêm vị trí mới...":
+                    custom_sub_loc = st.text_input("請輸入自訂位置 (中越文): 焊接區 / Khu vực hàn")
+                    sub_loc = custom_sub_loc if custom_sub_loc else "辦公室 / Văn phòng (Office)"
                 else:
                     sub_loc = sub_loc_choice
 
                 purchase_dt = st.date_input(L["lbl_purchase_date"], datetime.date(2023, 1, 1))
             with c2:
                 asset_dept = st.selectbox(L["lbl_dept"], DEPT_OPTIONS)
-                asset_status = st.selectbox(L["lbl_status"], ["🟢 在用/租賃中 (Active)", "🟡 維修保養中 (Maintenance)", "🔴 報廢/封存 (Retired)"])
+                asset_status = st.selectbox(L["lbl_status"], STATUS_OPTIONS)
                 
                 cost_str = st.text_input(L["lbl_cost"], value="5.039.000.000")
                 cost_val = parse_formatted_amount(cost_str)
@@ -325,10 +326,10 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
             v_model = ""
             inspection_date = None
 
-            if "車輛" in asset_cat:
+            if "車輛" in asset_cat or "Xe" in asset_cat:
                 st.markdown("""
                 <div class="vehicle-box">
-                    <h5 style="color:#1E40AF; margin-top:0;">🚗 車輛專屬補充資料（自動同步至公務派車與保修模組）</h5>
+                    <h5 style="color:#1E40AF; margin-top:0;">🚗 車輛專屬補充資料 / Thông tin xe công tác</h5>
                 """, unsafe_allow_html=True)
                 
                 v_c1, v_c2 = st.columns(2)
@@ -340,17 +341,17 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                 inspection_date = st.date_input(L["lbl_inspection_date"], datetime.date(2027, 10, 16))
                 st.markdown("</div>", unsafe_allow_html=True)
             else:
-                v_model = st.text_input(L["lbl_brand"], placeholder="例: 廠牌型號 / 規格")
+                v_model = st.text_input(L["lbl_brand"], placeholder="例: 廠牌型號 / Nhãn hiệu & Model")
 
             if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
                 if not asset_code or not asset_name:
-                    st.error("⚠️ 請填寫資產編號與名稱！")
+                    st.error("⚠️ 請填寫資產編號與名稱！ / Vui lòng nhập mã và tên tài sản!")
                 elif not general_custodian:
-                    st.error("⚠️ 請填寫資產保管人姓名！")
-                elif "車輛" in asset_cat and not license_plate:
-                    st.error("⚠️ 請填寫車輛的【車牌號碼】！")
+                    st.error("⚠️ 請填寫資產保管人姓名！ / Vui lòng nhập tên người quản lý!")
+                elif ("車輛" in asset_cat or "Xe" in asset_cat) and not license_plate:
+                    st.error("⚠️ 請填寫車輛的【車牌號碼】！ / Vui lòng nhập biển số xe!")
                 elif cost_val <= 0:
-                    st.error("⚠️ 請填寫正確的取得原價成本！")
+                    st.error("⚠️ 請填寫正確的取得原價成本！ / Vui lòng nhập nguyên giá hợp lệ!")
                 else:
                     is_duplicate = False
                     if engine:
@@ -362,7 +363,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                             pass
 
                     if is_duplicate:
-                        st.warning(f"⚠️ **資料重複提示**：系統中已經存在資產編號 `{asset_code}`！請更換新的資產編號後再試一次。")
+                        st.warning(f"⚠️ **代碼重複提示 / Trùng mã**：系統中已經存在資產編號 `{asset_code}`！")
                     else:
                         if engine:
                             try:
@@ -379,7 +380,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                 st.success(f"🎉 成功新增固定資產【{asset_name}】 | 位置：{sub_loc} | 保管人：{general_custodian}")
                                 st.rerun()
                             except Exception as e:
-                                st.error("寫入失敗: " + str(e))
+                                st.error("寫入失敗 / Lỗi ghi CSDL: " + str(e))
                         else:
                             st.success(f"🎉 [展示模式] 固定資產【{asset_name}】建立成功！")
 
@@ -388,16 +389,16 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_excel:
         st.markdown(f"### {L['tab_excel']}")
-        st.info("請上傳包含固定資產資料的 Excel 檔案 (.xlsx)。支援欄位包含：資產編號、資產名稱、資產類別、詳細位置、部門、保管人、取得原價等。")
+        st.info("請上傳包含固定資產資料的 Excel 檔案 (.xlsx)。支援欄位：資產編號、資產名稱、資產類別、詳細位置、部門、保管人、取得原價等。")
         
-        uploaded_file = st.file_uploader("選擇 Excel 檔案上傳", type=["xlsx", "xls"])
+        uploaded_file = st.file_uploader("選擇 Excel 檔案上傳 / Chọn file Excel", type=["xlsx", "xls"])
         if uploaded_file is not None:
             try:
                 df_upload = pd.read_excel(uploaded_file)
-                st.markdown("##### 📄 預覽上傳的 Excel 數據內容：")
+                st.markdown("##### 📄 預覽上傳的 Excel 數據 / Xem trước dữ liệu:")
                 st.dataframe(df_upload.head(5), use_container_width=True)
 
-                if st.button("🚀 確認執行 Excel 智慧識別並寫入資料庫", type="primary"):
+                if st.button("🚀 確認執行 Excel 智慧識別並寫入資料庫 / Xác nhận nhập", type="primary"):
                     success_count = 0
                     error_count = 0
                     if engine:
@@ -409,11 +410,11 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                     raw_cat = str(row.get("資產類別") or row.get("Category") or "")
                                     cat = raw_cat if raw_cat in ASSET_CATEGORIES else auto_detect_category(name)
                                     site = str(row.get("廠區") or row.get("Location") or site_options[0])
-                                    sub_loc = str(row.get("詳細位置") or row.get("Sub Location") or "辦公室 (Office)")
-                                    dept = str(row.get("部門") or row.get("Department") or "管理部 (Management Dept)")
+                                    sub_loc = str(row.get("詳細位置") or row.get("Sub Location") or "辦公室 / Văn phòng (Office)")
+                                    dept = str(row.get("部門") or row.get("Department") or DEPT_OPTIONS[1])
                                     plate = str(row.get("車牌號碼") or row.get("License Plate") or "")
                                     brand = str(row.get("廠牌型號") or row.get("Brand") or "")
-                                    driver = str(row.get("保管人") or row.get("Driver") or row.get("Custodian") or "管理部")
+                                    driver = str(row.get("保管人") or row.get("Driver") or row.get("Custodian") or "Quản lý")
                                     
                                     cost = float(row.get("取得原價") or row.get("Cost") or 0)
                                     salvage = float(row.get("預估殘值") or row.get("Salvage") or (cost * 0.1))
@@ -421,21 +422,21 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                     conn.execute(text("""
                                         INSERT INTO public.fixed_assets 
                                         (asset_code, asset_name, category, site_location, sub_location, department, brand_model, license_plate, driver_custodian, cost_amount, salvage_amount, status)
-                                        VALUES (:code, :name, :cat, :site, :sub_loc, :dept, :bm, :plate, :driver, :cost, :sal, '🟢 在用/租賃中')
+                                        VALUES (:code, :name, :cat, :site, :sub_loc, :dept, :bm, :plate, :driver, :cost, :sal, '🟢 在用/租賃中 / Đang sử dụng (Active)')
                                         ON CONFLICT (asset_code) DO NOTHING;
                                     """), {
                                         "code": code.strip(), "name": name, "cat": cat, "site": site, "sub_loc": sub_loc, "dept": dept,
                                         "bm": brand, "plate": plate if plate != "nan" else "", 
-                                        "driver": driver if driver != "nan" else "管理部", "cost": cost, "sal": salvage
+                                        "driver": driver if driver != "nan" else "Quản lý", "cost": cost, "sal": salvage
                                     })
                                     success_count += 1
                                 except Exception:
                                     error_count += 1
                     
-                    st.success(f"🎉 Excel 批次匯入完成！成功寫入：{success_count} 筆，略過/錯誤：{error_count} 筆。")
+                    st.success(f"🎉 批次匯入完成！成功：{success_count} 筆，失敗：{error_count} 筆。")
                     st.rerun()
             except Exception as e:
-                st.error("❌ 解析 Excel 失敗: " + str(e))
+                st.error("❌ 解析 Excel 失敗 / Lỗi đọc Excel: " + str(e))
 
     # ----------------------------------------------------
     # 📋 頁籤 3: 固定資產清冊與管理
@@ -444,21 +445,20 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown(f"### {L['tab_list']}")
         st.markdown("""
         <div class="depr-box">
-            <b>📊 5 年直線法折舊計算公式說明：</b><br>
-            • <b>每月折舊額</b> = (取得原價 - 預估殘值) ÷ 60 個月<br>
-            • <b>累計折舊</b> = 每月折舊額 × 購買至今已使用月份<br>
-            • <b>目前剩餘殘值 (資產淨值)</b> = 取得原價 - 累計折舊
+            <b>📊 5 年直線法折舊計算公式 / Công thức tính khấu hao đường thẳng 5 năm：</b><br>
+            • <b>每月折舊額 / Khấu hao tháng</b> = (取得原價 - 預估殘值) ÷ 60 個月<br>
+            • <b>累計折舊 / Khấu hao lũy kế</b> = 每月折舊額 × 已使用月份<br>
+            • <b>目前剩餘殘值 / Giá trị còn lại</b> = 取得原價 - 累計折舊
         </div>
         """, unsafe_allow_html=True)
         
-        # 📂 篩選器：詳細位置與部門過濾
         col_f1, col_f2 = st.columns(2)
         with col_f1:
-            filter_sub_loc = st.selectbox("📍 依詳細位置過濾", ["全部詳細位置 (All Locations)"] + sub_location_options)
+            filter_sub_loc = st.selectbox("📍 依詳細位置過濾 / Lọc theo vị trí", ["全部詳細位置 / Tất cả vị trí (All)"] + sub_location_options)
         with col_f2:
-            filter_dept = st.selectbox("📂 依使用部門過濾", ["全部部門 (All Departments)"] + DEPT_OPTIONS)
+            filter_dept = st.selectbox("📂 依使用部門過濾 / Lọc theo bộ phận", ["全部部門 / Tất cả bộ phận (All)"] + DEPT_OPTIONS)
 
-        search_kw = st.text_input(L["lbl_search"], placeholder="搜尋資產名稱、車牌號碼、編號、保管人或位置...")
+        search_kw = st.text_input(L["lbl_search"], placeholder="搜尋資產名稱、車牌、編號、保管人、位置...")
 
         if engine:
             try:
@@ -472,9 +472,9 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                         for r in rows:
                             item = dict(r._mapping)
                             
-                            if filter_sub_loc != "全部詳細位置 (All Locations)" and item.get("sub_location") != filter_sub_loc:
+                            if filter_sub_loc != "全部詳細位置 / Tất cả vị trí (All)" and item.get("sub_location") != filter_sub_loc:
                                 continue
-                            if filter_dept != "全部部門 (All Departments)" and item.get("department") != filter_dept:
+                            if filter_dept != "全部部門 / Tất cả bộ phận (All)" and item.get("department") != filter_dept:
                                 continue
 
                             if search_kw:
@@ -495,28 +495,28 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                             months_used, accum_depr, net_value = calculate_5y_depreciation(cost_amt, salvage_amt, p_date)
 
                             data_list.append({
-                                "資產編號": item.get("asset_code"),
-                                "資產名稱": item.get("asset_name") or item.get("license_plate"),
-                                "資產類別": item.get("category"),
-                                "詳細位置": item.get("sub_location") or "未指定",
-                                "使用部門": item.get("department") or "未指定",
-                                "廠牌/型號": item.get("brand_model") or "無",
-                                "保管人": item.get("driver_custodian") or "未指定",
-                                "購買日期": str(p_date)[:10],
-                                "取得原價": format_vnd(cost_amt),
-                                "已使用月份": f"{months_used} 個月 / 60",
-                                "累計折舊 (5年期)": format_vnd(accum_depr),
-                                "目前剩餘殘值": format_vnd(net_value),
-                                "狀態": item.get("status")
+                                "資產編號 / Mã TS": item.get("asset_code"),
+                                "資產名稱 / Tên tài sản": item.get("asset_name") or item.get("license_plate"),
+                                "資產類別 / Phân loại": item.get("category"),
+                                "詳細位置 / Vị trí chi tiết": item.get("sub_location") or "Chưa định nghĩa",
+                                "使用部門 / Bộ phận": item.get("department") or "Chưa định nghĩa",
+                                "廠牌型號 / Model": item.get("brand_model") or "Không",
+                                "保管人 / Người quản lý": item.get("driver_custodian") or "Chưa có",
+                                "購買日期 / Ngày mua": str(p_date)[:10],
+                                "取得原價 / Nguyên giá": format_vnd(cost_amt),
+                                "已使用月份 / Số tháng SD": f"{months_used} 月 / tháng (60)",
+                                "累計折舊 / Khấu hao lũy kế": format_vnd(accum_depr),
+                                "目前剩餘殘值 / Giá trị còn lại": format_vnd(net_value),
+                                "狀態 / Trạng thái": item.get("status")
                             })
 
                         if data_list:
                             st.dataframe(pd.DataFrame(data_list), use_container_width=True)
                             
                             st.markdown("---")
-                            st.markdown("### ✏️ 固定資產資料修改 / 刪除管理")
+                            st.markdown("### ✏️ 固定資產資料修改 / 刪除管理 (Chỉnh sửa / Xóa tài sản)")
                             asset_options = [f"{item['asset_code']} - {item['asset_name'] or item['license_plate']} [位置: {item.get('sub_location','無')} | 部門: {item.get('department','無')}] (保管人: {item.get('driver_custodian', '無')})" for item in raw_items]
-                            selected_target = st.selectbox("選擇要修改或刪除的資產", asset_options)
+                            selected_target = st.selectbox("選擇要修改或刪除的資產 / Chọn tài sản để sửa/xóa", asset_options)
                             
                             if selected_target:
                                 target_code = selected_target.split(" - ")[0]
@@ -526,22 +526,22 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                     with st.form("form_edit_asset"):
                                         ec1, ec2 = st.columns(2)
                                         with ec1:
-                                            ed_code = st.text_input("資產/合約編號 (可修改)", value=target_item.get("asset_code", ""))
-                                            ed_name = st.text_input("資產名稱", value=target_item.get("asset_name", ""))
+                                            ed_code = st.text_input("資產編號 / Mã tài sản (Có thể sửa)", value=target_item.get("asset_code", ""))
+                                            ed_name = st.text_input("資產名稱 / Tên tài sản", value=target_item.get("asset_name", ""))
                                             
                                             curr_sub = target_item.get("sub_location", sub_location_options[0])
                                             sub_idx = sub_location_options.index(curr_sub) if curr_sub in sub_location_options else 0
-                                            ed_sub = st.selectbox("詳細位置", sub_location_options, index=sub_idx)
+                                            ed_sub = st.selectbox("詳細位置 / Vị trí chi tiết", sub_location_options, index=sub_idx)
 
                                             curr_dept = target_item.get("department", DEPT_OPTIONS[0])
                                             dept_idx = DEPT_OPTIONS.index(curr_dept) if curr_dept in DEPT_OPTIONS else 0
-                                            ed_dept = st.selectbox("使用/權責部門", DEPT_OPTIONS, index=dept_idx)
+                                            ed_dept = st.selectbox("使用部門 / Bộ phận sử dụng", DEPT_OPTIONS, index=dept_idx)
 
-                                            ed_plate = st.text_input("車牌號碼 (若為車輛)", value=target_item.get("license_plate", ""))
-                                            ed_driver = st.text_input("保管人姓名 / 負責人", value=target_item.get("driver_custodian", ""))
+                                            ed_plate = st.text_input("車牌號碼 / Biển số xe", value=target_item.get("license_plate", ""))
+                                            ed_driver = st.text_input("保管人姓名 / Người quản lý", value=target_item.get("driver_custodian", ""))
 
                                         with ec2:
-                                            ed_brand = st.text_input("廠牌型號", value=target_item.get("brand_model", ""))
+                                            ed_brand = st.text_input("廠牌型號 / Model", value=target_item.get("brand_model", ""))
                                             
                                             raw_pdate = target_item.get("purchase_date")
                                             if isinstance(raw_pdate, (datetime.date, datetime.datetime)):
@@ -551,19 +551,19 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                                     default_date = datetime.datetime.strptime(str(raw_pdate)[:10], "%Y-%m-%d").date()
                                                 except Exception:
                                                     default_date = datetime.date(2023, 1, 1)
-                                            ed_pdate = st.date_input("購買/取得日期", value=default_date)
+                                            ed_pdate = st.date_input("購買日期 / Ngày mua", value=default_date)
 
                                             default_cost_str = format_vnd_input(target_item.get("cost_amount", 0))
-                                            ed_cost = st.text_input("取得原價成本 (VND)", value=default_cost_str)
+                                            ed_cost = st.text_input("取得原價成本 (VND) / Nguyên giá", value=default_cost_str)
                                             
                                             default_sal_str = format_vnd_input(target_item.get("salvage_amount", 0))
-                                            ed_salvage = st.text_input("預估殘值 (VND)", value=default_sal_str)
+                                            ed_salvage = st.text_input("預估殘值 (VND) / Giá trị thanh lý", value=default_sal_str)
 
                                         eb1, eb2 = st.columns(2)
                                         with eb1:
-                                            btn_update = st.form_submit_button("💾 儲存資產變更", type="primary", use_container_width=True)
+                                            btn_update = st.form_submit_button("💾 儲存資產變更 / Lưu thay đổi", type="primary", use_container_width=True)
                                         with eb2:
-                                            btn_delete = st.form_submit_button("🔥 刪除此筆資產", type="secondary", use_container_width=True)
+                                            btn_delete = st.form_submit_button("🔥 刪除此筆資產 / Xóa tài sản", type="secondary", use_container_width=True)
 
                                         if btn_update:
                                             try:
@@ -582,25 +582,25 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                                         "plate": ed_plate, "bm": ed_brand, "driver": ed_driver, "pdate": ed_pdate,
                                                         "cost": final_cost, "sal": final_salvage, "old_code": target_code
                                                     })
-                                                st.success(f"🎉 固定資產編號 [{ed_code}] 資料更新成功！")
+                                                st.success(f"🎉 資產編號 [{ed_code}] 更新成功！")
                                                 st.rerun()
                                             except Exception as e:
-                                                st.error("更新失敗 (可能是編號與其他資產重複): " + str(e))
+                                                st.error("更新失敗 / Lỗi cập nhật: " + str(e))
 
                                         if btn_delete:
                                             try:
                                                 with engine.begin() as conn:
                                                     conn.execute(text("DELETE FROM public.fixed_assets WHERE asset_code = :code;"), {"code": target_code})
-                                                st.success(f"🗑️ 固定資產編號 [{target_code}] 已成功刪除！")
+                                                st.success(f"🗑️ 資產編號 [{target_code}] 已成功刪除！")
                                                 st.rerun()
                                             except Exception as e:
-                                                st.error("刪除失敗: " + str(e))
+                                                st.error("刪除失敗 / Lỗi xóa: " + str(e))
                         else:
-                            st.warning("⚠️ 依照目前的詳細位置與部門過濾條件，查無符合的固定資產紀錄。")
+                            st.warning("⚠️ 依照目前的過濾條件，查無符合的固定資產紀錄。")
                     else:
-                        st.info("目前尚無固定資產資料。")
+                        st.info("目前尚無固定資產資料。 / Chưa có dữ liệu tài sản.")
             except Exception as e:
-                st.error("讀取失敗: " + str(e))
+                st.error("讀取失敗 / Lỗi đọc: " + str(e))
 
 # ----------------------------------------------------
 # 🔗 相容性進入點
