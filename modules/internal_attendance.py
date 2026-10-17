@@ -83,12 +83,11 @@ def get_all_employees_from_db(engine):
     """
     emp_list = []
     
-    # 1. 從資料庫 employee_profiles 讀取所有現職員工
     if engine:
         try:
             with engine.connect() as conn:
                 res = conn.execute(text("""
-                    SELECT emp_code, emp_name, department 
+                    SELECT emp_code, emp_name, department, position 
                     FROM public.employee_profiles 
                     WHERE (status IS NULL OR status = '在職')
                     ORDER BY emp_code ASC;
@@ -97,27 +96,31 @@ def get_all_employees_from_db(engine):
                 if rows:
                     for r in rows:
                         if r[0] and r[1]:
-                            emp_list.append({"工號": str(r[0]), "姓名": str(r[1]), "部門": str(r[2] or "管理部")})
+                            emp_list.append({
+                                "工號": str(r[0]), 
+                                "姓名": str(r[1]), 
+                                "部門": str(r[2] or "管理部"),
+                                "職稱": str(r[3] or "廠內固定員工")
+                            })
         except Exception:
             pass
 
-    # 2. 若資料庫暫時無法連線，則從 session 抓取
     if not emp_list and "employee_db" in st.session_state and st.session_state.employee_db:
         for e in st.session_state.employee_db:
             code = str(e.get("工號") or "").strip()
             name = str(e.get("姓名") or "").strip()
             dept = str(e.get("部門") or "管理部").strip()
+            pos = str(e.get("職稱") or "廠內固定員工").strip()
             if code and name:
-                emp_list.append({"工號": code, "姓名": name, "部門": dept})
+                emp_list.append({"工號": code, "姓名": name, "部門": dept, "職稱": pos})
 
-    # 3. 備援保底名單
     if not emp_list:
         emp_list = [
-            {"工號": "TW-001", "姓名": "李佑路", "部門": "總經理室"},
-            {"工號": "VN-002", "姓名": "Nguyễn Văn Quý", "部門": "管理部"},
-            {"工號": "TW-002", "姓名": "陳智賢", "部門": "總經理室"},
-            {"工號": "TW-003", "姓名": "李元隆", "部門": "總經理室"},
-            {"工號": "TW-004", "姓名": "許福村", "部門": "管理部"}
+            {"工號": "TW-001", "姓名": "李佑路", "部門": "總經理室", "職稱": "董事長"},
+            {"工號": "VN-002", "姓名": "Nguyễn Văn Quý", "部門": "管理部", "職稱": "廠內固定員工"},
+            {"工號": "TW-002", "姓名": "陳智賢", "部門": "總經理室", "職稱": "總經理"},
+            {"工號": "TW-003", "姓名": "李元隆", "部門": "總經理室", "職稱": "副總經理"},
+            {"工號": "TW-004", "姓名": "許福村", "部門": "管理部", "職稱": "經理"}
         ]
     return emp_list
 
@@ -130,7 +133,6 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
 
     init_attendance_db(engine)
 
-    # 🔗 動態取得最新員工名冊（來自 employee_profiles）
     emp_list = get_all_employees_from_db(engine)
 
     tab_summary, tab_clock, tab_rules, tab_api, tab_logs = st.tabs([
@@ -142,11 +144,19 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
     ])
 
     # ----------------------------------------------------
-    # 📊 Tab 1: 月考勤統計
+    # 📊 Tab 1: 月考勤統計 (含台幹/越幹身分獨立分流)
     # ----------------------------------------------------
     with tab_summary:
         st.markdown("### 📊 員工個人月度考勤與 OT 統計彙整表")
         st.markdown(f"✨ **已成功串聯人事資料庫 (`employee_profiles`)！目前共同步載入 {len(emp_list)} 位現職員工。**")
+
+        # 📋 新增身分分流篩選器
+        att_sub_filter = st.radio(
+            "📋 檢視考勤名冊類別分流：",
+            ["全部現職員工 (All)", "🇹🇼 外派幹部 / 台籍與中籍 (Expat/TW/CN)", "🇻🇳 越南籍員工 (Local VN)"],
+            horizontal=True,
+            key="att_sub_filter_radio"
+        )
 
         c1, c2 = st.columns([1, 2])
         with c1:
@@ -156,10 +166,22 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
 
         summary_data = []
         for emp in emp_list:
+            code_upper = emp["工號"].upper()
+            pos_str = emp["職稱"]
+            
+            # 判斷是否為外派幹部 / 台幹
+            is_expat = code_upper.startswith("TW") or code_upper.startswith("CN") or any(k in pos_str for k in ["廠長", "經理", "副理", "主任", "董事長", "外派", "助理"])
+            
+            if "外派" in att_sub_filter and not is_expat:
+                continue
+            if "越南" in att_sub_filter and is_expat:
+                continue
+
             summary_data.append({
                 "工號 / Mã NV": emp["工號"],
                 "姓名 / Họ tên": emp["姓名"],
                 "部門 / Bộ phận": emp["部門"],
+                "職稱 / Chức vụ": emp["職稱"],
                 "應出勤天數": 22,
                 "實際出勤": 22,
                 "遲到次數": 0,
@@ -170,11 +192,15 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
             })
 
         df_summary = pd.DataFrame(summary_data)
-        if search_kw:
+        if search_kw and not df_summary.empty:
             kw = search_kw.lower()
             df_summary = df_summary[df_summary["工號 / Mã NV"].str.lower().str.contains(kw) | df_summary["姓名 / Họ tên"].str.lower().str.contains(kw)]
 
-        st.dataframe(df_summary, use_container_width=True)
+        if not df_summary.empty:
+            df_summary.insert(0, "STT", range(len(df_summary)))
+            st.dataframe(df_summary, use_container_width=True)
+        else:
+            st.info("ℹ️ 此分流類別目前尚無符合的考勤員工資料。")
 
     # ----------------------------------------------------
     # ⏰ Tab 2: 打卡與補貼
