@@ -553,4 +553,30 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
                                         if btn_delete:
                                             try:
-                                                with engine.begin
+                                                with engine.begin() as conn:
+                                                    conn.execute(text("DELETE FROM public.fixed_assets WHERE asset_code = :code;"), {"code": target_code})
+                                                st.success(f"🗑️ 資產編號 [{target_code}] 已成功刪除！")
+                                                st.rerun()
+                                            except Exception as e:
+                                                st.error("刪除失敗: " + str(e))
+                        else:
+                            st.warning("⚠️ 查無符合的固定資產紀錄。")
+                    else:
+                        st.info("目前尚無固定資產資料。")
+            except Exception as e:
+                st.error("讀取失敗: " + str(e))
+
+# ----------------------------------------------------
+# 🔗 相容性進入點
+# ----------------------------------------------------
+def render_assets_page(engine=None, lang="繁體中文", **kwargs):
+    render_asset_management_page(engine=engine, lang=lang, **kwargs)
+
+def render_fixed_assets(engine=None, lang="繁體中文", **kwargs):
+    render_asset_management_page(engine=engine, lang=lang, **kwargs)
+
+def show(engine=None, lang="繁體中文", **kwargs):
+    render_asset_management_page(engine=engine, lang=lang, **kwargs)
+
+def main(engine=None, lang="繁體中文", **kwargs):
+    render_asset_management_page(engine=engine, lang=lang, **kwargs)
