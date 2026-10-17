@@ -215,11 +215,9 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                     t_sal_vnd = 30000000.0
                 st.markdown(f"**💡 越南盾確認金額：`{t_sal_vnd:,.0f} ₫ (VND)`**")
                 
-                # 先選擇幣別，讓下方輸入框與預覽文字動態讀取
                 t_sec_curr = st.selectbox("第二幣別選擇", ["USD", "TWD", "RMB"], key="tw_sec_curr")
-                
-                # 動態帶入所選幣別，絕不寫死 USD
-                t_sec_sal = st.number_input(f"外派第二薪資金額 ")
+                t_sec_sal = st.number_input("外派第二薪資金額", min_value=0.0, value=1500.0, step=100.0, format="%.2f")
+                st.markdown(f"**💲 外派薪資即時預覽：`{t_sec_sal:,.2f} {t_sec_curr}`**")
 
             if st.form_submit_button("💾 儲存外派幹部檔案 (含雙薪設定)", type="primary", use_container_width=True):
                 if engine and t_code and t_name:
@@ -247,18 +245,53 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.warning("⚠️ 請填寫外派工號與姓名！")
 
     # ----------------------------------------------------
-    # ✏️ Tab 3: 修改員工資料 (支援雙薪與動態幣別)
+    # ✏️ Tab 3: 修改員工資料 (加入身份分流與部門篩選)
     # ----------------------------------------------------
     with tab_edit:
         st.markdown("### ✏️ 修改現職員工個人檔案與雙薪保險資料")
         if engine:
             try:
                 with engine.connect() as conn:
-                    res = conn.execute(text("SELECT emp_code, emp_name, department FROM public.employee_profiles WHERE (status IS NULL OR status = '在職') ORDER BY emp_code;"))
+                    # 1. 身份分流選擇
+                    edit_identity_filter = st.radio(
+                        "🔍 選擇修改對象身分過濾：",
+                        ["🇹🇼 外派幹部 / 台籍與中籍 (Expat/TW/CN)", "🇻🇳 越南籍員工 (Local VN)", "全部現職員工 (All)"],
+                        horizontal=True,
+                        key="edit_identity_radio"
+                    )
+
+                    # 2. 部門篩選器
+                    edit_dept_filter = st.selectbox(
+                        "📂 依部門過濾員工：",
+                        ["全部部門 (All Departments)"] + DEPT_OPTIONS,
+                        key="edit_dept_select"
+                    )
+
+                    # 動態組合 SQL 查詢條件
+                    base_sql = """
+                        SELECT emp_code, emp_name, department, position 
+                        FROM public.employee_profiles 
+                        WHERE (status IS NULL OR status = '在職')
+                    """
+                    params = {}
+
+                    if "外派" in edit_identity_filter:
+                        base_sql += " AND (emp_code ILIKE 'TW%' OR emp_code ILIKE 'CN%' OR position ~* '廠長|經理|副理|主任|董事長|外派')"
+                    elif "越南" in edit_identity_filter:
+                        base_sql += " AND (emp_code ILIKE 'VN%' OR (emp_code NOT ILIKE 'TW%' AND emp_code NOT ILIKE 'CN%'))"
+
+                    if edit_dept_filter != "全部部門 (All Departments)":
+                        base_sql += " AND department = :dept_val"
+                        params["dept_val"] = edit_dept_filter
+
+                    base_sql += " ORDER BY emp_code ASC;"
+
+                    res = conn.execute(text(base_sql), params)
                     emp_list = res.fetchall()
+
                     if emp_list:
-                        emp_options = {f"{r.emp_code} - {r.emp_name} ({r.department})": r.emp_code for r in emp_list}
-                        selected_emp_label = st.selectbox("請選擇要修改的員工：", list(emp_options.keys()))
+                        emp_options = {f"{r.emp_code} - {r.emp_name} ({r.department}) [{r.position}]": r.emp_code for r in emp_list}
+                        selected_emp_label = st.selectbox("📌 請從篩選結果中選擇要修改的員工：", list(emp_options.keys()), key="selected_emp_dropdown")
                         target_code = emp_options[selected_emp_label]
 
                         emp_detail = conn.execute(text("SELECT * FROM public.employee_profiles WHERE emp_code = :c;"), {"c": target_code}).fetchone()
@@ -300,7 +333,8 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                     sec_curr_idx = ["USD", "TWD", "RMB"].index(curr_sec_curr) if curr_sec_curr in ["USD", "TWD", "RMB"] else 0
                                     
                                     edit_sec_curr = st.selectbox("第二幣別選擇", ["USD", "TWD", "RMB"], index=sec_curr_idx, key="edit_sec_curr")
-                                    edit_sec_sal = st.number_input(f"外派第二薪資金額 ")
+                                    edit_sec_sal = st.number_input("外派第二薪資金額", value=float(e.get("second_salary") or 0.0), step=100.0, format="%.2f")
+                                    st.markdown(f"**💲 外派薪資即時預覽：`{edit_sec_sal:,.2f} {edit_sec_curr}`**")
 
                                 if st.form_submit_button("💾 儲存修改內容", type="primary", use_container_width=True):
                                     with engine.begin() as conn_up:
@@ -322,7 +356,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                     st.success(f"🎉 已成功更新員工資料與雙薪結構！")
                                     st.rerun()
                     else:
-                        st.info("目前尚無在職員工資料。")
+                        st.info("ℹ️ 依照目前的過濾條件（身分與部門），找不到符合的在職員工資料。")
             except Exception as e:
                 st.error("讀取員工列表失敗: " + str(e))
 
