@@ -149,8 +149,13 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                 v_social_code = st.text_input("社保號碼 (Mã số BHXH)", placeholder="例: 7912345678")
 
             with col3:
-                v_sal = st.number_input("越南盾約定底薪 (Lương CB - VND)", min_value=0.0, value=5000000.0, step=100000.0, format="%.0f")
-                st.markdown(f"**💲 越南盾千分位預覽：`{v_sal:,.0f} ₫ (VND)`**")
+                # 越南盾底薪輸入與即時千分位對照
+                v_sal_str = st.text_input("越南盾約定底薪 (Lương CB - VND)", value="5,000,000", placeholder="例: 5,000,000")
+                try:
+                    v_sal = float(v_sal_str.replace(",", "").replace(" ", ""))
+                except:
+                    v_sal = 5000000.0
+                st.markdown(f"**💡 確認金額：`{v_sal:,.0f} ₫ (VND)`**")
                 
                 v_role = st.selectbox("系統權限角色 (System Role)", system_roles_options, index=0, key="vn_role")
                 v_perm_addr = st.text_input("戶籍地址 (Thường trú)", placeholder="例: Tây Ninh, Việt Nam")
@@ -208,14 +213,20 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
 
             with col3:
                 st.markdown("##### 💰 外派人員雙軌薪資設定")
-                t_sal_vnd = st.number_input("越南盾在地底薪 (VND Salary)", min_value=0.0, value=30000000.0, step=1000000.0, format="%.0f")
-                st.markdown(f"**💲 越南盾即時千分位：`{t_sal_vnd:,.0f} ₫ (VND)`**")
+                
+                # 越南盾底薪採用文字框帶千分位預覽
+                t_sal_str = st.text_input("越南盾在地底薪 (VND Salary)", value="30,000,000", placeholder="例: 30,000,000")
+                try:
+                    t_sal_vnd = float(t_sal_str.replace(",", "").replace(" ", ""))
+                except:
+                    t_sal_vnd = 30000000.0
+                st.markdown(f"**💡 越南盾確認金額：`{t_sal_vnd:,.0f} ₫ (VND)`**")
                 
                 sc_col1, sc_col2 = st.columns([1, 2])
                 with sc_col1:
                     t_sec_curr = st.selectbox("第二幣別", ["USD", "TWD", "RMB"], key="tw_sec_curr")
                 with sc_col2:
-                    # 標題動態顯示所選幣別，不再寫死 USD
+                    # 標題動態顯示所選幣別，絕不寫死 USD
                     t_sec_sal = st.number_input(f"外派第二薪資 ({t_sec_curr})", min_value=0.0, value=1500.0, step=100.0, format="%.2f")
                 st.markdown(f"**💲 外派薪資即時預覽：`{t_sec_sal:,.2f} {t_sec_curr}`**")
 
@@ -286,8 +297,13 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                                 st.markdown("##### 2️⃣ 薪資結構調整 (支援越南盾與外派雙薪)")
                                 col_sal1, col_sal2 = st.columns(2)
                                 with col_sal1:
-                                    edit_sal = st.number_input("越南盾底薪 (Lương CB - VND)", value=float(e.get("base_salary") or 0.0), step=100000.0, format="%.0f")
-                                    st.markdown(f"**💲 越南盾即時千分位：`{edit_sal:,.0f} ₫ (VND)`**")
+                                    default_sal_val = f"{float(e.get('base_salary') or 0.0):,.0f}"
+                                    edit_sal_str = st.text_input("越南盾底薪 (Lương CB - VND)", value=default_sal_val)
+                                    try:
+                                        edit_sal = float(edit_sal_str.replace(",", "").replace(" ", ""))
+                                    except:
+                                        edit_sal = float(e.get("base_salary") or 0.0)
+                                    st.markdown(f"**💡 越南盾確認金額：`{edit_sal:,.0f} ₫ (VND)`**")
                                 with col_sal2:
                                     curr_sec_curr = str(e.get("second_currency") or "USD")
                                     sec_curr_idx = ["USD", "TWD", "RMB"].index(curr_sec_curr) if curr_sec_curr in ["USD", "TWD", "RMB"] else 0
