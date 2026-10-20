@@ -4,17 +4,13 @@ import datetime
 import re
 from sqlalchemy import text
 
-# ----------------------------------------------------
-# 🌐 三語系字典 (i18n)
-# ----------------------------------------------------
 ASSETS_I18N = {
     "繁體中文": {
-        "title": "🏢 固定資產與設備管理 & 越南會計總表",
-        "caption": "支援車輛車牌、條碼掃描、越南土地面積 (m²) 租賃，以及財務自訂折舊年限與越南會計標準總表 (Thông tư 200)。",
+        "title": "🏢 固定資產與設備管理 (Fixed Assets & Equipment)",
+        "caption": "支援車輛車牌、條碼掃描、越南土地面積 (m²) 租賃，以及財務自訂折舊年限設定。",
         "tab_add": "➕ 新增固定資產",
         "tab_excel": "📊 Excel 智慧批次匯入",
         "tab_list": "📋 固定資產清冊與折舊試算",
-        "tab_bctc": "📑 越南稅務標準財務總表 (BCTC)",
         "lbl_code": "資產/合約編號 *",
         "lbl_name": "資產名稱 *",
         "lbl_status": "目前狀態",
@@ -31,12 +27,11 @@ ASSETS_I18N = {
         "lbl_search": "🔍 輸入關鍵字查詢資產/車牌/地號/保管人："
     },
     "English": {
-        "title": "🏢 Fixed Assets & Financial Statement (BCTC)",
-        "caption": "Supports vehicles, barcodes, sqm land leasing, custom depreciation, and Circular 200 statements.",
+        "title": "🏢 Fixed Assets & Equipment Management",
+        "caption": "Supports vehicles, barcodes, sqm land leasing, and custom depreciation settings.",
         "tab_add": "➕ Add Asset",
         "tab_excel": "📊 Excel Batch Import",
         "tab_list": "📋 Asset Inventory",
-        "tab_bctc": "📑 Financial Statement (BCTC)",
         "lbl_code": "Asset Code *",
         "lbl_name": "Asset Name *",
         "lbl_status": "Status",
@@ -53,12 +48,11 @@ ASSETS_I18N = {
         "lbl_search": "🔍 Search Asset / Plate / Land No. / Custodian:"
     },
     "Tiếng Việt": {
-        "title": "🏢 Quản lý TSCĐ & Báo cáo tài chính (BCTC)",
-        "caption": "Quản lý xe, mã vạch, đất đai, khấu hao tùy chỉnh theo Thông tư 200.",
+        "title": "🏢 Quản lý Tài sản cố định & Nhà xưởng",
+        "caption": "Quản lý xe, mã vạch, đất đai và cấu hình thời gian khấu hao tùy chỉnh.",
         "tab_add": "➕ Thêm mới tài sản",
         "tab_excel": "📊 Nhập Excel hàng loạt",
         "tab_list": "📋 Danh sách tài sản",
-        "tab_bctc": "📑 Báo cáo tài chính (BCTC)",
         "lbl_code": "Mã tài sản *",
         "lbl_name": "Tên tài sản *",
         "lbl_status": "Trạng thái",
@@ -206,7 +200,6 @@ def calculate_custom_depreciation(cost, salvage, purchase_date_str, useful_years
         if years < 1:
             years = 1
         total_months = years * 12
-        
         salvage_val = float(salvage if salvage is not None else (cost_val * 0.1))
         
         if isinstance(purchase_date_str, (datetime.date, datetime.datetime)):
@@ -272,14 +265,10 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
     site_options = get_factory_options_from_db(engine)
 
-    tab_add, tab_excel, tab_list, tab_bctc = st.tabs([L["tab_add"], L["tab_excel"], L["tab_list"], L["tab_bctc"]])
+    tab_add, tab_excel, tab_list = st.tabs([L["tab_add"], L["tab_excel"], L["tab_list"]])
 
-    # ----------------------------------------------------
-    # ➕ 頁籤 1: 新增固定資產 (即時動態欄位連動 + 財務自訂年限與殘值)
-    # ----------------------------------------------------
     with tab_add:
         st.markdown(f"### {L['tab_add']}")
-        
         asset_cat = st.selectbox(L["lbl_cat"], ASSET_CATEGORIES, key="dynamic_asset_cat_selector")
 
         default_years = 5
@@ -319,7 +308,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
 
                 salvage_str = st.text_input(L["lbl_salvage"], value=str(int(cost_val * 0.1)))
                 salvage_val = parse_formatted_amount(salvage_str)
-                st.caption(f"💡 殘值預覽: **{salvage_val:,.0f} VND** (折舊期: {useful_life}年 / {useful_life * 12}個月)".replace(",", "."))
+                st.caption(f"💡 殘值預覽: **{salvage_val:,.0f} VND** (折舊期: {useful_life}年)".replace(",", "."))
 
             general_custodian = st.text_input(L["lbl_custodian"], value="Nguyễn Văn Tài")
 
@@ -336,46 +325,32 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
             renewal_amt = 0.0
 
             if "車輛" in asset_cat or "Xe" in asset_cat:
-                st.markdown("""
-                <div class="dynamic-box">
-                    <h5 style="color:#047857; margin-top:0;">🚗 車輛專屬補充資料 / Thông tin xe công tác</h5>
-                """, unsafe_allow_html=True)
+                st.markdown("""<div class="dynamic-box"><h5 style="color:#047857; margin-top:0;">🚗 車輛專屬補充資料</h5>""", unsafe_allow_html=True)
                 v_c1, v_c2 = st.columns(2)
                 with v_c1:
                     license_plate = st.text_input("車牌號碼 (Biển số xe) *", value="70A-492.14")
                 with v_c2:
-                    v_model = st.text_input("車輛廠牌與型號 (Nhãn hiệu xe)", value="Mercedes-Benz S450")
-                inspection_date = st.date_input("車輛驗車/行照到期日 (Hạn đăng kiểm)", datetime.date(2027, 10, 16))
+                    v_model = st.text_input("車輛廠牌與型號", value="Mercedes-Benz S450")
+                inspection_date = st.date_input("車輛驗車到期日", datetime.date(2027, 10, 16))
                 st.markdown("</div>", unsafe_allow_html=True)
-
             elif "土地" in asset_cat or "廠房" in asset_cat or "Đất" in asset_cat:
-                st.markdown("""
-                <div class="land-box">
-                    <h5 style="color:#B45309; margin-top:0;">🏢 越南土地與廠房不動產專屬資料 (以平方公尺 $m^2$ 計價)</h5>
-                """, unsafe_allow_html=True)
+                st.markdown("""<div class="land-box"><h5 style="color:#B45309; margin-top:0;">🏢 越南土地與廠房不動產專屬資料</h5>""", unsafe_allow_html=True)
                 l_c1, l_c2 = st.columns(2)
                 with l_c1:
-                    land_address = st.text_input("不動產詳細地址 (Địa chỉ BĐS)", value="Khu công nghiệp Trảng Bàng, Tây Ninh")
-                    land_plot_no = st.text_input("地號 / 圖號 (Số thửa / Tờ bản đồ)", value="Thửa đất số 45, Tờ bản đồ số 12")
-                    land_area = st.number_input("總面積 ($\text{m}^2$) / Diện tích ($m^2$)", min_value=0.0, value=5000.0, step=10.0, format="%.2f")
+                    land_address = st.text_input("不動產詳細地址", value="Khu công nghiệp Trảng Bàng, Tây Ninh")
+                    land_plot_no = st.text_input("地號 / 圖號", value="Thửa đất số 45, Tờ bản đồ số 12")
+                    land_area = st.number_input("總面積 ($m^2$)", min_value=0.0, value=5000.0, step=10.0, format="%.2f")
                 with l_c2:
-                    lease_start = st.date_input("租賃/合約起日 (Ngày bắt đầu thuê)", datetime.date(2020, 1, 1))
-                    lease_end = st.date_input("租賃/合約到期日 (Ngày hết hạn thuê)", datetime.date(2050, 12, 31))
-                    renewal_dt = st.date_input("預定續約日 (Ngày gia hạn)", datetime.date(2030, 1, 1))
-                    ren_str = st.text_input("預估續約金額 (VND) / Giá trị gia hạn", value="150.000.000")
+                    lease_start = st.date_input("租賃起日", datetime.date(2020, 1, 1))
+                    lease_end = st.date_input("租賃到期日", datetime.date(2050, 12, 31))
+                    renewal_dt = st.date_input("預定續約日", datetime.date(2030, 1, 1))
+                    ren_str = st.text_input("預估續約金額 (VND)", value="150.000.000")
                     renewal_amt = parse_formatted_amount(ren_str)
-                if land_area > 0 and cost_val > 0:
-                    unit_price_sqm = cost_val / land_area
-                    st.markdown(f"**📐 單位地價試算：`{unit_price_sqm:,.2f} VND / m²`**".replace(",", "."))
                 st.markdown("</div>", unsafe_allow_html=True)
-
             else:
-                st.markdown("""
-                <div class="dynamic-box">
-                    <h5 style="color:#047857; margin-top:0;">📦 財產條碼與序號認證 / Mã vạch & Serial Number</h5>
-                """, unsafe_allow_html=True)
-                barcode_serial = st.text_input("資產條碼 / 序號 (Barcode / Serial No.)", value="BC-IT-2026-9988")
-                v_model = st.text_input("品牌與型號 / Brand & Model", placeholder="例: Dell PowerEdge R750")
+                st.markdown("""<div class="dynamic-box"><h5 style="color:#047857; margin-top:0;">📦 財產條碼與序號認證</h5>""", unsafe_allow_html=True)
+                barcode_serial = st.text_input("資產條碼 / 序號", value="BC-IT-2026-9988")
+                v_model = st.text_input("品牌與型號", placeholder="例: Dell PowerEdge R750")
                 st.markdown("</div>", unsafe_allow_html=True)
 
             if st.form_submit_button(L["btn_submit"], type="primary", use_container_width=True):
@@ -383,47 +358,27 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.error("⚠️ 請填寫資產編號與名稱！")
                 elif not general_custodian:
                     st.error("⚠️ 請填寫保管人姓名！")
-                elif "車輛" in asset_cat and not license_plate:
-                    st.error("⚠️ 請填寫車輛的【車牌號碼】！")
                 else:
-                    is_duplicate = False
                     if engine:
                         try:
-                            df_check = pd.read_sql("SELECT asset_code FROM public.fixed_assets WHERE asset_code = :code", con=engine, params={"code": asset_code})
-                            if not df_check.empty:
-                                is_duplicate = True
-                        except Exception:
-                            pass
+                            with engine.begin() as conn:
+                                conn.execute(text("""
+                                    INSERT INTO public.fixed_assets 
+                                    (asset_code, asset_name, category, site_location, sub_location, department, brand_model, license_plate, barcode_serial, land_address, land_plot_no, land_area_sqm, lease_start_date, lease_end_date, renewal_date, renewal_amount, driver_custodian, purchase_date, inspection_expiry, cost_amount, salvage_amount, useful_life_years, status)
+                                    VALUES (:code, :name, :cat, :site, :sub_loc, :dept, :bm, :plate, :bc, :l_addr, :l_plot, :l_area, :l_start, :l_end, :r_dt, :r_amt, :driver, :pdate, :exp, :cost, :sal, :life, :status);
+                                """), {
+                                    "code": asset_code, "name": asset_name, "cat": asset_cat, "site": site_loc, "sub_loc": sub_loc, "dept": asset_dept,
+                                    "bm": v_model, "plate": license_plate, "bc": barcode_serial, "l_addr": land_address, "l_plot": land_plot_no,
+                                    "l_area": land_area, "l_start": lease_start, "l_end": lease_end, "r_dt": renewal_dt, "r_amt": renewal_amt,
+                                    "driver": general_custodian, "pdate": purchase_dt, "exp": inspection_date, "cost": cost_val, "sal": salvage_val, "life": useful_life, "status": asset_status
+                                })
+                            st.success(f"🎉 成功新增資產【{asset_name}】 | 年限：{useful_life}年")
+                            st.rerun()
+                        except Exception as e:
+                            st.error("寫入資料庫失敗: " + str(e))
 
-                    if is_duplicate:
-                        st.warning(f"⚠️ 代碼重複：系統已存在資產編號 `{asset_code}`！")
-                    else:
-                        if engine:
-                            try:
-                                with engine.begin() as conn:
-                                    conn.execute(text("""
-                                        INSERT INTO public.fixed_assets 
-                                        (asset_code, asset_name, category, site_location, sub_location, department, brand_model, license_plate, barcode_serial, land_address, land_plot_no, land_area_sqm, lease_start_date, lease_end_date, renewal_date, renewal_amount, driver_custodian, purchase_date, inspection_expiry, cost_amount, salvage_amount, useful_life_years, status)
-                                        VALUES (:code, :name, :cat, :site, :sub_loc, :dept, :bm, :plate, :bc, :l_addr, :l_plot, :l_area, :l_start, :l_end, :r_dt, :r_amt, :driver, :pdate, :exp, :cost, :sal, :life, :status);
-                                    """), {
-                                        "code": asset_code, "name": asset_name, "cat": asset_cat, "site": site_loc, "sub_loc": sub_loc, "dept": asset_dept,
-                                        "bm": v_model, "plate": license_plate, "bc": barcode_serial, "l_addr": land_address, "l_plot": land_plot_no,
-                                        "l_area": land_area, "l_start": lease_start, "l_end": lease_end, "r_dt": renewal_dt, "r_amt": renewal_amt,
-                                        "driver": general_custodian, "pdate": purchase_dt, "exp": inspection_date, "cost": cost_val, "sal": salvage_val, "life": useful_life, "status": asset_status
-                                    })
-                                st.success(f"🎉 成功新增資產【{asset_name}】 | 年限：{useful_life}年 | 金額：{cost_val:,.0f} VND".replace(",", "."))
-                                st.rerun()
-                            except Exception as e:
-                                st.error("寫入資料庫失敗: " + str(e))
-                        else:
-                            st.success(f"🎉 [展示模式] 固定資產【{asset_name}】建立成功！")
-
-    # ----------------------------------------------------
-    # 📊 頁籤 2: Excel 智慧批次匯入
-    # ----------------------------------------------------
     with tab_excel:
         st.markdown(f"### {L['tab_excel']}")
-        st.info("請上傳包含固定資產資料的 Excel 檔案 (.xlsx)。")
         uploaded_file = st.file_uploader("選擇 Excel 檔案上傳", type=["xlsx", "xls"])
         if uploaded_file is not None:
             try:
@@ -453,9 +408,6 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
             except Exception as e:
                 st.error("❌ 解析 Excel 失敗: " + str(e))
 
-    # ----------------------------------------------------
-    # 📋 頁籤 3: 固定資產清冊與財務折舊管理
-    # ----------------------------------------------------
     with tab_list:
         st.markdown(f"### {L['tab_list']}")
         search_kw = st.text_input(L["lbl_search"], placeholder="搜尋資產名稱、車牌、地號、條碼、保管人...")
@@ -482,22 +434,13 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                             p_date = item.get("purchase_date") or datetime.date(2023, 1, 1)
                             life_years = int(item.get("useful_life_years") or 5)
 
-                            months_used, accum_depr, net_value = calculate_custom_depreciation(cost_amt, salvage_amt, p_date, life_years)
-
-                            extra_info = "-"
-                            if item.get("license_plate"):
-                                extra_info = f"🚗 車牌: {item['license_plate']}"
-                            elif item.get("barcode_serial"):
-                                extra_info = f"📦 條碼: {item['barcode_serial']}"
-                            elif item.get("land_plot_no"):
-                                extra_info = f"🏢 地號: {item['land_plot_no']} ({float(item.get('land_area_sqm') or 0):,.2f} m²)"
+                            _, _, net_value = calculate_custom_depreciation(cost_amt, salvage_amt, p_date, life_years)
 
                             data_list.append({
                                 "資產編號": item.get("asset_code"),
                                 "資產名稱": item.get("asset_name"),
                                 "資產類別": item.get("category"),
                                 "耐用年限": f"{life_years}年",
-                                "專屬特徵/車牌/地號": extra_info,
                                 "保管人": item.get("driver_custodian"),
                                 "取得原價": format_vnd(cost_amt),
                                 "目前淨值": format_vnd(net_value),
@@ -509,7 +452,7 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                             
                             st.markdown("---")
                             st.markdown("### ✏️ 財務資產資料修改與折舊年限調整")
-                            asset_options = [f"{item['asset_code']} - {item['asset_name']} [{item.get('category','')} - 年限: {item.get('useful_life_years',5)}年]" for item in raw_items]
+                            asset_options = [f"{item['asset_code']} - {item['asset_name']} [年限: {item.get('useful_life_years',5)}年]" for item in raw_items]
                             selected_target = st.selectbox("選擇要修改年限或刪除的資產", asset_options)
                             
                             if selected_target:
@@ -522,14 +465,9 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                         with ec1:
                                             ed_code = st.text_input("資產編號", value=target_item.get("asset_code", ""))
                                             ed_name = st.text_input("資產名稱", value=target_item.get("asset_name", ""))
-                                            ed_plate = st.text_input("車牌號碼 (若適用)", value=target_item.get("license_plate", ""))
-                                            ed_driver = st.text_input("保管人姓名", value=target_item.get("driver_custodian", ""))
                                         with ec2:
                                             ed_life = st.number_input("耐用年限 (年)", min_value=1, max_value=50, value=int(target_item.get("useful_life_years") or 5), step=1)
-                                            default_cost_str = format_vnd_input(target_item.get("cost_amount", 0))
-                                            ed_cost = st.text_input("取得原價成本 (VND)", value=default_cost_str)
-                                            edit_cost_val = parse_formatted_amount(ed_cost)
-                                            st.caption(f"💡 成本預覽: **{edit_cost_val:,.0f} VND**".replace(",", "."))
+                                            ed_cost = st.text_input("取得原價成本 (VND)", value=format_vnd_input(target_item.get("cost_amount", 0)))
 
                                         eb1, eb2 = st.columns(2)
                                         with eb1:
@@ -543,14 +481,14 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                                 with engine.begin() as conn:
                                                     conn.execute(text("""
                                                         UPDATE public.fixed_assets 
-                                                        SET asset_code = :new_code, asset_name = :name, license_plate = :plate, 
+                                                        SET asset_code = :new_code, asset_name = :name, 
                                                             useful_life_years = :life, cost_amount = :cost
                                                         WHERE asset_code = :old_code;
                                                     """), {
-                                                        "new_code": ed_code.strip(), "name": ed_name, "plate": ed_plate,
+                                                        "new_code": ed_code.strip(), "name": ed_name,
                                                         "life": ed_life, "cost": final_cost, "old_code": target_code
                                                     })
-                                                st.success(f"🎉 資產編號 [{ed_code}] 更新成功（耐用年限：{ed_life}年）！")
+                                                st.success(f"🎉 資產更新成功！")
                                                 st.rerun()
                                             except Exception as e:
                                                 st.error("更新失敗: " + str(e))
@@ -559,84 +497,13 @@ def render_asset_management_page(engine=None, lang="繁體中文", **kwargs):
                                             try:
                                                 with engine.begin() as conn:
                                                     conn.execute(text("DELETE FROM public.fixed_assets WHERE asset_code = :code;"), {"code": target_code})
-                                                st.success(f"🗑️ 資產編號 [{target_code}] 已成功刪除！")
+                                                st.success(f"🗑️ 已刪除！")
                                                 st.rerun()
                                             except Exception as e:
                                                 st.error("刪除失敗: " + str(e))
-                        else:
-                            st.warning("⚠️ 查無符合的固定資產紀錄。")
-                    else:
-                        st.info("目前尚無固定資產資料。")
             except Exception as e:
                 st.error("讀取失敗: " + str(e))
 
-    # ----------------------------------------------------
-    # 📑 頁籤 4: 越南稅務標準財務總表 (BCTC / Thông tư 200 格式)
-    # ----------------------------------------------------
-    with tab_bctc:
-        st.markdown("### 📑 裕豐工業責任有限公司 - 財務狀況與固定資產總表 (BCTC Standard)")
-        st.caption("依據越南企業會計制度 (Thông tư 200) 自動彙總並呈現期末財務狀況。")
-
-        total_asset_cost = 0.0
-        total_net_book_value = 0.0
-        total_accumulated_depr = 0.0
-        bctc_rows = []
-
-        if engine:
-            try:
-                with engine.connect() as conn:
-                    res = conn.execute(text("SELECT * FROM public.fixed_assets;"))
-                    rows = res.fetchall()
-                    for r in rows:
-                        item = dict(r._mapping)
-                        cost = float(item.get("cost_amount", 0) or 0)
-                        salvage = float(item.get("salvage_amount", 0) or (cost * 0.1))
-                        p_date = item.get("purchase_date") or datetime.date(2023, 1, 1)
-                        life_years = int(item.get("useful_life_years") or 5)
-                        
-                        _, accum, net = calculate_custom_depreciation(cost, salvage, p_date, life_years)
-                        
-                        total_asset_cost += cost
-                        total_accumulated_depr += accum
-                        total_net_book_value += net
-                        
-                        bctc_rows.append({
-                            "代碼": item.get("asset_code"),
-                            "資產名稱": item.get("asset_name"),
-                            "分類": item.get("category"),
-                            "年限": f"{life_years}年",
-                            "取得原價 (Cost)": format_vnd(cost),
-                            "累積折舊 (Depreciation)": format_vnd(accum),
-                            "帳面淨值 (Net Book Value)": format_vnd(net)
-                        })
-            except Exception:
-                pass
-
-        col_a1, col_a2, col_a3 = st.columns(3)
-        col_a1.metric("🏢 固定資產總成本 (Total Cost)", format_vnd(total_asset_cost))
-        col_a2.metric("📉 累積折舊總額 (Accumulated Depr.)", format_vnd(total_accumulated_depr))
-        col_a3.metric("💰 帳面淨值總計 (Net Book Value)", format_vnd(total_net_book_value))
-
-        st.markdown("---")
-        st.markdown("#### 📊 固定資產會計總表明細 (B01-DN 格式彙整)")
-        if bctc_rows:
-            st.dataframe(pd.DataFrame(bctc_rows), use_container_width=True)
-        else:
-            st.info("目前尚無資產數據可供彙總。")
-
-        st.markdown("---")
-        st.markdown("#### 📈 越南 Thông tư 200 會計科目結構總結")
-        st.markdown("""
-        * **100. 短期資產 (Short-term Assets)**：包含銀行存款、應收帳款與存貨。
-        * **200. 長期資產 (Long-term Assets)**：
-          * **221. 有形固定資產 (Tangible Fixed Assets)**：成本 `{0}` 減除累積折舊 `{1}`，淨值 `{2}`。
-        * **300. 負債總計 (Liabilities)**：包含應付帳款、短期貸款。
-        * **400. 股東權益 (Equity)**：投資主資本與累計未分配盈餘。
-        """.format(format_vnd(total_asset_cost), format_vnd(total_accumulated_depr), format_vnd(total_net_book_value)))
-
-# ----------------------------------------------------
-# 🔗 相容性進入點
-# ----------------------------------------------------
 def render_assets_page(engine=None, lang="繁體中文", **kwargs):
     render_asset_management_page(engine=engine, lang=lang, **kwargs)
 
