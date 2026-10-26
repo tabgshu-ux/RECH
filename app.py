@@ -121,7 +121,7 @@ NAV_CONFIG = [
         },
         "features": [
             {"code": "it_admin", "labels": {"繁體中文": "🔒 系統角色權限與模組開關設定", "Tiếng Việt": "🔒 Cài đặt Phân quyền Hệ thống", "English": "🔒 System Role Permissions"}},
-            {"code": "it_licensing", "labels": {"繁體中文": "🎛️ 客戶 ERP 模組授權與功能開關", "Tiếng Việt": "🎛️ Phân quyền Bản quyền ERP", "English": "🎛️ Client ERP Licensing"}},
+            {"code": "it_licensing", "labels": {"🔌 API 串接區", "Tiếng Việt": "🔌 Khu vực kết nối API", "English": "🔌 API Integration Hub""}},
         ]
     },
 ]
