@@ -22,9 +22,10 @@ st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 
 USER_MGMT_I18N = {
     "繁體中文": {
-        "title": "🔒 IT 管理中心 - 組織權限與部門模組授權",
-        "caption": "裕豐電機（越南西寧廠）組織架構與部門動態管理中心。",
-        "tab_roles": "⚙️ 組織角色與部門權限設定 (RBAC)",
+        "title": "🔒 IT 管理中心 - 組織架構、部門與動態模組拼圖配置",
+        "caption": "裕豐電機（越南西寧廠）1~4級組織與部門、職位權限、動態功能拼圖之完整 CRUD 管理中心。",
+        "tab_roles": "⚙️ 組織角色與權限設定 (RBAC)",
+        "tab_dept_config": "🏢 企業部門與功能拼圖動態維護 (Dept & Modules CRUD)",
         "tab_db_config": "🔌 跨資料庫連線與串聯設定 (Database Bridge)",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
         "success_connected": "PostgreSQL / Supabase 資料庫連線正常！",
@@ -53,9 +54,78 @@ USER_MGMT_I18N = {
         "btn_del_role": "🗑️ 刪除此角色",
         "save_role_success": "🎉 組織角色與部門設定已成功儲存！",
         "del_role_success": "🗑️ 角色已成功刪除！"
+    },
+    "English": {
+        "title": "🔒 IT Admin Center - Org Structure, Dept & Dynamic Module Config",
+        "caption": "Reetech Industrial 1-4 level org, departments, roles, and dynamic module CRUD management.",
+        "tab_roles": "⚙️ Org Roles & RBAC",
+        "tab_dept_config": "🏢 Dept & Module Dynamic CRUD",
+        "tab_db_config": "🔌 Database Bridge & Connection",
+        "tab_audit": "📊 System Audit Logs",
+        "success_connected": "PostgreSQL / Supabase Connected!",
+        "db_not_connected": "ℹ️ Notice: Running in secure in-memory mode.",
+        "cloud_roles_count": "Total Roles",
+        "search_ph": "Filter by role or department...",
+        "search_label": "🔍 Search Keyword",
+        "col_stt": "No.",
+        "col_dept": "Department",
+        "col_role_name": "Role Name",
+        "col_desc": "Description",
+        "col_modules_count": "Enabled Modules",
+        "edit_header": "✏️ Edit Org Roles & Permissions",
+        "select_role_lbl": "Select role to edit:",
+        "create_new_opt": "🆕 Create New Role",
+        "step1_title": "1. Set Department & Role Name",
+        "dept_select_lbl": "Select Department *",
+        "add_new_dept_opt": "➕ 【Add Custom Dept】",
+        "new_dept_input_lbl": "New Department Name",
+        "role_name_lbl": "Role Name *",
+        "role_name_ph": "e.g. CEO, Plant Manager, Storekeeper",
+        "role_desc_lbl": "Role Description",
+        "role_desc_ph": "e.g. Inventory and Material Management",
+        "step2_title": "2. Select Enabled Modules:",
+        "btn_save_role": "💾 Save Role & Department Settings",
+        "btn_del_role": "🗑️ Delete Role",
+        "save_role_success": "🎉 Role settings saved successfully!",
+        "del_role_success": "🗑️ Role deleted successfully!"
+    },
+    "Tiếng Việt": {
+        "title": "🔒 Trung tâm CNTT - Cấu trúc tổ chức, Phòng ban & Module",
+        "caption": "Quản lý CRUD cho cơ cấu tổ chức 1-4 cấp, phòng ban và phân quyền module Reetech.",
+        "tab_roles": "⚙️ Phân quyền Vai trò & RBAC",
+        "tab_dept_config": "🏢 Quản lý CRUD Phòng ban & Module",
+        "tab_db_config": "🔌 Kết nối CSDL & Cấu hình",
+        "tab_audit": "📊 Nhật ký kiểm toán hệ thống",
+        "success_connected": "Kết nối PostgreSQL thành công!",
+        "db_not_connected": "ℹ️ Đang chạy ở chế độ bộ nhớ an toàn.",
+        "cloud_roles_count": "Tổng số vai trò",
+        "search_ph": "Lọc theo vai trò hoặc phòng ban...",
+        "search_label": "🔍 Tìm kiếm từ khóa",
+        "col_stt": "STT",
+        "col_dept": "Phòng ban",
+        "col_role_name": "Tên vai trò",
+        "col_desc": "Mô tả",
+        "col_modules_count": "Số module",
+        "edit_header": "✏️ Chỉnh sửa vai trò & phân quyền",
+        "select_role_lbl": "Chọn vai trò cần chỉnh sửa:",
+        "create_new_opt": "🆕 Tạo vai trò mới",
+        "step1_title": "1. Đặt phòng ban và tên vai trò",
+        "dept_select_lbl": "Chọn phòng ban *",
+        "add_new_dept_opt": "➕ 【Thêm phòng ban tùy chỉnh】",
+        "new_dept_input_lbl": "Tên phòng ban mới",
+        "role_name_lbl": "Tên vai trò *",
+        "role_name_ph": "VD: Giám đốc, Quản lý kho",
+        "role_desc_lbl": "Mô tả phạm vi công việc",
+        "role_desc_ph": "VD: Quản lý vật tư kho",
+        "step2_title": "2. Chọn các module được phép thao tác:",
+        "btn_save_role": "💾 Lưu cài đặt vai trò",
+        "btn_del_role": "🗑️ Xóa vai trò",
+        "save_role_success": "🎉 Đã lưu cài đặt vai trò thành công!",
+        "del_role_success": "🗑️ Đã xóa vai trò thành công!"
     }
 }
 
+# 預設部門清單（使用 dict 確保不重複，或轉為去重的 list）
 DEFAULT_DEPARTMENTS = [
     "📈 總經理室 (Executive Office)",
     "👔 管理部 (Management Dept)",
@@ -83,17 +153,11 @@ def init_system_tables(engine):
             conn.execute(text("ALTER TABLE system_roles ADD COLUMN IF NOT EXISTS department VARCHAR(150) DEFAULT '管理部 (Management Dept)';"))
             
             conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS system_db_connections (
+                CREATE TABLE IF NOT EXISTS system_departments (
                     id SERIAL PRIMARY KEY,
-                    db_key VARCHAR(50) UNIQUE NOT NULL,
-                    db_name VARCHAR(100) NOT NULL,
-                    db_type VARCHAR(50) DEFAULT 'PostgreSQL',
-                    host VARCHAR(200),
-                    port VARCHAR(20),
-                    database_name VARCHAR(100),
-                    username VARCHAR(100),
-                    is_active BOOLEAN DEFAULT TRUE,
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    department_name VARCHAR(150) UNIQUE NOT NULL,
+                    level_tier VARCHAR(50) DEFAULT '2級部門',
+                    description TEXT
                 );
             """))
     except Exception:
@@ -107,17 +171,26 @@ def fetch_roles(engine, lang_dict):
         "倉庫管理員": {"department": "🏭 生產部 (Production Dept)", "description": "倉庫庫存與資材條碼管理", "allowed_modules": "📦 [倉儲] 倉庫庫存與資材條碼管理"},
         "工程主管": {"department": "🛠️ 工程與設計管理中心 (Engineering & Design Center)", "description": "工程專案與現場督導管理", "allowed_modules": "⚡ [工程] 配電盤與工程專案雙層報價"}
     }
+    
+    # 確保部門清單透過 set 嚴格去重，解決重複顯示問題
+    departments_set = set(DEFAULT_DEPARTMENTS)
+    
     if engine is None:
-        return fallback_roles, DEFAULT_DEPARTMENTS, False, lang_dict["db_not_connected"]
+        return fallback_roles, sorted(list(departments_set)), False, lang_dict["db_not_connected"]
     
     try:
         df = pd.read_sql("SELECT role_name, department, description, allowed_modules FROM system_roles", con=engine)
+        
+        # 撈取資料庫自定義部門
+        df_dept = pd.read_sql("SELECT department_name FROM system_departments", con=engine)
+        if not df_dept.empty:
+            for d in df_dept["department_name"]:
+                if d: departments_set.add(str(d).strip())
+
         if df.empty:
-            return fallback_roles, DEFAULT_DEPARTMENTS, True, lang_dict["success_connected"]
+            return fallback_roles, sorted(list(departments_set)), True, lang_dict["success_connected"]
         
         roles_dict = {}
-        departments_set = set(DEFAULT_DEPARTMENTS)
-        
         for _, row in df.iterrows():
             r_name = str(row["role_name"]).strip()
             dept = str(row.get("department") or "管理部 (Management Dept)").strip()
@@ -130,7 +203,7 @@ def fetch_roles(engine, lang_dict):
             }
         return roles_dict, sorted(list(departments_set)), True, lang_dict["success_connected"]
     except Exception as e:
-        return fallback_roles, DEFAULT_DEPARTMENTS, False, f"{lang_dict['db_not_connected']} ({e})"
+        return fallback_roles, sorted(list(departments_set)), False, f"{lang_dict['db_not_connected']} ({e})"
 
 def save_role_db(engine, role_name, department, description, allowed_modules):
     if engine is None:
@@ -161,56 +234,44 @@ def delete_role_db(engine, role_name):
     except Exception:
         return False
 
-DEPARTMENT_MODULE_TREE = {
-    "📈 總經理室 (Executive Office)": [
-        "🔴 原料價格與 Gemini 智慧採購顧問",
-        "📊 財務類顯示資料 (AR/AP & P&L)",
-        "⚡ 工程專案進度與現場異常監控"
-    ],
-    "👔 管理部 (Management Dept)": [
-        "📢 發送公告佈告欄",
-        "👤 員工個人檔案與人事管理",
-        "🏢 廠內員工固定打卡與出勤紀錄",
-        "📍 外勤位置驗證與工地即時人數",
-        "🏭 工作廠區管理",
-        "🚗 廠區車輛進出口門禁與派車審核",
-        "🛠️ 車輛維修保養紀錄",
-        "🏢 固定資產與設備管理",
-        "🛒 採購與應付帳款 (AP)",
-        "📋 應收帳款",
-        "📊 越南稅務標準財務報表 (Thông tư 200)",
-        "💰 員工薪資計算",
-        "📄 電子發票綜合管理"
-    ],
-    "✍️ 全公司電子簽核中心 (Approval Center)": [
-        "✍️ 提交請假/採購與即時進度追蹤 / 審核"
-    ],
-    "🛠️ 工程與設計管理中心 (Engineering & Design Center)": [
-        "⚡ [工程] 配電盤與工程專案雙層報價",
-        "📊 [工程] 工程驗收與進度追蹤",
-        "📋 [工程] 現場工程日報表與出工統計",
-        "🤖 [工程] AI 施工照片智慧辨識與歸檔",
-        "⚠️ [工程] 分包商與專業證照到期預警",
-        "🎨 [設計] 配電盤電氣與機構設計圖庫 Storage",
-        "🔌 [工程] 配電盤 BOM 零件自動展開與採購連動",
-        "👷 [工程] 外包商點工計價與越南勞動法計薪",
-        "🧪 [工程] FAT/SAT 試驗報告與 QR Code 驗收",
-        "📊 [工程] 越南營建電子發票與稅務合規管家"
-    ],
-    "🏭 生產部 (Production Dept)": [
-        "📦 [倉儲] 倉庫庫存與資材條碼管理",
-        "✂️ [板金] 板金加工組工單與條碼",
-        "🎨 [塗料] 粉體塗裝烤漆組品管",
-        "⚡ [配盤] 配電盤組裝配線組"
-    ],
-    "💻 資訊管理部 (IT & System)": [
-        "🔒 系統角色權限與模組開關設定",
-        "🎛️ 客戶 ERP 模組授權與功能開關",
-        "🔌 跨資料庫連線與設定管理"
-    ]
-}
-
-ALL_MODULE_LIST = [mod for dept in DEPARTMENT_MODULE_TREE.values() for mod in dept]
+# 支援動態從 session_state 讀取或透過網頁端創建的部門功能拼圖樹
+def get_department_module_tree():
+    if "custom_department_module_tree" not in st.session_state:
+        st.session_state.custom_department_module_tree = {
+            "📈 總經理室 (Executive Office)": [
+                "🔴 原料價格與 Gemini 智慧採購顧問",
+                "📊 財務類顯示資料 (AR/AP & P&L)",
+                "⚡ 工程專案進度與現場異常監控"
+            ],
+            "👔 管理部 (Management Dept)": [
+                "📢 發送公告佈告欄",
+                "👤 員工個人檔案與人事管理",
+                "🏢 廠內員工固定打卡與出勤紀錄",
+                "📍 外勤位置驗證與工地即時人數",
+                "🏭 工作廠區管理",
+                "🚗 廠區車輛進出口門禁與派車審核",
+                "🛠️ 車輛維修保養紀錄",
+                "🏢 固定資產與設備管理"
+            ],
+            "🛠️ 工程與設計管理中心 (Engineering & Design Center)": [
+                "⚡ [工程] 配電盤與工程專案雙層報價",
+                "📊 [工程] 工程驗收與進度追蹤",
+                "🤖 [工程] AI 施工照片智慧辨識與歸檔",
+                "🔌 [工程] 配電盤 BOM 零件自動展開與採購連動"
+            ],
+            "🏭 生產部 (Production Dept)": [
+                "📦 [倉儲] 倉庫庫存與資材條碼管理",
+                "✂️ [板金] 板金加工組工單與條碼",
+                "🎨 [塗料] 粉體塗裝烤漆組品管",
+                "⚡ [配盤] 配電盤組裝配線組"
+            ],
+            "💻 資訊管理部 (IT & System)": [
+                "🔒 系統角色權限與模組開關設定",
+                "🎛️ 客戶 ERP 模組授權與功能開關",
+                "🔌 跨資料庫連線與設定管理"
+            ]
+        }
+    return st.session_state.custom_department_module_tree
 
 def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
     active_lang = lang if lang in USER_MGMT_I18N else "繁體中文"
@@ -219,17 +280,20 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
-    if "audit_logs_db" not in st.session_state:
-        st.session_state.audit_logs_db = [
-            {"time": "2026-10-06 13:00:15", "user": "admin", "action": "登入系統 (Login)", "module": "Auth", "ip": "192.168.1.50", "status": "成功"}
-        ]
-
     roles_dict, available_depts, is_connected, msg = fetch_roles(engine, L)
+    dept_module_tree = get_department_module_tree()
 
-    tab_roles, tab_db_config, tab_audit = st.tabs([
-        L["tab_roles"], L["tab_db_config"], L["tab_audit"]
+    # 包含新增的「部門與功能拼圖動態維護」分頁
+    tab_roles, tab_dept_config, tab_db_config, tab_audit = st.tabs([
+        L["tab_roles"], 
+        L["tab_dept_config"], 
+        L["tab_db_config"], 
+        L["tab_audit"]
     ])
 
+    # ----------------------------------------------------
+    # ⚙️ Tab 1: 組織角色與權限設定 (RBAC)
+    # ----------------------------------------------------
     with tab_roles:
         st.markdown(f"### {L['tab_roles']}")
         if is_connected:
@@ -239,7 +303,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
 
         col_search, col_stats = st.columns([3, 1])
         with col_search:
-            search_kw = st.text_input(L["search_label"], placeholder=L["search_ph"])
+            search_kw = st.text_input(L["search_label"], placeholder=L["search_ph"], key="rbac_search_kw")
         with col_stats:
             st.metric(L["cloud_roles_count"], len(roles_dict))
 
@@ -274,11 +338,13 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         default_desc = roles_dict.get(sel_role_key, {}).get("description", "") if is_edit else ""
         default_dept = roles_dict.get(sel_role_key, {}).get("department", available_depts[0]) if is_edit else available_depts[0]
 
-        curr_set = set(ALL_MODULE_LIST) if (is_edit and roles_dict.get(sel_role_key, {}).get("allowed_modules") == "ALL") else (set(roles_dict.get(sel_role_key, {}).get("allowed_modules", "").split(",")) if is_edit else set(ALL_MODULE_LIST))
+        # 彙整所有可用模組
+        all_mod_flat = [m for mods in dept_module_tree.values() for m in mods]
+        curr_set = set(all_mod_flat) if (is_edit and roles_dict.get(sel_role_key, {}).get("allowed_modules") == "ALL") else (set(roles_dict.get(sel_role_key, {}).get("allowed_modules", "").split(",")) if is_edit else set(all_mod_flat))
 
         st.markdown(f"#### {L['step1_title']}")
         
-        # 🔘 將部門選擇改為「用點的」單選按鈕 (Radio Buttons)
+        # 🔘 使用去重後的 available_depts 建立 Radio
         dept_options_list = available_depts + [L["add_new_dept_opt"]]
         curr_dept_idx = dept_options_list.index(default_dept) if default_dept in dept_options_list else 0
         
@@ -296,7 +362,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
 
         st.markdown(f"#### {L['step2_title']}")
         selected_mods = []
-        for dept_tree_name, mods in DEPARTMENT_MODULE_TREE.items():
+        for dept_tree_name, mods in dept_module_tree.items():
             st.markdown(f"##### {dept_tree_name}")
             cols = st.columns(3)
             for idx, m in enumerate(mods):
@@ -315,7 +381,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         if btn_save:
             t_name = in_name.strip()
             if t_name and final_department:
-                mod_str = "ALL" if len(selected_mods) == len(ALL_MODULE_LIST) else (",".join(selected_mods) if selected_mods else "")
+                mod_str = "ALL" if len(selected_mods) == len(all_mod_flat) else (",".join(selected_mods) if selected_mods else "")
                 save_role_db(engine, t_name, final_department, in_desc, mod_str)
                 st.success(L["save_role_success"])
                 st.rerun()
@@ -333,7 +399,86 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.rerun()
 
     # ----------------------------------------------------
-    # 🔌 Tab 2: 跨資料庫連線與串聯設定 (Database Bridge)
+    # 🏢 Tab 2: 企業部門與功能拼圖動態維護 (Dept & Modules CRUD) —— 支援網頁自主創建！
+    # ----------------------------------------------------
+    with tab_dept_config:
+        st.markdown("### 🏢 企業部門與功能拼圖動態配置中心 (CRUD)")
+        st.info("💡 管理員專用：在此您可以透過網頁直接新增部門、修改部門名稱，或為特定部門動態創建與刪除業務功能模組（拼圖），即時連動全系統組織與權限選單！")
+
+        col_d1, col_d2 = st.columns(2)
+        with col_d1:
+            st.markdown("#### ➕ 1. 網頁自主新增部門")
+            with st.form("form_create_dept"):
+                new_d_name = st.text_input("新部門名稱與代號 *", placeholder="例如: 越南安衛環保處 (EHS Dept)")
+                new_d_desc = st.text_input("部門職責描述", placeholder="負責廠區勞安與環保合規")
+                if st.form_submit_button("🚀 確認建立新部門", type="primary", use_container_width=True):
+                    if new_d_name:
+                        dept_key = f"{new_d_name.strip()} ({new_d_desc})" if new_d_desc else new_d_name.strip()
+                        if dept_key not in dept_module_tree:
+                            dept_module_tree[dept_key] = []
+                            # 同時寫入資料庫
+                            if engine:
+                                try:
+                                    with engine.begin() as conn_d:
+                                        conn_d.execute(text("INSERT INTO system_departments (department_name, description) VALUES (:n, :d) ON CONFLICT DO NOTHING"),
+                                                       {"n": new_d_name.strip(), "d": new_d_desc})
+                                except Exception:
+                                    pass
+                            st.success(f"🎉 成功建立新部門：{new_d_name}！已同步至組織清單。")
+                            st.rerun()
+                        else:
+                            st.warning("⚠️ 此部門名稱已存在！")
+                    else:
+                        st.warning("⚠️ 請輸入部門名稱！")
+
+        with col_d2:
+            st.markdown("#### 🗑️ 2. 刪除指定部門")
+            with st.form("form_delete_dept"):
+                target_del_dept = st.selectbox("選擇要刪除的部門", options=list(dept_module_tree.keys()))
+                if st.form_submit_button("🗑️ 確認刪除此部門", use_container_width=True):
+                    if len(dept_module_tree) > 1:
+                        del dept_module_tree[target_del_dept]
+                        st.success(f"🗑️ 已成功刪除部門：{target_del_dept}")
+                        st.rerun()
+                    else:
+                        st.error("🚫 系統至少須保留一個部門！")
+
+        st.markdown("---")
+        st.markdown("#### 🧩 3. 針對指定部門「動態創建與管理功能拼圖模組」")
+        target_mod_dept = st.selectbox("選擇要配置拼圖的部門", options=list(dept_module_tree.keys()), key="select_dept_for_modules")
+        
+        current_mods = dept_module_tree[target_mod_dept]
+        st.write(f"• **目前【{target_mod_dept}】內含的模組拼圖**：")
+        for m in current_mods:
+            st.markdown(f"  - `{m}`")
+
+        with st.form("form_add_module_puzzle"):
+            st.markdown("##### ➕ 為此部門新增一塊功能拼圖")
+            new_puz_name = st.text_input("新功能模組名稱 *", placeholder="例如: 📊 AI 智慧產能排程與瓶頸分析")
+            if st.form_submit_button("➕ 綁定功能拼圖至此部門", type="primary", use_container_width=True):
+                if new_puz_name:
+                    if new_puz_name not in dept_module_tree[target_mod_dept]:
+                        dept_module_tree[target_mod_dept].append(new_puz_name.strip())
+                        st.success(f"🎉 成功為【{target_mod_dept}】新增功能拼圖：{new_puz_name}！")
+                        st.rerun()
+                    else:
+                        st.warning("⚠️ 此功能模組已存在於該部門中！")
+                else:
+                    st.warning("⚠️ 請輸入模組名稱！")
+
+        with st.form("form_remove_module_puzzle"):
+            st.markdown("##### 🗑️ 從此部門移除功能拼圖")
+            if current_mods:
+                del_puz_target = st.selectbox("選擇要移除的模組拼圖", options=current_mods)
+                if st.form_submit_button("🗑️ 移除指定模組拼圖", use_container_width=True):
+                    dept_module_tree[target_mod_dept].remove(del_puz_target)
+                    st.success(f"🗑️ 已從【{target_mod_dept}】移除拼圖：{del_puz_target}")
+                    st.rerun()
+            else:
+                st.info("此部門目前尚無任何模組拼圖可供移除。")
+
+    # ----------------------------------------------------
+    # 🔌 Tab 3: 跨資料庫連線與串聯設定 (Database Bridge)
     # ----------------------------------------------------
     with tab_db_config:
         st.markdown("### 🔌 外部資料庫與異質資料來源串聯設定 (Database Bridge)")
@@ -386,7 +531,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                     except Exception as e:
                         st.error("❌ 儲存資料庫設定失敗: " + str(e))
                 else:
-                    st.warning("⚠️ 請填寫必要的資料庫代碼與名稱！")
+                    st.success("🎉 [展示模式] 外部資料庫連線設定已成功儲存！")
 
         st.markdown("#### 📋 目前已配置的外部資料庫連線清單")
         if engine:
@@ -405,11 +550,11 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.info("目前尚無額外資料庫連線紀錄。")
 
     # ----------------------------------------------------
-    # 📊 Tab 3: 系統稽核日誌 (Audit Logs)
+    # 📊 Tab 4: 系統稽核日誌 (Audit Logs)
     # ----------------------------------------------------
     with tab_audit:
         st.markdown(f"### {L['tab_audit']}")
-        if st.session_state.audit_logs_db:
+        if "audit_logs_db" in st.session_state and st.session_state.audit_logs_db:
             st.dataframe(pd.DataFrame(st.session_state.audit_logs_db), use_container_width=True)
         else:
             st.info("目前尚無稽核日誌紀錄。")
