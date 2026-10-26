@@ -377,22 +377,29 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
             with col_hdr2:
                 select_all_key = f"select_all_{sel_role_key}_{dept_tree_name}"
                 
-                # 💡 定義回呼函數：當「一鍵全選」被觸發時，直接更新該部門底下所有模組在 session_state 中的狀態
-                def toggle_all_modulesFor(dept_name=dept_tree_name, mod_list=mods):
-                    target_state = st.session_state.get(select_all_key, False)
+                # 💡 雙向同步回呼函數：依據「一鍵全選」當前狀態，批發更新或清空該部門底下所有模組
+                def toggle_all_modules_for(dept_name=dept_tree_name, mod_list=mods, k=select_all_key):
+                    target_state = st.session_state.get(k, False)
                     for i, mod_name in enumerate(mod_list):
                         chk_key = f"chk_rbac_{active_lang}_{sel_role_key}_{dept_name}_{i}_{mod_name}"
                         st.session_state[chk_key] = target_state
 
-                is_all_selected = st.checkbox("一鍵全選", key=select_all_key, on_change=toggle_all_modulesFor)
+                # 初始化一鍵全選預設狀態（若該部門所有子項目皆為勾選，則預設勾選全選框）
+                if select_all_key not in st.session_state:
+                    all_checked_init = all(
+                        st.session_state.get(f"chk_rbac_{active_lang}_{sel_role_key}_{dept_tree_name}_{i}_{m}", m in curr_set)
+                        for i, m in enumerate(mods)
+                    )
+                    st.session_state[select_all_key] = all_checked_init
+
+                st.checkbox("一鍵全選", key=select_all_key, on_change=toggle_all_modules_for)
 
             cols = st.columns(3)
             for idx, m in enumerate(mods):
                 with cols[idx % 3]:
                     chk_key = f"chk_rbac_{active_lang}_{sel_role_key}_{dept_tree_name}_{idx}_{m}"
-                    # 如果 session_state 裡還沒有這個 key，則依據原本的權限狀態初始化
                     if chk_key not in st.session_state:
-                        st.session_state[chk_key] = (m in curr_set) or is_all_selected
+                        st.session_state[chk_key] = (m in curr_set)
 
                     chk = st.checkbox(m, key=chk_key)
                     if chk:
