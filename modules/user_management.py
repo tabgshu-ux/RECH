@@ -371,18 +371,17 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         
         selected_mods = []
         for dept_tree_name, mods in dept_module_tree.items():
-            # 💡 每個部門上方加入一鍵全選 / 全取消的 Checkbox
             col_hdr1, col_hdr2 = st.columns([3, 1])
             with col_hdr1:
                 st.markdown(f"##### {dept_tree_name}")
             with col_hdr2:
                 select_all_key = f"select_all_{sel_role_key}_{dept_tree_name}"
-                is_all_selected = st.checkbox("一鍵全選", key=select_all_key)
+                # 💡 加入 on_change 觸發 st.rerun()，讓全選/取消即時生效
+                is_all_selected = st.checkbox("一鍵全選", key=select_all_key, on_change=lambda: st.rerun())
 
             cols = st.columns(3)
             for idx, m in enumerate(mods):
                 with cols[idx % 3]:
-                    # 如果點了一鍵全選，則該部門下的所有模組預設勾選
                     default_checked = (m in curr_set) or is_all_selected
                     chk = st.checkbox(m, value=default_checked, key=f"chk_rbac_{active_lang}_{sel_role_key}_{dept_tree_name}_{idx}_{m}")
                     if chk:
