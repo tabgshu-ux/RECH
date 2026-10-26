@@ -368,13 +368,23 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         in_desc = st.text_input(L["role_desc_lbl"], value=default_desc, placeholder=L["role_desc_ph"])
 
         st.markdown(f"#### {L['step2_title']}")
+        
         selected_mods = []
         for dept_tree_name, mods in dept_module_tree.items():
-            st.markdown(f"##### {dept_tree_name}")
+            # 💡 每個部門上方加入一鍵全選 / 全取消的 Checkbox
+            col_hdr1, col_hdr2 = st.columns([3, 1])
+            with col_hdr1:
+                st.markdown(f"##### {dept_tree_name}")
+            with col_hdr2:
+                select_all_key = f"select_all_{sel_role_key}_{dept_tree_name}"
+                is_all_selected = st.checkbox("一鍵全選", key=select_all_key)
+
             cols = st.columns(3)
             for idx, m in enumerate(mods):
                 with cols[idx % 3]:
-                    chk = st.checkbox(m, value=(m in curr_set), key=f"chk_rbac_{active_lang}_{sel_role_key}_{dept_tree_name}_{idx}_{m}")
+                    # 如果點了一鍵全選，則該部門下的所有模組預設勾選
+                    default_checked = (m in curr_set) or is_all_selected
+                    chk = st.checkbox(m, value=default_checked, key=f"chk_rbac_{active_lang}_{sel_role_key}_{dept_tree_name}_{idx}_{m}")
                     if chk:
                         selected_mods.append(m)
             st.markdown("---")
