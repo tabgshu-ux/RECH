@@ -22,10 +22,10 @@ st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 
 USER_MGMT_I18N = {
     "繁體中文": {
-        "title": "🔒 IT 管理中心 - 組織架構、部門與動態模組拼圖配置",
-        "caption": "裕豐電機（越南西寧廠）1~4級組織與部門、職位權限、動態功能拼圖之完整 CRUD 管理中心。",
+        "title": "🔒 IT 管理中心 - 組織架構與企業部門設置",
+        "caption": "裕豐電機（越南西寧廠）1~4級組織與部門、職位權限、功能模組之完整 CRUD 管理中心。",
         "tab_roles": "⚙️ 組織角色與權限設定 (RBAC)",
-        "tab_dept_config": "🏢 企業部門與功能拼圖動態維護 (Dept & Modules CRUD)",
+        "tab_dept_config": "🏢 企業部門設置 (Department Setup)",
         "tab_db_config": "🔌 跨資料庫連線與串聯設定 (Database Bridge)",
         "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
         "success_connected": "PostgreSQL / Supabase 資料庫連線正常！",
@@ -56,10 +56,10 @@ USER_MGMT_I18N = {
         "del_role_success": "🗑️ 角色已成功刪除！"
     },
     "English": {
-        "title": "🔒 IT Admin Center - Org Structure, Dept & Dynamic Module Config",
-        "caption": "Reetech Industrial 1-4 level org, departments, roles, and dynamic module CRUD management.",
+        "title": "🔒 IT Admin Center - Org Structure & Department Setup",
+        "caption": "Reetech Industrial 1-4 level org, departments, roles, and module CRUD management.",
         "tab_roles": "⚙️ Org Roles & RBAC",
-        "tab_dept_config": "🏢 Dept & Module Dynamic CRUD",
+        "tab_dept_config": "🏢 Department Setup",
         "tab_db_config": "🔌 Database Bridge & Connection",
         "tab_audit": "📊 System Audit Logs",
         "success_connected": "PostgreSQL / Supabase Connected!",
@@ -90,10 +90,10 @@ USER_MGMT_I18N = {
         "del_role_success": "🗑️ Role deleted successfully!"
     },
     "Tiếng Việt": {
-        "title": "🔒 Trung tâm CNTT - Cấu trúc tổ chức, Phòng ban & Module",
+        "title": "🔒 Trung tâm CNTT - Cấu trúc tổ chức & Cài đặt phòng ban",
         "caption": "Quản lý CRUD cho cơ cấu tổ chức 1-4 cấp, phòng ban và phân quyền module Reetech.",
         "tab_roles": "⚙️ Phân quyền Vai trò & RBAC",
-        "tab_dept_config": "🏢 Quản lý CRUD Phòng ban & Module",
+        "tab_dept_config": "🏢 Cài đặt Phòng ban",
         "tab_db_config": "🔌 Kết nối CSDL & Cấu hình",
         "tab_audit": "📊 Nhật ký kiểm toán hệ thống",
         "success_connected": "Kết nối PostgreSQL thành công!",
@@ -125,7 +125,6 @@ USER_MGMT_I18N = {
     }
 }
 
-# 預設部門清單（使用 dict 確保不重複，或轉為去重的 list）
 DEFAULT_DEPARTMENTS = [
     "📈 總經理室 (Executive Office)",
     "👔 管理部 (Management Dept)",
@@ -172,7 +171,6 @@ def fetch_roles(engine, lang_dict):
         "工程主管": {"department": "🛠️ 工程與設計管理中心 (Engineering & Design Center)", "description": "工程專案與現場督導管理", "allowed_modules": "⚡ [工程] 配電盤與工程專案雙層報價"}
     }
     
-    # 確保部門清單透過 set 嚴格去重，解決重複顯示問題
     departments_set = set(DEFAULT_DEPARTMENTS)
     
     if engine is None:
@@ -181,7 +179,6 @@ def fetch_roles(engine, lang_dict):
     try:
         df = pd.read_sql("SELECT role_name, department, description, allowed_modules FROM system_roles", con=engine)
         
-        # 撈取資料庫自定義部門
         df_dept = pd.read_sql("SELECT department_name FROM system_departments", con=engine)
         if not df_dept.empty:
             for d in df_dept["department_name"]:
@@ -234,7 +231,6 @@ def delete_role_db(engine, role_name):
     except Exception:
         return False
 
-# 支援動態從 session_state 讀取或透過網頁端創建的部門功能拼圖樹
 def get_department_module_tree():
     if "custom_department_module_tree" not in st.session_state:
         st.session_state.custom_department_module_tree = {
@@ -283,7 +279,6 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
     roles_dict, available_depts, is_connected, msg = fetch_roles(engine, L)
     dept_module_tree = get_department_module_tree()
 
-    # 包含新增的「部門與功能拼圖動態維護」分頁
     tab_roles, tab_dept_config, tab_db_config, tab_audit = st.tabs([
         L["tab_roles"], 
         L["tab_dept_config"], 
@@ -338,13 +333,11 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         default_desc = roles_dict.get(sel_role_key, {}).get("description", "") if is_edit else ""
         default_dept = roles_dict.get(sel_role_key, {}).get("department", available_depts[0]) if is_edit else available_depts[0]
 
-        # 彙整所有可用模組
         all_mod_flat = [m for mods in dept_module_tree.values() for m in mods]
         curr_set = set(all_mod_flat) if (is_edit and roles_dict.get(sel_role_key, {}).get("allowed_modules") == "ALL") else (set(roles_dict.get(sel_role_key, {}).get("allowed_modules", "").split(",")) if is_edit else set(all_mod_flat))
 
         st.markdown(f"#### {L['step1_title']}")
         
-        # 🔘 使用去重後的 available_depts 建立 Radio
         dept_options_list = available_depts + [L["add_new_dept_opt"]]
         curr_dept_idx = dept_options_list.index(default_dept) if default_dept in dept_options_list else 0
         
@@ -399,11 +392,11 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.rerun()
 
     # ----------------------------------------------------
-    # 🏢 Tab 2: 企業部門與功能拼圖動態維護 (Dept & Modules CRUD) —— 支援網頁自主創建！
+    # 🏢 Tab 2: 企業部門設置 (Department Setup) —— 支援網頁自主創建！
     # ----------------------------------------------------
     with tab_dept_config:
-        st.markdown("### 🏢 企業部門與功能拼圖動態配置中心 (CRUD)")
-        st.info("💡 管理員專用：在此您可以透過網頁直接新增部門、修改部門名稱，或為特定部門動態創建與刪除業務功能模組（拼圖），即時連動全系統組織與權限選單！")
+        st.markdown("### 🏢 企業部門設置與功能模組管理 (CRUD)")
+        st.info("💡 管理員專用：在此您可以透過網頁直接新增部門、修改部門名稱，或為特定部門動態指派與管理業務功能模組，即時連動全系統組織與權限選單！")
 
         col_d1, col_d2 = st.columns(2)
         with col_d1:
@@ -416,7 +409,6 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                         dept_key = f"{new_d_name.strip()} ({new_d_desc})" if new_d_desc else new_d_name.strip()
                         if dept_key not in dept_module_tree:
                             dept_module_tree[dept_key] = []
-                            # 同時寫入資料庫
                             if engine:
                                 try:
                                     with engine.begin() as conn_d:
@@ -444,22 +436,22 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                         st.error("🚫 系統至少須保留一個部門！")
 
         st.markdown("---")
-        st.markdown("#### 🧩 3. 針對指定部門「動態創建與管理功能拼圖模組」")
-        target_mod_dept = st.selectbox("選擇要配置拼圖的部門", options=list(dept_module_tree.keys()), key="select_dept_for_modules")
+        st.markdown("#### 🧩 3. 針對指定部門「動態創建與管理功能模組」")
+        target_mod_dept = st.selectbox("選擇要配置功能的部門", options=list(dept_module_tree.keys()), key="select_dept_for_modules")
         
         current_mods = dept_module_tree[target_mod_dept]
-        st.write(f"• **目前【{target_mod_dept}】內含的模組拼圖**：")
+        st.write(f"• **目前【{target_mod_dept}】內含的功能模組**：")
         for m in current_mods:
             st.markdown(f"  - `{m}`")
 
         with st.form("form_add_module_puzzle"):
-            st.markdown("##### ➕ 為此部門新增一塊功能拼圖")
+            st.markdown("##### ➕ 為此部門新增功能模組")
             new_puz_name = st.text_input("新功能模組名稱 *", placeholder="例如: 📊 AI 智慧產能排程與瓶頸分析")
-            if st.form_submit_button("➕ 綁定功能拼圖至此部門", type="primary", use_container_width=True):
+            if st.form_submit_button("➕ 綁定功能模組至此部門", type="primary", use_container_width=True):
                 if new_puz_name:
                     if new_puz_name not in dept_module_tree[target_mod_dept]:
                         dept_module_tree[target_mod_dept].append(new_puz_name.strip())
-                        st.success(f"🎉 成功為【{target_mod_dept}】新增功能拼圖：{new_puz_name}！")
+                        st.success(f"🎉 成功為【{target_mod_dept}】新增功能模組：{new_puz_name}！")
                         st.rerun()
                     else:
                         st.warning("⚠️ 此功能模組已存在於該部門中！")
@@ -467,15 +459,15 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.warning("⚠️ 請輸入模組名稱！")
 
         with st.form("form_remove_module_puzzle"):
-            st.markdown("##### 🗑️ 從此部門移除功能拼圖")
+            st.markdown("##### 🗑️ 從此部門移除功能模組")
             if current_mods:
-                del_puz_target = st.selectbox("選擇要移除的模組拼圖", options=current_mods)
-                if st.form_submit_button("🗑️ 移除指定模組拼圖", use_container_width=True):
+                del_puz_target = st.selectbox("選擇要移除的功能模組", options=current_mods)
+                if st.form_submit_button("🗑️ 移除指定功能模組", use_container_width=True):
                     dept_module_tree[target_mod_dept].remove(del_puz_target)
-                    st.success(f"🗑️ 已從【{target_mod_dept}】移除拼圖：{del_puz_target}")
+                    st.success(f"🗑️ 已從【{target_mod_dept}】移除模組：{del_puz_target}")
                     st.rerun()
             else:
-                st.info("此部門目前尚無任何模組拼圖可供移除。")
+                st.info("此部門目前尚無任何功能模組可供移除。")
 
     # ----------------------------------------------------
     # 🔌 Tab 3: 跨資料庫連線與串聯設定 (Database Bridge)
