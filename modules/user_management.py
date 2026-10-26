@@ -377,14 +377,13 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
             with col_hdr2:
                 select_all_key = f"select_all_{sel_role_key}_{dept_tree_name}"
                 
-                # 💡 雙向同步回呼函數：依據「一鍵全選」當前狀態，批發更新或清空該部門底下所有模組
-                def toggle_all_modules_for(dept_name=dept_tree_name, mod_list=mods, k=select_all_key):
+                # 🚀 極速記憶體狀態切換（移除強制 rerun，改由 session_state 瞬間驅動，大幅加速！）
+                def toggle_all_modules_fast(dept_name=dept_tree_name, mod_list=mods, k=select_all_key):
                     target_state = st.session_state.get(k, False)
                     for i, mod_name in enumerate(mod_list):
                         chk_key = f"chk_rbac_{active_lang}_{sel_role_key}_{dept_name}_{i}_{mod_name}"
                         st.session_state[chk_key] = target_state
 
-                # 初始化一鍵全選預設狀態（若該部門所有子項目皆為勾選，則預設勾選全選框）
                 if select_all_key not in st.session_state:
                     all_checked_init = all(
                         st.session_state.get(f"chk_rbac_{active_lang}_{sel_role_key}_{dept_tree_name}_{i}_{m}", m in curr_set)
@@ -392,7 +391,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                     )
                     st.session_state[select_all_key] = all_checked_init
 
-                st.checkbox("一鍵全選", key=select_all_key, on_change=toggle_all_modules_for)
+                st.checkbox("一鍵全選", key=select_all_key, on_change=toggle_all_modules_fast)
 
             cols = st.columns(3)
             for idx, m in enumerate(mods):
