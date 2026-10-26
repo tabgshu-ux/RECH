@@ -376,14 +376,25 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.markdown(f"##### {dept_tree_name}")
             with col_hdr2:
                 select_all_key = f"select_all_{sel_role_key}_{dept_tree_name}"
-                # 💡 加入 on_change 觸發 st.rerun()，讓全選/取消即時生效
-                is_all_selected = st.checkbox("一鍵全選", key=select_all_key, on_change=lambda: st.rerun())
+                
+                # 💡 定義回呼函數：當「一鍵全選」被觸發時，直接更新該部門底下所有模組在 session_state 中的狀態
+                def toggle_all_modulesFor(dept_name=dept_tree_name, mod_list=mods):
+                    target_state = st.session_state.get(select_all_key, False)
+                    for i, mod_name in enumerate(mod_list):
+                        chk_key = f"chk_rbac_{active_lang}_{sel_role_key}_{dept_name}_{i}_{mod_name}"
+                        st.session_state[chk_key] = target_state
+
+                is_all_selected = st.checkbox("一鍵全選", key=select_all_key, on_change=toggle_all_modulesFor)
 
             cols = st.columns(3)
             for idx, m in enumerate(mods):
                 with cols[idx % 3]:
-                    default_checked = (m in curr_set) or is_all_selected
-                    chk = st.checkbox(m, value=default_checked, key=f"chk_rbac_{active_lang}_{sel_role_key}_{dept_tree_name}_{idx}_{m}")
+                    chk_key = f"chk_rbac_{active_lang}_{sel_role_key}_{dept_tree_name}_{idx}_{m}"
+                    # 如果 session_state 裡還沒有這個 key，則依據原本的權限狀態初始化
+                    if chk_key not in st.session_state:
+                        st.session_state[chk_key] = (m in curr_set) or is_all_selected
+
+                    chk = st.checkbox(m, key=chk_key)
                     if chk:
                         selected_mods.append(m)
             st.markdown("---")
