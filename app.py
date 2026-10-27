@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import importlib
 from sqlalchemy import text
+from modules.user_management import get_department_module_tree
 
 st.set_page_config(
     page_title="裕豐電機工業 REETECH INDUSTRIAL AI ERP",
