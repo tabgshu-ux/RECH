@@ -297,11 +297,23 @@ if active_anns:
     st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
 
 # ----------------------------------------------------
-# 🔀 智慧關鍵字動態安全路由分流（完整對應所有子功能名稱）
+# 🔀 智慧關鍵字動態安全路由分流
 # ----------------------------------------------------
 feat_str = str(selected_feat_label)
 
-if "公告" in feat_str or "佈告欄" in feat_str:
+if "API" in feat_str or "it_licensing" in feat_str:
+    if current_role_clean == "admin":
+        load_module_safely("modules.system_licensing", "render_licensing_control_page", engine=engine, lang=curr_lang)
+    else:
+        st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
+
+elif "系統角色權限" in feat_str or "模組開關" in feat_str:
+    if current_role_clean == "admin":
+        load_module_safely("modules.user_management", "render_user_management_page", engine=engine, lang=curr_lang)
+    else:
+        st.error("⚠️ 權限不足：資訊管理部僅限系統管理員 (admin) 登入存取。")
+
+elif "公告" in feat_str or "佈告欄" in feat_str:
     load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
 
 elif "原料價格" in feat_str or "Gemini" in feat_str:
@@ -328,7 +340,7 @@ elif "工程" in feat_str or "施工日報表" in feat_str or "配電盤電氣" 
 elif "外勤出勤" in feat_str or "工地人數" in feat_str or "現場外勤打卡" in feat_str:
     load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="management" if "統計" in feat_str else "field_worker")
 
-elif "採購與應付帳款" in feat_str or "AP" in feat_str:
+elif "採購與應付帳款" in feat_str or "採購" in feat_str:
     load_module_safely("modules.procurement_ap", "render_procurement_ap_page", engine=engine, lang=curr_lang)
 
 elif "應收帳款" in feat_str or "對帳" in feat_str:
@@ -373,19 +385,6 @@ elif "塗料" in feat_str or "烤漆" in feat_str:
 elif "配盤" in feat_str or "組裝" in feat_str:
     load_module_safely("modules.assembly", "render_assembly_module", engine=engine, t=ui_t, lang=curr_lang)
 
-elif "系統角色權限" in feat_str or "模組開關" in feat_str:
-    if current_role_clean == "admin":
-        load_module_safely("modules.user_management", "render_user_management_page", engine=engine, lang=curr_lang)
-    else:
-        st.error("⚠️ 權限不足：資訊管理部僅限系統管理員 (admin) 登入存取。")
-
-elif "API" in feat_str:
-    if current_role_clean == "admin":
-        load_module_safely("modules.system_licensing", "render_licensing_control_page", engine=engine, lang=curr_lang)
-    else:
-        st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
-
 else:
-    # 預設萬用回退：若自訂了新部門或新功能，預設嘗試載入對應名稱的模組或顯示友善提示
     st.markdown(f"### 📍 目前選定功能：{selected_feat_label}")
     st.info("💡 此功能模組正在載入中，或您可以前往【資訊管理部 > 系統角色權限與模組開關設定】進行進一步配置。")
