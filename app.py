@@ -35,98 +35,6 @@ RECH_LOGO_HTML = """
 </div>
 """
 
-# ----------------------------------------------------
-# 🌐 結構化選單設計：將「內部路由代碼」與「多語系顯示標籤」分離
-# ----------------------------------------------------
-NAV_CONFIG = [
-    {
-        "dept_code": "executive",
-        "labels": {
-            "繁體中文": "📈 總經理室 (Executive Office)",
-            "Tiếng Việt": "📈 Ban Giám đốc (Executive Office)",
-            "English": "📈 Executive Office"
-        },
-        "features": [
-            {"code": "commodities_fx", "labels": {"繁體中文": "🔴 原料價格與 Gemini 智慧採購顧問", "Tiếng Việt": "🔴 Giá Nguyên liệu & Cố vấn Gemini", "English": "🔴 Raw Materials & Gemini Advisor"}},
-            {"code": "financials_pl", "labels": {"繁體中文": "📊 財務類顯示資料 (AR/AP & P&L)", "Tiếng Việt": "📊 Dữ liệu Tài chính", "English": "📊 Financial Analytics"}},
-            {"code": "project_progress_exec", "labels": {"繁體中文": "⚡ 工程專案進度與現場異常監控", "Tiếng Việt": "⚡ Tiến độ Dự án Kỹ thuật", "English": "⚡ Engineering Project Progress"}},
-        ]
-    },
-    {
-        "dept_code": "management",
-        "labels": {
-            "繁體中文": "👔 管理部 (Management Dept)",
-            "Tiếng Việt": "👔 Phòng Quản lý (Management Dept)",
-            "English": "👔 Management Dept (GA & Finance)"
-        },
-        "features": [
-            {"code": "company_announcements", "labels": {"繁體中文": "📢 公司重要公告與佈告欄", "Tiếng Việt": "📢 Thông báo công ty", "English": "📢 Company Announcements"}},
-            {"code": "hr_employee", "labels": {"繁體中文": "👤 員工個人檔案與人事管理", "Tiếng Việt": "👤 Hồ sơ nhân sự", "English": "👤 HR Records"}},
-            {"code": "internal_attendance", "labels": {"繁體中文": "🏢 廠內員工固定打卡與出勤紀錄", "Tiếng Việt": "🏢 Chấm công nội bộ", "English": "🏢 Internal Attendance"}},
-            {"code": "field_attendance", "labels": {"繁體中文": "📍 外勤出勤統計與工地人數監控", "Tiếng Việt": "📍 Giám sát quân số công trường", "English": "📍 Site Workforce Monitoring"}},
-            {"code": "dorm_catering", "labels": {"繁體中文": "🥗 幹部宿舍伙食與採購控管", "Tiếng Việt": "🥗 Quản lý Ký túc xá & Mua thực phẩm", "English": "🥗 Dormitory Catering & Food Procurement"}},
-            {"code": "factory_mgmt", "labels": {"繁體中文": "🏭 廠區與工作廠區管理", "Tiếng Việt": "🏭 Quản lý Nhà máy", "English": "🏭 Factory Management"}},
-            {"code": "vehicle_gate", "labels": {"繁體中文": "🚗 廠區車輛進出口門禁與派車審核", "Tiếng Việt": "🚗 Quản lý xe ra vào & Phê duyệt", "English": "🚗 Vehicle Gate & Dispatch Log"}},
-            {"code": "vehicle_maintenance", "labels": {"繁體中文": "🛠️ 車輛維修保養紀錄", "Tiếng Việt": "🛠️ Bảo trì xe", "English": "🛠️ Vehicle Maintenance"}},
-            {"code": "asset_mgmt", "labels": {"繁體中文": "🏢 固定資產與設備管理", "Tiếng Việt": "🏢 Quản lý Tài sản cố định", "English": "🏢 Fixed Asset Management"}},
-            {"code": "procurement_ap", "labels": {"繁體中文": "🛒 採購與應付帳款 (AP)", "Tiếng Việt": "🛒 Mua hàng & Phải trả (AP)", "English": "🛒 Procurement & AP"}},
-            {"code": "sales_order_ar", "labels": {"繁體中文": "📋 應收帳款與對帳管理中心", "Tiếng Việt": "📋 Quản lý Phải thu", "English": "📋 Accounts Receivable"}},
-            {"code": "financial_tax", "labels": {"繁體中文": "📊 越南稅務標準財務報表 (Thông tư 200)", "Tiếng Việt": "📊 Báo cáo Tài chính chuẩn Thuế VN", "English": "📊 Vietnamese Tax Financials"}},
-            {"code": "payroll_calc", "labels": {"繁體中文": "💰 員工薪資計算與保險扣除", "Tiếng Việt": "💰 Tính lương & Khấu trừ bảo hiểm", "English": "💰 Payroll & Insurance Calculation"}},
-            {"code": "invoice_management", "labels": {"繁體中文": "📄 電子發票綜合管理與 XML 歸檔", "Tiếng Việt": "📄 Quản lý Hóa đơn điện tử", "English": "📄 E-Invoice Management"}},
-        ]
-    },
-    {
-        "dept_code": "approval",
-        "labels": {
-            "繁體中文": "✍️ 全公司電子簽核中心 (Approval Center)",
-            "Tiếng Việt": "✍️ Trung tâm Phê duyệt Điện tử (Approval Center)",
-            "English": "✍️ E-Approval Center"
-        },
-        "features": [
-            {"code": "approval_center", "labels": {"繁體中文": "✍️ 提交請假/採購與即時進度追蹤 / 審核", "Tiếng Việt": "✍️ Gửi đơn nghỉ phép/mua hàng & Theo dõi tiến độ", "English": "✍️ Submit Leave/Purchase & Track Workflow"}},
-        ]
-    },
-    {
-        "dept_code": "engineering",
-        "labels": {
-            "繁體中文": "🛠️ 工程與設計管理中心 (Engineering & Design Center)",
-            "Tiếng Việt": "🛠️ Trung tâm Quản lý Kỹ thuật & Thiết kế",
-            "English": "🛠️ Engineering & Design Management Center"
-        },
-        "features": [
-            {"code": "eng_mgmt_center", "labels": {"繁體中文": "⚡ 工程主管戰情室與案場管理", "Tiếng Việt": "⚡ Quản lý Kỹ thuật & Dự án", "English": "⚡ Engineering Executive Center"}},
-            {"code": "eng_field_checkin", "labels": {"繁體中文": "📍 [工程] 現場外勤打卡與作業登記", "Tiếng Việt": "📍 Chấm công ngoài công trường", "English": "📍 Field Check-in Log"}},
-        ]
-    },
-    {
-        "dept_code": "production",
-        "labels": {
-            "繁體中文": "🏭 生產部 (Production Dept)",
-            "Tiếng Việt": "🏭 Phòng Sản xuất (Production Dept)",
-            "English": "🏭 Production Dept"
-        },
-        "features": [
-            {"code": "wh_management", "labels": {"繁體中文": "📦 [倉儲] 倉庫庫存與資材條碼管理", "Tiếng Việt": "📦 [Kho] Quản lý Kho & Mã vạch", "English": "📦 [Warehouse] Material Barcodes"}},
-            {"code": "sheet_metal", "labels": {"繁體中文": "✂️ [板金] 板金加工組工單與條碼", "Tiếng Việt": "✂️ [Gia công] Tổ Gia công Cơ khí", "English": "✂️ [Sheet Metal] Processing Dept"}},
-            {"code": "painting", "labels": {"繁體中文": "🎨 [塗料] 粉體塗裝烤漆組品管", "Tiếng Việt": "🎨 [Sơn] Tổ Sơn tĩnh điện", "English": "🎨 [Coating] Powder Coating Dept"}},
-            {"code": "assembly", "labels": {"繁體中文": "⚡ [配盤] 配電盤組裝配線組", "Tiếng Việt": "⚡ [Lắp ráp] Tổ Lắp ráp Tủ điện", "English": "⚡ [Assembly] Switchgear Assembly"}},
-        ]
-    },
-    {
-        "dept_code": "it",
-        "labels": {
-            "繁體中文": "💻 資訊管理部 (IT & System)",
-            "Tiếng Việt": "💻 Phòng IT (IT & System)",
-            "English": "💻 Information Technology (IT)"
-        },
-        "features": [
-            {"code": "it_admin", "labels": {"繁體中文": "🔒 系統角色權限與模組開關設定", "Tiếng Việt": "🔒 Cài đặt Phân quyền Hệ thống", "English": "🔒 System Role Permissions"}},
-            {"code": "it_licensing", "labels": {"繁體中文": "🔌 API 串接區", "Tiếng Việt": "🔌 Khu vực kết nối API", "English": "🔌 API Integration Hub"}},
-        ]
-    },
-]
-
 UI_STRINGS = {
     "繁體中文": {
         "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
@@ -136,8 +44,8 @@ UI_STRINGS = {
         "login_btn": "🔑 登入系統",
         "logout_btn": "🚪 登出系統",
         "lang_selector": "🌐 選擇系統語系 / Select Language",
-        "parent_header": "請選擇一級部門 / 系統：",
-        "sub_header": "選擇子部門與功能：",
+        "parent_header": "請選擇一級部門 / Chọn phòng ban :",
+        "sub_header": "選擇子部門與功能 / Chọn chức năng :",
     },
     "Tiếng Việt": {
         "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
@@ -278,7 +186,7 @@ if st.session_state.get("must_change_pwd", False):
     st.stop()
 
 # ----------------------------------------------------
-# 🚀 3. 已登入側邊欄與功能選單
+# 🚀 3. 已登入側邊欄與動態功能選單
 # ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
@@ -307,68 +215,65 @@ st.sidebar.markdown("---")
 
 current_role_clean = str(st.session_state.get("user_role", "")).strip().lower()
 
-available_depts = []
-for d in NAV_CONFIG:
-    if current_role_clean == "security":
-        if d["dept_code"] == "management":
-            available_depts = [d]
-            break
-    else:
-        is_executive_access = current_role_clean in ["admin", "chairman", "generalmanager", "vicemanager", "executive", "manager", "finance_manager"]
-        if not is_executive_access and d["dept_code"] == "executive":
-            continue
-        if current_role_clean != "admin" and d["dept_code"] == "it":
-            continue
-        available_depts.append(d)
+# 從動態樹狀結構取得部門與子功能
+dept_module_tree = get_department_module_tree()
+department_names = list(dept_module_tree.keys())
+
+# 權限過濾：非 admin 隱藏資訊管理部 (IT)
+available_dept_names = []
+for d_name in department_names:
+    if current_role_clean != "admin" and "資訊管理部" in d_name:
+        continue
+    if current_role_clean == "security" and "管理部" not in d_name:
+        continue
+    available_dept_names.append(d_name)
+
+if not available_dept_names:
+    available_dept_names = department_names
 
 if current_role_clean == "security":
-    selected_dept = available_depts[0]
+    selected_dept_label = next((d for d in available_dept_names if "管理部" in d), available_dept_names[0])
     st.sidebar.markdown(f"**{ui_t['parent_header']}**")
-    st.sidebar.markdown(f"👔 {selected_dept['labels'][curr_lang]}")
-    target_route = "vehicle_gate"
+    st.sidebar.markdown(f"👔 {selected_dept_label}")
+    sub_features = ["🚗 廠區車輛進出口門禁與派車審核"]
+    selected_feat_label = sub_features[0]
 else:
-    dept_labels = [d["labels"][curr_lang] for d in available_depts]
-    
-    if st.session_state.selected_dept_index >= len(available_depts):
+    if st.session_state.selected_dept_index >= len(available_dept_names):
         st.session_state.selected_dept_index = 0
 
     selected_dept_label = st.sidebar.radio(
         ui_t["parent_header"],
-        dept_labels,
+        available_dept_names,
         index=st.session_state.selected_dept_index,
         key="dept_radio_idx"
     )
     
-    selected_dept_index = dept_labels.index(selected_dept_label)
+    selected_dept_index = available_dept_names.index(selected_dept_label)
     if selected_dept_index != st.session_state.selected_dept_index:
         st.session_state.selected_dept_index = selected_dept_index
         st.session_state.selected_feat_index = 0
         st.rerun()
 
-    selected_dept = available_depts[selected_dept_index]
+    sub_features = dept_module_tree.get(selected_dept_label, [])
+    if not sub_features:
+        sub_features = ["(此部門尚無功能模組)"]
 
-    st.sidebar.markdown("---")
-    features = selected_dept["features"]
-    feat_labels = [f["labels"][curr_lang] for f in features]
-
-    if st.session_state.selected_feat_index >= len(features):
+    if st.session_state.selected_feat_index >= len(sub_features):
         st.session_state.selected_feat_index = 0
 
     st.sidebar.caption(f"**{selected_dept_label.split('(')[0].strip()}**")
     
     selected_feat_label = st.sidebar.radio(
         ui_t["sub_header"],
-        feat_labels,
+        sub_features,
         index=st.session_state.selected_feat_index,
         key="feat_radio_idx"
     )
     
-    selected_feat_index = feat_labels.index(selected_feat_label)
+    selected_feat_index = sub_features.index(selected_feat_label)
     if selected_feat_index != st.session_state.selected_feat_index:
         st.session_state.selected_feat_index = selected_feat_index
         st.rerun()
-
-    target_route = features[selected_feat_index]["code"]
 
 # ----------------------------------------------------
 # 📢 公司公告跑馬燈
@@ -392,85 +297,95 @@ if active_anns:
     st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
 
 # ----------------------------------------------------
-# 🔀 動態安全路由分流
+# 🔀 智慧關鍵字動態安全路由分流（完整對應所有子功能名稱）
 # ----------------------------------------------------
-if target_route == "company_announcements":
+feat_str = str(selected_feat_label)
+
+if "公告" in feat_str or "佈告欄" in feat_str:
     load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
 
-elif target_route in ["commodities_fx", "financials_pl", "project_progress_exec"]:
-    load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route=target_route, lang=curr_lang)
+elif "原料價格" in feat_str or "Gemini" in feat_str:
+    load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="commodities_fx", lang=curr_lang)
 
-elif target_route == "approval_center":
+elif "財務類" in feat_str or "AR/AP & P&L" in feat_str:
+    load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="financials_pl", lang=curr_lang)
+
+elif "工程專案進度" in feat_str or "異常監控" in feat_str:
+    load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="project_progress_exec", lang=curr_lang)
+
+elif "請假" in feat_str or "電子簽核" in feat_str:
     load_module_safely("modules.approval_workflow", "render_approval_center", lang=curr_lang)
 
-elif target_route == "dorm_catering":
+elif "宿舍" in feat_str or "伙食" in feat_str:
     load_module_safely("modules.dorm_catering", "render_dorm_catering_module", engine=engine, lang=curr_lang)
 
-elif target_route in [
-    "eng_mgmt_center", "eng_quote", "eng_progress", "field_daily_report", 
-    "eng_ai_photo", "eng_license", "eng_design", "eng_bom", "eng_labor", "eng_fat"
-]:
+elif "工程主管戰情室" in feat_str or "工程專案報價" in feat_str:
     load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang)
 
-elif target_route == "eng_field_checkin":
-    load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="field_worker")
+elif "工程" in feat_str or "施工日報表" in feat_str or "配電盤電氣" in feat_str or "BOM" in feat_str or "FAT/SAT" in feat_str:
+    load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang)
 
-elif target_route == "field_attendance":
-    load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="management")
+elif "外勤出勤" in feat_str or "工地人數" in feat_str or "現場外勤打卡" in feat_str:
+    load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="management" if "統計" in feat_str else "field_worker")
 
-elif target_route == "procurement_ap":
+elif "採購與應付帳款" in feat_str or "AP" in feat_str:
     load_module_safely("modules.procurement_ap", "render_procurement_ap_page", engine=engine, lang=curr_lang)
 
-elif target_route == "sales_order_ar":
+elif "應收帳款" in feat_str or "對帳" in feat_str:
     load_module_safely("modules.sales_order_ar", "render_sales_order_ar_page", engine=engine, lang=curr_lang)
 
-elif target_route == "financial_tax":
+elif "越南稅務" in feat_str or "Thông tư 200" in feat_str:
     load_module_safely("modules.financial_tax_reports", "render_financial_tax_reports_page", engine=engine, lang=curr_lang)
 
-elif target_route == "asset_mgmt":
+elif "固定資產" in feat_str or "設備管理" in feat_str:
     load_module_safely("modules.asset_management", "render_asset_management_page", engine=engine, lang=curr_lang)
 
-elif target_route == "payroll_calc":
+elif "薪資" in feat_str or "保險扣除" in feat_str:
     load_module_safely("modules.payroll_management", "render_payroll_management_page", engine=engine, lang=curr_lang)
 
-elif target_route == "invoice_management":
+elif "電子發票" in feat_str or "XML" in feat_str:
     load_module_safely("modules.invoice_management", "render_invoice_management_page", engine=engine, lang=curr_lang)
 
-elif target_route == "internal_attendance":
+elif "打卡" in feat_str or "出勤紀錄" in feat_str:
     load_module_safely("modules.internal_attendance", "render_internal_attendance_page", engine=engine, lang=curr_lang)
 
-elif target_route == "factory_mgmt":
+elif "廠區" in feat_str or "工作廠區" in feat_str:
     load_module_safely("modules.factory_management", "render_factory_management_page", engine=engine, lang=curr_lang)
 
-elif target_route == "hr_employee":
+elif "員工" in feat_str or "人事" in feat_str:
     load_module_safely("modules.employee_management", "render_employee_management", engine=engine, t=ui_t, lang=curr_lang)
 
-elif target_route == "vehicle_gate":
+elif "車輛進出口門禁" in feat_str or "派車審核" in feat_str:
     load_module_safely("modules.vehicle_gate_log", "render_vehicle_gate_log_page", engine=engine, lang=curr_lang)
 
-elif target_route == "vehicle_maintenance":
+elif "車輛維修" in feat_str or "保養紀錄" in feat_str:
     load_module_safely("modules.vehicle_maintenance", "render_vehicle_maintenance_page", engine=engine, lang=curr_lang)
 
-elif target_route == "wh_management":
+elif "倉庫" in feat_str or "倉儲" in feat_str:
     load_module_safely("modules.warehouse_management", "render_warehouse_management", engine=engine, t=ui_t, lang=curr_lang)
 
-elif target_route == "sheet_metal":
+elif "板金" in feat_str:
     load_module_safely("modules.sheet_metal", "render_sheet_metal_module", engine=engine, t=ui_t, lang=curr_lang)
 
-elif target_route == "painting":
+elif "塗料" in feat_str or "烤漆" in feat_str:
     load_module_safely("modules.painting", "render_painting_module", engine=engine, t=ui_t, lang=curr_lang)
 
-elif target_route == "assembly":
+elif "配盤" in feat_str or "組裝" in feat_str:
     load_module_safely("modules.assembly", "render_assembly_module", engine=engine, t=ui_t, lang=curr_lang)
 
-elif target_route == "it_admin":
+elif "系統角色權限" in feat_str or "模組開關" in feat_str:
     if current_role_clean == "admin":
         load_module_safely("modules.user_management", "render_user_management_page", engine=engine, lang=curr_lang)
     else:
         st.error("⚠️ 權限不足：資訊管理部僅限系統管理員 (admin) 登入存取。")
 
-elif target_route == "it_licensing":
+elif "API" in feat_str:
     if current_role_clean == "admin":
         load_module_safely("modules.system_licensing", "render_licensing_control_page", engine=engine, lang=curr_lang)
     else:
         st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
+
+else:
+    # 預設萬用回退：若自訂了新部門或新功能，預設嘗試載入對應名稱的模組或顯示友善提示
+    st.markdown(f"### 📍 目前選定功能：{selected_feat_label}")
+    st.info("💡 此功能模組正在載入中，或您可以前往【資訊管理部 > 系統角色權限與模組開關設定】進行進一步配置。")
