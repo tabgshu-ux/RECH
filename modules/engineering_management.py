@@ -13,8 +13,6 @@ def parse_formatted_amount(val_str):
     return float(clean_str) if clean_str else 0.0
 
 def convert_currency(amount, from_curr="VND", to_curr="VND"):
-    # 簡易預設匯率換算基準 (可依實際需求調整)
-    # 1 USD = 25,000 VND, 1 RMB = 3,500 VND, 1 TWD = 780 VND
     rates_to_vnd = {
         "VND": 1.0,
         "USD": 25000.0,
@@ -42,59 +40,59 @@ def format_currency_text(amount, currency="VND"):
         return f"{amount} {currency}"
 
 # ----------------------------------------------------
-# 🛠️ 主渲染函式：工程與設計管理中心 (全功能完整版)
+# 🛠️ 主渲染函式：工程與設計管理中心 (精簡直覺版)
 # ----------------------------------------------------
 def render_engineering_management_page(engine=None, lang="繁體中文", **kwargs):
-    st.markdown("### ⚡ 裕豐電機 - 工程與設計管理中心")
+    st.markdown("### ⚡ 裕豐電機 (REETECH) - 工程與設計管理中心")
     st.info("💡 水電工程、配電盤製造、現場勘查與雙層報價系統（支援多幣別 VND、USD、RMB、TWD 與跨部門完整連動）")
 
-    # 初始化全域資料庫 (Session State)
     if "engineering_projects_db" not in st.session_state:
         st.session_state.engineering_projects_db = [
             {"proj_id": "PRJ-2026-001", "proj_name": "西寧廠高壓配電盤擴建", "client": "CÔNG TY TNHH LEADER ART INDUSTRIES (VIETNAM)", "status": "進行中", "manager": "陳明華"}
         ]
 
+    # 🌐 採用直覺、好懂且符合兩地工程習慣的中越雙語選單
     sub_options = [
-        "1. 工程主管戰情室",
-        "2. 工程專案報價系統",
-        "3. 現場外勤打卡與作業登記",
-        "4. 施工日報表與點工點料登記",
-        "5. AI 施工照片辨識與稽核",
-        "6. 工程師證照與機具檢驗預警",
-        "7. 配電盤電氣與機構設計圖庫 ",
-        "8. 配電盤 BOM 零件與採購連動",
-        "9. 外包商計價與管理",
-        "10. FAT / SAT 出廠與現場驗收管理"
+        "1. 工程戰情室 | Dashboard",
+        "2. 專案雙層報價 | Báo giá & BOM",
+        "3. 現場打卡 | Chấm công công trường",
+        "4. 施工日報 | Nhật ký thi công",
+        "5. AI 工安稽核 | Kiểm tra An toàn AI",
+        "6. 證照預警 | Cảnh báo Chứng chỉ",
+        "7. 設計圖庫 | Kho bản vẽ kỹ thuật",
+        "8. BOM 採購連動 | Liên kết Mua hàng BOM",
+        "9. 外包商施工進度與驗收 | Tiến độ & Nghiệm thu thầu phụ",
+        "10. 竣工驗收 | Nghiệm thu FAT / SAT"
     ]
     
-    selected_option = st.selectbox("請選擇要執行的工程/設計功能：", sub_options)
+    selected_option = st.selectbox("請選擇工程模組 / Chọn chức năng:", sub_options)
     st.markdown("---")
 
     # ====================================================
-    # 📊 1. 工程主管戰情室與案場管理
+    # 📊 1. 工程主管戰情室
     # ====================================================
     if "1." in selected_option or "戰情室" in selected_option:
         st.markdown("### 📊 1. 工程主管戰情室與案場管理 (Dashboard)")
         
         col_s1, col_s2, col_s3, col_s4 = st.columns(4)
         with col_s1:
-            st.metric("進行中工程專案", "12 案", "+2 本月新增")
+            st.metric("進行中專案 / Dự án", "12 案", "+2 本月新增")
         with col_s2:
-            st.metric("總合約金額 (VND)", "18,450,000,000", "匯率正常")
+            st.metric("總合約金額 / Tổng hợp đồng (VND)", "18,450,000,000", "匯率正常")
         with col_s3:
-            st.metric("待審核 BOM / 採購", "5 件", "需主管覆核")
+            st.metric("待審核 BOM / Chờ duyệt", "5 件", "需主管覆核")
         with col_s4:
-            st.metric("工安事故率", "0%", "持續保持")
+            st.metric("工安事故率 / TN lao động", "0%", "持續保持")
 
         st.markdown("##### 📁 目前進行中的工程專案一覽")
         proj_df = pd.DataFrame(st.session_state.engineering_projects_db)
         st.dataframe(proj_df, use_container_width=True)
 
     # ====================================================
-    # 📋 2. 配電盤與工程專案雙層報價系統 (含千分位、操作引導與多幣別總計)
+    # 📋 2. 工程專案報價系統
     # ====================================================
-    elif "2." in selected_option or "雙層報價" in selected_option or "報價" in selected_option:
-        st.markdown("### 📋 2. 配電盤與工程專案雙層報價系統 (內部成本估算 vs 對外報價)")
+    elif "2." in selected_option or "報價" in selected_option:
+        st.markdown("### 📋 2. 配電盤與工程專案雙層報價系統 (Báo giá & Dự toán)")
         st.info("💡 支援多幣別（VND、USD、RMB、TWD），並在報價核准後自動將內部 BOM 零件展開並推送到採購與生產部門。")
 
         if "two_tier_quotations_db" not in st.session_state:
@@ -131,7 +129,7 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                 }
             ]
 
-        tab_q_create, tab_q_list = st.tabs(["📝 建立 / 提交報價與自動BOM展開", "📊 報價單總表與審核紀錄 (支援多幣別總計)"])
+        tab_q_create, tab_q_list = st.tabs(["📝 建立報價與自動BOM | Lập báo giá", "📊 報價總表與多幣別總計 | Tổng hợp báo giá"])
 
         with tab_q_create:
             with st.form("form_create_quotation"):
@@ -147,19 +145,19 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
 
                 qc5, qc6, qc7 = st.columns(3)
                 with qc5:
-                    p_from = st.text_input("提案負責人 (From)", value="陳智賢")
+                    p_from = st.text_input("提案負責人 (Người lập)", value="陳智賢")
                 with qc6:
-                    p_ref = st.text_input("報價單號 (Ref)", value="09092026/LA/BG01")
+                    p_ref = st.text_input("報價單號 (Số báo giá)", value="09092026/LA/BG01")
                 with qc7:
                     p_vat = st.number_input("增值稅率 VAT (%)", value=8.0)
 
                 st.markdown("---")
                 st.markdown("##### 📦 工程 BOM 材料與工資明細清單 (CHI TIẾT HẠNG MỤC)")
                 
-                st.success("👉 **【操作指引說明】**\n"
-                           "1. **修改現有資料**：直接用滑鼠點擊下方表格內的任何文字或數字格子即可直接修改。\n"
-                           "2. **新增一列材料**：請點擊下方表格的最末行空白處直接輸入，或點選表格左上角/右上角的 `+` 號新增列。\n"
-                           "3. **金額千分位**：系統已自動套用越南盾千分位與貨幣格式 (`₫`)，方便核對金額。")
+                st.success("👉 **【操作指引 / Hướng dẫn thao tác】**\n"
+                           "1. **修改資料 / Sửa**：直接點擊下方表格內的格子修改。\n"
+                           "2. **新增一列 / Thêm dòng**：點擊表格最末行空白處或右上角 `+` 號。\n"
+                           "3. **金額千分位 / Định dạng số**：系統自動套用千分位與越南盾 `₫` 格式。")
 
                 default_items_df = pd.DataFrame(st.session_state.two_tier_quotations_db[0]["items"])
                 
@@ -169,14 +167,14 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                     use_container_width=True,
                     column_config={
                         "item": st.column_config.TextColumn("材料與工項名稱 (Item)", width="medium"),
-                        "unit": st.column_config.TextColumn("單位 (Unit)", width="small"),
-                        "qty": st.column_config.NumberColumn("數量 (Qty)", format="%.1f"),
-                        "unit_price": st.column_config.NumberColumn("單價 (Unit Price)", format="%,.0f ₫"),
-                        "total_price": st.column_config.NumberColumn("複價 (Total Price)", format="%,.0f ₫")
+                        "unit": st.column_config.TextColumn("單位 (ĐVT)", width="small"),
+                        "qty": st.column_config.NumberColumn("數量 (SL)", format="%.1f"),
+                        "unit_price": st.column_config.NumberColumn("單價 (Đơn giá)", format="%,.0f ₫"),
+                        "total_price": st.column_config.NumberColumn("複價 (Thành tiền)", format="%,.0f ₫")
                     }
                 )
 
-                if st.form_submit_button("🚀 確認送出報價單並【自動展開BOM連動採購】", type="primary"):
+                if st.form_submit_button("🚀 確認送出並【自動展開BOM連動採購】", type="primary"):
                     if p_client and p_proj and p_ref:
                         internal_rows = edited_items_df.to_dict(orient="records")
                         
@@ -205,7 +203,7 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                         else:
                             existing_bom["bom_items"] = internal_rows
 
-                        st.success(f"🎉 報價單 [{p_ref}] 建立成功！系統已自動將 BOM 物料清單推送到【第 8 項 BOM 採購連動中心】！")
+                        st.success(f"🎉 報價單 [{p_ref}] 建立成功！系統已自動推送到【BOM 採購連動】！")
                         st.rerun()
                     else:
                         st.warning("⚠️ 請完整填寫客戶名稱、工程名稱與報價單號！")
@@ -213,84 +211,81 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
         with tab_q_list:
             st.markdown("##### 📊 已建立之雙層報價單總表與多幣別總計切換")
             
-            # 🌐 總經理室 / 主管審核端的多幣別檢視切換工具列
-            view_curr = st.selectbox("🌐 選擇總計顯示幣別（支援主管審核與總經理室檢視）", ["VND", "USD", "RMB", "TWD"], key="view_curr_select")
+            view_curr = st.selectbox("🌐 選擇總計顯示幣別 / Chọn tiền tệ hiển thị (支援主管審核與總經理室檢視)", ["VND", "USD", "RMB", "TWD"], key="view_curr_select")
 
             for q in st.session_state.two_tier_quotations_db:
-                # 計算該筆報價單的總金額 (原始幣別)
                 subtotal_orig = sum([item.get("total_price", 0) for item in q["items"]])
                 vat_amount = subtotal_orig * (q["vat"] / 100.0)
                 grand_total_orig = subtotal_orig + vat_amount
 
-                # 轉換為使用者選擇的幣別
                 subtotal_converted = convert_currency(subtotal_orig, from_curr=q["currency"], to_curr=view_curr)
                 vat_converted = convert_currency(vat_amount, from_curr=q["currency"], to_curr=view_curr)
                 grand_total_converted = convert_currency(grand_total_orig, from_curr=q["currency"], to_curr=view_curr)
 
-                with st.expander(f"📌 報價單號: {q['quot_id']} | 客戶: {q['client']} | 專案: {q['project_name']} (原幣別: {q['currency']})"):
+                with st.expander(f"📌 單號: {q['quot_id']} | 客戶: {q['client']} | 專案: {q['project_name']} (原幣別: {q['currency']})"):
                     col_info1, col_info2, col_info3 = st.columns(3)
                     with col_info1:
-                        st.write(f"**提案人**：{q['author']}")
-                        st.write(f"**建立日期**：{q['date']}")
+                        st.write(f"**提案人 / Người lập**：{q['author']}")
+                        st.write(f"**建立日期 / Ngày**：{q['date']}")
                     with col_info2:
-                        st.write(f"**審核狀態**：{q['status']}")
+                        st.write(f"**審核狀態 / Trạng thái**：{q['status']}")
                         st.write(f"**增值稅 VAT**：{q['vat']}%")
                     with col_info3:
-                        st.markdown(f"**💰 項目小計 ({view_curr})**：`{format_currency_text(subtotal_converted, view_curr)}`")
-                        st.markdown(f"**🔥 含稅總計 ({view_curr})**：`{format_currency_text(grand_total_converted, view_curr)}`")
+                        st.markdown(f"**💰 項目小計 / Tổng cộng ({view_curr})**：`{format_currency_text(subtotal_converted, view_curr)}`")
+                        st.markdown(f"**🔥 含稅總計 / Tổng thanh toán ({view_curr})**：`{format_currency_text(grand_total_converted, view_curr)}`")
 
                     st.dataframe(pd.DataFrame(q["items"]), use_container_width=True)
 
     # ====================================================
-    # ⏱️ 3. 現場外勤打卡與作業登記
+    # ⏱️ 3. 現場打卡
     # ====================================================
     elif "3." in selected_option or "打卡" in selected_option:
-        st.markdown("### ⏱️ 3. 現場外勤打卡與 GPS 定位作業登記")
+        st.markdown("### ⏱️ 3. 現場外勤打卡與 GPS 定位作業登記 (Chấm công công trường)")
         st.info("💡 提供工程師與施工人員於案場進行 GPS 打卡、拍照回報與出勤時數紀錄。")
-        st.success("✅ 目前定位：越南平陽省美福工業區案場 (GPS 正常)")
-        if st.button("📍 點擊送出今日現場上班打卡"):
+        st.success("✅ 目前定位 / Vị trí hiện tại：越南平陽省美福工業區案場 (GPS 正常)")
+        if st.button("📍 點擊送出今日現場上班打卡 / Chấm công vào làm"):
             st.success("🎉 打卡成功！記錄時間：" + str(datetime.datetime.now()))
 
     # ====================================================
-    # 📝 4. 施工日報表與點工點料登記
+    # 📝 4. 施工日報
     # ====================================================
-    elif "4." in selected_option or "日報表" in selected_option:
-        st.markdown("### 📝 4. 施工日報表與點工點料登記")
+    elif "4." in selected_option or "日報" in selected_option:
+        st.markdown("### 📝 4. 施工日報表與點工點料登記 (Nhật ký thi công)")
         st.info("💡 記錄每日工地施工進度、外包商點工數與領料消耗量。")
-        st.text_input("填報日期", value=str(datetime.date.today()))
-        st.text_area("今日施工摘要與進度說明", value="今日進行西寧廠主配電盤吊裝與二次配線作業。")
-        if st.button("💾 儲存並送出施工日報表"):
+        st.text_input("填報日期 / Ngày báo cáo", value=str(datetime.date.today()))
+        st.text_area("今日施工摘要與進度說明 / Nội dung công việc", value="今日進行西寧廠主配電盤吊裝與二次配線作業。")
+        if st.button("💾 儲存並送出施工日報表 / Lưu báo cáo"):
             st.success("🎉 今日施工日報表已成功存入資料庫！")
 
     # ====================================================
-    # 📸 5. AI 施工照片辨識與安衛稽核
+    # 📸 5. AI 工安稽核
     # ====================================================
-    elif "5." in selected_option or "AI" in selected_option or "照片" in selected_option:
-        st.markdown("### 📸 5. AI 施工照片辨識與工安衛稽核")
+    elif "5." in selected_option or "AI" in selected_option or "稽核" in selected_option:
+        st.markdown("### 📸 5. AI 施工照片辨識與工安衛稽核 (Kiểm tra An toàn AI)")
         st.info("💡 上傳現場施工照片，透過 AI 自動辨識是否確實佩戴安全帽、安全帶與防護裝備。")
-        st.file_uploader("上傳工地現場照片進行 AI 稽核", type=["jpg", "png", "jpeg"])
-        if st.button("🔍 執行 AI 工安合規檢測"):
-            st.success("✅ AI 檢測結果：合格率 98%，所有現場作業人員均確實佩戴安全帽與反光背心。")
+        st.file_uploader("上傳工地現場照片進行 AI 稽核 / Tải ảnh công trường", type=["jpg", "png", "jpeg"])
+        if st.button("🔍 執行 AI 工安合規檢測 / Chạy kiểm tra AI"):
+            st.success("✅ AI 檢測結果 / Kết quả：合格率 98%，所有現場作業人員均確實佩戴安全帽與反光背心。")
 
     # ====================================================
-    # 🛡️ 6. 工程師證照與機具檢驗預警
+    # 🛡️ 6. 證照預警
     # ====================================================
     elif "6." in selected_option or "證照" in selected_option or "預警" in selected_option:
-        st.markdown("### 🛡️ 6. 工程師證照與施工機具檢驗到期預警")
-        st.info("💡 自動監控高壓電氣技術員證照、堆高機證照與吊車檢驗效期，提前 30 天發出黃色/紅色預警。")
+        st.markdown("### 🛡️ 6. 工程師證照與施工機具檢驗到期預警 (Cảnh báo Chứng chỉ)")
+        st.info("💡 自動監控高壓電氣技術員證照、堆高機證照與吊車檢驗效期，提前 30 天發出預警。")
         cert_data = [
-            {"姓名": "陳明華", "證照名稱": "甲級室內配線技術士", "有效期限": "2026-11-30", "狀態": "🟢 效期正常"},
-            {"姓名": "阮文雄", "證照名稱": "特定高壓氣體作業主管", "有效期限": "2026-10-25", "狀態": "🟡 即將到期 (剩9天)"},
-            {"機具編號": "CRANE-01", "機具名稱": "5噸油壓吊卡車", "定期檢驗日": "2026-11-15", "狀態": "🟢 檢驗合格"}
+            {"姓名 / Họ tên": "陳明華", "證照名稱 / Tên chứng chỉ": "甲級室內配線技術士", "有效期限 / Hạn": "2026-11-30", "狀態 / Trạng thái": "🟢 效期正常"},
+            {"姓名 / Họ tên": "阮文雄", "證照名稱 / Tên chứng chỉ": "特定高壓氣體作業主管", "有效期限 / Hạn": "2026-10-25", "狀態 / Trạng thái": "🟡 即將到期 (剩9天)"},
+            {"機具編號 / Mã máy": "CRANE-01", "機具名稱 / Tên thiết bị": "5噸油壓吊卡車", "定期檢驗日 / Ngày kiểm định": "2026-11-15", "狀態 / Trạng thái": "🟢 檢驗合格"}
         ]
         st.dataframe(pd.DataFrame(cert_data), use_container_width=True)
 
     # ====================================================
-    # 🎨 7. 配電盤電氣與機構設計圖庫 Storage (含一鍵傳送生產部 & 分類維護)
+    # 🎨 7. 設計圖庫
     # ====================================================
-    elif "7." in selected_option or "圖庫" in selected_option or "Storage" in selected_option:
-        st.markdown("### 🎨 7. 配電盤電氣與機構設計圖庫 Storage 與生產下發中心")
-        st.info("💡 管理所有配電盤 2D/3D 設計圖檔、CAD 藍圖與機構規格書，並可一鍵將設計規格傳送至生產部門進行排程與備料。")
+    elif "7." in selected_option or "圖庫" in selected_option:
+        st.markdown("### 🎨 7. 配電盤電氣與機構設計圖庫 Storage (Kho bản vẽ)")
+        st.info("💡 管理所有配電盤 2D/3D 設計圖檔、CAD 藍圖與機構規格書，並可一鍵將設計規格傳送至生產部門。")
 
         if "drawing_storage_db" not in st.session_state:
             st.session_state.drawing_storage_db = [
@@ -329,18 +324,18 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
             ]
 
         tab_drw_list, tab_drw_upload, tab_cat_mgmt, tab_dispatch = st.tabs([
-            "📁 設計圖庫總表與一鍵下發", 
-            "📤 上傳新藍圖與圖檔", 
-            "⚙️ 圖面技術分類維護",
-            "🏭 生產部門接收狀態追蹤"
+            "📁 設計圖庫總表 | Danh sách bản vẽ", 
+            "📤 上傳新圖檔 | Tải lên bản vẽ", 
+            "⚙️ 技術分類維護 | Quản lý phân loại",
+            "🏭 生產部門接收 | Trạng thái sản xuất"
         ])
 
         with tab_drw_list:
             dc1, dc2 = st.columns([1, 2])
             with dc1:
-                drw_type_filter = st.selectbox("依圖面類型篩選", ["全部類型"] + st.session_state.drawing_categories_list)
+                drw_type_filter = st.selectbox("依圖面類型篩選 / Lọc theo loại", ["全部類型"] + st.session_state.drawing_categories_list)
             with dc2:
-                drw_search = st.text_input("🔍 搜尋專案名稱、圖面標題或檔名...", key="drw_search_box")
+                drw_search = st.text_input("🔍 搜尋專案、標題或檔名 / Tìm kiếm...", key="drw_search_box")
 
             filtered_drw = st.session_state.drawing_storage_db
             if drw_type_filter != "全部類型":
@@ -353,14 +348,14 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                     with st.expander(f"📌 [{drw['drawing_id']}] {drw['project']} - {drw['title']} ({drw['version']})"):
                         col_d1, col_d2, col_d3 = st.columns(3)
                         with col_d1:
-                            st.write(f"**圖面類型**：{drw['type']}")
-                            st.write(f"**檔案名稱**：{drw['filename']}")
+                            st.write(f"**圖庫類型 / Loại**：{drw['type']}")
+                            st.write(f"**檔案名稱 / File**：{drw['filename']}")
                         with col_d2:
-                            st.write(f"**上傳者**：{drw['uploader']}")
-                            st.write(f"**上傳日期**：{drw['date']}")
+                            st.write(f"**上傳者 / Người tải**：{drw['uploader']}")
+                            st.write(f"**上傳日期 / Ngày**：{drw['date']}")
                         with col_d3:
                             current_status = drw.get("transfer_status", "⏳ 尚未下發")
-                            st.write(f"**下發狀態**：{current_status}")
+                            st.write(f"**下發狀態 / Trạng thái**：{current_status}")
 
                         if st.button(f"🚀 一鍵下發設計規格至生產部 ({drw['drawing_id']})", key=f"dispatch_btn_{drw['drawing_id']}"):
                             drw["transfer_status"] = "🟢 已下發生產部"
@@ -377,7 +372,7 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                                     "status": "🟢 生產備料與排程中",
                                     "date": str(datetime.date.today())
                                 })
-                            st.success(f"🎉 成功！設計圖面與規格 [{drw['title']}] 已即時傳送至【生產部門】！")
+                            st.success(f"🎉 成功傳送至【生產部門】！")
                             st.rerun()
             else:
                 st.info("⚠️ 找不到符合條件的設計圖檔紀錄。")
@@ -386,13 +381,13 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
             with st.form("form_upload_drawing"):
                 uc1, uc2 = st.columns(2)
                 with uc1:
-                    d_proj = st.selectbox("關聯工程專案", [p["proj_name"] for p in st.session_state.engineering_projects_db])
-                    d_title = st.text_input("圖面與規格說明標題 *", value="西寧廠低壓控制盤二次迴路配線圖")
-                    d_type = st.selectbox("圖面技術分類 *", st.session_state.drawing_categories_list)
+                    d_proj = st.selectbox("關聯工程專案 / Dự án", [p["proj_name"] for p in st.session_state.engineering_projects_db])
+                    d_title = st.text_input("圖面與規格說明標題 / Tiêu đề *", value="西寧廠低壓控制盤二次迴路配線圖")
+                    d_type = st.selectbox("圖面技術分類 / Phân loại *", st.session_state.drawing_categories_list)
                 with uc2:
-                    d_ver = st.text_input("圖面版本 (Version)", value="v1.0")
+                    d_ver = st.text_input("圖面版本 / Phiên bản", value="v1.0")
                     d_file = st.file_uploader("上傳設計圖檔 (DWG, STEP, PDF, ZIP)", type=["dwg", "step", "pdf", "zip", "png"])
-                    d_uploader = st.text_input("上傳工程師 / 設計師姓名", value="陳明華")
+                    d_uploader = st.text_input("上傳工程師 / Kỹ sư", value="陳明華")
 
                 if st.form_submit_button("🚀 確認上傳並存入 Storage 圖庫", type="primary"):
                     if d_title and d_file and d_type:
@@ -408,7 +403,7 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                             "date": str(datetime.date.today()),
                             "transfer_status": "⏳ 尚未下發"
                         })
-                        st.success(f"🎉 成功上傳設計圖檔 [{d_file.name}]！分類：【{d_type}】 圖面編號：`{new_d_id}`")
+                        st.success(f"🎉 成功上傳設計圖檔 [{d_file.name}]！")
                         st.rerun()
                     else:
                         st.warning("⚠️ 請完整填寫圖面標題、選擇分類，並上傳設計檔案！")
@@ -418,7 +413,7 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
             st.info("💡 在此處您可以隨時新增工程上需要的圖面技術分類，或刪除不需要的分類項目。")
 
             with st.form("form_add_drawing_category"):
-                new_cat_name = st.text_input("新增圖面技術分類名稱", placeholder="例如: 弱電與消防系統佈局圖")
+                new_cat_name = st.text_input("新增圖面技術分類名稱 / Tên phân loại mới", placeholder="例如: 弱電與消防系統佈局圖")
                 if st.form_submit_button("➕ 確認新增技術分類", type="primary"):
                     if new_cat_name.strip():
                         clean_name = new_cat_name.strip()
@@ -454,41 +449,41 @@ def render_engineering_management_page(engine=None, lang="繁體中文", **kwarg
                 st.info("目前尚無下發至生產部的設計規格紀錄。")
 
     # ====================================================
-    # 🔗 8. 配電盤 BOM 零件自動展開與採購連動
+    # 🔗 8. BOM 採購連動
     # ====================================================
-    elif "8." in selected_option or "BOM" in selected_option or "採購連動" in selected_option:
-        st.markdown("### 🔗 8. 配電盤 BOM 零件自動展開與採購連動")
+    elif "8." in selected_option or "BOM" in selected_option or "採購" in selected_option:
+        st.markdown("### 🔗 8. 配電盤 BOM 零件自動展開與採購連動 (Liên kết Mua hàng BOM)")
         st.info("💡 工程報價核准後自動展開物料清單 (BOM)，並可一鍵連動採購請購單 (PR) 與對比專案預算。")
 
         if "bom_procurement_db" not in st.session_state or not st.session_state.bom_procurement_db:
-            st.warning("⚠️ 目前尚無已展開的 BOM 資料，請先至【第 2 項 雙層報價系統】建立或送出報價單。")
+            st.warning("⚠️ 目前尚無已展開的 BOM 資料，請先至【第 2 項 專案雙層報價】建立或送出報價單。")
         else:
             for bom_rec in st.session_state.bom_procurement_db:
                 with st.expander(f"📦 專案報價單號: {bom_rec['quot_id']} - {bom_rec['project_name']} ({bom_rec['client']})"):
-                    st.markdown(f"**包含物料項目總數**：`{len(bom_rec['bom_items'])}` 項")
+                    st.markdown(f"**包含物料項目總數 / Tổng số mục**：`{len(bom_rec['bom_items'])}` 項")
                     st.dataframe(pd.DataFrame(bom_rec['bom_items']), use_container_width=True)
 
                     col_b1, col_b2 = st.columns(2)
                     with col_b1:
                         if st.button(f"🛒 一鍵轉入採購請購單 (PR) - {bom_rec['quot_id']}", key=f"pr_btn_{bom_rec['quot_id']}"):
-                            st.success(f"🎉 成功將 [{bom_rec['quot_id']}] 的 BOM 物料轉入採購部請購單（PR）進行詢比價與下單！")
+                            st.success(f"🎉 成功將 BOM 物料轉入採購部請購單（PR）！")
                     with col_b2:
                         if st.button(f"📊 進行專案預算與採購成本對比 - {bom_rec['quot_id']}", key=f"budget_btn_{bom_rec['quot_id']}"):
                             st.info("✅ 經系統比對：此 BOM 採購總金額符合專案預算範圍，未超出上限！")
 
     # ====================================================
-    # 💰 9. 外包商計價與工進估驗管理
+    # 💰 9. 外包商施工進度與驗收 (已更新為直覺易懂名稱)
     # ====================================================
-    elif "9." in selected_option or "外包商" in selected_option or "估驗" in selected_option:
-        st.markdown("### 💰 9. 外包商計價與工進估驗管理")
-        st.info("💡 記錄外包工班點工數、工程進度百分比，自動產生應付帳款與估驗請款單。")
-        st.success("✅ 目前外包商合約計價狀態正常，無超支情形。")
+    elif "9." in selected_option or "外包商" in selected_option or "Tiến độ" in selected_option:
+        st.markdown("### 💰 9. 外包商施工進度與驗收 (Tiến độ & Nghiệm thu thầu phụ)")
+        st.info("💡 管理外包工班施工進度百分比與工程量驗收，並自動計算計價金額與請款單。")
+        st.success("✅ 目前外包商合約施工進度與驗收狀態正常，無超支情形。")
 
     # ====================================================
-    # 🏁 10. FAT / SAT 出廠與現場驗收管理
+    # 🏁 10. 竣工驗收
     # ====================================================
     elif "10." in selected_option or "FAT" in selected_option or "SAT" in selected_option or "驗收" in selected_option:
-        st.markdown("### 🏁 10. FAT / SAT 出廠與現場驗收管理")
+        st.markdown("### 🏁 10. FAT / SAT 出廠與現場驗收管理 (Nghiệm thu FAT / SAT)")
         st.info("💡 執行工廠驗收測試 (FAT) 與現場驗收測試 (SAT)，記錄缺失改善與客戶簽收單。")
         st.success("✅ 西寧廠高壓配電盤 FAT 出廠測試已完成並取得客戶簽收！")
 
