@@ -134,7 +134,6 @@ DEFAULT_DEPARTMENTS = [
 ]
 
 def init_system_tables(engine):
-    """確保系統必要資料表完整建立"""
     if engine is None:
         return
     try:
@@ -178,7 +177,6 @@ def fetch_roles(engine, lang_dict):
     
     try:
         df = pd.read_sql("SELECT role_name, department, description, allowed_modules FROM system_roles", con=engine)
-        
         df_dept = pd.read_sql("SELECT department_name FROM system_departments", con=engine)
         if not df_dept.empty:
             for d in df_dept["department_name"]:
@@ -232,6 +230,7 @@ def delete_role_db(engine, role_name):
         return False
 
 def get_department_module_tree():
+    """全域共享的部門與子功能樹狀結構，確保 app.py 與 user_management.py 資料同步"""
     if "custom_department_module_tree" not in st.session_state:
         st.session_state.custom_department_module_tree = {
             "📈 總經理室 (Executive Office)": [
@@ -377,7 +376,6 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
             with col_hdr2:
                 select_all_key = f"select_all_{sel_role_key}_{dept_tree_name}"
                 
-                # 🚀 極速記憶體狀態切換（移除強制 rerun，改由 session_state 瞬間驅動，大幅加速！）
                 def toggle_all_modules_fast(dept_name=dept_tree_name, mod_list=mods, k=select_all_key):
                     target_state = st.session_state.get(k, False)
                     for i, mod_name in enumerate(mod_list):
@@ -491,7 +489,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown("---")
         st.markdown("##### 🛠️ 模組拼圖庫：直接勾選或取消以指派功能至此部門")
 
-        # 彙整全系統所有標準功能拼圖清單
+        # 彙整全系統所有標準功能拼圖清單（包含倉庫管理與各項業務）
         master_all_modules = [
             "🔴 原料價格與 Gemini 智慧採購顧問",
             "📊 財務類顯示資料 (AR/AP & P&L)",
@@ -544,7 +542,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown("")
         if st.button("💾 立即儲存並更新此部門的功能拼圖配置", type="primary", use_container_width=True):
             dept_module_tree[target_mod_dept] = new_selected_puzzle_mods
-            st.success(f"🎉 成功更新【{target_mod_dept}】的功能模組拼圖設定！")
+            st.success(f"🎉 成功更新【{target_mod_dept}】的功能模組拼圖設定！已同步至左側主選單。")
             st.rerun()
 
     # ----------------------------------------------------
@@ -599,7 +597,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                             })
                         st.success(f"🎉 成功儲存並啟用跨資料庫設定：{db_name}！")
                     except Exception as e:
-                        st.error("❌ 儲存資料庫設定失敗: " + str(e))
+                        st.error("❌ ❌ 儲存資料庫設定失敗: " + str(e))
                 else:
                     st.success("🎉 [展示模式] 外部資料庫連線設定已成功儲存！")
 
