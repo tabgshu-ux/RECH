@@ -380,6 +380,7 @@ elif "系統角色權限" in feat_str or "模組開關" in feat_str:
         st.error("⚠️ 權限不足：資訊管理部僅限系統管理員 (admin) 登入存取。")
 
 feat_str = str(selected_feat_label)
+
 elif "API" in feat_str:
     if current_role_clean == "admin":
         load_module_safely("modules.system_licensing", "render_licensing_control_page", engine=engine, lang=curr_lang)
