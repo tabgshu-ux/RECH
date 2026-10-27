@@ -432,11 +432,11 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.rerun()
 
     # ----------------------------------------------------
-    # 🏢 Tab 2: 企業部門設置 (Department Setup)
+    # 🏢 Tab 2: 企業部門設置 (Department Setup - 拼圖方塊勾選版)
     # ----------------------------------------------------
     with tab_dept_config:
-        st.markdown("### 🏢 企業部門設置與功能模組管理 (CRUD)")
-        st.info("💡 管理員專用：在此您可以透過網頁直接新增部門、修改部門名稱，或為特定部門動態指派與管理業務功能模組，即時連動全系統組織與權限選單！")
+        st.markdown("### 🏢 企業部門設置與功能模組管理 (🧩 拼圖式權限配置)")
+        st.info("💡 管理員專用：在此您可以透過網頁直接新增部門、修改部門名稱，或直接透過下方拼圖方塊勾選為特定部門配置業務功能模組！")
 
         col_d1, col_d2 = st.columns(2)
         with col_d1:
@@ -476,38 +476,76 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                         st.error("🚫 系統至少須保留一個部門！")
 
         st.markdown("---")
-        st.markdown("#### 🧩 3. 針對指定部門「動態創建與管理功能模組」")
-        target_mod_dept = st.selectbox("選擇要配置功能的部門", options=list(dept_module_tree.keys()), key="select_dept_for_modules")
+        st.markdown("#### 🧩 3. 針對指定部門「以拼圖方塊勾選方式管理功能模組」")
         
+        target_mod_dept = st.selectbox("🎯 請選擇欲配置功能模組的目標部門：", options=list(dept_module_tree.keys()), key="select_dept_for_modules_puzzle")
         current_mods = dept_module_tree[target_mod_dept]
-        st.write(f"• **目前【{target_mod_dept}】內含的功能模組**：")
-        for m in current_mods:
-            st.markdown(f"  - `{m}`")
 
-        with st.form("form_add_module_puzzle"):
-            st.markdown("##### ➕ 為此部門新增功能模組")
-            new_puz_name = st.text_input("新功能模組名稱 *", placeholder="例如: 📊 AI 智慧產能排程與瓶頸分析")
-            if st.form_submit_button("➕ 綁定功能模組至此部門", type="primary", use_container_width=True):
-                if new_puz_name:
-                    if new_puz_name not in dept_module_tree[target_mod_dept]:
-                        dept_module_tree[target_mod_dept].append(new_puz_name.strip())
-                        st.success(f"🎉 成功為【{target_mod_dept}】新增功能模組：{new_puz_name}！")
-                        st.rerun()
-                    else:
-                        st.warning("⚠️ 此功能模組已存在於該部門中！")
-                else:
-                    st.warning("⚠️ 請輸入模組名稱！")
+        st.markdown(f"##### 📦 目前【{target_mod_dept}】已啟用的功能拼圖：")
+        if current_mods:
+            for cm in current_mods:
+                st.markdown(f"  - `🧩 {cm}`")
+        else:
+            st.info("目前此部門尚無任何啟用的模組。")
 
-        with st.form("form_remove_module_puzzle"):
-            st.markdown("##### 🗑️ 從此部門移除功能模組")
-            if current_mods:
-                del_puz_target = st.selectbox("選擇要移除的功能模組", options=current_mods)
-                if st.form_submit_button("🗑️ 移除指定功能模組", use_container_width=True):
-                    dept_module_tree[target_mod_dept].remove(del_puz_target)
-                    st.success(f"🗑️ 已從【{target_mod_dept}】移除模組：{del_puz_target}")
-                    st.rerun()
-            else:
-                st.info("此部門目前尚無任何功能模組可供移除。")
+        st.markdown("---")
+        st.markdown("##### 🛠️ 模組拼圖庫：直接勾選或取消以指派功能至此部門")
+
+        # 彙整全系統所有標準功能拼圖清單
+        master_all_modules = [
+            "🔴 原料價格與 Gemini 智慧採購顧問",
+            "📊 財務類顯示資料 (AR/AP & P&L)",
+            "⚡ 工程專案進度與現場異常監控",
+            "📢 發送公告佈告欄",
+            "👤 員工個人檔案與人事管理",
+            "🏢 廠內員工固定打卡與出勤紀錄",
+            "📍 外勤位置驗證與工地即時人數",
+            "🥗 幹部宿舍伙食與採購控管",
+            "🏭 工作廠區管理",
+            "🚗 廠區車輛進出口門禁與派車審核",
+            "🛠️ 車輛維修保養紀錄",
+            "🏢 固定資產與設備管理",
+            "🛒 採購與應付帳款 (AP)",
+            "📋 應收帳款與對帳管理中心",
+            "📊 越南稅務標準財務報表 (Thông tư 200)",
+            "💰 員工薪資計算與保險扣除",
+            "📄 電子發票綜合管理與 XML 歸檔",
+            "✍️ 提交請假/採購與即時進度追蹤 / 審核",
+            "⚡ 1. 工程主管戰情室與案場管理",
+            "⚡ 2. 工程專案報價系統",
+            "📍 3. 現場外勤打卡與作業登記",
+            "📋 4. 施工日報表與點工點料登記",
+            "🤖 5. AI 施工照片辨識與稽核",
+            "⚠️ 6. 工程證照預警與機具檢驗預警",
+            "🎨 7. 配電盤電氣與機構設計圖庫",
+            "🔌 8. 配電盤 BOM 零件與採購連動",
+            "👷 9. 外包商計價與偶鐸管理",
+            "🧪 10. FAT/SAT 出廠與現場驗收管理",
+            "📦 [倉儲] 倉庫庫存與資材條碼管理",
+            "✂️ [板金] 板金加工組工單與條碼",
+            "🎨 [塗料] 粉體塗裝烤漆組品管",
+            "⚡ [配盤] 配電盤組裝配線組",
+            "🔒 系統角色權限與模組開關設定",
+            "🔌 API 串接區"
+        ]
+
+        new_selected_puzzle_mods = []
+        cols_pz = st.columns(2)
+        for idx, mod_item in enumerate(master_all_modules):
+            with cols_pz[idx % 2]:
+                puz_chk_key = f"puz_mod_{target_mod_dept}_{idx}_{mod_item}"
+                if puz_chk_key not in st.session_state:
+                    st.session_state[puz_chk_key] = (mod_item in current_mods)
+                
+                is_checked = st.checkbox(mod_item, key=puz_chk_key)
+                if is_checked:
+                    new_selected_puzzle_mods.append(mod_item)
+
+        st.markdown("")
+        if st.button("💾 立即儲存並更新此部門的功能拼圖配置", type="primary", use_container_width=True):
+            dept_module_tree[target_mod_dept] = new_selected_puzzle_mods
+            st.success(f"🎉 成功更新【{target_mod_dept}】的功能模組拼圖設定！")
+            st.rerun()
 
     # ----------------------------------------------------
     # 🔌 Tab 3: 跨資料庫連線與串聯設定 (Database Bridge)
