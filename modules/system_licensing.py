@@ -9,34 +9,37 @@ from sqlalchemy import text
 API_SETTING_I18N = {
     "繁體中文": {
         "title": "🔌 API 串聯設定中心 (API Integration Hub)",
-        "caption": "管理裕豐電機 ERP 系統對外串聯的所有第三方硬體與雲端 API 憑證（含 NFC 手機感應打卡、臉部/指紋辨識、LINE/Zalo、異質資料庫與股票財經）。",
+        "caption": "管理裕豐電機 ERP 系統對外串聯的所有第三方硬體、雲端 AI 與 API 憑證。",
         "tab_nfc": "📶 NFC / 藍牙手機感應打卡 API",
         "tab_biometric": "👤 臉部與指紋辨識 API",
         "tab_messaging": "📱 LINE / Zalo 通訊 API",
         "tab_database": "🗄️ 異質資料庫串聯",
         "tab_stock": "📈 股票與財經數據 API",
+        "tab_ai": "🤖 企業 AI 大模型串接",
         "save_success": "🎉 API 串聯憑證與參數已成功寫入資料庫並即時生效！",
         "test_success": "🟢 API 連線測試成功！回應時間正常。"
     },
     "Tiếng Việt": {
         "title": "🔌 Trung tâm Cấu hình Tích hợp API",
-        "caption": "Quản lý chứng chỉ API phần cứng và đám mây (Chấm công NFC/Bluetooth, Khuôn mặt, vân tay, LINE/Zalo, CSDL và chứng khoán).",
+        "caption": "Quản lý chứng chỉ API phần cứng, AI đám mây và hệ thống của Reetech ERP.",
         "tab_nfc": "📶 API Chấm công NFC / Bluetooth",
         "tab_biometric": "👤 API Khuôn mặt & Vân tay",
         "tab_messaging": "📱 API LINE / Zalo",
         "tab_database": "🗄️ Kết nối Cơ sở dữ liệu",
         "tab_stock": "📈 API Chứng khoán & Tài chính",
+        "tab_ai": "🤖 Tích hợp AI Doanh nghiệp",
         "save_success": "🎉 Đã lưu cấu hình API thành công vào cơ sở dữ liệu!",
         "test_success": "🟢 Kiểm tra kết nối API thành công!"
     },
     "English": {
         "title": "🔌 API Integration Hub",
-        "caption": "Manage all third-party hardware and cloud API credentials for Reetech ERP (NFC Mobile Tap-in, Face/Fingerprint, LINE/Zalo, Database, and Stock APIs).",
+        "caption": "Manage all third-party hardware, cloud AI, and system API credentials for Reetech ERP.",
         "tab_nfc": "📶 NFC / BLE Mobile Tap API",
         "tab_biometric": "👤 Face & Fingerprint API",
         "tab_messaging": "📱 LINE / Zalo API",
         "tab_database": "🗄️ Database Bridge",
         "tab_stock": "📈 Stock & Financial API",
+        "tab_ai": "🤖 Enterprise AI Integration",
         "save_success": "🎉 API credentials and parameters successfully saved to database!",
         "test_success": "🟢 API Connection Test Successful!"
     }
@@ -67,21 +70,22 @@ def render_api_settings_page(engine=None, lang="繁體中文", **kwargs):
 
     init_api_settings_db(engine)
 
-    # 建立五大 API 串聯設定分頁 (新增 NFC 專用分頁)
-    tab_nfc, tab_bio, tab_msg, tab_db, tab_stock = st.tabs([
+    # 建立六大 API 串聯設定分頁 (新增 AI 大模型串接專用分頁)
+    tab_nfc, tab_bio, tab_msg, tab_db, tab_stock, tab_ai = st.tabs([
         L["tab_nfc"],
         L["tab_biometric"], 
         L["tab_messaging"], 
         L["tab_database"], 
-        L["tab_stock"]
+        L["tab_stock"],
+        L["tab_ai"]
     ])
 
     # ----------------------------------------------------
-    # 1. NFC / 藍牙手機感應打卡 API 串聯 (新增)
+    # 1. NFC / 藍牙手機感應打卡 API 串聯
     # ----------------------------------------------------
     with tab_nfc:
         st.markdown("### 📶 廠區大門與車間入口：NFC / 藍牙手機感應打卡硬體 API 串聯")
-        st.info("💡 支援員工手機靠近閘門 NFC 感應或藍牙 (BLE) 自動通關打卡。當手機靠近閘門讀卡機時，設備透過此 API 即時將加密識別碼傳送回 ERP 後台完成考勤寫入。")
+        st.info("💡 支援員工手機靠近閘門 NFC 感應或藍牙 (BLE) 自動通關打卡。")
 
         with st.form("form_nfc_ble_api"):
             col1, col2 = st.columns(2)
@@ -99,7 +103,7 @@ def render_api_settings_page(engine=None, lang="繁體中文", **kwargs):
                 save_nfc = st.form_submit_button("💾 儲存 NFC / 藍牙打卡 API 設定", type="primary", use_container_width=True)
 
             if test_nfc:
-                st.success("🟢 NFC 閘門硬體通訊正常！主機回應時間：8ms，已準備好迎接手機感應打卡。")
+                st.success("🟢 NFC 閘門硬體通訊正常！主機回應時間：8ms。")
             if save_nfc:
                 st.success(L["save_success"])
 
@@ -108,8 +112,6 @@ def render_api_settings_page(engine=None, lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_bio:
         st.markdown("### 👤 廠區門禁硬體：臉部辨識與指紋辨識系統 API 串聯")
-        st.info("💡 用於連結工廠大門與各車間的 AI 臉部辨識打卡機、指紋打卡機（支援 Hikvision、Dahua 及 Suprema 設備 SDK / REST API）。")
-
         with st.form("form_biometric_api"):
             col1, col2 = st.columns(2)
             with col1:
@@ -127,8 +129,6 @@ def render_api_settings_page(engine=None, lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_msg:
         st.markdown("### 📱 越南勞工與台幹通訊：LINE 與 Zalo 官方通知 API 串聯")
-        st.info("💡 支援越南員工專用 Zalo OA / ZNS 訊息推播與打卡，以及台籍幹部慣用之 LINE Messaging API 雙軌整合。")
-
         with st.form("form_messaging_api"):
             col1, col2 = st.columns(2)
             with col1:
@@ -138,7 +138,7 @@ def render_api_settings_page(engine=None, lang="繁體中文", **kwargs):
             with col2:
                 st.markdown("##### 🇻🇳 Zalo 平台設定 (越南主力)")
                 zalo_token = st.text_input("Zalo OA Access Token", value="ZALO_OA_TOKEN_SAMPLE_XYZ", type="password")
-                zalo_zns_id = st.text_input("Zalo ZNS Template ID (薪資/打卡通知)", value="ZNS_TEMPLATE_99210")
+                zalo_zns_id = st.text_input("Zalo ZNS Template ID", value="ZNS_TEMPLATE_99210")
 
             gps_radius = st.number_input("外地工地 GPS 有效打卡範圍 (公尺)", min_value=10, max_value=2000, value=500)
 
@@ -150,8 +150,6 @@ def render_api_settings_page(engine=None, lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_db:
         st.markdown("### 🗄️ 跨資料庫與異質系統串聯 (Database Bridge)")
-        st.info("💡 連結廠房舊系統 MySQL、總公司 SQL Server 或外部供應商資料庫，進行實時數據交換與同步。")
-
         with st.form("form_database_bridge"):
             col1, col2 = st.columns(2)
             with col1:
@@ -168,12 +166,10 @@ def render_api_settings_page(engine=None, lang="繁體中文", **kwargs):
                 st.success(L["save_success"])
 
     # ----------------------------------------------------
-    # 5. 股票與財經數據 API 串聯 (Stock Market & Financial Data)
+    # 5. 股票與財經數據 API 串聯
     # ----------------------------------------------------
     with tab_stock:
         st.markdown("### 📈 股票行情與財經數據 API 串聯 (Stock & Financial Market API)")
-        st.info("💡 用於即時抓取越南股市 (HOSE / HNX)、台股與原物料（銅、鋁、鋼材）國際期貨報價，供採購與財務決策參考。")
-
         with st.form("form_stock_api"):
             col1, col2 = st.columns(2)
             with col1:
@@ -185,6 +181,46 @@ def render_api_settings_page(engine=None, lang="繁體中文", **kwargs):
 
             if st.form_submit_button("💾 儲存股票與財經 API 設定", type="primary", use_container_width=True):
                 st.success(L["save_success"])
+
+    # ----------------------------------------------------
+    # 6. 企業 AI 智慧大模型串接 (新加入的彈性 AI 配置中心)
+    # ----------------------------------------------------
+    with tab_ai:
+        st.markdown("### 🤖 企業 AI 智慧大模型串接中心 (AI Model Integration Hub)")
+        st.info("💡 自由切換總經理室與全系統各模組所使用的 AI 大模型供應商（Google Gemini、OpenAI、Anthropic Claude），並動態配置 API 憑證。")
+
+        # 初始化 session 狀態
+        if "ai_config" not in st.session_state:
+            st.session_state["ai_config"] = {
+                "provider": "Google Gemini",
+                "model": "gemini-3.0-flash",
+                "api_key": ""
+            }
+
+        with st.form("form_ai_model_api"):
+            curr_conf = st.session_state["ai_config"]
+            provider_opts = ["Google Gemini", "OpenAI (GPT-4o)", "Anthropic (Claude 3.5)"]
+            def_idx = provider_opts.index(curr_conf["provider"]) if curr_conf["provider"] in provider_opts else 0
+
+            ai_provider = st.selectbox("選擇 AI 服務供應商 (AI Provider)", provider_opts, index=def_idx)
+
+            if ai_provider == "Google Gemini":
+                models = ["gemini-3.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"]
+            elif ai_provider == "OpenAI (GPT-4o)":
+                models = ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"]
+            else:
+                models = ["claude-3-5-sonnet-20241022", "claude-3-opus-20240229"]
+
+            ai_model_name = st.selectbox("選擇模型版本 (Model Name)", models)
+            ai_api_key = st.text_input(f"輸入 {ai_provider} API Key", value=curr_conf["api_key"], type="password", placeholder="請輸入對應的 API 金鑰...")
+
+            if st.form_submit_button("💾 儲存並即時套用 AI 串接設定", type="primary", use_container_width=True):
+                st.session_state["ai_config"] = {
+                    "provider": ai_provider,
+                    "model": ai_model_name,
+                    "api_key": ai_api_key
+                }
+                st.success(f"✅ 設定已成功更新！系統已將預設 AI 動態切換為【{ai_provider} - {ai_model_name}】")
 
 # 兼容進入點
 def show(engine=None, lang="繁體中文", **kwargs):
