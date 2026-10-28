@@ -397,4 +397,63 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
                                     VALUES (:doc_no, :org, :p_date, :cat, :title, :sum, :adv, :full)
                                 """), {
                                     "doc_no": new_doc_no,
-                                    "org
+                                    "org": new_org,
+                                    "p_date": new_date,
+                                    "cat": new_cat,
+                                    "title": new_title,
+                                    "sum": new_summary,
+                                    "adv": new_advice,
+                                    "full": new_full
+                                })
+                            st.success(L['save_success'])
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ 錯誤: {str(e)}")
+                    else:
+                        st.warning("⚠️ 請完整填寫標題、案號、日期、摘要與完整內文！")
+        st.markdown("---")
+
+    col_p1, col_p2 = st.columns([2, 1])
+    with col_p1:
+        policy_search = st.text_input(L['search_label'], placeholder=L['search_placeholder'])
+    with col_p2:
+        category_filter = st.selectbox(L['filter_label'], [
+            L['all_categories'], 
+            "🔴 稅務與海關法規 / Thuế & Hải quan", 
+            "🟡 勞動與外籍員工 / Lao động & Nhân sự", 
+            "🟢 土地與廠房建照 / Đất đai & Nhà xưởng", 
+            "🔵 產業投資與補貼 / Đầu tư & Trợ cấp"
+        ])
+
+    policy_news_list = get_policy_news_from_db(engine)
+
+    filtered_count = 0
+    for news in policy_news_list:
+        if category_filter != L['all_categories'] and category_filter not in news["類別"]:
+            continue
+        if policy_search and policy_search.lower() not in news["標題"].lower() and policy_search.lower() not in news["政策摘要"].lower() and policy_search.lower() not in news["公文案號"].lower():
+            continue
+
+        filtered_count += 1
+        with st.container():
+            st.markdown(f"#### {news['標題']}")
+            st.markdown(f"📌 **公文案號**：`{news['公文案號']}` | 🏛️ **發布機關**：{news['發布機關']}")
+            st.markdown(f"📅 **發布日期**：{news['日期']} | 📁 **類別**：{news['類別']} | 🔍 **[點擊透過 Google 檢索此公文與最新資訊]({news['Google檢索連結']})**", unsafe_allow_html=True)
+            
+            st.info(f"📌 **政策摘要**：{news['政策摘要']}")
+            st.warning(f"💡 **經營合規建議**：{news['對裕豐電機之影響與建議']}")
+            
+            if st.button(f"📖 進入閱讀正式公文詳細內文 #{news['id']}", key=f"btn_detail_{news['id']}", type="secondary"):
+                st.session_state.selected_policy_id = news['id']
+                st.rerun()
+
+            st.markdown("---")
+
+    if filtered_count == 0:
+        st.info("ℹ️ 目前沒有符合搜尋條件的法規政策。")
+
+def show(engine=None, lang="繁體中文", **kwargs):
+    render_vietnam_policy_news_page(engine=engine, lang=lang, **kwargs)
+
+def main(engine=None, lang="繁體中文", **kwargs):
+    render_vietnam_policy_news_page(engine=engine, lang=lang, **kwargs)
