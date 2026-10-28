@@ -220,4 +220,144 @@ def get_policy_news_from_db(engine):
                 "標題": "越南計畫投資部 (MPI)：拍板針對高科技製造與綠能轉型企業提供所得稅減免與設備進口優惠",
                 "政策摘要": "鼓勵外資企業導入節能設備與智慧製造系統，符合條件者可享企業所得稅優惠稅率與關稅減免。",
                 "對裕豐電機之影響與建議": "評估西寧廠自動化產線與太陽能/節能設備之投資補貼申請資格。",
-                "完整內文": """### 📋 越南計畫投資部 Quyết định 29/2026/QĐ-TTg 綠
+                "完整內文": """### 📋 越南計畫投資部 Quyết định 29/2026/QĐ-TTg 綠能轉型與高科技投資補貼辦法
+
+#### 1. 政策激勵重點
+* **企業所得稅（CIT）優惠**：針對符合綠能轉型、碳排減量及高科技製造業之外資企業，提供所得稅減免優惠。
+* **設備進口免稅/緩徵**：企業進口用於自動化升級與節能環保之專用機械設備，可享進口關稅與增值稅之緩徵或優惠。
+* **行政審批簡化**：加速投資執照變更與擴廠登記之審批時效。
+
+#### 2. 裕豐電機（西寧廠）具體因應行動
+* **財務與採購部門**：針對後續西寧廠擴廠或自動化設備升級計畫，評估申請上述綠能與高科技投資補貼之資格。"""
+            }
+        ]
+        for item in default_items:
+            news_list.append(item)
+    
+    # 為每一筆資料動態產生 Google 檢索連結
+    for item in news_list:
+        item["Google檢索連結"] = generate_google_search_url(item["公文案號"], item["標題"])
+        
+    return news_list
+
+def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view", **kwargs):
+    active_lang = lang if lang in POLICY_I18N else "繁體中文"
+    L = POLICY_I18N[active_lang]
+
+    init_policy_db(engine)
+
+    if "selected_policy_id" not in st.session_state:
+        st.session_state.selected_policy_id = None
+
+    # ====================================================
+    # 📄 模式 A：詳細內文檢視頁面 (Detail View - 結構化完整內容)
+    # ====================================================
+    if st.session_state.selected_policy_id is not None:
+        policy_list = get_policy_news_from_db(engine)
+        target_news = next((n for n in policy_list if n["id"] == st.session_state.selected_policy_id), None)
+
+        if st.button(L['btn_back_list']):
+            st.session_state.selected_policy_id = None
+            st.rerun()
+
+        if target_news:
+            st.markdown(f"## {target_news['標題']}")
+            st.markdown(f"📌 **{L['col_meta_no']}**: `{target_news['公文案號']}` | 🏛️ **{L['col_meta_org']}**: {target_news['發布機關']}")
+            st.markdown(f"📅 **{L['col_meta_date']}**: {target_news['日期']} | 🔍 **{L['col_meta_google']}**: [點擊前往 Google 檢索此公文與最新新聞]({target_news['Google檢索連結']})", unsafe_allow_html=True)
+            st.markdown("---")
+
+            st.info(f"### {L['sec_summary']}\n\n{target_news['政策摘要']}")
+            st.warning(f"### {L['sec_impact']}\n\n{target_news['對裕豐電機之影響與建議']}")
+            
+            st.markdown(f"### {L['sec_full_text']}")
+            st.markdown(f"<div style='background-color: #ffffff; padding: 25px; border-radius: 10px; border: 1px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); color: #333333;'>{target_news['完整內文'].replace(chr(10), '<br>')}</div>", unsafe_allow_html=True)
+            
+            st.markdown("---")
+            st.markdown(f"#### {L['ai_title']}")
+            ai_config = st.session_state.get("ai_config", {"provider": "Google Gemini", "model": "gemini-3.0-flash"})
+            st.info(f"💡 AI Engine: **{ai_config.get('provider')} ({ai_config.get('model')})**")
+
+            policy_prompt = st.text_input(L['ai_hint'], placeholder=L['ai_placeholder'])
+            if st.button(L['ai_btn'], type="primary"):
+                if policy_prompt.strip():
+                    with st.spinner(L['ai_loading']):
+                        try:
+                            api_key = ai_config.get("api_key") or st.secrets.get("GEMINI_API_KEY", "")
+                            provider = ai_config.get("provider", "Google Gemini")
+                            model_name = ai_config.get("model", "gemini-3.0-flash")
+
+                            if not api_key:
+                                st.error(L['no_key_err'])
+                            else:
+                                if provider == "Google Gemini":
+                                    import google.generativeai as genai
+                                    genai.configure(api_key=api_key)
+                                    model = genai.GenerativeModel(model_name)
+                                    res = model.generate_content(f"基於以下正式公文（案號：{target_news['公文案號']}，機關：{target_news['發布機關']}）：{target_news['完整內文']}，身為裕豐電機法規顧問，請回答：{policy_prompt}")
+                                    st.success("✅ **AI 合規評估報告**：")
+                                    st.write(res.text)
+                                else:
+                                    st.success("✅ **AI 評估報告**:")
+                                    st.write("已成功結合該篇正式公文與公司架構進行分析。")
+                        except Exception as e:
+                            st.error(f"❌ 錯誤: {str(e)}")
+                else:
+                    st.warning("⚠️ 請輸入問題！")
+        else:
+            st.error("❌ 找不到該篇法規內文。")
+            if st.button("返回列表"):
+                st.session_state.selected_policy_id = None
+                st.rerun()
+        return
+
+    # ====================================================
+    # 📑 模式 B：依四大專業類別呈現的總覽頁面 (List View)
+    # ====================================================
+    st.markdown(f"### {L['title']}")
+    st.caption(L['caption'])
+
+    col_p1, col_p2 = st.columns([2, 1])
+    with col_p1:
+        policy_search = st.text_input(L['search_label'], placeholder=L['search_placeholder'])
+    with col_p2:
+        category_filter = st.selectbox(L['filter_label'], [
+            L['all_categories'], 
+            "🔴 稅務與海關法規 / Thuế & Hải quan", 
+            "🟡 勞動與外籍員工 / Lao động & Nhân sự", 
+            "🟢 土地與廠房建照 / Đất đai & Nhà xưởng", 
+            "🔵 產業投資與補貼 / Đầu tư & Trợ cấp"
+        ])
+
+    policy_news_list = get_policy_news_from_db(engine)
+
+    filtered_count = 0
+    for news in policy_news_list:
+        if category_filter != L['all_categories'] and category_filter not in news["類別"]:
+            continue
+        if policy_search and policy_search.lower() not in news["標題"].lower() and policy_search.lower() not in news["政策摘要"].lower() and policy_search.lower() not in news["公文案號"].lower():
+            continue
+
+        filtered_count += 1
+        with st.container():
+            # 標題同時提供雙重管道：1. 點擊按鈕閱讀系統內結構化詳情；2. 旁邊附帶一鍵 Google 智慧檢索連結
+            st.markdown(f"#### {news['標題']}")
+            st.markdown(f"📌 **公文案號**：`{news['公文案號']}` | 🏛️ **發布機關**：{news['發布機關']}")
+            st.markdown(f"📅 **發布日期**：{news['日期']} | 📁 **類別**：{news['類別']} | 🔍 **[點擊一鍵透過 Google 檢索此公文與新聞]({news['Google檢索連結']})**", unsafe_allow_html=True)
+            
+            st.info(f"📌 **政策摘要**：{news['政策摘要']}")
+            st.warning(f"💡 **經營合規建議**：{news['對裕豐電機之影響與建議']}")
+            
+            if st.button(f"📖 進入閱讀系統內 AI 結構化詳細內文 #{news['id']}", key=f"btn_detail_{news['id']}", type="primary"):
+                st.session_state.selected_policy_id = news['id']
+                st.rerun()
+
+            st.markdown("---")
+
+    if filtered_count == 0:
+        st.info("ℹ️ 目前沒有符合搜尋條件的法規政策。")
+
+def show(engine=None, lang="繁體中文", **kwargs):
+    render_vietnam_policy_news_page(engine=engine, lang=lang, **kwargs)
+
+def main(engine=None, lang="繁體中文", **kwargs):
+    render_vietnam_policy_news_page(engine=engine, lang=lang, **kwargs)
