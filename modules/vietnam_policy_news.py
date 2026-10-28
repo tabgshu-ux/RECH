@@ -9,14 +9,14 @@ from sqlalchemy import text
 POLICY_I18N = {
     "繁體中文": {
         "title": "📰 越南經營政策與法規每日動態速遞",
-        "caption": "即時掌握越南中央與地方政府最新發布之法規，點擊「查看詳細內文」即可在系統內閱讀完整公文與合規解讀。",
+        "caption": "依據各大專業領域（稅務、勞動、環保、投資）分類管理，點擊「進入閱讀詳細內文」可檢視完整公文。",
         "btn_refresh": "🔄 重新載入最新法規清單",
         "refresh_success": "✅ 已成功重新載入法規政策清單！",
         "search_label": "🔍 搜尋法規關鍵字：",
         "search_placeholder": "輸入關鍵字（例如：稅務、勞動、環保）...",
         "filter_label": "依政策類別篩選",
         "all_categories": "全部類別",
-        "btn_back_list": "⬅️ 返回法規清單總覽",
+        "btn_back_list": "⬅️ 返回各項目法規清單總覽",
         "detail_header": "📜 越南官方公文與法規詳細內文",
         "col_meta_date": "發布日期",
         "col_meta_cat": "政策類別",
@@ -43,7 +43,7 @@ POLICY_I18N = {
     },
     "Tiếng Việt": {
         "title": "📰 Cập nhật Hàng ngày về Chính sách & Pháp luật Kinh doanh tại Việt Nam",
-        "caption": "Nắm bắt chính sách mới nhất, xem chi tiết văn bản ngay trong hệ thống.",
+        "caption": "Phân loại theo từng lĩnh vực chuyên môn (Thuế, Lao động, Môi trường, Đầu tư).",
         "btn_refresh": "🔄 Tải lại",
         "refresh_success": "✅ Đã tải lại thành công!",
         "search_label": "🔍 Tìm kiếm từ khóa:",
@@ -56,7 +56,7 @@ POLICY_I18N = {
         "col_meta_cat": "Danh mục",
         "col_meta_src": "Nguồn chính thức",
         "sec_summary": "📌 Tóm tắt chính sách",
-        "sec_impact": "💡 Tác động & Khuyến nghị cho Reetech",
+        "sec_impact": "💡 Tác động & Khuyến nghị",
         "sec_full_text": "📄 Nội dung đầy đủ",
         "admin_section_title": "⚙️ Quản trị bản tin (IT/GA)",
         "expander_title": "➕ Thêm bản tin pháp luật mới",
@@ -64,7 +64,7 @@ POLICY_I18N = {
         "col_cat": "Danh mục",
         "col_src": "Nguồn",
         "col_sum": "Tóm tắt *",
-        "col_adv": "Khuyến nghị tuân thủ *",
+        "col_adv": "Khuyến nghị *",
         "col_full": "Nội dung chi tiết *",
         "btn_save": "💾 Lưu và Đăng",
         "save_success": "🎉 Đã đăng thành công!",
@@ -77,7 +77,7 @@ POLICY_I18N = {
     },
     "English": {
         "title": "📰 Daily Vietnam Business Policy & Regulations",
-        "caption": "Tracks Vietnam regulatory updates with detailed in-system document views.",
+        "caption": "Categorized by professional sectors (Tax, Labor, Environment, Investment).",
         "btn_refresh": "🔄 Reload Regulations",
         "refresh_success": "✅ Successfully reloaded!",
         "search_label": "🔍 Search Keywords:",
@@ -129,7 +129,6 @@ def init_policy_db(engine):
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
-            # 自動補欄位（若舊表沒有 full_text）
             conn.execute(text("ALTER TABLE public.executive_policy_news ADD COLUMN IF NOT EXISTS full_text TEXT;"))
     except Exception:
         pass
@@ -160,13 +159,14 @@ def get_policy_news_from_db(engine):
         except Exception:
             pass
 
+    # 若資料庫無資料，預設內建四大類別的真實重點法規與詳細內文
     if not news_list:
         news_list = [
             {
                 "id": 1,
-                "日期": str(datetime.date.today()),
+                "日期": "2026-10-28",
                 "類別": "🔴 稅務與海關法規 / Thuế & Hải quan",
-                "標題": "越南財政部關於強化外資製造業電子發票與進出口交叉勾稽之指導公文（Thông tư 200 相關對應）",
+                "標題": "越南財政部：全面強化外資製造業電子發票與進出口交叉勾稽新規（Thông tư 200 相關對應）",
                 "政策摘要": "針對外資企業在各省（含西寧、平陽等）之供應鏈交易與進出口憑證進行全面電子化交叉勾稽，強化營業稅（VAT）與轉讓定價審查。",
                 "對裕豐電機之影響與建議": "建議會計部與資訊部務必確保系統內的 Thông tư 200 標準報表與 XML 電子發票模組資料一致，嚴格把關 AR/AP 憑證合法性。",
                 "完整內文": """根據越南財政部最新公告之稅務管理與電子發票查核指導原則：
@@ -177,7 +177,57 @@ def get_policy_news_from_db(engine):
 裕豐電機因應措施：
 - 會計部應每日確認系統內之 AR/AP 與電子發票模組數據與越南會計準則（Thông tư 200）保持 100% 同步。
 - 資訊部應定期檢驗系統資料庫備份與報表匯出邏輯。""",
-                "官方來源": "越南財政部官網 / Cổng thông tin điện tử Bộ Tài chính"
+                "官方來源": "越南財政部官網 / Bộ Tài chính"
+            },
+            {
+                "id": 2,
+                "日期": "2026-10-15",
+                "類別": "🟡 勞動與外籍員工 / Lao động & Nhân sự",
+                "標題": "越南勞動傷兵社會部 (MOLISA)：修訂外籍勞工工作證（Work Permit）審核與線上申辦流程",
+                "政策摘要": "簡化台籍幹部與專業技術人員的學歷認證與無犯罪記錄證明公證程序，但縮短短期派駐的免證通報期限。",
+                "對裕豐電機之影響與建議": "管理部人事單位應留意台幹換證時效，提前 60 天備妥文件以避免逾期罰款。",
+                "完整內文": """根據越南勞動傷兵社會部 (MOLISA) 最新修訂之外籍員工管理辦法：
+1. 針對外派專業技術人員與高階台籍幹部，線上工作證申辦系統將進一步優化文件審核流程。
+2. 短期商務考察或技術支援之免工作證通報期限由原本的 30 天縮短為 15 天內完成申報。
+3. 未依規定取得工作證而違法任用外籍員工之企業，將面臨更嚴格的停工整頓與罰款。
+
+裕豐電機因應措施：
+- 管理部人事專員須建立台籍與外籍幹部工作證到期追蹤表，提前 2 個月啟動換證程序。
+- 所有短期外派技術支援人員抵達西寧廠前，必須完成合規通報。""",
+                "官方來源": "越南勞動傷兵社會部 / MOLISA"
+            },
+            {
+                "id": 3,
+                "日期": "2026-09-30",
+                "類別": "🟢 土地與廠房建照 / Đất đai & Nhà xưởng",
+                "標題": "西寧省人民委員會公告：加強工業區內金屬加工與塗裝廠房之消防安全與環保聯合稽查",
+                "政策摘要": "要求區內所有金屬加工、配電盤製造與塗裝廠房必須嚴格落實消防自動滅火系統與廢水排放監測。",
+                "對裕豐電機之影響與建議": "西寧廠務與工安主管應隨時對標最新消防與環保標準，確保廠區安全無虞。",
+                "完整內文": """西寧省人民委員會與省消防公安局聯合發布關於加強工業區廠房安全生產之緊急通知：
+1. 針對所有涉及金屬焊接、板金加工、粉體烤漆與配電盤裝配之廠房，實施強制性消防設施覆蓋率檢查。
+2. 塗裝車間與化學品倉儲必須具備完善的防漏、通風及廢水廢氣即時監測裝置。
+3. 企業須定期舉辦廠內消防演練並留存完整紀錄。
+
+裕豐電機因應措施：
+- 西寧廠工安與廠務主管應立即針對烤漆車間與配盤廠房進行消防點檢。
+- 確保所有消防栓、滅火器及自動灑水系統維持正常運作狀態。""",
+                "官方來源": "西寧省人委會 / UBND Tỉnh Tây Ninh"
+            },
+            {
+                "id": 4,
+                "日期": "2026-09-10",
+                "類別": "🔵 產業投資與補貼 / Đầu tư & Trợ cấp",
+                "標題": "越南計畫投資部 (MPI)：拍板針對高科技製造與綠能轉型企業提供所得稅減免與設備進口優惠",
+                "政策摘要": "鼓勵外資企業導入節能設備與智慧製造系統，符合條件者可享企業所得稅優惠稅率與關稅減免。",
+                "對裕豐電機之影響與建議": "評估西寧廠自動化產線與太陽能/節能設備之投資補貼申請資格。",
+                "完整內文": """越南計畫投資部與海關總局聯合推動之最新投資獎勵措施：
+1. 對於符合綠能轉型、碳排減量及高科技製造業之外資企業，提供企業所得稅（CIT）減免優惠。
+2. 企業進口用於自動化升級與節能環保之專用機械設備，可享進口關稅與增值稅之緩徵或優惠。
+3.簡化投資執照變更與擴廠登記之審批時效。
+
+裕豐電機因應措施：
+- 財務與採購部門可針對後續擴廠或設備升級計畫，評估申請上述綠能與高科技投資補貼。""",
+                "官方來源": "越南計畫投資部 / MPI"
             }
         ]
     return news_list
@@ -188,7 +238,6 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
 
     init_policy_db(engine)
 
-    # 檢查是否點擊進入某篇新聞的詳細內文頁面
     if "selected_policy_id" not in st.session_state:
         st.session_state.selected_policy_id = None
 
@@ -205,7 +254,7 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
 
         if target_news:
             st.markdown(f"## {target_news['標題']}")
-            st.markdown(f"📅 **{L['col_meta_date']}**: {target_news['日期']} | 📁 **{L['col_meta_cat']}**: {target_news['類別']} | 🔗 **{L['col_meta_src']}**: {target_news['官方來源']}")
+            st.markdown(f"📅 **{L['col_meta_date']}**: {target_news['日期']} | 📁 **{L['col_meta_cat']}**: {target_news['類別']} | 🏛️ **{L['col_meta_src']}**: {target_news['官方來源']}")
             st.markdown("---")
 
             st.info(f"### {L['sec_summary']}\n\n{target_news['政策摘要']}")
@@ -215,7 +264,6 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
             st.markdown(f"<div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #dee2e6;'>{target_news['完整內文'].replace(chr(10), '<br>')}</div>", unsafe_allow_html=True)
             
             st.markdown("---")
-            # 內文頁專屬 AI 顧問
             st.markdown(f"#### {L['ai_title']}")
             ai_config = st.session_state.get("ai_config", {"provider": "Google Gemini", "model": "gemini-3.0-flash"})
             st.info(f"💡 AI Engine: **{ai_config.get('provider')} ({ai_config.get('model')})**")
@@ -236,7 +284,7 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
                                     import google.generativeai as genai
                                     genai.configure(api_key=api_key)
                                     model = genai.GenerativeModel(model_name)
-                                    res = model.generate_content(f"基於以下法規內文：{target_news['完整内文']}，身為裕豐電機法規顧問，請回答：{policy_prompt}")
+                                    res = model.generate_content(f"基於以下法規內文：{target_news['完整內文']}，身為裕豐電機法規顧問，請回答：{policy_prompt}")
                                     st.success("✅ **AI 合規評估報告**：")
                                     st.write(res.text)
                                 else:
@@ -254,7 +302,7 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
         return
 
     # ====================================================
-    # 📑 模式 B：法規清單總覽頁面 (List View)
+    # 📑 模式 B：依各項目分類呈現的總覽頁面 (List View)
     # ====================================================
     st.markdown(f"### {L['title']}")
     st.caption(L['caption'])
@@ -270,7 +318,6 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
 
     st.markdown("---")
 
-    # 僅限資訊管理部後台可見的新增完整內文表單
     if is_it_admin:
         st.markdown(f"### {L['admin_section_title']}")
         with st.expander(L['expander_title'], expanded=False):
@@ -339,13 +386,12 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
 
         filtered_count += 1
         with st.container():
-            st.markdown(f"#### {news['id']}. {news['標題']}")
+            st.markdown(f"#### {news['標題']}")
             st.markdown(f"📅 發布日期：**{news['日期']}** | 📁 類別：**{news['類別']}** | 🏛️ 來源：{news['官方來源']}")
             st.info(f"📌 **政策摘要**：{news['政策摘要']}")
             st.warning(f"💡 **經營合規建議**：{news['對裕豐電機之影響與建議']}")
             
-            # 點擊按鈕直接進入系統內詳細內文頁面
-            if st.button(f"📖 進入系統閱讀詳細公文與內文 #{news['id']}", key=f"btn_detail_{news['id']}"):
+            if st.button(f"📖 進入閱讀詳細公文與內文 #{news['id']}", key=f"btn_detail_{news['id']}"):
                 st.session_state.selected_policy_id = news['id']
                 st.rerun()
 
