@@ -28,7 +28,7 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
     st.markdown("---")
 
     # ====================================================
-    # 子功能 1：原料價格與 Gemini 智慧採購顧問
+    # 子功能 1：原料價格與多模態 AI 智慧採購顧問（支援動態切換模型）
     # ====================================================
     if sub_route == "commodities_fx":
         st.markdown("### 🔴配電盤製造關鍵原料即時行情與採購決策建議")
@@ -43,36 +43,67 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
         ]
         st.dataframe(pd.DataFrame(comm_data), use_container_width=True)
 
-        st.markdown("#### 🤖 Gemini 智能採購與總體經濟分析顧問")
+        st.markdown("#### 🤖 企業多模態 AI 智能採購與總體經濟分析顧問")
+        
+        # 顯示目前系統正在使用的 AI 供應商與模型供管理者參考
+        ai_config = st.session_state.get("ai_config", {"provider": "Google Gemini", "model": "gemini-3.0-flash", "api_key": ""})
+        st.info(f"💡 目前系統使用 AI 引擎：**{ai_config.get('provider')} ({ai_config.get('model')})**（可至後台 API 串接設定中心隨時切換）")
+
         gemini_prompt = st.text_area(
-            "向 Gemini 請詢問關於銅鋁金屬走勢、採購時機或專案成本評估：",
+            "向 AI 顧問請詢問關於銅鋁金屬走勢、採購時機或專案成本評估：",
             placeholder="例如：目前 LME 銅價處於高檔，針對西寧廠下一季的大型配電盤案場，我們該如何擬定採購策略？"
         )
-        if st.button("🚀 發送給 Gemini 進行深度分析", type="primary"):
+        
+        if st.button("🚀 發送給 AI 進行深度分析", type="primary"):
             if not gemini_prompt.strip():
-                st.warning("⚠️ 請先在上方輸入您想詢問的問題或分析主題！")
+                st.warning("⚠️ 請先在上方輸入您的問題或分析主題！")
             else:
-                try:
-                    import google.generativeai as genai
-                    
-                    # 從 Streamlit Cloud 後台安全的 st.secrets 讀取金鑰
-                    api_key = st.secrets.get("GEMINI_API_KEY")
-                    
-                    if not api_key:
-                        st.error("❌ 找不到 GEMINI_API_KEY，請確認 Streamlit Cloud 後台的 Secrets 是否已正確設定！")
-                    else:
-                        genai.configure(api_key=api_key)
-                        
-                        # 使用 Gemini 模型進行即時動態分析
-                        model = genai.GenerativeModel('gemini-3.8-flash')
-                        
-                        with st.spinner("⏳ Gemini 正在即時分析您的問題，請稍候..."):
-                            response = model.generate_content(gemini_prompt)
-                            st.success("✅ **Gemini 深度分析結果**：")
-                            st.write(response.text)
+                # 動態讀取後台設定中心儲存的 AI 配置，若無則備援讀取 st.secrets
+                provider = ai_config.get("provider", "Google Gemini")
+                model_name = ai_config.get("model", "gemini-3.0-flash")
+                api_key = ai_config.get("api_key") or st.secrets.get("GEMINI_API_KEY", "")
+                
+                if not api_key:
+                    st.error("❌ 找不到有效的 API Key！請先確認後台設定或 Streamlit Cloud Secrets。")
+                else:
+                    with st.spinner(f"⏳ 正在透過 【{provider} ({model_name})】 進行即時深度分析，請稍候..."):
+                        try:
+                            response_text = ""
                             
-                except Exception as e:
-                    st.error(f"❌ 呼叫 Gemini API 發生錯誤：{str(e)}")
+                            # 1. 呼叫 Google Gemini API
+                            if provider == "Google Gemini":
+                                import google.generativeai as genai
+                                genai.configure(api_key=api_key)
+                                model = genai.GenerativeModel(model_name)
+                                res = model.generate_content(gemini_prompt)
+                                response_text = res.text
+                                
+                            # 2. 呼叫 OpenAI API (GPT-4o)
+                            elif provider == "OpenAI (GPT-4o)":
+                                from openai import OpenAI
+                                client = OpenAI(api_key=api_key)
+                                completion = client.chat.completions.create(
+                                    model=model_name,
+                                    messages=[{"role": "user", "content": gemini_prompt}]
+                                )
+                                response_text = completion.choices[0].message.content
+                                
+                            # 3. 呼叫 Anthropic API (Claude 3.5)
+                            elif provider == "Anthropic (Claude 3.5)":
+                                import anthropic
+                                client = anthropic.Anthropic(api_key=api_key)
+                                message = client.messages.create(
+                                    model=model_name,
+                                    max_tokens=1500,
+                                    messages=[{"role": "user", "content": gemini_prompt}]
+                                )
+                                response_text = message.content[0].text
+                            
+                            st.success(f"✅ **{provider} 深度分析結果**：")
+                            st.write(response_text)
+                            
+                        except Exception as e:
+                            st.error(f"❌ 呼叫 {provider} API 發生錯誤：{str(e)}")
 
     # ====================================================
     # 子功能 2：財務類顯示資料 (AR/AP & P&L) - 直接內嵌 Thông tư 200 財報
