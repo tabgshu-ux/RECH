@@ -64,7 +64,7 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
                         genai.configure(api_key=api_key)
                         
                         # 使用 Gemini 模型進行即時動態分析
-                        model = genai.GenerativeModel('gemini-2.5-flash')
+                        model = genai.GenerativeModel('gemini-3.8-flash')
                         
                         with st.spinner("⏳ Gemini 正在即時分析您的問題，請稍候..."):
                             response = model.generate_content(gemini_prompt)
