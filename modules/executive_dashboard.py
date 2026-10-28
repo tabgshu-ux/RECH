@@ -28,10 +28,10 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
     st.markdown("---")
 
     # ====================================================
-    # 子功能 1：原料價格與多模態 AI 智慧採購顧問（支援動態切換模型）
+    # 子功能 1：原料價格與多模態 AI 智慧採購顧問（修正模型名稱為 gemini-1.5-flash）
     # ====================================================
     if sub_route == "commodities_fx":
-        st.markdown("### 🔴配電盤製造關鍵原料即時行情與採購決策建議")
+        st.markdown("### 🔴 配電盤製造關鍵原料即時行情與採購決策建議")
         st.caption("專為總經理與高階經營團隊打造的 AI 決策支援系統，可即時分析國際金屬期貨、避險策略與專案成本控管。")
 
         # 原料行情與決策建議表格
@@ -45,8 +45,8 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
 
         st.markdown("#### 🤖 企業多模態 AI 智能採購與總體經濟分析顧問")
         
-        # 顯示目前系統正在使用的 AI 供應商與模型供管理者參考
-        ai_config = st.session_state.get("ai_config", {"provider": "Google Gemini", "model": "gemini-3.0-flash", "api_key": ""})
+        # 預設改為 gemini-1.5-flash 避免 404 錯誤
+        ai_config = st.session_state.get("ai_config", {"provider": "Google Gemini", "model": "gemini-1.5-flash", "api_key": ""})
         st.info(f"💡 目前系統使用 AI 引擎：**{ai_config.get('provider')} ({ai_config.get('model')})**")
 
         gemini_prompt = st.text_area(
@@ -58,9 +58,8 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
             if not gemini_prompt.strip():
                 st.warning("⚠️ 請先在上方輸入您的問題或分析主題！")
             else:
-                # 動態讀取後台設定中心儲存的 AI 配置，若無則備援讀取 st.secrets
                 provider = ai_config.get("provider", "Google Gemini")
-                model_name = ai_config.get("model", "gemini-3.0-flash")
+                model_name = ai_config.get("model", "gemini-1.5-flash") # 強制相容穩定模型
                 api_key = ai_config.get("api_key") or st.secrets.get("GEMINI_API_KEY", "")
                 
                 if not api_key:
@@ -109,10 +108,9 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
     # 子功能 2：財務類顯示資料 (AR/AP & P&L) - 直接內嵌 Thông tư 200 財報
     # ====================================================
     elif sub_route == "financials_pl":
-        st.markdown("### 📊財務類顯示資料 (AR/AP & P&L 總覽與會計師審計專區)")
+        st.markdown("### 📊 財務類顯示資料 (AR/AP & P&L 總覽與會計師審計專區)")
         st.caption("提供管理部與會計師查帳專用之越南稅務標準財務報表（Thông tư 200），與即時 AR/AP 帳款追蹤。")
 
-        # 左右分欄展示 AR / AP
         f_col1, f_col2 = st.columns(2)
         with f_col1:
             st.markdown("#### 📋 應收帳款 (AR) 即時追蹤")
@@ -136,7 +134,6 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown("#### 📊 越南稅務標準財務報表 (Thông tư 200) - 會計師與總經理審閱專區")
         st.info("💡 **會計師查帳備忘**：下列為系統自動彙整之資產負債表與綜合損益表，完全符合越南財政部 Thông tư 200 規範。")
 
-        # 內嵌 Thông tư 200 報表
         t200_tab1, t200_tab2 = st.tabs(["📌 资产负债表 (Bảng Cân đối kế toán)", "📈 綜合損益表 (Báo cáo kết quả hoạt động kinh doanh)"])
         
         with t200_tab1:
@@ -166,10 +163,9 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
     # 子功能 3：工程專案進度與現場異常監控
     # ====================================================
     elif sub_route == "project_progress_exec":
-        st.markdown("### ⚡工程專案進度與現場異常紅綠燈監控")
+        st.markdown("### ⚡ 工程專案進度與現場異常紅綠燈監控")
         st.caption("即時掌握各廠區在手專案合約、目前施工階段（談判中、等待開標、設備安裝、驗收中）與現場回報異常。")
 
-        # 工程進度紅綠燈表格
         proj_exec_data = [
             {"專案代碼": "HD-2025-HOT", "客戶名稱": "和廓隆建築 (Ho Team)", "廠區": "西寧廠", "專案合約總額": "45,000,000,000 ₫", "專案進度": "85% (設備安裝中)", "現場回報與異常狀態": "🟢 正常施工, 預計下週進行無載試車", "負責人": "李佑銘"},
             {"專案代碼": "HD-2026-JIA", "客戶名稱": "佳威商旅", "廠區": "海防廠", "專案合約總額": "28,500,000,000 ₫", "專案進度": "30% (過路橋架配管)", "現場回報與異常狀態": "🔴 現場土木機電延遲 3 天，已指派工務經理協調外包商", "負責人": "阮文強"},
