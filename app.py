@@ -320,6 +320,9 @@ elif "原料價格" in feat_str or "Gemini" in feat_str:
 elif "財務類" in feat_str or "AR/AP & P&L" in feat_str:
     load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="financials_pl", lang=curr_lang)
 
+elif "政策" in feat_str or "法規" in feat_str or "越南經營" in feat_str:
+    load_module_safely("modules.vietnam_policy_news", "render_vietnam_policy_news_page", engine=engine, lang=curr_lang)
+    
 elif "工程專案進度" in feat_str or "異常監控" in feat_str:
     load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="project_progress_exec", lang=curr_lang)
 
