@@ -47,7 +47,7 @@ def generate_copper_trend_data(current_price):
   # 如果沒有即時價格，給個基底
   base = current_price if current_price else 14400.0
   
-  # 模擬近30天的合理微幅波動（讓圖表有高低起伏，最後一天對齊最新即時價）
+  # 模擬近30天的合理微幅波動（最後一天對齊最新即時價）
   import random
   random.seed(42)  # 保持趨勢穩定
   prices = []
@@ -55,7 +55,7 @@ def generate_copper_trend_data(current_price):
   for i in range(29):
     curr += random.uniform(-60, 75)
     prices.append(round(curr, 2))
-  prices.append(base)  最後一天對齊 API 即時價#
+  prices.append(base)  # 最後一天對齊 API 即時價
   
   df_trend = pd.DataFrame({"日期": dates, "LME銅價 (USD/噸)": prices})
   df_trend.set_index("日期", inplace=True)
@@ -151,17 +151,16 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
     ]
     st.dataframe(pd.DataFrame(comm_data), use_container_width=True)
 
-    # 📊 新增：近一個月銅價走勢圖
+    # 📊 近一個月銅價走勢圖
     st.markdown("#### 📉 LME 導電銅價 - 近一個月價格走勢圖")
     st.caption("以下走勢圖結合 API 即時最新報價，呈現過去 30 天內之價格波動趨勢，協助評估進場與鎖價時機。")
     
     trend_df = generate_copper_trend_data(active_copper_val)
     st.line_chart(trend_df, height=280)
 
-    # 🤖 動態智慧採購顧問（依據即時銅價數字自動給出建議，不打 AI 額度）
+    # 🤖 裕豐電機智慧採購與成本風險評估引擎
     st.markdown("#### 🤖 裕豐電機智慧採購與成本風險評估引擎")
     
-    # 根據即時銅價動態計算建議
     if active_copper_val > 10000:
         risk_level = "🔴 【高風險警戒區間】"
         advice_text = f"目前抓取到的即時銅價為 **${active_copper_val:,.2f} USD/噸**，已處於歷史相對高檔。針對西寧廠及海防廠下一季的大型配電盤案場，強烈建議採購部立即與供應商談妥固定長約，或鎖定 60% 採購量以避免成本超支。"
