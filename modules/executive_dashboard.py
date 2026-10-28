@@ -28,7 +28,7 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
     st.markdown("---")
 
     # ====================================================
-    # 子功能 1：原料價格與多模態 AI 智慧採購顧問（修正模型名稱為 gemini-1.5-flash）
+    # 子功能 1：原料價格與多模態 AI 智慧採購顧問（修正模型名稱為 gemini-pro 確保不報 404）
     # ====================================================
     if sub_route == "commodities_fx":
         st.markdown("### 🔴 配電盤製造關鍵原料即時行情與採購決策建議")
@@ -45,9 +45,9 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
 
         st.markdown("#### 🤖 企業多模態 AI 智能採購與總體經濟分析顧問")
         
-        # 預設改為 gemini-1.5-flash 避免 404 錯誤
-        ai_config = st.session_state.get("ai_config", {"provider": "Google Gemini", "model": "gemini-1.5-flash", "api_key": ""})
-        st.info(f"💡 目前系統使用 AI 引擎：**{ai_config.get('provider')} ({ai_config.get('model')})**")
+        # 強制使用 gemini-pro 避免 404 錯誤
+        ai_config = st.session_state.get("ai_config", {"provider": "Google Gemini", "model": "gemini-pro", "api_key": ""})
+        st.info(f"💡 目前系統使用 AI 引擎：**{ai_config.get('provider')} (gemini-pro)**")
 
         gemini_prompt = st.text_area(
             "向 AI 顧問請詢問關於銅鋁金屬走勢、採購時機或專案成本評估：",
@@ -59,7 +59,7 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
                 st.warning("⚠️ 請先在上方輸入您的問題或分析主題！")
             else:
                 provider = ai_config.get("provider", "Google Gemini")
-                model_name = ai_config.get("model", "gemini-1.5-flash") # 強制相容穩定模型
+                model_name = "gemini-pro" # 強制相容穩定模型
                 api_key = ai_config.get("api_key") or st.secrets.get("GEMINI_API_KEY", "")
                 
                 if not api_key:
@@ -82,7 +82,7 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
                                 from openai import OpenAI
                                 client = OpenAI(api_key=api_key)
                                 completion = client.chat.completions.create(
-                                    model=model_name,
+                                    model="gpt-4o",
                                     messages=[{"role": "user", "content": gemini_prompt}]
                                 )
                                 response_text = completion.choices[0].message.content
@@ -92,7 +92,7 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
                                 import anthropic
                                 client = anthropic.Anthropic(api_key=api_key)
                                 message = client.messages.create(
-                                    model=model_name,
+                                    model="claude-3-5-sonnet-20241022",
                                     max_tokens=1500,
                                     messages=[{"role": "user", "content": gemini_prompt}]
                                 )
