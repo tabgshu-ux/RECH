@@ -55,7 +55,7 @@ def generate_copper_trend_data(current_price):
   for i in range(29):
     curr += random.uniform(-60, 75)
     prices.append(round(curr, 2))
-  prices.append(base)  最後一天對齊 API 即時價
+  prices.append(base)  最後一天對齊 API 即時價#
   
   df_trend = pd.DataFrame({"日期": dates, "LME銅價 (USD/噸)": prices})
   df_trend.set_index("日期", inplace=True)
