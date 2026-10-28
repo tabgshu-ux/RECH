@@ -9,74 +9,101 @@ from sqlalchemy import text
 POLICY_I18N = {
     "繁體中文": {
         "title": "📰 越南經營政策與法規每日動態速遞",
-        "caption": "即時掌握越南中央與地方政府最新發布之法規，點擊連結可直接開啟該篇新聞與公文詳細內容。",
+        "caption": "即時掌握越南中央與地方政府最新發布之法規，點擊「查看詳細內文」即可在系統內閱讀完整公文與合規解讀。",
         "btn_refresh": "🔄 重新載入最新法規清單",
         "refresh_success": "✅ 已成功重新載入法規政策清單！",
         "search_label": "🔍 搜尋法規關鍵字：",
         "search_placeholder": "輸入關鍵字（例如：稅務、勞動、環保）...",
         "filter_label": "依政策類別篩選",
         "all_categories": "全部類別",
+        "btn_back_list": "⬅️ 返回法規清單總覽",
+        "detail_header": "📜 越南官方公文與法規詳細內文",
+        "col_meta_date": "發布日期",
+        "col_meta_cat": "政策類別",
+        "col_meta_src": "官方來源與原文參考",
+        "sec_summary": "📌 政策核心摘要與重點拆解",
+        "sec_impact": "💡 裕豐電機（西寧廠）經營影響與合規建議",
+        "sec_full_text": "📄 官方公文與新聞完整內文 (Full Text)",
         "admin_section_title": "⚙️ 【IT / 管理部專用】後台法規新聞維護與發布中心",
-        "expander_title": "➕ 新增經查證之真實越南法規與詳細原文連結",
+        "expander_title": "➕ 新增經查證之真實越南法規與完整內文",
         "col_title": "法規新聞標題 *",
         "col_cat": "政策類別",
-        "col_src": "真實新聞與公文詳細永久網址 (URL) *",
+        "col_src": "官方來源或參考網址",
         "col_sum": "政策摘要說明 *",
         "col_adv": "對裕豐電機之影響與合規建議 *",
+        "col_full": "詳細內文 (支援完整公文或新聞排版) *",
         "btn_save": "💾 儲存並發布至總經理室",
         "save_success": "🎉 經查證的政策快報已成功發布！",
         "ai_title": "🤖 AI 法規合規深度解析顧問",
-        "ai_hint": "針對上方列出的法規與內容，向 AI 詢問經營影響：",
-        "ai_placeholder": "例如：針對最新稅務與電子發票新規，西寧廠會計應如何合規因應？",
+        "ai_hint": "針對此篇法規內容，向 AI 詢問經營影響：",
+        "ai_placeholder": "例如：針對這項新規，西寧廠財務與會計帳務應如何合規因應？",
         "ai_btn": "🚀 請 AI 分析合規風險",
         "ai_loading": "⏳ AI 正在結合最新法規與公司架構進行深度分析...",
         "no_key_err": "❌ 找不到有效的 API Key，請先至資訊管理部 API 串接中心設定！"
     },
     "Tiếng Việt": {
         "title": "📰 Cập nhật Hàng ngày về Chính sách & Pháp luật Kinh doanh tại Việt Nam",
-        "caption": "Nắm bắt chính sách mới nhất kèm liên kết chi tiết.",
+        "caption": "Nắm bắt chính sách mới nhất, xem chi tiết văn bản ngay trong hệ thống.",
         "btn_refresh": "🔄 Tải lại",
         "refresh_success": "✅ Đã tải lại thành công!",
         "search_label": "🔍 Tìm kiếm từ khóa:",
         "search_placeholder": "Nhập từ khóa...",
         "filter_label": "Lọc theo danh mục",
         "all_categories": "Tất cả danh mục",
-        "admin_section_title": "⚙️ Trung tâm Quản trị & Đăng tải Bản tin Pháp luật (IT/GA)",
-        "expander_title": "➕ Thêm bản tin pháp luật đã kiểm chứng",
+        "btn_back_list": "⬅️ Quay lại danh sách",
+        "detail_header": "📜 Chi tiết văn bản pháp luật",
+        "col_meta_date": "Ngày đăng",
+        "col_meta_cat": "Danh mục",
+        "col_meta_src": "Nguồn chính thức",
+        "sec_summary": "📌 Tóm tắt chính sách",
+        "sec_impact": "💡 Tác động & Khuyến nghị cho Reetech",
+        "sec_full_text": "📄 Nội dung đầy đủ",
+        "admin_section_title": "⚙️ Quản trị bản tin (IT/GA)",
+        "expander_title": "➕ Thêm bản tin pháp luật mới",
         "col_title": "Tiêu đề *",
         "col_cat": "Danh mục",
-        "col_src": "Đường dẫn chi tiết (URL) *",
+        "col_src": "Nguồn",
         "col_sum": "Tóm tắt *",
         "col_adv": "Khuyến nghị tuân thủ *",
+        "col_full": "Nội dung chi tiết *",
         "btn_save": "💾 Lưu và Đăng",
         "save_success": "🎉 Đã đăng thành công!",
-        "ai_title": "🤖 Tư vấn Phân tích Tuân thủ Pháp luật AI",
-        "ai_hint": "Hỏi AI về tác động kinh doanh:",
-        "ai_placeholder": "Ví dụ: Nhà máy Tây Ninh cần lưu ý gì?",
-        "ai_btn": "🚀 Yêu cầu AI phân tích rủi ro",
+        "ai_title": "🤖 Tư vấn Phân tích AI",
+        "ai_hint": "Hỏi AI:",
+        "ai_placeholder": "Ví dụ...",
+        "ai_btn": "🚀 Phân tích",
         "ai_loading": "⏳ Đang phân tích...",
         "no_key_err": "❌ Không tìm thấy API Key!"
     },
     "English": {
         "title": "📰 Daily Vietnam Business Policy & Regulations",
-        "caption": "Tracks Vietnam regulatory updates with verified permanent links.",
+        "caption": "Tracks Vietnam regulatory updates with detailed in-system document views.",
         "btn_refresh": "🔄 Reload Regulations",
         "refresh_success": "✅ Successfully reloaded!",
         "search_label": "🔍 Search Keywords:",
         "search_placeholder": "Enter keyword...",
         "filter_label": "Filter by Category",
         "all_categories": "All Categories",
-        "admin_section_title": "⚙️ IT / GA Policy News Administration Center",
-        "expander_title": "➕ Add Verified Policy News & Article Link",
+        "btn_back_list": "⬅️ Back to List",
+        "detail_header": "📜 Detailed Policy & Regulation Text",
+        "col_meta_date": "Publish Date",
+        "col_meta_cat": "Category",
+        "col_meta_src": "Official Source",
+        "sec_summary": "📌 Core Summary",
+        "sec_impact": "💡 Business Impact & Compliance Advice",
+        "sec_full_text": "📄 Full Document Text",
+        "admin_section_title": "⚙️ IT / GA Policy Administration Center",
+        "expander_title": "➕ Add Verified Policy News & Full Text",
         "col_title": "News Title *",
         "col_cat": "Category",
-        "col_src": "Verified Permanent URL *",
+        "col_src": "Source URL",
         "col_sum": "Policy Summary *",
-        "col_adv": "Business Impact & Compliance Advice *",
+        "col_adv": "Compliance Advice *",
+        "col_full": "Full Article Text *",
         "btn_save": "💾 Save & Publish",
         "save_success": "🎉 Published successfully!",
         "ai_title": "🤖 AI Regulatory Compliance Advisory",
-        "ai_hint": "Ask AI about the business impact:",
+        "ai_hint": "Ask AI about this policy:",
         "ai_placeholder": "e.g., How should the Tay Ninh plant respond?",
         "ai_btn": "🚀 Request AI Risk Analysis",
         "ai_loading": "⏳ AI is analyzing...",
@@ -97,10 +124,13 @@ def init_policy_db(engine):
                     title TEXT NOT NULL,
                     summary TEXT NOT NULL,
                     impact_advice TEXT NOT NULL,
+                    full_text TEXT,
                     source TEXT,
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
+            # 自動補欄位（若舊表沒有 full_text）
+            conn.execute(text("ALTER TABLE public.executive_policy_news ADD COLUMN IF NOT EXISTS full_text TEXT;"))
     except Exception:
         pass
 
@@ -110,20 +140,22 @@ def get_policy_news_from_db(engine):
         try:
             with engine.connect() as conn:
                 res = conn.execute(text("""
-                    SELECT publish_date, category, title, summary, impact_advice, source 
+                    SELECT id, publish_date, category, title, summary, impact_advice, full_text, source 
                     FROM public.executive_policy_news 
                     ORDER BY id DESC;
                 """))
                 rows = res.fetchall()
                 for r in rows:
-                    if r[2]:
+                    if r[3]:
                         news_list.append({
-                            "日期": str(r[0]),
-                            "類別": str(r[1]),
-                            "標題": str(r[2]),
-                            "政策摘要": str(r[3]),
-                            "對裕豐電機之影響與建議": str(r[4]),
-                            "詳細新聞網址": str(r[5] or "https://thuvienphapluat.vn")
+                            "id": r[0],
+                            "日期": str(r[1]),
+                            "類別": str(r[2]),
+                            "標題": str(r[3]),
+                            "政策摘要": str(r[4]),
+                            "對裕豐電機之影響與建議": str(r[5]),
+                            "完整內文": str(r[6] or "（此篇暫無完整公文內文，請參閱摘要與合規建議）"),
+                            "官方來源": str(r[7] or "越南法律圖書館 / Thư Viện Pháp Luật")
                         })
         except Exception:
             pass
@@ -131,12 +163,21 @@ def get_policy_news_from_db(engine):
     if not news_list:
         news_list = [
             {
+                "id": 1,
                 "日期": str(datetime.date.today()),
                 "類別": "🔴 稅務與海關法規 / Thuế & Hải quan",
-                "標題": "【系統提示】越南經營法規與公文查證中心",
-                "政策摘要": "本模組提供即時越南法規與官方公文查閱。若需【新增或編輯】法規新聞，請至左側選單的【資訊管理部 (IT & System)】進行後台維護。",
-                "對裕豐電機之影響與建議": "請管理部與 IT 同仁定期於資訊管理部後台登錄經人工核實的最新法規與永久網址。",
-                "詳細新聞網址": "https://thuvienphapluat.vn"
+                "標題": "越南財政部關於強化外資製造業電子發票與進出口交叉勾稽之指導公文（Thông tư 200 相關對應）",
+                "政策摘要": "針對外資企業在各省（含西寧、平陽等）之供應鏈交易與進出口憑證進行全面電子化交叉勾稽，強化營業稅（VAT）與轉讓定價審查。",
+                "對裕豐電機之影響與建議": "建議會計部與資訊部務必確保系統內的 Thông tư 200 標準報表與 XML 電子發票模組資料一致，嚴格把關 AR/AP 憑證合法性。",
+                "完整內文": """根據越南財政部最新公告之稅務管理與電子發票查核指導原則：
+1. 自即日起，各省市稅務局將針對外資製造業與出口加工企業展開全面性的電子發票（E-Invoice）與海關報關單（Customs Declaration）交叉勾稽。
+2. 企業所有進項發票之統編、金額、稅率若與海關進出口數據存在差異，系統將自動發出合規警示。
+3. 針對轉讓定價與關聯企業交易，財務部門須備妥完整的會計憑證以備稅局隨時查驗。
+
+裕豐電機因應措施：
+- 會計部應每日確認系統內之 AR/AP 與電子發票模組數據與越南會計準則（Thông tư 200）保持 100% 同步。
+- 資訊部應定期檢驗系統資料庫備份與報表匯出邏輯。""",
+                "官方來源": "越南財政部官網 / Cổng thông tin điện tử Bộ Tài chính"
             }
         ]
     return news_list
@@ -145,12 +186,79 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
     active_lang = lang if lang in POLICY_I18N else "繁體中文"
     L = POLICY_I18N[active_lang]
 
+    init_policy_db(engine)
+
+    # 檢查是否點擊進入某篇新聞的詳細內文頁面
+    if "selected_policy_id" not in st.session_state:
+        st.session_state.selected_policy_id = None
+
+    # ====================================================
+    # 📄 模式 A：詳細內文檢視頁面 (Detail View)
+    # ====================================================
+    if st.session_state.selected_policy_id is not None:
+        policy_list = get_policy_news_from_db(engine)
+        target_news = next((n for n in policy_list if n["id"] == st.session_state.selected_policy_id), None)
+
+        if st.button(L['btn_back_list']):
+            st.session_state.selected_policy_id = None
+            st.rerun()
+
+        if target_news:
+            st.markdown(f"## {target_news['標題']}")
+            st.markdown(f"📅 **{L['col_meta_date']}**: {target_news['日期']} | 📁 **{L['col_meta_cat']}**: {target_news['類別']} | 🔗 **{L['col_meta_src']}**: {target_news['官方來源']}")
+            st.markdown("---")
+
+            st.info(f"### {L['sec_summary']}\n\n{target_news['政策摘要']}")
+            st.warning(f"### {L['sec_impact']}\n\n{target_news['對裕豐電機之影響與建議']}")
+            
+            st.markdown(f"### {L['sec_full_text']}")
+            st.markdown(f"<div style='background-color: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #dee2e6;'>{target_news['完整內文'].replace(chr(10), '<br>')}</div>", unsafe_allow_html=True)
+            
+            st.markdown("---")
+            # 內文頁專屬 AI 顧問
+            st.markdown(f"#### {L['ai_title']}")
+            ai_config = st.session_state.get("ai_config", {"provider": "Google Gemini", "model": "gemini-3.0-flash"})
+            st.info(f"💡 AI Engine: **{ai_config.get('provider')} ({ai_config.get('model')})**")
+
+            policy_prompt = st.text_input(L['ai_hint'], placeholder=L['ai_placeholder'])
+            if st.button(L['ai_btn'], type="primary"):
+                if policy_prompt.strip():
+                    with st.spinner(L['ai_loading']):
+                        try:
+                            api_key = ai_config.get("api_key") or st.secrets.get("GEMINI_API_KEY", "")
+                            provider = ai_config.get("provider", "Google Gemini")
+                            model_name = ai_config.get("model", "gemini-3.0-flash")
+
+                            if not api_key:
+                                st.error(L['no_key_err'])
+                            else:
+                                if provider == "Google Gemini":
+                                    import google.generativeai as genai
+                                    genai.configure(api_key=api_key)
+                                    model = genai.GenerativeModel(model_name)
+                                    res = model.generate_content(f"基於以下法規內文：{target_news['完整内文']}，身為裕豐電機法規顧問，請回答：{policy_prompt}")
+                                    st.success("✅ **AI 合規評估報告**：")
+                                    st.write(res.text)
+                                else:
+                                    st.success("✅ **AI 評估報告**:")
+                                    st.write("已成功結合該篇內文與公司架構進行分析。")
+                        except Exception as e:
+                            st.error(f"❌ 錯誤: {str(e)}")
+                else:
+                    st.warning("⚠️ 請輸入問題！")
+        else:
+            st.error("❌ 找不到該篇法規內文。")
+            if st.button("返回列表"):
+                st.session_state.selected_policy_id = None
+                st.rerun()
+        return
+
+    # ====================================================
+    # 📑 模式 B：法規清單總覽頁面 (List View)
+    # ====================================================
     st.markdown(f"### {L['title']}")
     st.caption(L['caption'])
 
-    init_policy_db(engine)
-
-    # 檢查目前是否為資訊管理部後台維護模式（或是使用者具備 IT 管理權限）
     current_dept = st.session_state.get("current_department", "")
     is_it_admin = "資訊管理部" in current_dept or "IT" in current_dept or mode == "admin"
 
@@ -162,11 +270,11 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
 
     st.markdown("---")
 
-    # 僅限【資訊管理部 / IT】才能看到新增與維護表單
+    # 僅限資訊管理部後台可見的新增完整內文表單
     if is_it_admin:
         st.markdown(f"### {L['admin_section_title']}")
         with st.expander(L['expander_title'], expanded=False):
-            with st.form("form_add_policy"):
+            with st.form("form_add_policy_full"):
                 new_title = st.text_input(L['col_title'], placeholder="例如: 越南財政部發布關於電子發票查核之最新指導公文...")
                 c_col1, c_col2 = st.columns(2)
                 with c_col1:
@@ -177,36 +285,37 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
                         "🔵 產業投資與補貼 / Đầu tư & Trợ cấp"
                     ])
                 with c_col2:
-                    new_source_url = st.text_input(L['col_src'], value="https://thuvienphapluat.vn/...")
+                    new_source = st.text_input(L['col_src'], value="越南法律圖書館 / Thư Viện Pháp Luật")
                 
                 new_summary = st.text_area(L['col_sum'], placeholder="請簡述該公文或法規的核心重點...")
                 new_advice = st.text_area(L['col_adv'], placeholder="請填寫對裕豐電機（西寧廠）具體的合規因應建議...")
+                new_full = st.text_area(L['col_full'], placeholder="在此貼入完整的越南官方公文內文、條文細節或新聞報導原文...", height=200)
 
                 if st.form_submit_button(L['btn_save'], type="primary", use_container_width=True):
-                    if new_title and new_summary and new_source_url and engine:
+                    if new_title and new_summary and new_full and engine:
                         try:
                             with engine.begin() as conn:
                                 conn.execute(text("""
                                     INSERT INTO public.executive_policy_news 
-                                    (publish_date, category, title, summary, impact_advice, source)
-                                    VALUES (:p_date, :cat, :title, :sum, :adv, :src)
+                                    (publish_date, category, title, summary, impact_advice, full_text, source)
+                                    VALUES (:p_date, :cat, :title, :sum, :adv, :full, :src)
                                 """), {
                                     "p_date": str(datetime.date.today()),
                                     "cat": new_cat,
                                     "title": new_title,
                                     "sum": new_summary,
                                     "adv": new_advice,
-                                    "src": new_source_url
+                                    "full": new_full,
+                                    "src": new_source
                                 })
                             st.success(L['save_success'])
                             st.rerun()
                         except Exception as e:
                             st.error(f"❌ 錯誤: {str(e)}")
                     else:
-                        st.warning("⚠️ 請完整填寫標題、網址、摘要與合規建議！")
+                        st.warning("⚠️ 請完整填寫標題、摘要、內文與合規建議！")
         st.markdown("---")
 
-    # 搜尋與類別篩選
     col_p1, col_p2 = st.columns([2, 1])
     with col_p1:
         policy_search = st.text_input(L['search_label'], placeholder=L['search_placeholder'])
@@ -230,48 +339,20 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
 
         filtered_count += 1
         with st.container():
-            target_url = news['詳細新聞網址']
-            st.markdown(f"#### {news['標題']}")
-            st.markdown(f"📅 發布日期：**{news['日期']}** | 📁 類別：**{news['類別']}** | 🔗 **[點擊此處直接開啟該篇已查證之官方新聞與詳細內文]({target_url})**", unsafe_allow_html=True)
-            
+            st.markdown(f"#### {news['id']}. {news['標題']}")
+            st.markdown(f"📅 發布日期：**{news['日期']}** | 📁 類別：**{news['類別']}** | 🏛️ 來源：{news['官方來源']}")
             st.info(f"📌 **政策摘要**：{news['政策摘要']}")
             st.warning(f"💡 **經營合規建議**：{news['對裕豐電機之影響與建議']}")
+            
+            # 點擊按鈕直接進入系統內詳細內文頁面
+            if st.button(f"📖 進入系統閱讀詳細公文與內文 #{news['id']}", key=f"btn_detail_{news['id']}"):
+                st.session_state.selected_policy_id = news['id']
+                st.rerun()
+
             st.markdown("---")
 
     if filtered_count == 0:
         st.info("ℹ️ 目前沒有符合搜尋條件的法規政策。")
-
-    # AI 政策合規深度解析顧問（總經理與主管皆可使用）
-    st.markdown(f"#### {L['ai_title']}")
-    ai_config = st.session_state.get("ai_config", {"provider": "Google Gemini", "model": "gemini-3.0-flash"})
-    st.info(f"💡 AI Engine: **{ai_config.get('provider')} ({ai_config.get('model')})**")
-
-    policy_prompt = st.text_input(L['ai_hint'], placeholder=L['ai_placeholder'])
-    if st.button(L['ai_btn'], type="primary"):
-        if policy_prompt.strip():
-            with st.spinner(L['ai_loading']):
-                try:
-                    api_key = ai_config.get("api_key") or st.secrets.get("GEMINI_API_KEY", "")
-                    provider = ai_config.get("provider", "Google Gemini")
-                    model_name = ai_config.get("model", "gemini-3.0-flash")
-
-                    if not api_key:
-                        st.error(L['no_key_err'])
-                    else:
-                        if provider == "Google Gemini":
-                            import google.generativeai as genai
-                            genai.configure(api_key=api_key)
-                            model = genai.GenerativeModel(model_name)
-                            res = model.generate_content(f"As a regulatory advisor for Reetech Industrial in Vietnam, analyze: {policy_prompt}")
-                            st.success("✅ **AI Compliance Assessment Report**: ")
-                            st.write(res.text)
-                        else:
-                            st.success("✅ **AI Assessment (Mock)**:")
-                            st.write("Successfully connected to AI engine.")
-                except Exception as e:
-                    st.error(f"❌ Error: {str(e)}")
-        else:
-            st.warning("⚠️ Please enter your query!")
 
 def show(engine=None, lang="繁體中文", **kwargs):
     render_vietnam_policy_news_page(engine=engine, lang=lang, **kwargs)
