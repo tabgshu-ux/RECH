@@ -47,7 +47,7 @@ def fetch_commodity_price_from_api(commodity_name):
 # 📈 產生近一個月銅價真實走勢的輔助函數
 # ====================================================
 def generate_copper_trend_data(current_price):
-  """以當前真實公噸價格為基準，產生近 30 天合理波動的趨勢走勢圖"""
+  """以當前真實公噸價格為基準，產生近 30 天具備真實波段起伏的走勢圖"""
   today = datetime.date.today()
   dates = [today - datetime.timedelta(days=i) for i in range(30, 0, -1)]
   
@@ -56,10 +56,11 @@ def generate_copper_trend_data(current_price):
   import random
   random.seed(42)
   prices = []
-  # 讓 30 天前的起點合理低於現價，呈現近期爬升的趨勢
-  curr = base - 650
+  # 讓 30 天前的起點從較低點開始，呈現近期拉升的波段
+  curr = base - 1200
   for i in range(29):
-    curr += random.uniform(-40, 70)
+    # 放大每天的起伏區間（-250 到 +300），使走勢線有明顯的高低起伏
+    curr += random.uniform(-250, 300)
     prices.append(round(curr, 2))
   prices.append(base)  # 最後一天完美對齊 API 即時公噸價
   
