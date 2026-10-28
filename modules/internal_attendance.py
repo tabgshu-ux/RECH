@@ -13,7 +13,6 @@ ATT_I18N = {
         "tab_summary": "📊 月考勤統計",
         "tab_clock": "⏰ 打卡與補貼",
         "tab_rules": "⚙️ 考勤規則",
-        "tab_api": "🔌 硬體 API",
         "tab_logs": "📑 刷卡日誌",
         "lbl_month": "選擇月份",
         "lbl_search": "搜尋姓名或工號...",
@@ -28,7 +27,6 @@ ATT_I18N = {
         "tab_summary": "📊 Bảng chấm công",
         "tab_clock": "⏰ Chấm công",
         "tab_rules": "⚙️ Quy tắc",
-        "tab_api": "🔌 Kết nối API",
         "tab_logs": "📑 Nhật ký quét thẻ",
         "lbl_month": "Chọn tháng",
         "lbl_search": "Tìm tên/Mã NV...",
@@ -43,7 +41,6 @@ ATT_I18N = {
         "tab_summary": "📊 Monthly Summary",
         "tab_clock": "⏰ Clock-in Kiosk",
         "tab_rules": "⚙️ Rules Config",
-        "tab_api": "🔌 Hardware API",
         "tab_logs": "📑 Raw Logs",
         "lbl_month": "Select Month",
         "lbl_search": "Search Name/ID...",
@@ -135,11 +132,11 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
 
     emp_list = get_all_employees_from_db(engine)
 
-    tab_summary, tab_clock, tab_rules, tab_api, tab_logs = st.tabs([
+    # 4大核心分頁（已將重複的硬體 API 設定收歸至資訊管理部 IT 統一管理）
+    tab_summary, tab_clock, tab_rules, tab_logs = st.tabs([
         L["tab_summary"],
         L["tab_clock"],
         L["tab_rules"],
-        L["tab_api"],
         L["tab_logs"]
     ])
 
@@ -150,7 +147,6 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown("### 📊 員工個人月度考勤與 OT 統計彙整表")
         st.markdown(f"✨ **已成功串聯人事資料庫 (`employee_profiles`)！目前共同步載入 {len(emp_list)} 位現職員工。**")
 
-        # 📋 新增身分分流篩選器
         att_sub_filter = st.radio(
             "📋 檢視考勤名冊類別分流：",
             ["全部現職員工 (All)", "🇹🇼 外派幹部 / 台籍與中籍 (Expat/TW/CN)", "🇻🇳 越南籍員工 (Local VN)"],
@@ -169,7 +165,6 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
             code_upper = emp["工號"].upper()
             pos_str = emp["職稱"]
             
-            # 判斷是否為外派幹部 / 台幹
             is_expat = code_upper.startswith("TW") or code_upper.startswith("CN") or any(k in pos_str for k in ["廠長", "經理", "副理", "主任", "董事長", "外派", "助理"])
             
             if "外派" in att_sub_filter and not is_expat:
@@ -260,16 +255,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
         st.button("💾 儲存考勤參數規則", type="primary")
 
     # ----------------------------------------------------
-    # 🔌 Tab 4: 硬體 API
-    # ----------------------------------------------------
-    with tab_api:
-        st.markdown("### 🔌 廠區硬體刷卡機 / 指紋機 API 串接設定")
-        st.info("系統支援 ZKTeco、Hikvision 及 Dahua 人臉辨識與指紋打卡機 Webhook 自動同步。")
-        st.text_input("Webhook 接收端點 (API Endpoint)", value="https://rechvn.streamlit.app/api/v1/attendance_webhook", disabled=True)
-        st.text_input("API Secret Key", value="rech_sec_987654321_key", type="password")
-
-    # ----------------------------------------------------
-    # 📑 Tab 5: 刷卡日誌
+    # 📑 Tab 4: 刷卡日誌
     # ----------------------------------------------------
     with tab_logs:
         st.markdown("### 📑 廠內完整出勤與刷卡原始日誌 (Audit Logs)")
