@@ -198,7 +198,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
             st.info("ℹ️ 此分流類別目前尚無符合的考勤員工資料。")
 
     # ----------------------------------------------------
-    # ⏰ Tab 2: 打卡與補貼
+    # ⏰ Tab 2: 打卡補登
     # ----------------------------------------------------
     with tab_clock:
         st.markdown("### ⏰ 廠內打卡與補簽單登記 / Chấm công thủ công")
