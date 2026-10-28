@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import urllib.parse
 from sqlalchemy import text
 
 # ----------------------------------------------------
@@ -8,12 +9,12 @@ from sqlalchemy import text
 # ----------------------------------------------------
 POLICY_I18N = {
     "繁體中文": {
-        "title": "📰 越南經營政策與法規每日動態速遞 (正式公文核實中心)",
-        "caption": "每則法規皆載明正式公文案號、發布機關、精確日期與原文出處，供管理團隊100%安心查證。",
+        "title": "📰 越南經營政策與法規每日動態速遞 (Google 智慧查證中心)",
+        "caption": "每則法規皆內建正式公文案號、發布機關與 Google 智慧檢索連結，確保隨點隨查、永不 404。",
         "btn_refresh": "🔄 重新載入最新法規清單",
         "refresh_success": "✅ 已成功重新載入法規政策清單！",
         "search_label": "🔍 搜尋法規關鍵字、案號或機關：",
-        "search_placeholder": "輸入關鍵字（例如：Thông tư 200、1258/UBND、稅務）...",
+        "search_placeholder": "輸入關鍵字（例如：Thông tư 200、勞動、西寧、稅務）...",
         "filter_label": "依政策類別篩選",
         "all_categories": "全部類別",
         "btn_back_list": "⬅️ 返回各項目法規清單總覽",
@@ -21,18 +22,17 @@ POLICY_I18N = {
         "col_meta_no": "正式公文案號 (Số hiệu)",
         "col_meta_org": "發布機關 (Cơ quan ban hành)",
         "col_meta_date": "發布日期",
-        "col_meta_src": "官方原文與查證連結",
+        "col_meta_src": "Google 智慧檢索與原文查證",
         "sec_summary": "📌 政策核心摘要與重點拆解",
         "sec_impact": "💡 裕豐電機（西寧廠）經營影響與合規建議",
         "sec_full_text": "📄 正式公文與新聞完整條文內文 (Full Text)",
         "admin_section_title": "⚙️ 【IT / 管理部專用】後台正式公文維護與發布中心",
-        "expander_title": "➕ 新增具備案號與官方出處之真實越南法規",
+        "expander_title": "➕ 新增具備正式案號之越南法規",
         "col_title": "法規/公文標題 *",
         "col_doc_no": "正式公文案號 (例如: Số: 452/TB-UBND) *",
         "col_org": "發布機關 (例如: 西寧省人民委員會 / 越南財政部) *",
         "col_cat": "政策類別",
         "col_date": "精確發布日期 *",
-        "col_src": "官方原文永久連結 (URL) *",
         "col_sum": "政策摘要說明 *",
         "col_adv": "對裕豐電機之影響與合規建議 *",
         "col_full": "正式公文完整內文與條文細節 *",
@@ -47,7 +47,7 @@ POLICY_I18N = {
     },
     "Tiếng Việt": {
         "title": "📰 Cập nhật Hàng ngày về Chính sách & Pháp luật Kinh doanh tại Việt Nam",
-        "caption": "Mỗi văn bản đều có số hiệu, cơ quan ban hành, ngày tháng và nguồn chính thức để kiểm chứng.",
+        "caption": "Tích hợp tìm kiếm thông minh Google dựa trên số hiệu văn bản, không bao giờ lỗi 404.",
         "btn_refresh": "🔄 Tải lại",
         "refresh_success": "✅ Đã tải lại thành công!",
         "search_label": "🔍 Tìm kiếm từ khóa hoặc số hiệu:",
@@ -59,18 +59,17 @@ POLICY_I18N = {
         "col_meta_no": "Số hiệu văn bản",
         "col_meta_org": "Cơ quan ban hành",
         "col_meta_date": "Ngày ban hành",
-        "col_meta_src": "Nguồn chính thức",
+        "col_meta_src": "Tra cứu Google",
         "sec_summary": "📌 Tóm tắt chính sách",
         "sec_impact": "💡 Tác động & Khuyến nghị",
         "sec_full_text": "📄 Nội dung đầy đủ",
         "admin_section_title": "⚙️ Quản trị bản tin (IT/GA)",
         "expander_title": "➕ Thêm văn bản pháp luật có số hiệu",
         "col_title": "Tiêu đề *",
-        "col_doc_no": "Số hiệu (VD: Số: 452/TB-UBND) *",
+        "col_doc_no": "Số hiệu *",
         "col_org": "Cơ quan ban hành *",
         "col_cat": "Danh mục",
         "col_date": "Ngày ban hành *",
-        "col_src": "Đường dẫn gốc (URL) *",
         "col_sum": "Tóm tắt *",
         "col_adv": "Khuyến nghị tuân thủ *",
         "col_full": "Nội dung chi tiết *",
@@ -84,8 +83,8 @@ POLICY_I18N = {
         "no_key_err": "❌ Không tìm thấy API Key!"
     },
     "English": {
-        "title": "📰 Daily Vietnam Business Policy & Regulations (Official Gazettes)",
-        "caption": "Every regulation includes official document numbers, issuing agencies, dates, and verified source links.",
+        "title": "📰 Daily Vietnam Business Policy & Regulations (Google Verified)",
+        "caption": "Features integrated Google Search dynamic links based on official document numbers to ensure zero broken links.",
         "btn_refresh": "🔄 Reload Regulations",
         "refresh_success": "✅ Successfully reloaded!",
         "search_label": "🔍 Search Keywords or Doc No:",
@@ -97,7 +96,7 @@ POLICY_I18N = {
         "col_meta_no": "Document No. (Số hiệu)",
         "col_meta_org": "Issuing Agency",
         "col_meta_date": "Publish Date",
-        "col_meta_src": "Official Source URL",
+        "col_meta_src": "Google Search Link",
         "sec_summary": "📌 Core Summary",
         "sec_impact": "💡 Business Impact & Compliance Advice",
         "sec_full_text": "📄 Full Document Text",
@@ -108,7 +107,6 @@ POLICY_I18N = {
         "col_org": "Issuing Agency *",
         "col_cat": "Category",
         "col_date": "Publish Date *",
-        "col_src": "Verified URL *",
         "col_sum": "Policy Summary *",
         "col_adv": "Compliance Advice *",
         "col_full": "Full Text *",
@@ -139,16 +137,20 @@ def init_policy_db(engine):
                     summary TEXT NOT NULL,
                     impact_advice TEXT NOT NULL,
                     full_text TEXT,
-                    source TEXT,
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
-            # 自動補欄位若舊表沒有
             conn.execute(text("ALTER TABLE public.executive_policy_news ADD COLUMN IF NOT EXISTS doc_number VARCHAR(100) DEFAULT 'Đang cập nhật';"))
             conn.execute(text("ALTER TABLE public.executive_policy_news ADD COLUMN IF NOT EXISTS issuing_agency VARCHAR(200) DEFAULT 'Chính phủ Việt Nam';"))
             conn.execute(text("ALTER TABLE public.executive_policy_news ADD COLUMN IF NOT EXISTS full_text TEXT;"))
     except Exception:
         pass
+
+def generate_google_search_url(doc_number, title):
+    """根據公文案號與標題自動產生 Google 智慧搜尋檢索連結"""
+    query = f"{doc_number} {title}"
+    encoded_query = urllib.parse.quote(query)
+    return f"https://www.google.com/search?q={encoded_query}"
 
 def get_policy_news_from_db(engine):
     news_list = []
@@ -156,34 +158,35 @@ def get_policy_news_from_db(engine):
         try:
             with engine.connect() as conn:
                 res = conn.execute(text("""
-                    SELECT id, doc_number, issuing_agency, publish_date, category, title, summary, impact_advice, full_text, source 
+                    SELECT id, doc_number, issuing_agency, publish_date, category, title, summary, impact_advice, full_text 
                     FROM public.executive_policy_news 
                     ORDER BY id DESC;
                 """))
                 rows = res.fetchall()
                 for r in rows:
                     if r[5]:
+                        doc_no = str(r[1] or "Đang cập nhật")
+                        title = str(r[5])
                         news_list.append({
                             "id": r[0],
-                            "公文案號": str(r[1] or "Đang cập nhật"),
+                            "公文案號": doc_no,
                             "發布機關": str(r[2] or "Chính phủ Việt Nam"),
                             "日期": str(r[3]),
                             "類別": str(r[4]),
-                            "標題": str(r[5]),
+                            "標題": title,
                             "政策摘要": str(r[6]),
                             "對裕豐電機之影響與建議": str(r[7]),
                             "完整內文": str(r[8] or "（此篇暫無完整公文內文）"),
-                            "官方來源網址": str(r[9] or "https://thuvienphapluat.vn")
+                            "Google檢索連結": generate_google_search_url(doc_no, title)
                         })
         except Exception:
             pass
 
-    # 若資料庫無資料，預設內建具備正式案號與機關的真實範例
     if not news_list:
-        news_list = [
+        default_items = [
             {
                 "id": 1,
-                "公文案號": "Thông tư 200/2014/TT-BTC & Công văn bổ sung 2026",
+                "公文案號": "Thông tư số 200/2014/TT-BTC",
                 "發布機關": "越南財政部 (Bộ Tài chính)",
                 "日期": "2026-10-28",
                 "類別": "🔴 稅務與海關法規 / Thuế & Hải quan",
@@ -201,12 +204,11 @@ def get_policy_news_from_db(engine):
 
 裕豐電機因應措施：
 - 會計部應每日確認系統內之 AR/AP 與電子發票模組數據與越南會計準則（Thông tư 200）保持 100% 同步。
-- 資訊部應定期檢驗系統資料庫備份與報表匯出邏輯。""",
-                "官方來源網址": "https://thuvienphapluat.vn"
+- 資訊部應定期檢驗系統資料庫備份與報表匯出邏輯。"""
             },
             {
                 "id": 2,
-                "公文案號": "Nghị định 152/2020/NĐ-CP & Thông tư sửa đổi 2026",
+                "公文案號": "Nghị định số 152/2020/NĐ-CP",
                 "發布機關": "越南勞動傷兵社會部 (MOLISA)",
                 "日期": "2026-10-15",
                 "類別": "🟡 勞動與外籍員工 / Lao động & Nhân sự",
@@ -224,8 +226,7 @@ def get_policy_news_from_db(engine):
 
 裕豐電機因應措施：
 - 管理部人事專員須建立台籍與外籍幹部工作證到期追蹤表，提前 2 個月啟動換證程序。
-- 所有短期外派技術支援人員抵達西寧廠前，必須完成合規通報。""",
-                "官方來源網址": "https://thuvienphapluat.vn"
+- 所有短期外派技術支援人員抵達西寧廠前，必須完成合規通報。"""
             },
             {
                 "id": 3,
@@ -247,8 +248,7 @@ def get_policy_news_from_db(engine):
 
 裕豐電機因應措施：
 - 西寧廠工安與廠務主管應立即針對烤漆車間與配盤廠房進行消防點檢。
-- 確保所有消防栓、滅火器及自動灑水系統維持正常運作狀態。""",
-                "官方來源網址": "https://tayninh.gov.vn"
+- 確保所有消防栓、滅火器及自動灑水系統維持正常運作狀態。"""
             },
             {
                 "id": 4,
@@ -269,10 +269,12 @@ def get_policy_news_from_db(engine):
 3. 簡化投資執照變更與擴廠登記之審批時效。
 
 裕豐電機因應措施：
-- 財務與採購部門可針對後續擴廠或設備升級計畫，評估申請上述綠能與高科技投資補貼。""",
-                "官方來源網址": "https://www.mpi.gov.vn"
+- 財務與採購部門可針對後續擴廠或設備升級計畫，評估申請上述綠能與高科技投資補貼。"""
             }
         ]
+        for item in default_items:
+            item["Google檢索連結"] = generate_google_search_url(item["公文案號"], item["標題"])
+            news_list.append(item)
     return news_list
 
 def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view", **kwargs):
@@ -298,7 +300,7 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
         if target_news:
             st.markdown(f"## {target_news['標題']}")
             st.markdown(f"📌 **{L['col_meta_no']}**: `{target_news['公文案號']}` | 🏛️ **{L['col_meta_org']}**: {target_news['發布機關']}")
-            st.markdown(f"📅 **{L['col_meta_date']}**: {target_news['日期']} | 🔗 **{L['col_meta_src']}**: [點擊前往官方原文查證]({target_news['官方來源網址']})", unsafe_allow_html=True)
+            st.markdown(f"📅 **{L['col_meta_date']}**: {target_news['日期']} | 🔍 **{L['col_meta_src']}**: [點擊透過 Google 檢索此公文與最新資訊]({target_news['Google檢索連結']})", unsafe_allow_html=True)
             st.markdown("---")
 
             st.info(f"### {L['sec_summary']}\n\n{target_news['政策摘要']}")
@@ -346,7 +348,7 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
         return
 
     # ====================================================
-    # 📑 模式 B：依各項目分類呈現的總覽頁面 (List View)
+    # 📑 模式 B：依四大專業類別呈現的總覽頁面 (List View)
     # ====================================================
     st.markdown(f"### {L['title']}")
     st.caption(L['caption'])
@@ -381,7 +383,6 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
                     ])
                     new_date = st.text_input(L['col_date'], value=str(datetime.date.today()))
                 
-                new_source = st.text_input(L['col_src'], value="https://thuvienphapluat.vn/...")
                 new_summary = st.text_area(L['col_sum'], placeholder="請簡述該公文或法規的核心重點...")
                 new_advice = st.text_area(L['col_adv'], placeholder="請填寫對裕豐電機（西寧廠）具體的合規因應建議...")
                 new_full = st.text_area(L['col_full'], placeholder="在此貼入正式公文完整條文細節、各項條款...", height=200)
@@ -392,68 +393,8 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
                             with engine.begin() as conn:
                                 conn.execute(text("""
                                     INSERT INTO public.executive_policy_news 
-                                    (doc_number, issuing_agency, publish_date, category, title, summary, impact_advice, full_text, source)
-                                    VALUES (:doc_no, :org, :p_date, :cat, :title, :sum, :adv, :full, :src)
+                                    (doc_number, issuing_agency, publish_date, category, title, summary, impact_advice, full_text)
+                                    VALUES (:doc_no, :org, :p_date, :cat, :title, :sum, :adv, :full)
                                 """), {
                                     "doc_no": new_doc_no,
-                                    "org": new_org,
-                                    "p_date": new_date,
-                                    "cat": new_cat,
-                                    "title": new_title,
-                                    "sum": new_summary,
-                                    "adv": new_advice,
-                                    "full": new_full,
-                                    "src": new_source
-                                })
-                            st.success(L['save_success'])
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"❌ 錯誤: {str(e)}")
-                    else:
-                        st.warning("⚠️ 請完整填寫標題、案號、日期、摘要與完整內文！")
-        st.markdown("---")
-
-    col_p1, col_p2 = st.columns([2, 1])
-    with col_p1:
-        policy_search = st.text_input(L['search_label'], placeholder=L['search_placeholder'])
-    with col_p2:
-        category_filter = st.selectbox(L['filter_label'], [
-            L['all_categories'], 
-            "🔴 稅務與海關法規 / Thuế & Hải quan", 
-            "🟡 勞動與外籍員工 / Lao động & Nhân sự", 
-            "🟢 土地與廠房建照 / Đất đai & Nhà xưởng", 
-            "🔵 產業投資與補貼 / Đầu tư & Trợ cấp"
-        ])
-
-    policy_news_list = get_policy_news_from_db(engine)
-
-    filtered_count = 0
-    for news in policy_news_list:
-        if category_filter != L['all_categories'] and category_filter not in news["類別"]:
-            continue
-        if policy_search and policy_search.lower() not in news["標題"].lower() and policy_search.lower() not in news["政策摘要"].lower() and policy_search.lower() not in news["公文案號"].lower():
-            continue
-
-        filtered_count += 1
-        with st.container():
-            st.markdown(f"#### {news['標題']}")
-            st.markdown(f"📌 **公文案號**：`{news['公文案號']}` | 🏛️ **發布機關**：{news['發布機關']}")
-            st.markdown(f"📅 **發布日期**：{news['日期']} | 📁 **類別**：{news['類別']} | 🔗 **[點擊前往官方原文查證]({news['官方來源網址']})**", unsafe_allow_html=True)
-            
-            st.info(f"📌 **政策摘要**：{news['政策摘要']}")
-            st.warning(f"💡 **經營合規建議**：{news['對裕豐電機之影響與建議']}")
-            
-            if st.button(f"📖 進入閱讀正式公文詳細內文 #{news['id']}", key=f"btn_detail_{news['id']}", type="secondary"):
-                st.session_state.selected_policy_id = news['id']
-                st.rerun()
-
-            st.markdown("---")
-
-    if filtered_count == 0:
-        st.info("ℹ️ 目前沒有符合搜尋條件的法規政策。")
-
-def show(engine=None, lang="繁體中文", **kwargs):
-    render_vietnam_policy_news_page(engine=engine, lang=lang, **kwargs)
-
-def main(engine=None, lang="繁體中文", **kwargs):
-    render_vietnam_policy_news_page(engine=engine, lang=lang, **kwargs)
+                                    "org
