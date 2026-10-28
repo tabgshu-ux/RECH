@@ -47,7 +47,7 @@ def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
         
         # 顯示目前系統正在使用的 AI 供應商與模型供管理者參考
         ai_config = st.session_state.get("ai_config", {"provider": "Google Gemini", "model": "gemini-3.0-flash", "api_key": ""})
-        st.info(f"💡 目前系統使用 AI 引擎：**{ai_config.get('provider')} ({ai_config.get('model')})**（可至後台 API 串接設定中心隨時切換）")
+        st.info(f"💡 目前系統使用 AI 引擎：**{ai_config.get('provider')} ({ai_config.get('model')})**")
 
         gemini_prompt = st.text_area(
             "向 AI 顧問請詢問關於銅鋁金屬走勢、採購時機或專案成本評估：",
