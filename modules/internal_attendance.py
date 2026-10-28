@@ -74,12 +74,29 @@ def init_attendance_db(engine):
     except Exception as e:
         st.warning(f"⚠️ 資料庫初始化提示: {str(e)}")
 
-def get_all_employees_from_db(engine):
+def get_active_plants_from_db(engine):
     """
-    🔗 全模組主動連動：直接精準對應 employee_profiles 資料表
+    🔗 精準對應「廠區與工作廠區管理」的 factory_profiles 資料表
     """
-    emp_list = []
+    plant_list = []
+    if engine:
+        try:
+            with engine.connect() as conn:
+                res = conn.execute(text("SELECT plant_name FROM public.factory_profiles;"))
+                rows = res.fetchall()
+                for r in rows:
+                    if r[0]:
+                        plant_list.append(str(r[0]))
+        except Exception:
+            pass
     
+    # 若資料庫抓取為空，則預設僅顯示西寧廠，絕對不出現海防廠
+    if not plant_list:
+        plant_list = ["西寧廠"]
+    return plant_list
+
+def get_all_employees_from_db(engine):
+    emp_list = []
     if engine:
         try:
             with engine.connect() as conn:
@@ -113,7 +130,7 @@ def get_all_employees_from_db(engine):
 
     if not emp_list:
         emp_list = [
-            {"工號": "TW-001", "姓名": "李佑路", "部門": "總經理室", "職稱": "董事長"},
+            {"工號": "TW-001", "姓名": "李佑銘", "部門": "總經理室", "職稱": "董事長"},
             {"工號": "VN-002", "姓名": "Nguyễn Văn Quý", "部門": "管理部", "職稱": "廠內固定員工"},
             {"工號": "TW-002", "姓名": "陳智賢", "部門": "總經理室", "職稱": "總經理"},
             {"工號": "TW-003", "姓名": "李元隆", "部門": "總經理室", "職稱": "副總經理"},
@@ -131,8 +148,8 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
     init_attendance_db(engine)
 
     emp_list = get_all_employees_from_db(engine)
+    active_plants = get_active_plants_from_db(engine)
 
-    # 4大核心分頁（已將重複的硬體 API 設定收歸至資訊管理部 IT 統一管理）
     tab_summary, tab_clock, tab_rules, tab_logs = st.tabs([
         L["tab_summary"],
         L["tab_clock"],
@@ -141,7 +158,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
     ])
 
     # ----------------------------------------------------
-    # 📊 Tab 1: 月考勤統計 (含台幹/越幹身分獨立分流)
+    # 📊 Tab 1: 月考勤統計
     # ----------------------------------------------------
     with tab_summary:
         st.markdown("### 📊 員工個人月度考勤與 OT 統計彙整表")
@@ -198,7 +215,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
             st.info("ℹ️ 此分流類別目前尚無符合的考勤員工資料。")
 
     # ----------------------------------------------------
-    # ⏰ Tab 2: 打卡補登
+    # ⏰ Tab 2: 打卡補登 (直接連動資料庫廠區設定)
     # ----------------------------------------------------
     with tab_clock:
         st.markdown("### ⏰ 廠內打卡與補簽單登記 / Chấm công thủ công")
@@ -210,7 +227,8 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
             with col_c1:
                 selected_emp_str = st.selectbox("選擇打卡員工 / Chọn nhân viên", emp_names_opt)
             with col_c2:
-                plant_loc = st.selectbox("廠區位置 / Nhà máy", ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)"])
+                # 動態直接抓取資料庫 factory_profiles 的廠區名稱
+                plant_loc = st.selectbox("廠區位置 / Nhà máy (即時連動資料庫)", active_plants)
                 check_type = st.selectbox("刷卡類別 / Loại", [L["lbl_clock_in"], L["lbl_clock_out"]])
             with col_c3:
                 ot_cat = st.selectbox("OT 加班類別 / Tăng ca", ["正常工時 (Standard)", "平日加班 150%", "週末加班 200%", "國定假日 300%"])
@@ -219,7 +237,8 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
             if st.form_submit_button(L["btn_clock"], type="primary", use_container_width=True):
                 e_code_save = selected_emp_str.split(" - ")[0]
                 e_name_save = selected_emp_str.split(" - ")[1] if " - " in selected_emp_str else selected_emp_str
-                plant_clean = "西寧廠" if "西寧" in plant_loc else "海防廠"
+                
+                plant_clean = plant_loc.split(" ")[0] if plant_loc else "西寧廠"
 
                 if engine:
                     try:
@@ -256,10 +275,10 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
 
     # ----------------------------------------------------
     # 📑 Tab 4: 刷卡日誌
-    # ----------------------------------------------------
+    # ------------------------------------------------jection
     with tab_logs:
         st.markdown("### 📑 廠內完整出勤與刷卡原始日誌 (Audit Logs)")
-        st.caption("按時間倒序列出西寧廠與海防廠所有員工刷卡原始流水紀錄。")
+        st.caption("按時間倒序列出西寧廠所有員工刷卡原始流水紀錄。")
 
         logs_data = []
         if engine:
@@ -281,8 +300,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
 
         if not logs_data:
             logs_data = [
-                {"STT": 1, "工號": "TW-001", "姓名": "李佑路", "廠區": "西寧廠", "類型": "上班簽到", "刷卡時間": "2026-10-13 07:55:00", "加班/加給": "正常工時", "假別": "正常出勤", "判定狀態": "🟢 正常", "扣款時數": "0.0 小時"},
-                {"STT": 2, "工號": "VN-002", "姓名": "Nguyễn Văn Quý", "廠區": "海防廠", "類型": "上班簽到", "刷卡時間": "2026-10-13 08:00:00", "加班/加給": "正常工時", "假別": "正常出勤", "判定狀態": "🟢 正常", "扣款時數": "0.0 小時"}
+                {"STT": 1, "工號": "TW-001", "姓名": "李佑路", "廠區": "西寧廠", "類型": "上班簽到", "刷卡時間": "2026-10-13 07:55:00", "加班/加給": "正常工時", "假別": "正常出勤", "判定狀態": "🟢 正常", "扣款時數": "0.0 小時"}
             ]
 
         df_logs = pd.DataFrame(logs_data)
