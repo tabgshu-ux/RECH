@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import importlib
+import modules.ai_config_hub as ai_config_hub
 from sqlalchemy import text
 from modules.user_management import get_department_module_tree
 
@@ -384,6 +385,10 @@ elif "塗料" in feat_str or "烤漆" in feat_str:
 
 elif "配盤" in feat_str or "組裝" in feat_str:
     load_module_safely("modules.assembly", "render_assembly_module", engine=engine, t=ui_t, lang=curr_lang)
+
+# 當子選單選擇 AI 串接或在 API 串接中心多加一個標籤頁時：
+# 可以透過分頁 (st.tabs) 或子路由引入：
+ai_config_hub.render_ai_config_hub_page(engine=engine, lang=lang)
 
 else:
     st.markdown(f"### 📍 目前選定功能：{selected_feat_label}")
