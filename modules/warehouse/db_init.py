@@ -2,7 +2,7 @@ import streamlit as st
 from sqlalchemy import text
 
 def init_warehouse_db(engine):
-    """初始化倉庫管理相關資料表，並自動擴充舊表欄位確保 100% 相容"""
+    """初始化倉庫相關資料表，並自動擴充舊表欄位確保 100% 相容與永不遺失"""
     if not engine:
         return
     try:
@@ -96,7 +96,7 @@ def load_warehouse_data(engine):
                 pass
 
             try:
-                res_logs = conn.execute(text("SELECT * FROM warehouse_logs")).fetchall()
+                res_logs = conn.execute(text("SELECT * FROM warehouse_logs ORDER BY date DESC, log_id DESC")).fetchall()
                 for r in res_logs:
                     logs_db.append({
                         "log_id": r[0] if len(r) > 0 else "", 
@@ -112,7 +112,7 @@ def load_warehouse_data(engine):
                 pass
 
             try:
-                res_st = conn.execute(text("SELECT * FROM warehouse_stocktaking")).fetchall()
+                res_st = conn.execute(text("SELECT * FROM warehouse_stocktaking ORDER BY check_date DESC")).fetchall()
                 for r in res_st:
                     stocktake_db.append({
                         "check_id": r[0] if len(r) > 0 else "", 
