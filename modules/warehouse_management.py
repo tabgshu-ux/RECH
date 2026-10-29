@@ -4,11 +4,12 @@ import datetime
 from sqlalchemy import text
 
 def init_warehouse_db(engine):
-    """初始化倉庫管理相關資料表（歸屬管理部管轄，含盤點紀錄表）"""
+    """初始化倉庫管理相關資料表，並自動檢查補齊缺少的欄位（確保平滑升級）"""
     if not engine:
         return
     try:
         with engine.begin() as conn:
+            # 1. 建立 warehouse_inventory 主檔表
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS warehouse_inventory (
                     item_code VARCHAR(50) PRIMARY KEY,
@@ -24,6 +25,8 @@ def init_warehouse_db(engine):
                     photo_path TEXT
                 );
             """))
+
+            # 2. 建立 warehouse_logs 日誌表
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS warehouse_logs (
                     log_id VARCHAR(50) PRIMARY KEY,
@@ -36,6 +39,8 @@ def init_warehouse_db(engine):
                     note TEXT
                 );
             """))
+
+            # 3. 建立 warehouse_stocktaking 盤點表
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS warehouse_stocktaking (
                     check_id VARCHAR(50) PRIMARY KEY,
@@ -50,6 +55,20 @@ def init_warehouse_db(engine):
                     status VARCHAR(50)
                 );
             """))
+
+            # 自動檢查並補齊可能缺少的欄位（針對既有舊資料表）
+            for col_sql in [
+                "ALTER TABLE warehouse_inventory ADD COLUMN IF NOT EXISTS safety_stock FLOAT DEFAULT 5;",
+                "ALTER TABLE warehouse_inventory ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);",
+                "ALTER TABLE warehouse_inventory ADD COLUMN IF NOT EXISTS photo_path TEXT;",
+                "ALTER TABLE warehouse_logs ADD COLUMN IF NOT EXISTS date VARCHAR(50);",
+                "ALTER TABLE warehouse_logs ADD COLUMN IF NOT EXISTS note TEXT;"
+            ]:
+                try:
+                    conn.execute(text(col_sql))
+                except Exception:
+                    pass
+
     except Exception as e:
         st.error(f"資料庫初始化失敗: {e}")
 
@@ -99,15 +118,22 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                 for r in res_inv:
                     inventory_db.append({
                         "item_code": r[0], "item_name": r[1], "category": r[2], "spec": r[3],
-                        "barcode": r[4], "qty": r[5], "unit": r[6], "safety_stock": r[7],
-                        "location": r[8], "updated": r[9], "photo": r[10]
+                        "barcode": r[4] if len(r) > 4 else "", 
+                        "qty": r[5] if len(r) > 5 else 0, 
+                        "unit": r[6] if len(r) > 6 else "只", 
+                        "safety_stock": r[7] if len(r) > 7 else 5,
+                        "location": r[8] if len(r) > 8 else "A區", 
+                        "updated": r[9] if len(r) > 9 else "", 
+                        "photo": r[10] if len(r) > 10 else None
                     })
+                
                 res_logs = conn.execute(text("SELECT * FROM warehouse_logs ORDER BY date DESC, log_id DESC")).fetchall()
                 for r in res_logs:
                     logs_db.append({
                         "log_id": r[0], "type": r[1], "item_code": r[2], "item_name": r[3],
-                        "qty": r[4], "operator": r[5], "date": r[6], "note": r[7]
+                        "qty": r[4], "operator": r[5], "date": r[6] if len(r) > 6 else "", "note": r[7] if len(r) > 7 else ""
                     })
+
                 res_st = conn.execute(text("SELECT * FROM warehouse_stocktaking ORDER BY check_date DESC")).fetchall()
                 for r in res_st:
                     stocktake_db.append({
@@ -132,7 +158,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
         filtered_items = inventory_db
         if search_wh:
             s_low = search_wh.lower()
-            filtered_items = [i for i in filtered_items if s_low in i["item_code"].lower() or s_low in i["item_name"].lower() or s_low in i["location"].lower() or s_low in str(i.get("barcode", "")).lower()]
+            filtered_items = [i for i in filtered_items if s_low in str(i["item_code"]).lower() or s_low in str(i["item_name"]).lower() or s_low in str(i["location"]).lower() or s_low in str(i.get("barcode", "")).lower()]
 
         if filtered_items:
             for item in filtered_items:
@@ -154,14 +180,14 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                         st.markdown(f":{color_str}[{text_str}]")
                 st.markdown("---")
         else:
-            st.info("目前無符合搜尋條件的庫存紀錄。")
+            st.info("目前無符合搜尋條件的庫存紀錄。請至分頁5新增物料。")
 
     # ----------------------------------------------------
     # Tab 2: 快速出入庫
     # ----------------------------------------------------
     with tab_in_out:
         st.markdown("##### 📥📤 快速出入庫領料作業")
-        all_zones = sorted(list(set([i["location"].split("-")[0] if "-" in i["location"] else i["location"] for i in inventory_db])))
+        all_zones = sorted(list(set([i["location"].split("-")[0] if "-" in str(i["location"]) else str(i["location"]) for i in inventory_db])))
         zone_choices = ["全部倉庫分區"] + all_zones
         
         col_sel1, col_sel2 = st.columns(2)
@@ -170,7 +196,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
         
         pool = inventory_db
         if chosen_zone != "全部倉庫分區":
-            pool = [i for i in pool if chosen_zone in i["location"]]
+            pool = [i for i in pool if chosen_zone in str(i["location"])]
 
         item_labels = [f"{i['item_code']} ➔ {i['item_name']} (庫存: {i['qty']} {i['unit']} | 儲位: {i['location']})" for i in pool] if pool else []
 
@@ -248,11 +274,11 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
             st.dataframe(pd.DataFrame(logs_db), use_container_width=True, hide_index=True)
 
     # ----------------------------------------------------
-    # Tab 3: 庫存盤點作業 (支援列印盤點表 & 平板線上盤點)
+    # Tab 3: 庫存盤點作業
     # ----------------------------------------------------
     with tab_stock:
         st.markdown("##### 📋 倉庫即時盤點作業中心")
-        st.info("💡 說明：您可以選擇【列印紙本盤點表】攜帶至現場清點，或是直接使用【平板線上盤點模式】在網頁上輸入實點數量進行對帳與差異結算。")
+        st.info("💡 說明：支援【列印紙本盤點表】與【平板線上盤點模式】雙模式！")
 
         stock_mode = st.radio("選擇盤點模式", ["🖨️ 列印紙本盤點表 (供現場逐一清點)", "📱 平板線上盤點與差異結算 (Online Stocktaking)"], horizontal=True)
         st.markdown("---")
@@ -264,13 +290,12 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
             if inventory_db:
                 print_df = pd.DataFrame(inventory_db)[["location", "item_code", "item_name", "qty", "unit", "barcode"]]
                 print_df.columns = ["倉庫儲位", "料號代碼", "品名規格", "帳面數量", "單位", "條碼編號"]
-                # 加上空白欄位供手寫實點數與簽名
                 print_df["實點數量 (Actual)"] = ""
                 print_df["盤差 (Diff)"] = ""
                 print_df["盤點簽名"] = ""
 
                 st.dataframe(print_df, use_container_width=True, hide_index=True)
-                st.markdown("📌 *提示：請點選右上角瀏覽器選單或按 Ctrl+P 即可直接將此頁面列印成紙本盤點表攜至現場！*")
+                st.markdown("📌 *提示：請按 Ctrl+P 即可直接將此頁面列印成紙本盤點表！*")
             else:
                 st.warning("目前無庫存資料可列印。")
 
@@ -279,9 +304,6 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
             if not inventory_db:
                 st.warning("目前無庫存可盤點。")
             else:
-                # 平板介面：選擇分區或全廠盤點
-                st.write("請選擇要盤點的物料，並直接輸入現場實際清點的數量：")
-                
                 with st.form("tablet_stocktake_form"):
                     st_results = []
                     for idx, item in enumerate(inventory_db):
@@ -311,7 +333,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                         })
                         st.markdown("---")
 
-                    st_note = st.text_input("盤點備註說明 (例如: 年終全面盤點、各儲位清查...)")
+                    st_note = st.text_input("盤點備註說明")
                     
                     if st.form_submit_button("🚀 確認送出線上盤點並更新帳面庫存", type="primary", use_container_width=True):
                         today_str = str(datetime.date.today())
@@ -321,29 +343,17 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                             try:
                                 with engine.begin() as conn:
                                     for res in st_results:
-                                        # 更新主檔庫存為實際盤點數
-                                        conn.execute(text(
-                                            "UPDATE warehouse_inventory SET qty = :q, updated = :u WHERE item_code = :c"
-                                        ), {"q": res["actual_qty"], "u": today_str, "c": res["item_code"]})
-
-                                        # 記錄盤點明細
+                                        conn.execute(text("UPDATE warehouse_inventory SET qty = :q, updated = :u WHERE item_code = :c"), {"q": res["actual_qty"], "u": today_str, "c": res["item_code"]})
                                         conn.execute(text("""
                                             INSERT INTO warehouse_stocktaking (check_id, item_code, item_name, location, book_qty, actual_qty, diff_qty, operator, check_date, status)
                                             VALUES (:cid, :code, :name, :loc, :bq, :aq, :dq, :op, :dt, :st)
                                         """), {
                                             "cid": f"{check_batch_id}-{res['item_code']}",
-                                            "code": res["item_code"],
-                                            "name": res["item_name"],
-                                            "loc": res["location"],
-                                            "bq": res["book_qty"],
-                                            "aq": res["actual_qty"],
-                                            "dq": res["diff_qty"],
-                                            "op": str(current_logged_user),
-                                            "dt": today_str,
-                                            "st": "已結算覆核"
+                                            "code": res["item_code"], "name": res["item_name"], "loc": res["location"],
+                                            "bq": res["book_qty"], "aq": res["actual_qty"], "dq": res["diff_qty"],
+                                            "op": str(current_logged_user), "dt": today_str, "st": "已結算覆核"
                                         })
 
-                                        # 若有盤虧或盤盈，同步寫入異動日誌以供追溯
                                         if res["diff_qty"] != 0:
                                             log_type = "📈 盤盈調整" if res["diff_qty"] > 0 else "📉 盤虧調整"
                                             conn.execute(text("""
@@ -351,19 +361,15 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                                                 VALUES (:id, :t, :c, :n, :q, :op, :d, :note)
                                             """), {
                                                 "id": f"LOG-ST-{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}-{res['item_code']}",
-                                                "t": log_type,
-                                                "c": res["item_code"],
-                                                "n": res["item_name"],
-                                                "q": abs(res["diff_qty"]),
-                                                "op": str(current_logged_user),
-                                                "d": today_str,
-                                                "note": f"盤點調整 [{st_note}] 帳面:{res['book_qty']} 實點:{res['actual_qty']}"
+                                                "t": log_type, "c": res["item_code"], "n": res["item_name"],
+                                                "q": abs(res["diff_qty"]), "op": str(current_logged_user),
+                                                "d": today_str, "note": f"盤點調整 [{st_note}] 帳面:{res['book_qty']} 實點:{res['actual_qty']}"
                                             })
 
-                                st.success("🎉 線上盤點完成！庫存已自動依實點數結算更新，並已歸檔至盤點紀錄。")
+                                st.success("🎉 線上盤點完成！庫存已自動結算更新。")
                                 st.rerun()
                             except Exception as e:
-                                st.error(f"盤點結算寫入資料庫失敗: {e}")
+                                st.error(f"寫入資料庫失敗: {e}")
 
         if stocktake_db:
             st.markdown("---")
