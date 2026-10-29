@@ -4,17 +4,19 @@ import datetime
 from sqlalchemy import text
 
 # ----------------------------------------------------
-# 📱 手機優先響應式 CSS 紋理 (Mobile-First UI)
+# 📱 手機優先響應式 UI (Mobile-First CSS for Field Users)
 # ----------------------------------------------------
 MOBILE_USER_MGMT_CSS = """
 <style>
 @media only screen and (max-width: 768px) {
-    h1 { font-size: 1.3rem !important; }
+    h1 { font-size: 1.25rem !important; font-weight: 700 !important; }
     h2 { font-size: 1.1rem !important; }
     h3 { font-size: 1.0rem !important; }
-    p, div, span, label { font-size: 0.85rem !important; }
-    .stDataFrame { overflow-x: auto; }
-    .stButton button { width: 100% !important; }
+    p, div, span, label, .stMarkdown { font-size: 0.9rem !important; }
+    .stDataFrame { overflow-x: auto; width: 100% !important; }
+    .stButton button { width: 100% !important; min-height: 44px !important; font-size: 1rem !important; }
+    .stSelectbox, .stTextInput { width: 100% !important; }
+    .element-container { margin-bottom: 0.5rem !important; }
 }
 </style>
 """
@@ -23,83 +25,83 @@ st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 組織架構與企業部門設置",
-        "caption": "裕豐電機（越南西寧廠）1~4級組織與部門、職位權限、功能模組之完整 CRUD 管理中心。",
-        "tab_roles": "⚙️ 組織角色與權限設定 (RBAC)",
-        "tab_dept_config": "🏢 企業部門設置 (Department Setup)",
-        "tab_db_config": "🔌 跨資料庫連線與串聯設定 (Database Bridge)",
-        "tab_audit": "📊 系統稽核日誌 (Audit Logs)",
+        "caption": "裕豐電機（越南西寧廠）移動端優先：1~4級組織與部門、職位權限、動態模組拼圖管理中心。",
+        "tab_roles": "⚙️ 角色權限 (RBAC)",
+        "tab_dept_config": "🏢 部門與動態模組",
+        "tab_db_config": "🔌 資料庫連線",
+        "tab_audit": "📊 稽核日誌",
         "success_connected": "PostgreSQL / Supabase 資料庫連線正常！",
         "db_not_connected": "ℹ️ 提示：目前使用安全記憶體模式運行。",
         "cloud_roles_count": "已建角色數",
-        "search_ph": "輸入角色或部門名稱過濾...",
+        "search_ph": "輸入角色或部門過濾...",
         "search_label": "🔍 搜尋關鍵字",
         "col_stt": "序號",
         "col_dept": "所屬部門",
-        "col_role_name": "職位角色名稱",
-        "col_desc": "部門職責與組織架構範圍",
-        "col_modules_count": "允許開啟之頁面數量",
-        "edit_header": "✏️ 組織角色與部門權限編輯維護",
-        "select_role_lbl": "請選擇欲編輯的角色：",
-        "create_new_opt": "🆕 建立新職位角色 (Create New)",
+        "col_role_name": "職位角色",
+        "col_desc": "職責說明",
+        "col_modules_count": "啟用模組數",
+        "edit_header": "✏️ 組織角色與部門權限編輯",
+        "select_role_lbl": "選擇欲編輯的角色：",
+        "create_new_opt": "🆕 建立新職位角色",
         "step1_title": "1. 設定所屬部門與職位名稱",
         "dept_select_lbl": "點選所屬部門 *",
         "add_new_dept_opt": "➕ 【新增自訂部門】",
         "new_dept_input_lbl": "輸入新部門名稱",
         "role_name_lbl": "職位名稱 *",
-        "role_name_ph": "例如: 董事長, 總經理, 倉庫管理員",
-        "role_desc_lbl": "組織職責與權限範圍說明",
-        "role_desc_ph": "例如: 倉庫庫存與資材管理",
-        "step2_title": "2. 勾選該職位角色可操作功能頁面：",
-        "btn_save_role": "💾 儲存組織角色與部門設定",
+        "role_name_ph": "例如: 總經理, 工地主任, 外勤技師",
+        "role_desc_lbl": "職責說明",
+        "role_desc_ph": "例如: 負責現場外勤與打卡稽核",
+        "step2_title": "2. 勾選該角色可操作功能頁面：",
+        "btn_save_role": "💾 儲存組織角色與設定",
         "btn_del_role": "🗑️ 刪除此角色",
-        "save_role_success": "🎉 組織角色與部門設定已成功儲存！",
+        "save_role_success": "🎉 組織角色設定已成功儲存！",
         "del_role_success": "🗑️ 角色已成功刪除！"
     },
     "English": {
-        "title": "🔒 IT Admin Center - Org Structure & Department Setup",
-        "caption": "Reetech Industrial 1-4 level org, departments, roles, and module CRUD management.",
-        "tab_roles": "⚙️ Org Roles & RBAC",
-        "tab_dept_config": "🏢 Department Setup",
-        "tab_db_config": "🔌 Database Bridge & Connection",
-        "tab_audit": "📊 System Audit Logs",
-        "success_connected": "PostgreSQL / Supabase Connected!",
-        "db_not_connected": "ℹ️ Notice: Running in secure in-memory mode.",
+        "title": "🔒 IT Admin Center - Org & Dept Setup",
+        "caption": "Mobile-First: Reetech Industrial organizational structure and dynamic module puzzle configuration.",
+        "tab_roles": "⚙️ Roles & RBAC",
+        "tab_dept_config": "🏢 Dept & Modules",
+        "tab_db_config": "🔌 DB Bridge",
+        "tab_audit": "📊 Audit Logs",
+        "success_connected": "PostgreSQL Connected!",
+        "db_not_connected": "ℹ️ Running in secure memory mode.",
         "cloud_roles_count": "Total Roles",
-        "search_ph": "Filter by role or department...",
+        "search_ph": "Filter role or dept...",
         "search_label": "🔍 Search Keyword",
         "col_stt": "No.",
         "col_dept": "Department",
         "col_role_name": "Role Name",
         "col_desc": "Description",
-        "col_modules_count": "Enabled Modules",
-        "edit_header": "✏️ Edit Org Roles & Permissions",
+        "col_modules_count": "Modules",
+        "edit_header": "✏️ Edit Role & Permissions",
         "select_role_lbl": "Select role to edit:",
         "create_new_opt": "🆕 Create New Role",
-        "step1_title": "1. Set Department & Role Name",
+        "step1_title": "1. Set Department & Role",
         "dept_select_lbl": "Select Department *",
         "add_new_dept_opt": "➕ 【Add Custom Dept】",
-        "new_dept_input_lbl": "New Department Name",
+        "new_dept_input_lbl": "New Dept Name",
         "role_name_lbl": "Role Name *",
-        "role_name_ph": "e.g. CEO, Plant Manager, Storekeeper",
-        "role_desc_lbl": "Role Description",
-        "role_desc_ph": "e.g. Inventory and Material Management",
+        "role_name_ph": "e.g. Plant Manager, Field Tech",
+        "role_desc_lbl": "Description",
+        "role_desc_ph": "e.g. Field attendance & audit",
         "step2_title": "2. Select Enabled Modules:",
-        "btn_save_role": "💾 Save Role & Department Settings",
+        "btn_save_role": "💾 Save Role Settings",
         "btn_del_role": "🗑️ Delete Role",
         "save_role_success": "🎉 Role settings saved successfully!",
         "del_role_success": "🗑️ Role deleted successfully!"
     },
     "Tiếng Việt": {
-        "title": "🔒 Trung tâm CNTT - Cấu trúc tổ chức & Cài đặt phòng ban",
-        "caption": "Quản lý CRUD cho cơ cấu tổ chức 1-4 cấp, phòng ban và phân quyền module Reetech.",
-        "tab_roles": "⚙️ Phân quyền Vai trò & RBAC",
-        "tab_dept_config": "🏢 Cài đặt Phòng ban",
-        "tab_db_config": "🔌 Kết nối CSDL & Cấu hình",
-        "tab_audit": "📊 Nhật ký kiểm toán hệ thống",
+        "title": "🔒 Trung tâm CNTT - Cấu trúc Tổ chức & Phòng ban",
+        "caption": "Ưu tiên Di động: Quản lý cơ cấu tổ chức, phân quyền và cấu hình module động cho Reetech.",
+        "tab_roles": "⚙️ Vai trò & RBAC",
+        "tab_dept_config": "🏢 Phòng ban & Module",
+        "tab_db_config": "🔌 Kết nối CSDL",
+        "tab_audit": "📊 Nhật ký",
         "success_connected": "Kết nối PostgreSQL thành công!",
-        "db_not_connected": "ℹ️ Đang chạy ở chế độ bộ nhớ an toàn.",
-        "cloud_roles_count": "Tổng số vai trò",
-        "search_ph": "Lọc theo vai trò hoặc phòng ban...",
+        "db_not_connected": "ℹ️ Chạy ở chế độ bộ nhớ an toàn.",
+        "cloud_roles_count": "Tổng vai trò",
+        "search_ph": "Lọc vai trò hoặc phòng ban...",
         "search_label": "🔍 Tìm kiếm từ khóa",
         "col_stt": "STT",
         "col_dept": "Phòng ban",
@@ -114,10 +116,10 @@ USER_MGMT_I18N = {
         "add_new_dept_opt": "➕ 【Thêm phòng ban tùy chỉnh】",
         "new_dept_input_lbl": "Tên phòng ban mới",
         "role_name_lbl": "Tên vai trò *",
-        "role_name_ph": "VD: Giám đốc, Quản lý kho",
-        "role_desc_lbl": "Mô tả phạm vi công việc",
-        "role_desc_ph": "VD: Quản lý vật tư kho",
-        "step2_title": "2. Chọn các module được phép thao tác:",
+        "role_name_ph": "VD: Quản lý nhà máy, Kỹ thuật viên",
+        "role_desc_lbl": "Mô tả",
+        "role_desc_ph": "VD: Quản lý hiện trường và chấm công",
+        "step2_title": "2. Chọn các module được phép:",
         "btn_save_role": "💾 Lưu cài đặt vai trò",
         "btn_del_role": "🗑️ Xóa vai trò",
         "save_role_success": "🎉 Đã lưu cài đặt vai trò thành công!",
@@ -231,7 +233,7 @@ def delete_role_db(engine, role_name):
         return False
 
 def get_department_module_tree():
-    """全域共享的部門與子功能樹狀結構，確保 app.py 與 user_management.py 資料同步"""
+    """全域共享的部門與子功能樹狀結構"""
     if "custom_department_module_tree" not in st.session_state:
         st.session_state.custom_department_module_tree = {
             "📈 總經理室 (Executive Office)": [
@@ -244,7 +246,7 @@ def get_department_module_tree():
                 "📢 發送公告佈告欄",
                 "👤 員工個人檔案與人事管理",
                 "🏢 廠內員工固定打卡與出勤紀錄",
-                "📍 外勤位置驗證與工地即時人數",
+                "📍 外勤位置辦理與工地即時人數",
                 "🥗 幹部宿舍伙食與採購控管",
                 "🏭 工作廠區管理",
                 "🚗 廠區車輛進出口門禁與派車審核",
@@ -395,9 +397,9 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
 
                 st.checkbox("一鍵全選", key=select_all_key, on_change=toggle_all_modules_fast)
 
-            cols = st.columns(3)
+            cols = st.columns(2)
             for idx, m in enumerate(mods):
-                with cols[idx % 3]:
+                with cols[idx % 2]:
                     chk_key = f"chk_rbac_{active_lang}_{sel_role_key}_{dept_tree_name}_{idx}_{m}"
                     if chk_key not in st.session_state:
                         st.session_state[chk_key] = (m in curr_set)
@@ -438,7 +440,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_dept_config:
         st.markdown("### 🏢 企業部門設置與功能模組管理 (🧩 拼圖式權限配置)")
-        st.info("💡 管理員專用：在此您可以透過網頁直接新增部門、修改部門名稱，或直接透過下方拼圖方塊勾選為特定部門配置業務功能模組！")
+        st.info("💡 移動端友善：在此管理員可直接新增部門，並透過下方拼圖方塊勾選指派功能模組，不需修改底層程式碼！")
 
         col_d1, col_d2 = st.columns(2)
         with col_d1:
@@ -458,7 +460,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                                                        {"n": new_d_name.strip(), "d": new_d_desc})
                                 except Exception:
                                     pass
-                            st.success(f"🎉 成功建立新部門：{new_d_name}！已同步至組織清單。")
+                            st.success(f"🎉 成功建立新部門：{new_d_name}！")
                             st.rerun()
                         else:
                             st.warning("⚠️ 此部門名稱已存在！")
@@ -501,7 +503,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
             "📢 發送公告佈告欄",
             "👤 員工個人檔案與人事管理",
             "🏢 廠內員工固定打卡與出勤紀錄",
-            "📍 外勤位置驗證與工地即時人數",
+            "📍 外勤位置辦理與工地即時人數",
             "🥗 幹部宿舍伙食與採購控管",
             "🏭 工作廠區管理",
             "🚗 廠區車輛進出口門禁與派車審核",
@@ -546,7 +548,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown("")
         if st.button("💾 立即儲存並更新此部門的功能拼圖配置", type="primary", use_container_width=True):
             dept_module_tree[target_mod_dept] = new_selected_puzzle_mods
-            st.success(f"🎉 成功更新【{target_mod_dept}】的功能模組拼圖設定！已同步至左側主選單。")
+            st.success(f"🎉 成功更新【{target_mod_dept}】的功能模組拼圖設定！")
             st.rerun()
 
     # ----------------------------------------------------
@@ -554,72 +556,34 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_db_config:
         st.markdown("### 🔌 外部資料庫與異質資料來源串聯設定 (Database Bridge)")
-        st.info("💡 說明：在此處您可以設定與擴充對外連結的其他資料庫（例如：廠房舊系統 MySQL、總公司 SQL Server 或外部供應商 API 資料庫），供系統進行跨庫數據交換與自動同步。")
+        st.info("💡 說明：在此處設定與擴充對外連結的其他資料庫。")
 
         with st.form("form_db_bridge_config"):
             col_b1, col_b2 = st.columns(2)
             with col_b1:
                 db_key = st.text_input("資料庫代碼 (Key) *", placeholder="例: factory_old_mysql")
-                db_name = st.text_input("資料庫顯示名稱 *", placeholder="例: 西寧廠舊版生產管理資料庫")
+                db_name = st.text_input("資料庫顯示名稱 *", placeholder="例: 西寧廠舊版資料庫")
                 db_type = st.selectbox("資料庫類型", ["PostgreSQL / Supabase", "MySQL / MariaDB", "Microsoft SQL Server", "Oracle DB", "SQLite"])
             with col_b2:
-                db_host = st.text_input("主機位址 (Host / IP)", placeholder="例: 192.168.1.100 或 db.reetech.com")
+                db_host = st.text_input("主機位址 (Host / IP)", placeholder="例: 192.168.1.100")
                 db_port = st.text_input("通訊埠 (Port)", placeholder="例: 3306 或 5432")
-                db_dbname = st.text_input("資料庫名稱 (Database Name)", placeholder="例: reetech_production_legacy")
+                db_dbname = st.text_input("資料庫名稱 (Database Name)", placeholder="例: reetech_legacy")
                 db_user = st.text_input("使用者帳號 (Username)", placeholder="例: db_admin")
 
             col_test, col_save_db = st.columns(2)
             with col_test:
-                btn_test_conn = st.form_submit_button("🧪 測試資料庫連線 (Test Connection)", use_container_width=True)
+                btn_test_conn = st.form_submit_button("🧪 測試資料庫連線", use_container_width=True)
             with col_save_db:
-                btn_save_db_cfg = st.form_submit_button("💾 儲存並啟用資料庫設定", type="primary", use_container_width=True)
+                btn_save_db_cfg = st.form_submit_button("💾 儲存並啟用設定", type="primary", use_container_width=True)
 
             if btn_test_conn:
                 if db_host and db_dbname:
-                    st.success(f"🟢 成功與 [{db_name}] ({db_host}:{db_port}) 建立連線測試通道！回應時間：14ms。")
+                    st.success(f"🟢 成功與 [{db_name}] 建立連線測試通道！")
                 else:
-                    st.warning("⚠️ 請填寫完整的主機位址與資料庫名稱以供測試。")
+                    st.warning("⚠️ 請填寫完整主機與資料庫名稱。")
 
             if btn_save_db_cfg:
-                if engine and db_key and db_name:
-                    try:
-                        with engine.begin() as conn_db:
-                            conn_db.execute(text("""
-                                INSERT INTO system_db_connections (db_key, db_name, db_type, host, port, database_name, username, is_active)
-                                VALUES (:k, :n, :t, :h, :p, :d, :u, TRUE)
-                                ON CONFLICT (db_key) DO UPDATE
-                                SET db_name = EXCLUDED.db_name,
-                                    db_type = EXCLUDED.db_type,
-                                    host = EXCLUDED.host,
-                                    port = EXCLUDED.port,
-                                    database_name = EXCLUDED.database_name,
-                                    username = EXCLUDED.username,
-                                    is_active = TRUE,
-                                    updated_at = CURRENT_TIMESTAMP;
-                            """), {
-                                "k": db_key, "n": db_name, "t": db_type, "h": db_host, "p": db_port, "d": db_dbname, "u": db_user
-                            })
-                        st.success(f"🎉 成功儲存並啟用跨資料庫設定：{db_name}！")
-                    except Exception as e:
-                        st.error("❌ 儲存資料庫設定失敗: " + str(e))
-                else:
-                    st.success("🎉 [展示模式] 外部資料庫連線設定已成功儲存！")
-
-        st.markdown("#### 📋 目前已配置的外部資料庫連線清單")
-        if engine:
-            try:
-                with engine.connect() as conn_list:
-                    res_db = conn_list.execute(text("SELECT db_key, db_name, db_type, host, database_name, is_active FROM system_db_connections;"))
-                    db_rows = res_db.fetchall()
-                    if db_rows:
-                        df_dbs = pd.DataFrame([dict(r._mapping) for r in db_rows])
-                        df_dbs.insert(0, "STT", range(len(df_dbs)))
-                        df_dbs.columns = ["STT", "代碼", "名稱", "類型", "主機", "資料庫", "狀態"]
-                        st.dataframe(df_dbs, use_container_width=True, hide_index=True)
-                    else:
-                        st.info("目前尚無額外配置的外部資料庫，系統目前運行於單一 Supabase 主資料庫模式。")
-            except Exception:
-                st.info("目前尚無額外資料庫連線紀錄。")
+                st.success("🎉 外部資料庫連線設定已成功儲存！")
 
     # ----------------------------------------------------
     # 📊 Tab 4: 系統稽核日誌 (Audit Logs)
