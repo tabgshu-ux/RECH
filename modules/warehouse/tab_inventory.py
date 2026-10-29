@@ -2,7 +2,7 @@ import streamlit as st
 
 def render_inventory_tab(inventory_db, lang):
     st.markdown("##### 📊 全廠共用倉庫：即時庫存查詢中心 (權限檢視模式)")
-    st.info("💡 說明：依據公司權限設定，所有授權同仁可在此隨時查詢各品項剩餘數量、儲位與實物照片。如需領用或申請物料，請至【電子簽核中心】提出申請。")
+    st.info("💡 說明：所有授權同仁可在此隨時查詢各品項剩餘數量、儲位與實物照片。如需領用或申請物料，請至側邊欄的【電子簽核中心】提出申請。")
     
     search_wh = st.text_input("🔍 搜尋料號、名稱、條碼或儲位...", key="wh_search_box")
     
