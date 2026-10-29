@@ -4,15 +4,15 @@ import datetime
 from sqlalchemy import text
 
 def render_stocktaking_tab(engine, inventory_db, stocktake_db, current_logged_user, lang):
-    st.markdown("##### 📋 倉庫即時盤點作業中心")
-    st.info("💡 說明：支援【列印紙本盤點表】與【平板線上盤點模式】雙模式！")
+    st.markdown("##### 📋 倉庫即時盤點與稽核作業中心")
+    st.info("💡 說明：支援【列印紙本盤點表】與【平板線上盤點模式】雙模式，盤點差異自動結算並寫入資料庫。")
 
     stock_mode = st.radio("選擇盤點模式", ["🖨️ 列印紙本盤點表 (供現場逐一清點)", "📱 平板線上盤點與差異結算 (Online Stocktaking)"], horizontal=True)
     st.markdown("---")
 
     if stock_mode == "🖨️ 列印紙本盤點表 (供現場逐一清點)":
         st.markdown("#### 裕豐電機工業 (REETECH) - 倉儲定期實地盤點表")
-        st.write(f"**盤點日期**：{datetime.date.today()} | **管轄部門**：管理部倉庫 | **列印人員**：{current_logged_user}")
+        st.write(f"**盤點日期**：{datetime.date.today()} | **管轄部門**：全廠共用倉庫 | **列印人員**：{current_logged_user}")
         
         if inventory_db:
             print_df = pd.DataFrame(inventory_db)[["location", "item_code", "item_name", "qty", "unit", "barcode"]]
@@ -22,7 +22,7 @@ def render_stocktaking_tab(engine, inventory_db, stocktake_db, current_logged_us
             print_df["盤點簽名"] = ""
 
             st.dataframe(print_df, use_container_width=True, hide_index=True)
-            st.markdown("📌 *提示：請按 Ctrl+P 即可直接將此頁面列印成紙本盤點表！*")
+            st.markdown("📌 *提示：請按 Ctrl+P 即可直接將此頁面列印成紙本盤點表攜至現場！*")
         else:
             st.warning("目前無庫存資料可列印。")
 
@@ -60,9 +60,9 @@ def render_stocktaking_tab(engine, inventory_db, stocktake_db, current_logged_us
                     })
                     st.markdown("---")
 
-                st_note = st.text_input("盤點備註說明")
+                st_note = st.text_input("盤點備註說明 (例如: 年終全面盤點)")
                 
-                if st.form_submit_button("🚀 確認送出線上盤點並更新帳面庫存", type="primary", use_container_width=True):
+                if st.form_submit_button("🚀 確認送出線上盤點並更新資料庫", type="primary", use_container_width=True):
                     today_str = str(datetime.date.today())
                     check_batch_id = f"ST-{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
                     
@@ -93,12 +93,12 @@ def render_stocktaking_tab(engine, inventory_db, stocktake_db, current_logged_us
                                             "d": today_str, "note": f"盤點調整 [{st_note}] 帳面:{res['book_qty']} 實點:{res['actual_qty']}"
                                         })
 
-                            st.success("🎉 線上盤點完成！庫存已自動結算更新。")
+                            st.success("🎉 線上盤點完成！庫存已自動結算更新並歸檔至資料庫。")
                             st.rerun()
                         except Exception as e:
                             st.error(f"寫入資料庫失敗: {e}")
 
     if stocktake_db:
         st.markdown("---")
-        st.markdown("##### 📜 歷史盤點紀錄與差異追溯")
+        st.markdown("##### 📜 歷史盤點紀錄與稽核追溯")
         st.dataframe(pd.DataFrame(stocktake_db), use_container_width=True, hide_index=True)
