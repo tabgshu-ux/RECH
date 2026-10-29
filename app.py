@@ -338,8 +338,8 @@ elif "工程主管戰情室" in feat_str or "工程專案報價" in feat_str:
 elif "工程" in feat_str or "施工日報表" in feat_str or "配電盤電氣" in feat_str or "BOM" in feat_str or "FAT/SAT" in feat_str:
     load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang)
 
-elif "外勤出勤" in feat_str or "工地人數" in feat_str or "現場外勤打卡" in feat_str:
-    load_module_safely("modules.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="management" if "統計" in feat_str else "field_worker")
+elif "外勤位置驗證" in feat_str or "工地人數" in feat_str or "現場外勤打卡" in feat_str:
+    load_module_safely("modules.management.hr.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="management" if "統計" in feat_str else "field_worker")
 
 elif "採購與應付帳款" in feat_str or "採購" in feat_str:
     load_module_safely("modules.procurement_ap", "render_procurement_ap_page", engine=engine, lang=curr_lang)
