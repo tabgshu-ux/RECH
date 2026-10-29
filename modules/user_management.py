@@ -128,6 +128,7 @@ USER_MGMT_I18N = {
 DEFAULT_DEPARTMENTS = [
     "📈 總經理室 (Executive Office)",
     "👔 管理部 (Management Dept)",
+    "📦 倉庫管理 (Warehouse Management)",
     "🛠️ 工程與設計管理中心 (Engineering & Design Center)",
     "🏭 生產部 (Production Dept)",
     "💻 資訊管理部 (IT & System)"
@@ -166,7 +167,7 @@ def fetch_roles(engine, lang_dict):
     fallback_roles = {
         "董事長": {"department": "📈 總經理室 (Executive Office)", "description": "公司經營方向規劃與戰略定奪", "allowed_modules": "ALL"},
         "總經理": {"department": "📈 總經理室 (Executive Office)", "description": "董事長指示的公司經營方向執行與公司管理", "allowed_modules": "ALL"},
-        "倉庫管理員": {"department": "🏭 生產部 (Production Dept)", "description": "倉庫庫存與資材條碼管理", "allowed_modules": "📦 [倉儲] 倉庫庫存與資材條碼管理"},
+        "倉庫管理員": {"department": "📦 倉庫管理 (Warehouse Management)", "description": "倉庫庫存與資材條碼管理", "allowed_modules": "📦 [倉儲] 倉庫庫存與資材條碼管理"},
         "工程主管": {"department": "🛠️ 工程與設計管理中心 (Engineering & Design Center)", "description": "工程專案與現場督導管理", "allowed_modules": "⚡ [工程] 配電盤與工程專案雙層報價"}
     }
     
@@ -255,6 +256,9 @@ def get_department_module_tree():
                 "💰 員工薪資計算與保險扣除",
                 "📄 電子發票綜合管理與 XML 歸檔"
             ],
+            "📦 倉庫管理 (Warehouse Management)": [
+                "📦 [倉儲] 倉庫庫存與資材條碼管理"
+            ],
             "✍️ 全公司電子簽核中心 (Approval Center)": [
                 "✍️ 提交請假/採購與即時進度追蹤 / 審核"
             ],
@@ -271,7 +275,6 @@ def get_department_module_tree():
                 "🧪 10. FAT/SAT 出廠與現場驗收管理"
             ],
             "🏭 生產部 (Production Dept)": [
-                "📦 [倉儲] 倉庫庫存與資材條碼管理",
                 "✂️ [板金] 板金加工組工單與條碼",
                 "🎨 [塗料] 粉體塗裝烤漆組品管",
                 "⚡ [配盤] 配電盤組裝配線組"
@@ -525,7 +528,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
             "🎨 [塗料] 粉體塗裝烤漆組品管",
             "⚡ [配盤] 配電盤組裝配線組",
             "🔒 系統角色權限與模組開關設定",
-            "🔌 API 串接設定中心"
+            "🔌 API 串聯設定中心"
         ]
 
         new_selected_puzzle_mods = []
