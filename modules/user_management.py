@@ -25,9 +25,9 @@ st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 組織架構與企業部門設置",
-        "caption": "裕豐電機（越南西寧廠）移動端優先：1~4級組織與部門、職位權限、動態模組拼圖管理中心。",
+        "caption": "裕豐電機（越南西寧廠）移動端優先：獨立部門管理、職位權限、動態模組拼圖管理中心。",
         "tab_roles": "⚙️ 角色權限 (RBAC)",
-        "tab_dept_config": "🏢 部門與動態模組",
+        "tab_dept_config": "🏢 獨立部門與模組設定",
         "tab_db_config": "🔌 資料庫連線",
         "tab_audit": "📊 稽核日誌",
         "success_connected": "PostgreSQL / Supabase 資料庫連線正常！",
@@ -45,8 +45,6 @@ USER_MGMT_I18N = {
         "create_new_opt": "🆕 建立新職位角色",
         "step1_title": "1. 設定所屬部門與職位名稱",
         "dept_select_lbl": "點選所屬部門 *",
-        "add_new_dept_opt": "➕ 【新增自訂部門】",
-        "new_dept_input_lbl": "輸入新部門名稱",
         "role_name_lbl": "職位名稱 *",
         "role_name_ph": "例如: 總經理, 工地主任, 外勤技師",
         "role_desc_lbl": "職責說明",
@@ -59,7 +57,7 @@ USER_MGMT_I18N = {
     },
     "English": {
         "title": "🔒 IT Admin Center - Org & Dept Setup",
-        "caption": "Mobile-First: Reetech Industrial organizational structure and dynamic module puzzle configuration.",
+        "caption": "Mobile-First: Independent department setup and dynamic module configuration.",
         "tab_roles": "⚙️ Roles & RBAC",
         "tab_dept_config": "🏢 Dept & Modules",
         "tab_db_config": "🔌 DB Bridge",
@@ -79,8 +77,6 @@ USER_MGMT_I18N = {
         "create_new_opt": "🆕 Create New Role",
         "step1_title": "1. Set Department & Role",
         "dept_select_lbl": "Select Department *",
-        "add_new_dept_opt": "➕ 【Add Custom Dept】",
-        "new_dept_input_lbl": "New Dept Name",
         "role_name_lbl": "Role Name *",
         "role_name_ph": "e.g. Plant Manager, Field Tech",
         "role_desc_lbl": "Description",
@@ -93,7 +89,7 @@ USER_MGMT_I18N = {
     },
     "Tiếng Việt": {
         "title": "🔒 Trung tâm CNTT - Cấu trúc Tổ chức & Phòng ban",
-        "caption": "Ưu tiên Di động: Quản lý cơ cấu tổ chức, phân quyền và cấu hình module động cho Reetech.",
+        "caption": "Ưu tiên Di động: Quản lý phòng ban độc lập và cấu hình module động.",
         "tab_roles": "⚙️ Vai trò & RBAC",
         "tab_dept_config": "🏢 Phòng ban & Module",
         "tab_db_config": "🔌 Kết nối CSDL",
@@ -113,8 +109,6 @@ USER_MGMT_I18N = {
         "create_new_opt": "🆕 Tạo vai trò mới",
         "step1_title": "1. Đặt phòng ban và tên vai trò",
         "dept_select_lbl": "Chọn phòng ban *",
-        "add_new_dept_opt": "➕ 【Thêm phòng ban tùy chỉnh】",
-        "new_dept_input_lbl": "Tên phòng ban mới",
         "role_name_lbl": "Tên vai trò *",
         "role_name_ph": "VD: Quản lý nhà máy, Kỹ thuật viên",
         "role_desc_lbl": "Mô tả",
@@ -357,17 +351,12 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
 
         st.markdown(f"#### {L['step1_title']}")
         
-        dept_options_list = available_depts + [L["add_new_dept_opt"]]
+        dept_options_list = available_depts
         curr_dept_idx = dept_options_list.index(default_dept) if default_dept in dept_options_list else 0
         
         st.markdown(f"**{L['dept_select_lbl']}**")
         selected_dept_option = st.radio("dept_radio_group", options=dept_options_list, index=curr_dept_idx, label_visibility="collapsed")
-        
-        if selected_dept_option == L["add_new_dept_opt"]:
-            new_dept_name = st.text_input(L["new_dept_input_lbl"], placeholder="例如: 採購部 (Procurement Dept)")
-            final_department = new_dept_name.strip() if new_dept_name else "未命名部門"
-        else:
-            final_department = selected_dept_option
+        final_department = selected_dept_option
 
         in_name = st.text_input(L["role_name_lbl"], value=default_name, placeholder=L["role_name_ph"])
         in_desc = st.text_input(L["role_desc_lbl"], value=default_desc, placeholder=L["role_desc_ph"])
@@ -436,18 +425,18 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                     st.rerun()
 
     # ----------------------------------------------------
-    # 🏢 Tab 2: 企業部門設置 (Department Setup - 拼圖方塊勾選版)
+    # 🏢 Tab 2: 獨立企業部門與模組管理 (Department & Module Config)
     # ----------------------------------------------------
     with tab_dept_config:
-        st.markdown("### 🏢 企業部門設置與功能模組管理 (🧩 拼圖式權限配置)")
-        st.info("💡 移動端友善：在此管理員可直接新增部門，並透過下方拼圖方塊勾選指派功能模組，不需修改底層程式碼！")
+        st.markdown("### 🏢 獨立企業部門設置與功能模組管理 (🧩 拼圖式權限配置)")
+        st.info("💡 移動端友善：在此您可以**純粹新增部門**（不需綁定職稱），並透過下方拼圖方塊勾選指派功能模組！")
 
         col_d1, col_d2 = st.columns(2)
         with col_d1:
-            st.markdown("#### ➕ 1. 網頁自主新增部門")
-            with st.form("form_create_dept"):
-                new_d_name = st.text_input("新部門名稱與代號 *", placeholder="例如: 越南安衛環保處 (EHS Dept)")
-                new_d_desc = st.text_input("部門職責描述", placeholder="負責廠區勞安與環保合規")
+            st.markdown("#### ➕ 1. 獨立新增部門")
+            with st.form("form_create_dept_isolated"):
+                new_d_name = st.text_input("新部門名稱與代號 *", placeholder="例如: 外勤工程處 (Field Ops)")
+                new_d_desc = st.text_input("部門職責描述", placeholder="負責全公司外勤與工地打卡")
                 if st.form_submit_button("🚀 確認建立新部門", type="primary", use_container_width=True):
                     if new_d_name:
                         dept_key = f"{new_d_name.strip()} ({new_d_desc})" if new_d_desc else new_d_name.strip()
@@ -469,7 +458,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
 
         with col_d2:
             st.markdown("#### 🗑️ 2. 刪除指定部門")
-            with st.form("form_delete_dept"):
+            with st.form("form_delete_dept_isolated"):
                 target_del_dept = st.selectbox("選擇要刪除的部門", options=list(dept_module_tree.keys()))
                 if st.form_submit_button("🗑️ 確認刪除此部門", use_container_width=True):
                     if len(dept_module_tree) > 1:
