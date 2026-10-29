@@ -6,7 +6,7 @@ from sqlalchemy import text
 def render_transaction_tab(engine, inventory_db, logs_db, current_logged_user, lang):
     st.markdown("##### 📥📤 倉庫出入庫與電子簽核領料覆核")
     
-    # 檢查是否為倉管或 Admin 權限
+    # 權限控管：僅允許倉管人員或 Admin 執行直接出入庫
     is_warehouse_manager = current_logged_user in ["admin", "warehouse", "倉管人員"]
     
     if not is_warehouse_manager:
@@ -50,23 +50,24 @@ def render_transaction_tab(engine, inventory_db, logs_db, current_logged_user, l
             """)
 
     st.markdown("---")
-    
-    # 僅允許倉管人員執行直接出入庫，一般同仁表單唯讀或提示
     with st.form("simple_transaction_form"):
         tc1, tc2 = st.columns(2)
         with tc1:
             t_type = st.selectbox("3️⃣ 作業類型", ["📥 物料入庫 (Stock In)", "📤 出庫領料 (Stock Out)"])
         with tc2:
             t_qty = st.number_input("4️⃣ 數量", min_value=1.0, value=1.0)
-        t_note = st.text_input("5️⃣ 備註說明 (請填寫電子簽核單號，例如: APP-2026-001)", placeholder="例如: 依據簽核單號 APP-2026-001 領料...")
-        st.text_input("經辦人員 (自動綁定)", value=str(current_logged_user), disabled=True)
+        
+        t_note = st.text_input("5️⃣ 備註說明 (💡 必填寫電子簽核單號供稽核追溯)", placeholder="例如: 依據簽核單號 APP-2026-001 領料")
+        st.text_input("經辦人員 (系統自動綁定)", value=str(current_logged_user), disabled=True)
 
         submit_disabled = not is_warehouse_manager
-        btn_label = "🚀 確認執行出入庫 (限倉管人員)" if is_warehouse_manager else "🔒 權限不足 (請至電子簽核中心申請)"
+        btn_label = "🚀 確認執行出入庫並寫入資料庫 (限倉管人員)" if is_warehouse_manager else "🔒 權限不足 (請至電子簽核中心申請)"
         
         if st.form_submit_button(btn_label, type="primary", use_container_width=True, disabled=submit_disabled):
             if not chosen_item_str or not selected_item_obj:
                 st.error("❌ 請先選擇物品！")
+            elif not t_note or "APP" not in t_note:
+                st.warning("⚠️ 內控提醒：出庫作業請務必在備註欄填寫正式的【電子簽核單號】（例如 APP-2026-001）以供會計與 ISO 稽核！")
             else:
                 qty_val = float(t_qty)
                 new_qty = selected_item_obj["qty"]
@@ -78,7 +79,7 @@ def render_transaction_tab(engine, inventory_db, logs_db, current_logged_user, l
                         new_qty -= qty_val
                         log_type = "📤 出庫 (Out)"
                     else:
-                        st.error("❌ 庫存不足！")
+                        st.error("❌ 庫存不足，無法出庫！")
                         st.stop()
 
                 today_str = str(datetime.date.today())
@@ -93,12 +94,12 @@ def render_transaction_tab(engine, inventory_db, logs_db, current_logged_user, l
                                 "n": selected_item_obj["item_name"], "q": qty_val, "op": str(current_logged_user),
                                 "d": today_str, "note": f"{t_note} [儲位:{selected_item_obj['location']}]"
                             })
-                        st.success(f"🎉 執行成功！最新庫存：{new_qty} {selected_item_obj['unit']}")
+                        st.success(f"🎉 執行成功並已永久記錄至資料庫！最新庫存：{new_qty} {selected_item_obj['unit']}")
                         st.rerun()
                     except Exception as e:
-                        st.error(f"錯誤: {e}")
+                        st.error(f"寫入資料庫錯誤: {e}")
 
     st.markdown("---")
-    st.markdown("##### 📋 近期庫存異動日誌 (聯動簽核單號追溯)")
+    st.markdown("##### 📋 近期庫存異動稽核日誌 (Persistent Audit Trail)")
     if logs_db:
         st.dataframe(pd.DataFrame(logs_db), use_container_width=True, hide_index=True)
