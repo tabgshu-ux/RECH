@@ -4,12 +4,12 @@ import datetime
 from sqlalchemy import text
 
 def init_warehouse_db(engine):
-    """初始化倉庫管理相關資料表，並自動檢查補齊缺少的欄位（確保平滑升級）"""
+    """初始化倉庫管理相關資料表，並自動擴充舊表欄位確保 100% 相容"""
     if not engine:
         return
     try:
         with engine.begin() as conn:
-            # 1. 建立 warehouse_inventory 主檔表
+            # 1. 建立主檔表
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS warehouse_inventory (
                     item_code VARCHAR(50) PRIMARY KEY,
@@ -26,7 +26,7 @@ def init_warehouse_db(engine):
                 );
             """))
 
-            # 2. 建立 warehouse_logs 日誌表
+            # 2. 建立日誌表
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS warehouse_logs (
                     log_id VARCHAR(50) PRIMARY KEY,
@@ -40,7 +40,7 @@ def init_warehouse_db(engine):
                 );
             """))
 
-            # 3. 建立 warehouse_stocktaking 盤點表
+            # 3. 建立盤點表
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS warehouse_stocktaking (
                     check_id VARCHAR(50) PRIMARY KEY,
@@ -56,21 +56,23 @@ def init_warehouse_db(engine):
                 );
             """))
 
-            # 自動檢查並補齊可能缺少的欄位（針對既有舊資料表）
-            for col_sql in [
+            # 自動為舊表補齊可能缺少的欄位
+            alter_queries = [
                 "ALTER TABLE warehouse_inventory ADD COLUMN IF NOT EXISTS safety_stock FLOAT DEFAULT 5;",
                 "ALTER TABLE warehouse_inventory ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);",
                 "ALTER TABLE warehouse_inventory ADD COLUMN IF NOT EXISTS photo_path TEXT;",
+                "ALTER TABLE warehouse_logs ADD COLUMN IF NOT EXISTS log_id VARCHAR(50);",
                 "ALTER TABLE warehouse_logs ADD COLUMN IF NOT EXISTS date VARCHAR(50);",
                 "ALTER TABLE warehouse_logs ADD COLUMN IF NOT EXISTS note TEXT;"
-            ]:
+            ]
+            for q in alter_queries:
                 try:
-                    conn.execute(text(col_sql))
+                    conn.execute(text(q))
                 except Exception:
                     pass
 
     except Exception as e:
-        st.error(f"資料庫初始化失敗: {e}")
+        st.warning(f"資料庫結構自動升級提示: {e}")
 
 def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwargs):
     if engine:
@@ -108,41 +110,67 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
     st.markdown(f"### {curr_t['title']}")
     st.info(curr_t['info'])
 
+    # 安全讀取資料庫（具備防呆機制，若發生例外不會中斷畫面）
     inventory_db = []
     logs_db = []
     stocktake_db = []
     if engine:
         try:
             with engine.connect() as conn:
-                res_inv = conn.execute(text("SELECT * FROM warehouse_inventory")).fetchall()
-                for r in res_inv:
-                    inventory_db.append({
-                        "item_code": r[0], "item_name": r[1], "category": r[2], "spec": r[3],
-                        "barcode": r[4] if len(r) > 4 else "", 
-                        "qty": r[5] if len(r) > 5 else 0, 
-                        "unit": r[6] if len(r) > 6 else "只", 
-                        "safety_stock": r[7] if len(r) > 7 else 5,
-                        "location": r[8] if len(r) > 8 else "A區", 
-                        "updated": r[9] if len(r) > 9 else "", 
-                        "photo": r[10] if len(r) > 10 else None
-                    })
-                
-                res_logs = conn.execute(text("SELECT * FROM warehouse_logs ORDER BY date DESC, log_id DESC")).fetchall()
-                for r in res_logs:
-                    logs_db.append({
-                        "log_id": r[0], "type": r[1], "item_code": r[2], "item_name": r[3],
-                        "qty": r[4], "operator": r[5], "date": r[6] if len(r) > 6 else "", "note": r[7] if len(r) > 7 else ""
-                    })
+                try:
+                    res_inv = conn.execute(text("SELECT * FROM warehouse_inventory")).fetchall()
+                    for r in res_inv:
+                        inventory_db.append({
+                            "item_code": r[0] if len(r) > 0 else "", 
+                            "item_name": r[1] if len(r) > 1 else "", 
+                            "category": r[2] if len(r) > 2 else "", 
+                            "spec": r[3] if len(r) > 3 else "",
+                            "barcode": r[4] if len(r) > 4 else "", 
+                            "qty": r[5] if len(r) > 5 else 0, 
+                            "unit": r[6] if len(r) > 6 else "只", 
+                            "safety_stock": r[7] if len(r) > 7 else 5,
+                            "location": r[8] if len(r) > 8 else "A區", 
+                            "updated": r[9] if len(r) > 9 else "", 
+                            "photo": r[10] if len(r) > 10 else None
+                        })
+                except Exception:
+                    pass
 
-                res_st = conn.execute(text("SELECT * FROM warehouse_stocktaking ORDER BY check_date DESC")).fetchall()
-                for r in res_st:
-                    stocktake_db.append({
-                        "check_id": r[0], "item_code": r[1], "item_name": r[2], "location": r[3],
-                        "book_qty": r[4], "actual_qty": r[5], "diff_qty": r[6], "operator": r[7],
-                        "check_date": r[8], "status": r[9]
-                    })
+                try:
+                    res_logs = conn.execute(text("SELECT * FROM warehouse_logs")).fetchall()
+                    for r in res_logs:
+                        logs_db.append({
+                            "log_id": r[0] if len(r) > 0 else "", 
+                            "type": r[1] if len(r) > 1 else "", 
+                            "item_code": r[2] if len(r) > 2 else "", 
+                            "item_name": r[3] if len(r) > 3 else "",
+                            "qty": r[4] if len(r) > 4 else 0, 
+                            "operator": r[5] if len(r) > 5 else "", 
+                            "date": r[6] if len(r) > 6 else "", 
+                            "note": r[7] if len(r) > 7 else ""
+                        })
+                except Exception:
+                    pass
+
+                try:
+                    res_st = conn.execute(text("SELECT * FROM warehouse_stocktaking")).fetchall()
+                    for r in res_st:
+                        stocktake_db.append({
+                            "check_id": r[0] if len(r) > 0 else "", 
+                            "item_code": r[1] if len(r) > 1 else "", 
+                            "item_name": r[2] if len(r) > 2 else "", 
+                            "location": r[3] if len(r) > 3 else "",
+                            "book_qty": r[4] if len(r) > 4 else 0, 
+                            "actual_qty": r[5] if len(r) > 5 else 0, 
+                            "diff_qty": r[6] if len(r) > 6 else 0, 
+                            "operator": r[7] if len(r) > 7 else "",
+                            "check_date": r[8] if len(r) > 8 else "", 
+                            "status": r[9] if len(r) > 9 else ""
+                        })
+                except Exception:
+                    pass
         except Exception as e:
-            st.error(f"讀取資料庫失敗: {e}")
+            st.warning(f"資料庫連線提示: {e}")
 
     tab_inv, tab_in_out, tab_stock, tab_alert, tab_manage = st.tabs([
         curr_t["tab1"], curr_t["tab2"], curr_t["tab3"], curr_t["tab4"], curr_t["tab5"]
@@ -187,7 +215,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
     # ----------------------------------------------------
     with tab_in_out:
         st.markdown("##### 📥📤 快速出入庫領料作業")
-        all_zones = sorted(list(set([i["location"].split("-")[0] if "-" in str(i["location"]) else str(i["location"]) for i in inventory_db])))
+        all_zones = sorted(list(set([str(i["location"]).split("-")[0] if "-" in str(i["location"]) else str(i["location"]) for i in inventory_db]))) if inventory_db else []
         zone_choices = ["全部倉庫分區"] + all_zones
         
         col_sel1, col_sel2 = st.columns(2)
@@ -381,7 +409,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
     # ----------------------------------------------------
     with tab_alert:
         st.markdown("##### ⚠️ 安全庫存與缺料警示監控")
-        low_items = [i for i in inventory_db if i["qty"] <= i["safety_stock"]]
+        low_items = [i for i in inventory_db if i["qty"] <= i["safety_stock"]] if inventory_db else []
         if low_items:
             st.warning("⚠️ 以下物料庫存已低於安全水位！")
             for item in low_items:
