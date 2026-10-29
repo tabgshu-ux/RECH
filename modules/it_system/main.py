@@ -2,35 +2,41 @@ import streamlit as st
 import importlib
 
 def render_it_system_module(engine=None, lang="繁體中文", **kwargs):
-    # 資訊管理部的子選單（支援多語系）
     sub_menus = {
         "繁體中文": [
-            "🔒 1. 組織角色權限與部門模組設定 (RBAC & Dept)",
-            "🔌 2. 外部資料庫與 API 串聯設定 (Database Bridge)",
-            "📊 3. 系統稽核日誌與安全監控 (Audit Logs)"
+            "🏢 1. 獨立企業部門與模組拼圖 (Department Config)",
+            "⚙️ 2. 組織角色與權限指派 (RBAC)",
+            "🔌 3. 資料庫與 API 串聯設定 (DB Bridge)",
+            "📊 4. 系統稽核日誌與安全監控 (Audit Logs)"
         ],
         "Tiếng Việt": [
-            "🔒 1. Phân quyền vai trò & Cài đặt phòng ban (RBAC)",
-            "🔌 2. Kết nối CSDL & API (Database Bridge)",
-            "📊 3. Nhật ký kiểm toán hệ thống (Audit Logs)"
+            "🏢 1. Cài đặt phòng ban & Module",
+            "⚙️ 2. Phân quyền vai trò (RBAC)",
+            "🔌 3. Kết nối CSDL & API",
+            "📊 4. Nhật ký kiểm toán"
         ],
         "English": [
-            "🔒 1. Roles, RBAC & Department Setup",
-            "🔌 2. Database Bridge & API Configuration",
-            "📊 3. System Audit Logs"
+            "🏢 1. Department Configuration",
+            "⚙️ 2. Roles & RBAC",
+            "🔌 3. Database Bridge & API",
+            "📊 4. System Audit Logs"
         ]
     }
 
     current_lang = lang if lang in sub_menus else "繁體中文"
     menu_list = sub_menus[current_lang]
 
-    # 手機優先友善的子功能下拉選單
     selected_sub = st.selectbox("📌 選擇 IT 資訊管理子模組 / Select IT Module", menu_list, key="it_system_sub_select")
     st.markdown("---")
 
     try:
-        if "組織角色" in selected_sub or "RBAC" in selected_sub or "Phân quyền" in selected_sub or "Roles" in selected_sub:
-            mod = importlib.import_module("modules.it_system.role_department_manager")
+        if "獨立企業部門" in selected_sub or "Department" in selected_sub or "phòng ban" in selected_sub.lower():
+            mod = importlib.import_module("modules.it_system.department_config")
+            if hasattr(mod, "render"):
+                mod.render(engine=engine, lang=current_lang)
+
+        elif "組織角色" in selected_sub or "RBAC" in selected_sub or "Phân quyền" in selected_sub or "Roles" in selected_sub:
+            mod = importlib.import_module("modules.it_system.role_rbac")
             if hasattr(mod, "render"):
                 mod.render(engine=engine, lang=current_lang)
 
