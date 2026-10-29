@@ -3,8 +3,59 @@ import pandas as pd
 import datetime
 
 def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwargs):
-    st.markdown("### 📦 裕豐電機 (REETECH) - 倉庫庫存與物料條碼照片識別中心")
-    st.info("💡 管理廠內原物料、零組件、配電盤成品，支援照片預覽、條碼/QR Code 掃描識別、出入庫作業與安全庫存預警，幫助新進員工一眼識別正確物料與出入倉儲位。")
+    # 多語系字典定義 (支援繁體中文與越南文)
+    ui_texts = {
+        "繁體中文": {
+            "title": "📦 裕豐電機 (REETECH) - 倉庫庫存與物料條碼照片識別中心",
+            "info": "💡 管理廠內原物料、零組件、配電盤成品，支援照片預覽、條碼掃描、分區儲位確認與安全庫存預警。",
+            "tab1": "📊 即時庫存總表與照片預覽",
+            "tab2": "📥📤 入庫與出庫領料作業",
+            "tab3": "⚠️ 安全庫存預警",
+            "tab4": "⚙️ 物料建檔與照片條碼維護",
+            "search_box": "🔍 搜尋料號、名稱、條碼或儲位...",
+            "cat_filter": "依類別篩選",
+            "all_cat": "全部類別",
+            "trans_title": "📥📤 快速登錄物料入庫或出庫領料",
+            "trans_type": "交易類型 / Loại giao dịch",
+            "trans_in": "📥 物料入庫 (Stock In)",
+            "trans_out": "📤 出庫領料 (Stock Out)",
+            "select_item": "選擇料號與品名",
+            "qty_label": "異動數量",
+            "note_label": "備註說明",
+            "operator_label": "經辦人員",
+            "submit_btn": "💾 確認送出並更新庫存",
+            "location_card": "📍 【出入倉位置與儲位確認 (Vị trí kho)】",
+            "log_title": "📋 近期庫存異動日誌 (Stock Movement History)"
+        },
+        "越南文 (Tiếng Việt)": {
+            "title": "📦 REETECH - Trung tâm Quản lý Kho & Mã vạch Vật tư",
+            "info": "💡 Quản lý nguyên vật liệu, linh kiện, tủ điện. Hỗ trợ xem ảnh, quét mã vạch, xác nhận vị trí kho và cảnh báo tồn kho.",
+            "tab1": "📊 Tổng hợp tồn kho & Xem trước ảnh",
+            "tab2": "📥📤 Nghiệp vụ Nhập / Xuất kho",
+            "tab3": "⚠️ Cảnh báo tồn kho an toàn",
+            "tab4": "⚙️ Quản lý danh mục & Mã vạch",
+            "search_box": "🔍 Tìm kiếm mã, tên, mã vạch hoặc vị trí...",
+            "cat_filter": "Lọc theo danh mục",
+            "all_cat": "Tất cả danh mục",
+            "trans_title": "📥📤 Đăng ký Nhập kho hoặc Xuất kho nhanh",
+            "trans_type": "Loại giao dịch",
+            "trans_in": "📥 Nhập kho (Stock In)",
+            "trans_out": "📤 Xuất kho (Stock Out)",
+            "select_item": "Chọn mã và tên vật tư",
+            "qty_label": "Số lượng thay đổi",
+            "note_label": "Ghi chú",
+            "operator_label": "Người thao tác",
+            "submit_btn": "💾 Xác nhận & Cập nhật kho",
+            "location_card": "📍 【Xác nhận vị trí kho & Phân loại (Vị trí kho)】",
+            "log_title": "📋 Lịch sử biến động kho gần đây"
+        }
+    }
+
+    # 取得當前語系對應的文字 (若無則預設繁體中文)
+    curr_t = ui_texts.get(lang, ui_texts["繁體中文"])
+
+    st.markdown(f"### {curr_t['title']}")
+    st.info(curr_t['info'])
 
     if "warehouse_inventory_db" not in st.session_state:
         st.session_state.warehouse_inventory_db = [
@@ -21,25 +72,25 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
         ]
 
     tab_inv, tab_in_out, tab_alert, tab_manage = st.tabs([
-        "📊 即時庫存總表與照片/條碼預覽 | Tồn kho",
-        "📥📤 入庫與出庫領料作業 (含儲位與類別確認) | Nhập/Xuất kho",
-        "⚠️ 安全庫存預警 | Cảnh báo tồn kho",
-        "⚙️ 物料建檔、照片與條碼維護"
+        curr_t["tab1"],
+        curr_t["tab2"],
+        curr_t["tab3"],
+        curr_t["tab4"]
     ])
 
     # ----------------------------------------------------
-    # Tab 1: 即時庫存總表與照片/條碼預覽
+    # Tab 1: 即時庫存總表與照片預覽
     # ----------------------------------------------------
     with tab_inv:
         col_w1, col_w2 = st.columns([3, 1])
         with col_w1:
-            search_wh = st.text_input("🔍 搜尋料號、名稱、條碼 (Barcode) 或儲位...", key="wh_search_box")
+            search_wh = st.text_input(curr_t["search_box"], key="wh_search_box")
         with col_w2:
-            cat_options = ["全部類別"] + list(set([i["category"] for i in st.session_state.warehouse_inventory_db]))
-            cat_filter = st.selectbox("依類別篩選", cat_options, key="wh_cat_filter")
+            cat_options = [curr_t["all_cat"]] + list(set([i["category"] for i in st.session_state.warehouse_inventory_db]))
+            cat_filter = st.selectbox(curr_t["cat_filter"], cat_options, key="wh_cat_filter")
 
         filtered_items = st.session_state.warehouse_inventory_db
-        if cat_filter != "全部類別":
+        if cat_filter != curr_t["all_cat"]:
             filtered_items = [i for i in filtered_items if i["category"] == cat_filter]
         if search_wh:
             s_low = search_wh.lower()
@@ -53,58 +104,66 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                         if item.get("photo"):
                             st.image(item["photo"], caption=f"料號: {item['item_code']}", width=110)
                         else:
-                            st.markdown("📷 `無照片`")
-                            st.caption("建議補拍外觀以供新進同仁辨識")
+                            st.markdown("📷 `無照片 / Không có ảnh`")
                     with c_info:
                         st.markdown(f"**📦 [{item['item_code']}] {item['item_name']}**")
-                        st.caption(f"🏷️ 條碼/QR Code: `{item.get('barcode', '無條碼')}`")
-                        st.write(f"📁 類別: `{item['category']}` | 規格: `{item['spec']}`")
-                        st.write(f"📍 儲位/分區: **{item['location']}** | 現有庫存: **{item['qty']} {item['unit']}** (安全水位: {item['safety_stock']})")
+                        st.caption(f"🏷️ Barcode: `{item.get('barcode', 'N/A')}`")
+                        st.write(f"📁 類別 (Danh mục): `{item['category']}` | 規格: `{item['spec']}`")
+                        st.write(f"📍 儲位/分區 (Vị trí kho): **{item['location']}** | 庫存: **{item['qty']} {item['unit']}** (安全水位: {item['safety_stock']})")
                     with c_status:
                         is_normal = item["qty"] > item["safety_stock"]
                         color_str = "green" if is_normal else "red"
                         text_str = "🟢 庫存正常" if is_normal else "🔴 低於安全水位"
-                        st.markdown(f"狀態: :{color_str}[{text_str}]")
+                        st.markdown(f":{color_str}[{text_str}]")
                         st.caption(f"更新: {item['updated']}")
                 st.markdown("---")
         else:
             st.info("目前尚無符合條件的庫存資材紀錄。")
 
     # ----------------------------------------------------
-    # Tab 2: 入庫與出庫領料作業 (含儲位與類別確認)
+    # Tab 2: 入庫與出庫領料作業 (乾淨下拉選單 + 獨立儲位確認卡片)
     # ----------------------------------------------------
     with tab_in_out:
-        st.markdown("##### 📥📤 快速登錄物料入庫或出庫領料（支援分區與儲位確認）")
-        item_options = [f"{i['item_code']} - {i['item_name']} 【分類: {i['category']} | 儲位: {i['location']}】" for i in st.session_state.warehouse_inventory_db]
+        st.markdown(f"##### {curr_t['trans_title']}")
+        
+        # 下拉選單保持簡潔：只顯示「料號 - 品名」
+        item_options = [f"{i['item_code']} - {i['item_name']}" for i in st.session_state.warehouse_inventory_db]
         
         with st.form("form_warehouse_transaction"):
             tc1, tc2, tc3 = st.columns(3)
             with tc1:
-                t_type = st.selectbox("交易類型 / Loại giao dịch", ["📥 物料入庫 (Stock In)", "📤 出庫領料 (Stock Out)"])
+                t_type = st.selectbox(curr_t["trans_type"], [curr_t["trans_in"], curr_t["trans_out"]])
             with tc2:
-                t_code = st.selectbox("選擇料號、分類與儲位 / Vị trí & Kho", item_options) if item_options else ""
+                t_code = st.selectbox(curr_t["select_item"], item_options) if item_options else ""
             with tc3:
-                t_qty = st.number_input("異動數量 / Số lượng", min_value=1.0, value=1.0)
+                t_qty = st.number_input(curr_t["qty_label"], min_value=1.0, value=1.0)
 
+            # 獨立且醒目的儲位與分類確認區塊（完全避免擠壓，多語系完美對應）
             if t_code:
                 selected_code = t_code.split(" - ")[0]
                 sel_obj = next((i for i in st.session_state.warehouse_inventory_db if i["item_code"] == selected_code), None)
                 if sel_obj:
-                    st.info(f"📍 【出入倉位置與類別確認】\n- 資材分類: {sel_obj['category']}\n- 正確儲位/分區: {sel_obj['location']}\n- 條碼編號: {sel_obj.get('barcode', 'N/A')}\n- 目前庫存: {sel_obj['qty']} {sel_obj['unit']} (安全水位: {sel_obj['safety_stock']})")
+                    st.success(f"""
+                    {curr_t['location_card']}  
+                    - 📁 **資材分類 (Danh mục)**：`{sel_obj['category']}`  
+                    - 📍 **正確儲位與分區 (Vị trí kệ kho)**：**{sel_obj['location']}**  
+                    - 🏷️ **條碼編號 (Barcode)**：`{sel_obj.get('barcode', 'N/A')}`  
+                    - 📊 **目前庫存 (Tồn kho hiện tại)**：`{sel_obj['qty']} {sel_obj['unit']}` (安全水位: {sel_obj['safety_stock']})
+                    """)
 
-            t_note = st.text_input("備註說明 / Ghi chú", placeholder="例如: 專案領料、廠商送貨入庫")
-            t_operator = st.text_input("經辦人員 / Người thao tác", value="倉庫管理員")
+            t_note = st.text_input(curr_t["note_label"], placeholder="例如: 專案領料、廠商送貨入庫 / Ghi chú...")
+            t_operator = st.text_input(curr_t["operator_label"], value="倉庫管理員")
 
-            if st.form_submit_button("💾 確認送出並更新庫存", type="primary", use_container_width=True):
+            if st.form_submit_button(curr_t["submit_btn"], type="primary", use_container_width=True):
                 if not t_code:
-                    st.error("❌ 目前無可用料號可供異動！")
+                    st.error("❌ 錯誤：無可用料號！")
                 else:
                     code_extracted = t_code.split(" - ")[0]
                     item_obj = next((i for i in st.session_state.warehouse_inventory_db if i["item_code"] == code_extracted), None)
                     
                     if item_obj:
                         qty_val = float(t_qty)
-                        if "入庫" in t_type:
+                        if "入庫" in t_type or "Nhập" in t_type:
                             item_obj["qty"] += qty_val
                             log_type_str = "📥 入庫 (In)"
                         else:
@@ -127,11 +186,11 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                             "date": str(datetime.date.today()),
                             "note": f"{t_note} [儲位:{item_obj['location']}]"
                         })
-                        st.success(f"🎉 庫存異動成功！[{item_obj['item_name']}] 儲位：**{item_obj['location']}**，最新庫存：{item_obj['qty']} {item_obj['unit']}")
+                        st.success(f"🎉 庫存異動成功！儲位：**{item_obj['location']}**，最新庫存：{item_obj['qty']} {item_obj['unit']}")
                         st.rerun()
 
         st.markdown("---")
-        st.markdown("##### 📋 近期庫存異動日誌 (Stock Movement History)")
+        st.markdown(f"##### {curr_t['log_title']}")
         if st.session_state.warehouse_logs_db:
             st.dataframe(pd.DataFrame(st.session_state.warehouse_logs_db), use_container_width=True, hide_index=True)
 
@@ -139,10 +198,10 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
     # Tab 3: 安全庫存預警
     # ----------------------------------------------------
     with tab_alert:
-        st.markdown("##### ⚠️ 安全庫存與缺料警示監控")
+        st.markdown("##### ⚠️ 安全庫存與缺料警示監控 (Cảnh báo tồn kho)")
         low_stock_items = [i for i in st.session_state.warehouse_inventory_db if i["qty"] <= i["safety_stock"]]
         if low_stock_items:
-            st.warning("⚠️ 以下物料庫存已低於安全水位，請盡速聯繫採購部進行補貨！")
+            st.warning("⚠️ 以下物料庫存已低於安全水位，請盡速補貨！")
             for item in low_stock_items:
                 st.error(f"儲位: **{item['location']}** | 料號: `{item['item_code']}` | 品名: {item['item_name']} | 現有庫存: {item['qty']} {item['unit']}")
         else:
@@ -152,8 +211,8 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
     # Tab 4: 物料建檔、照片與條碼維護
     # ----------------------------------------------------
     with tab_manage:
-        st.markdown("##### ⚙️ 倉庫資材主檔、照片與條碼/QR Code 維護")
-        action_mode = st.radio("選擇維護動作", ["➕ 新增資材與照片/條碼/儲位", "✏️ 修改現有資材、照片與儲位", "🗑️ 移除資材品項"], horizontal=True)
+        st.markdown("##### ⚙️ 倉庫資材主檔、照片與條碼/儲位維護")
+        action_mode = st.radio("選擇維護動作 / Chọn thao tác", ["➕ 新增資材與照片/條碼/儲位", "✏️ 修改現有資材、照片與儲位", "🗑️ 移除資材品項"], horizontal=True)
         st.markdown("---")
 
         if action_mode == "➕ 新增資材與照片/條碼/儲位":
