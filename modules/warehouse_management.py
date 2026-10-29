@@ -3,10 +3,25 @@ import pandas as pd
 import datetime
 
 def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwargs):
+    # 自動抓取當前登入的帳號 (對應您左側顯示的 admin 或其他登入者)
+    current_logged_user = "倉庫管理員 (未登入)"
+    if "username" in st.session_state and st.session_state.username:
+        current_logged_user = st.session_state.username
+    elif "user" in st.session_state and st.session_state.user:
+        current_logged_user = str(st.session_state.user)
+    elif "logged_in_user" in st.session_state and st.session_state.logged_in_user:
+        current_logged_user = st.session_state.logged_in_user
+    else:
+        # 兼容常見的 streamlit session 結構
+        for key in ["username", "user", "account", "logged_in", "admin"]:
+            if key in st.session_state and st.session_state[key]:
+                current_logged_user = str(st.session_state[key])
+                break
+
     ui_texts = {
         "繁體中文": {
             "title": "📦 裕豐電機 (REETECH) - 倉庫直覺化管理與快速出入庫",
-            "info": "💡 專為現場同仁設計：點選分區與物品，系統即時顯示照片與正確儲位，滑鼠點兩下輕鬆完成領料與入庫。",
+            "info": "💡 專為現場同仁設計：點選分區與物品，系統即時顯示照片與正確儲位，經辦人員自動鎖定登入帳號以供追溯。",
             "tab1": "📊 即時庫存總表與照片預覽",
             "tab2": "📥📤 快速出入庫領料作業 (極簡直覺)",
             "tab3": "⚠️ 安全庫存預警",
@@ -20,15 +35,15 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
             "trans_out": "📤 出庫領料 (Stock Out)",
             "qty_label": "4️⃣ 輸入異動數量",
             "note_label": "5️⃣ 備註說明 (選填)",
-            "operator_label": "經辦人員",
+            "operator_label": "經辦人員 (系統自動綁定登入帳號，無法更改)",
             "submit_btn": "🚀 確認執行出入庫",
-            "log_title": "📋 近期庫存異動日誌"
+            "log_title": "📋 近期庫存異動日誌 (具備真實帳號追溯)"
         },
         "越南文 (Tiếng Việt)": {
             "title": "📦 REETECH - Quản lý Kho Trực quan & Nhập Xuất Nhanh",
-            "info": "💡 Dành cho nhân viên: Chọn khu vực và vật tư, hệ thống hiện ngay ảnh và vị trí kệ kho.",
+            "info": "💡 Dành cho nhân viên: Chọn khu vực và vật tư, hệ thống hiện ngay ảnh và vị trí kệ kho. Người thao tác tự động gán tài khoản đăng nhập.",
             "tab1": "📊 Tổng hợp tồn kho & Xem ảnh",
-            "tab2": "📥📤 Nhập/Xuất kho nhanh (Đơn giản)",
+            "tab2": "📥📤 Nhập/Xuất kho nhanh",
             "tab3": "⚠️ Cảnh báo tồn kho",
             "tab4": "⚙️ Quản lý danh mục & Mã vạch",
             "search_box": "🔍 Tìm kiếm mã, tên hoặc vị trí...",
@@ -40,7 +55,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
             "trans_out": "📤 Xuất kho (Stock Out)",
             "qty_label": "4️⃣ Số lượng",
             "note_label": "5️⃣ Ghi chú",
-            "operator_label": "Người thao tác",
+            "operator_label": "Người thao tác (Tự động khóa theo tài khoản)",
             "submit_btn": "🚀 Xác nhận thực hiện",
             "log_title": "📋 Lịch sử giao dịch kho"
         }
@@ -61,8 +76,8 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
 
     if "warehouse_logs_db" not in st.session_state:
         st.session_state.warehouse_logs_db = [
-            {"log_id": "LOG-2026-001", "type": "📥 入庫 (In)", "item_code": "MCCB-400L", "item_name": "MCCB 3P 400AF 315AT 50KA", "qty": 20, "operator": "倉庫管理員", "date": "2026-10-20", "note": "採購部到貨驗收上架"},
-            {"log_id": "LOG-2026-002", "type": "📤 出庫 (Out)", "item_code": "CT-300-5A", "item_name": "比流器 CT300/5A", "qty": 3, "operator": "配盤組裝員", "date": "2026-10-22", "note": "領料投入西寧廠高壓配盤專案"}
+            {"log_id": "LOG-2026-001", "type": "📥 入庫 (In)", "item_code": "MCCB-400L", "item_name": "MCCB 3P 400AF 315AT 50KA", "qty": 20, "operator": "admin", "date": "2026-10-20", "note": "採購部到貨驗收上架"},
+            {"log_id": "LOG-2026-002", "type": "📤 出庫 (Out)", "item_code": "CT-300-5A", "item_name": "比流器 CT300/5A", "qty": 3, "operator": "admin", "date": "2026-10-22", "note": "領料投入西寧廠高壓配盤專案"}
         ]
 
     tab_inv, tab_in_out, tab_alert, tab_manage = st.tabs([
@@ -105,12 +120,11 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
             st.info("目前無符合條件的庫存紀錄。")
 
     # ----------------------------------------------------
-    # Tab 2: 快速出入庫領料作業（左右直覺對照設計）
+    # Tab 2: 快速出入庫領料作業（經辦人員自動綁定登入帳號）
     # ----------------------------------------------------
     with tab_in_out:
         st.markdown(f"##### {curr_t['tab2']}")
 
-        # 步驟 1 & 2：分區篩選與物品選擇
         all_zones = sorted(list(set([i["location"].split("-")[0] if "-" in i["location"] else i["location"] for i in st.session_state.warehouse_inventory_db])))
         zone_choices = [curr_t["all_zone"]] + all_zones
         
@@ -129,7 +143,6 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
 
         st.markdown("---")
 
-        # 核心亮點：選定物品後，立刻以「左右大圖對照」顯示物品長相與正確儲位，絕不弄錯！
         selected_item_obj = None
         if chosen_item_str:
             target_code = chosen_item_str.split(" ➔ ")[0]
@@ -142,7 +155,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                 if selected_item_obj.get("photo"):
                     st.image(selected_item_obj["photo"], width=180)
                 else:
-                    st.warning("⚠️ 尚未上傳照片，建議至分頁4補拍上傳")
+                    st.warning("⚠️ 尚未上傳照片")
             with col_preview_info:
                 st.markdown("##### 📍 正確出入倉位置確認")
                 st.success(f"""
@@ -156,7 +169,6 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
 
         st.markdown("---")
 
-        # 步驟 3, 4, 5：交易執行
         with st.form("simple_transaction_form"):
             tc1, tc2 = st.columns(2)
             with tc1:
@@ -165,7 +177,9 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                 t_qty = st.number_input(curr_t["qty_label"], min_value=1.0, value=1.0)
 
             t_note = st.text_input(curr_t["note_label"], placeholder="例如: 專案領料、廠商送貨...")
-            t_operator = st.text_input(curr_t["operator_label"], value="倉庫管理員")
+            
+            # 經辦人員改為顯示當前真實登入帳號，並透過 text_input(..., disabled=True) 鎖定唯讀無法更改！
+            st.text_input(curr_t["operator_label"], value=str(current_logged_user), disabled=True)
 
             if st.form_submit_button(curr_t["submit_btn"], type="primary", use_container_width=True):
                 if not chosen_item_str or not selected_item_obj:
@@ -190,11 +204,11 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                         "item_code": selected_item_obj["item_code"],
                         "item_name": selected_item_obj["item_name"],
                         "qty": qty_val,
-                        "operator": t_operator,
+                        "operator": str(current_logged_user),  # 紀錄真實登入帳號
                         "date": str(datetime.date.today()),
                         "note": f"{t_note} [儲位:{selected_item_obj['location']}]"
                     })
-                    st.success(f"🎉 執行成功！儲位 [{selected_item_obj['location']}] 最新庫存：{selected_item_obj['qty']} {selected_item_obj['unit']}")
+                    st.success(f"🎉 執行成功！經辦帳號：[{current_logged_user}]，儲位：[{selected_item_obj['location']}] 最新庫存：{selected_item_obj['qty']} {selected_item_obj['unit']}")
                     st.rerun()
 
         st.markdown("---")
@@ -237,7 +251,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                     n_unit = st.text_input("單位", value="只")
                     n_safe = st.number_input("安全水位", value=5.0)
 
-                up_file = st.file_uploader("📷 上傳物品照片 (讓新進員工一眼看懂)", type=["jpg", "png", "jpeg"])
+                up_file = st.file_uploader("📷 上傳物品照片", type=["jpg", "png", "jpeg"])
 
                 if st.form_submit_button("💾 儲存新物料", type="primary", use_container_width=True):
                     if n_code and n_name and n_loc:
