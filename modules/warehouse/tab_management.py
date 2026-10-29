@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy import text
 
 def render_management_tab(engine, inventory_db, lang):
-    st.markdown("##### ⚙️ 管理部倉庫：物料建檔、照片與安全水位設定")
+    st.markdown("##### ⚙️ 倉庫資材主檔與安全水位設定")
     action_mode = st.radio("選擇操作", ["➕ 新增物料", "✏️ 修改物料與安全水位", "🗑️ 刪除物料"], horizontal=True)
     st.markdown("---")
 
@@ -39,16 +39,16 @@ def render_management_tab(engine, inventory_db, lang):
                                     "b": n_barcode.strip(), "q": n_qty, "u": n_unit.strip(), "safe": n_safe,
                                     "loc": n_loc.strip(), "up": str(datetime.date.today()), "p": up_file if up_file else None
                                 })
-                            st.success(f"✅ 成功新增料號 `{n_code}`！")
+                            st.success(f"✅ 成功將料號 `{n_code}` 寫入資料庫！")
                             st.rerun()
                         except Exception as e:
-                            st.error(f"寫入失敗: {e}")
+                            st.error(f"寫入資料庫失敗: {e}")
                 else:
                     st.warning("請填寫必填欄位！")
 
     elif action_mode == "✏️ 修改物料與安全水位":
         if not inventory_db:
-            st.info("無物料可修改")
+            st.info("目前無物料可修改")
         else:
             edit_str = st.selectbox("選擇物料", [f"{i['item_code']} - {i['item_name']} (庫存: {i['qty']} {i['unit']})" for i in inventory_db])
             t_code = edit_str.split(" - ")[0]
@@ -72,7 +72,7 @@ def render_management_tab(engine, inventory_db, lang):
                                         "n": e_name, "l": e_loc, "q": e_qty, "s": e_safe,
                                         "u": str(datetime.date.today()), "p": e_photo if e_photo else None, "c": t_code
                                     })
-                                st.success("更新成功！")
+                                st.success("資料庫更新成功！")
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"更新失敗: {e}")
@@ -80,12 +80,12 @@ def render_management_tab(engine, inventory_db, lang):
     elif action_mode == "🗑️ 刪除物料":
         if inventory_db:
             del_str = st.selectbox("選擇要刪除的料號", [i["item_code"] for i in inventory_db])
-            if st.button("🗑️ 確認刪除", type="primary"):
+            if st.button("🗑️ 確認從資料庫永久刪除", type="primary"):
                 if engine:
                     try:
                         with engine.begin() as conn:
                             conn.execute(text("DELETE FROM warehouse_inventory WHERE item_code = :c"), {"c": del_str})
-                        st.success("已刪除！")
+                        st.success(f"已成功從資料庫刪除料號 {del_str}！")
                         st.rerun()
                     except Exception as e:
                         st.error(f"刪除失敗: {e}")
