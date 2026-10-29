@@ -4,7 +4,14 @@ import datetime
 from sqlalchemy import text
 
 def render_transaction_tab(engine, inventory_db, logs_db, current_logged_user, lang):
-    st.markdown("##### 📥📤 快速出入庫領料作業")
+    st.markdown("##### 📥📤 倉庫出入庫與電子簽核領料覆核")
+    
+    # 檢查是否為倉管或 Admin 權限
+    is_warehouse_manager = current_logged_user in ["admin", "warehouse", "倉管人員"]
+    
+    if not is_warehouse_manager:
+        st.warning("🔒 【內控提示】您目前為一般檢視權限。若需領用備品或申請物料，請至側邊欄的 **【電子簽核中心】** 提交領料單，經主管核准後由倉管人員進行系統出庫。")
+    
     all_zones = sorted(list(set([str(i["location"]).split("-")[0] if "-" in str(i["location"]) else str(i["location"]) for i in inventory_db]))) if inventory_db else []
     zone_choices = ["全部倉庫分區"] + all_zones
     
@@ -43,16 +50,21 @@ def render_transaction_tab(engine, inventory_db, logs_db, current_logged_user, l
             """)
 
     st.markdown("---")
+    
+    # 僅允許倉管人員執行直接出入庫，一般同仁表單唯讀或提示
     with st.form("simple_transaction_form"):
         tc1, tc2 = st.columns(2)
         with tc1:
             t_type = st.selectbox("3️⃣ 作業類型", ["📥 物料入庫 (Stock In)", "📤 出庫領料 (Stock Out)"])
         with tc2:
             t_qty = st.number_input("4️⃣ 數量", min_value=1.0, value=1.0)
-        t_note = st.text_input("5️⃣ 備註說明", placeholder="例如: 專案領料...")
+        t_note = st.text_input("5️⃣ 備註說明 (請填寫電子簽核單號，例如: APP-2026-001)", placeholder="例如: 依據簽核單號 APP-2026-001 領料...")
         st.text_input("經辦人員 (自動綁定)", value=str(current_logged_user), disabled=True)
 
-        if st.form_submit_button("🚀 確認執行出入庫", type="primary", use_container_width=True):
+        submit_disabled = not is_warehouse_manager
+        btn_label = "🚀 確認執行出入庫 (限倉管人員)" if is_warehouse_manager else "🔒 權限不足 (請至電子簽核中心申請)"
+        
+        if st.form_submit_button(btn_label, type="primary", use_container_width=True, disabled=submit_disabled):
             if not chosen_item_str or not selected_item_obj:
                 st.error("❌ 請先選擇物品！")
             else:
@@ -87,6 +99,6 @@ def render_transaction_tab(engine, inventory_db, logs_db, current_logged_user, l
                         st.error(f"錯誤: {e}")
 
     st.markdown("---")
-    st.markdown("##### 📋 近期庫存異動日誌")
+    st.markdown("##### 📋 近期庫存異動日誌 (聯動簽核單號追溯)")
     if logs_db:
         st.dataframe(pd.DataFrame(logs_db), use_container_width=True, hide_index=True)
