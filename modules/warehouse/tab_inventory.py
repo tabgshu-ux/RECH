@@ -1,7 +1,9 @@
 import streamlit as st
 
 def render_inventory_tab(inventory_db, lang):
-    st.markdown("##### 📊 管理部倉庫：全廠各品項即時庫存總覽")
+    st.markdown("##### 📊 全廠共用倉庫：即時庫存查詢中心 (權限檢視模式)")
+    st.info("💡 說明：依據公司權限設定，所有授權同仁可在此隨時查詢各品項剩餘數量、儲位與實物照片。如需領用或申請物料，請至【電子簽核中心】提出申請。")
+    
     search_wh = st.text_input("🔍 搜尋料號、名稱、條碼或儲位...", key="wh_search_box")
     
     filtered_items = inventory_db
@@ -21,7 +23,7 @@ def render_inventory_tab(inventory_db, lang):
                 with c_info:
                     st.markdown(f"**📦 [{item['item_code']}] {item['item_name']}**")
                     st.write(f"📁 類別: `{item['category']}` | 📍 儲位: **{item['location']}** | 🏷️ 條碼: `{item.get('barcode', 'N/A')}`")
-                    st.markdown(f"📊 **剩餘庫存：`{item['qty']} {item['unit']}`** (安全水位: {item['safety_stock']})")
+                    st.markdown(f"📊 **剩餘庫存數量：`{item['qty']} {item['unit']}`** (安全水位: {item['safety_stock']})")
                 with c_status:
                     is_normal = item["qty"] > item["safety_stock"]
                     color_str = "green" if is_normal else "red"
@@ -29,4 +31,4 @@ def render_inventory_tab(inventory_db, lang):
                     st.markdown(f":{color_str}[{text_str}]")
             st.markdown("---")
     else:
-        st.info("目前無符合搜尋條件的庫存紀錄。請至分頁5新增物料。")
+        st.info("目前無符合搜尋條件的庫存紀錄。")
