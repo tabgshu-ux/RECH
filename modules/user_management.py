@@ -128,9 +128,9 @@ USER_MGMT_I18N = {
 DEFAULT_DEPARTMENTS = [
     "📈 總經理室 (Executive Office)",
     "👔 管理部 (Management Dept)",
-    "📦 倉庫管理 (Warehouse Management)",
     "🛠️ 工程與設計管理中心 (Engineering & Design Center)",
     "🏭 生產部 (Production Dept)",
+    "📦 倉庫管理 (Warehouse Management)",
     "💻 資訊管理部 (IT & System)"
 ]
 
@@ -256,9 +256,6 @@ def get_department_module_tree():
                 "💰 員工薪資計算與保險扣除",
                 "📄 電子發票綜合管理與 XML 歸檔"
             ],
-            "📦 倉庫管理 (Warehouse Management)": [
-                "📦 [倉儲] 倉庫庫存與資材條碼管理"
-            ],
             "✍️ 全公司電子簽核中心 (Approval Center)": [
                 "✍️ 提交請假/採購與即時進度追蹤 / 審核"
             ],
@@ -278,6 +275,9 @@ def get_department_module_tree():
                 "✂️ [板金] 板金加工組工單與條碼",
                 "🎨 [塗料] 粉體塗裝烤漆組品管",
                 "⚡ [配盤] 配電盤組裝配線組"
+            ],
+            "📦 倉庫管理 (Warehouse Management)": [
+                "📦 [倉儲] 倉庫庫存與資材條碼管理"
             ],
             "💻 資訊管理部 (IT & System)": [
                 "🔒 系統角色權限與模組開關設定",
