@@ -4,7 +4,7 @@ import datetime
 
 def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwargs):
     st.markdown("### 📦 裕豐電機 (REETECH) - 倉庫庫存與物料條碼照片識別中心")
-    st.info("💡 管理廠內原物料、零組件、配電盤成品，支援照片預覽、條碼/QR Code 掃描識別、出入庫作業與安全庫存預警，幫助新進員工一眼識別正確物料。")
+    st.info("💡 管理廠內原物料、零組件、配電盤成品，支援照片預覽、條碼/QR Code 掃描識別、出入庫作業與安全庫存預警，幫助新進員工一眼識別正確物料與出入倉儲位。")
 
     if "warehouse_inventory_db" not in st.session_state:
         st.session_state.warehouse_inventory_db = [
@@ -22,7 +22,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
 
     tab_inv, tab_in_out, tab_alert, tab_manage = st.tabs([
         "📊 即時庫存總表與照片/條碼預覽 | Tồn kho",
-        "📥📤 入庫與出庫領料作業 | Nhập/Xuất kho",
+        "📥📤 入庫與出庫領料作業 (含儲位與類別確認) | Nhập/Xuất kho",
         "⚠️ 安全庫存預警 | Cảnh báo tồn kho",
         "⚙️ 物料建檔、照片與條碼維護"
     ])
@@ -59,7 +59,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                         st.markdown(f"**📦 [{item['item_code']}] {item['item_name']}**")
                         st.caption(f"🏷️ 條碼/QR Code: `{item.get('barcode', '無條碼')}`")
                         st.write(f"📁 類別: `{item['category']}` | 規格: `{item['spec']}`")
-                        st.write(f"📍 儲位: **{item['location']}** | 現有庫存: **{item['qty']} {item['unit']}** (安全水位: {item['safety_stock']})")
+                        st.write(f"📍 儲位/分區: **{item['location']}** | 現有庫存: **{item['qty']} {item['unit']}** (安全水位: {item['safety_stock']})")
                     with c_status:
                         is_normal = item["qty"] > item["safety_stock"]
                         color_str = "green" if is_normal else "red"
@@ -71,19 +71,26 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
             st.info("目前尚無符合條件的庫存資材紀錄。")
 
     # ----------------------------------------------------
-    # Tab 2: 入庫與出庫領料作業
+    # Tab 2: 入庫與出庫領料作業 (含儲位與類別確認)
     # ----------------------------------------------------
     with tab_in_out:
-        st.markdown("##### 📥📤 快速登錄物料入庫或出庫領料")
+        st.markdown("##### 📥📤 快速登錄物料入庫或出庫領料（支援分區與儲位確認）")
+        item_options = [f"{i['item_code']} - {i['item_name']} 【分類: {i['category']} | 儲位: {i['location']}】" for i in st.session_state.warehouse_inventory_db]
+        
         with st.form("form_warehouse_transaction"):
             tc1, tc2, tc3 = st.columns(3)
             with tc1:
                 t_type = st.selectbox("交易類型 / Loại giao dịch", ["📥 物料入庫 (Stock In)", "📤 出庫領料 (Stock Out)"])
             with tc2:
-                item_options = [f"{i['item_code']} - {i['item_name']} (條碼:{i.get('barcode','N/A')})" for i in st.session_state.warehouse_inventory_db]
-                t_code = st.selectbox("選擇料號與條碼 / Mã vật tư", item_options) if item_options else ""
+                t_code = st.selectbox("選擇料號、分類與儲位 / Vị trí & Kho", item_options) if item_options else ""
             with tc3:
                 t_qty = st.number_input("異動數量 / Số lượng", min_value=1.0, value=1.0)
+
+            if t_code:
+                selected_code = t_code.split(" - ")[0]
+                sel_obj = next((i for i in st.session_state.warehouse_inventory_db if i["item_code"] == selected_code), None)
+                if sel_obj:
+                    st.info(f"📍 【出入倉位置與類別確認】\n- 資材分類: {sel_obj['category']}\n- 正確儲位/分區: {sel_obj['location']}\n- 條碼編號: {sel_obj.get('barcode', 'N/A')}\n- 目前庫存: {sel_obj['qty']} {sel_obj['unit']} (安全水位: {sel_obj['safety_stock']})")
 
             t_note = st.text_input("備註說明 / Ghi chú", placeholder="例如: 專案領料、廠商送貨入庫")
             t_operator = st.text_input("經辦人員 / Người thao tác", value="倉庫管理員")
@@ -118,9 +125,9 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                             "qty": qty_val,
                             "operator": t_operator,
                             "date": str(datetime.date.today()),
-                            "note": t_note
+                            "note": f"{t_note} [儲位:{item_obj['location']}]"
                         })
-                        st.success(f"🎉 庫存異動成功！[{item_obj['item_name']}] 目前最新庫存：{item_obj['qty']} {item_obj['unit']}")
+                        st.success(f"🎉 庫存異動成功！[{item_obj['item_name']}] 儲位：**{item_obj['location']}**，最新庫存：{item_obj['qty']} {item_obj['unit']}")
                         st.rerun()
 
         st.markdown("---")
@@ -137,7 +144,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
         if low_stock_items:
             st.warning("⚠️ 以下物料庫存已低於安全水位，請盡速聯繫採購部進行補貨！")
             for item in low_stock_items:
-                st.error(f"料號: `{item['item_code']}` | 條碼: {item.get('barcode','N/A')} | 品名: {item['item_name']} | 現有庫存: {item['qty']} {item['unit']} (安全水位: {item['safety_stock']})")
+                st.error(f"儲位: **{item['location']}** | 料號: `{item['item_code']}` | 品名: {item['item_name']} | 現有庫存: {item['qty']} {item['unit']}")
         else:
             st.success("🟢 目前所有倉庫物料庫存皆高於安全水位，供應鏈狀態正常！")
 
@@ -146,29 +153,28 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
     # ----------------------------------------------------
     with tab_manage:
         st.markdown("##### ⚙️ 倉庫資材主檔、照片與條碼/QR Code 維護")
-        
-        action_mode = st.radio("選擇維護動作", ["➕ 新增資材與照片/條碼", "✏️ 修改現有資材、照片與條碼", "🗑️ 移除資材品項"], horizontal=True)
+        action_mode = st.radio("選擇維護動作", ["➕ 新增資材與照片/條碼/儲位", "✏️ 修改現有資材、照片與儲位", "🗑️ 移除資材品項"], horizontal=True)
         st.markdown("---")
 
-        if action_mode == "➕ 新增資材與照片/條碼":
+        if action_mode == "➕ 新增資材與照片/條碼/儲位":
             with st.form("form_add_item"):
                 c1, c2 = st.columns(2)
                 with c1:
                     new_code = st.text_input("料號 (Item Code) *", placeholder="例如: MCCB-600L")
                     new_name = st.text_input("品名規格名稱 (Item Name) *", placeholder="例如: 600A 無熔絲開關")
-                    new_cat = st.text_input("資材類別 (Category) *", placeholder="例如: 配電元件")
+                    new_cat = st.text_input("資材類別 / 分類 *", placeholder="例如: 配電元件")
                     new_spec = st.text_input("詳細規格 (Specification)", placeholder="例如: TBX-600L")
                 with c2:
                     new_barcode = st.text_input("條碼 / QR Code 編號 *", placeholder="例如: 893500123405")
+                    new_loc = st.text_input("倉庫儲位 / 分區位置 *", placeholder="例如: A區-02櫃 或 B區-05架")
                     new_qty = st.number_input("初始庫存數量 (Initial Qty)", min_value=0.0, value=10.0)
                     new_unit = st.text_input("計量單位 (Unit) *", value="只")
                     new_safety = st.number_input("安全庫存水位 (Safety Stock)", min_value=0.0, value=5.0)
-                    new_loc = st.text_input("倉庫儲位 (Location)", value="A區-02櫃")
 
                 uploaded_file = st.file_uploader("📷 上傳物品外觀照片 (供新進員工識別)", type=["jpg", "png", "jpeg"])
 
                 if st.form_submit_button("💾 確認新增資材", type="primary", use_container_width=True):
-                    if new_code and new_name and new_cat and new_unit:
+                    if new_code and new_name and new_cat and new_unit and new_loc:
                         if any(i["item_code"] == new_code.strip() for i in st.session_state.warehouse_inventory_db):
                             st.error(f"❌ 錯誤：料號 `{new_code}` 已存在！")
                         else:
@@ -185,16 +191,16 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                                 "updated": str(datetime.date.today()),
                                 "photo": uploaded_file if uploaded_file else None
                             })
-                            st.success(f"✅ 成功新增資材：`{new_code} - {new_name}`！")
+                            st.success(f"✅ 成功新增資材與儲位 [{new_loc}]：`{new_code} - {new_name}`！")
                             st.rerun()
                     else:
-                        st.warning("⚠️ 請完整填寫所有必填欄位！")
+                        st.warning("⚠️ 請完整填寫所有必填欄位（料號、品名、類別、儲位、單位）！")
 
-        elif action_mode == "✏️ 修改現有資材、照片與條碼":
+        elif action_mode == "✏️ 修改現有資材、照片與儲位":
             if not st.session_state.warehouse_inventory_db:
                 st.info("目前無任何資材可供修改。")
             else:
-                edit_target_str = st.selectbox("選擇要修改的資材料號", [i["item_code"] + " - " + i["item_name"] for i in st.session_state.warehouse_inventory_db])
+                edit_target_str = st.selectbox("選擇要修改的資材料號", [f"{i['item_code']} - {i['item_name']} (儲位:{i['location']})" for i in st.session_state.warehouse_inventory_db])
                 target_code = edit_target_str.split(" - ")[0]
                 target_item = next((i for i in st.session_state.warehouse_inventory_db if i["item_code"] == target_code), None)
 
@@ -203,14 +209,14 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                         ec1, ec2 = st.columns(2)
                         with ec1:
                             edit_name = st.text_input("品名規格名稱", value=target_item["item_name"])
-                            edit_cat = st.text_input("資材類別", value=target_item["category"])
+                            edit_cat = st.text_input("資材類別 / 分類", value=target_item["category"])
                             edit_spec = st.text_input("詳細規格", value=target_item["spec"])
                             edit_barcode = st.text_input("條碼 / QR Code 編號", value=target_item.get("barcode", ""))
                         with ec2:
+                            edit_loc = st.text_input("倉庫儲位 / 分區位置", value=target_item["location"])
                             edit_qty = st.number_input("現有庫存數量", min_value=0.0, value=float(target_item["qty"]))
                             edit_unit = st.text_input("計量單位", value=target_item["unit"])
                             edit_safety = st.number_input("安全庫存水位", min_value=0.0, value=float(target_item["safety_stock"]))
-                            edit_loc = st.text_input("倉庫儲位", value=target_item["location"])
 
                         edit_photo = st.file_uploader("📷 更新物品照片", type=["jpg", "png", "jpeg"], key="edit_photo_upload")
 
@@ -219,22 +225,22 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                             target_item["category"] = edit_cat.strip()
                             target_item["spec"] = edit_spec.strip()
                             target_item["barcode"] = edit_barcode.strip()
+                            target_item["location"] = edit_loc.strip()
                             target_item["qty"] = edit_qty
                             target_item["unit"] = edit_unit.strip()
                             target_item["safety_stock"] = edit_safety
-                            target_item["location"] = edit_loc.strip()
                             target_item["updated"] = str(datetime.date.today())
                             if edit_photo:
                                 target_item["photo"] = edit_photo
 
-                            st.success(f"✅ 料號 `{target_code}` 資料與照片條碼已成功更新！")
+                            st.success(f"✅ 料號 `{target_code}` 的儲位 **{edit_loc}** 與資料已成功更新！")
                             st.rerun()
 
         elif action_mode == "🗑️ 移除資材品項":
             if not st.session_state.warehouse_inventory_db:
                 st.info("目前無任何資材可供移除。")
             else:
-                del_target_str = st.selectbox("選擇要移除的資材料號", [i["item_code"] + " - " + i["item_name"] for i in st.session_state.warehouse_inventory_db], key="del_select")
+                del_target_str = st.selectbox("選擇要移除的資材料號", [f"{i['item_code']} - {i['item_name']} (儲位:{i['location']})" for i in st.session_state.warehouse_inventory_db], key="del_select")
                 del_code = del_target_str.split(" - ")[0]
 
                 st.warning(f"⚠️ 您即將從庫存系統中徹底移除料號：`{del_code}`。此動作無法復原，請確認！")
