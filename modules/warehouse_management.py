@@ -19,19 +19,19 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
     # 3. 多語系 UI 字典
     ui_texts = {
         "繁體中文": {
-            "title": "📦 裕豐電機 (REETECH) - 管理部轄下：倉庫直覺化管理與智慧盤點系統",
-            "info": "💡 歸屬管理部管轄。採用模組化資料夾架構，支援即時庫存查詢、快速出入庫、安全水位警示、物料維護，以及【列印紙本盤點表】與【平板線上盤點】雙模式！",
+            "title": "📦 裕豐電機 (REETECH) - 全廠共用倉庫：直覺化管理與智慧盤點系統",
+            "info": "💡 內控規範：授權同仁可隨時檢視庫存；領用物料請至【電子簽核中心】申請，由倉管人員於此處執行出庫覆核並留存稽核日誌。",
             "tab1": "📊 即時庫存總表與查詢",
-            "tab2": "📥📤 快速出入庫領料",
+            "tab2": "📥📤 出入庫覆核與簽核追蹤",
             "tab3": "📋 庫存盤點作業 (支援列印與平板線上盤點)",
             "tab4": "⚠️ 安全庫存預警",
             "tab5": "⚙️ 物料建檔與維護"
         },
         "越南文 (Tiếng Việt)": {
-            "title": "📦 REETECH - Quản lý Kho & Kiểm kê Thông minh",
-            "info": "💡 Trực thuộc Bộ phận Quản lý. Kiến trúc mô-đun thư mục hỗ trợ kiểm kê trực tuyến và in ấn.",
+            "title": "📦 REETECH - Quản lý Kho chung & Kiểm kê Thông minh",
+            "info": "💡 Quy định nội bộ: Tra cứu tồn kho trực tuyến; yêu cầu lĩnh vật tư qua Trung tâm Phê duyệt điện tử.",
             "tab1": "📊 Tổng hợp tồn kho",
-            "tab2": "📥📤 Nhập/Xuất kho",
+            "tab2": "📥📤 Xuất nhập kho & Theo dõi",
             "tab3": "📋 Kiểm kê kho",
             "tab4": "⚠️ Cảnh báo tồn kho",
             "tab5": "⚙️ Quản lý danh mục"
