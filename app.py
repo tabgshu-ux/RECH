@@ -360,32 +360,3 @@ elif "電子發票" in feat_str or "XML" in feat_str:
     load_module_safely("modules.invoice_management", "render_invoice_management_page", engine=engine, lang=curr_lang)
 
 elif "打卡" in feat_str or "出勤紀錄" in feat_str:
-    load_module_safely("modules.internal_attendance", "render_internal_attendance_page", engine=engine, lang=curr_lang)
-
-elif "廠區" in feat_str or "工作廠區" in feat_str:
-    load_module_safely("modules.factory_management", "render_factory_management_page", engine=engine, lang=curr_lang)
-
-elif "員工" in feat_str or "人事" in feat_str:
-    load_module_safely("modules.employee_management", "render_employee_management", engine=engine, t=ui_t, lang=curr_lang)
-
-elif "車輛進出口門禁" in feat_str or "派車審核" in feat_str:
-    load_module_safely("modules.vehicle_gate_log", "render_vehicle_gate_log_page", engine=engine, lang=curr_lang)
-
-elif "車輛維修" in feat_str or "保養紀錄" in feat_str:
-    load_module_safely("modules.vehicle_maintenance", "render_vehicle_maintenance_page", engine=engine, lang=curr_lang)
-
-elif "倉庫" in feat_str or "倉儲" in feat_str:
-    load_module_safely("modules.warehouse_management", "render_warehouse_management", engine=engine, t=ui_t, lang=curr_lang)
-
-elif "板金" in feat_str:
-    load_module_safely("modules.sheet_metal", "render_sheet_metal_module", engine=engine, t=ui_t, lang=curr_lang)
-
-elif "塗料" in feat_str or "烤漆" in feat_str:
-    load_module_safely("modules.painting", "render_painting_module", engine=engine, t=ui_t, lang=curr_lang)
-
-elif "配盤" in feat_str or "組裝" in feat_str:
-    load_module_safely("modules.assembly", "render_assembly_module", engine=engine, t=ui_t, lang=curr_lang)
-
-else:
-    st.markdown(f"### 📍 目前選定功能：{selected_feat_label}")
-    st.info("💡 此功能模組正在載入中，或您可以前往【資訊管理部 > 系統角色權限與模組開關設定】進行進一步配置。")
