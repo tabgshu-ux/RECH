@@ -3,7 +3,6 @@ import pandas as pd
 import datetime
 
 def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwargs):
-    # 多語系字典定義 (支援繁體中文與越南文)
     ui_texts = {
         "繁體中文": {
             "title": "📦 裕豐電機 (REETECH) - 倉庫庫存與物料條碼照片識別中心",
@@ -14,8 +13,10 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
             "tab4": "⚙️ 物料建檔與照片條碼維護",
             "search_box": "🔍 搜尋料號、名稱、條碼或儲位...",
             "cat_filter": "依類別篩選",
+            "zone_filter": "📍 倉庫分區快速篩選 (Zone Filter)",
+            "all_zone": "全部倉庫分區",
             "all_cat": "全部類別",
-            "trans_title": "📥📤 快速登錄物料入庫或出庫領料",
+            "trans_title": "📥📤 快速登錄物料入庫或出庫領料（即時儲位連動確認）",
             "trans_type": "交易類型 / Loại giao dịch",
             "trans_in": "📥 物料入庫 (Stock In)",
             "trans_out": "📤 出庫領料 (Stock Out)",
@@ -24,7 +25,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
             "note_label": "備註說明",
             "operator_label": "經辦人員",
             "submit_btn": "💾 確認送出並更新庫存",
-            "location_card": "📍 【出入倉位置與儲位確認 (Vị trí kho)】",
+            "location_card": "📍 【即時出入倉位置與儲位確認 (Vị trí kho)】",
             "log_title": "📋 近期庫存異動日誌 (Stock Movement History)"
         },
         "越南文 (Tiếng Việt)": {
@@ -36,6 +37,8 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
             "tab4": "⚙️ Quản lý danh mục & Mã vạch",
             "search_box": "🔍 Tìm kiếm mã, tên, mã vạch hoặc vị trí...",
             "cat_filter": "Lọc theo danh mục",
+            "zone_filter": "📍 Lọc khu vực kho nhanh (Zone Filter)",
+            "all_zone": "Tất cả khu vực kho",
             "all_cat": "Tất cả danh mục",
             "trans_title": "📥📤 Đăng ký Nhập kho hoặc Xuất kho nhanh",
             "trans_type": "Loại giao dịch",
@@ -51,7 +54,6 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
         }
     }
 
-    # 取得當前語系對應的文字 (若無則預設繁體中文)
     curr_t = ui_texts.get(lang, ui_texts["繁體中文"])
 
     st.markdown(f"### {curr_t['title']}")
@@ -121,73 +123,82 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
             st.info("目前尚無符合條件的庫存資材紀錄。")
 
     # ----------------------------------------------------
-    # Tab 2: 入庫與出庫領料作業 (乾淨下拉選單 + 獨立儲位確認卡片)
+    # Tab 2: 入庫與出庫領料作業（分區選項 + 即時連動確認卡片）
     # ----------------------------------------------------
     with tab_in_out:
         st.markdown(f"##### {curr_t['trans_title']}")
         
-        # 下拉選單保持簡潔：只顯示「料號 - 品名」
-        item_options = [f"{i['item_code']} - {i['item_name']}" for i in st.session_state.warehouse_inventory_db]
+        # 1. 倉庫分區快速篩選器 (讓同仁先選分區，如 A區、B區)
+        all_locations = list(set([i["location"].split("-")[0] if "-" in i["location"] else i["location"] for i in st.session_state.warehouse_inventory_db]))
+        zone_options = [curr_t["all_zone"]] + all_locations
+        selected_zone = st.selectbox(curr_t["zone_filter"], zone_options, key="trans_zone_filter")
+
+        # 根據分區篩選可用物料
+        pool_items = st.session_state.warehouse_inventory_db
+        if selected_zone != curr_t["all_zone"]:
+            pool_items = [i for i in pool_items if selected_zone in i["location"]]
+
+        item_options = [f"{i['item_code']} - {i['item_name']} (儲位: {i['location']})" for i in pool_items] if pool_items else []
         
-        with st.form("form_warehouse_transaction"):
-            tc1, tc2, tc3 = st.columns(3)
-            with tc1:
-                t_type = st.selectbox(curr_t["trans_type"], [curr_t["trans_in"], curr_t["trans_out"]])
-            with tc2:
-                t_code = st.selectbox(curr_t["select_item"], item_options) if item_options else ""
-            with tc3:
-                t_qty = st.number_input(curr_t["qty_label"], min_value=1.0, value=1.0)
+        # 2. 交易選項與物料選擇（移出 form 外，確保即時連動！）
+        tc1, tc2, tc3 = st.columns(3)
+        with tc1:
+            t_type = st.selectbox(curr_t["trans_type"], [curr_t["trans_in"], curr_t["trans_out"]], key="trans_type_box")
+        with tc2:
+            t_code = st.selectbox(curr_t["select_item"], item_options, key="trans_item_select") if item_options else ""
+        with tc3:
+            t_qty = st.number_input(curr_t["qty_label"], min_value=1.0, value=1.0, key="trans_qty_box")
 
-            # 獨立且醒目的儲位與分類確認區塊（完全避免擠壓，多語系完美對應）
-            if t_code:
-                selected_code = t_code.split(" - ")[0]
-                sel_obj = next((i for i in st.session_state.warehouse_inventory_db if i["item_code"] == selected_code), None)
-                if sel_obj:
-                    st.success(f"""
-                    {curr_t['location_card']}  
-                    - 📁 **資材分類 (Danh mục)**：`{sel_obj['category']}`  
-                    - 📍 **正確儲位與分區 (Vị trí kệ kho)**：**{sel_obj['location']}**  
-                    - 🏷️ **條碼編號 (Barcode)**：`{sel_obj.get('barcode', 'N/A')}`  
-                    - 📊 **目前庫存 (Tồn kho hiện tại)**：`{sel_obj['qty']} {sel_obj['unit']}` (安全水位: {sel_obj['safety_stock']})
-                    """)
+        # 3. 立即即時顯示所選物料的分類、儲位與庫存卡片（換物品時會立刻跟著變動！）
+        selected_obj = None
+        if t_code:
+            extracted_code = t_code.split(" - ")[0]
+            selected_obj = next((i for i in st.session_state.warehouse_inventory_db if i["item_code"] == extracted_code), None)
+            if selected_obj:
+                st.success(f"""
+                {curr_t['location_card']}  
+                - 📁 **資材分類 (Danh mục)**：`{selected_obj['category']}`  
+                - 📍 **正確儲位與分區 (Vị trí kệ kho)**：**{selected_obj['location']}**  
+                - 🏷️ **條碼編號 (Barcode)**：`{selected_obj.get('barcode', 'N/A')}`  
+                - 📊 **目前庫存 (Tồn kho hiện tại)**：`{selected_obj['qty']} {selected_obj['unit']}` (安全水位: {selected_obj['safety_stock']})
+                """)
 
+        # 4. 提交表單（處理實際庫存扣減與異動紀錄）
+        with st.form("form_warehouse_transaction_action"):
             t_note = st.text_input(curr_t["note_label"], placeholder="例如: 專案領料、廠商送貨入庫 / Ghi chú...")
             t_operator = st.text_input(curr_t["operator_label"], value="倉庫管理員")
 
-            if st.form_submit_button(curr_t["submit_btn"], type="primary", use_container_width=True):
-                if not t_code:
-                    st.error("❌ 錯誤：無可用料號！")
+            submitted = st.form_submit_button(curr_t["submit_btn"], type="primary", use_container_width=True)
+            if submitted:
+                if not t_code or not selected_obj:
+                    st.error("❌ 錯誤：請選擇有效的物料！")
                 else:
-                    code_extracted = t_code.split(" - ")[0]
-                    item_obj = next((i for i in st.session_state.warehouse_inventory_db if i["item_code"] == code_extracted), None)
-                    
-                    if item_obj:
-                        qty_val = float(t_qty)
-                        if "入庫" in t_type or "Nhập" in t_type:
-                            item_obj["qty"] += qty_val
-                            log_type_str = "📥 入庫 (In)"
+                    qty_val = float(t_qty)
+                    if "入庫" in t_type or "Nhập" in t_type:
+                        selected_obj["qty"] += qty_val
+                        log_type_str = "📥 入庫 (In)"
+                    else:
+                        if selected_obj["qty"] >= qty_val:
+                            selected_obj["qty"] -= qty_val
+                            log_type_str = "📤 出庫 (Out)"
                         else:
-                            if item_obj["qty"] >= qty_val:
-                                item_obj["qty"] -= qty_val
-                                log_type_str = "📤 出庫 (Out)"
-                            else:
-                                st.error("❌ 庫存不足，無法出庫！")
-                                st.stop()
+                            st.error("❌ 庫存不足，無法出庫！")
+                            st.stop()
 
-                        item_obj["updated"] = str(datetime.date.today())
-                        
-                        st.session_state.warehouse_logs_db.insert(0, {
-                            "log_id": f"LOG-2026-{len(st.session_state.warehouse_logs_db)+1:03d}",
-                            "type": log_type_str,
-                            "item_code": item_obj["item_code"],
-                            "item_name": item_obj["item_name"],
-                            "qty": qty_val,
-                            "operator": t_operator,
-                            "date": str(datetime.date.today()),
-                            "note": f"{t_note} [儲位:{item_obj['location']}]"
-                        })
-                        st.success(f"🎉 庫存異動成功！儲位：**{item_obj['location']}**，最新庫存：{item_obj['qty']} {item_obj['unit']}")
-                        st.rerun()
+                    selected_obj["updated"] = str(datetime.date.today())
+                    
+                    st.session_state.warehouse_logs_db.insert(0, {
+                        "log_id": f"LOG-2026-{len(st.session_state.warehouse_logs_db)+1:03d}",
+                        "type": log_type_str,
+                        "item_code": selected_obj["item_code"],
+                        "item_name": selected_obj["item_name"],
+                        "qty": qty_val,
+                        "operator": t_operator,
+                        "date": str(datetime.date.today()),
+                        "note": f"{t_note} [儲位:{selected_obj['location']}]"
+                    })
+                    st.success(f"🎉 庫存異動成功！儲位：**{selected_obj['location']}**，最新庫存：{selected_obj['qty']} {selected_obj['unit']}")
+                    st.rerun()
 
         st.markdown("---")
         st.markdown(f"##### {curr_t['log_title']}")
@@ -253,7 +264,7 @@ def render_warehouse_management(engine=None, t=None, lang="繁體中文", **kwar
                             st.success(f"✅ 成功新增資材與儲位 [{new_loc}]：`{new_code} - {new_name}`！")
                             st.rerun()
                     else:
-                        st.warning("⚠️ 請完整填寫所有必填欄位（料號、品名、類別、儲位、單位）！")
+                        st.warning("⚠️ 請完整填寫所有必填欄位！")
 
         elif action_mode == "✏️ 修改現有資材、照片與儲位":
             if not st.session_state.warehouse_inventory_db:
