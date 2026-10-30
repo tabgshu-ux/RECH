@@ -229,7 +229,12 @@ for d_name in department_names:
 if not available_dept_names:
     available_dept_names = department_names
 
-if current_role_clean == "security":
+# 外勤人員專用帳號直接直達外勤打卡頁面
+if current_role_clean in ["fieldworker", "外勤人員", "worker", "外勤技師"]:
+    selected_dept_label = "📍 外勤工程打卡與工作回報 (Field Attendance)"
+    selected_feat_label = "📍 現場外勤打卡與工作回報"
+    st.sidebar.markdown("**📌 外勤專用直達模式**")
+elif current_role_clean == "security":
     selected_dept_label = next((d for d in available_dept_names if "管理部" in d), available_dept_names[0])
     st.sidebar.markdown(f"**{ui_t['parent_header']}**")
     st.sidebar.markdown(f"👔 {selected_dept_label}")
@@ -379,7 +384,7 @@ try:
     elif "倉庫" in dept_str or "Warehouse" in dept_str or "Quản lý Kho" in dept_str:
         load_module_safely("modules.warehouse_management", "render_warehouse_management", engine=engine, t=ui_t, lang=curr_lang)
 
-    # 7. 外勤工程打卡與即時人數
+    # 7. 外勤工程打卡與工作回報 (獨立至頂層選單)
     elif "外勤" in dept_str or "Field Attendance" in dept_str or "Chấm công" in dept_str:
         load_module_safely("modules.management.hr.field_attendance", "render_field_attendance_page", engine=engine, lang=curr_lang, view_mode="management" if "統計" in feat_str else "field_worker")
 
