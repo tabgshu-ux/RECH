@@ -29,7 +29,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
     st.markdown(f"### {t['title']}")
     st.info(t['info'])
 
-    # 建立雙 Tab 架構：將廠內考勤與外勤 GPS 打卡整合在同一個畫面中
+    # 建立雙 Tab 架構：完美整合廠內考勤與外勤 GPS 打卡稽核
     tab1, tab2 = st.tabs([t['tab1_title'], t['tab2_title']])
 
     # ----------------------------------------------------
@@ -78,7 +78,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                             "工程進度回報": r[7], "打卡時間": r[8], "狀態": r[9], "備註": r[10], "現場照片": "📷 已上傳" if r[11] else "無"
                         })
             except Exception as e:
-                st.warning(f"載入外勤打卡資料庫發生錯誤 (DB tables initializing): {e}")
+                st.warning(f"載入外勤打卡資料庫發生異常: {e}")
 
         if field_records:
             df_field = pd.DataFrame(field_records)
