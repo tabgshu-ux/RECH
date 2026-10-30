@@ -217,7 +217,6 @@ else:
     st.markdown(f"### 📍 目前選定功能：{selected_feat_label}")
     st.info("💡 此模組正在運行中，或可至【資訊管理部】進行設定。")
    
-
     except Exception as e:
         st.error(f"⚠️ 載入模組發生異常: {str(e)}")
 
