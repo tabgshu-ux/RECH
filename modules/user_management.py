@@ -22,6 +22,9 @@ MOBILE_USER_MGMT_CSS = """
 """
 st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 
+# ----------------------------------------------------
+# 🌐 完整多語系翻譯字典 (支援 繁中 / 英文 / 越文)
+# ----------------------------------------------------
 USER_MGMT_I18N = {
     "繁體中文": {
         "title": "🔒 IT 管理中心 - 組織架構與企業部門設置",
@@ -53,7 +56,35 @@ USER_MGMT_I18N = {
         "btn_save_role": "💾 儲存組織角色與設定",
         "btn_del_role": "🗑️ 刪除此角色",
         "save_role_success": "🎉 組織角色設定已成功儲存！",
-        "del_role_success": "🗑️ 角色已成功刪除！"
+        "del_role_success": "🗑️ 角色已成功刪除！",
+        "dept_sec_title": "🏢 獨立企業部門設置與功能模組管理 (🧩 拼圖式權限配置)",
+        "dept_sec_info": "💡 移動端友善：在此您可以純粹新增部門（不需綁定職稱），並透過下方拼圖方塊勾選指派功能模組！",
+        "add_dept_header": "➕ 1. 獨立新增部門",
+        "new_dept_lbl": "新部門名稱與代號 *",
+        "new_dept_ph": "例如: 外勤工程處 (Field Ops)",
+        "dept_desc_lbl": "部門職責描述",
+        "dept_desc_ph": "負責全公司外勤與工地打卡",
+        "btn_create_dept": "🚀 確認建立新部門",
+        "del_dept_header": "🗑️ 2. 刪除指定部門",
+        "sel_del_dept_lbl": "選擇要刪除的部門",
+        "btn_del_dept": "🗑️ 確認刪除此部門",
+        "puzzle_header": "🧩 3. 針對指定部門『以拼圖方塊勾選方式管理功能模組』",
+        "sel_target_dept": "🎯 請選擇欲配置功能模組的目標部門：",
+        "enabled_puzzle_title": "📦 目前已啟用的功能拼圖：",
+        "no_enabled_mod": "目前此部門尚無任何啟用的模組。",
+        "puzzle_lib_title": "🛠️ 模組拼圖庫：直接勾選或取消以指派功能至此部門",
+        "btn_save_puzzle": "💾 立即儲存並更新此部門的功能拼圖配置",
+        "db_sec_title": "🔌 外部資料庫與異質資料來源串聯設定 (Database Bridge)",
+        "db_sec_info": "💡 說明：在此處設定與擴充對外連結的其他資料庫。",
+        "db_key_lbl": "資料庫代碼 (Key) *",
+        "db_name_lbl": "資料庫顯示名稱 *",
+        "db_type_lbl": "資料庫類型",
+        "db_host_lbl": "主機位址 (Host / IP)",
+        "db_port_lbl": "通訊埠 (Port)",
+        "db_dbname_lbl": "資料庫名稱 (Database Name)",
+        "db_user_lbl": "使用者帳號 (Username)",
+        "btn_test_db": "🧪 測試資料庫連線",
+        "btn_save_db": "💾 儲存並啟用設定"
     },
     "English": {
         "title": "🔒 IT Admin Center - Org & Dept Setup",
@@ -85,7 +116,35 @@ USER_MGMT_I18N = {
         "btn_save_role": "💾 Save Role Settings",
         "btn_del_role": "🗑️ Delete Role",
         "save_role_success": "🎉 Role settings saved successfully!",
-        "del_role_success": "🗑️ Role deleted successfully!"
+        "del_role_success": "🗑️ Role deleted successfully!",
+        "dept_sec_title": "🏢 Independent Department & Module Management (Puzzle RBAC)",
+        "dept_sec_info": "💡 Mobile-Friendly: Add departments and assign modules via puzzle checkboxes.",
+        "add_dept_header": "➕ 1. Create New Department",
+        "new_dept_lbl": "New Dept Name & Code *",
+        "new_dept_ph": "e.g. Field Ops",
+        "dept_desc_lbl": "Department Description",
+        "dept_desc_ph": "Responsible for field attendance",
+        "btn_create_dept": "🚀 Confirm Create Dept",
+        "del_dept_header": "🗑️ 2. Delete Department",
+        "sel_del_dept_lbl": "Select Dept to Delete",
+        "btn_del_dept": "🗑️ Confirm Delete Dept",
+        "puzzle_header": "🧩 3. Configure Department Modules via Puzzle Checkboxes",
+        "sel_target_dept": "🎯 Select Target Department:",
+        "enabled_puzzle_title": "📦 Currently Enabled Modules:",
+        "no_enabled_mod": "No modules enabled for this department.",
+        "puzzle_lib_title": "🛠️ Module Puzzle Library: Check/Uncheck to assign modules",
+        "btn_save_puzzle": "💾 Save Department Module Configuration",
+        "db_sec_title": "🔌 External Database & Bridge Setup (Database Bridge)",
+        "db_sec_info": "💡 Connect and configure external database sources.",
+        "db_key_lbl": "Database Key *",
+        "db_name_lbl": "Database Display Name *",
+        "db_type_lbl": "Database Type",
+        "db_host_lbl": "Host / IP",
+        "db_port_lbl": "Port",
+        "db_dbname_lbl": "Database Name",
+        "db_user_lbl": "Username",
+        "btn_test_db": "🧪 Test DB Connection",
+        "btn_save_db": "💾 Save & Enable"
     },
     "Tiếng Việt": {
         "title": "🔒 Trung tâm CNTT - Cấu trúc Tổ chức & Phòng ban",
@@ -117,7 +176,35 @@ USER_MGMT_I18N = {
         "btn_save_role": "💾 Lưu cài đặt vai trò",
         "btn_del_role": "🗑️ Xóa vai trò",
         "save_role_success": "🎉 Đã lưu cài đặt vai trò thành công!",
-        "del_role_success": "🗑️ Đã xóa vai trò thành công!"
+        "del_role_success": "🗑️ Đã xóa vai trò thành công!",
+        "dept_sec_title": "🏢 Quản lý Phòng ban & Cấu hình Module động",
+        "dept_sec_info": "💡 Thân thiện di động: Thêm phòng ban và cấu hình module qua hộp kiểm.",
+        "add_dept_header": "➕ 1. Thêm phòng ban mới",
+        "new_dept_lbl": "Tên & Mã phòng ban mới *",
+        "new_dept_ph": "VD: Phòng Vận hành Hiện trường",
+        "dept_desc_lbl": "Mô tả phòng ban",
+        "dept_desc_ph": "Chịu trách nhiệm chấm công hiện trường",
+        "btn_create_dept": "🚀 Xác nhận tạo phòng ban",
+        "del_dept_header": "🗑️ 2. Xóa phòng ban",
+        "sel_del_dept_lbl": "Chọn phòng ban cần xóa",
+        "btn_del_dept": "🗑️ Xác nhận xóa phòng ban",
+        "puzzle_header": "🧩 3. Quản lý module cho phòng ban đã chọn",
+        "sel_target_dept": "🎯 Chọn phòng ban cần cấu hình module:",
+        "enabled_puzzle_title": "📦 Các module đang bật:",
+        "no_enabled_mod": "Phòng ban này chưa có module nào.",
+        "puzzle_lib_title": "🛠️ Thư viện module: Tích chọn để gán chức năng",
+        "btn_save_puzzle": "💾 Lưu cấu hình module cho phòng ban",
+        "db_sec_title": "🔌 Cấu hình kết nối Cơ sở dữ liệu ngoài (Database Bridge)",
+        "db_sec_info": "💡 Cấu hình và kết nối các nguồn dữ liệu bên ngoài.",
+        "db_key_lbl": "Mã CSDL (Key) *",
+        "db_name_lbl": "Tên hiển thị CSDL *",
+        "db_type_lbl": "Loại CSDL",
+        "db_host_lbl": "Địa chỉ Host / IP",
+        "db_port_lbl": "Cổng (Port)",
+        "db_dbname_lbl": "Tên CSDL (Database Name)",
+        "db_user_lbl": "Tài khoản (Username)",
+        "btn_test_db": "🧪 Kiểm tra kết nối CSDL",
+        "btn_save_db": "💾 Lưu và kích hoạt"
     }
 }
 
@@ -229,7 +316,7 @@ def delete_role_db(engine, role_name):
         return False
 
 def get_department_module_tree():
-    """全域共享的部門與子功能樹狀結構（外勤打卡已獨立至頂層選單）"""
+    """全域共享的部門與子功能樹狀結構（極簡命名，對齊 14 項管理部功能）"""
     if "custom_department_module_tree" not in st.session_state:
         st.session_state.custom_department_module_tree = {
             "📈 總經理室 (Executive Office)": [
@@ -253,10 +340,9 @@ def get_department_module_tree():
                 "📊 越南稅務報表",
                 "💵 員工薪資與保險",
                 "📄 電子發票管理"
-    
             ],
             "📍 外勤工程上下班打卡 (Field Attendance)": [
-                "📍 工程現場打卡與工作回報"
+                "📍 現場外勤打卡與工作回報"
             ],
             "✍️ 電子簽核中心 (Approval Center)": [
                 "✍️ 提交請假/採購與即時進度追蹤 / 審核"
@@ -433,16 +519,16 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
     # 🏢 Tab 2: 獨立企業部門與模組管理 (Department & Module Config)
     # ----------------------------------------------------
     with tab_dept_config:
-        st.markdown("### 🏢 獨立企業部門設置與功能模組管理 (🧩 拼圖式權限配置)")
-        st.info("💡 移動端友善：在此您可以**純粹新增部門**（不需綁定職稱），並透過下方拼圖方塊勾選指派功能模組！")
+        st.markdown(f"### {L['dept_sec_title']}")
+        st.info(L["dept_sec_info"])
 
         col_d1, col_d2 = st.columns(2)
         with col_d1:
-            st.markdown("#### ➕ 1. 獨立新增部門")
+            st.markdown(f"#### {L['add_dept_header']}")
             with st.form("form_create_dept_isolated"):
-                new_d_name = st.text_input("新部門名稱與代號 *", placeholder="例如: 外勤工程處 (Field Ops)")
-                new_d_desc = st.text_input("部門職責描述", placeholder="負責全公司外勤與工地打卡")
-                if st.form_submit_button("🚀 確認建立新部門", type="primary", use_container_width=True):
+                new_d_name = st.text_input(L["new_dept_lbl"], placeholder=L["new_dept_ph"])
+                new_d_desc = st.text_input(L["dept_desc_lbl"], placeholder=L["dept_desc_ph"])
+                if st.form_submit_button(L["btn_create_dept"], type="primary", use_container_width=True):
                     if new_d_name:
                         dept_key = f"{new_d_name.strip()} ({new_d_desc})" if new_d_desc else new_d_name.strip()
                         if dept_key not in dept_module_tree:
@@ -451,7 +537,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                                 try:
                                     with engine.begin() as conn_d:
                                         conn_d.execute(text("INSERT INTO system_departments (department_name, description) VALUES (:n, :d) ON CONFLICT DO NOTHING"),
-                                                        {"n": new_d_name.strip(), "d": new_d_desc})
+                                                       {"n": new_d_name.strip(), "d": new_d_desc})
                                 except Exception:
                                     pass
                             st.success(f"🎉 成功建立新部門：{new_d_name}！")
@@ -462,10 +548,10 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                         st.warning("⚠️ 請輸入部門名稱！")
 
         with col_d2:
-            st.markdown("#### 🗑️ 2. 刪除指定部門")
+            st.markdown(f"#### {L['del_dept_header']}")
             with st.form("form_delete_dept_isolated"):
-                target_del_dept = st.selectbox("選擇要刪除的部門", options=list(dept_module_tree.keys()))
-                if st.form_submit_button("🗑️ 確認刪除此部門", use_container_width=True):
+                target_del_dept = st.selectbox(L["sel_del_dept_lbl"], options=list(dept_module_tree.keys()))
+                if st.form_submit_button(L["btn_del_dept"], use_container_width=True):
                     if len(dept_module_tree) > 1:
                         del dept_module_tree[target_del_dept]
                         st.success(f"🗑️ 已成功刪除部門：{target_del_dept}")
@@ -474,40 +560,40 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                         st.error("🚫 系統至少須保留一個部門！")
 
         st.markdown("---")
-        st.markdown("#### 🧩 3. 針對指定部門「以拼圖方塊勾選方式管理功能模組」")
+        st.markdown(f"#### {L['puzzle_header']}")
         
-        target_mod_dept = st.selectbox("🎯 請選擇欲配置功能模組的目標部門：", options=list(dept_module_tree.keys()), key="select_dept_for_modules_puzzle")
+        target_mod_dept = st.selectbox(L["sel_target_dept"], options=list(dept_module_tree.keys()), key="select_dept_for_modules_puzzle")
         current_mods = dept_module_tree[target_mod_dept]
 
-        st.markdown(f"##### 📦 目前【{target_mod_dept}】已啟用的功能拼圖：")
+        st.markdown(f"##### {L['enabled_puzzle_title']}【{target_mod_dept}】")
         if current_mods:
             for cm in current_mods:
                 st.markdown(f"  - `🧩 {cm}`")
         else:
-            st.info("目前此部門尚無任何啟用的模組。")
+            st.info(L["no_enabled_mod"])
 
         st.markdown("---")
-        st.markdown("##### 🛠️ 模組拼圖庫：直接勾選或取消以指派功能至此部門")
+        st.markdown(f"##### {L['puzzle_lib_title']}")
 
         master_all_modules = [
             "🔴 原料價格與 Gemini 智慧採購顧問",
             "📊 財務類顯示資料 (AR/AP & P&L)",
             "⚡ 工程專案進度與現場異常監控",
             "📰 越南經營政策與法規每日動態",
-            "📢 發送公告佈告欄",
-            "👤 員工個人檔案與人事管理",
-            "🏢 廠內員工固定打卡與出勤紀錄",
-            "📍 現場外勤打卡與工作回報",
-            "🥗 幹部宿舍伙食與採購控管",
+            "📢 公司公告",
+            "👤 員工檔案",
+            "📊 員工打卡紀錄",
+            "🔑 密碼修改",
+            "🏠 宿舍與伙食",
             "🏭 工作廠區管理",
-            "🚗 廠區車輛進出口門禁與派車審核",
-            "🛠️ 車輛維修保養紀錄",
-            "🏢 固定資產與設備管理",
-            "🛒 採購與應付帳款 (AP)",
-            "📋 應收帳款與對帳管理中心",
-            "📊 越南稅務標準財務報表 (Thông tư 200)",
-            "💰 員工薪資計算與保險扣除",
-            "📄 電子發票綜合管理與 XML 歸檔",
+            "🚗 車輛進出口",
+            "🔧 車輛維修紀錄",
+            "📦 固定資產管理",
+            "🛒 採購與應付帳款",
+            "💰 應收帳款管理",
+            "📊 越南稅務報表",
+            "💵 員工薪資與保險",
+            "📄 電子發票管理",
             "✍️ 提交請假/採購與即時進度追蹤 / 審核",
             "⚡ 1. 工程主管戰情室與案場管理",
             "⚡ 2. 工程專案報價系統",
@@ -539,7 +625,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                     new_selected_puzzle_mods.append(mod_item)
 
         st.markdown("")
-        if st.button("💾 立即儲存並更新此部門的功能拼圖配置", type="primary", use_container_width=True):
+        if st.button(L["btn_save_puzzle"], type="primary", use_container_width=True):
             dept_module_tree[target_mod_dept] = new_selected_puzzle_mods
             st.success(f"🎉 成功更新【{target_mod_dept}】的功能模組拼圖設定！")
             st.rerun()
@@ -548,26 +634,26 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
     # 🔌 Tab 3: 跨資料庫連線與串聯設定 (Database Bridge)
     # ----------------------------------------------------
     with tab_db_config:
-        st.markdown("### 🔌 外部資料庫與異質資料來源串聯設定 (Database Bridge)")
-        st.info("💡 說明：在此處設定與擴充對外連結的其他資料庫。")
+        st.markdown(f"### {L['db_sec_title']}")
+        st.info(L["db_sec_info"])
 
         with st.form("form_db_bridge_config"):
             col_b1, col_b2 = st.columns(2)
             with col_b1:
-                db_key = st.text_input("資料庫代碼 (Key) *", placeholder="例: factory_old_mysql")
-                db_name = st.text_input("資料庫顯示名稱 *", placeholder="例: 西寧廠舊版資料庫")
-                db_type = st.selectbox("資料庫類型", ["PostgreSQL / Supabase", "MySQL / MariaDB", "Microsoft SQL Server", "Oracle DB", "SQLite"])
+                db_key = st.text_input(L["db_key_lbl"], placeholder="例: factory_old_mysql")
+                db_name = st.text_input(L["db_name_lbl"], placeholder="例: 西寧廠舊版資料庫")
+                db_type = st.selectbox(L["db_type_lbl"], ["PostgreSQL / Supabase", "MySQL / MariaDB", "Microsoft SQL Server", "Oracle DB", "SQLite"])
             with col_b2:
-                db_host = st.text_input("主機位址 (Host / IP)", placeholder="例: 192.168.1.100")
-                db_port = st.text_input("通訊埠 (Port)", placeholder="例: 3306 或 5432")
-                db_dbname = st.text_input("資料庫名稱 (Database Name)", placeholder="例: reetech_legacy")
-                db_user = st.text_input("使用者帳號 (Username)", placeholder="例: db_admin")
+                db_host = st.text_input(L["db_host_lbl"], placeholder="例: 192.168.1.100")
+                db_port = st.text_input(L["db_port_lbl"], placeholder="例: 3306 或 5432")
+                db_dbname = st.text_input(L["db_dbname_lbl"], placeholder="例: reetech_legacy")
+                db_user = st.text_input(L["db_user_lbl"], placeholder="例: db_admin")
 
             col_test, col_save_db = st.columns(2)
             with col_test:
-                btn_test_conn = st.form_submit_button("🧪 測試資料庫連線", use_container_width=True)
+                btn_test_conn = st.form_submit_button(L["btn_test_db"], use_container_width=True)
             with col_save_db:
-                btn_save_db_cfg = st.form_submit_button("💾 儲存並啟用設定", type="primary", use_container_width=True)
+                btn_save_db_cfg = st.form_submit_button(L["btn_save_db"], type="primary", use_container_width=True)
 
             if btn_test_conn:
                 if db_host and db_dbname:
