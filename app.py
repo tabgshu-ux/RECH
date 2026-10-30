@@ -307,8 +307,8 @@ try:
     dept_str = str(selected_dept_label)
 
     # 1. 檢查是否為獨立的頂層功能（例如外勤打卡、密碼修改等）
-    if "外勤工程打卡" in dept_str or "Field Attendance" in dept_str:
-        load_module_safely("modules.management.hr.field_gps_attendance", "render_field_gps_attendance", engine=engine, lang=curr_lang)
+    elif "外勤工程打卡" in dept_str or "Field Attendance" in dept_str:
+        load_module_safely("modules.field_gps_attendance", "render_field_gps_attendance", engine=engine, lang=curr_lang)
 
     elif "密碼修改" in feat_str or "個人帳號" in feat_str:
         load_module_safely("modules.change_password", "render_change_password_page", engine=engine, lang=curr_lang)
