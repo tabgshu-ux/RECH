@@ -344,31 +344,34 @@ try:
 
     # 5. 管理部 (Management Dept)
     elif "管理部" in dept_str:
-        if "公告" in feat_str:
+        if "公司公告" in feat_str:
             load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
-        elif "員工個人檔案" in feat_str:
+        elif "員工檔案" in feat_str:
             load_module_safely("modules.employee_management", "render_employee_management", engine=engine, t=ui_t, lang=curr_lang)
-        elif "廠內員工固定打卡" in feat_str:
+        elif "員工打卡紀錄" in feat_str:
             load_module_safely("modules.management.hr.internal_attendance", "render_internal_attendance_page", engine=engine, lang=curr_lang)
-        elif "宿舍" in feat_str:
+        elif "密碼修改" in feat_str:
+            load_module_safely("modules.change_password", "render_change_password_page", engine=engine, lang=curr_lang)
+        elif "宿舍與伙食" in feat_str:
             load_module_safely("modules.dorm_catering", "render_dorm_catering_module", engine=engine, lang=curr_lang)
+        elif "工作廠區管理" in feat_str:
+            load_module_safely("modules.plant_management", "render_plant_management_page", engine=engine, lang=curr_lang)
         elif "車輛進出口" in feat_str:
             load_module_safely("modules.vehicle_gate_log", "render_vehicle_gate_log_page", engine=engine, lang=curr_lang)
-        elif "車輛維修" in feat_str:
+        elif "車輛維修紀錄" in feat_str:
             load_module_safely("modules.vehicle_maintenance", "render_vehicle_maintenance_page", engine=engine, lang=curr_lang)
-        elif "固定資產" in feat_str:
+        elif "固定資產管理" in feat_str:
             load_module_safely("modules.asset_management", "render_asset_management_page", engine=engine, lang=curr_lang)
-        elif "採購" in feat_str:
+        elif "採購與應付帳款" in feat_str:
             load_module_safely("modules.procurement_ap", "render_procurement_ap_page", engine=engine, lang=curr_lang)
-        elif "應收帳款" in feat_str:
+        elif "應收帳款管理" in feat_str:
             load_module_safely("modules.sales_order_ar", "render_sales_order_ar_page", engine=engine, lang=curr_lang)
-        elif "越南稅務" in feat_str:
+        elif "越南稅務報表" in feat_str:
             load_module_safely("modules.financial_tax_reports", "render_financial_tax_reports_page", engine=engine, lang=curr_lang)
-        elif "薪資" in feat_str:
+        elif "員工薪資與保險" in feat_str:
             load_module_safely("modules.payroll_management", "render_payroll_management_page", engine=engine, lang=curr_lang)
-        elif "電子發票" in feat_str:
+        elif "電子發票管理" in feat_str:
             load_module_safely("modules.invoice_management", "render_invoice_management_page", engine=engine, lang=curr_lang)
-
     # 6. 工程與設計管理中心 (完整展開 10 大子功能)
     elif "工程與設計管理中心" in dept_str:
         if "1. 工程主管戰情室" in feat_str or "戰情室" in feat_str:
