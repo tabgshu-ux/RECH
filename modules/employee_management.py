@@ -188,7 +188,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
     # 🇹🇼 Tab 2: 新增外派幹部 (支援外派雙薪與動態幣別)
     # ----------------------------------------------------
     with tab_add_tw:
-        st.markdown("### 🇹🇼 TW/CN 新增外派幹部 / 台籍與中籍員工 (支援外派雙薪)")
+        st.markdown("### 🇹🇼 TW/CN 新增外籍員工")
         with st.form("form_add_tw_emp_full"):
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -254,7 +254,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                 with engine.connect() as conn:
                     edit_identity_filter = st.radio(
                         "🔍 選擇修改對象身分過濾：",
-                        ["🇹🇼 外派幹部 / 台籍與中籍 (Expat/TW/CN)", "🇻🇳 越南籍員工 (Local VN)", "全部現職員工 (All)"],
+                        ["🇹🇼 外派幹部 / 台籍與中籍 (Expat/TW/CN)", "🇻🇳 越南籍員工 (Local VN)"],
                         horizontal=True,
                         key="edit_identity_radio"
                     )
@@ -367,7 +367,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
                 with engine.connect() as conn:
                     resign_identity_filter = st.radio(
                         "🔍 選擇離職對象身分過濾：",
-                        ["🇹🇼 外派幹部 / 台籍與中籍 (Expat/TW/CN)", "🇻🇳 越南籍員工 (Local VN)", "全部現職員工 (All)"],
+                        ["外籍員工", "🇻🇳 越南籍員工 (Local VN)"],
                         horizontal=True,
                         key="resign_identity_radio"
                     )
@@ -426,7 +426,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
         
         sub_filter = st.radio(
             "📋 檢視名冊類別分流：",
-            ["全部現職員工 (All)", "🇹🇼 外派幹部 / 台籍與中籍 (Expat/TW/CN)", "🇻🇳 越南籍員工 (Local VN)"],
+            ["全部現職員工 (All)", "外籍員工, "🇻🇳 越南籍員工 (Local VN)"],
             horizontal=True
         )
 
