@@ -367,7 +367,7 @@ try:
         elif "電子發票" in feat_str or "XML" in feat_str:
             load_module_safely("modules.invoice_management", "render_invoice_management_page", engine=engine, lang=curr_lang)
         elif "密碼修改" in feat_str or "個人帳號" in feat_str:
-    load_module_safely("modules.change_password", "render_change_password_page", engine=engine, lang=curr_lang)
+            load_module_safely("modules.change_password", "render_change_password_page", engine=engine, lang=curr_lang)
         else:
             load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
 
