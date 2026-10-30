@@ -353,7 +353,7 @@ try:
         elif "員工打卡紀錄" in feat_str:
             load_module_safely("modules.management.hr.internal_attendance", "render_internal_attendance_page", engine=engine, lang=curr_lang)
         elif "密碼修改" in feat_str:
-            load_module_safely("modules.change_password", "render_change_password_page", engine=engine, lang=curr_lang)
+            load_module_safely("modules.management.hr.change_password", "render_change_password_page", engine=engine, lang=curr_lang)
         elif "宿舍與伙食" in feat_str:
             load_module_safely("modules.dorm_catering", "render_dorm_catering_module", engine=engine, lang=curr_lang)
         elif "工作廠區管理" in feat_str:
