@@ -155,14 +155,14 @@ if not st.session_state.logged_in:
                     st.rerun()
                 else:
                     st.error("⚠️ 帳號或初始密碼錯誤 / Incorrect username or password")
-    st.stop()
-if st.button(ui_t["login_btn"], use_container_width=True):
-            # ... (原本的登入驗證邏輯) ...
 
-               # 🔑 新增：登入列下方的忘記密碼與安全防護引導
-                    st.markdown("<br>", unsafe_allow_html=True)
-    with st.expander("❓ 忘記密碼 / Quên mật khẩu / Forgot Password?"):
-                   st.info("💡 若您不慎遺失密碼，請聯繫**管理部人事主管**或 **IT 管理員**進行身分核對與密碼重設。")
+        # 🔑 登入列下方的忘記密碼與安全防護引導
+        st.markdown("<br>", unsafe_allow_html=True)
+        with st.expander("❓ 忘記密碼 / Quên mật khẩu / Forgot Password?"):
+            st.info("💡 若您不慎遺失密碼，請聯繫**管理部人事主管**或 **IT 管理員**進行身分核對與密碼重設。")
+
+    st.stop()
+
 # ----------------------------------------------------
 # 🔐 2. 首次登入強制修改密碼
 # ----------------------------------------------------
@@ -316,11 +316,7 @@ try:
     if "外勤工程打卡" in dept_str or "Field Attendance" in dept_str:
         load_module_safely("modules.field_gps_attendance", "render_field_gps_attendance", engine=engine, lang=curr_lang)
 
-    # 2. 個人密碼修改
-    elif "密碼修改" in feat_str or "個人帳號" in feat_str:
-        load_module_safely("modules.change_password", "render_change_password_page", engine=engine, lang=curr_lang)
-
-    # 3. 資訊管理部 (僅限 admin)
+    # 2. 資訊管理部 (僅限 admin)
     elif "資訊管理部" in dept_str:
         if current_role_clean == "admin":
             sub_mod_choice = st.selectbox("📌 選擇 IT 管理子模組", ["🏢 1. 獨立企業部門與模組拼圖", "⚙️ 2. 組織角色與權限指派 (RBAC)", "🔌 3. 資料庫與 API 閘道器", "📊 4. 系統稽核日誌與追蹤"])
@@ -335,7 +331,7 @@ try:
         else:
             st.error("🚫 權限不足：資訊管理部僅限系統管理員 (admin) 存取與設定！")
 
-    # 4. 總經理室 (Executive Office)
+    # 3. 總經理室 (Executive Office)
     elif "總經理室" in dept_str:
         if "原料價格" in feat_str or "Gemini" in feat_str:
             load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="commodities_fx", lang=curr_lang)
@@ -348,7 +344,7 @@ try:
         else:
             load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="commodities_fx", lang=curr_lang)
 
-    # 5. 管理部 (Management Dept)
+    # 4. 管理部 (Management Dept)
     elif "管理部" in dept_str:
         if "公司公告" in feat_str:
             load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
@@ -368,6 +364,8 @@ try:
             load_module_safely("modules.vehicle_maintenance", "render_vehicle_maintenance_page", engine=engine, lang=curr_lang)
         elif "固定資產管理" in feat_str:
             load_module_safely("modules.asset_management", "render_asset_management_page", engine=engine, lang=curr_lang)
+        elif "文件管理" in feat_str:
+            load_module_safely("modules.document_management", "render_document_management_page", engine=engine, lang=curr_lang)
         elif "採購與應付帳款" in feat_str:
             load_module_safely("modules.procurement_ap", "render_procurement_ap_page", engine=engine, lang=curr_lang)
         elif "應收帳款管理" in feat_str:
@@ -378,7 +376,8 @@ try:
             load_module_safely("modules.payroll_management", "render_payroll_management_page", engine=engine, lang=curr_lang)
         elif "電子發票管理" in feat_str:
             load_module_safely("modules.invoice_management", "render_invoice_management_page", engine=engine, lang=curr_lang)
-    # 6. 工程與設計管理中心 (完整展開 10 大子功能)
+
+    # 5. 工程與設計管理中心
     elif "工程與設計管理中心" in dept_str:
         if "1. 工程主管戰情室" in feat_str or "戰情室" in feat_str:
             load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="dashboard")
@@ -401,7 +400,7 @@ try:
         else:
             load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang)
 
-    # 7. 生產部
+    # 6. 生產部
     elif "生產部" in dept_str:
         if "板金" in feat_str:
             load_module_safely("modules.sheet_metal", "render_sheet_metal_module", engine=engine, t=ui_t, lang=curr_lang)
@@ -410,11 +409,11 @@ try:
         elif "配盤" in feat_str:
             load_module_safely("modules.assembly", "render_assembly_module", engine=engine, t=ui_t, lang=curr_lang)
 
-    # 8. 倉庫管理
+    # 7. 倉庫管理
     elif "倉庫管理" in dept_str:
         load_module_safely("modules.warehouse_management", "render_warehouse_management", engine=engine, t=ui_t, lang=curr_lang)
 
-    # 9. 全公司電子簽核中心
+    # 8. 全公司電子簽核中心
     elif "電子簽核中心" in dept_str:
         load_module_safely("modules.approval_workflow", "render_approval_center", lang=curr_lang)
 
