@@ -159,7 +159,7 @@ if not st.session_state.logged_in:
         # 🔑 登入列下方的忘記密碼與安全防護引導
         st.markdown("<br>", unsafe_allow_html=True)
         with st.expander("❓ 忘記密碼 / Quên mật khẩu / Forgot Password?"):
-            st.info("💡 若您不慎遺失密碼，請聯繫**管理部人事進行身分核對與密碼重設。")
+            st.info("💡 若您不慎遺失密碼，請聯繫**管理部人事**進行身分核對與密碼重設。")
 
     st.stop()
 
