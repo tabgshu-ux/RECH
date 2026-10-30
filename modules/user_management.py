@@ -325,7 +325,7 @@ def get_department_module_tree():
                 "⚡ 工程專案進度與現場異常監控",
                 "📰 越南經營政策與法規每日動態"
             ],
-            "管理部 (Management Dept)": [
+            "👔管理部 (Management Dept)": [
                 "📢 公司公告",
                 "👤 員工檔案",
                 "📊 員工打卡紀錄",
