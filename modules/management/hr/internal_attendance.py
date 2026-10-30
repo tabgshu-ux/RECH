@@ -6,10 +6,13 @@ def get_t(lang):
     texts = {
         "繁體中文": {
             "title": "📊 員工打卡紀錄與出勤稽核中心",
-            "info": "💡 說明：HR 可在此檢視廠內出勤、執行打卡補登、匯出每月考勤報表，並切換分頁審核外勤 GPS 打卡與現場照片。",
-            "tab1_title": "🏭 廠內考勤與月報下載",
+            "info": "💡 說明：HR 可在此檢視廠內出勤、設定考勤寬限期規則、執行打卡補登、匯出每月考勤，並切換分頁審核外勤 GPS 打卡。",
+            "tab1_title": "🏭 廠內考勤與寬限規則",
             "tab2_title": "📝 打卡補登與原始日誌",
             "tab3_title": "📍 外勤 GPS 打卡稽核",
+            "rule_title": "⚙️ 考勤寬限期與遲到判定規則設定",
+            "grace_min": "上班打卡寬限分鐘數 (分鐘內不算遲到)",
+            "monthly_limit": "每月累計遲到容許總分鐘數",
             "export_btn": "📥 下載各員工每月打卡紀錄 (CSV)",
             "punch_fix_title": "⚙️ 員工考勤補登與異常調整",
             "no_field_data": "目前尚無外勤 GPS 打卡與回報紀錄。",
@@ -17,10 +20,13 @@ def get_t(lang):
         },
         "Tiếng Việt": {
             "title": "📊 Quản lý Chấm công & Kiểm toán Nhân viên",
-            "info": "💡 Hướng dẫn: HR quản lý chấm công, bù giờ, tải báo cáo tháng và kiểm duyệt GPS hiện trường.",
-            "tab1_title": "🏭 Chấm công & Tải báo cáo",
+            "info": "💡 Hướng dẫn: HR quản lý chấm công, cài đặt thời gian ân hạn, bù giờ và kiểm duyệt GPS hiện trường.",
+            "tab1_title": "🏭 Chấm công & Quy định ân hạn",
             "tab2_title": "📝 Bù giờ & Nhật ký",
             "tab3_title": "📍 Kiểm duyệt GPS",
+            "rule_title": "⚙️ Cài đặt thời gian ân hạn đi muộn",
+            "grace_min": "Số phút ân hạn buổi sáng (Không tính đi muộn)",
+            "monthly_limit": "Tổng số phút đi muộn cho phép mỗi tháng",
             "export_btn": "📥 Tải xuống bảng chấm công tháng (CSV)",
             "punch_fix_title": "⚙️ Xử lý bù giờ chấm công",
             "no_field_data": "Hiện tại chưa có dữ liệu chấm công GPS.",
@@ -35,18 +41,31 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
     st.markdown(f"### {t['title']}")
     st.info(t['info'])
 
-    # 建立三合一分頁：月報下載、補登、外勤稽核完美並存
     tab1, tab2, tab3 = st.tabs([t['tab1_title'], t['tab2_title'], t['tab3_title']])
 
     # ----------------------------------------------------
-    # TAB 1: 廠內考勤與月報下載
+    # TAB 1: 廠內考勤與寬限規則設定
     # ----------------------------------------------------
     with tab1:
+        st.markdown(f"#### {t['rule_title']}")
+        
+        # 考勤寬限期設定表單區塊
+        with st.expander("🛠️ 點此展開並調整「遲到寬限與扣薪規則」設定", expanded=True):
+            col_r1, col_r2 = st.columns(2)
+            with col_r1:
+                grace_minutes = st.number_input(t['grace_min'], min_value=0, max_value=30, value=10, step=1, help="例如設定 10 分鐘，則上班後 10 分鐘內刷卡皆判定為正常出勤。")
+            with col_r2:
+                monthly_late_limit = st.number_input(t['monthly_limit'], min_value=0, max_value=120, value=30, step=5, help="每月累計遲到超過此分鐘數將自動列入薪資扣款計算。")
+            
+            if st.button("💾 儲存考勤寬限規則", type="primary"):
+                st.success(f"🎉 考勤規則已更新：上班寬限 {grace_minutes} 分鐘內不算遲到，每月容許累計 {monthly_late_limit} 分鐘。")
+
+        st.markdown("---")
         st.markdown("#### 🏢 廠內同仁出勤與月度 OT 統計")
         
         emp_records = [
-            {"工號": "VN-001", "姓名": "Nguyễn Văn A", "部門": "生產部", "職稱": "技術員", "應出勤天數": 22, "實際出勤": 22, "遲到次數": 0, "平時OT時數": 4, "假日OT時數": 0, "狀態": "🟢 正常"},
-            {"工號": "VN-002", "姓名": "Tran Thi B", "部門": "管理部", "職稱": "會計專員", "應出勤天數": 22, "實際出勤": 21, "遲到次數": 1, "平時OT時數": 0, "假日OT時數": 0, "狀態": "🟡 遲到 1 次"},
+            {"工號": "VN-001", "姓名": "Nguyễn Văn A", "部門": "生產部", "職稱": "技術員", "應出勤天數": 22, "實際出勤": 22, "累計遲到分": 0, "平時OT時數": 4, "假日OT時數": 0, "狀態": "🟢 正常"},
+            {"工號": "VN-002", "姓名": "Tran Thi B", "部門": "管理部", "職稱": "會計專員", "應出勤天數": 22, "實際出勤": 21, "累計遲到分": 8, "平時OT時數": 0, "假日OT時數": 0, "狀態": f"🟡 遲到 8 分 (在寬限 {grace_minutes} 分內)" if 8 <= grace_minutes else "🔴 遲到扣薪"},
         ]
         
         if engine:
@@ -56,7 +75,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                     if res:
                         emp_records = [{
                             "工號": r[0], "姓名": r[1], "部門": r[2], "職稱": r[3],
-                            "應出勤天數": 22, "實際出勤": 22, "遲到次數": 0, "平時OT時數": 0, "假日OT時數": 0, "狀態": "🟢 正常"
+                            "應出勤天數": 22, "實際出勤": 22, "累計遲到分": 0, "平時OT時數": 0, "假日OT時數": 0, "狀態": "🟢 正常"
                         } for r in res]
             except Exception:
                 pass
