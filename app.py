@@ -1,126 +1,301 @@
 import streamlit as st
+import pandas as pd
 import importlib
+from sqlalchemy import text
+from modules.user_management import get_department_module_tree
 
-# 頁面基本設定
 st.set_page_config(
-    page_title="REETECH Vietnam SaaS ERP",
-    page_icon="🏭",
+    page_title="裕豐電機工業 REETECH INDUSTRIAL AI ERP",
+    page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
+MOBILE_CSS_AND_JS = """
+<style>
+@media only screen and (max-width: 768px) {
+    h1 { font-size: 1.35rem !important; font-weight: 700 !important; }
+    h2 { font-size: 1.15rem !important; }
+    h3, .stSubheader { font-size: 1.05rem !important; }
+    p, div, span, label { font-size: 0.9rem !important; }
+    .block-container { padding: 1rem 0.5rem !important; }
+}
+</style>
+"""
+st.markdown(MOBILE_CSS_AND_JS, unsafe_allow_html=True)
+
+RECH_LOGO_HTML = """
+<div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; padding: 6px 8px; background: transparent;">
+    <div style="font-size: 32px; font-weight: 900; color: #000055; letter-spacing: -1px; line-height: 1;">RECH</div>
+    <div style="border-left: 2px solid #000055; padding-left: 8px; line-height: 1.15; text-align: left;">
+        <div style="font-size: 14px; font-weight: 800; color: #000055;">裕豐電機工業有限公司</div>
+        <div style="font-size: 9px; font-weight: 700; color: #1E293B;">REETECH INDUSTRIAL CO., LTD</div>
+        <div style="font-size: 8.5px; font-weight: 700; color: #334155;">CÔNG TY TNHH CN DŨ PHONG</div>
+    </div>
+</div>
+"""
+
+UI_STRINGS = {
+    "繁體中文": {
+        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
+        "login_title": "⚡ 裕豐電機工業系統登入",
+        "username": "帳號 (工號)",
+        "password": "密碼",
+        "login_btn": "🔑 登入系統",
+        "logout_btn": "🚪 登出系統",
+        "lang_selector": "🌐 選擇系統語系 / Select Language",
+        "parent_header": "請選擇一級部門 / Chọn phòng ban :",
+        "sub_header": "選擇子部門與功能 / Chọn chức năng :",
+    },
+    "Tiếng Việt": {
+        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
+        "login_title": "⚡ REETECH INDUSTRIAL - Đăng nhập hệ thống",
+        "username": "Tài khoản (Mã NV)",
+        "password": "Mật khẩu",
+        "login_btn": "🔑 Đăng nhập",
+        "logout_btn": "🚪 Đăng xuất",
+        "lang_selector": "🌐 Chọn ngôn ngữ / Select Language",
+        "parent_header": "Chọn phòng ban chính:",
+        "sub_header": "Chọn bộ phận trực thuộc:",
+    },
+    "English": {
+        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
+        "login_title": "⚡ REETECH INDUSTRIAL - System Login",
+        "username": "Username (Emp ID)",
+        "password": "Password",
+        "login_btn": "🔑 Login",
+        "logout_btn": "🚪 Logout",
+        "lang_selector": "🌐 Select Language",
+        "parent_header": "Select Department:",
+        "sub_header": "Select Unit & Features:",
+    }
+}
+
+if "current_lang" not in st.session_state:
+    st.session_state.current_lang = "繁體中文"
+
+if "selected_dept_index" not in st.session_state:
+    st.session_state.selected_dept_index = 0
+if "selected_feat_index" not in st.session_state:
+    st.session_state.selected_feat_index = 0
+
+try:
+    db_conn = importlib.import_module("modules.db_connection")
+    engine = db_conn.get_db_engine()
+except Exception:
+    engine = None
+
+def load_module_safely(mod_name, func_name, *args, **kwargs):
+    try:
+        mod = importlib.import_module(mod_name)
+        func = getattr(mod, func_name, None)
+        if callable(func):
+            func(*args, **kwargs)
+        else:
+            st.error(f"模組 {mod_name} 中找不到方法 {func_name}")
+    except Exception as e:
+        st.error(f"載入模組 {mod_name} 發生異常: {str(e)}")
+
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+    st.session_state.user_role = ""
+    st.session_state.user_name = ""
+    st.session_state.must_change_pwd = False
+
+curr_lang = st.session_state.current_lang
+ui_t = UI_STRINGS.get(curr_lang, UI_STRINGS["繁體中文"])
+
 # ----------------------------------------------------
-# 🔐 登入驗證模組 (Login Authentication)
+# 🔐 1. 登入介面
 # ----------------------------------------------------
-def render_login_page():
-    st.markdown("<h2 style='text-align: center;'>🏭 REETECH Vietnam SaaS ERP</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; color: gray;'>西寧廠企業資源規劃系統 - 請先登入帳號</p>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        with st.form("login_form"):
-            username_input = st.text_input("👤 帳號 / Username", placeholder="請輸入帳號 (例如: admin)")
-            password_input = st.text_input("🔑 密碼 / Password", type="password", placeholder="請輸入密碼")
-            lang_choice = st.selectbox("🌐 語言 / Language", ["繁體中文", "Tiếng Việt", "English"])
+if not st.session_state.logged_in:
+    _, center_col, _ = st.columns([1, 1.5, 1])
+    with center_col:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
+        st.markdown(f"<h2 style='text-align: center;'>{ui_t['login_title']}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align: center; color: gray;'>{ui_t['company_sub']}</p>", unsafe_allow_html=True)
+        st.markdown("---")
+        
+        username_input = st.text_input(ui_t["username"])
+        password_input = st.text_input(ui_t["password"], type="password")
+        
+        lang_list = ["繁體中文", "Tiếng Việt", "English"]
+        current_lang_idx = lang_list.index(curr_lang) if curr_lang in lang_list else 0
+        selected_login_lang = st.selectbox(ui_t["lang_selector"], lang_list, index=current_lang_idx, key="login_lang_select")
+        
+        if selected_login_lang != curr_lang:
+            st.session_state.current_lang = selected_login_lang
+            st.rerun()
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if st.button(ui_t["login_btn"], use_container_width=True):
+            u_clean = username_input.strip()
             
-            submit_login = st.form_submit_button("🚀 登入系統 / Login", type="primary", use_container_width=True)
-            
-            if submit_login:
-                # 簡單驗證（實務上可串接資料庫 users 表格進行雜湊驗證）
-                if username_input.strip() == "admin" and password_input == "admin123":
-                    st.session_state["authenticated"] = True
-                    st.session_state["current_user"] = "admin"
-                    st.session_state["user_role"] = "系統管理員"
-                    st.session_state["lang"] = lang_choice
-                    st.success("🎉 登入成功！正在進入系統...")
-                    st.rerun()
-                elif username_input.strip() != "" and password_input.strip() != "":
-                    # 一般廠區同仁或主管帳號
-                    st.session_state["authenticated"] = True
-                    st.session_state["current_user"] = username_input.strip()
-                    st.session_state["user_role"] = "一般使用者 / 員工"
-                    st.session_state["lang"] = lang_choice
-                    st.success(f"🎉 歡迎 [{username_input}] 登入 REETECH ERP！")
+            if u_clean.lower() == "admin" and password_input == "123":
+                st.session_state.logged_in = True
+                st.session_state.user_role = "admin"
+                st.session_state.user_name = "admin"
+                st.session_state.must_change_pwd = False
+                st.rerun()
+            else:
+                matched_emp = None
+                if "employee_db" in st.session_state:
+                    matched_emp = next((e for e in st.session_state.employee_db if e["工號"].lower() == u_clean.lower()), None)
+                
+                stored_pwd = matched_emp.get("密碼", "123456") if matched_emp else "123456"
+                
+                if matched_emp and password_input == stored_pwd:
+                    st.session_state.logged_in = True
+                    st.session_state.user_name = matched_emp["姓名"]
+                    st.session_state.user_role = matched_emp.get("角色", "Staff")
+                    st.session_state.must_change_pwd = matched_emp.get("must_change_password", False)
+                    st.session_state.current_emp_code = matched_emp["工號"]
                     st.rerun()
                 else:
-                    st.warning("⚠️ 請輸入正確的帳號與密碼！")
-
-        st.info("💡 預設測試帳號：\n- 系統管理員: `admin` / `admin123` (可見 IT 資訊管理)\n- 一般同仁: 自行輸入姓名登入")
+                    st.error("⚠️ 帳號或初始密碼錯誤 / Incorrect username or password")
+    st.stop()
 
 # ----------------------------------------------------
-# 🏭 主系統介面 (Main App)
+# 🔐 2. 首次登入強制修改密碼
 # ----------------------------------------------------
-def main():
-    # 檢查是否已登入
-    if "authenticated" not in st.session_state or not st.session_state["authenticated"]:
-        render_login_page()
-        return
+if st.session_state.get("must_change_pwd", False):
+    _, center_col, _ = st.columns([1, 1.5, 1])
+    with center_col:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
+        st.warning("⚠️ **首次登入安全設定 / Lần đầu đăng nhập - Đổi mật khẩu**：為符合企業資安規範，請您立即變更由人事分派的初始密碼。")
+        
+        with st.form("force_change_pwd_form"):
+            new_pwd = st.text_input("請輸入您的新密碼 (Mật khẩu mới) *", type="password")
+            confirm_pwd = st.text_input("再次確認新密碼 (Nhập lại mật khẩu mới) *", type="password")
+            
+            if st.form_submit_button("💾 確認修改密碼並進入系統", type="primary", use_container_width=True):
+                if new_pwd and new_pwd == confirm_pwd:
+                    if "employee_db" in st.session_state:
+                        for emp_item in st.session_state.employee_db:
+                            if emp_item["工號"] == st.session_state.get("current_emp_code"):
+                                emp_item["密碼"] = new_pwd
+                                emp_item["must_change_password"] = False
+                    st.session_state.must_change_pwd = False
+                    st.success("🎉 密碼修改成功！正在進入系統...")
+                    st.rerun()
+                else:
+                    st.error("⚠️ 兩次輸入的新密碼不相符或未填寫，請重新檢查！")
+    st.stop()
 
-    # 已登入後的側邊欄選單
-    current_user = st.session_state.get("current_user", "Guest")
-    user_role = st.session_state.get("user_role", "員工")
-    is_admin = (current_user.lower() == "admin")
-    current_lang = st.session_state.get("lang", "繁體中文")
+# ----------------------------------------------------
+# 🚀 3. 已登入側邊欄與動態功能選單
+# ----------------------------------------------------
+st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
-    st.sidebar.title("🏭 REETECH ERP 中樞")
-    st.sidebar.markdown(f"👤 **使用者**: {current_user} (`{user_role}`)")
+lang_list = ["繁體中文", "Tiếng Việt", "English"]
+selected_lang = st.sidebar.selectbox(
+    ui_t["lang_selector"],
+    lang_list,
+    index=(lang_list.index(curr_lang) if curr_lang in lang_list else 0),
+    key="sidebar_lang_select"
+)
+
+if selected_lang != curr_lang:
+    st.session_state.current_lang = selected_lang
+    st.rerun()
+
+u_name_display = st.session_state.get("user_name", "User")
+u_role_display = str(st.session_state.get("user_role", "Staff")).upper()
+st.sidebar.markdown(f"**👤 {u_name_display}** ({u_role_display})")
+
+if st.sidebar.button(ui_t["logout_btn"], use_container_width=True):
+    st.session_state.logged_in = False
+    st.session_state.must_change_pwd = False
+    st.rerun()
+
+st.sidebar.markdown("---")
+
+current_role_clean = str(st.session_state.get("user_role", "")).strip().lower()
+
+dept_module_tree = get_department_module_tree()
+department_names = list(dept_module_tree.keys())
+
+available_dept_names = []
+for d_name in department_names:
+    if current_role_clean != "admin" and "資訊管理部" in d_name:
+        continue
+    if current_role_clean == "security" and "管理部" not in d_name:
+        continue
+    available_dept_names.append(d_name)
+
+if not available_dept_names:
+    available_dept_names = department_names
+
+if current_role_clean == "security":
+    selected_dept_label = next((d for d in available_dept_names if "管理部" in d), available_dept_names[0])
+    st.sidebar.markdown(f"**{ui_t['parent_header']}**")
+    st.sidebar.markdown(f"👔 {selected_dept_label}")
+    sub_features = ["🚗 廠區車輛進出口門禁與派車審核"]
+    selected_feat_label = sub_features[0]
+else:
+    if st.session_state.selected_dept_index >= len(available_dept_names):
+        st.session_state.selected_dept_index = 0
+
+    selected_dept_label = st.sidebar.radio(
+        ui_t["parent_header"],
+        available_dept_names,
+        index=st.session_state.selected_dept_index,
+        key="dept_radio_idx"
+    )
     
-    if st.sidebar.button("🚪 登出系統 / Logout", use_container_width=True):
-        st.session_state["authenticated"] = False
-        st.session_state["current_user"] = None
+    selected_dept_index = available_dept_names.index(selected_dept_label)
+    if selected_dept_index != st.session_state.selected_dept_index:
+        st.session_state.selected_dept_index = selected_dept_index
+        st.session_state.selected_feat_index = 0
         st.rerun()
 
-    st.sidebar.markdown("---")
+    sub_features = dept_module_tree.get(selected_dept_label, [])
+    if not sub_features:
+        sub_features = ["(此部門尚無功能模組)"]
 
-    # 依造您的要求排序的部門與核心功能選單
-    departments_dict = {
-        "繁體中文": [
-            "📈 總經理室 (Executive Office)",
-            "🛠️ 工程與設計管理中心 (Engineering & Design)",
-            "👔 管理部 (Management Dept)",
-            "🏭 生產部 (Production Dept)",
-            "📦 倉庫管理 (Warehouse Management)",
-            "📍 外勤工程打卡與即時人數 (Field Attendance)",
-            "✍️ 全公司電子簽核中心 (Approval Center)"
-        ],
-        "Tiếng Việt": [
-            "📈 Văn phòng Giám đốc (Executive Office)",
-            "🛠️ Trung tâm Kỹ thuật & Thiết kế (Engineering)",
-            "👔 Phòng Quản lý (Management Dept)",
-            "📦 Quản lý Kho (Warehouse)",
-            "📍 Chấm công & Vị trí hiện trường (Field Attendance)",
-            "✍️ Trung tâm Phê duyệt điện tử (Approval Center)"
-        ],
-        "English": [
-            "📈 Executive Office",
-            "🛠️ Engineering & Design Center",
-            "Management Dept",
-            "Production Dept",
-            "Warehouse Management",
-            "Field Attendance & Headcount",
-            "Electronic Approval Center"
-        ]
-    }
+    if st.session_state.selected_feat_index >= len(sub_features):
+        st.session_state.selected_feat_index = 0
 
-    it_menu_label = {
-        "繁體中文": "💻 資訊管理部 (IT System - Admin Only)",
-        "Tiếng Việt": "💻 Quản lý CNTT (IT System - Admin Only)",
-        "English": "💻 IT System (Admin Only)"
-    }
-
-    menu_list = list(departments_dict.get(current_lang, departments_dict["繁體中文"]))
+    st.sidebar.caption(f"**{selected_dept_label.split('(')[0].strip()}**")
     
-    # 只有 Admin 才能看到資訊管理部
-    if is_admin:
-        menu_list.append(it_menu_label.get(current_lang, it_menu_label["繁體中文"]))
-
-    selected_dept = st.sidebar.radio("📌 選擇部門與功能 / Select Module", menu_list)
-    st.sidebar.markdown("---")
+    selected_feat_label = st.sidebar.radio(
+        ui_t["sub_header"],
+        sub_features,
+        index=st.session_state.selected_feat_index,
+        key="feat_radio_idx"
+    )
     
-    engine = st.session_state.get("db_engine", None)
+    selected_feat_index = sub_features.index(selected_feat_label)
+    if selected_feat_index != st.session_state.selected_feat_index:
+        st.session_state.selected_feat_index = selected_feat_index
+        st.rerun()
 
 # ----------------------------------------------------
-# 🔀 裕豐電機專屬：全部門與細緻子功能智慧安全路由分流
+# 📢 公司公告跑馬燈
+# ----------------------------------------------------
+if "announcements_db" not in st.session_state:
+    st.session_state.announcements_db = [
+        {
+            "ann_id": "ANN-2026-001",
+            "title": "⚡ 關於越南全國連假與西寧廠安全生產之重要通知",
+            "category": "🔴 緊急公告 (Urgent)",
+            "content": "請各部門主管務必於連假前落實廠區斷電巡檢、消防設備盤點，並確保留守人員通訊暢通。",
+            "publisher": "總經理室 / 董事長辦公室",
+            "date": "2026-10-09",
+            "status": "🟢 發布中 (Active)"
+        }
+    ]
+
+active_anns = [a for a in st.session_state.announcements_db if "發布中" in a["status"]]
+if active_anns:
+    latest_ann = active_anns[0]
+    st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
+
+# ----------------------------------------------------
+# 🔀 智慧關鍵字動態安全路由分流
 # ----------------------------------------------------
 try:
     feat_str = str(selected_feat_label)
@@ -158,7 +333,7 @@ try:
     elif "工程" in dept_str or "Engineering" in dept_str or "Kỹ thuật" in dept_str:
         load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang)
 
-    # 4. 管理部 (Management Dept) - 包含公告、正式文件、人事、薪資等
+    # 4. 管理部 (Management Dept)
     elif "管理部" in dept_str or "Management Dept" in dept_str or "Phòng Quản lý" in dept_str:
         if "公告" in feat_str or "佈告欄" in feat_str:
             load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
@@ -218,6 +393,3 @@ try:
 
 except Exception as e:
     st.error(f"⚠️ 路由分發發生異常: {str(e)}")
-
-if __name__ == "__main__":
-    main()
