@@ -300,7 +300,7 @@ if active_anns:
     st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
 
 # ----------------------------------------------------
-# 🔀 精準路由分發
+# 🔀 路由
 # ----------------------------------------------------
 try:
     feat_str = str(selected_feat_label)
@@ -329,7 +329,20 @@ try:
         else:
             st.error("🚫 權限不足：資訊管理部僅限系統管理員 (admin) 存取與設定！")
 
-    # 4. 管理部 (Management Dept - 包含 HR 人事打卡與薪資計算稽核)
+    # 4. 總經理室 (Executive Office)
+    elif "總經理室" in dept_str:
+        if "原料價格" in feat_str or "Gemini" in feat_str:
+            load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="commodities_fx", lang=curr_lang)
+        elif "財務類" in feat_str or "AR/AP" in feat_str:
+            load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="financials_pl", lang=curr_lang)
+        elif "專案進度" in feat_str or "異常監控" in feat_str:
+            load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="project_progress_exec", lang=curr_lang)
+        elif "政策" in feat_str or "法規" in feat_str:
+            load_module_safely("modules.vietnam_policy_news", "render_vietnam_policy_news_page", engine=engine, lang=curr_lang)
+        else:
+            load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="commodities_fx", lang=curr_lang)
+
+    # 5. 管理部 (Management Dept)
     elif "管理部" in dept_str:
         if "公告" in feat_str:
             load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
@@ -356,11 +369,30 @@ try:
         elif "電子發票" in feat_str:
             load_module_safely("modules.invoice_management", "render_invoice_management_page", engine=engine, lang=curr_lang)
 
-    # 5. 工程與設計管理中心
+    # 6. 工程與設計管理中心 (完整展開 10 大子功能)
     elif "工程與設計管理中心" in dept_str:
-        load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang)
+        if "1. 工程主管戰情室" in feat_str or "戰情室" in feat_str:
+            load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="dashboard")
+        elif "2. 工程專案報價系統" in feat_str or "報價系統" in feat_str:
+            load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="quotation")
+        elif "3. 施工日報表" in feat_str or "點工點料" in feat_str:
+            load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="daily_report")
+        elif "4. AI 施工照片辨識" in feat_str or "照片辨識" in feat_str:
+            load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="ai_audit")
+        elif "5. 工程證照預警" in feat_str or "機具檢驗" in feat_str:
+            load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="license_alert")
+        elif "6. 配電盤電氣與機構設計圖庫" in feat_str or "設計圖庫" in feat_str:
+            load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="drawing_gallery")
+        elif "7. 配電盤 BOM 零件" in feat_str or "採購連動" in feat_str:
+            load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="bom_procurement")
+        elif "8. 外包商計價" in feat_str or "偶鐸管理" in feat_str:
+            load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="subcontractor")
+        elif "9. FAT/SAT" in feat_str or "現場驗收" in feat_str:
+            load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="fatsat")
+        else:
+            load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang)
 
-    # 6. 生產部
+    # 7. 生產部
     elif "生產部" in dept_str:
         if "板金" in feat_str:
             load_module_safely("modules.sheet_metal", "render_sheet_metal_module", engine=engine, t=ui_t, lang=curr_lang)
@@ -369,11 +401,11 @@ try:
         elif "配盤" in feat_str:
             load_module_safely("modules.assembly", "render_assembly_module", engine=engine, t=ui_t, lang=curr_lang)
 
-    # 7. 倉庫管理
+    # 8. 倉庫管理
     elif "倉庫管理" in dept_str:
         load_module_safely("modules.warehouse_management", "render_warehouse_management", engine=engine, t=ui_t, lang=curr_lang)
 
-    # 8. 全公司電子簽核中心
+    # 9. 全公司電子簽核中心
     elif "電子簽核中心" in dept_str:
         load_module_safely("modules.approval_workflow", "render_approval_center", lang=curr_lang)
 
