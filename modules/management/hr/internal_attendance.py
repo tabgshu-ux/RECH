@@ -1,10 +1,8 @@
 import streamlit as st
 import pandas as pd
-import datetime
 from sqlalchemy import text
 
 def get_t(lang):
-    """多語系字典引擎 (精簡專業命名，優化越文顯示)"""
     texts = {
         "繁體中文": {
             "title": "📊 員工打卡紀錄與出勤稽核中心",
@@ -31,16 +29,15 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
     st.markdown(f"### {t['title']}")
     st.info(t['info'])
 
-    # 建立雙 Tab 架構：將廠內考勤與外勤 GPS 打卡完美整合，不需增加額外選單
+    # 建立雙 Tab 架構：將廠內考勤與外勤 GPS 打卡整合在同一個畫面中
     tab1, tab2 = st.tabs([t['tab1_title'], t['tab2_title']])
 
     # ----------------------------------------------------
-    # TAB 1: 廠內固定考勤與月統計 (原有邏輯)
+    # TAB 1: 廠內固定考勤與月統計
     # ----------------------------------------------------
     with tab1:
         st.markdown("#### 🏢 廠內同仁出勤與月度 OT 統計")
         
-        # 嘗試讀取 employee_profiles 或顯示預設示範考勤
         emp_records = []
         if engine:
             try:
@@ -55,7 +52,6 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
                 pass
 
         if not emp_records:
-            # 預設示範資料
             emp_records = [
                 {"工號": "VN-001", "姓名": "Nguyễn Văn A", "部門": "生產部", "職稱": "技術員", "應出勤天數": 22, "實際出勤": 22, "遲到次數": 0, "平時OT時數": 4, "假日OT時數": 0, "狀態": "🟢 正常 (Normal)"},
                 {"工號": "VN-002", "姓名": "Tran Thi B", "部門": "管理部", "職稱": "會計專員", "應出勤天數": 22, "實際出勤": 21, "遲到次數": 1, "平時OT時數": 0, "假日OT時數": 0, "狀態": "🟡 遲到 1 次"},
