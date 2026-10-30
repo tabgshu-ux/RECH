@@ -300,21 +300,22 @@ if active_anns:
     st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
 
 # ----------------------------------------------------
-# 🔀 路由分流
+# 🔀 精準路由分發
 # ----------------------------------------------------
 try:
     feat_str = str(selected_feat_label)
     dept_str = str(selected_dept_label)
 
-    # 1. 檢查是否為獨立的頂層功能（例如外勤打卡、密碼修改等）
-        if "外勤工程打卡" in dept_str or "Field Attendance" in dept_str:
+    # 1. 獨立頂層外勤工程打卡與工作回報 (給工程人員現場使用)
+    if "外勤工程打卡" in dept_str or "Field Attendance" in dept_str:
         load_module_safely("modules.field_gps_attendance", "render_field_gps_attendance", engine=engine, lang=curr_lang)
 
+    # 2. 個人密碼修改
     elif "密碼修改" in feat_str or "個人帳號" in feat_str:
         load_module_safely("modules.change_password", "render_change_password_page", engine=engine, lang=curr_lang)
 
-    # 2. 資訊管理部 (僅限 admin)
-    elif "資訊管理部" in dept_str or "IT System" in dept_str:
+    # 3. 資訊管理部 (僅限 admin)
+    elif "資訊管理部" in dept_str:
         if current_role_clean == "admin":
             sub_mod_choice = st.selectbox("📌 選擇 IT 管理子模組", ["🏢 1. 獨立企業部門與模組拼圖", "⚙️ 2. 組織角色與權限指派 (RBAC)", "🔌 3. 資料庫與 API 閘道器", "📊 4. 系統稽核日誌與追蹤"])
             if "獨立企業部門" in sub_mod_choice:
@@ -328,18 +329,7 @@ try:
         else:
             st.error("🚫 權限不足：資訊管理部僅限系統管理員 (admin) 存取與設定！")
 
-    # 3. 總經理室 (Executive Office)
-    elif "總經理室" in dept_str:
-        if "原料價格" in feat_str:
-            load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="commodities_fx", lang=curr_lang)
-        elif "財務類" in feat_str:
-            load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="financials_pl", lang=curr_lang)
-        elif "工程專案進度" in feat_str:
-            load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="project_progress_exec", lang=curr_lang)
-        elif "越南經營政策" in feat_str:
-            load_module_safely("modules.vietnam_policy_news", "render_vietnam_policy_news_page", engine=engine, lang=curr_lang)
-
-    # 4. 管理部 (Management Dept)
+    # 4. 管理部 (Management Dept - 包含 HR 人事打卡與薪資計算稽核)
     elif "管理部" in dept_str:
         if "公告" in feat_str:
             load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
@@ -366,11 +356,11 @@ try:
         elif "電子發票" in feat_str:
             load_module_safely("modules.invoice_management", "render_invoice_management_page", engine=engine, lang=curr_lang)
 
-    # 5. 工程與設計管理中心 (Engineering & Design)
+    # 5. 工程與設計管理中心
     elif "工程與設計管理中心" in dept_str:
         load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang)
 
-    # 6. 生產部 (Production Dept)
+    # 6. 生產部
     elif "生產部" in dept_str:
         if "板金" in feat_str:
             load_module_safely("modules.sheet_metal", "render_sheet_metal_module", engine=engine, t=ui_t, lang=curr_lang)
@@ -379,7 +369,7 @@ try:
         elif "配盤" in feat_str:
             load_module_safely("modules.assembly", "render_assembly_module", engine=engine, t=ui_t, lang=curr_lang)
 
-    # 7. 倉庫管理 (Warehouse Management)
+    # 7. 倉庫管理
     elif "倉庫管理" in dept_str:
         load_module_safely("modules.warehouse_management", "render_warehouse_management", engine=engine, t=ui_t, lang=curr_lang)
 
