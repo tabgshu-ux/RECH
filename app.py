@@ -300,7 +300,7 @@ if active_anns:
     st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
 
 # ----------------------------------------------------
-# 🔀 路由
+# 🔀 精準路由分發 
 # ----------------------------------------------------
 try:
     feat_str = str(selected_feat_label)
