@@ -426,7 +426,7 @@ def render_employee_management_page(engine=None, lang="繁體中文", **kwargs):
         
         sub_filter = st.radio(
             "📋 檢視名冊類別分流：",
-            ["全部現職員工 (All)", "外籍員工, "🇻🇳 越南籍員工 (Local VN)"],
+            ["全部現職員工 (All)", "外籍員工", "🇻🇳 越南籍員工 (Local VN)"],
             horizontal=True
         )
 
