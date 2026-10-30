@@ -8,7 +8,7 @@ from sqlalchemy import text
 # ----------------------------------------------------
 ANN_I18N = {
     "繁體中文": {
-        "title": "📢 總務部/總經理室 - 全公司重要公告與佈告欄管理中心",
+        "title": "📢 公告通知",
         "caption": "發布全廠緊急通知、連假安全規範與行政宣導；支援歷史公告查詢與權限控管。",
         "tab_active": "📢 當前發布中公告 (首頁同步)",
         "tab_manage": "📝 發布與管理公告 (權限控管)",
@@ -26,7 +26,7 @@ ANN_I18N = {
         "btn_update_status": "💾 更新公告狀態"
     },
     "Tiếng Việt": {
-        "title": "📢 Bảng Thông Báo Công Ty & Quản Lý Bảng Tin",
+        "title": "📢 THÔNG BÁO",
         "caption": "Đăng thông báo khẩn cấp, quy định lễ tết và thông tin hành chính toàn công ty.",
         "tab_active": "📢 Thông báo đang phát hành (Đồng bộ trang chủ)",
         "tab_manage": "📝 Đăng & Quản lý thông báo",
@@ -44,7 +44,7 @@ ANN_I18N = {
         "btn_update_status": "💾 Cập nhật trạng thái"
     },
     "English": {
-        "title": "📢 Company Announcements & Bulletin Board Management",
+        "title": "📢 NOTICE",
         "caption": "Publish company-wide emergency alerts, holiday compliance, and administrative notices.",
         "tab_active": "📢 Active Announcements (Synced to Homepage)",
         "tab_manage": "📝 Publish & Manage Announcements",
