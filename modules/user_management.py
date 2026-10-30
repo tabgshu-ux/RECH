@@ -124,6 +124,7 @@ USER_MGMT_I18N = {
 DEFAULT_DEPARTMENTS = [
     "📈 總經理室 (Executive Office)",
     "👔 管理部 (Management Dept)",
+    "📍 外勤工程打卡與工作回報 (Field Attendance)",
     "🛠️ 工程與設計管理中心 (Engineering & Design Center)",
     "🏭 生產部 (Production Dept)",
     "📦 倉庫管理 (Warehouse Management)",
@@ -164,6 +165,7 @@ def fetch_roles(engine, lang_dict):
         "董事長": {"department": "📈 總經理室 (Executive Office)", "description": "公司經營方向規劃與戰略定奪", "allowed_modules": "ALL"},
         "總經理": {"department": "📈 總經理室 (Executive Office)", "description": "董事長指示的公司經營方向執行與公司管理", "allowed_modules": "ALL"},
         "倉庫管理員": {"department": "📦 倉庫管理 (Warehouse Management)", "description": "倉庫庫存與資材條碼管理", "allowed_modules": "📦 [倉儲] 倉庫庫存與資材條碼管理"},
+        "外勤技師": {"department": "📍 外勤工程打卡與工作回報 (Field Attendance)", "description": "現場外勤打卡與工作回報專用", "allowed_modules": "📍 現場外勤打卡與工作回報"},
         "工程主管": {"department": "🛠️ 工程與設計管理中心 (Engineering & Design Center)", "description": "工程專案與現場督導管理", "allowed_modules": "⚡ [工程] 配電盤與工程專案雙層報價"}
     }
     
@@ -227,7 +229,7 @@ def delete_role_db(engine, role_name):
         return False
 
 def get_department_module_tree():
-    """全域共享的部門與子功能樹狀結構"""
+    """全域共享的部門與子功能樹狀結構（外勤打卡已獨立至頂層選單）"""
     if "custom_department_module_tree" not in st.session_state:
         st.session_state.custom_department_module_tree = {
             "📈 總經理室 (Executive Office)": [
@@ -240,7 +242,6 @@ def get_department_module_tree():
                 "📢 發送公告佈告欄",
                 "👤 員工個人檔案與人事管理",
                 "🏢 廠內員工固定打卡與出勤紀錄",
-                "📍 外勤位置辦理與工地即時人數",
                 "🥗 幹部宿舍伙食與採購控管",
                 "🏭 工作廠區管理",
                 "🚗 廠區車輛進出口門禁與派車審核",
@@ -252,20 +253,22 @@ def get_department_module_tree():
                 "💰 員工薪資計算與保險扣除",
                 "📄 電子發票綜合管理與 XML 歸檔"
             ],
+            "📍 外勤工程打卡與工作回報 (Field Attendance)": [
+                "📍 現場外勤打卡與工作回報"
+            ],
             "✍️ 全公司電子簽核中心 (Approval Center)": [
                 "✍️ 提交請假/採購與即時進度追蹤 / 審核"
             ],
             "🛠️ 工程與設計管理中心 (Engineering & Design Center)": [
                 "⚡ 1. 工程主管戰情室與案場管理",
                 "⚡ 2. 工程專案報價系統",
-                "📍 3. 現場外勤打卡與作業登記",
-                "📋 4. 施工日報表與點工點料登記",
-                "🤖 5. AI 施工照片辨識與稽核",
-                "⚠️ 6. 工程證照預警與機具檢驗預警",
-                "🎨 7. 配電盤電氣與機構設計圖庫",
-                "🔌 8. 配電盤 BOM 零件與採購連動",
-                "👷 9. 外包商計價與偶鐸管理",
-                "🧪 10. FAT/SAT 出廠與現場驗收管理"
+                "📋 3. 施工日報表與點工點料登記",
+                "🤖 4. AI 施工照片辨識與稽核",
+                "⚠️ 5. 工程證照預警與機具檢驗預警",
+                "🎨 6. 配電盤電氣與機構設計圖庫",
+                "🔌 7. 配電盤 BOM 零件與採購連動",
+                "👷 8. 外包商計價與偶鐸管理",
+                "🧪 9. FAT/SAT 出廠與現場驗收管理"
             ],
             "🏭 生產部 (Production Dept)": [
                 "✂️ [板金] 板金加工組工單與條碼",
@@ -446,7 +449,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                                 try:
                                     with engine.begin() as conn_d:
                                         conn_d.execute(text("INSERT INTO system_departments (department_name, description) VALUES (:n, :d) ON CONFLICT DO NOTHING"),
-                                                       {"n": new_d_name.strip(), "d": new_d_desc})
+                                                        {"n": new_d_name.strip(), "d": new_d_desc})
                                 except Exception:
                                     pass
                             st.success(f"🎉 成功建立新部門：{new_d_name}！")
@@ -492,7 +495,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
             "📢 發送公告佈告欄",
             "👤 員工個人檔案與人事管理",
             "🏢 廠內員工固定打卡與出勤紀錄",
-            "📍 外勤位置辦理與工地即時人數",
+            "📍 現場外勤打卡與工作回報",
             "🥗 幹部宿舍伙食與採購控管",
             "🏭 工作廠區管理",
             "🚗 廠區車輛進出口門禁與派車審核",
@@ -506,14 +509,13 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
             "✍️ 提交請假/採購與即時進度追蹤 / 審核",
             "⚡ 1. 工程主管戰情室與案場管理",
             "⚡ 2. 工程專案報價系統",
-            "📍 3. 現場外勤打卡與作業登記",
-            "📋 4. 施工日報表與點工點料登記",
-            "🤖 5. AI 施工照片辨識與稽核",
-            "⚠️ 6. 工程證照預警與機具檢驗預警",
-            "🎨 7. 配電盤電氣與機構設計圖庫",
-            "🔌 8. 配電盤 BOM 零件與採購連動",
-            "👷 9. 外包商計價與偶鐸管理",
-            "🧪 10. FAT/SAT 出廠與現場驗收管理",
+            "📋 3. 施工日報表與點工點料登記",
+            "🤖 4. AI 施工照片辨識與稽核",
+            "⚠️ 5. 工程證照預警與機具檢驗預警",
+            "🎨 6. 配電盤電氣與機構設計圖庫",
+            "🔌 7. 配電盤 BOM 零件與採購連動",
+            "👷 8. 外包商計價與偶鐸管理",
+            "🧪 9. FAT/SAT 出廠與現場驗收管理",
             "📦 [倉儲] 倉庫庫存與資材條碼管理",
             "✂️ [板金] 板金加工組工單與條碼",
             "🎨 [塗料] 粉體塗裝烤漆組品管",
