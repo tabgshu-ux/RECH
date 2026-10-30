@@ -349,7 +349,7 @@ try:
         elif "員工個人檔案" in feat_str:
             load_module_safely("modules.employee_management", "render_employee_management", engine=engine, t=ui_t, lang=curr_lang)
         elif "廠內員工固定打卡" in feat_str:
-            load_module_safely("modules.internal_attendance", "render_internal_attendance_page", engine=engine, lang=curr_lang)
+            load_module_safely("modules.management.hr.internal_attendance", "render_internal_attendance_page", engine=engine, lang=curr_lang)
         elif "宿舍" in feat_str:
             load_module_safely("modules.dorm_catering", "render_dorm_catering_module", engine=engine, lang=curr_lang)
         elif "車輛進出口" in feat_str:
