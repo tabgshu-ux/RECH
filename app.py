@@ -156,7 +156,13 @@ if not st.session_state.logged_in:
                 else:
                     st.error("⚠️ 帳號或初始密碼錯誤 / Incorrect username or password")
     st.stop()
+if st.button(ui_t["login_btn"], use_container_width=True):
+            # ... (原本的登入驗證邏輯) ...
 
+               # 🔑 新增：登入列下方的忘記密碼與安全防護引導
+                    st.markdown("<br>", unsafe_allow_html=True)
+    with st.expander("❓ 忘記密碼 / Quên mật khẩu / Forgot Password?"):
+                   st.info("💡 若您不慎遺失密碼，請聯繫**管理部人事主管**或 **IT 管理員**進行身分核對與密碼重設。")
 # ----------------------------------------------------
 # 🔐 2. 首次登入強制修改密碼
 # ----------------------------------------------------
