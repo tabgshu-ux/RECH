@@ -4,25 +4,25 @@ import datetime
 from sqlalchemy import text
 
 # ----------------------------------------------------
-# 🌐 車輛門禁、訪客與收发信件模組多語系字典 (i18n)
+# 🌐 車輛門禁、訪客與收發信件模組多語系字典 (i18n)
 # ----------------------------------------------------
 GATE_LOG_I18N = {
     "繁體中文": {
         "title": "🚗 警衛室/管理部 - 廠區門禁、派車審核、訪客與收發信件管理中心",
-        "caption": "記錄工廠車輛進出、訪客登記、包裹信件代收，並即時串聯【固定資產車輛】與【員工檔案】資料庫。",
+        "caption": "記錄工廠車輛進出、訪客登記與包裹信件代收，所有數據直接寫入資料庫永久歸檔稽核。",
         "tab_list": "📑 今日車輛門禁總表",
         "tab_approval": "🛡️ 派車審核放行表",
-        "tab_visitor": "👥 訪客與外包商登記",
-        "tab_parcel": "📦 包裹信件代收管理",
+        "tab_visitor": "👥 訪客與外包商登記 (DB)",
+        "tab_parcel": "📦 包裹信件代收管理 (DB)",
         "table_header": "📋 廠區大門車輛進出即時紀錄清冊",
         "approval_header": "🛡️ 主管已簽核之派車放行與車輛管制清冊",
         "approval_caption": "保全人員請於車輛離廠或入廠時，核對下方由系統主管簽核通過之派車單與車牌號碼。",
         "no_records": "目前無車輛進出紀錄。",
         "no_approvals": "目前無已核准的派車單。",
-        "visitor_header": "👥 訪客、外包商與面試者進出登記",
-        "visitor_list_header": "📋 今日訪客與外包商進出紀錄",
-        "parcel_header": "📦 公司包裹、信件與快遞代收登記",
-        "parcel_list_header": "📋 待領取與歷史包裹清單",
+        "visitor_header": "👥 訪客、外包商與面試者進出登記 (資料庫直寫)",
+        "visitor_list_header": "📋 資料庫訪客與外包商歷史進出稽核清冊",
+        "parcel_header": "📦 公司包裹、信件與快遞代收登記 (資料庫直寫)",
+        "parcel_list_header": "📋 資料庫包裹信件代收與領取清單",
         "col_index": "STT",
         "col_plate": "車牌號碼",
         "col_driver": "駕駛與單位",
@@ -34,7 +34,7 @@ GATE_LOG_I18N = {
     },
     "Tiếng Việt": {
         "title": "🚗 Phòng Bảo vệ - Quản lý Cổng, Khách ra vào & Bưu phẩm",
-        "caption": "Ghi nhận xe, khách ra vào và quản lý bưu phẩm.",
+        "caption": "Ghi nhận xe, khách ra vào và quản lý bưu phẩm lưu CSDL.",
         "tab_list": "📑 Sổ xe ra vào",
         "tab_approval": "🛡️ Phê duyệt điều xe",
         "tab_visitor": "👥 Đăng ký Khách",
@@ -59,7 +59,7 @@ GATE_LOG_I18N = {
     },
     "English": {
         "title": "🚗 Security - Gate Access, Dispatch, Visitors & Parcels Center",
-        "caption": "Track vehicle entry, visitor logs, and parcel receptions.",
+        "caption": "Track vehicle entry, visitor logs, and parcel receptions with database archiving.",
         "tab_list": "📑 Gate Access Log",
         "tab_approval": "🛡️ Dispatch Orders",
         "tab_visitor": "👥 Visitor Registration",
@@ -69,10 +69,10 @@ GATE_LOG_I18N = {
         "approval_caption": "Verify dispatch orders before entry.",
         "no_records": "No records found.",
         "no_approvals": "No approved orders.",
-        "visitor_header": "👥 Visitor Registration",
-        "visitor_list_header": "📋 Visitor Log",
-        "parcel_header": "📦 Parcel & Mail Reception",
-        "parcel_list_header": "📋 Parcel Inventory",
+        "visitor_header": "Visitor Registration (DB)",
+        "visitor_list_header": "Visitor Audit Log",
+        "parcel_header": "Parcel Reception (DB)",
+        "parcel_list_header": "Parcel Inventory Log",
         "col_index": "No.",
         "col_plate": "License Plate",
         "col_driver": "Driver",
@@ -83,6 +83,44 @@ GATE_LOG_I18N = {
         "col_status": "Status"
     }
 }
+
+def init_gate_extension_db(engine):
+    """
+    🔗 自動初始化訪客紀錄與包裹代收的專屬資料庫表格
+    """
+    if not engine:
+        return
+    try:
+        with engine.begin() as conn:
+            # 1. 訪客與外包商進出登記表
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS public.visitor_logs (
+                    id SERIAL PRIMARY KEY,
+                    visit_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    visitor_name VARCHAR(150) NOT NULL,
+                    company_name VARCHAR(150) NOT NULL,
+                    visit_target VARCHAR(150),
+                    id_number VARCHAR(100),
+                    visitor_pass VARCHAR(50),
+                    status VARCHAR(50) DEFAULT '在廠中',
+                    notes TEXT
+                );
+            """))
+            # 2. 包裹信件代收登記表
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS public.parcel_logs (
+                    id SERIAL PRIMARY KEY,
+                    reg_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    courier_source VARCHAR(150) NOT NULL,
+                    receiver_name VARCHAR(150) NOT NULL,
+                    parcel_type VARCHAR(100),
+                    sender_source VARCHAR(150),
+                    status VARCHAR(50) DEFAULT '待領取',
+                    notes TEXT
+                );
+            """))
+    except Exception:
+        pass
 
 def get_vehicle_options_from_assets(engine):
     vehicles = ["60A-888.99 (Toyota Fortuner 7座)"]
@@ -147,6 +185,9 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
     st.title(L["title"])
     st.caption(L["caption"])
 
+    # 確保資料庫表格已建立
+    init_gate_extension_db(engine)
+
     # 1. 初始化車輛門禁紀錄 Session
     if "vehicle_gate_db" not in st.session_state:
         st.session_state.vehicle_gate_db = [
@@ -157,33 +198,6 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
                 "direction": "車輛入廠",
                 "purpose": "載送總經理赴胡志明市開會",
                 "time": "2026-10-06 08:15:00"
-            }
-        ]
-
-    # 2. 初始化訪客登記 Session
-    if "visitor_gate_db" not in st.session_state:
-        st.session_state.visitor_gate_db = [
-            {
-                "日期時間": "2026-10-31 09:00:00",
-                "訪客姓名": "Trần Văn Hùng",
-                "單位/公司": "ABC 消防設備工程",
-                "拜訪對象": "許福村 (管理部經理)",
-                "證件號碼": "079088123456",
-                "訪客證編號": "V-01",
-                "狀態": "🟢 在廠中 (Checked-In)"
-            }
-        ]
-
-    # 3. 初始化包裹信件代收 Session
-    if "parcel_gate_db" not in st.session_state:
-        st.session_state.parcel_gate_db = [
-            {
-                "登記日期": "2026-10-31 10:30:00",
-                "快遞公司": "Viettel Post / 順豐",
-                "收件人": "許福村 (Tassos)",
-                "物件類型": "文件包裹 (Document/Box)",
-                "寄件來源": "胡志明市總公司",
-                "領取狀態": "🟡 待領取 (Uncollected)"
             }
         ]
 
@@ -259,50 +273,80 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
         else:
             st.info(L["no_approvals"])
 
-    # Tab 3: 訪客與外包商登記
+    # Tab 3: 訪客與外包商登記 (直接寫入資料庫)
     with tab_visitor:
         st.markdown(f"### {L['visitor_header']}")
-        with st.form("form_visitor_record"):
+        with st.form("form_visitor_record_db"):
             c1, c2 = st.columns(2)
             with c1:
                 v_name = st.text_input("訪客 / 外包商姓名 *", placeholder="輸入全名...")
                 v_company = st.text_input("所屬公司 / 單位 *", placeholder="例: 宏碁電腦 / 消防工程行")
-                v_id = st.text_input("身分證號 / 護照號碼 (留置換證)", placeholder="CCCD / Passport ID...")
+                v_id = st.text_input("身分證號 / 護照號碼 (留置換證) *", placeholder="CCCD / Passport ID...")
             with c2:
                 v_target = st.selectbox("拜訪對象 / 員工 *", emp_list)
                 v_pass_no = st.text_input("核發訪客證編號 (Visitor Pass)", placeholder="例: V-05")
-                v_status = st.selectbox("進出狀態", ["🟢 剛入廠 (Check-In)", "🔴 已離廠 (Check-Out)"])
+                v_status = st.selectbox("進出狀態", ["🟢 在廠中 (Checked-In)", "🔴 已離廠 (Check-Out)"])
 
             v_note = st.text_input("拜訪事由與攜帶工具備註", placeholder="例: 廠區消防灑水系統定期維護...")
 
-            if st.form_submit_button("🚀 登記訪客並發放訪客證", type="primary", use_container_width=True):
-                if v_name and v_company:
-                    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    st.session_state.visitor_gate_db.insert(0, {
-                        "日期時間": now_str,
-                        "訪客姓名": v_name,
-                        "單位/公司": v_company,
-                        "拜訪對象": v_target,
-                        "證件號碼": v_id if v_id else "-",
-                        "訪客證編號": v_pass_no if v_pass_no else "-",
-                        "狀態": v_status
-                    })
-                    st.success(f"✅ 訪客 {v_name} ({v_company}) 登記成功！")
-                    st.rerun()
+            if st.form_submit_button("🚀 登記訪客並寫入資料庫歸檔", type="primary", use_container_width=True):
+                if v_name and v_company and v_id:
+                    if engine:
+                        try:
+                            with engine.begin() as conn:
+                                conn.execute(text("""
+                                    INSERT INTO public.visitor_logs (visitor_name, company_name, visit_target, id_number, visitor_pass, status, notes)
+                                    VALUES (:name, :comp, :target, :id_no, :pass_no, :status, :notes);
+                                """), {
+                                    "name": v_name.strip(),
+                                    "comp": v_company.strip(),
+                                    "target": v_target,
+                                    "id_no": v_id.strip(),
+                                    "pass_no": v_pass_no.strip() if v_pass_no else "-",
+                                    "status": v_status,
+                                    "notes": v_note.strip() if v_note else "-"
+                                })
+                            st.success(f"✅ 訪客 {v_name} ({v_company}) 已成功寫入資料庫，證件已留置管制！")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"寫入訪客資料庫失敗: {e}")
+                    else:
+                        st.warning("⚠️ 資料庫連線引擎未就緒。")
                 else:
-                    st.warning("⚠️ 請填寫訪客姓名與所屬公司！")
+                    st.warning("⚠️ 請完整填寫訪客姓名、所屬公司與身分證/護照號碼！")
 
         st.markdown("---")
         st.markdown(f"### {L['visitor_list_header']}")
-        if st.session_state.visitor_gate_db:
-            st.dataframe(pd.DataFrame(st.session_state.visitor_gate_db), use_container_width=True, hide_index=True)
-        else:
-            st.info("目前尚無訪客紀錄。")
+        
+        # 從資料庫撈取真實訪客歷史紀錄
+        visitor_records = []
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    res = conn.execute(text("SELECT visit_time, visitor_name, company_name, visit_target, id_number, visitor_pass, status, notes FROM public.visitor_logs ORDER BY id DESC LIMIT 50;"))
+                    for r in res.fetchall():
+                        visitor_records.append({
+                            "登記時間": str(r[0])[:19],
+                            "訪客姓名": r[1],
+                            "單位/公司": r[2],
+                            "拜訪對象": r[3],
+                            "證件號碼": r[4],
+                            "訪客證": r[5],
+                            "狀態": r[6],
+                            "備註事由": r[7]
+                        })
+            except Exception:
+                pass
 
-    # Tab 4: 包裹信件代收管理
+        if visitor_records:
+            st.dataframe(pd.DataFrame(visitor_records), use_container_width=True, hide_index=True)
+        else:
+            st.info("目前資料庫尚無訪客紀錄。")
+
+    # Tab 4: 包裹信件代收管理 (直接寫入資料庫)
     with tab_parcel:
         st.markdown(f"### {L['parcel_header']}")
-        with st.form("form_parcel_record"):
+        with st.form("form_parcel_record_db"):
             c1, c2 = st.columns(2)
             with c1:
                 p_courier = st.text_input("快遞公司 / 貨運來源 *", placeholder="例: Shopee Express, Viettel Post, 順豐...")
@@ -314,28 +358,57 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
 
             p_desc = st.text_input("快遞單號或備註說明", placeholder="例: 貨號 VT-998231，易碎品...")
 
-            if st.form_submit_button("📦 登記代收包裹並通知", type="primary", use_container_width=True):
+            if st.form_submit_button("📦 登記代收包裹並寫入資料庫", type="primary", use_container_width=True):
                 if p_courier:
-                    now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    st.session_state.parcel_gate_db.insert(0, {
-                        "登記日期": now_str,
-                        "快遞公司": p_courier,
-                        "收件人": p_receiver,
-                        "物件類型": p_type,
-                        "寄件來源": p_source if p_source else "-",
-                        "領取狀態": p_status
-                    })
-                    st.success(f"✅ 包裹已成功代收登記，收件人：{p_receiver}")
-                    st.rerun()
+                    if engine:
+                        try:
+                            with engine.begin() as conn:
+                                conn.execute(text("""
+                                    INSERT INTO public.parcel_logs (courier_source, receiver_name, parcel_type, sender_source, status, notes)
+                                    VALUES (:courier, :receiver, :p_type, :sender, :status, :notes);
+                                """), {
+                                    "courier": p_courier.strip(),
+                                    "receiver": p_receiver,
+                                    "p_type": p_type,
+                                    "sender": p_source.strip() if p_source else "-",
+                                    "status": p_status,
+                                    "notes": p_desc.strip() if p_desc else "-"
+                                })
+                            st.success(f"✅ 包裹代收紀錄已成功寫入資料庫，收件人：{p_receiver}")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"寫入包裹資料庫失敗: {e}")
+                    else:
+                        st.warning("⚠️ 資料庫連線引擎未就緒。")
                 else:
                     st.warning("⚠️ 請填寫快遞公司或貨運來源！")
 
         st.markdown("---")
         st.markdown(f"### {L['parcel_list_header']}")
-        if st.session_state.parcel_gate_db:
-            st.dataframe(pd.DataFrame(st.session_state.parcel_gate_db), use_container_width=True, hide_index=True)
+        
+        # 從資料庫撈取真實包裹歷史紀錄
+        parcel_records = []
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    res = conn.execute(text("SELECT reg_time, courier_source, receiver_name, parcel_type, sender_source, status, notes FROM public.parcel_logs ORDER BY id DESC LIMIT 50;"))
+                    for r in res.fetchall():
+                        parcel_records.append({
+                            "登記時間": str(r[0])[:19],
+                            "快遞來源": r[1],
+                            "收件人": r[2],
+                            "物件類型": r[3],
+                            "寄件公司": r[4],
+                            "領取狀態": r[5],
+                            "單號備註": r[6]
+                        })
+            except Exception:
+                pass
+
+        if parcel_records:
+            st.dataframe(pd.DataFrame(parcel_records), use_container_width=True, hide_index=True)
         else:
-            st.info("目前尚無包裹代收紀錄。")
+            st.info("目前資料庫尚無包裹代收紀錄。")
 
 def show(*args, **kwargs):
     render_vehicle_gate_log_page(*args, **kwargs)
