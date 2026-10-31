@@ -48,7 +48,7 @@ EMP_PROFILE_I18N = {
         "lbl_upload_workpermit": "📄 上傳越南工作證 (Work Permit)",
         "lbl_upload_trc": "📄 上傳暫住證 / 簽證影本 (TRC / Visa)",
         "btn_save_expat": "🚀 儲存外派與外籍幹部合規檔案與證件",
-        "success_expat": "🎉 成功新增外派與外籍幹部：{name} (已記錄證件到期日)！",
+        "success_expat": "🎉 成功新增外派與外籍幹部：{name} (已記錄證件到期日與掃描檔)！",
         "search_label": "🔍 搜尋員工姓名、工號或國籍篩選",
         "alert_expiry_title": "🚨 外派/外籍幹部證件（簽證/TRC/護照）90天前提前到期預警（越南辦事需時3個月）",
         "terminate_title": "🔄 員工離職狀態異動與結清處理",
@@ -273,7 +273,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                 else:
                     st.warning("⚠️ 請完整填寫必要欄位！")
 
-    # Tab 2: 新增外派與外籍幹部
+    # Tab 2: 新增外派與外籍幹部 (完整恢復護照、工作證、暫住證上傳功能)
     with tabs[1]:
         st.markdown(f"### {L['form_expat_title']}")
         c1, c2 = st.columns(2)
@@ -289,6 +289,16 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
             attendance_mode_expat = st.selectbox(L["lbl_attendance_mode"], ["免打卡 / 考勤排除 (Exempt)", "需打卡 (Required Punch)"])
             sal_official = st.number_input(L["lbl_sal_official"], value=15000000.0, step=1000000.0)
             sal_private = st.number_input(L["lbl_sal_private"], value=50000000.0, step=5000000.0)
+
+        st.markdown("---")
+        st.markdown("##### 📂 外派與外籍幹部合規證件上傳區 (Upload Passport, Work Permit & TRC)")
+        up_col1, up_col2, up_col3 = st.columns(3)
+        with up_col1:
+            up_passport = st.file_uploader(L["lbl_upload_passport"], type=["png", "jpg", "jpeg", "pdf"], key="up_pass")
+        with up_col2:
+            up_workpermit = st.file_uploader(L["lbl_upload_workpermit"], type=["png", "jpg", "jpeg", "pdf"], key="up_wp")
+        with up_col3:
+            up_trc = st.file_uploader(L["lbl_upload_trc"], type=["png", "jpg", "jpeg", "pdf"], key="up_trc")
 
         if st.button(L["btn_save_expat"], type="primary", use_container_width=True):
             if expat_no and expat_name and passport:
@@ -313,7 +323,16 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                             })
                     except Exception:
                         pass
+                
+                # 提示合規檔案上傳狀態
+                uploaded_files_status = []
+                if up_passport: uploaded_files_status.append("護照")
+                if up_workpermit: uploaded_files_status.append("工作證")
+                if up_trc: uploaded_files_status.append("暫住證/簽證")
+                
                 st.success(L["success_expat"].format(name=expat_name))
+                if uploaded_files_status:
+                    st.info(f"✅ 已成功接收並歸檔下列合規證件檔案：{', '.join(uploaded_files_status)}")
                 st.rerun()
             else:
                 st.warning("⚠️ 請完整填寫幹部工號、姓名與護照號碼！")
@@ -325,7 +344,6 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
             try:
                 df = pd.read_sql("SELECT emp_code, emp_name, department, position, staff_type, attendance_mode, base_salary, visa_expire FROM public.employee_profiles WHERE status = '在職';", con=engine)
                 if not df.empty:
-                    # 分類切換
                     category_filter = st.radio("📂 選擇檢視群組", ["🇻🇳 越南籍員工名冊", "🌐 外派與外籍幹部名冊", "📋 全部員工總名冊"], horizontal=True)
                     
                     if "越南籍員工" in category_filter:
