@@ -3,16 +3,19 @@ import pandas as pd
 import datetime
 from sqlalchemy import text
 
+# ----------------------------------------------------
+# 🌐 員工檔案與人事管理模組完整多語系字典 (i18n)
+# ----------------------------------------------------
 EMP_PROFILE_I18N = {
     "繁體中文": {
         "title": "👤 管理部 - 員工個人檔案與人事管理中心",
-        "caption": "管理公司在職員工名冊、越南勞動法規合規建檔、外派與外籍幹部薪資、簽證與證件歸檔。",
+        "caption": "管理公司在職員工名冊、越南勞動法規合規建檔、外派與外籍幹部薪資、簽證、證件歸檔與離職異動。",
         "tab_vn": "VN 新增越南員工",
-        "tab_expat": "🌐 新增外派與外籍幹部",
-        "tab_list": "📑 現職員工總名冊",
-        "tab_resigned": "📁 離職名冊",
+        "tab_expat": "🌐 新增外派與外籍幹部 (多國籍/雙薪/證件上傳)",
+        "tab_list": "📑 現職員工總名冊與異動",
+        "tab_resigned": "📁 離職名冊管理",
         # 越南員工表單
-        "form_vn_title": "VN 新增越南籍員工資料 ",
+        "form_vn_title": "VN 新增越南籍員工資料 (符合越南勞動法規範)",
         "lbl_emp_no": "工號 (Mã NV) *",
         "lbl_name": "姓名 (Họ tên) *",
         "lbl_phone": "聯絡電話 (Số ĐT)",
@@ -34,7 +37,7 @@ EMP_PROFILE_I18N = {
         "btn_save_vn": "🚀 確認並寫入越南員工資料庫",
         "success_vn": "🎉 成功新增越南籍員工：{name} (工號: {emp_no})！",
         # 外派/外籍幹部表單
-        "form_expat_title": "🌐 新增外派與外籍幹部資料 (多國籍專案管理與證件歸檔)",
+        "form_expat_title": "🌐 新增外派與外籍幹部資料 (多國籍專案管理、雙薪與證件上傳)",
         "lbl_expat_name": "幹部姓名 (Họ tên chuyên gia) *",
         "lbl_expat_no": "工號 / 識別碼 *",
         "lbl_nationality": "國籍 (Nationality)",
@@ -47,16 +50,21 @@ EMP_PROFILE_I18N = {
         "lbl_upload_passport": "📄 上傳護照掃描檔 / 照片 (Passport)",
         "lbl_upload_workpermit": "📄 上傳越南工作證 (Work Permit)",
         "lbl_upload_trc": "📄 上傳暫住證 / 簽證影本 (TRC / Visa)",
-        "btn_save_expat": "🚀 儲存外派與外籍幹部合規檔案",
-        "success_expat": "🎉 成功新增外派與外籍幹部：{name}！"
+        "btn_save_expat": "🚀 儲存外派與外籍幹部合規檔案與證件",
+        "success_expat": "🎉 成功新增外派與外籍幹部：{name}！",
+        # 離職異動
+        "terminate_title": "🔄 員工離職狀態異動與結清處理",
+        "lbl_select_terminate_emp": "選擇要辦理離職的員工 (工號 - 姓名)",
+        "btn_terminate": "🔴 辦理離職手續並移至離職名冊",
+        "success_terminate": "✅ 員工 `{emp}` 已成功辦理離職！"
     },
     "Tiếng Việt": {
         "title": "👤 Phòng Nhân sự - Quản lý Hồ sơ & Nhân sự",
-        "caption": "Quản lý nhân viên, luật lao động VN, chuyên gia nước ngoài, lương và hồ sơ giấy tờ.",
+        "caption": "Quản lý nhân viên, luật lao động VN, chuyên gia, lương, hồ sơ giấy tờ và thủ tục nghỉ việc.",
         "tab_vn": "VN Thêm nhân viên VN",
         "tab_expat": "🌐 Thêm chuyên gia nước ngoài",
-        "tab_list": "📑 Danh sách nhân viên",
-        "tab_resigned": "📁 Danh sách nghỉ việc",
+        "tab_list": "📑 Danh sách nhân viên & Xử lý nghỉ việc",
+        "tab_resigned": "📁 Danh sách đã nghỉ việc",
         "form_vn_title": "VN Thêm nhân viên người Việt",
         "lbl_emp_no": "Mã NV *",
         "lbl_name": "Họ tên *",
@@ -92,14 +100,18 @@ EMP_PROFILE_I18N = {
         "lbl_upload_workpermit": "📄 Tải lên Giấy phép lao động",
         "lbl_upload_trc": "📄 Tải lên Thẻ tạm trú (TRC)",
         "btn_save_expat": "🚀 Lưu hồ sơ chuyên gia",
-        "success_expat": "🎉 Đã lưu thành công chuyên gia: {name}!"
+        "success_expat": "🎉 Đã lưu thành công chuyên gia: {name}!",
+        "terminate_title": "🔄 Xử lý thủ tục nghỉ việc nhân sự",
+        "lbl_select_terminate_emp": "Chọn nhân viên nghỉ việc",
+        "btn_terminate": "🔴 Xác nhận nghỉ việc",
+        "success_terminate": "✅ Đã chuyển nhân viên `{emp}` sang danh sách nghỉ việc!"
     },
     "English": {
         "title": "👤 HR Center - Employee Profiles & Expat Management",
-        "caption": "Manage employee registry, multinational expats, salaries, and document uploads.",
+        "caption": "Manage employee registry, multinational expats, salaries, document uploads, and termination records.",
         "tab_vn": "VN New Employee",
         "tab_expat": "🌐 Expat & Foreign Staff Setup",
-        "tab_list": "📑 Employee Registry",
+        "tab_list": "📑 Employee Registry & Termination",
         "tab_resigned": "📁 Resigned List",
         "form_vn_title": "VN Add Vietnamese Employee",
         "lbl_emp_id": "Employee No. *",
@@ -136,7 +148,11 @@ EMP_PROFILE_I18N = {
         "lbl_upload_workpermit": "📄 Upload Work Permit",
         "lbl_upload_trc": "📄 Upload TRC / Visa",
         "btn_save_expat": "🚀 Save Expat Profile",
-        "success_expat": "🎉 Successfully saved expat: {name}!"
+        "success_expat": "🎉 Successfully saved expat: {name}!",
+        "terminate_title": "🔄 Process Employee Termination",
+        "lbl_select_terminate_emp": "Select Employee to Terminate",
+        "btn_terminate": "🔴 Confirm Termination",
+        "success_terminate": "✅ Employee `{emp}` moved to resigned list!"
     }
 }
 
@@ -221,7 +237,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                                     (emp_no, emp_name, phone, id_card, tax_code, factory, department, position, staff_type, base_salary, private_allowance, system_role, perm_address, temp_address, hospital, bhxh_no, bank_acc, bank_name, status)
                                     VALUES (:no, :name, :phone, :id_c, :tax, :fac, :dept, :pos, :stype, :sal, 0, :srole, :paddr, :taddr, :hosp, :bhxh, :bacc, :bname, '在職')
                                     ON CONFLICT (emp_no) DO UPDATE SET 
-                                    emp_name = :name, phone = :phone, base_salary = :sal;
+                                    emp_name = :name, phone = :phone, base_salary = :sal, status = '在職';
                                 """), {
                                     "no": emp_no.strip(), "name": name.strip(), "phone": phone.strip(),
                                     "id_c": id_card.strip(), "tax": tax_code.strip(), "fac": factory,
@@ -237,81 +253,8 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                 else:
                     st.warning("⚠️ 請完整填寫必要欄位！")
 
-    # Tab 2: 外派與外籍幹部
+    # Tab 2: 外派與外籍幹部 (多國籍、雙薪、聯絡電話、證件檔案上傳)
     with tabs[1]:
         st.markdown(f"### {L['form_expat_title']}")
         c1, c2 = st.columns(2)
         with c1:
-            expat_no = st.text_input(L["lbl_expat_no"], placeholder="TW-001 / CN-002 / MY-003")
-            expat_name = st.text_input(L["lbl_expat_name"], placeholder="許福村 / 张伟 / David Lee")
-            nationality = st.selectbox(L["lbl_nationality"], ["台灣 (Taiwan)", "中國大陸 (China)", "馬來西亞 (Malaysia)", "韓國 (Korea)", "其他國家 (Other)"])
-            phone_expat = st.text_input(L["lbl_phone_expat"], placeholder="+84-... / WeChat / Zalo")
-            passport = st.text_input(L["lbl_passport"], placeholder="Passport No. / ID")
-            visa_type = st.selectbox(L["lbl_visa_type"], ["LD1 / LD2 (工作簽證)", "DN1 (商業簽證)", "TRC (長期居留證)", "DT (投資簽證)"])
-        with c2:
-            visa_expire = st.text_input(L["lbl_visa_expire"], value="2027-12-31")
-            sal_official = st.number_input(L["lbl_sal_official"], value=15000000.0, step=1000000.0)
-            sal_private = st.number_input(L["lbl_sal_private"], value=50000000.0, step=5000000.0)
-            
-            st.markdown("---")
-            up_passport = st.file_uploader(L["lbl_upload_passport"], type=["png", "jpg", "jpeg", "pdf"])
-            up_workpermit = st.file_uploader(L["lbl_upload_workpermit"], type=["png", "jpg", "jpeg", "pdf"])
-            up_trc = st.file_uploader(L["lbl_upload_trc"], type=["png", "jpg", "jpeg", "pdf"])
-
-        if st.button(L["btn_save_expat"], type="primary", use_container_width=True):
-            if expat_no and expat_name and passport:
-                if engine:
-                    try:
-                        with engine.begin() as conn:
-                            conn.execute(text("""
-                                INSERT INTO public.employee_profiles 
-                                (emp_no, emp_name, phone, id_card, staff_type, base_salary, private_allowance, status)
-                                VALUES (:no, :name, :phone, :passport, :stype, :sal_off, :sal_priv, '在職')
-                                ON CONFLICT (emp_no) DO UPDATE SET emp_name = :name, base_salary = :sal_off, private_allowance = :sal_priv;
-                            """), {
-                                "no": expat_no.strip(), 
-                                "name": f"{expat_name.strip()} ({nationality})", 
-                                "phone": phone_expat.strip() if phone_expat else "-",
-                                "passport": passport.strip(),
-                                "stype": f"外派/外籍幹部 ({nationality})",
-                                "sal_off": sal_official,
-                                "sal_priv": sal_private
-                            })
-                    except Exception:
-                        pass
-                st.success(L["success_expat"].format(name=expat_name))
-                st.info("📁 外派幹部檔案已成功建檔，證件與薪資資料已安全歸檔。")
-            else:
-                st.warning("⚠️ 請完整填寫幹部工號、姓名與護照號碼！")
-
-    # Tab 3: 現職員工總名冊
-    with tabs[2]:
-        st.markdown(f"### {L['tab_list']}")
-        if engine:
-            try:
-                df = pd.read_sql("SELECT emp_no, emp_name, phone, staff_type, base_salary FROM public.employee_profiles WHERE status = '在職';", con=engine)
-                if not df.empty:
-                    st.dataframe(df, use_container_width=True, hide_index=True)
-                else:
-                    st.info("目前尚無員工資料紀錄。")
-            except Exception:
-                st.info("資料庫表格尚未初始化或無資料。")
-        else:
-            st.info("DB engine not connected.")
-
-    # Tab 4: 離職名冊
-    with tabs[3]:
-        st.markdown(f"### {L['tab_resigned']}")
-        st.info("目前無離職人員紀錄。")
-
-def show(*args, **kwargs):
-    render_hr_profile_page(*args, **kwargs)
-
-def main(*args, **kwargs):
-    render_hr_profile_page(*args, **kwargs)
-
-def render_employee_profile(*args, **kwargs):
-    render_hr_profile_page(*args, **kwargs)
-
-def render_employee_management(*args, **kwargs):
-    render_hr_profile_page(*args, **kwargs)
