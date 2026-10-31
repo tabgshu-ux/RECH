@@ -191,7 +191,7 @@ if st.session_state.get("must_change_pwd", False):
     st.stop()
 
 # ----------------------------------------------------
-# 🚀 3. 已登入側邊欄與動態功能選單 (樹狀階層收合版)
+# 🚀 3. 已登入側邊欄與動態功能選單 (極簡主部門導航版)
 # ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
@@ -242,10 +242,9 @@ elif current_role_clean == "security":
     selected_dept_label = next((d for d in available_dept_names if "管理部" in d), available_dept_names[0])
     st.sidebar.markdown(f"**{ui_t['parent_header']}**")
     st.sidebar.markdown(f"👔 {selected_dept_label}")
-    sub_features = ["🚗 廠區車輛進出口門禁與派車審核"]
-    selected_feat_label = sub_features[0]
+    selected_feat_label = "🚗 廠區車輛進出口門禁與派車審核"
 else:
-    # 🌳 第一階段：一級部門選擇清單
+    # 🌳 側邊欄只保留一級部門選擇，乾淨俐落
     st.sidebar.markdown(f"**{ui_t['parent_header']}**")
     
     selected_dept_label = st.sidebar.radio(
@@ -260,32 +259,11 @@ else:
     if selected_dept_index != st.session_state.get("selected_dept_index", 0):
         st.session_state.selected_dept_index = selected_dept_index
         st.session_state.selected_feat_index = 0
+        # 切換部門時重置管理部內部狀態
+        st.session_state.mgmt_active_tab = "總覽"
         st.rerun()
 
-    sub_features = dept_module_tree.get(selected_dept_label, [])
-    if not sub_features:
-        sub_features = ["(此部門尚無功能模組)"]
-
-    if st.session_state.get("selected_feat_index", 0) >= len(sub_features):
-        st.session_state.selected_feat_index = 0
-
-    st.sidebar.markdown("---")
-    
-    # 📂 第二階段：點選部門後，自動在下方以「展開收合 (Expander)」呈現子功能樹狀結構
-    dept_short_name = selected_dept_label.split('(')[0].strip()
-    with st.sidebar.expander(f"📂 展開【{dept_short_name}】功能選單", expanded=True):
-        selected_feat_label = st.radio(
-            ui_t["sub_header"],
-            sub_features,
-            index=st.session_state.get("selected_feat_index", 0),
-            key="feat_radio_idx",
-            label_visibility="collapsed"
-        )
-        
-        selected_feat_index = sub_features.index(selected_feat_label)
-        if selected_feat_index != st.session_state.get("selected_feat_index", 0):
-            st.session_state.selected_feat_index = selected_feat_index
-            st.rerun()
+    selected_feat_label = selected_dept_label
 
 # ----------------------------------------------------
 # 📢 公司公告跑馬燈
@@ -336,80 +314,56 @@ try:
 
     # 3. 總經理室 (Executive Office)
     elif "總經理室" in dept_str:
-        if "原料價格" in feat_str or "Gemini" in feat_str:
+        sub_exec_choice = st.selectbox("📌 選擇總經理室子功能", ["📊 原料價格與匯率戰情室", "💰 財務與損益類", "📈 專案進度與異常監控", "🇻🇳 越南政策與法規"])
+        if "原料價格" in sub_exec_choice:
             load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="commodities_fx", lang=curr_lang)
-        elif "財務類" in feat_str or "AR/AP" in feat_str:
+        elif "財務" in sub_exec_choice:
             load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="financials_pl", lang=curr_lang)
-        elif "專案進度" in feat_str or "異常監控" in feat_str:
+        elif "專案進度" in sub_exec_choice:
             load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="project_progress_exec", lang=curr_lang)
-        elif "政策" in feat_str or "法規" in feat_str:
+        elif "政策" in sub_exec_choice:
             load_module_safely("modules.vietnam_policy_news", "render_vietnam_policy_news_page", engine=engine, lang=curr_lang)
         else:
             load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="commodities_fx", lang=curr_lang)
 
-    # 4. 管理部 (Management Dept)
+    # 4. 管理部 (Management Dept) - 採用主畫面卡片導航儀表板
     elif "管理部" in dept_str:
-        if "公司公告" in feat_str:
-            load_module_safely("modules.company_announcements", "render_company_announcements_page", engine=engine, lang=curr_lang)
-        elif "員工檔案" in feat_str:
-            load_module_safely("modules.employee_management", "render_employee_management", engine=engine, t=ui_t, lang=curr_lang)
-        elif "員工打卡紀錄" in feat_str:
-            load_module_safely("modules.management.hr.internal_attendance", "render_internal_attendance_page", engine=engine, lang=curr_lang)
-        elif "密碼修改" in feat_str:
-            load_module_safely("modules.management.hr.change_password", "render_change_password_page", engine=engine, lang=curr_lang)
-        elif "宿舍與伙食" in feat_str:
-            load_module_safely("modules.management.dorm_catering", "render_dorm_catering_module", engine=engine, lang=curr_lang)
-        elif "工作廠區管理" in feat_str:
-            load_module_safely("modules.management.plant_management", "render_plant_management_page", engine=engine, lang=curr_lang)
-        elif "車輛進出口" in feat_str:
-            load_module_safely("modules.management.general_affairs.vehicle_gate_log", "render_vehicle_gate_log_page", engine=engine, lang=curr_lang)
-        elif "車輛維修紀錄" in feat_str:
-            load_module_safely("modules.management.general_affairs.vehicle_maintenance", "show", engine=engine, lang=curr_lang)
-        elif "固定資產管理" in feat_str:
-            load_module_safely("modules.management.general_affairs.asset_management", "render_asset_management_page", engine=engine, lang=curr_lang)
-        elif "文件管理" in feat_str:
-            load_module_safely("modules.document_management", "render_document_management_page", engine=engine, lang=curr_lang)
-        elif "採購與應付帳款" in feat_str:
-            load_module_safely("modules.procurement_ap", "render_procurement_ap_page", engine=engine, lang=curr_lang)
-        elif "應收帳款管理" in feat_str:
-            load_module_safely("modules.sales_order_ar", "render_sales_order_ar_page", engine=engine, lang=curr_lang)
-        elif "越南稅務報表" in feat_str:
-            load_module_safely("modules.financial_tax_reports", "render_financial_tax_reports_page", engine=engine, lang=curr_lang)
-        elif "員工薪資與保險" in feat_str:
-            load_module_safely("modules.payroll_management", "render_payroll_management_page", engine=engine, lang=curr_lang)
-        elif "電子發票管理" in feat_str:
-            load_module_safely("modules.invoice_management", "render_invoice_management_page", engine=engine, lang=curr_lang)
+        load_module_safely("modules.management.dashboard", "render_management_dashboard", engine=engine, lang=curr_lang)
 
     # 5. 工程與設計管理中心
     elif "工程與設計管理中心" in dept_str:
-        if "1. 工程主管戰情室" in feat_str or "戰情室" in feat_str:
+        eng_sub_choice = st.selectbox("📌 選擇工程中心子模組", [
+            "1. 工程主管戰情室", "2. 工程專案報價系統", "3. 施工日報表 (點工點料)", 
+            "4. AI 施工照片辨識", "5. 工程證照預警", "6. 配電盤電氣與機構設計圖庫", 
+            "7. 配電盤 BOM 零件與採購連動", "8. 外包商計價", "9. FAT/SAT 現場驗收"
+        ])
+        if "1. 工程主管戰情室" in eng_sub_choice:
             load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="dashboard")
-        elif "2. 工程專案報價系統" in feat_str or "報價系統" in feat_str:
+        elif "2. 工程專案報價系統" in eng_sub_choice:
             load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="quotation")
-        elif "3. 施工日報表" in feat_str or "點工點料" in feat_str:
+        elif "3. 施工日報表" in eng_sub_choice:
             load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="daily_report")
-        elif "4. AI 施工照片辨識" in feat_str or "照片辨識" in feat_str:
+        elif "4. AI 施工照片辨識" in eng_sub_choice:
             load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="ai_audit")
-        elif "5. 工程證照預警" in feat_str or "機具檢驗" in feat_str:
+        elif "5. 工程證照預警" in eng_sub_choice:
             load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="license_alert")
-        elif "6. 配電盤電氣與機構設計圖庫" in feat_str or "設計圖庫" in feat_str:
+        elif "6. 配電盤電氣與機構設計圖庫" in eng_sub_choice:
             load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="drawing_gallery")
-        elif "7. 配電盤 BOM 零件" in feat_str or "採購連動" in feat_str:
+        elif "7. 配電盤 BOM 零件" in eng_sub_choice:
             load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="bom_procurement")
-        elif "8. 外包商計價" in feat_str or "偶鐸管理" in feat_str:
+        elif "8. 外包商計價" in eng_sub_choice:
             load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="subcontractor")
-        elif "9. FAT/SAT" in feat_str or "現場驗收" in feat_str:
+        elif "9. FAT/SAT" in eng_sub_choice:
             load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="fatsat")
-        else:
-            load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang)
 
     # 6. 生產部
     elif "生產部" in dept_str:
-        if "板金" in feat_str:
+        prod_sub_choice = st.selectbox("📌 選擇生產部子模組", ["板金加工模組", "塗料產線模組", "配盤組裝模組"])
+        if "板金" in prod_sub_choice:
             load_module_safely("modules.sheet_metal", "render_sheet_metal_module", engine=engine, t=ui_t, lang=curr_lang)
-        elif "塗料" in feat_str:
+        elif "塗料" in prod_sub_choice:
             load_module_safely("modules.painting", "render_painting_module", engine=engine, t=ui_t, lang=curr_lang)
-        elif "配盤" in feat_str:
+        elif "配盤" in prod_sub_choice:
             load_module_safely("modules.assembly", "render_assembly_module", engine=engine, t=ui_t, lang=curr_lang)
 
     # 7. 倉庫管理
@@ -421,8 +375,8 @@ try:
         load_module_safely("modules.approval_workflow", "render_approval_center", lang=curr_lang)
 
     else:
-        st.markdown(f"### 📍 目前選定功能：{selected_feat_label}")
-        st.info("💡 此模組正在運行中。")
+        st.markdown(f"### 📍 目前選定部門：{dept_str}")
+        st.info("💡 此部門模組正在運行中。")
 
 except Exception as e:
     st.error(f"⚠️ 路由分發發生異常: {str(e)}")
