@@ -133,6 +133,30 @@ def get_vehicle_options_from_assets(engine):
             pass
     return vehicles
 
+def get_employee_options_from_db(engine):
+    """
+    🔗 動態從員工資料庫讀取真實員工與職稱，取代固定寫死的人名
+    """
+    employees = []
+    if engine:
+        try:
+            with engine.connect() as conn:
+                res = conn.execute(text("SELECT emp_name, position FROM public.employee_profiles WHERE (status IS NULL OR status = '在職');"))
+                rows = res.fetchall()
+                if rows:
+                    for r in rows:
+                        name = r[0]
+                        pos = r[1] or '員工'
+                        if name:
+                            employees.append(f"{name} ({pos})")
+        except Exception:
+            pass
+    
+    # 若資料庫無資料時的安全預設值
+    if not employees:
+        employees = ["陳經理 (Manager)", "阮文強 (Staff)", "許福村 (Tassos)"]
+    return employees
+
 def smart_translate_gate(text_val, target_lang):
     if not text_val or not isinstance(text_val, str):
         return text_val
@@ -177,9 +201,14 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
             }
         ]
 
+    # 動態從資料庫抓取真實員工對應至審核清單的申請人
+    emp_list = get_employee_options_from_db(engine)
+    req_mgr_1 = emp_list[0] if len(emp_list) > 0 else "陳經理"
+    req_staff_2 = emp_list[1] if len(emp_list) > 1 else "阮文強"
+
     approved_dispatches = [
-        {"工單編號": "APP-DISPATCH-2026-001", "申請部門": "管理部", "申請人": "陳經理", "車牌號碼": "61A-888.66", "用途說明": "載送總經理赴胡志明市開會", "主管簽核狀態": "🟢 總經理已核准 (Approved)"},
-        {"工單編號": "APP-DISPATCH-2026-002", "申請部門": "生產部", "申請人": "阮文強", "車牌號碼": "51D-456.78", "用途說明": "運送 2000A 銅排母線原料 500kg", "主管簽核狀態": "🟢 生產主管已核准 (Approved)"}
+        {"工單編號": "APP-DISPATCH-2026-001", "申請部門": "管理部", "申請人": req_mgr_1, "車牌號碼": "61A-888.66", "用途說明": "載送總經理赴胡志明市開會", "主管簽核狀態": "🟢 總經理已核准 (Approved)"},
+        {"工單編號": "APP-DISPATCH-2026-002", "申請部門": "生產部", "申請人": req_staff_2, "車牌號碼": "51D-456.78", "用途說明": "運送 2000A 銅排母線原料 500kg", "主管簽核狀態": "🟢 生產主管已核准 (Approved)"}
     ]
 
     tab_list, tab_approval, tab_record = st.tabs([
