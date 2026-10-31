@@ -7,7 +7,24 @@ def render_employee_list(engine=None, lang="繁體中文"):
     st.markdown("### 📑 現職員工總名冊與證件預警")
     if engine:
         try:
-            df = pd.read_sql("SELECT emp_code, emp_name, department, position, staff_type, attendance_mode, base_salary, visa_expire FROM public.employee_profiles WHERE status = '在職';", con=engine)
+            # 💡 雙重保險：直接從 payroll_records 與 employee_profiles 聯集撈取，確保薪資有資料就一定看得到人
+            query = """
+                SELECT DISTINCT 
+                    COALESCE(e.emp_code, p.emp_code) as emp_code,
+                    COALESCE(e.emp_name, p.emp_name) as emp_name,
+                    COALESCE(e.department, p.department) as department,
+                    COALESCE(e.position, '-') as position,
+                    COALESCE(e.staff_type, '越南籍員工 (VN Local Staff)') as staff_type,
+                    COALESCE(e.attendance_mode, '需打卡 (Required Punch)') as attendance_mode,
+                    COALESCE(e.base_salary, p.base_salary, 0) as base_salary,
+                    COALESCE(e.visa_expire, '2027-12-31') as visa_expire,
+                    COALESCE(e.status, '在職') as status
+                FROM public.payroll_records p
+                FULL OUTER JOIN public.employee_profiles e ON p.emp_code = e.emp_code
+                WHERE COALESCE(e.status, '在職') = '在職';
+            """
+            df = pd.read_sql(query, con=engine)
+            
             if not df.empty:
                 category_filter = st.radio("📂 選擇檢視群組", ["🇻🇳 越南籍員工名冊", "🌐 外派與外籍幹部名冊", "📋 全部員工總名冊"], horizontal=True)
                 
@@ -59,12 +76,16 @@ def render_employee_list(engine=None, lang="繁體中文"):
                     if selected_to_terminate:
                         target_emp_no = selected_to_terminate.split(" - ")[0]
                         with engine.begin() as conn:
-                            conn.execute(text("UPDATE public.employee_profiles SET status = '離職' WHERE emp_code = :no;"), {"no": target_emp_no})
+                            conn.execute(text("""
+                                INSERT INTO public.employee_profiles (emp_code, emp_name, status)
+                                VALUES (:no, :name, '離職')
+                                ON CONFLICT (emp_code) DO UPDATE SET status = '離職';
+                            """), {"no": target_emp_no, "name": selected_to_terminate.split(" - ")[1]})
                         st.success(f"✅ 員工 `{selected_to_terminate}` 已成功辦理離職！")
                         st.rerun()
             else:
-                st.info("目前尚無在職員工紀錄。請先至薪資模組批次匯入 Excel，系統將自動同步建立名冊！")
-        except Exception:
-            st.info("目前尚無在職員工紀錄。")
+                st.info("目前尚無在職員工紀錄。請先至【員工薪資與保險】頁面建立薪資或匯入 Excel，名冊將會自動同步顯示！")
+        except Exception as e:
+            st.warning(f"⚠️ 讀取名冊發生異常（可能是表格尚未完全初始化）：{str(e)}")
     else:
         st.info("資料庫引擎未連線。")
