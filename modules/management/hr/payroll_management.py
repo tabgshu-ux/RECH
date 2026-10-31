@@ -29,7 +29,7 @@ def fmt_vn_curr(val):
     return fmt_vn_num(val) + " VND"
 
 # ----------------------------------------------------
-# 🌐 多語系字典 (i18n) - 分頁標籤已精簡優化
+# 🌐 多語系字典 (i18n)
 # ----------------------------------------------------
 PAYROLL_I18N = {
     "繁體中文": {
@@ -62,7 +62,7 @@ PAYROLL_I18N = {
         "lbl_advance": "本月預支金額 Tạm ứng (VND)",
         "lbl_other_deduct": "其他扣款 Khoản trừ (VND)",
         "btn_calc_and_save": "💾 計算並寫入 Supabase 薪資資料庫",
-        "msg_success": "✅ 薪資清冊計算完畢並已成功寫入資料庫！",
+        "msg_success": "✅ 薪資清冊計算完畢，並已同步更新人事名冊與資料庫！",
         "lbl_net_pay": "💵 本月應發實領金額 (Thực lãnh)",
         "header_summary": "📋 歷史月度薪資與保險扣除統計表"
     }
@@ -231,6 +231,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 if engine:
                     try:
                         with engine.begin() as conn:
+                            # 1. 寫入薪資紀錄
                             conn.execute(text("""
                                 INSERT INTO public.payroll_records 
                                 (payroll_month, emp_code, emp_name, department, factory, base_salary, pos_allowance, eval_bonus, 
@@ -271,13 +272,13 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                                 "bhxh": bhxh, "bhyt": bhyt, "bhtn": bhtn, "adv": advance_pay, "net": net_pay
                             })
 
+                            # 2. 自動同步建立/更新至員工基本檔案 (employee_profiles)
                             conn.execute(text("""
                                 INSERT INTO public.employee_profiles (emp_code, emp_name, department, factory, base_salary)
-                                VALUES (:code, :name, :dept, :factory, :bs)
+                                VALUES (:code, :name, :dept, '文房 (VP)', :bs)
                                 ON CONFLICT (emp_code) DO UPDATE
                                 SET emp_name = EXCLUDED.emp_name,
                                     department = EXCLUDED.department,
-                                    factory = EXCLUDED.factory,
                                     base_salary = EXCLUDED.base_salary;
                             """), {"code": e_code, "name": e_name, "dept": dept_name, "bs": base_sal})
 
@@ -287,10 +288,10 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                         st.error("❌ 寫入資料庫失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 📤 Tab 2: 批次匯入 (標籤精簡為「批次匯入」)
+    # 📤 Tab 2: 批次匯入 (自動同步建立人事名冊)
     # ----------------------------------------------------
     with tab_import:
-        st.markdown("### 📤 批次匯入 Excel 薪資表")
+        st.markdown("### 📤 批次匯入")
         st.caption("只需上傳公司 Excel 檔案，系統會自動拆解文房、廠房與工程清冊，並同步寫入【人事名冊】與【薪資紀錄】！")
 
         uploaded_file = st.file_uploader("請選擇要匯入的 Excel 薪資檔案 (.xls / .xlsx)", type=["xls", "xlsx"])
@@ -343,6 +344,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 if parsed_records and engine:
                     with engine.begin() as conn:
                         for rec in parsed_records:
+                            # 1. 寫入薪資紀錄
                             conn.execute(text("""
                                 INSERT INTO public.payroll_records 
                                 (payroll_month, emp_code, emp_name, department, factory, base_salary, pos_allowance, eval_bonus, 
@@ -365,6 +367,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                                     net_salary = EXCLUDED.net_salary;
                             """), rec)
 
+                            # 2. 自動同步建立/更新至員工基本檔案 (employee_profiles)
                             conn.execute(text("""
                                 INSERT INTO public.employee_profiles (emp_code, emp_name, department, factory, base_salary)
                                 VALUES (:code, :name, :dept, :factory, :bs)
@@ -375,13 +378,13 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                                     base_salary = EXCLUDED.base_salary;
                             """), {"code": rec["code"], "name": rec["name"], "dept": rec["dept"], "factory": rec["factory"], "bs": rec["bs"]})
 
-                st.success(f"🎉 成功批次匯入 {len(parsed_records)} 筆員工資料！")
+                st.success(f"🎉 成功批次匯入 {len(parsed_records)} 筆員工資料，並已同步更新人事名冊！")
                 st.rerun()
             except Exception as e:
                 st.error("❌ 批次解析失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 📄 Tab 3: 員工薪資單 (標籤精簡為「員工薪資單」)
+    # 📄 Tab 3: 員工薪資單
     # ----------------------------------------------------
     with tab_slip:
         st.markdown("### 📄 全公司員工薪資單總覽與列印中心")
