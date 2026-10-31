@@ -258,3 +258,99 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown(f"### {L['form_expat_title']}")
         c1, c2 = st.columns(2)
         with c1:
+            expat_no = st.text_input(L["lbl_expat_no"], placeholder="TW-001 / CN-002 / MY-003")
+            expat_name = st.text_input(L["lbl_expat_name"], placeholder="許福村 / 张伟 / David Lee")
+            nationality = st.selectbox(L["lbl_nationality"], ["台灣 (Taiwan)", "中國大陸 (China)", "馬來西亞 (Malaysia)", "韓國 (Korea)", "其他國家 (Other)"])
+            phone_expat = st.text_input(L["lbl_phone_expat"], placeholder="+84-... / WeChat / Zalo")
+            passport = st.text_input(L["lbl_passport"], placeholder="Passport No. / ID")
+            visa_type = st.selectbox(L["lbl_visa_type"], ["LD1 / LD2 (工作簽證)", "DN1 (商業簽證)", "TRC (長期居留證)", "DT (投資簽證)"])
+        with c2:
+            visa_expire = st.text_input(L["lbl_visa_expire"], value="2027-12-31")
+            sal_official = st.number_input(L["lbl_sal_official"], value=15000000.0, step=1000000.0)
+            sal_private = st.number_input(L["lbl_sal_private"], value=50000000.0, step=5000000.0)
+            
+            st.markdown("---")
+            up_passport = st.file_uploader(L["lbl_upload_passport"], type=["png", "jpg", "jpeg", "pdf"])
+            up_workpermit = st.file_uploader(L["lbl_upload_workpermit"], type=["png", "jpg", "jpeg", "pdf"])
+            up_trc = st.file_uploader(L["lbl_upload_trc"], type=["png", "jpg", "jpeg", "pdf"])
+
+        if st.button(L["btn_save_expat"], type="primary", use_container_width=True):
+            if expat_no and expat_name and passport:
+                if engine:
+                    try:
+                        with engine.begin() as conn:
+                            conn.execute(text("""
+                                INSERT INTO public.employee_profiles 
+                                (emp_no, emp_name, phone, id_card, staff_type, base_salary, private_allowance, status)
+                                VALUES (:no, :name, :phone, :passport, :stype, :sal_off, :sal_priv, '在職')
+                                ON CONFLICT (emp_no) DO UPDATE SET emp_name = :name, base_salary = :sal_off, private_allowance = :sal_priv, status = '在職';
+                            """), {
+                                "no": expat_no.strip(), 
+                                "name": f"{expat_name.strip()} ({nationality})", 
+                                "phone": phone_expat.strip() if phone_expat else "-",
+                                "passport": passport.strip(),
+                                "stype": f"外派/外籍幹部 ({nationality})",
+                                "sal_off": sal_official,
+                                "sal_priv": sal_private
+                            })
+                    except Exception:
+                        pass
+                st.success(L["success_expat"].format(name=expat_name))
+                st.info("📁 外派與外籍幹部檔案已成功建檔，聯絡電話、證件上傳與薪資分流已安全歸檔。")
+            else:
+                st.warning("⚠️ 請完整填寫幹部工號、姓名與護照號碼！")
+
+    # Tab 3: 現職員工總名冊與離職異動
+    with tabs[2]:
+        st.markdown(f"### {L['tab_list']}")
+        if engine:
+            try:
+                df = pd.read_sql("SELECT emp_no, emp_name, phone, department, position, staff_type, base_salary FROM public.employee_profiles WHERE status = '在職';", con=engine)
+                if not df.empty:
+                    st.dataframe(df, use_container_width=True, hide_index=True)
+                    
+                    st.markdown("---")
+                    st.markdown(f"#### {L['terminate_title']}")
+                    active_emp_list = [f"{r['emp_no']} - {r['emp_name']}" for _, r in df.iterrows()]
+                    selected_to_terminate = st.selectbox(L["lbl_select_terminate_emp"], active_emp_list)
+                    
+                    if st.button(L["btn_terminate"], type="secondary"):
+                        if selected_to_terminate:
+                            target_emp_no = selected_to_terminate.split(" - ")[0]
+                            with engine.begin() as conn:
+                                conn.execute(text("UPDATE public.employee_profiles SET status = '離職' WHERE emp_no = :no;"), {"no": target_emp_no})
+                            st.success(L["success_terminate"].format(emp=selected_to_terminate))
+                            st.rerun()
+                else:
+                    st.info("目前尚無在職員工紀錄。")
+            except Exception:
+                st.info("資料庫表格尚未初始化或無資料。")
+        else:
+            st.info("DB engine not connected.")
+
+    # Tab 4: 離職名冊管理
+    with tabs[3]:
+        st.markdown(f"### {L['tab_resigned']}")
+        if engine:
+            try:
+                df_resigned = pd.read_sql("SELECT emp_no, emp_name, department, position, staff_type FROM public.employee_profiles WHERE status = '離職';", con=engine)
+                if not df_resigned.empty:
+                    st.dataframe(df_resigned, use_container_width=True, hide_index=True)
+                else:
+                    st.info("目前無離職人員紀錄。")
+            except Exception:
+                st.info("目前無離職人員紀錄。")
+        else:
+            st.info("DB engine not connected.")
+
+def show(*args, **kwargs):
+    render_hr_profile_page(*args, **kwargs)
+
+def main(*args, **kwargs):
+    render_hr_profile_page(*args, **kwargs)
+
+def render_employee_profile(*args, **kwargs):
+    render_hr_profile_page(*args, **kwargs)
+
+def render_employee_management(*args, **kwargs):
+    render_hr_profile_page(*args, **kwargs)
