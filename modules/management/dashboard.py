@@ -147,10 +147,9 @@ def render_management_dashboard(engine=None, lang="繁體中文", **kwargs):
             st.subheader(L['hr_sub'])
             sub_choice = st.radio(L['select_item'], L['hr_options'], horizontal=True, label_visibility="collapsed")
             st.markdown("---")
-            # 根據選擇項目對應載入模組 (支援多語系名稱判斷)
             if any(k in sub_choice for k in ["員工基本檔案", "Hồ sơ nhân viên", "Employee Profiles"]):
-                from modules.employee_management import render_employee_management
-                render_employee_management(engine=engine, lang=lang)
+                from modules.management.hr.employee_profile import render_hr_profile_page
+                render_hr_profile_page(engine=engine, lang=lang)
             elif any(k in sub_choice for k in ["員工打卡紀錄", "Chấm công", "Attendance"]):
                 from modules.management.hr.internal_attendance import render_internal_attendance_page
                 render_internal_attendance_page(engine=engine, lang=lang)
