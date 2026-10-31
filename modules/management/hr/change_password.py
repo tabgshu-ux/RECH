@@ -2,34 +2,40 @@ import streamlit as st
 
 PASSWORD_I18N = {
     "繁體中文": {
-        "title": "🔑 管理部 - 員工密碼重設與授權管理",
-        "caption": "由管理部與人事主管協助廠內同仁安全重設密碼與派發初始密碼。",
-        "select_emp": "🎯 請選擇或搜尋欲重設密碼的員工 *",
-        "new_pwd_lbl": "輸入新密碼 (New Password) *",
-        "confirm_pwd_lbl": "再次確認新密碼 (Confirm Password) *",
-        "btn_save": "💾 確認替此員工重設密碼",
+        "title": "🔑 管理部 - 員工密碼重設與管理中心",
+        "caption": "由管理部 / 人事主管協助廠內同仁重設密碼。請輸入或選擇員工工號，系統將自動辨識姓名與職位。",
+        "input_emp_lbl": "輸入或選擇欲重設密碼的員工工號 (Emp ID) *",
+        "emp_name_display": "員工姓名 (Employee Name)：",
+        "new_pwd_lbl": "指派新密碼 (New Password) *",
+        "confirm_pwd_lbl": "再次確認新密碼 (Confirm New Password) *",
+        "btn_save": "💾 確認更新此員工密碼",
         "success": "🎉 已成功幫員工 【{name} ({emp_id})】 更新密碼！",
-        "error_match": "⚠️ 兩次輸入的新密碼不相符，請重新檢查！"
+        "error_match": "⚠️ 兩次輸入的新密碼不相符或未填寫，請重新檢查！",
+        "emp_not_found": "⚠️ 找不到此工號的員工資料，請確認工號是否正確或先至【員工檔案】建立。"
     },
     "Tiếng Việt": {
         "title": "🔑 Phòng Quản lý - Đặt lại mật khẩu nhân viên",
-        "caption": "Phòng Quản lý và nhân sự hỗ trợ nhân viên đặt lại mật khẩu an toàn.",
-        "select_emp": "🎯 Chọn nhân viên cần đặt lại mật khẩu *",
-        "new_pwd_lbl": "Nhập mật khẩu mới *",
+        "caption": "Phòng Quản lý / Nhân sự hỗ trợ đặt lại mật khẩu cho nhân viên.",
+        "input_emp_lbl": "Nhập hoặc chọn mã nhân viên (Emp ID) *",
+        "emp_name_display": "Tên nhân viên:",
+        "new_pwd_lbl": "Mật khẩu mới *",
         "confirm_pwd_lbl": "Nhập lại mật khẩu mới *",
-        "btn_save": "💾 Xác nhận đặt lại mật khẩu",
+        "btn_save": "💾 Xác nhận cập nhật mật khẩu",
         "success": "🎉 Đã cập nhật mật khẩu thành công cho nhân viên 【{name} ({emp_id})】!",
-        "error_match": "⚠️ Mật khẩu không khớp, vui lòng kiểm tra lại!"
+        "error_match": "⚠️ Mật khẩu không khớp hoặc chưa điền!",
+        "emp_not_found": "⚠️ Không tìm thấy mã nhân viên này."
     },
     "English": {
-        "title": "🔑 Management Dept - Employee Password Reset",
-        "caption": "HR and Management department assistance for secure password resets.",
-        "select_emp": "🎯 Select Employee to Reset Password *",
+        "title": "🔑 Management Dept - Employee Password Reset Center",
+        "caption": "HR and Management department assistance for employee password resets.",
+        "input_emp_lbl": "Enter or Select Employee ID *",
+        "emp_name_display": "Employee Name:",
         "new_pwd_lbl": "New Password *",
         "confirm_pwd_lbl": "Confirm New Password *",
-        "btn_save": "💾 Confirm Password Reset",
-        "success": "🎉 Successfully reset password for employee 【{name} ({emp_id})】!",
-        "error_match": "⚠️ Passwords do not match!"
+        "btn_save": "💾 Confirm Employee Password Update",
+        "success": "🎉 Successfully updated password for 【{name} ({emp_id})】!",
+        "error_match": "⚠️ Passwords do not match or are empty!",
+        "emp_not_found": "⚠️ Employee ID not found."
     }
 }
 
@@ -41,31 +47,45 @@ def render_change_password_page(engine=None, lang="繁體中文", **kwargs):
     st.caption(L["caption"])
     st.markdown("---")
 
-    # 取得現有的員工清單資料庫
+    # 檢查員工資料庫是否存在
     if "employee_db" not in st.session_state or not st.session_state.employee_db:
         st.warning("⚠️ 目前系統中尚無員工檔案，請先至【管理部 > 員工檔案】建立員工資料。")
         return
 
     emp_list = st.session_state.employee_db
-    
-    # 組合下拉選單格式：「姓名 (工號 - 職位)」讓管理者一眼看出是誰
-    emp_options = {f"{emp['姓名']} ({emp['工號']} - {emp.get('職位', 'Staff')})": emp for emp in emp_list}
-    
-    selected_emp_key = st.selectbox(L["select_emp"], options=list(emp_options.keys()))
-    target_emp = emp_options[selected_emp_key]
 
-    st.info(f"📌 目前選定對象：**{target_emp['姓名']}** | 工號：`{target_emp['工號']}` | 部門：{target_emp.get('部門', '未分發')} | 現有角色：`{target_emp.get('角色', 'Staff')}`")
+    # 建立工號選項清單 (讓管理者可以下拉選取，也可以清楚看到工號與姓名)
+    emp_options = [f"{emp['工號']} - {emp['姓名']} ({emp.get('職位', 'Staff')})" for emp in emp_list]
 
-    with st.form("admin_reset_password_form"):
+    with st.form("admin_reset_emp_pwd_form"):
+        # 1. 選擇或輸入工號
+        selected_option = st.selectbox(L["input_emp_lbl"], options=emp_options)
+        
+        # 從選項中解析出工號
+        target_emp_code = selected_option.split(" - ")[0].strip()
+        
+        # 尋找對應的員工物件
+        matched_emp = next((e for e in emp_list if e["工號"] == target_emp_code), None)
+
+        if matched_emp:
+            # 2. 自動顯示該員工姓名與部門
+            st.info(f"📌 **{L['emp_name_display']}** `{matched_emp['姓名']}` | 🏢 **部門**：{matched_emp.get('部門', '未分發')} | 👔 **職位**：{matched_emp.get('職位', 'Staff')}")
+        else:
+            st.error(L["emp_not_found"])
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # 3. 輸入新密碼與確認密碼
         new_pwd = st.text_input(L["new_pwd_lbl"], type="password", placeholder="請輸入新密碼...")
         confirm_pwd = st.text_input(L["confirm_pwd_lbl"], type="password", placeholder="再次確認新密碼...")
 
+        st.markdown("<br>", unsafe_allow_html=True)
+
         if st.form_submit_button(L["btn_save"], type="primary", use_container_width=True):
-            if new_pwd and new_pwd == confirm_pwd:
-                # 更新該員工的密碼
-                target_emp["密碼"] = new_pwd
-                target_emp["must_change_password"] = True  # 強制規定該員工下次登入時必須再次變更以策安全
-                
-                st.success(L["success"].format(name=target_emp['姓名'], emp_id=target_emp['工號']))
+            if matched_emp and new_pwd and new_pwd == confirm_pwd:
+                # 更新該員工密碼
+                matched_emp["密碼"] = new_pwd
+                matched_emp["must_change_password"] = True  # 強制下次登入需修改
+                st.success(L["success"].format(name=matched_emp['姓名'], emp_id=matched_emp['工號']))
             else:
                 st.error(L["error_match"])
