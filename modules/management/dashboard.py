@@ -33,33 +33,33 @@ MANAGEMENT_DASHBOARD_I18N = {
     },
     "Tiếng Việt": {
         "title": "👔 Trung tâm Điều hành Quản lý Tổng hợp",
-        "caption": "Quản lý nhân sự, hậu cần chung và kế toán tài chính. Nhấp vào các thẻ bên dưới để truy cập nhanh các khu vực quản lý tương ứng.",
+        "caption": "Quản lý nhân sự, hậu cần chung và kế toán tài chính. Nhấp vào các thẻ bên dưới để truy cập nhanh các khu vực quản lý.",
         "card_hr_title": "👤 Khu vực Nhân sự & Hành chính",
         "card_hr_desc": "Quản lý hồ sơ nhân viên, chấm công, lương và bảo hiểm.",
-        "card_hr_items": "- 📋 Hồ sơ nhân viên cơ bản\n- ⏱️ Lịch sử chấm công\n- 💳 Lương & Bảo hiểm nhân viên\n- 🔑 Thay đổi mật khẩu",
+        "card_hr_items": "- 📋 Hồ sơ nhân viên cơ bản\n- ⏱️ Lịch sử chấm công\n- 💳 Lương & Bảo hiểm\n- 🔑 Thay đổi mật khẩu",
         "btn_hr": "🚀 Vào Trung tâm Nhân sự",
         
         "card_ga_title": "📦 Khu vực Hậu cần & Tổng vụ",
         "card_ga_desc": "Phương tiện nhà máy, an ninh cổng, tài sản cố định và ký túc xá.",
-        "card_ga_items": "- 🚗 Kiểm soát cổng xe ra vào\n- 🔧 Lịch sử bảo trì xe\n- 🏢 Quản lý tài sản cố định\n- 🍲 Quản lý ký túc xá & suất ăn\n- 🌿 Bảo trì cơ sở hạ tầng",
+        "card_ga_items": "- 🚗 Kiểm soát cổng xe ra vào\n- 🔧 Lịch sử bảo trì xe\n- 🏢 Quản lý tài sản cố định\n- 🍲 Ký túc xá & Suất ăn\n- 🌿 Bảo trì cơ sở hạ tầng",
         "btn_ga": "🚀 Vào Trung tâm Hậu cần",
         
         "card_fin_title": "💰 Khu vực Kế toán & Tài chính",
         "card_fin_desc": "Mua sắm phải trả, khoản phải thu và tuân thủ thuế Việt Nam.",
-        "card_fin_items": "- 🛒 Mua sắm & Phải trả (AP)\n- 📊 Quản lý khoản phải thu (AR)\n- 📑 Báo cáo thuế Việt Nam\n- 🧾 Quản lý hóa đơn điện tử",
+        "card_fin_items": "- 🛒 Mua sắm & Phải trả (AP)\n- 📊 Khoản phải thu (AR)\n- 📑 Báo cáo thuế Việt Nam\n- 🧾 Hóa đơn điện tử",
         "btn_fin": "🚀 Vào Trung tâm Tài chính",
         
         "btn_back": "⬅️ Quay lại Tổng quan",
         "select_item": "Chọn mục thao tác",
         
         "hr_sub": "👥 Khu vực Nghiệp vụ Nhân sự",
-        "hr_options": ["員工基本檔案", "員工打卡紀錄", "員工薪資與保險", "密碼修改"],
+        "hr_options": ["Hồ sơ nhân viên", "Chấm công", "Lương & Bảo hiểm", "Đổi mật khẩu"],
         
         "ga_sub": "📦 Khu vực Nghiệp vụ Hậu cần",
-        "ga_options": ["車輛進出口與門禁", "車輛維修紀錄", "固定資產管理", "宿舍與伙食管理", "廠區設施維護"],
+        "ga_options": ["Kiểm soát cổng xe", "Bảo trì xe", "Tài sản cố định", "Ký túc xá & Suất ăn", "Bảo trì cơ sở"],
         
-        "fin_sub": "💰 Khu vực Nghiệp vụ Kế toán & Tài chính",
-        "fin_options": ["採購與應付帳款", "應收帳款管理", "越南稅務報表", "電子發票管理"]
+        "fin_sub": "💰 Khu vực Kế toán & Tài chính",
+        "fin_options": ["Mua sắm & Phải trả", "Khoản phải thu", "Báo cáo thuế", "Hóa đơn điện tử"]
     },
     "English": {
         "title": "👔 Management Department Dashboard",
@@ -83,13 +83,13 @@ MANAGEMENT_DASHBOARD_I18N = {
         "select_item": "Select Task",
         
         "hr_sub": "👥 HR Operations",
-        "hr_options": ["員工基本檔案", "員工打卡紀錄", "員工薪資與保險", "密碼修改"],
+        "hr_options": ["Employee Profiles", "Attendance", "Payroll & Insurance", "Password Settings"],
         
         "ga_sub": "📦 General Affairs Operations",
-        "ga_options": ["車輛進出口與門禁", "車輛維修紀錄", "固定資產管理", "宿舍與伙食管理", "廠區設施維護"],
+        "ga_options": ["Vehicle Gate", "Vehicle Maintenance", "Fixed Assets", "Dorm & Catering", "Facility Maintenance"],
         
         "fin_sub": "💰 Finance Operations",
-        "fin_options": ["採購與應付帳款", "應收帳款管理", "越南稅務報表", "電子發票管理"]
+        "fin_options": ["Procurement & AP", "Accounts Receivable", "Tax Reports", "E-Invoices"]
     }
 }
 
@@ -101,15 +101,12 @@ def render_management_dashboard(engine=None, lang="繁體中文", **kwargs):
     st.caption(L["caption"])
     st.markdown("---")
 
-    # 初始化管理部內部導航狀態
     if "mgmt_active_tab" not in st.session_state:
         st.session_state.mgmt_active_tab = "總覽"
 
-    # 若目前在總覽頁，顯示三大精美卡片
     if st.session_state.mgmt_active_tab == "總覽":
         col_hr, col_ga, col_fin = st.columns(3)
 
-        # 1. 人事行政區
         with col_hr:
             st.markdown(f"### {L['card_hr_title']}")
             st.markdown(L['card_hr_desc'])
@@ -119,7 +116,6 @@ def render_management_dashboard(engine=None, lang="繁體中文", **kwargs):
                 st.session_state.mgmt_active_tab = "人事行政"
                 st.rerun()
 
-        # 2. 總務後勤區
         with col_ga:
             st.markdown(f"### {L['card_ga_title']}")
             st.markdown(L['card_ga_desc'])
@@ -129,7 +125,6 @@ def render_management_dashboard(engine=None, lang="繁體中文", **kwargs):
                 st.session_state.mgmt_active_tab = "總務後勤"
                 st.rerun()
 
-        # 3. 財務會計區
         with col_fin:
             st.markdown(f"### {L['card_fin_title']}")
             st.markdown(L['card_fin_desc'])
@@ -140,30 +135,29 @@ def render_management_dashboard(engine=None, lang="繁體中文", **kwargs):
                 st.rerun()
 
     else:
-        # 進入子專區後，上方提供漂亮的返回總覽按鈕與分頁切換
         if st.button(L['btn_back'], type="secondary"):
             st.session_state.mgmt_active_tab = "總覽"
             st.rerun()
 
         st.markdown("---")
 
-        # 根據不同的子專區渲染對應的功能
         active_tab = st.session_state.mgmt_active_tab
         
         if active_tab == "人事行政":
             st.subheader(L['hr_sub'])
             sub_choice = st.radio(L['select_item'], L['hr_options'], horizontal=True, label_visibility="collapsed")
             st.markdown("---")
-            if "員工基本檔案" in sub_choice:
+            # 根據選擇項目對應載入模組 (支援多語系名稱判斷)
+            if any(k in sub_choice for k in ["員工基本檔案", "Hồ sơ nhân viên", "Employee Profiles"]):
                 from modules.employee_management import render_employee_management
                 render_employee_management(engine=engine, lang=lang)
-            elif "員工打卡紀錄" in sub_choice:
+            elif any(k in sub_choice for k in ["員工打卡紀錄", "Chấm công", "Attendance"]):
                 from modules.management.hr.internal_attendance import render_internal_attendance_page
                 render_internal_attendance_page(engine=engine, lang=lang)
-            elif "員工薪資與保險" in sub_choice:
+            elif any(k in sub_choice for k in ["員工薪資與保險", "Lương & Bảo hiểm", "Payroll"]):
                 from modules.payroll_management import render_payroll_management_page
                 render_payroll_management_page(engine=engine, lang=lang)
-            elif "密碼修改" in sub_choice:
+            elif any(k in sub_choice for k in ["密碼修改", "Đổi mật khẩu", "Password"]):
                 from modules.management.hr.change_password import render_change_password_page
                 render_change_password_page(engine=engine, lang=lang)
 
@@ -171,19 +165,19 @@ def render_management_dashboard(engine=None, lang="繁體中文", **kwargs):
             st.subheader(L['ga_sub'])
             sub_choice = st.radio(L['select_item'], L['ga_options'], horizontal=True, label_visibility="collapsed")
             st.markdown("---")
-            if "車輛進出口" in sub_choice:
+            if any(k in sub_choice for k in ["車輛進出口", "Kiểm soát cổng xe", "Vehicle Gate"]):
                 from modules.management.general_affairs.vehicle_gate_log import render_vehicle_gate_log_page
                 render_vehicle_gate_log_page(engine=engine, lang=lang)
-            elif "車輛維修紀錄" in sub_choice:
+            elif any(k in sub_choice for k in ["車輛維修紀錄", "Bảo trì xe", "Maintenance"]):
                 from modules.management.general_affairs.vehicle_maintenance import show
                 show(engine=engine, lang=lang)
-            elif "固定資產管理" in sub_choice:
+            elif any(k in sub_choice for k in ["固定資產管理", "Tài sản cố định", "Fixed Assets"]):
                 from modules.management.general_affairs.asset_management import render_asset_management_page
                 render_asset_management_page(engine=engine, lang=lang)
-            elif "宿舍與伙食" in sub_choice:
+            elif any(k in sub_choice for k in ["宿舍與伙食", "Ký túc xá", "Dorm"]):
                 from modules.management.dorm_catering import render_dorm_catering_module
                 render_dorm_catering_module(engine=engine, lang=lang)
-            elif "廠區設施" in sub_choice:
+            elif any(k in sub_choice for k in ["廠區設施", "Bảo trì cơ sở", "Facility"]):
                 from modules.management.plant_management import render_plant_management_page
                 render_plant_management_page(engine=engine, lang=lang)
 
@@ -191,15 +185,24 @@ def render_management_dashboard(engine=None, lang="繁體中文", **kwargs):
             st.subheader(L['fin_sub'])
             sub_choice = st.radio(L['select_item'], L['fin_options'], horizontal=True, label_visibility="collapsed")
             st.markdown("---")
-            if "採購與應付帳款" in sub_choice:
+            if any(k in sub_choice for k in ["採購與應付帳款", "Mua sắm & Phải trả", "Procurement"]):
                 from modules.procurement_ap import render_procurement_ap_page
                 render_procurement_ap_page(engine=engine, lang=lang)
-            elif "應收帳款管理" in sub_choice:
+            elif any(k in sub_choice for k in ["應收帳款管理", "Khoản phải thu", "Accounts Receivable"]):
                 from modules.sales_order_ar import render_sales_order_ar_page
                 render_sales_order_ar_page(engine=engine, lang=lang)
-            elif "越南稅務報表" in sub_choice:
+            elif any(k in sub_choice for k in ["越南稅務報表", "Báo cáo thuế", "Tax Reports"]):
                 from modules.financial_tax_reports import render_financial_tax_reports_page
                 render_financial_tax_reports_page(engine=engine, lang=lang)
-            elif "電子發票管理" in sub_choice:
+            elif any(k in sub_choice for k in ["電子發票管理", "Hóa đơn điện tử", "E-Invoices"]):
                 from modules.invoice_management import render_invoice_management_page
                 render_invoice_management_page(engine=engine, lang=lang)
+
+def show(engine=None, lang="繁體中文", **kwargs):
+    render_management_dashboard(engine=engine, lang=lang, **kwargs)
+
+def main(engine=None, lang="繁體中文", **kwargs):
+    render_management_dashboard(engine=engine, lang=lang, **kwargs)
+
+def render_management_dashboard_module(*args, **kwargs):
+    render_management_dashboard(*args, **kwargs)
