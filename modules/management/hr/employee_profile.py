@@ -3,16 +3,14 @@ import pandas as pd
 import datetime
 from sqlalchemy import text
 
-# ----------------------------------------------------
-# 🌐 員工檔案與人事管理模組完整多語系字典 (i18n)
-# ----------------------------------------------------
 EMP_PROFILE_I18N = {
     "繁體中文": {
         "title": "👤 管理部 - 員工個人檔案與人事管理中心",
-        "caption": "管理公司在職員工名冊、越南勞動法規合規建檔、外派與外籍幹部薪資、簽證、證件歸檔與離職異動。",
+        "caption": "管理公司在職員工名冊、越南勞動法規合規建檔、外派與外籍幹部、薪資、簽證、證件歸檔與資料維護。",
         "tab_vn": "VN 新增越南員工",
-        "tab_expat": "🌐 新增外派與外籍幹部 (多國籍/雙薪/證件上傳)",
-        "tab_list": "📑 現職員工總名冊與異動",
+        "tab_expat": "🌐 新增外派與外籍幹部",
+        "tab_list": "📑 現職員工總名冊與搜尋",
+        "tab_edit": "✏️ 編輯與修改員工資料",
         "tab_resigned": "📁 離職名冊管理",
         # 越南員工表單
         "form_vn_title": "VN 新增越南籍員工資料 (符合越南勞動法規範)",
@@ -52,7 +50,8 @@ EMP_PROFILE_I18N = {
         "lbl_upload_trc": "📄 上傳暫住證 / 簽證影本 (TRC / Visa)",
         "btn_save_expat": "🚀 儲存外派與外籍幹部合規檔案與證件",
         "success_expat": "🎉 成功新增外派與外籍幹部：{name}！",
-        # 離職異動
+        # 搜尋與列表
+        "search_label": "🔍 搜尋員工姓名、工號或國籍篩選",
         "terminate_title": "🔄 員工離職狀態異動與結清處理",
         "lbl_select_terminate_emp": "選擇要辦理離職的員工 (工號 - 姓名)",
         "btn_terminate": "🔴 辦理離職手續並移至離職名冊",
@@ -60,11 +59,12 @@ EMP_PROFILE_I18N = {
     },
     "Tiếng Việt": {
         "title": "👤 Phòng Nhân sự - Quản lý Hồ sơ & Nhân sự",
-        "caption": "Quản lý nhân viên, luật lao động VN, chuyên gia, lương, hồ sơ giấy tờ và thủ tục nghỉ việc.",
+        "caption": "Quản lý nhân viên, tìm kiếm, chỉnh sửa thông tin và thủ tục nghỉ việc.",
         "tab_vn": "VN Thêm nhân viên VN",
         "tab_expat": "🌐 Thêm chuyên gia nước ngoài",
-        "tab_list": "📑 Danh sách nhân viên & Xử lý nghỉ việc",
-        "tab_resigned": "📁 Danh sách đã nghỉ việc",
+        "tab_list": "📑 Danh sách & Tìm kiếm",
+        "tab_edit": "✏️ Chỉnh sửa hồ sơ",
+        "tab_resigned": "📁 Danh sách nghỉ việc",
         "form_vn_title": "VN Thêm nhân viên người Việt",
         "lbl_emp_no": "Mã NV *",
         "lbl_name": "Họ tên *",
@@ -101,17 +101,19 @@ EMP_PROFILE_I18N = {
         "lbl_upload_trc": "📄 Tải lên Thẻ tạm trú (TRC)",
         "btn_save_expat": "🚀 Lưu hồ sơ chuyên gia",
         "success_expat": "🎉 Đã lưu thành công chuyên gia: {name}!",
-        "terminate_title": "🔄 Xử lý thủ tục nghỉ việc nhân sự",
+        "search_label": "🔍 Tìm kiếm theo tên, mã NV hoặc quốc tịch",
+        "terminate_title": "🔄 Xử lý thủ tục nghỉ việc",
         "lbl_select_terminate_emp": "Chọn nhân viên nghỉ việc",
         "btn_terminate": "🔴 Xác nhận nghỉ việc",
         "success_terminate": "✅ Đã chuyển nhân viên `{emp}` sang danh sách nghỉ việc!"
     },
     "English": {
         "title": "👤 HR Center - Employee Profiles & Expat Management",
-        "caption": "Manage employee registry, multinational expats, salaries, document uploads, and termination records.",
+        "caption": "Manage employee registry, search, edits, document uploads, and termination records.",
         "tab_vn": "VN New Employee",
         "tab_expat": "🌐 Expat & Foreign Staff Setup",
-        "tab_list": "📑 Employee Registry & Termination",
+        "tab_list": "📑 Registry & Search",
+        "tab_edit": "✏️ Edit Profile",
         "tab_resigned": "📁 Resigned List",
         "form_vn_title": "VN Add Vietnamese Employee",
         "lbl_emp_id": "Employee No. *",
@@ -149,6 +151,7 @@ EMP_PROFILE_I18N = {
         "lbl_upload_trc": "📄 Upload TRC / Visa",
         "btn_save_expat": "🚀 Save Expat Profile",
         "success_expat": "🎉 Successfully saved expat: {name}!",
+        "search_label": "🔍 Search by name, ID or nationality",
         "terminate_title": "🔄 Process Employee Termination",
         "lbl_select_terminate_emp": "Select Employee to Terminate",
         "btn_terminate": "🔴 Confirm Termination",
@@ -198,9 +201,10 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
 
     init_hr_profile_db(engine)
 
-    tabs = st.tabs([L["tab_vn"], L["tab_expat"], L["tab_list"], L["tab_resigned"]])
+    # 五大完整分頁：新增越南員工、新增外派/外籍幹部、現職總名冊與搜尋、編輯修改、離職名冊
+    tabs = st.tabs([L["tab_vn"], L["tab_expat"], L["tab_list"], L["tab_edit"], L["tab_resigned"]])
 
-    # Tab 1: 越南員工
+    # Tab 1: 新增越南員工
     with tabs[0]:
         st.markdown(f"### {L['form_vn_title']}")
         with st.form("form_add_vietnamese_employee"):
@@ -253,7 +257,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                 else:
                     st.warning("⚠️ 請完整填寫必要欄位！")
 
-    # Tab 2: 外派與外籍幹部 (多國籍、雙薪、聯絡電話、證件檔案上傳)
+    # Tab 2: 新增外派與外籍幹部 (多國籍、雙薪、電話、證件上傳)
     with tabs[1]:
         st.markdown(f"### {L['form_expat_title']}")
         c1, c2 = st.columns(2)
@@ -296,18 +300,26 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                     except Exception:
                         pass
                 st.success(L["success_expat"].format(name=expat_name))
-                st.info("📁 外派與外籍幹部檔案已成功建檔，聯絡電話、證件上傳與薪資分流已安全歸檔。")
+                st.info("📁 外派與外籍幹部檔案已成功建檔，證件與薪資資料已安全歸檔。")
             else:
                 st.warning("⚠️ 請完整填寫幹部工號、姓名與護照號碼！")
 
-    # Tab 3: 現職員工總名冊與離職異動
+    # Tab 3: 現職員工總名冊與智慧搜尋
     with tabs[2]:
         st.markdown(f"### {L['tab_list']}")
         if engine:
             try:
                 df = pd.read_sql("SELECT emp_no, emp_name, phone, department, position, staff_type, base_salary FROM public.employee_profiles WHERE status = '在職';", con=engine)
                 if not df.empty:
-                    st.dataframe(df, use_container_width=True, hide_index=True)
+                    # 🔍 智慧搜尋列
+                    search_query = st.text_input(L["search_label"], placeholder="輸入工號、姓名或國籍關鍵字...")
+                    if search_query:
+                        mask = df.astype(str).apply(lambda x: x.str.contains(search_query, case=False)).any(axis=1)
+                        df_filtered = df[mask]
+                    else:
+                        df_filtered = df
+
+                    st.dataframe(df_filtered, use_container_width=True, hide_index=True)
                     
                     st.markdown("---")
                     st.markdown(f"#### {L['terminate_title']}")
@@ -322,14 +334,46 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                             st.success(L["success_terminate"].format(emp=selected_to_terminate))
                             st.rerun()
                 else:
-                    st.info("目前尚無在職員工紀錄。")
+                    st.info("目前尚無在職員工紀錄或資料庫尚未建立資料。")
             except Exception:
-                st.info("資料庫表格尚未初始化或無資料。")
+                st.info("目前尚無在職員工紀錄。")
         else:
             st.info("DB engine not connected.")
 
-    # Tab 4: 離職名冊管理
+    # Tab 4: 編輯與修改員工資料
     with tabs[3]:
+        st.markdown(f"### ✏️ 編輯與更新現職員工資料")
+        if engine:
+            try:
+                df_edit = pd.read_sql("SELECT emp_no, emp_name, phone, position, base_salary FROM public.employee_profiles WHERE status = '在職';", con=engine)
+                if not df_edit.empty:
+                    edit_emp_list = [f"{r['emp_no']} - {r['emp_name']}" for _, r in df_edit.iterrows()]
+                    selected_edit_target = st.selectbox("選擇要修改的員工", edit_emp_list)
+                    if selected_edit_target:
+                        t_no = selected_edit_target.split(" - ")[0]
+                        current_row = df_edit[df_edit["emp_no"] == t_no].iloc[0]
+                        
+                        with st.form("form_edit_employee"):
+                            new_name = st.text_input("修改姓名", value=current_row["emp_name"])
+                            new_phone = st.text_input("修改電話", value=str(current_row["phone"] or ""))
+                            new_pos = st.text_input("修改職稱", value=str(current_row["position"] or ""))
+                            new_sal = st.number_input("修改底薪", value=float(current_row["base_salary"] or 0))
+                            
+                            if st.form_submit_button("💾 儲存修改變更", type="primary", use_container_width=True):
+                                with engine.begin() as conn:
+                                    conn.execute(text("UPDATE public.employee_profiles SET emp_name = :name, phone = :phone, position = :pos, base_salary = :sal WHERE emp_no = :no;"),
+                                                 {"name": new_name, "phone": new_phone, "pos": new_pos, "sal": new_sal, "no": t_no})
+                                st.success(f"✅ 員工 `{t_no}` 資料已成功更新！")
+                                st.rerun()
+                else:
+                    st.info("目前無可編輯的員工資料。")
+            except Exception:
+                st.info("資料庫載入失敗。")
+        else:
+            st.info("DB engine not connected.")
+
+    # Tab 5: 離職名冊管理
+    with tabs[4]:
         st.markdown(f"### {L['tab_resigned']}")
         if engine:
             try:
