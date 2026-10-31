@@ -156,7 +156,6 @@ if not st.session_state.logged_in:
                 else:
                     st.error("⚠️ 帳號或初始密碼錯誤 / Incorrect username or password")
 
-        # 🔑 登入列下方的忘記密碼與安全防護引導
         st.markdown("<br>", unsafe_allow_html=True)
         with st.expander("❓ 忘記密碼 / Quên mật khẩu / Forgot Password?"):
             st.info("💡 若您不慎遺失密碼，請聯繫**管理部人事**進行身分核對與密碼重設。")
@@ -235,7 +234,6 @@ for d_name in department_names:
 if not available_dept_names:
     available_dept_names = department_names
 
-# 外勤人員專用帳號直接直達外勤打卡頁面
 if current_role_clean in ["fieldworker", "外勤人員", "worker", "外勤技師"]:
     selected_dept_label = "📍 外勤工程打卡與工作回報 (Field Attendance)"
     selected_feat_label = "📍 現場外勤打卡與工作回報"
@@ -359,9 +357,9 @@ try:
         elif "工作廠區管理" in feat_str:
             load_module_safely("modules.management.plant_management", "render_plant_management_page", engine=engine, lang=curr_lang)
         elif "車輛進出口" in feat_str:
-            load_module_safely("modules.vehicle_gate_log", "render_vehicle_gate_log_page", engine=engine, lang=curr_lang)
+            load_module_safely("modules.management.general_affairs.vehicle_gate_log", "render_vehicle_gate_log_page", engine=engine, lang=curr_lang)
         elif "車輛維修紀錄" in feat_str:
-            load_module_safely("modules.vehicle_maintenance", "render_vehicle_maintenance_page", engine=engine, lang=curr_lang)
+            load_module_safely("modules.management.general_affairs.vehicle_maintenance", "render_vehicle_maintenance_page", engine=engine, lang=curr_lang)
         elif "固定資產管理" in feat_str:
             load_module_safely("modules.management.general_affairs.asset_management", "render_asset_management_page", engine=engine, lang=curr_lang)
         elif "文件管理" in feat_str:
