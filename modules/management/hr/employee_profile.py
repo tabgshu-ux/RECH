@@ -6,10 +6,10 @@ from sqlalchemy import text
 EMP_PROFILE_I18N = {
     "繁體中文": {
         "title": "👤 管理部 - 員工個人檔案與人事管理中心",
-        "caption": "管理公司在職員工名冊、越南勞動法規合規建檔、外派/外籍幹部雙薪、簽證與證件歸檔。",
+        "caption": "管理公司在職員工名冊、越南勞動法規合規建檔、外派與外籍幹部薪資、簽證與證件歸檔。",
         "tab_vn": "VN 新增越南員工",
-        "tab_expat": "🌐 新增外派/外籍幹部 (含內部私帳與證件上傳)",
-        "tab_list": "📑 現職員工總名冊 (含權限分流)",
+        "tab_expat": "🌐 新增外派與外籍幹部",
+        "tab_list": "📑 現職員工總名冊",
         "tab_resigned": "📁 離職名冊",
         # 越南員工表單
         "form_vn_title": "VN 新增越南籍員工資料 (符合越南勞動法規範)",
@@ -34,7 +34,7 @@ EMP_PROFILE_I18N = {
         "btn_save_vn": "🚀 確認並寫入越南員工資料庫",
         "success_vn": "🎉 成功新增越南籍員工：{name} (工號: {emp_no})！",
         # 外派/外籍幹部表單
-        "form_expat_title": "🌐 新增外派與外籍幹部資料 (含越南官方報稅薪資與 🔒 內部私帳雙薪分流)",
+        "form_expat_title": "🌐 新增外派與外籍幹部資料 (多國籍專案管理與證件歸檔)",
         "lbl_expat_name": "幹部姓名 (Họ tên chuyên gia) *",
         "lbl_expat_no": "工號 / 識別碼 *",
         "lbl_nationality": "國籍 (Nationality)",
@@ -42,20 +42,20 @@ EMP_PROFILE_I18N = {
         "lbl_passport": "護照號碼 / 居留證號 *",
         "lbl_visa_type": "簽證類型 (Visa Type)",
         "lbl_visa_expire": "工作簽證 / 暫住證 (TRC) / 工作證到期日",
-        "lbl_sal_official": "越南官方報稅薪資 (依當地稅法申報)",
-        "lbl_sal_private": "🔒 境外/母國私下給付津貼 (內部私帳/不報稅)",
+        "lbl_sal_official": "當地申報薪資 (Local Base Salary)",
+        "lbl_sal_private": "海外專案津貼 / 差旅補助 (Overseas Allowance)",
         "lbl_upload_passport": "📄 上傳護照掃描檔 / 照片 (Passport)",
         "lbl_upload_workpermit": "📄 上傳越南工作證 (Work Permit)",
         "lbl_upload_trc": "📄 上傳暫住證 / 簽證影本 (TRC / Visa)",
-        "btn_save_expat": "🚀 儲存外派/外籍幹部合規檔案與內部私帳",
-        "success_expat": "🎉 成功新增外派/外籍幹部：{name} (已完成權限分流與證件歸檔)！"
+        "btn_save_expat": "🚀 儲存外派與外籍幹部合規檔案",
+        "success_expat": "🎉 成功新增外派與外籍幹部：{name}！"
     },
     "Tiếng Việt": {
         "title": "👤 Phòng Nhân sự - Quản lý Hồ sơ & Nhân sự",
-        "caption": "Quản lý nhân viên, luật lao động VN, chuyên gia nước ngoài, lương chính thức và phụ cấp nội bộ.",
+        "caption": "Quản lý nhân viên, luật lao động VN, chuyên gia nước ngoài, lương và hồ sơ giấy tờ.",
         "tab_vn": "VN Thêm nhân viên VN",
-        "tab_expat": "🌐 Thêm chuyên gia & Quản lý lương nội bộ",
-        "tab_list": "📑 Danh sách nhân viên toàn công ty",
+        "tab_expat": "🌐 Thêm chuyên gia nước ngoài",
+        "tab_list": "📑 Danh sách nhân viên",
         "tab_resigned": "📁 Danh sách nghỉ việc",
         "form_vn_title": "VN Thêm nhân viên người Việt",
         "lbl_emp_no": "Mã NV *",
@@ -63,7 +63,7 @@ EMP_PROFILE_I18N = {
         "lbl_phone": "Số điện thoại",
         "lbl_id_card": "Số CCCD / Hộ chiếu *",
         "lbl_tax_code": "Mã số thuế",
-        "lbl_factory": "Nhà máy trực thuộc",
+        "lbl_factory": "Nhà máy",
         "lbl_dept": "Bộ phận",
         "lbl_position": "Chức vụ",
         "lbl_staff_type": "Loại nhân sự",
@@ -78,7 +78,7 @@ EMP_PROFILE_I18N = {
         "lbl_bank_name": "Tên ngân hàng",
         "btn_save_vn": "🚀 Lưu nhân viên VN",
         "success_vn": "🎉 Đã thêm thành công: {name}!",
-        "form_expat_title": "🌐 Quản lý Chuyên gia nước ngoài (Lương chính thức & Lương nội bộ mật)",
+        "form_expat_title": "🌐 Quản lý Chuyên gia nước ngoài",
         "lbl_expat_name": "Họ tên chuyên gia *",
         "lbl_expat_no": "Mã nhân sự *",
         "lbl_nationality": "Quốc tịch",
@@ -86,8 +86,8 @@ EMP_PROFILE_I18N = {
         "lbl_passport": "Số hộ chiếu *",
         "lbl_visa_type": "Loại Visa",
         "lbl_visa_expire": "Ngày hết hạn Visa/TRC",
-        "lbl_sal_official": "Lương chính thức báo thuế VN",
-        "lbl_sal_private": "🔒 Phụ cấp nội bộ mật (Không báo thuế)",
+        "lbl_sal_official": "Lương cơ bản tại chỗ",
+        "lbl_sal_private": "Phụ cấp dự án nước ngoài",
         "lbl_upload_passport": "📄 Tải lên Hộ chiếu",
         "lbl_upload_workpermit": "📄 Tải lên Giấy phép lao động",
         "lbl_upload_trc": "📄 Tải lên Thẻ tạm trú (TRC)",
@@ -96,9 +96,9 @@ EMP_PROFILE_I18N = {
     },
     "English": {
         "title": "👤 HR Center - Employee Profiles & Expat Management",
-        "caption": "Manage employee registry, multinational expats, official salary, and confidential private payroll.",
+        "caption": "Manage employee registry, multinational expats, salaries, and document uploads.",
         "tab_vn": "VN New Employee",
-        "tab_expat": "🌐 Expat Setup & Confidential Payroll",
+        "tab_expat": "🌐 Expat & Foreign Staff Setup",
         "tab_list": "📑 Employee Registry",
         "tab_resigned": "📁 Resigned List",
         "form_vn_title": "VN Add Vietnamese Employee",
@@ -122,7 +122,7 @@ EMP_PROFILE_I18N = {
         "lbl_bank_name": "Bank Name",
         "btn_save_vn": "🚀 Save Vietnamese Employee",
         "success_vn": "🎉 Successfully added: {name}!",
-        "form_expat_title": "🌐 Expat Setup (Official Tax Salary & 🔒 Confidential Private Pay)",
+        "form_expat_title": "🌐 Expat & Foreign Staff Setup",
         "lbl_expat_name": "Expat Full Name *",
         "lbl_expat_no": "Expat ID *",
         "lbl_nationality": "Nationality",
@@ -130,8 +130,8 @@ EMP_PROFILE_I18N = {
         "lbl_passport": "Passport No. *",
         "lbl_visa_type": "Visa Type",
         "lbl_visa_expire": "Expiry Date",
-        "lbl_sal_official": "Official Tax Salary (Reported)",
-        "lbl_sal_private": "🔒 Confidential Private Allowance (Off-the-Books)",
+        "lbl_sal_official": "Local Base Salary",
+        "lbl_sal_private": "Overseas Allowance",
         "lbl_upload_passport": "📄 Upload Passport",
         "lbl_upload_workpermit": "📄 Upload Work Permit",
         "lbl_upload_trc": "📄 Upload TRC / Visa",
@@ -237,7 +237,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                 else:
                     st.warning("⚠️ 請完整填寫必要欄位！")
 
-    # Tab 2: 外派/外籍幹部 (含官方報稅薪資與 🔒 內部私帳)
+    # Tab 2: 外派與外籍幹部
     with tabs[1]:
         st.markdown(f"### {L['form_expat_title']}")
         c1, c2 = st.columns(2)
@@ -250,8 +250,8 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
             visa_type = st.selectbox(L["lbl_visa_type"], ["LD1 / LD2 (工作簽證)", "DN1 (商業簽證)", "TRC (長期居留證)", "DT (投資簽證)"])
         with c2:
             visa_expire = st.text_input(L["lbl_visa_expire"], value="2027-12-31")
-            sal_official = st.number_input(L["lbl_sal_official"], value=15000000.0, step=1000000.0, help="此金額列入越南官方報稅與合規帳冊")
-            sal_private = st.number_input(L["lbl_sal_private"], value=50000000.0, step=5000000.0, help="🔒 內部私帳管理，不列入官方稅務報表")
+            sal_official = st.number_input(L["lbl_sal_official"], value=15000000.0, step=1000000.0)
+            sal_private = st.number_input(L["lbl_sal_private"], value=50000000.0, step=5000000.0)
             
             st.markdown("---")
             up_passport = st.file_uploader(L["lbl_upload_passport"], type=["png", "jpg", "jpeg", "pdf"])
@@ -280,18 +280,17 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                     except Exception:
                         pass
                 st.success(L["success_expat"].format(name=expat_name))
-                st.info("🔒 官方報稅薪資與內部私帳已成功分流歸檔，證件檔案已上傳備查。")
+                st.info("📁 外派幹部檔案已成功建檔，證件與薪資資料已安全歸檔。")
             else:
                 st.warning("⚠️ 請完整填寫幹部工號、姓名與護照號碼！")
 
-    # Tab 3: 現職員工總名冊 (含權限分流提示)
+    # Tab 3: 現職員工總名冊
     with tabs[2]:
         st.markdown(f"### {L['tab_list']}")
         if engine:
             try:
-                df = pd.read_sql("SELECT emp_no, emp_name, phone, staff_type, base_salary, private_allowance FROM public.employee_profiles WHERE status = '在職';", con=engine)
+                df = pd.read_sql("SELECT emp_no, emp_name, phone, staff_type, base_salary FROM public.employee_profiles WHERE status = '在職';", con=engine)
                 if not df.empty:
-                    # 如果是一般視圖，可以選擇隱藏私帳欄位，此處顯示供高管稽核
                     st.dataframe(df, use_container_width=True, hide_index=True)
                 else:
                     st.info("目前尚無員工資料紀錄。")
