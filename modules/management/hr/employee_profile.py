@@ -170,7 +170,7 @@ def init_hr_profile_db(engine):
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS public.employee_profiles (
                     id SERIAL PRIMARY KEY,
-                    emp_no VARCHAR(50) UNIQUE NOT NULL,
+                    emp_code VARCHAR(50) UNIQUE NOT NULL,
                     emp_name VARCHAR(150) NOT NULL,
                     phone VARCHAR(50),
                     id_card VARCHAR(100),
@@ -243,9 +243,9 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                             with engine.begin() as conn:
                                 conn.execute(text("""
                                     INSERT INTO public.employee_profiles 
-                                    (emp_no, emp_name, phone, id_card, tax_code, factory, department, position, staff_type, attendance_mode, base_salary, private_allowance, system_role, perm_address, temp_address, hospital, bhxh_no, bank_acc, bank_name, status)
+                                    (emp_code, emp_name, phone, id_card, tax_code, factory, department, position, staff_type, attendance_mode, base_salary, private_allowance, system_role, perm_address, temp_address, hospital, bhxh_no, bank_acc, bank_name, status)
                                     VALUES (:no, :name, :phone, :id_c, :tax, :fac, :dept, :pos, :stype, :amode, :sal, 0, :srole, :paddr, :taddr, :hosp, :bhxh, :bacc, :bname, '在職')
-                                    ON CONFLICT (emp_no) DO UPDATE SET 
+                                    ON CONFLICT (emp_code) DO UPDATE SET 
                                     emp_name = :name, phone = :phone, staff_type = :stype, attendance_mode = :amode, base_salary = :sal, status = '在職';
                                 """), {
                                     "no": emp_no.strip(), "name": name.strip(), "phone": phone.strip(),
@@ -262,7 +262,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                 else:
                     st.warning("⚠️ 請完整填寫必要欄位！")
 
-    # Tab 2: 新增外派與外籍幹部 (含考勤免打卡設定)
+    # Tab 2: 新增外派與外籍幹部
     with tabs[1]:
         st.markdown(f"### {L['form_expat_title']}")
         c1, c2 = st.columns(2)
@@ -291,9 +291,9 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                         with engine.begin() as conn:
                             conn.execute(text("""
                                 INSERT INTO public.employee_profiles 
-                                (emp_no, emp_name, phone, id_card, staff_type, attendance_mode, base_salary, private_allowance, visa_expire, status)
+                                (emp_code, emp_name, phone, id_card, staff_type, attendance_mode, base_salary, private_allowance, visa_expire, status)
                                 VALUES (:no, :name, :phone, :passport, :stype, :amode, :sal_off, :sal_priv, :vexpire, '在職')
-                                ON CONFLICT (emp_no) DO UPDATE SET emp_name = :name, attendance_mode = :amode, base_salary = :sal_off, private_allowance = :sal_priv, visa_expire = :vexpire, status = '在職';
+                                ON CONFLICT (emp_code) DO UPDATE SET emp_name = :name, attendance_mode = :amode, base_salary = :sal_off, private_allowance = :sal_priv, visa_expire = :vexpire, status = '在職';
                             """), {
                                 "no": expat_no.strip(), 
                                 "name": f"{expat_name.strip()} ({nationality})", 
@@ -317,7 +317,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown(f"### {L['tab_list']}")
         if engine:
             try:
-                df = pd.read_sql("SELECT emp_no, emp_name, phone, department, position, staff_type, attendance_mode, base_salary, visa_expire FROM public.employee_profiles WHERE status = '在職';", con=engine)
+                df = pd.read_sql("SELECT emp_code, emp_name, phone, department, position, staff_type, attendance_mode, base_salary, visa_expire FROM public.employee_profiles WHERE status = '在職';", con=engine)
                 if not df.empty:
                     today_date = datetime.date.today()
                     expiring_soon = []
@@ -331,7 +331,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                                     continue
                             days_left = (v_exp - today_date).days
                             if days_left <= 90:
-                                expiring_soon.append((row["emp_no"], row["emp_name"], v_exp, days_left))
+                                expiring_soon.append((row["emp_code"], row["emp_name"], v_exp, days_left))
 
                     if expiring_soon:
                         st.error(L["alert_expiry_title"])
@@ -353,14 +353,14 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                     
                     st.markdown("---")
                     st.markdown(f"#### {L['terminate_title']}")
-                    active_emp_list = [f"{r['emp_no']} - {r['emp_name']}" for _, r in df.iterrows()]
+                    active_emp_list = [f"{r['emp_code']} - {r['emp_name']}" for _, r in df.iterrows()]
                     selected_to_terminate = st.selectbox(L["lbl_select_terminate_emp"], active_emp_list)
                     
                     if st.button(L["btn_terminate"], type="secondary"):
                         if selected_to_terminate:
                             target_emp_no = selected_to_terminate.split(" - ")[0]
                             with engine.begin() as conn:
-                                conn.execute(text("UPDATE public.employee_profiles SET status = '離職' WHERE emp_no = :no;"), {"no": target_emp_no})
+                                conn.execute(text("UPDATE public.employee_profiles SET status = '離職' WHERE emp_code = :no;"), {"no": target_emp_no})
                             st.success(L["success_terminate"].format(emp=selected_to_terminate))
                             st.rerun()
                 else:
@@ -375,13 +375,13 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown(f"### ✏️ 編輯與更新現職員工資料")
         if engine:
             try:
-                df_edit = pd.read_sql("SELECT emp_no, emp_name, phone, position, attendance_mode, base_salary, visa_expire FROM public.employee_profiles WHERE status = '在職';", con=engine)
+                df_edit = pd.read_sql("SELECT emp_code, emp_name, phone, position, attendance_mode, base_salary, visa_expire FROM public.employee_profiles WHERE status = '在職';", con=engine)
                 if not df_edit.empty:
-                    edit_emp_list = [f"{r['emp_no']} - {r['emp_name']}" for _, r in df_edit.iterrows()]
+                    edit_emp_list = [f"{r['emp_code']} - {r['emp_name']}" for _, r in df_edit.iterrows()]
                     selected_edit_target = st.selectbox("選擇要修改的員工", edit_emp_list)
                     if selected_edit_target:
                         t_no = selected_edit_target.split(" - ")[0]
-                        current_row = df_edit[df_edit["emp_no"] == t_no].iloc[0]
+                        current_row = df_edit[df_edit["emp_code"] == t_no].iloc[0]
                         
                         with st.form("form_edit_employee"):
                             new_name = st.text_input("修改姓名", value=current_row["emp_name"])
@@ -408,8 +408,8 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                             
                             if st.form_submit_button("💾 儲存修改變更", type="primary", use_container_width=True):
                                 with engine.begin() as conn:
-                                    conn.execute(text("UPDATE public.employee_profiles SET emp_name = :name, phone = :phone, position = :pos, attendance_mode = :amode, base_salary = :sal, visa_expire = :vexpire WHERE emp_no = :no;"),
-                                                 {"name": new_name, "phone": new_phone, "pos": new_pos, "amode": new_mode, "sal": new_sal, "vexpire": new_expire, "no": t_no})
+                                    conn.execute(text("UPDATE public.employee_profiles SET emp_name = :name, phone = :phone, position = :pos, attendance_mode = :amode, base_salary = :sal, visa_expire = :vexpire WHERE emp_code = :no;"),
+                                                   {"name": new_name, "phone": new_phone, "pos": new_pos, "amode": new_mode, "sal": new_sal, "vexpire": new_expire, "no": t_no})
                                 st.success(f"✅ 員工 `{t_no}` 資料已成功更新！")
                                 st.rerun()
                 else:
@@ -424,7 +424,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown(f"### {L['tab_resigned']}")
         if engine:
             try:
-                df_resigned = pd.read_sql("SELECT emp_no, emp_name, department, position, staff_type FROM public.employee_profiles WHERE status = '離職';", con=engine)
+                df_resigned = pd.read_sql("SELECT emp_code, emp_name, department, position, staff_type FROM public.employee_profiles WHERE status = '離職';", con=engine)
                 if not df_resigned.empty:
                     st.dataframe(df_resigned, use_container_width=True, hide_index=True)
                 else:
