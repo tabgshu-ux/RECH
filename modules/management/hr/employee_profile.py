@@ -21,7 +21,8 @@ EMP_PROFILE_I18N = {
         "lbl_factory": "駐點廠區 (Nhà máy)",
         "lbl_dept": "部門 (Bộ phận)",
         "lbl_position": "職稱 (Chức vụ)",
-        "lbl_staff_type": "出勤性質",
+        "lbl_staff_type": "員工屬性 (廠內/外勤/點工)",
+        "lbl_attendance_mode": "考勤打卡設定",
         "lbl_base_sal": "越南盾固定底薪 (Lương CB - VND)",
         "lbl_net_sal": "越南盾確認金額 (VND)",
         "lbl_sys_role": "系統權限角色 (System Role)",
@@ -73,6 +74,7 @@ EMP_PROFILE_I18N = {
         "lbl_dept": "Bộ phận",
         "lbl_position": "Chức vụ",
         "lbl_staff_type": "Loại nhân sự",
+        "lbl_attendance_mode": "Chế độ chấm công",
         "lbl_base_sal": "Lương cơ bản (VND)",
         "lbl_net_sal": "Thực nhận (VND)",
         "lbl_sys_role": "Quyền hệ thống",
@@ -124,6 +126,7 @@ EMP_PROFILE_I18N = {
         "lbl_dept": "Department",
         "lbl_position": "Position",
         "lbl_staff_type": "Staff Type",
+        "lbl_attendance_mode": "Attendance Mode",
         "lbl_base_sal": "Base Salary (VND)",
         "lbl_net_sal": "Net Salary",
         "lbl_sys_role": "System Role",
@@ -176,6 +179,7 @@ def init_hr_profile_db(engine):
                     department VARCHAR(150),
                     position VARCHAR(100),
                     staff_type VARCHAR(100),
+                    attendance_mode VARCHAR(50) DEFAULT '需打卡',
                     base_salary NUMERIC(15, 2) DEFAULT 0,
                     private_allowance NUMERIC(15, 2) DEFAULT 0,
                     visa_expire DATE DEFAULT '2027-12-31',
@@ -219,7 +223,8 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                 factory = st.selectbox(L["lbl_factory"], ["西寧廠 (Tay Ninh)", "胡志明辦事處 (HCMC)"])
                 dept = st.selectbox(L["lbl_dept"], ["生產部 (Production Dept)", "品管部 (QA/QC)", "倉儲物流 (Logistics)", "管理部 (Management)", "工程部 (Engineering)"])
                 position = st.text_input(L["lbl_position"], placeholder="作業員 / 班長 / 工程師")
-                staff_type = st.selectbox(L["lbl_staff_type"], ["廠內固定員工 (Plant Fixed Staff)", "外包派遣員工 (Contractor)", "產學合作實習生"])
+                staff_type = st.selectbox(L["lbl_staff_type"], ["廠內員工 (Plant Staff)", "外勤工程人員 (Field Engineer)", "點工 (Daily Worker)"])
+                attendance_mode = st.selectbox(L["lbl_attendance_mode"], ["需打卡 (Required Punch)", "免打卡 / 考勤排除 (Exempt)"])
                 base_sal = st.number_input(L["lbl_base_sal"], value=5000000.0, step=500000.0)
                 st.markdown(f"**{L['lbl_net_sal']}**：`{base_sal:,.0f} ₫ (VND)`")
             with c3:
@@ -238,17 +243,17 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                             with engine.begin() as conn:
                                 conn.execute(text("""
                                     INSERT INTO public.employee_profiles 
-                                    (emp_no, emp_name, phone, id_card, tax_code, factory, department, position, staff_type, base_salary, private_allowance, system_role, perm_address, temp_address, hospital, bhxh_no, bank_acc, bank_name, status)
-                                    VALUES (:no, :name, :phone, :id_c, :tax, :fac, :dept, :pos, :stype, :sal, 0, :srole, :paddr, :taddr, :hosp, :bhxh, :bacc, :bname, '在職')
+                                    (emp_no, emp_name, phone, id_card, tax_code, factory, department, position, staff_type, attendance_mode, base_salary, private_allowance, system_role, perm_address, temp_address, hospital, bhxh_no, bank_acc, bank_name, status)
+                                    VALUES (:no, :name, :phone, :id_c, :tax, :fac, :dept, :pos, :stype, :amode, :sal, 0, :srole, :paddr, :taddr, :hosp, :bhxh, :bacc, :bname, '在職')
                                     ON CONFLICT (emp_no) DO UPDATE SET 
-                                    emp_name = :name, phone = :phone, base_salary = :sal, status = '在職';
+                                    emp_name = :name, phone = :phone, staff_type = :stype, attendance_mode = :amode, base_salary = :sal, status = '在職';
                                 """), {
                                     "no": emp_no.strip(), "name": name.strip(), "phone": phone.strip(),
                                     "id_c": id_card.strip(), "tax": tax_code.strip(), "fac": factory,
                                     "dept": dept, "position": position.strip(), "stype": staff_type,
-                                    "sal": base_sal, "srole": system_role, "paddr": perm_addr,
-                                    "taddr": temp_addr, "hosp": hospital, "bhxh": bhxh_no,
-                                    "bacc": bank_acc, "bname": bank_name
+                                    "amode": attendance_mode, "sal": base_sal, "srole": system_role,
+                                    "paddr": perm_addr, "taddr": temp_addr, "hosp": hospital,
+                                    "bhxh": bhxh_no, "bacc": bank_acc, "bname": bank_name
                                 })
                         except Exception:
                             pass
@@ -257,7 +262,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                 else:
                     st.warning("⚠️ 請完整填寫必要欄位！")
 
-    # Tab 2: 新增外派與外籍幹部 (含 90 天到期日記錄)
+    # Tab 2: 新增外派與外籍幹部 (含考勤免打卡設定)
     with tabs[1]:
         st.markdown(f"### {L['form_expat_title']}")
         c1, c2 = st.columns(2)
@@ -270,6 +275,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
             visa_type = st.selectbox(L["lbl_visa_type"], ["LD1 / LD2 (工作簽證)", "DN1 (商業簽證)", "TRC (長期居留證)", "DT (投資簽證)"])
         with c2:
             visa_expire = st.date_input(L["lbl_visa_expire"], value=datetime.date.today() + datetime.timedelta(days=180))
+            attendance_mode_expat = st.selectbox(L["lbl_attendance_mode"], ["免打卡 / 考勤排除 (Exempt)", "需打卡 (Required Punch)"])
             sal_official = st.number_input(L["lbl_sal_official"], value=15000000.0, step=1000000.0)
             sal_private = st.number_input(L["lbl_sal_private"], value=50000000.0, step=5000000.0)
             
@@ -285,15 +291,16 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                         with engine.begin() as conn:
                             conn.execute(text("""
                                 INSERT INTO public.employee_profiles 
-                                (emp_no, emp_name, phone, id_card, staff_type, base_salary, private_allowance, visa_expire, status)
-                                VALUES (:no, :name, :phone, :passport, :stype, :sal_off, :sal_priv, :vexpire, '在職')
-                                ON CONFLICT (emp_no) DO UPDATE SET emp_name = :name, base_salary = :sal_off, private_allowance = :sal_priv, visa_expire = :vexpire, status = '在職';
+                                (emp_no, emp_name, phone, id_card, staff_type, attendance_mode, base_salary, private_allowance, visa_expire, status)
+                                VALUES (:no, :name, :phone, :passport, :stype, :amode, :sal_off, :sal_priv, :vexpire, '在職')
+                                ON CONFLICT (emp_no) DO UPDATE SET emp_name = :name, attendance_mode = :amode, base_salary = :sal_off, private_allowance = :sal_priv, visa_expire = :vexpire, status = '在職';
                             """), {
                                 "no": expat_no.strip(), 
                                 "name": f"{expat_name.strip()} ({nationality})", 
                                 "phone": phone_expat.strip() if phone_expat else "-",
                                 "passport": passport.strip(),
                                 "stype": f"外派/外籍幹部 ({nationality})",
+                                "amode": attendance_mode_expat,
                                 "sal_off": sal_official,
                                 "sal_priv": sal_private,
                                 "vexpire": visa_expire
@@ -301,7 +308,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                     except Exception:
                         pass
                 st.success(L["success_expat"].format(name=expat_name))
-                st.info("📁 外派與外籍幹部檔案已成功建檔，證件 90 天預警與檔案已安全歸檔。")
+                st.info("📁 外派與外籍幹部檔案已成功建檔，考勤設定、90天證件預警與薪資已安全歸檔。")
             else:
                 st.warning("⚠️ 請完整填寫幹部工號、姓名與護照號碼！")
 
@@ -310,9 +317,8 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown(f"### {L['tab_list']}")
         if engine:
             try:
-                df = pd.read_sql("SELECT emp_no, emp_name, phone, department, position, staff_type, base_salary, visa_expire FROM public.employee_profiles WHERE status = '在職';", con=engine)
+                df = pd.read_sql("SELECT emp_no, emp_name, phone, department, position, staff_type, attendance_mode, base_salary, visa_expire FROM public.employee_profiles WHERE status = '在職';", con=engine)
                 if not df.empty:
-                    # 🚨 證件到期預警雷達檢查 (改為 90 天內或已過期)
                     today_date = datetime.date.today()
                     expiring_soon = []
                     for _, row in df.iterrows():
@@ -324,7 +330,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                                 except:
                                     continue
                             days_left = (v_exp - today_date).days
-                            if days_left <= 90: # 設定為 90 天前預警
+                            if days_left <= 90:
                                 expiring_soon.append((row["emp_no"], row["emp_name"], v_exp, days_left))
 
                     if expiring_soon:
@@ -369,7 +375,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown(f"### ✏️ 編輯與更新現職員工資料")
         if engine:
             try:
-                df_edit = pd.read_sql("SELECT emp_no, emp_name, phone, position, base_salary, visa_expire FROM public.employee_profiles WHERE status = '在職';", con=engine)
+                df_edit = pd.read_sql("SELECT emp_no, emp_name, phone, position, attendance_mode, base_salary, visa_expire FROM public.employee_profiles WHERE status = '在職';", con=engine)
                 if not df_edit.empty:
                     edit_emp_list = [f"{r['emp_no']} - {r['emp_name']}" for _, r in df_edit.iterrows()]
                     selected_edit_target = st.selectbox("選擇要修改的員工", edit_emp_list)
@@ -381,6 +387,12 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                             new_name = st.text_input("修改姓名", value=current_row["emp_name"])
                             new_phone = st.text_input("修改電話", value=str(current_row["phone"] or ""))
                             new_pos = st.text_input("修改職稱", value=str(current_row["position"] or ""))
+                            
+                            cur_mode = str(current_row.get("attendance_mode") or "需打卡")
+                            mode_options = ["需打卡 (Required Punch)", "免打卡 / 考勤排除 (Exempt)"]
+                            default_mode_idx = 1 if "免打卡" in cur_mode or "Exempt" in cur_mode else 0
+                            new_mode = st.selectbox("修改考勤設定", mode_options, index=default_mode_idx)
+
                             new_sal = st.number_input("修改底薪", value=float(current_row["base_salary"] or 0))
                             
                             cur_expiry = current_row["visa_expire"]
@@ -396,8 +408,8 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                             
                             if st.form_submit_button("💾 儲存修改變更", type="primary", use_container_width=True):
                                 with engine.begin() as conn:
-                                    conn.execute(text("UPDATE public.employee_profiles SET emp_name = :name, phone = :phone, position = :pos, base_salary = :sal, visa_expire = :vexpire WHERE emp_no = :no;"),
-                                                 {"name": new_name, "phone": new_phone, "pos": new_pos, "sal": new_sal, "vexpire": new_expire, "no": t_no})
+                                    conn.execute(text("UPDATE public.employee_profiles SET emp_name = :name, phone = :phone, position = :pos, attendance_mode = :amode, base_salary = :sal, visa_expire = :vexpire WHERE emp_no = :no;"),
+                                                 {"name": new_name, "phone": new_phone, "pos": new_pos, "amode": new_mode, "sal": new_sal, "vexpire": new_expire, "no": t_no})
                                 st.success(f"✅ 員工 `{t_no}` 資料已成功更新！")
                                 st.rerun()
                 else:
