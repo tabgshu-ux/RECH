@@ -7,7 +7,14 @@ def render_employee_list(engine=None, lang="繁體中文"):
     st.markdown("### 📑 現職員工總名冊與證件預警")
     if engine:
         try:
-            # 💡 雙重保險：直接從 payroll_records 與 employee_profiles 聯集撈取，確保薪資有資料就一定看得到人
+            with engine.begin() as conn:
+                # 🛡️ 自動補全可能缺少的欄位，避免資料庫結構不一致報錯
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS staff_type VARCHAR(100) DEFAULT '越南籍員工';"))
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS attendance_mode VARCHAR(50) DEFAULT '需打卡';"))
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS visa_expire DATE DEFAULT '2027-12-31';"))
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT '在職';"))
+
+            # 💡 安全且相容的查詢語法
             query = """
                 SELECT DISTINCT 
                     COALESCE(e.emp_code, p.emp_code) as emp_code,
@@ -21,7 +28,7 @@ def render_employee_list(engine=None, lang="繁體中文"):
                     COALESCE(e.status, '在職') as status
                 FROM public.payroll_records p
                 FULL OUTER JOIN public.employee_profiles e ON p.emp_code = e.emp_code
-                WHERE COALESCE(e.status, '在職') = '在職';
+                WHERE COALESCE(e.status, '在職', p.status) = '在職';
             """
             df = pd.read_sql(query, con=engine)
             
@@ -86,6 +93,6 @@ def render_employee_list(engine=None, lang="繁體中文"):
             else:
                 st.info("目前尚無在職員工紀錄。請先至【員工薪資與保險】頁面建立薪資或匯入 Excel，名冊將會自動同步顯示！")
         except Exception as e:
-            st.warning(f"⚠️ 讀取名冊發生異常（可能是表格尚未完全初始化）：{str(e)}")
+            st.warning(f"⚠️ 讀取名冊發生異常：{str(e)}")
     else:
         st.info("資料庫引擎未連線。")
