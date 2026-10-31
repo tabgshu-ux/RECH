@@ -6,10 +6,10 @@ from sqlalchemy import text
 EMP_PROFILE_I18N = {
     "繁體中文": {
         "title": "👤 管理部 - 員工個人檔案與人事管理中心",
-        "caption": "管理公司在職員工名冊、越南勞動法規合規建檔、外派與外籍幹部、薪資、簽證、證件歸檔與資料維護。",
+        "caption": "管理公司在職員工名冊、越南勞動法規合規建檔、外派與外籍幹部、薪資、簽證、證件歸檔與 90 天前到期預警。",
         "tab_vn": "VN 新增越南員工",
         "tab_expat": "🌐 新增外派與外籍幹部",
-        "tab_list": "📑 現職員工總名冊與搜尋",
+        "tab_list": "📑 現職員工總名冊與證件預警 (90天)",
         "tab_edit": "✏️ 編輯與修改員工資料",
         "tab_resigned": "📁 離職名冊管理",
         "form_vn_title": "VN 新增越南籍員工資料 (符合越南勞動法規範)",
@@ -40,15 +40,16 @@ EMP_PROFILE_I18N = {
         "lbl_phone_expat": "聯絡電話 (Phone / Zalo / WeChat)",
         "lbl_passport": "護照號碼 / 居留證號 *",
         "lbl_visa_type": "簽證類型 (Visa Type)",
-        "lbl_visa_expire": "工作簽證 / 暫住證 (TRC) / 工作證到期日",
+        "lbl_visa_expire": "工作簽證 / 暫住證 (TRC) / 護照到期日 *",
         "lbl_sal_official": "當地申報薪資 (Local Base Salary)",
         "lbl_sal_private": "海外專案津貼 / 差旅補助 (Overseas Allowance)",
         "lbl_upload_passport": "📄 上傳護照掃描檔 / 照片 (Passport)",
         "lbl_upload_workpermit": "📄 上傳越南工作證 (Work Permit)",
         "lbl_upload_trc": "📄 上傳暫住證 / 簽證影本 (TRC / Visa)",
         "btn_save_expat": "🚀 儲存外派與外籍幹部合規檔案與證件",
-        "success_expat": "🎉 成功新增外派與外籍幹部：{name}！",
+        "success_expat": "🎉 成功新增外派與外籍幹部：{name} (已記錄證件到期日)！",
         "search_label": "🔍 搜尋員工姓名、工號或國籍篩選",
+        "alert_expiry_title": "🚨 外派/外籍幹部證件（簽證/TRC/護照）90天前提前到期預警（越南辦事需時3個月）",
         "terminate_title": "🔄 員工離職狀態異動與結清處理",
         "lbl_select_terminate_emp": "選擇要辦理離職的員工 (工號 - 姓名)",
         "btn_terminate": "🔴 辦理離職手續並移至離職名冊",
@@ -56,10 +57,10 @@ EMP_PROFILE_I18N = {
     },
     "Tiếng Việt": {
         "title": "👤 Phòng Nhân sự - Quản lý Hồ sơ & Nhân sự",
-        "caption": "Quản lý nhân viên, tìm kiếm, chỉnh sửa thông tin và thủ tục nghỉ việc.",
+        "caption": "Quản lý nhân viên, chuyên gia, cảnh báo trước 90 ngày cho Visa/TRC/Hộ chiếu và thủ tục nghỉ việc.",
         "tab_vn": "VN Thêm nhân viên VN",
         "tab_expat": "🌐 Thêm chuyên gia nước ngoài",
-        "tab_list": "📑 Danh sách & Tìm kiếm",
+        "tab_list": "📑 Danh sách & Cảnh báo 90 ngày",
         "tab_edit": "✏️ Chỉnh sửa hồ sơ",
         "tab_resigned": "📁 Danh sách nghỉ việc",
         "form_vn_title": "VN Thêm nhân viên người Việt",
@@ -90,7 +91,7 @@ EMP_PROFILE_I18N = {
         "lbl_phone_expat": "Số điện thoại",
         "lbl_passport": "Số hộ chiếu *",
         "lbl_visa_type": "Loại Visa",
-        "lbl_visa_expire": "Ngày hết hạn Visa/TRC",
+        "lbl_visa_expire": "Ngày hết hạn Visa / TRC / Hộ chiếu *",
         "lbl_sal_official": "Lương cơ bản tại chỗ",
         "lbl_sal_private": "Phụ cấp dự án nước ngoài",
         "lbl_upload_passport": "📄 Tải lên Hộ chiếu",
@@ -99,6 +100,7 @@ EMP_PROFILE_I18N = {
         "btn_save_expat": "🚀 Lưu hồ sơ chuyên gia",
         "success_expat": "🎉 Đã lưu thành công chuyên gia: {name}!",
         "search_label": "🔍 Tìm kiếm theo tên, mã NV hoặc quốc tịch",
+        "alert_expiry_title": "🚨 Cảnh báo trước 90 ngày hạn sử dụng Giấy tờ (Visa/TRC/Hộ chiếu)",
         "terminate_title": "🔄 Xử lý thủ tục nghỉ việc",
         "lbl_select_terminate_emp": "Chọn nhân viên nghỉ việc",
         "btn_terminate": "🔴 Xác nhận nghỉ việc",
@@ -106,10 +108,10 @@ EMP_PROFILE_I18N = {
     },
     "English": {
         "title": "👤 HR Center - Employee Profiles & Expat Management",
-        "caption": "Manage employee registry, search, edits, document uploads, and termination records.",
+        "caption": "Manage employee registry, expat 90-day advance visa/passport expiry alerts, and terminations.",
         "tab_vn": "VN New Employee",
         "tab_expat": "🌐 Expat & Foreign Staff Setup",
-        "tab_list": "📑 Registry & Search",
+        "tab_list": "📑 Registry & 90-Day Expiry Alerts",
         "tab_edit": "✏️ Edit Profile",
         "tab_resigned": "📁 Resigned List",
         "form_vn_title": "VN Add Vietnamese Employee",
@@ -140,7 +142,7 @@ EMP_PROFILE_I18N = {
         "lbl_phone_expat": "Phone",
         "lbl_passport": "Passport No. *",
         "lbl_visa_type": "Visa Type",
-        "lbl_visa_expire": "Expiry Date",
+        "lbl_visa_expire": "Visa / TRC / Passport Expiry Date *",
         "lbl_sal_official": "Local Base Salary",
         "lbl_sal_private": "Overseas Allowance",
         "lbl_upload_passport": "📄 Upload Passport",
@@ -149,6 +151,7 @@ EMP_PROFILE_I18N = {
         "btn_save_expat": "🚀 Save Expat Profile",
         "success_expat": "🎉 Successfully saved expat: {name}!",
         "search_label": "🔍 Search by name, ID or nationality",
+        "alert_expiry_title": "🚨 Expat 90-Day Advance Document Expiry Alerts (Visa/TRC/Passport)",
         "terminate_title": "🔄 Process Employee Termination",
         "lbl_select_terminate_emp": "Select Employee to Terminate",
         "btn_terminate": "🔴 Confirm Termination",
@@ -175,6 +178,7 @@ def init_hr_profile_db(engine):
                     staff_type VARCHAR(100),
                     base_salary NUMERIC(15, 2) DEFAULT 0,
                     private_allowance NUMERIC(15, 2) DEFAULT 0,
+                    visa_expire DATE DEFAULT '2027-12-31',
                     system_role VARCHAR(100),
                     perm_address TEXT,
                     temp_address TEXT,
@@ -253,7 +257,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                 else:
                     st.warning("⚠️ 請完整填寫必要欄位！")
 
-    # Tab 2: 新增外派與外籍幹部
+    # Tab 2: 新增外派與外籍幹部 (含 90 天到期日記錄)
     with tabs[1]:
         st.markdown(f"### {L['form_expat_title']}")
         c1, c2 = st.columns(2)
@@ -265,7 +269,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
             passport = st.text_input(L["lbl_passport"], placeholder="Passport No. / ID")
             visa_type = st.selectbox(L["lbl_visa_type"], ["LD1 / LD2 (工作簽證)", "DN1 (商業簽證)", "TRC (長期居留證)", "DT (投資簽證)"])
         with c2:
-            visa_expire = st.text_input(L["lbl_visa_expire"], value="2027-12-31")
+            visa_expire = st.date_input(L["lbl_visa_expire"], value=datetime.date.today() + datetime.timedelta(days=180))
             sal_official = st.number_input(L["lbl_sal_official"], value=15000000.0, step=1000000.0)
             sal_private = st.number_input(L["lbl_sal_private"], value=50000000.0, step=5000000.0)
             
@@ -281,9 +285,9 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                         with engine.begin() as conn:
                             conn.execute(text("""
                                 INSERT INTO public.employee_profiles 
-                                (emp_no, emp_name, phone, id_card, staff_type, base_salary, private_allowance, status)
-                                VALUES (:no, :name, :phone, :passport, :stype, :sal_off, :sal_priv, '在職')
-                                ON CONFLICT (emp_no) DO UPDATE SET emp_name = :name, base_salary = :sal_off, private_allowance = :sal_priv, status = '在職';
+                                (emp_no, emp_name, phone, id_card, staff_type, base_salary, private_allowance, visa_expire, status)
+                                VALUES (:no, :name, :phone, :passport, :stype, :sal_off, :sal_priv, :vexpire, '在職')
+                                ON CONFLICT (emp_no) DO UPDATE SET emp_name = :name, base_salary = :sal_off, private_allowance = :sal_priv, visa_expire = :vexpire, status = '在職';
                             """), {
                                 "no": expat_no.strip(), 
                                 "name": f"{expat_name.strip()} ({nationality})", 
@@ -291,22 +295,47 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                                 "passport": passport.strip(),
                                 "stype": f"外派/外籍幹部 ({nationality})",
                                 "sal_off": sal_official,
-                                "sal_priv": sal_private
+                                "sal_priv": sal_private,
+                                "vexpire": visa_expire
                             })
                     except Exception:
                         pass
                 st.success(L["success_expat"].format(name=expat_name))
-                st.info("📁 外派與外籍幹部檔案已成功建檔，證件與薪資資料已安全歸檔。")
+                st.info("📁 外派與外籍幹部檔案已成功建檔，證件 90 天預警與檔案已安全歸檔。")
             else:
                 st.warning("⚠️ 請完整填寫幹部工號、姓名與護照號碼！")
 
-    # Tab 3: 現職員工總名冊與搜尋
+    # Tab 3: 現職員工總名冊與 90 天證件到期智慧預警
     with tabs[2]:
         st.markdown(f"### {L['tab_list']}")
         if engine:
             try:
-                df = pd.read_sql("SELECT emp_no, emp_name, phone, department, position, staff_type, base_salary FROM public.employee_profiles WHERE status = '在職';", con=engine)
+                df = pd.read_sql("SELECT emp_no, emp_name, phone, department, position, staff_type, base_salary, visa_expire FROM public.employee_profiles WHERE status = '在職';", con=engine)
                 if not df.empty:
+                    # 🚨 證件到期預警雷達檢查 (改為 90 天內或已過期)
+                    today_date = datetime.date.today()
+                    expiring_soon = []
+                    for _, row in df.iterrows():
+                        v_exp = row.get("visa_expire")
+                        if v_exp:
+                            if isinstance(v_exp, str):
+                                try:
+                                    v_exp = datetime.datetime.strptime(v_exp, "%Y-%m-%d").date()
+                                except:
+                                    continue
+                            days_left = (v_exp - today_date).days
+                            if days_left <= 90: # 設定為 90 天前預警
+                                expiring_soon.append((row["emp_no"], row["emp_name"], v_exp, days_left))
+
+                    if expiring_soon:
+                        st.error(L["alert_expiry_title"])
+                        for eno, ename, edate, dleft in expiring_soon:
+                            if dleft < 0:
+                                st.markdown(f"🔴 **【已過期】** 員工：`{eno} - {ename}` (證件到期日：`{edate}`，已逾期 `{abs(dleft)}` 天！請立即辦理)")
+                            else:
+                                st.markdown(f"⚠️ **【90天內到期提醒】** 員工：`{eno} - {ename}` (證件到期日：`{edate}`，僅剩 `{dleft}` 天！越南辦證需時 3 個月，請盡速送件)")
+                        st.markdown("---")
+
                     search_query = st.text_input(L["search_label"], placeholder="輸入工號、姓名或國籍關鍵字...")
                     if search_query:
                         mask = df.astype(str).apply(lambda x: x.str.contains(search_query, case=False)).any(axis=1)
@@ -329,8 +358,8 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                             st.success(L["success_terminate"].format(emp=selected_to_terminate))
                             st.rerun()
                 else:
-                    st.info("目前尚無在職員工紀錄。您可以在上方「新增越南員工」或「新增外派與外籍幹部」建立資料。")
-            except Exception as e:
+                    st.info("目前尚無在職員工紀錄。")
+            except Exception:
                 st.info("目前尚無在職員工紀錄。")
         else:
             st.info("資料庫引擎未連線。")
@@ -340,7 +369,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown(f"### ✏️ 編輯與更新現職員工資料")
         if engine:
             try:
-                df_edit = pd.read_sql("SELECT emp_no, emp_name, phone, position, base_salary FROM public.employee_profiles WHERE status = '在職';", con=engine)
+                df_edit = pd.read_sql("SELECT emp_no, emp_name, phone, position, base_salary, visa_expire FROM public.employee_profiles WHERE status = '在職';", con=engine)
                 if not df_edit.empty:
                     edit_emp_list = [f"{r['emp_no']} - {r['emp_name']}" for _, r in df_edit.iterrows()]
                     selected_edit_target = st.selectbox("選擇要修改的員工", edit_emp_list)
@@ -354,10 +383,21 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                             new_pos = st.text_input("修改職稱", value=str(current_row["position"] or ""))
                             new_sal = st.number_input("修改底薪", value=float(current_row["base_salary"] or 0))
                             
+                            cur_expiry = current_row["visa_expire"]
+                            if isinstance(cur_expiry, str):
+                                try:
+                                    cur_expiry = datetime.datetime.strptime(cur_expiry, "%Y-%m-%d").date()
+                                except:
+                                    cur_expiry = datetime.date.today()
+                            elif not cur_expiry:
+                                cur_expiry = datetime.date.today()
+
+                            new_expire = st.date_input("修改簽證/護照到期日", value=cur_expiry)
+                            
                             if st.form_submit_button("💾 儲存修改變更", type="primary", use_container_width=True):
                                 with engine.begin() as conn:
-                                    conn.execute(text("UPDATE public.employee_profiles SET emp_name = :name, phone = :phone, position = :pos, base_salary = :sal WHERE emp_no = :no;"),
-                                                 {"name": new_name, "phone": new_phone, "pos": new_pos, "sal": new_sal, "no": t_no})
+                                    conn.execute(text("UPDATE public.employee_profiles SET emp_name = :name, phone = :phone, position = :pos, base_salary = :sal, visa_expire = :vexpire WHERE emp_no = :no;"),
+                                                 {"name": new_name, "phone": new_phone, "pos": new_pos, "sal": new_sal, "vexpire": new_expire, "no": t_no})
                                 st.success(f"✅ 員工 `{t_no}` 資料已成功更新！")
                                 st.rerun()
                 else:
