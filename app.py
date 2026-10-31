@@ -191,7 +191,7 @@ if st.session_state.get("must_change_pwd", False):
     st.stop()
 
 # ----------------------------------------------------
-# 🚀 3. 已登入側邊欄與動態功能選單
+# 🚀 3. 已登入側邊欄與動態功能選單 (樹狀階層收合版)
 # ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
@@ -245,18 +245,19 @@ elif current_role_clean == "security":
     sub_features = ["🚗 廠區車輛進出口門禁與派車審核"]
     selected_feat_label = sub_features[0]
 else:
-    if st.session_state.selected_dept_index >= len(available_dept_names):
-        st.session_state.selected_dept_index = 0
-
+    # 🌳 第一階段：一級部門選擇清單
+    st.sidebar.markdown(f"**{ui_t['parent_header']}**")
+    
     selected_dept_label = st.sidebar.radio(
         ui_t["parent_header"],
         available_dept_names,
-        index=st.session_state.selected_dept_index,
-        key="dept_radio_idx"
+        index=st.session_state.get("selected_dept_index", 0),
+        key="dept_radio_idx",
+        label_visibility="collapsed"
     )
     
     selected_dept_index = available_dept_names.index(selected_dept_label)
-    if selected_dept_index != st.session_state.selected_dept_index:
+    if selected_dept_index != st.session_state.get("selected_dept_index", 0):
         st.session_state.selected_dept_index = selected_dept_index
         st.session_state.selected_feat_index = 0
         st.rerun()
@@ -265,22 +266,26 @@ else:
     if not sub_features:
         sub_features = ["(此部門尚無功能模組)"]
 
-    if st.session_state.selected_feat_index >= len(sub_features):
+    if st.session_state.get("selected_feat_index", 0) >= len(sub_features):
         st.session_state.selected_feat_index = 0
 
-    st.sidebar.caption(f"**{selected_dept_label.split('(')[0].strip()}**")
+    st.sidebar.markdown("---")
     
-    selected_feat_label = st.sidebar.radio(
-        ui_t["sub_header"],
-        sub_features,
-        index=st.session_state.selected_feat_index,
-        key="feat_radio_idx"
-    )
-    
-    selected_feat_index = sub_features.index(selected_feat_label)
-    if selected_feat_index != st.session_state.selected_feat_index:
-        st.session_state.selected_feat_index = selected_feat_index
-        st.rerun()
+    # 📂 第二階段：點選部門後，自動在下方以「展開收合 (Expander)」呈現子功能樹狀結構
+    dept_short_name = selected_dept_label.split('(')[0].strip()
+    with st.sidebar.expander(f"📂 展開【{dept_short_name}】功能選單", expanded=True):
+        selected_feat_label = st.radio(
+            ui_t["sub_header"],
+            sub_features,
+            index=st.session_state.get("selected_feat_index", 0),
+            key="feat_radio_idx",
+            label_visibility="collapsed"
+        )
+        
+        selected_feat_index = sub_features.index(selected_feat_label)
+        if selected_feat_index != st.session_state.get("selected_feat_index", 0):
+            st.session_state.selected_feat_index = selected_feat_index
+            st.rerun()
 
 # ----------------------------------------------------
 # 📢 公司公告跑馬燈
@@ -351,7 +356,7 @@ try:
         elif "員工打卡紀錄" in feat_str:
             load_module_safely("modules.management.hr.internal_attendance", "render_internal_attendance_page", engine=engine, lang=curr_lang)
         elif "密碼修改" in feat_str:
-            load_no_cache = load_module_safely("modules.management.hr.change_password", "render_change_password_page", engine=engine, lang=curr_lang)
+            load_module_safely("modules.management.hr.change_password", "render_change_password_page", engine=engine, lang=curr_lang)
         elif "宿舍與伙食" in feat_str:
             load_module_safely("modules.management.dorm_catering", "render_dorm_catering_module", engine=engine, lang=curr_lang)
         elif "工作廠區管理" in feat_str:
@@ -359,7 +364,7 @@ try:
         elif "車輛進出口" in feat_str:
             load_module_safely("modules.management.general_affairs.vehicle_gate_log", "render_vehicle_gate_log_page", engine=engine, lang=curr_lang)
         elif "車輛維修紀錄" in feat_str:
-            load_module_safely("modules.management.general_affairs.vehicle_maintenance", "render_vehicle_maintenance_page", engine=engine, lang=curr_lang)
+            load_module_safely("modules.management.general_affairs.vehicle_maintenance", "show", engine=engine, lang=curr_lang)
         elif "固定資產管理" in feat_str:
             load_module_safely("modules.management.general_affairs.asset_management", "render_asset_management_page", engine=engine, lang=curr_lang)
         elif "文件管理" in feat_str:
