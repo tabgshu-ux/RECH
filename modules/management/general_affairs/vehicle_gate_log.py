@@ -3,26 +3,23 @@ import pandas as pd
 import datetime
 from sqlalchemy import text
 
-# ----------------------------------------------------
-# 🌐 車輛門禁、訪客與收發信件模組完整多語系字典 (i18n)
-# ----------------------------------------------------
 GATE_LOG_I18N = {
     "繁體中文": {
-        "title": "🚗 警衛室/管理部 - 廠區門禁、派車審核、訪客與收發信件管理中心",
-        "caption": "記錄工廠車輛進出、訪客登記與包裹信件代收，所有數據直接寫入資料庫永久歸檔稽核。",
-        "tab_list": "📑 今日車輛門禁總表",
-        "tab_approval": "🛡️ 派車審核放行表",
-        "tab_visitor": "👥 訪客與外包商登記 (DB)",
-        "tab_parcel": "📦 包裹信件代收管理 (DB)",
+        "title": "🚗 警衛室與廠區門禁管理中心",
+        "caption": "記錄工廠車輛進出、訪客登記與包裹信件代收。",
+        "tab_list": "📑 車輛門禁總表",
+        "tab_approval": "🛡️ 派車審核放行",
+        "tab_visitor": "👥 訪客與外包商登記",
+        "tab_parcel": "📦 包裹信件代收",
         "table_header": "📋 廠區大門車輛進出即時紀錄清冊",
-        "approval_header": "🛡️ 主管已簽核之派車放行與車輛管制清冊",
-        "approval_caption": "保全人員請於車輛離廠或入廠時，核對下方由系統主管簽核通過之派車單與車牌號碼。",
+        "approval_header": "🛡️ 主管已簽核之派車放行清冊",
+        "approval_caption": "保全人員請於車輛離廠或入廠時，核對下方派車單與車牌號碼。",
         "no_records": "目前無車輛進出紀錄。",
         "no_approvals": "目前無已核准的派車單。",
-        "visitor_header": "👥 訪客、外包商與面試者進出登記 (資料庫直寫)",
-        "visitor_list_header": "📋 資料庫訪客與外包商歷史進出稽核清冊",
-        "parcel_header": "📦 公司包裹、信件與快遞代收登記 (資料庫直寫)",
-        "parcel_list_header": "📋 資料庫包裹信件代收與領取清單",
+        "visitor_header": "👥 訪客與外包商進出登記",
+        "visitor_list_header": "📋 訪客與外包商歷史進出清冊",
+        "parcel_header": "📦 公司包裹與快遞代收登記",
+        "parcel_list_header": "📋 包裹信件代收與領取清單",
         "col_index": "STT",
         "col_plate": "車牌號碼",
         "col_driver": "駕駛與單位",
@@ -30,68 +27,66 @@ GATE_LOG_I18N = {
         "col_dir": "進出方向",
         "col_purpose": "載貨與事由",
         "col_time": "登記時間",
-        "col_status": "放行狀態",
-        # 表單與按鈕翻譯
+        "col_status": "狀態",
         "form_gate_title": "➕ 登記車輛進出廠區門禁",
         "lbl_select_plate": "選擇車牌號碼",
         "lbl_driver": "駕駛姓名與所屬單位",
         "lbl_v_type": "車輛類型",
         "lbl_direction": "進出方向",
-        "lbl_purpose": "入廠/出廠事由與載貨說明",
-        "btn_save_gate": "💾 記錄門禁進出時間",
-        "success_gate": "✅ 車輛 `{plate}` 門禁紀錄已成功登記！",
+        "lbl_purpose": "事由與載貨說明",
+        "btn_save_gate": "💾 記錄門禁時間",
+        "success_gate": "✅ 車輛 `{plate}` 門禁紀錄已登記！",
         "warn_gate": "⚠️ 請完整填寫車牌號碼與駕駛姓名！"
     },
     "Tiếng Việt": {
-        "title": "🚗 Phòng Bảo vệ - Quản lý Cổng, Khách ra vào & Bưu phẩm",
-        "caption": "Ghi nhận xe, khách ra vào và quản lý bưu phẩm lưu CSDL chính thức.",
+        "title": "🚗 Phòng Bảo vệ - Quản lý Cổng ra vào nhà máy",
+        "caption": "Ghi nhận xe, khách ra vào và quản lý bưu phẩm.",
         "tab_list": "📑 Sổ xe ra vào",
         "tab_approval": "🛡️ Phê duyệt điều xe",
         "tab_visitor": "👥 Đăng ký Khách",
         "tab_parcel": "📦 Quản lý Bưu phẩm",
         "table_header": "📋 Sổ nhật ký xe ra vào nhà máy",
-        "approval_header": "🛡️ Danh sách lệnh điều xe đã được phê duyệt",
-        "approval_caption": "Nhân viên bảo vệ vui lòng kiểm tra lệnh điều xe và biển số xe trước khi cho xe ra vào cổng.",
+        "approval_header": "🛡️ Danh sách lệnh điều xe đã duyệt",
+        "approval_caption": "Bảo vệ vui lòng kiểm tra lệnh điều xe trước khi cho xe qua cổng.",
         "no_records": "Không có dữ liệu xe ra vào.",
-        "no_approvals": "Không có lệnh điều xe được duyệt.",
-        "visitor_header": "👥 Đăng ký khách & nhà thầu ra vào (Lưu CSDL)",
-        "visitor_list_header": "📋 Danh sách lịch sử khách ra vào nhà máy",
-        "parcel_header": "📦 Quản lý bưu phẩm & thư tín (Lưu CSDL)",
+        "no_approvals": "Không có lệnh điều xe.",
+        "visitor_header": "👥 Đăng ký khách & nhà thầu",
+        "visitor_list_header": "📋 Lịch sử khách ra vào",
+        "parcel_header": "📦 Quản lý bưu phẩm & thư tín",
         "parcel_list_header": "📋 Danh sách nhận bưu phẩm",
         "col_index": "STT",
         "col_plate": "Biển số",
         "col_driver": "Tài xế & Đơn vị",
         "col_type": "Loại xe",
         "col_dir": "Hướng",
-        "col_purpose": "Nội dung / Hàng hóa",
+        "col_purpose": "Nội dung",
         "col_time": "Thời gian",
         "col_status": "Trạng thái",
-        # Form & Button
-        "form_gate_title": "➕ Đăng ký xe ra vào cổng nhà máy",
+        "form_gate_title": "➕ Đăng ký xe ra vào cổng",
         "lbl_select_plate": "Chọn biển số xe",
-        "lbl_driver": "Tên tài xế & Đơn vị trực thuộc",
+        "lbl_driver": "Tên tài xế & Đơn vị",
         "lbl_v_type": "Loại xe",
         "lbl_direction": "Hướng di chuyển",
         "lbl_purpose": "Lý do ra vào & Mô tả hàng hóa",
-        "btn_save_gate": "💾 Ghi nhận thời gian ra vào cổng",
-        "success_gate": "✅ Đã ghi nhận nhật ký cổng cho xe `{plate}` thành công!",
-        "warn_gate": "⚠️ Vui lòng điền đầy đủ biển số xe và tên tài xế!"
+        "btn_save_gate": "💾 Ghi nhận thời gian",
+        "success_gate": "✅ Đã ghi nhận xe `{plate}` thành công!",
+        "warn_gate": "⚠️ Vui lòng điền đầy đủ biển số và tên tài xế!"
     },
     "English": {
-        "title": "🚗 Security - Gate Access, Dispatch, Visitors & Parcels Center",
-        "caption": "Track vehicle entry, visitor logs, and parcel receptions with official database archiving.",
+        "title": "🚗 Security - Gate Access Center",
+        "caption": "Track vehicle entry, visitor logs, and parcel receptions.",
         "tab_list": "📑 Gate Access Log",
         "tab_approval": "🛡️ Dispatch Orders",
         "tab_visitor": "👥 Visitor Registration",
         "tab_parcel": "📦 Parcel Management",
         "table_header": "📋 Vehicle Access Registry",
         "approval_header": "🛡️ Approved Dispatch Registry",
-        "approval_caption": "Security personnel must verify dispatch orders and license plates before entry/exit.",
+        "approval_caption": "Verify dispatch orders before entry/exit.",
         "no_records": "No vehicle records found.",
         "no_approvals": "No approved dispatch orders.",
-        "visitor_header": "👥 Visitor & Contractor Registration (DB)",
+        "visitor_header": "👥 Visitor & Contractor Registration",
         "visitor_list_header": "📋 Visitor Audit Log",
-        "parcel_header": "📦 Parcel & Mail Reception (DB)",
+        "parcel_header": "📦 Parcel & Mail Reception",
         "parcel_list_header": "📋 Parcel Inventory Log",
         "col_index": "No.",
         "col_plate": "License Plate",
@@ -101,15 +96,14 @@ GATE_LOG_I18N = {
         "col_purpose": "Purpose & Cargo",
         "col_time": "Timestamp",
         "col_status": "Status",
-        # Form & Button
-        "form_gate_title": "➕ Register Factory Gate Access",
+        "form_gate_title": "➕ Register Gate Access",
         "lbl_select_plate": "Select License Plate",
         "lbl_driver": "Driver Name & Affiliation",
         "lbl_v_type": "Vehicle Type",
         "lbl_direction": "Direction",
         "lbl_purpose": "Purpose & Cargo Description",
-        "btn_save_gate": "💾 Record Gate Access Time",
-        "success_gate": "✅ Gate log for vehicle `{plate}` successfully registered!",
+        "btn_save_gate": "💾 Record Access Time",
+        "success_gate": "✅ Gate log for vehicle `{plate}` registered!",
         "warn_gate": "⚠️ Please fill in license plate and driver name!"
     }
 }
@@ -167,6 +161,9 @@ def get_vehicle_options_from_assets(engine):
     return vehicles
 
 def get_employee_options_from_db(engine):
+    """
+    嚴格從資料庫的員工檔案（employee_profiles）讀取真實員工名冊，不使用任何假名字
+    """
     employees = []
     if engine:
         try:
@@ -183,29 +180,24 @@ def get_employee_options_from_db(engine):
             pass
     
     if not employees:
-        employees = ["許福村 (Tassos)", "阮文強 (Staff)", "吳經理 (Manager)"]
+        employees = ["(請先至員工檔案建立資料 / No employees found)"]
     return employees
 
 def smart_translate_gate(text_val, target_lang):
-    """
-    🧠 強力智慧翻譯函式：自動將所有中文專有名詞、車輛類型與方向轉為越南文或英文
-    """
     if not text_val or not isinstance(text_val, str):
         return text_val
     val_lower = text_val.lower()
 
-    # 進出方向
     if "車輛入廠" in text_val or "check-in" in val_lower or "vào cổng" in val_lower or "入廠" in text_val:
         if target_lang == "Tiếng Việt": return "🟢 Xe vào cổng (Check-In)"
-        elif target_lang == "English": return "🟢 Check-In (Entry)"
+        elif target_lang == "English": return "🟢 Check-In"
         return "🟢 車輛入廠 (Check-In)"
 
     if "車輛出廠" in text_val or "check-out" in val_lower or "ra cổng" in val_lower or "出廠" in text_val:
         if target_lang == "Tiếng Việt": return "🔴 Xe ra cổng (Check-Out)"
-        elif target_lang == "English": return "🔴 Check-Out (Exit)"
+        elif target_lang == "English": return "🔴 Check-Out"
         return "🔴 車輛出廠 (Check-Out)"
 
-    # 車輛類型
     if "貨車" in text_val or "truck" in val_lower:
         if target_lang == "Tiếng Việt": return "Xe tải (Truck)"
         elif target_lang == "English": return "Truck"
@@ -219,11 +211,6 @@ def smart_translate_gate(text_val, target_lang):
         if target_lang == "Tiếng Việt": return "Xe nhà thầu (Contractor)"
         elif target_lang == "English": return "Contractor Vehicle"
 
-    # 常見預設事由翻譯
-    if "載送總經理赴胡志明市開會" in text_val:
-        if target_lang == "Tiếng Việt": return "Chở Tổng Giám đốc đi họp tại TP. Hồ Chí Minh"
-        elif target_lang == "English": return "Transporting General Manager to meeting in HCMC"
-
     return text_val
 
 def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
@@ -236,29 +223,14 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
     init_gate_extension_db(engine)
 
     if "vehicle_gate_db" not in st.session_state:
-        st.session_state.vehicle_gate_db = [
-            {
-                "plate": "61A-888.66",
-                "driver": "Nguyễn Văn An (Logistics)",
-                "type": "公務車 (Company Car)",
-                "direction": "車輛入廠",
-                "purpose": "載送總經理赴胡志明市開會",
-                "time": "2026-10-06 08:15:00"
-            }
-        ]
+        st.session_state.vehicle_gate_db = []
 
     emp_list = get_employee_options_from_db(engine)
-    req_mgr_1 = emp_list[0] if len(emp_list) > 0 else "許福村"
-
-    approved_dispatches = [
-        {"工單編號": "APP-DISPATCH-2026-001", "申請部門": "管理部", "申請人": req_mgr_1, "車牌號碼": "61A-888.66", "用途說明": "載送總經理赴胡志明市開會", "主管簽核狀態": "🟢 總經理已核准 (Approved)"}
-    ]
 
     tab_list, tab_approval, tab_visitor, tab_parcel = st.tabs([
         L["tab_list"], L["tab_approval"], L["tab_visitor"], L["tab_parcel"]
     ])
 
-    # Tab 1: 今日車輛門禁
     with tab_list:
         st.markdown(f"### {L['table_header']}")
         if st.session_state.vehicle_gate_db:
@@ -285,7 +257,7 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
             with c1:
                 selected_vehicle_option = st.selectbox(L["lbl_select_plate"], available_vehicles)
                 plate = selected_vehicle_option.split(" ")[0] if selected_vehicle_option else ""
-                driver = st.text_input(L["lbl_driver"], placeholder="例如: Nguyễn Văn B (物流外包)")
+                driver = st.text_input(L["lbl_driver"], placeholder="例如: Nguyễn Văn B")
             with c2:
                 v_type_options = ["貨車 (Truck)", "公務車 (Company Car)", "訪客車 (Visitor)", "外包工程車"]
                 if active_lang == "Tiếng Việt":
@@ -301,7 +273,7 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
                     dir_options = ["Check-In", "Check-Out"]
                 direction = st.selectbox(L["lbl_direction"], dir_options)
 
-            purpose = st.text_area(L["lbl_purpose"], placeholder="例如: 運送配電盤原物料銅排入廠")
+            purpose = st.text_area(L["lbl_purpose"], placeholder="例: 運送原物料入廠")
 
             if st.form_submit_button(L["btn_save_gate"], type="primary", use_container_width=True):
                 if plate and driver:
@@ -319,34 +291,120 @@ def render_vehicle_gate_log_page(engine=None, lang="繁體中文", **kwargs):
                 else:
                     st.warning(L["warn_gate"])
 
-    # Tab 2: 派車審核
     with tab_approval:
         st.markdown(f"### {L['approval_header']}")
         st.caption(L["approval_caption"])
-        if approved_dispatches:
-            trans_approvals = []
-            for app_item in approved_dispatches:
-                trans_approvals.append({
-                    "工單編號" if active_lang=="繁體中文" else ("Mã lệnh" if active_lang=="Tiếng Việt" else "Order No."): app_item["工單編號"],
-                    "申請部門" if active_lang=="繁體中文" else ("Bộ phận" if active_lang=="Tiếng Việt" else "Department"): app_item["申請部門"],
-                    "申請人" if active_lang=="繁體中文" else ("Người xin" if active_lang=="Tiếng Việt" else "Applicant"): app_item["申請人"],
-                    "車牌號碼" if active_lang=="繁體中文" else ("Biển số" if active_lang=="Tiếng Việt" else "License Plate"): app_item["車牌號碼"],
-                    "用途說明" if active_lang=="繁體中文" else ("Mục đích" if active_lang=="Tiếng Việt" else "Purpose"): smart_translate_gate(app_item["用途說明"], active_lang),
-                    "主管簽核狀態" if active_lang=="繁體中文" else ("Trạng thái duyệt" if active_lang=="Tiếng Việt" else "Approval Status"): smart_translate_gate(app_item["主管簽核狀態"], active_lang)
-                })
-            st.dataframe(pd.DataFrame(trans_approvals), use_container_width=True, hide_index=True)
-        else:
-            st.info(L["no_approvals"])
+        st.info(L["no_approvals"])
 
-    # Tab 3: 訪客與外包商登記
     with tab_visitor:
         st.markdown(f"### {L['visitor_header']}")
-        # 略... (維持原有訪客區邏輯)
+        with st.form("form_visitor_record_db"):
+            c1, c2 = st.columns(2)
+            with c1:
+                v_name = st.text_input("訪客姓名 *" if active_lang=="繁體中文" else ("Tên khách *" if active_lang=="Tiếng Việt" else "Visitor Name *"))
+                v_company = st.text_input("所屬公司 *" if active_lang=="繁體中文" else ("Công ty *" if active_lang=="Tiếng Việt" else "Company *"))
+                v_id = st.text_input("身分證號 / 護照 *" if active_lang=="繁體中文" else ("Số CCCD *" if active_lang=="Tiếng Việt" else "ID / Passport *"))
+            with c2:
+                v_target = st.selectbox("拜訪對象 *" if active_lang=="繁體中文" else ("Người gặp *" if active_lang=="Tiếng Việt" else "Visit Target *"), emp_list)
+                v_pass_no = st.text_input("訪客證編號" if active_lang=="繁體中文" else ("Thẻ khách" if active_lang=="Tiếng Việt" else "Pass No."))
+                v_status = st.selectbox("狀態" if active_lang=="繁體中文" else ("Trạng thái" if active_lang=="Tiếng Việt" else "Status"), ["🟢 在廠中", "🔴 已離廠"] if active_lang=="繁體中文" else ["🟢 Đang trong nhà máy", "🔴 Đã rời đi"])
 
-    # Tab 4: 包裹信件代收管理
+            v_note = st.text_input("備註" if active_lang=="繁體中文" else ("Ghi chú" if active_lang=="Tiếng Việt" else "Notes"))
+
+            if st.form_submit_button("🚀 登記訪客" if active_lang=="繁體中文" else ("Đăng ký" if active_lang=="Tiếng Việt" else "Register"), type="primary", use_container_width=True):
+                if v_name and v_company and v_id:
+                    if engine:
+                        try:
+                            with engine.begin() as conn:
+                                conn.execute(text("""
+                                    INSERT INTO public.visitor_logs (visitor_name, company_name, visit_target, id_number, visitor_pass, status, notes)
+                                    VALUES (:name, :comp, :target, :id_no, :pass_no, :status, :notes);
+                                """), {
+                                    "name": v_name.strip(), "comp": v_company.strip(), "target": v_target,
+                                    "id_no": v_id.strip(), "pass_no": v_pass_no.strip() if v_pass_no else "-",
+                                    "status": v_status, "notes": v_note.strip() if v_note else "-"
+                                })
+                            st.success("✅ 登記成功！" if active_lang=="繁體中文" else "Thành công!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+                    else:
+                        st.warning("⚠️ DB Engine not ready.")
+                else:
+                    st.warning("⚠️ 請填寫必填欄位！" if active_lang=="繁體中文" else "Vui lòng điền đủ thông tin!")
+
+        st.markdown("---")
+        st.markdown(f"### {L['visitor_list_header']}")
+        visitor_records = []
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    res = conn.execute(text("SELECT visit_time, visitor_name, company_name, visit_target, id_number, visitor_pass, status, notes FROM public.visitor_logs ORDER BY id DESC LIMIT 50;"))
+                    for r in res.fetchall():
+                        visitor_records.append({
+                            "時間": str(r[0])[:19], "姓名": r[1], "單位": r[2], "對象": r[3], "證件": r[4], "訪客證": r[5], "狀態": r[6], "備註": r[7]
+                        })
+            except Exception:
+                pass
+
+        if visitor_records:
+            st.dataframe(pd.DataFrame(visitor_records), use_container_width=True, hide_index=True)
+        else:
+            st.info(L["no_records"])
+
     with tab_parcel:
         st.markdown(f"### {L['parcel_header']}")
-        # 略... (維持原有包裹區邏輯)
+        with st.form("form_parcel_record_db"):
+            c1, c2 = st.columns(2)
+            with c1:
+                p_courier = st.text_input("快遞來源 *" if active_lang=="繁體中文" else ("Nguồn chuyển phát *" if active_lang=="Tiếng Việt" else "Courier *"))
+                p_receiver = st.selectbox("收件人 *" if active_lang=="繁體中文" else ("Người nhận *" if active_lang=="Tiếng Việt" else "Receiver *"), emp_list)
+                p_type = st.selectbox("物件類型" if active_lang=="繁體中文" else ("Loại" if active_lang=="Tiếng Việt" else "Type"), ["文件信封", "包裹箱子", "大宗貨物"])
+            with c2:
+                p_source = st.text_input("寄件公司" if active_lang=="繁體中文" else ("Công ty gửi" if active_lang=="Tiếng Việt" else "Sender"))
+                p_status = st.selectbox("狀態" if active_lang=="繁體中文" else ("Trạng thái" if active_lang=="Tiếng Việt" else "Status"), ["🟡 待領取", "🟢 已領取"])
+
+            p_desc = st.text_input("單號備註" if active_lang=="繁體中文" else ("Ghi chú" if active_lang=="Tiếng Việt" else "Notes"))
+
+            if st.form_submit_button("📦 登記包裹" if active_lang=="繁體中文" else ("Đăng ký bưu phẩm" if active_lang=="Tiếng Việt" else "Register Parcel"), type="primary", use_container_width=True):
+                if p_courier:
+                    if engine:
+                        try:
+                            with engine.begin() as conn:
+                                conn.execute(text("""
+                                    INSERT INTO public.parcel_logs (courier_source, receiver_name, parcel_type, sender_source, status, notes)
+                                    VALUES (:courier, :receiver, :p_type, :sender, :status, :notes);
+                                """), {
+                                    "courier": p_courier.strip(), "receiver": p_receiver, "p_type": p_type,
+                                    "sender": p_source.strip() if p_source else "-", "status": p_status, "notes": p_desc.strip() if p_desc else "-"
+                                })
+                            st.success("✅ 包裹登記成功！" if active_lang=="繁體中文" else "Thành công!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+                    else:
+                        st.warning("⚠️ DB Engine not ready.")
+                else:
+                    st.warning("⚠️ 請填寫快遞來源！" if active_lang=="繁體中文" else "Vui lòng nhập nguồn chuyển phát!")
+
+        st.markdown("---")
+        st.markdown(f"### {L['parcel_list_header']}")
+        parcel_records = []
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    res = conn.execute(text("SELECT reg_time, courier_source, receiver_name, parcel_type, sender_source, status, notes FROM public.parcel_logs ORDER BY id DESC LIMIT 50;"))
+                    for r in res.fetchall():
+                        parcel_records.append({
+                            "時間": str(r[0])[:19], "快遞": r[1], "收件人": r[2], "類型": r[3], "寄件者": r[4], "狀態": r[5], "備註": r[6]
+                        })
+            except Exception:
+                pass
+
+        if parcel_records:
+            st.dataframe(pd.DataFrame(parcel_records), use_container_width=True, hide_index=True)
+        else:
+            st.info(L["no_records"])
 
 def show(*args, **kwargs):
     render_vehicle_gate_log_page(*args, **kwargs)
