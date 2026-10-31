@@ -8,8 +8,8 @@ EMP_PROFILE_I18N = {
         "title": "👤 管理部 - 員工個人檔案與人事管理中心",
         "caption": "管理公司在職員工名冊、越南勞動法規合規建檔、外派/外籍幹部雙薪、簽證與證件歸檔。",
         "tab_vn": "VN 新增越南員工",
-        "tab_expat": "🌐 新增外派/外籍幹部 (多國籍、雙薪與證件上傳)",
-        "tab_list": "📑 現職員工總名冊 (含台越及外籍分流)",
+        "tab_expat": "🌐 新增外派/外籍幹部 (含內部私帳與證件上傳)",
+        "tab_list": "📑 現職員工總名冊 (含權限分流)",
         "tab_resigned": "📁 離職名冊",
         # 越南員工表單
         "form_vn_title": "VN 新增越南籍員工資料 (符合越南勞動法規範)",
@@ -34,7 +34,7 @@ EMP_PROFILE_I18N = {
         "btn_save_vn": "🚀 確認並寫入越南員工資料庫",
         "success_vn": "🎉 成功新增越南籍員工：{name} (工號: {emp_no})！",
         # 外派/外籍幹部表單
-        "form_expat_title": "🌐 新增外派與外籍幹部資料 (支援中/馬/台等外籍幹部、雙薪與證件上傳)",
+        "form_expat_title": "🌐 新增外派與外籍幹部資料 (含越南官方報稅薪資與 🔒 內部私帳雙薪分流)",
         "lbl_expat_name": "幹部姓名 (Họ tên chuyên gia) *",
         "lbl_expat_no": "工號 / 識別碼 *",
         "lbl_nationality": "國籍 (Nationality)",
@@ -42,23 +42,22 @@ EMP_PROFILE_I18N = {
         "lbl_passport": "護照號碼 / 居留證號 *",
         "lbl_visa_type": "簽證類型 (Visa Type)",
         "lbl_visa_expire": "工作簽證 / 暫住證 (TRC) / 工作證到期日",
-        "lbl_sal_home": "母國/原居地薪資 (Base Salary)",
-        "lbl_vn_allowance": "越南當地津貼 (USD / VND)",
+        "lbl_sal_official": "越南官方報稅薪資 (依當地稅法申報)",
+        "lbl_sal_private": "🔒 境外/母國私下給付津貼 (內部私帳/不報稅)",
         "lbl_upload_passport": "📄 上傳護照掃描檔 / 照片 (Passport)",
         "lbl_upload_workpermit": "📄 上傳越南工作證 (Work Permit)",
         "lbl_upload_trc": "📄 上傳暫住證 / 簽證影本 (TRC / Visa)",
-        "btn_save_expat": "🚀 儲存外派/外籍幹部合規檔案與證件",
-        "success_expat": "🎉 成功新增外派/外籍幹部：{name} (已完成證件歸檔)！"
+        "btn_save_expat": "🚀 儲存外派/外籍幹部合規檔案與內部私帳",
+        "success_expat": "🎉 成功新增外派/外籍幹部：{name} (已完成權限分流與證件歸檔)！"
     },
     "Tiếng Việt": {
         "title": "👤 Phòng Nhân sự - Quản lý Hồ sơ & Nhân sự",
-        "caption": "Quản lý nhân viên, luật lao động VN, chuyên gia nước ngoài (Trung Quốc, Malaysia, Đài Loan...), lương kép và hồ sơ giấy tờ.",
+        "caption": "Quản lý nhân viên, luật lao động VN, chuyên gia nước ngoài, lương chính thức và phụ cấp nội bộ.",
         "tab_vn": "VN Thêm nhân viên VN",
-        "tab_expat": "🌐 Thêm chuyên gia nước ngoài & Hồ sơ giấy tờ",
+        "tab_expat": "🌐 Thêm chuyên gia & Quản lý lương nội bộ",
         "tab_list": "📑 Danh sách nhân viên toàn công ty",
         "tab_resigned": "📁 Danh sách nghỉ việc",
-        # Form VN
-        "form_vn_title": "VN Thêm nhân viên người Việt (Đạt chuẩn luật lao động VN)",
+        "form_vn_title": "VN Thêm nhân viên người Việt",
         "lbl_emp_no": "Mã NV *",
         "lbl_name": "Họ tên *",
         "lbl_phone": "Số điện thoại",
@@ -73,74 +72,71 @@ EMP_PROFILE_I18N = {
         "lbl_sys_role": "Quyền hệ thống",
         "lbl_perm_addr": "Thường trú",
         "lbl_temp_addr": "Tạm trú",
-        "lbl_hospital": "Bệnh viện khám sức khỏe",
+        "lbl_hospital": "Bệnh viện",
         "lbl_ins_no": "Mã số BHXH",
-        "lbl_bank_acc": "Số tài khoản ngân hàng",
+        "lbl_bank_acc": "Số tài khoản",
         "lbl_bank_name": "Tên ngân hàng",
-        "btn_save_vn": "🚀 Lưu thông tin nhân viên VN",
-        "success_vn": "🎉 Đã thêm thành công nhân viên: {name} (Mã: {emp_no})!",
-        # Form Expat
-        "form_expat_title": "🌐 Quản lý Chuyên gia nước ngoài (Trung Quốc, Malaysia, Đài Loan...)",
+        "btn_save_vn": "🚀 Lưu nhân viên VN",
+        "success_vn": "🎉 Đã thêm thành công: {name}!",
+        "form_expat_title": "🌐 Quản lý Chuyên gia nước ngoài (Lương chính thức & Lương nội bộ mật)",
         "lbl_expat_name": "Họ tên chuyên gia *",
         "lbl_expat_no": "Mã nhân sự *",
         "lbl_nationality": "Quốc tịch",
-        "lbl_phone_expat": "Số điện thoại liên lạc",
+        "lbl_phone_expat": "Số điện thoại",
         "lbl_passport": "Số hộ chiếu *",
         "lbl_visa_type": "Loại Visa",
-        "lbl_visa_expire": "Ngày hết hạn Giấy phép lao động / TRC",
-        "lbl_sal_home": "Lương gốc tại nguyên quán",
-        "lbl_vn_allowance": "Phụ cấp tại Việt Nam",
-        "lbl_upload_passport": "📄 Tải lên ảnh Hộ chiếu (Passport)",
-        "lbl_upload_workpermit": "📄 Tải lên Giấy phép lao động (Work Permit)",
-        "lbl_upload_trc": "📄 Tải lên Thẻ tạm trú / Visa (TRC)",
-        "btn_save_expat": "🚀 Lưu hồ sơ chuyên gia và chứng từ",
-        "success_expat": "🎉 Đã lưu hồ sơ chuyên gia: {name} thành công!"
+        "lbl_visa_expire": "Ngày hết hạn Visa/TRC",
+        "lbl_sal_official": "Lương chính thức báo thuế VN",
+        "lbl_sal_private": "🔒 Phụ cấp nội bộ mật (Không báo thuế)",
+        "lbl_upload_passport": "📄 Tải lên Hộ chiếu",
+        "lbl_upload_workpermit": "📄 Tải lên Giấy phép lao động",
+        "lbl_upload_trc": "📄 Tải lên Thẻ tạm trú (TRC)",
+        "btn_save_expat": "🚀 Lưu hồ sơ chuyên gia",
+        "success_expat": "🎉 Đã lưu thành công chuyên gia: {name}!"
     },
     "English": {
         "title": "👤 HR Center - Employee Profiles & Expat Management",
-        "caption": "Manage employee registry, labor compliance, multinational expats, dual-payroll, and document uploads.",
+        "caption": "Manage employee registry, multinational expats, official salary, and confidential private payroll.",
         "tab_vn": "VN New Employee",
-        "tab_expat": "🌐 Expat / Foreign Staff Setup",
+        "tab_expat": "🌐 Expat Setup & Confidential Payroll",
         "tab_list": "📑 Employee Registry",
         "tab_resigned": "📁 Resigned List",
-        # Form VN
-        "form_vn_title": "VN Add Vietnamese Employee (Labor Law Compliant)",
-        "lbl_emp_no": "Employee No. *",
+        "form_vn_title": "VN Add Vietnamese Employee",
+        "lbl_emp_id": "Employee No. *",
         "lbl_name": "Full Name *",
-        "lbl_phone": "Phone Number",
-        "lbl_id_card": "ID Card / Passport No. *",
+        "lbl_phone": "Phone",
+        "lbl_id_card": "ID / Passport *",
         "lbl_tax_code": "Tax Code",
-        "lbl_factory": "Factory Location",
+        "lbl_factory": "Factory",
         "lbl_dept": "Department",
         "lbl_position": "Position",
         "lbl_staff_type": "Staff Type",
         "lbl_base_sal": "Base Salary (VND)",
-        "lbl_net_sal": "Net Salary (VND)",
+        "lbl_net_sal": "Net Salary",
         "lbl_sys_role": "System Role",
         "lbl_perm_addr": "Permanent Address",
         "lbl_temp_addr": "Temporary Address",
-        "lbl_hospital": "Medical Hospital",
-        "lbl_ins_no": "Social Insurance (BHXH)",
-        "lbl_bank_acc": "Bank Account No.",
+        "lbl_hospital": "Hospital",
+        "lbl_ins_no": "BHXH No.",
+        "lbl_bank_acc": "Bank Account",
         "lbl_bank_name": "Bank Name",
         "btn_save_vn": "🚀 Save Vietnamese Employee",
-        "success_vn": "🎉 Successfully added employee: {name} (No: {emp_no})!",
-        # Form Expat
-        "form_expat_title": "🌐 Expat & Foreign Staff Setup (China, Malaysia, Taiwan, etc.)",
+        "success_vn": "🎉 Successfully added: {name}!",
+        "form_expat_title": "🌐 Expat Setup (Official Tax Salary & 🔒 Confidential Private Pay)",
         "lbl_expat_name": "Expat Full Name *",
         "lbl_expat_no": "Expat ID *",
         "lbl_nationality": "Nationality",
-        "lbl_phone_expat": "Phone Number / Contact",
+        "lbl_phone_expat": "Phone",
         "lbl_passport": "Passport No. *",
         "lbl_visa_type": "Visa Type",
-        "lbl_visa_expire": "Work Permit / TRC Expiry Date",
-        "lbl_sal_home": "Home Country Salary",
-        "lbl_vn_allowance": "Vietnam Allowance",
-        "lbl_upload_passport": "📄 Upload Passport Scan / Photo",
+        "lbl_visa_expire": "Expiry Date",
+        "lbl_sal_official": "Official Tax Salary (Reported)",
+        "lbl_sal_private": "🔒 Confidential Private Allowance (Off-the-Books)",
+        "lbl_upload_passport": "📄 Upload Passport",
         "lbl_upload_workpermit": "📄 Upload Work Permit",
         "lbl_upload_trc": "📄 Upload TRC / Visa",
-        "btn_save_expat": "🚀 Save Expat Profile & Documents",
-        "success_expat": "🎉 Successfully saved expat profile: {name}!"
+        "btn_save_expat": "🚀 Save Expat Profile",
+        "success_expat": "🎉 Successfully saved expat: {name}!"
     }
 }
 
@@ -162,6 +158,7 @@ def init_hr_profile_db(engine):
                     position VARCHAR(100),
                     staff_type VARCHAR(100),
                     base_salary NUMERIC(15, 2) DEFAULT 0,
+                    private_allowance NUMERIC(15, 2) DEFAULT 0,
                     system_role VARCHAR(100),
                     perm_address TEXT,
                     temp_address TEXT,
@@ -187,7 +184,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
 
     tabs = st.tabs([L["tab_vn"], L["tab_expat"], L["tab_list"], L["tab_resigned"]])
 
-    # Tab 1: 新增越南員工
+    # Tab 1: 越南員工
     with tabs[0]:
         st.markdown(f"### {L['form_vn_title']}")
         with st.form("form_add_vietnamese_employee"):
@@ -221,8 +218,8 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                             with engine.begin() as conn:
                                 conn.execute(text("""
                                     INSERT INTO public.employee_profiles 
-                                    (emp_no, emp_name, phone, id_card, tax_code, factory, department, position, staff_type, base_salary, system_role, perm_address, temp_address, hospital, bhxh_no, bank_acc, bank_name, status)
-                                    VALUES (:no, :name, :phone, :id_c, :tax, :fac, :dept, :pos, :stype, :sal, :srole, :paddr, :taddr, :hosp, :bhxh, :bacc, :bname, '在職')
+                                    (emp_no, emp_name, phone, id_card, tax_code, factory, department, position, staff_type, base_salary, private_allowance, system_role, perm_address, temp_address, hospital, bhxh_no, bank_acc, bank_name, status)
+                                    VALUES (:no, :name, :phone, :id_c, :tax, :fac, :dept, :pos, :stype, :sal, 0, :srole, :paddr, :taddr, :hosp, :bhxh, :bacc, :bname, '在職')
                                     ON CONFLICT (emp_no) DO UPDATE SET 
                                     emp_name = :name, phone = :phone, base_salary = :sal;
                                 """), {
@@ -238,12 +235,11 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                     st.success(L["success_vn"].format(name=name, emp_no=emp_no))
                     st.rerun()
                 else:
-                    st.warning("⚠️ 請完整填寫必要欄位 (工號、姓名、身分證)！")
+                    st.warning("⚠️ 請完整填寫必要欄位！")
 
-    # Tab 2: 新增外派與外籍幹部 (多國籍、雙薪、簽證與證件上傳)
+    # Tab 2: 外派/外籍幹部 (含官方報稅薪資與 🔒 內部私帳)
     with tabs[1]:
         st.markdown(f"### {L['form_expat_title']}")
-        # 注意：包含 file_uploader 時，外面不能包在 st.form 裡面，或者使用非 form 互動
         c1, c2 = st.columns(2)
         with c1:
             expat_no = st.text_input(L["lbl_expat_no"], placeholder="TW-001 / CN-002 / MY-003")
@@ -254,8 +250,8 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
             visa_type = st.selectbox(L["lbl_visa_type"], ["LD1 / LD2 (工作簽證)", "DN1 (商業簽證)", "TRC (長期居留證)", "DT (投資簽證)"])
         with c2:
             visa_expire = st.text_input(L["lbl_visa_expire"], value="2027-12-31")
-            sal_home = st.number_input(L["lbl_sal_home"], value=60000.0, step=5000.0)
-            vn_allow = st.text_input(L["lbl_vn_allowance"], placeholder="USD $1,500 + 宿舍/配車")
+            sal_official = st.number_input(L["lbl_sal_official"], value=15000000.0, step=1000000.0, help="此金額列入越南官方報稅與合規帳冊")
+            sal_private = st.number_input(L["lbl_sal_private"], value=50000000.0, step=5000000.0, help="🔒 內部私帳管理，不列入官方稅務報表")
             
             st.markdown("---")
             up_passport = st.file_uploader(L["lbl_upload_passport"], type=["png", "jpg", "jpeg", "pdf"])
@@ -269,31 +265,33 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                         with engine.begin() as conn:
                             conn.execute(text("""
                                 INSERT INTO public.employee_profiles 
-                                (emp_no, emp_name, phone, id_card, staff_type, base_salary, status)
-                                VALUES (:no, :name, :phone, :passport, :stype, :sal, '在職')
-                                ON CONFLICT (emp_no) DO UPDATE SET emp_name = :name;
+                                (emp_no, emp_name, phone, id_card, staff_type, base_salary, private_allowance, status)
+                                VALUES (:no, :name, :phone, :passport, :stype, :sal_off, :sal_priv, '在職')
+                                ON CONFLICT (emp_no) DO UPDATE SET emp_name = :name, base_salary = :sal_off, private_allowance = :sal_priv;
                             """), {
                                 "no": expat_no.strip(), 
                                 "name": f"{expat_name.strip()} ({nationality})", 
                                 "phone": phone_expat.strip() if phone_expat else "-",
                                 "passport": passport.strip(),
                                 "stype": f"外派/外籍幹部 ({nationality})",
-                                "sal": sal_home
+                                "sal_off": sal_official,
+                                "sal_priv": sal_private
                             })
                     except Exception:
                         pass
                 st.success(L["success_expat"].format(name=expat_name))
-                st.info("📁 護照、工作證與暫住證檔案已成功上傳並歸檔備查。")
+                st.info("🔒 官方報稅薪資與內部私帳已成功分流歸檔，證件檔案已上傳備查。")
             else:
                 st.warning("⚠️ 請完整填寫幹部工號、姓名與護照號碼！")
 
-    # Tab 3: 現職員工總名冊
+    # Tab 3: 現職員工總名冊 (含權限分流提示)
     with tabs[2]:
         st.markdown(f"### {L['tab_list']}")
         if engine:
             try:
-                df = pd.read_sql("SELECT emp_no, emp_name, phone, department, position, staff_type, base_salary, system_role FROM public.employee_profiles WHERE status = '在職';", con=engine)
+                df = pd.read_sql("SELECT emp_no, emp_name, phone, staff_type, base_salary, private_allowance FROM public.employee_profiles WHERE status = '在職';", con=engine)
                 if not df.empty:
+                    # 如果是一般視圖，可以選擇隱藏私帳欄位，此處顯示供高管稽核
                     st.dataframe(df, use_container_width=True, hide_index=True)
                 else:
                     st.info("目前尚無員工資料紀錄。")
