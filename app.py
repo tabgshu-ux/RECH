@@ -357,7 +357,7 @@ try:
         elif "宿舍與伙食" in feat_str:
             load_module_safely("modules.management.dorm_catering", "render_dorm_catering_module", engine=engine, lang=curr_lang)
         elif "工作廠區管理" in feat_str:
-            load_module_safely("modules.plant_management", "render_plant_management_page", engine=engine, lang=curr_lang)
+            load_module_safely("modules.management.plant_management", "render_plant_management_page", engine=engine, lang=curr_lang)
         elif "車輛進出口" in feat_str:
             load_module_safely("modules.vehicle_gate_log", "render_vehicle_gate_log_page", engine=engine, lang=curr_lang)
         elif "車輛維修紀錄" in feat_str:
