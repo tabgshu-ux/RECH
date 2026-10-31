@@ -12,7 +12,7 @@ EMP_PROFILE_I18N = {
         "tab_list": "📑 現職員工總名冊",
         "tab_resigned": "📁 離職名冊",
         # 越南員工表單
-        "form_vn_title": "VN 新增越南籍員工資料 (符合越南勞動法規範)",
+        "form_vn_title": "VN 新增越南籍員工資料 ",
         "lbl_emp_no": "工號 (Mã NV) *",
         "lbl_name": "姓名 (Họ tên) *",
         "lbl_phone": "聯絡電話 (Số ĐT)",
