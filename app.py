@@ -244,7 +244,6 @@ elif current_role_clean == "security":
     st.sidebar.markdown(f"👔 {selected_dept_label}")
     selected_feat_label = "🚗 廠區車輛進出口門禁與派車審核"
 else:
-    # 🌳 側邊欄只保留一級部門選擇，乾淨俐落
     st.sidebar.markdown(f"**{ui_t['parent_header']}**")
     
     selected_dept_label = st.sidebar.radio(
@@ -259,7 +258,6 @@ else:
     if selected_dept_index != st.session_state.get("selected_dept_index", 0):
         st.session_state.selected_dept_index = selected_dept_index
         st.session_state.selected_feat_index = 0
-        # 切換部門時重置管理部內部狀態
         st.session_state.mgmt_active_tab = "總覽"
         st.rerun()
 
@@ -293,11 +291,9 @@ try:
     feat_str = str(selected_feat_label)
     dept_str = str(selected_dept_label)
 
-    # 1. 獨立頂層外勤工程打卡與工作回報 (給工程人員現場使用)
     if "外勤工程打卡" in dept_str or "Field Attendance" in dept_str:
         load_module_safely("modules.field_gps_attendance", "render_field_gps_attendance", engine=engine, lang=curr_lang)
 
-    # 2. 資訊管理部 (僅限 admin)
     elif "資訊管理部" in dept_str:
         if current_role_clean == "admin":
             sub_mod_choice = st.selectbox("📌 選擇 IT 管理子模組", ["🏢 1. 獨立企業部門與模組拼圖", "⚙️ 2. 組織角色與權限指派 (RBAC)", "🔌 3. 資料庫與 API 閘道器", "📊 4. 系統稽核日誌與追蹤"])
@@ -312,7 +308,6 @@ try:
         else:
             st.error("🚫 權限不足：資訊管理部僅限系統管理員 (admin) 存取與設定！")
 
-    # 3. 總經理室 (Executive Office)
     elif "總經理室" in dept_str:
         sub_exec_choice = st.selectbox("📌 選擇總經理室子功能", ["📊 原料價格與匯率戰情室", "💰 財務與損益類", "📈 專案進度與異常監控", "🇻🇳 越南政策與法規"])
         if "原料價格" in sub_exec_choice:
@@ -326,11 +321,9 @@ try:
         else:
             load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="commodities_fx", lang=curr_lang)
 
-    # 4. 管理部 (Management Dept) - 採用主畫面卡片導航儀表板
     elif "管理部" in dept_str:
         load_module_safely("modules.management.dashboard", "render_management_dashboard", engine=engine, lang=curr_lang)
 
-    # 5. 工程與設計管理中心
     elif "工程與設計管理中心" in dept_str:
         eng_sub_choice = st.selectbox("📌 選擇工程中心子模組", [
             "1. 工程主管戰情室", "2. 工程專案報價系統", "3. 施工日報表 (點工點料)", 
@@ -356,7 +349,6 @@ try:
         elif "9. FAT/SAT" in eng_sub_choice:
             load_module_safely("modules.engineering_management", "render_engineering_management_page", engine=engine, lang=curr_lang, sub_tab="fatsat")
 
-    # 6. 生產部
     elif "生產部" in dept_str:
         prod_sub_choice = st.selectbox("📌 選擇生產部子模組", ["板金加工模組", "塗料產線模組", "配盤組裝模組"])
         if "板金" in prod_sub_choice:
@@ -366,11 +358,9 @@ try:
         elif "配盤" in prod_sub_choice:
             load_module_safely("modules.assembly", "render_assembly_module", engine=engine, t=ui_t, lang=curr_lang)
 
-    # 7. 倉庫管理
     elif "倉庫管理" in dept_str:
         load_module_safely("modules.warehouse_management", "render_warehouse_management", engine=engine, t=ui_t, lang=curr_lang)
 
-    # 8. 全公司電子簽核中心
     elif "電子簽核中心" in dept_str:
         load_module_safely("modules.approval_workflow", "render_approval_center", lang=curr_lang)
 
