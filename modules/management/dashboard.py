@@ -154,7 +154,8 @@ def render_management_dashboard(engine=None, lang="繁體中文", **kwargs):
                 from modules.management.hr.internal_attendance import render_internal_attendance_page
                 render_internal_attendance_page(engine=engine, lang=lang)
             elif any(k in sub_choice for k in ["員工薪資與保險", "Lương & Bảo hiểm", "Payroll"]):
-                from modules.payroll_management import render_payroll_management_page
+                # 👉 這裡已修正為正確的子資料夾模組路徑
+                from modules.management.hr.payroll_management import render_payroll_management_page
                 render_payroll_management_page(engine=engine, lang=lang)
             elif any(k in sub_choice for k in ["密碼修改", "Đổi mật khẩu", "Password"]):
                 from modules.management.hr.change_password import render_change_password_page
