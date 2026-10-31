@@ -191,7 +191,7 @@ if st.session_state.get("must_change_pwd", False):
     st.stop()
 
 # ----------------------------------------------------
-# 🚀 3. 已登入側邊欄與動態功能選單 (極簡主部門導航版)
+# 🚀 3. 已登入側邊欄與動態功能選單
 # ----------------------------------------------------
 st.sidebar.markdown(RECH_LOGO_HTML, unsafe_allow_html=True)
 
