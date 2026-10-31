@@ -363,7 +363,7 @@ try:
         elif "車輛維修紀錄" in feat_str:
             load_module_safely("modules.vehicle_maintenance", "render_vehicle_maintenance_page", engine=engine, lang=curr_lang)
         elif "固定資產管理" in feat_str:
-            load_module_safely("modules.asset_management", "render_asset_management_page", engine=engine, lang=curr_lang)
+            load_module_safely("modules.management.general_affairs.asset_management", "render_asset_management_page", engine=engine, lang=curr_lang)
         elif "文件管理" in feat_str:
             load_module_safely("modules.document_management", "render_document_management_page", engine=engine, lang=curr_lang)
         elif "採購與應付帳款" in feat_str:
