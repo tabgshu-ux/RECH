@@ -3,9 +3,6 @@ import pandas as pd
 import datetime
 from sqlalchemy import text
 
-# ----------------------------------------------------
-# 🌐 員工檔案與人事管理模組多語系字典 (i18n)
-# ----------------------------------------------------
 EMP_PROFILE_I18N = {
     "繁體中文": {
         "title": "👤 管理部 - 員工個人檔案與人事管理中心",
@@ -67,7 +64,6 @@ EMP_PROFILE_I18N = {
 }
 
 def init_hr_profile_db(engine):
-    """初始化員工數位履歷資料表"""
     if not engine:
         return
     try:
@@ -83,7 +79,7 @@ def init_hr_profile_db(engine):
                     phone VARCHAR(50),
                     status VARCHAR(50) DEFAULT '在職'
                 );
-            ;"""))
+            """))
     except Exception:
         pass
 
@@ -112,7 +108,6 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
 
     tab_list, tab_add = st.tabs([L["tab_list"], L["tab_add"]])
 
-    # Tab 1: 現職員工名冊
     with tab_list:
         st.markdown(f"### {L['table_header']}")
         records = st.session_state.hr_employees_db
@@ -142,7 +137,6 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
         else:
             st.info(L["no_records"])
 
-    # Tab 2: 新增員工履歷
     with tab_add:
         st.markdown(f"### {L['form_title']}")
         with st.form("form_add_hr_employee"):
@@ -196,4 +190,7 @@ def main(*args, **kwargs):
     render_hr_profile_page(*args, **kwargs)
 
 def render_employee_profile(*args, **kwargs):
+    render_hr_profile_page(*args, **kwargs)
+
+def render_employee_management(*args, **kwargs):
     render_hr_profile_page(*args, **kwargs)
