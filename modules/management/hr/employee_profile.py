@@ -12,7 +12,6 @@ EMP_PROFILE_I18N = {
         "tab_list": "📑 現職員工總名冊與搜尋",
         "tab_edit": "✏️ 編輯與修改員工資料",
         "tab_resigned": "📁 離職名冊管理",
-        # 越南員工表單
         "form_vn_title": "VN 新增越南籍員工資料 (符合越南勞動法規範)",
         "lbl_emp_no": "工號 (Mã NV) *",
         "lbl_name": "姓名 (Họ tên) *",
@@ -34,7 +33,6 @@ EMP_PROFILE_I18N = {
         "lbl_bank_name": "銀行分行名稱 (Tên Ngân hàng)",
         "btn_save_vn": "🚀 確認並寫入越南員工資料庫",
         "success_vn": "🎉 成功新增越南籍員工：{name} (工號: {emp_no})！",
-        # 外派/外籍幹部表單
         "form_expat_title": "🌐 新增外派與外籍幹部資料 (多國籍專案管理、雙薪與證件上傳)",
         "lbl_expat_name": "幹部姓名 (Họ tên chuyên gia) *",
         "lbl_expat_no": "工號 / 識別碼 *",
@@ -50,7 +48,6 @@ EMP_PROFILE_I18N = {
         "lbl_upload_trc": "📄 上傳暫住證 / 簽證影本 (TRC / Visa)",
         "btn_save_expat": "🚀 儲存外派與外籍幹部合規檔案與證件",
         "success_expat": "🎉 成功新增外派與外籍幹部：{name}！",
-        # 搜尋與列表
         "search_label": "🔍 搜尋員工姓名、工號或國籍篩選",
         "terminate_title": "🔄 員工離職狀態異動與結清處理",
         "lbl_select_terminate_emp": "選擇要辦理離職的員工 (工號 - 姓名)",
@@ -201,7 +198,6 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
 
     init_hr_profile_db(engine)
 
-    # 五大完整分頁：新增越南員工、新增外派/外籍幹部、現職總名冊與搜尋、編輯修改、離職名冊
     tabs = st.tabs([L["tab_vn"], L["tab_expat"], L["tab_list"], L["tab_edit"], L["tab_resigned"]])
 
     # Tab 1: 新增越南員工
@@ -257,7 +253,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                 else:
                     st.warning("⚠️ 請完整填寫必要欄位！")
 
-    # Tab 2: 新增外派與外籍幹部 (多國籍、雙薪、電話、證件上傳)
+    # Tab 2: 新增外派與外籍幹部
     with tabs[1]:
         st.markdown(f"### {L['form_expat_title']}")
         c1, c2 = st.columns(2)
@@ -304,14 +300,13 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
             else:
                 st.warning("⚠️ 請完整填寫幹部工號、姓名與護照號碼！")
 
-    # Tab 3: 現職員工總名冊與智慧搜尋
+    # Tab 3: 現職員工總名冊與搜尋
     with tabs[2]:
         st.markdown(f"### {L['tab_list']}")
         if engine:
             try:
                 df = pd.read_sql("SELECT emp_no, emp_name, phone, department, position, staff_type, base_salary FROM public.employee_profiles WHERE status = '在職';", con=engine)
                 if not df.empty:
-                    # 🔍 智慧搜尋列
                     search_query = st.text_input(L["search_label"], placeholder="輸入工號、姓名或國籍關鍵字...")
                     if search_query:
                         mask = df.astype(str).apply(lambda x: x.str.contains(search_query, case=False)).any(axis=1)
@@ -334,11 +329,11 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                             st.success(L["success_terminate"].format(emp=selected_to_terminate))
                             st.rerun()
                 else:
-                    st.info("目前尚無在職員工紀錄或資料庫尚未建立資料。")
-            except Exception:
+                    st.info("目前尚無在職員工紀錄。您可以在上方「新增越南員工」或「新增外派與外籍幹部」建立資料。")
+            except Exception as e:
                 st.info("目前尚無在職員工紀錄。")
         else:
-            st.info("DB engine not connected.")
+            st.info("資料庫引擎未連線。")
 
     # Tab 4: 編輯與修改員工資料
     with tabs[3]:
@@ -366,11 +361,11 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                                 st.success(f"✅ 員工 `{t_no}` 資料已成功更新！")
                                 st.rerun()
                 else:
-                    st.info("目前無可編輯的員工資料。")
+                    st.info("目前尚無可編輯的員工資料。")
             except Exception:
-                st.info("資料庫載入失敗。")
+                st.info("目前尚無可編輯的員工資料。")
         else:
-            st.info("DB engine not connected.")
+            st.info("資料庫引擎未連線。")
 
     # Tab 5: 離職名冊管理
     with tabs[4]:
@@ -385,7 +380,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
             except Exception:
                 st.info("目前無離職人員紀錄。")
         else:
-            st.info("DB engine not connected.")
+            st.info("資料庫引擎未連線。")
 
 def show(*args, **kwargs):
     render_hr_profile_page(*args, **kwargs)
