@@ -6,10 +6,10 @@ from sqlalchemy import text
 EMP_PROFILE_I18N = {
     "繁體中文": {
         "title": "👤 管理部 - 員工個人檔案與人事管理中心",
-        "caption": "管理公司在職員工名冊、越南勞動法規合規建檔、外派與外籍幹部、薪資、簽證、證件歸檔與 90 天前到期預警。",
+        "caption": "管理公司在職員工名冊（區分越南員工與外派外籍幹部）、勞動法規合規建檔與 90 天證件預警。",
         "tab_vn": "VN 新增越南員工",
         "tab_expat": "🌐 新增外派與外籍幹部",
-        "tab_list": "📑 現職員工總名冊與證件預警 (90天)",
+        "tab_list": "📑 現職員工總名冊與證件預警",
         "tab_edit": "✏️ 編輯與修改員工資料",
         "tab_resigned": "📁 離職名冊管理",
         "form_vn_title": "VN 新增越南籍員工資料 (符合越南勞動法規範)",
@@ -58,10 +58,10 @@ EMP_PROFILE_I18N = {
     },
     "Tiếng Việt": {
         "title": "👤 Phòng Nhân sự - Quản lý Hồ sơ & Nhân sự",
-        "caption": "Quản lý nhân viên, chuyên gia, cảnh báo trước 90 ngày cho Visa/TRC/Hộ chiếu và thủ tục nghỉ việc.",
+        "caption": "Quản lý nhân viên Việt Nam và chuyên gia nước ngoài, cảnh báo trước 90 ngày cho Visa/TRC.",
         "tab_vn": "VN Thêm nhân viên VN",
         "tab_expat": "🌐 Thêm chuyên gia nước ngoài",
-        "tab_list": "📑 Danh sách & Cảnh báo 90 ngày",
+        "tab_list": "📑 Danh sách nhân sự & Cảnh báo",
         "tab_edit": "✏️ Chỉnh sửa hồ sơ",
         "tab_resigned": "📁 Danh sách nghỉ việc",
         "form_vn_title": "VN Thêm nhân viên người Việt",
@@ -110,10 +110,10 @@ EMP_PROFILE_I18N = {
     },
     "English": {
         "title": "👤 HR Center - Employee Profiles & Expat Management",
-        "caption": "Manage employee registry, expat 90-day advance visa/passport expiry alerts, and terminations.",
+        "caption": "Manage Vietnamese employees & expats, 90-day advance visa/passport expiry alerts.",
         "tab_vn": "VN New Employee",
         "tab_expat": "🌐 Expat & Foreign Staff Setup",
-        "tab_list": "📑 Registry & 90-Day Expiry Alerts",
+        "tab_list": "📑 Registry & Expiry Alerts",
         "tab_edit": "✏️ Edit Profile",
         "tab_resigned": "📁 Resigned List",
         "form_vn_title": "VN Add Vietnamese Employee",
@@ -178,7 +178,7 @@ def init_hr_profile_db(engine):
                     factory VARCHAR(100),
                     department VARCHAR(150),
                     position VARCHAR(100),
-                    staff_type VARCHAR(100),
+                    staff_type VARCHAR(100) DEFAULT '越南廠內員工',
                     attendance_mode VARCHAR(50) DEFAULT '需打卡',
                     base_salary NUMERIC(15, 2) DEFAULT 0,
                     private_allowance NUMERIC(15, 2) DEFAULT 0,
@@ -193,6 +193,18 @@ def init_hr_profile_db(engine):
                     status VARCHAR(50) DEFAULT '在職',
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
+            """))
+
+            # 自動同步：如果 payroll_records 有資料但 employee_profiles 沒有，自動撈過來建檔
+            conn.execute(text("""
+                INSERT INTO public.employee_profiles (emp_code, emp_name, department, factory, base_salary, status)
+                SELECT DISTINCT emp_code, emp_name, department, factory, base_salary, '在職'
+                FROM public.payroll_records
+                ON CONFLICT (emp_code) DO UPDATE 
+                SET emp_name = EXCLUDED.emp_name,
+                    department = EXCLUDED.department,
+                    factory = EXCLUDED.factory,
+                    base_salary = EXCLUDED.base_salary;
             """))
     except Exception:
         pass
@@ -220,21 +232,20 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                 id_card = st.text_input(L["lbl_id_card"], placeholder="079095012345")
                 tax_code = st.text_input(L["lbl_tax_code"], placeholder="8012345678")
             with c2:
-                factory = st.selectbox(L["lbl_factory"], ["西寧廠 (Tay Ninh)", "胡志明辦事處 (HCMC)"])
-                dept = st.selectbox(L["lbl_dept"], ["生產部 (Production Dept)", "品管部 (QA/QC)", "倉儲物流 (Logistics)", "管理部 (Management)", "工程部 (Engineering)"])
+                factory = st.selectbox(L["lbl_factory"], ["西寧廠 (Tay Ninh)", "海防廠 (Hai Phong)", "文房 (VP)", "工程工地 (Site)"])
+                dept = st.text_input(L["lbl_dept"], placeholder="生產部 / 財務部 / 品管部")
                 position = st.text_input(L["lbl_position"], placeholder="作業員 / 班長 / 工程師")
-                staff_type = st.selectbox(L["lbl_staff_type"], ["廠內員工 (Plant Staff)", "外勤工程人員 (Field Engineer)", "點工 (Daily Worker)"])
+                staff_type = "越南籍員工 (VN Local Staff)"
                 attendance_mode = st.selectbox(L["lbl_attendance_mode"], ["需打卡 (Required Punch)", "免打卡 / 考勤排除 (Exempt)"])
                 base_sal = st.number_input(L["lbl_base_sal"], value=5000000.0, step=500000.0)
-                st.markdown(f"**{L['lbl_net_sal']}**：`{base_sal:,.0f} ₫ (VND)`")
             with c3:
                 system_role = st.selectbox(L["lbl_sys_role"], ["一般員工 (Employee)", "產線班長 (Line Leader)", "保全人員 (Security)", "倉儲管理員 (Warehouse)", "會計/人事 (Admin/Finance)"])
                 perm_addr = st.text_input(L["lbl_perm_addr"], placeholder="Tây Ninh, Việt Nam")
-                temp_addr = st.text_input(L["lbl_temp_addr"], placeholder="An Tinh, Trảng Bàng, Tây Ninh")
-                hospital = st.text_input(L["lbl_hospital"], placeholder="Bệnh viện KCB Tây Ninh")
+                temp_addr = st.text_input(L["lbl_temp_addr"], placeholder="Trảng Bàng, Tây Ninh")
+                hospital = st.text_input(L["lbl_hospital"], placeholder="Bệnh viện KCB")
                 bhxh_no = st.text_input(L["lbl_ins_no"], placeholder="7912345678")
                 bank_acc = st.text_input(L["lbl_bank_acc"], placeholder="1023456789")
-                bank_name = st.text_input(L["lbl_bank_name"], placeholder="Vietcombank - Chi nhánh Tây Ninh")
+                bank_name = st.text_input(L["lbl_bank_name"], placeholder="Vietcombank")
 
             if st.form_submit_button(L["btn_save_vn"], type="primary", use_container_width=True):
                 if emp_no and name and id_card:
@@ -243,14 +254,14 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                             with engine.begin() as conn:
                                 conn.execute(text("""
                                     INSERT INTO public.employee_profiles 
-                                    (emp_code, emp_name, phone, id_card, tax_code, factory, department, position, staff_type, attendance_mode, base_salary, private_allowance, system_role, perm_address, temp_address, hospital, bhxh_no, bank_acc, bank_name, status)
-                                    VALUES (:no, :name, :phone, :id_c, :tax, :fac, :dept, :pos, :stype, :amode, :sal, 0, :srole, :paddr, :taddr, :hosp, :bhxh, :bacc, :bname, '在職')
+                                    (emp_code, emp_name, phone, id_card, tax_code, factory, department, position, staff_type, attendance_mode, base_salary, system_role, perm_address, temp_address, hospital, bhxh_no, bank_acc, bank_name, status)
+                                    VALUES (:no, :name, :phone, :id_c, :tax, :fac, :dept, :pos, :stype, :amode, :sal, :srole, :paddr, :taddr, :hosp, :bhxh, :bacc, :bname, '在職')
                                     ON CONFLICT (emp_code) DO UPDATE SET 
                                     emp_name = :name, phone = :phone, staff_type = :stype, attendance_mode = :amode, base_salary = :sal, status = '在職';
                                 """), {
                                     "no": emp_no.strip(), "name": name.strip(), "phone": phone.strip(),
                                     "id_c": id_card.strip(), "tax": tax_code.strip(), "fac": factory,
-                                    "dept": dept, "position": position.strip(), "stype": staff_type,
+                                    "dept": dept.strip(), "position": position.strip(), "stype": staff_type,
                                     "amode": attendance_mode, "sal": base_sal, "srole": system_role,
                                     "paddr": perm_addr, "taddr": temp_addr, "hosp": hospital,
                                     "bhxh": bhxh_no, "bacc": bank_acc, "bname": bank_name
@@ -267,22 +278,17 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown(f"### {L['form_expat_title']}")
         c1, c2 = st.columns(2)
         with c1:
-            expat_no = st.text_input(L["lbl_expat_no"], placeholder="TW-001 / CN-002 / MY-003")
-            expat_name = st.text_input(L["lbl_expat_name"], placeholder="許福村 / 张伟 / David Lee")
+            expat_no = st.text_input(L["lbl_expat_no"], placeholder="TW-001 / CN-002")
+            expat_name = st.text_input(L["lbl_expat_name"], placeholder="許福村 / David")
             nationality = st.selectbox(L["lbl_nationality"], ["台灣 (Taiwan)", "中國大陸 (China)", "馬來西亞 (Malaysia)", "韓國 (Korea)", "其他國家 (Other)"])
             phone_expat = st.text_input(L["lbl_phone_expat"], placeholder="+84-... / WeChat / Zalo")
-            passport = st.text_input(L["lbl_passport"], placeholder="Passport No. / ID")
+            passport = st.text_input(L["lbl_passport"], placeholder="Passport No.")
             visa_type = st.selectbox(L["lbl_visa_type"], ["LD1 / LD2 (工作簽證)", "DN1 (商業簽證)", "TRC (長期居留證)", "DT (投資簽證)"])
         with c2:
             visa_expire = st.date_input(L["lbl_visa_expire"], value=datetime.date.today() + datetime.timedelta(days=180))
             attendance_mode_expat = st.selectbox(L["lbl_attendance_mode"], ["免打卡 / 考勤排除 (Exempt)", "需打卡 (Required Punch)"])
             sal_official = st.number_input(L["lbl_sal_official"], value=15000000.0, step=1000000.0)
             sal_private = st.number_input(L["lbl_sal_private"], value=50000000.0, step=5000000.0)
-            
-            st.markdown("---")
-            up_passport = st.file_uploader(L["lbl_upload_passport"], type=["png", "jpg", "jpeg", "pdf"])
-            up_workpermit = st.file_uploader(L["lbl_upload_workpermit"], type=["png", "jpg", "jpeg", "pdf"])
-            up_trc = st.file_uploader(L["lbl_upload_trc"], type=["png", "jpg", "jpeg", "pdf"])
 
         if st.button(L["btn_save_expat"], type="primary", use_container_width=True):
             if expat_no and expat_name and passport:
@@ -299,7 +305,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                                 "name": f"{expat_name.strip()} ({nationality})", 
                                 "phone": phone_expat.strip() if phone_expat else "-",
                                 "passport": passport.strip(),
-                                "stype": f"外派/外籍幹部 ({nationality})",
+                                "stype": f"外派與外籍幹部 ({nationality})",
                                 "amode": attendance_mode_expat,
                                 "sal_off": sal_official,
                                 "sal_priv": sal_private,
@@ -308,22 +314,32 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                     except Exception:
                         pass
                 st.success(L["success_expat"].format(name=expat_name))
-                st.info("📁 外派與外籍幹部檔案已成功建檔，考勤設定、90天證件預警與薪資已安全歸檔。")
+                st.rerun()
             else:
                 st.warning("⚠️ 請完整填寫幹部工號、姓名與護照號碼！")
 
-    # Tab 3: 現職員工總名冊與 90 天證件到期智慧預警
+    # Tab 3: 現職員工總名冊與 90 天證件到期智慧預警 (區分越南員工與外派外籍幹部)
     with tabs[2]:
         st.markdown(f"### {L['tab_list']}")
         if engine:
             try:
-                df = pd.read_sql("SELECT emp_code, emp_name, phone, department, position, staff_type, attendance_mode, base_salary, visa_expire FROM public.employee_profiles WHERE status = '在職';", con=engine)
+                df = pd.read_sql("SELECT emp_code, emp_name, department, position, staff_type, attendance_mode, base_salary, visa_expire FROM public.employee_profiles WHERE status = '在職';", con=engine)
                 if not df.empty:
+                    # 分類切換
+                    category_filter = st.radio("📂 選擇檢視群組", ["🇻🇳 越南籍員工名冊", "🌐 外派與外籍幹部名冊", "📋 全部員工總名冊"], horizontal=True)
+                    
+                    if "越南籍員工" in category_filter:
+                        df_view = df[~df["staff_type"].str.contains("外派|外籍|Expat", na=False)]
+                    elif "外派與外籍幹部" in category_filter:
+                        df_view = df[df["staff_type"].str.contains("外派|外籍|Expat", na=False)]
+                    else:
+                        df_view = df
+
                     today_date = datetime.date.today()
                     expiring_soon = []
                     for _, row in df.iterrows():
                         v_exp = row.get("visa_expire")
-                        if v_exp:
+                        if v_exp and "外派" in str(row.get("staff_type", "")):
                             if isinstance(v_exp, str):
                                 try:
                                     v_exp = datetime.datetime.strptime(v_exp, "%Y-%m-%d").date()
@@ -337,17 +353,17 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                         st.error(L["alert_expiry_title"])
                         for eno, ename, edate, dleft in expiring_soon:
                             if dleft < 0:
-                                st.markdown(f"🔴 **【已過期】** 員工：`{eno} - {ename}` (證件到期日：`{edate}`，已逾期 `{abs(dleft)}` 天！請立即辦理)")
+                                st.markdown(f"🔴 **【已過期】** 幹部：`{eno} - {ename}` (證件到期日：`{edate}`，已逾期 `{abs(dleft)}` 天！)")
                             else:
-                                st.markdown(f"⚠️ **【90天內到期提醒】** 員工：`{eno} - {ename}` (證件到期日：`{edate}`，僅剩 `{dleft}` 天！越南辦證需時 3 個月，請盡速送件)")
+                                st.markdown(f"⚠️ **【90天內到期提醒】** 幹部：`{eno} - {ename}` (證件到期日：`{edate}`，僅剩 `{dleft}` 天，請盡速送件)")
                         st.markdown("---")
 
-                    search_query = st.text_input(L["search_label"], placeholder="輸入工號、姓名或國籍關鍵字...")
+                    search_query = st.text_input(L["search_label"], placeholder="輸入工號、姓名或部門關鍵字...")
                     if search_query:
-                        mask = df.astype(str).apply(lambda x: x.str.contains(search_query, case=False)).any(axis=1)
-                        df_filtered = df[mask]
+                        mask = df_view.astype(str).apply(lambda x: x.str.contains(search_query, case=False)).any(axis=1)
+                        df_filtered = df_view[mask]
                     else:
-                        df_filtered = df
+                        df_filtered = df_view
 
                     st.dataframe(df_filtered, use_container_width=True, hide_index=True)
                     
@@ -364,7 +380,7 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
                             st.success(L["success_terminate"].format(emp=selected_to_terminate))
                             st.rerun()
                 else:
-                    st.info("目前尚無在職員工紀錄。")
+                    st.info("目前尚無在職員工紀錄。請先至薪資模組批次匯入 Excel，系統將自動同步建立名冊！")
             except Exception:
                 st.info("目前尚無在職員工紀錄。")
         else:
