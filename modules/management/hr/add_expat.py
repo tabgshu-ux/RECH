@@ -3,7 +3,7 @@ import datetime
 from sqlalchemy import text
 
 def render_add_expat(engine=None, lang="繁體中文"):
-    st.markdown("### 🌐 新增外派與外籍幹部資料 (含護照、工作證、TRC 暫住證與 90 天合規預警)")
+    st.markdown("### 🌐 新增外派與外籍幹部資料 (含護照、工作證、TRC 暫住證雙面與 90 天合規預警)")
     
     with st.form("form_add_expat_employee"):
         c1, c2 = st.columns(2)
@@ -21,14 +21,18 @@ def render_add_expat(engine=None, lang="繁體中文"):
             sal_private = st.number_input("海外專案津貼 / 差旅補助 (Overseas Allowance)", value=50000000.0, step=5000000.0)
 
         st.markdown("---")
-        st.markdown("##### 📂 外派與外籍幹部合規證件上傳區 (Upload Passport, Work Permit & TRC)")
-        up_col1, up_col2, up_col3 = st.columns(3)
+        st.markdown("##### 📂 外派與外籍幹部合規證件上傳區 (Upload Passport, Work Permit & TRC - Front/Back)")
+        
+        # 💡 將上傳區擴充為 4 個欄位：護照、工作證、暫住證正面、暫住證背面
+        up_col1, up_col2, up_col3, up_col4 = st.columns(4)
         with up_col1:
-            up_passport = st.file_uploader("📄 上傳護照掃描檔 / 照片 (Passport)", type=["png", "jpg", "jpeg", "pdf"], key="up_pass_file")
+            up_passport = st.file_uploader("📄 護照掃描檔 (Passport)", type=["png", "jpg", "jpeg", "pdf"], key="up_pass_file")
         with up_col2:
-            up_workpermit = st.file_uploader("📄 上傳越南工作證 (Work Permit)", type=["png", "jpg", "jpeg", "pdf"], key="up_wp_file")
+            up_workpermit = st.file_uploader("📄 越南工作證 (Work Permit)", type=["png", "jpg", "jpeg", "pdf"], key="up_wp_file")
         with up_col3:
-            up_trc = st.file_uploader("📄 上傳暫住證 / 簽證影本 (TRC / Visa)", type=["png", "jpg", "jpeg", "pdf"], key="up_trc_file")
+            up_trc_front = st.file_uploader("📄 暫住證【正面】(TRC Front)", type=["png", "jpg", "jpeg", "pdf"], key="up_trc_front_file")
+        with up_col4:
+            up_trc_back = st.file_uploader("📄 暫住證【背面】(TRC Back)", type=["png", "jpg", "jpeg", "pdf"], key="up_trc_back_file")
 
         if st.form_submit_button("🚀 儲存外派與外籍幹部合規檔案與證件", type="primary", use_container_width=True):
             if expat_no and expat_name and passport:
@@ -56,9 +60,10 @@ def render_add_expat(engine=None, lang="繁體中文"):
                 uploaded_files_status = []
                 if up_passport: uploaded_files_status.append("護照")
                 if up_workpermit: uploaded_files_status.append("工作證")
-                if up_trc: uploaded_files_status.append("暫住證/簽證")
+                if up_trc_front: uploaded_files_status.append("暫住證(正面)")
+                if up_trc_back: uploaded_files_status.append("暫住證(背面)")
                 
-                st.success(f"🎉 成功新增外派與外籍幹部：{expat_name} (已記錄證件到期日與掃描檔)！")
+                st.success(f"🎉 成功新增外派與外籍幹部：{expat_name} (已完整記錄證件到期日與雙面合規檔案)！")
                 if uploaded_files_status:
                     st.info(f"✅ 已成功接收並歸檔下列合規證件檔案：{', '.join(uploaded_files_status)}")
                 st.rerun()
