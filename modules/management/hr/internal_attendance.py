@@ -7,11 +7,11 @@ def get_t(lang):
         "繁體中文": {
             "title": "📊 員工打卡紀錄與出勤稽核中心",
             "info": "💡 說明：HR 可在此檢視廠內出勤、設定考勤寬限期、執行打卡補登及匯出每月考勤。",
-            "tab1_title": "🏭 廠內考勤與多版本加班明細",
+            "tab1_title": "🏭 員工打卡紀錄",
             "tab2_title": "📝 打卡補登與原始日誌",
             "tab3_title": "📍 外勤 GPS 打卡稽核",
             "rule_title": "⚙️ 考勤寬限期與遲到判定規則設定",
-            "grace_min": "上班打卡寬限分鐘數 (分鐘內不算遲代)",
+            "grace_min": "上班打卡寬限分鐘數 (分鐘內不算遲到)",
             "monthly_limit": "每月累計遲到容許總分鐘數",
             "export_btn": "📥 下載各員工每月打卡與多版本加班紀錄 (CSV)",
             "punch_fix_title": "⚙️ 員工考勤補登與異常調整",
@@ -20,8 +20,8 @@ def get_t(lang):
         },
         "Tiếng Việt": {
             "title": "📊 Quản lý Chấm công & Kiểm toán Nhân viên",
-            "info": "💡 Hướng dẫn: HR quản lý chấm công, ân hạn,  đối chiếu theo bảng lương T.09.",
-            "tab1_title": "🏭 Chấm công & Chi tiết Tăng ca",
+            "info": "💡 Hướng dẫn: HR quản lý chấm công, ân hạn, đối chiếu theo bảng lương T.09.",
+            "tab1_title": "🏭 Hồ sơ chấm công",
             "tab2_title": "📝 Bù giờ & Nhật ký",
             "tab3_title": "📍 Kiểm duyệt GPS",
             "rule_title": "⚙️ Cài đặt thời gian ân hạn đi muộn",
@@ -31,6 +31,20 @@ def get_t(lang):
             "punch_fix_title": "⚙️ Xử lý bù giờ chấm công",
             "no_field_data": "Hiện tại chưa có dữ liệu chấm công GPS.",
             "field_table_title": "📋 Bảng chi tiết chấm công hiện trường"
+        },
+        "English": {
+            "title": "📊 Employee Attendance & Audit Center",
+            "info": "💡 Note: HR can view attendance, set grace periods, handle punch adjustments, and export monthly reports.",
+            "tab1_title": "🏭 Employee Punch Records",
+            "tab2_title": "📝 Punch Adjustments & Logs",
+            "tab3_title": "📍 Field GPS Attendance Audit",
+            "rule_title": "⚙️ Grace Period & Late Policy Settings",
+            "grace_min": "Check-in Grace Period (Minutes)",
+            "monthly_limit": "Monthly Total Allowed Late Minutes",
+            "export_btn": "📥 Download Monthly Attendance & OT Report (CSV)",
+            "punch_fix_title": "⚙️ Attendance Correction & Exception Handling",
+            "no_field_data": "No field GPS punch or report records found.",
+            "field_table_title": "📋 Field Engineering Attendance Details"
         }
     }
     return texts.get(lang, texts["繁體中文"])
@@ -44,7 +58,7 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
     tab1, tab2, tab3 = st.tabs([t['tab1_title'], t['tab2_title'], t['tab3_title']])
 
     # ----------------------------------------------------
-    # TAB 1: 廠內考勤、寬限規則與多版本加班明細
+    # TAB 1: 員工打卡紀錄、寬限規則與多版本加班明細
     # ----------------------------------------------------
     with tab1:
         st.markdown(f"#### {t['rule_title']}")
@@ -62,7 +76,6 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown("---")
         st.markdown("#### 🏢 廠內同仁出勤與九月薪資表對齊之「多版本加班時數」總表")
         
-        # 對齊真實薪資表的四種加班倍率欄位 (1.5, 1.95, 2.0, 3.0)
         emp_records = [
             {"工號": "VN-001", "姓名": "Nguyễn Văn A", "部門": "生產部", "職稱": "技術員", "應出勤": 22, "實出": 22, "遲到分": 0, "加班*1.5 (平日)": 38.0, "加班*1.95 (夜班)": 1.0, "加班*2.0 (休息日)": 30.0, "加班*3.0 (國定)": 8.0, "狀態": "🟢 正常"},
             {"工號": "VN-002", "姓名": "Tran Thi B", "部門": "管理部", "職稱": "會計專員", "應出勤": 22, "實出": 21, "遲到分": 8, "加班*1.5 (平日)": 0.0, "加班*1.95 (夜班)": 0.0, "加班*2.0 (休息日)": 0.0, "加班*3.0 (國定)": 0.0, "狀態": "🟡 遲到 8 分"},
@@ -83,7 +96,6 @@ def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
         df_emp = pd.DataFrame(emp_records)
         st.dataframe(df_emp, use_container_width=True, hide_index=True)
 
-        # 📥 下載完整月報與加班明細
         csv_data = df_emp.to_csv(index=False).encode('utf-8-sig')
         st.download_button(
             label=t['export_btn'],
