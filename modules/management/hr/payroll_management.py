@@ -21,12 +21,18 @@ def parse_vn_num(val_str):
 def fmt_vn_num(val):
     try:
         v = float(val)
+        if v == 0:
+            return "-"
         return f"{v:,.0f}".replace(",", ".")
     except Exception:
-        return "0"
+        return "-"
 
 def fmt_vn_curr(val):
-    return fmt_vn_num(val) + " VND"
+    try:
+        v = float(val)
+        return f"{v:,.0f}".replace(",", ".") + " VND"
+    except Exception:
+        return "0 VND"
 
 # ----------------------------------------------------
 # 🌐 多語系字典 (i18n)
@@ -34,10 +40,10 @@ def fmt_vn_curr(val):
 PAYROLL_I18N = {
     "繁體中文": {
         "title": "💰 管理部 - 員工薪資計算與電子薪資單中心",
-        "caption": "符合裕豐電機工業實務標準：1:1 完全對齊公司正式薪資條格式與精確扣款計算。",
+        "caption": "裕豐電機工業標準：1:1 復刻公司正式 Excel 經典黑框薪資單與精準計算。",
         "tab_calc": "🧮 單筆薪資核算",
         "tab_import": "📥 批次匯入",
-        "tab_slip": "📄 員工薪資單",
+        "tab_slip": "📄 員工薪資單 (公司經典版)",
         "tab_history": "📊 歷史薪資清冊與發放紀錄",
         "lbl_month": "計薪月份 (YYYY-MM)",
         "lbl_emp_code": "員工工號 / 人事編號",
@@ -68,22 +74,20 @@ def init_payroll_db(engine):
                     pos_allowance NUMERIC(12,2) DEFAULT 0,
                     eval_bonus NUMERIC(12,2) DEFAULT 0,
                     gas_allowance NUMERIC(12,2) DEFAULT 0,
-                    women_allowance NUMERIC(12,2) DEFAULT 0,
                     spec_bonus NUMERIC(12,2) DEFAULT 0,
                     actual_hours NUMERIC(6,2) DEFAULT 208,
-                    work_salary NUMERIC(12,2) DEFAULT 0,
-                    overtime_pay NUMERIC(12,2) DEFAULT 0,
+                    leave_hours NUMERIC(6,2) DEFAULT 0,
+                    ot_15_hours NUMERIC(6,2) DEFAULT 0,
+                    ot_195_hours NUMERIC(6,2) DEFAULT 0,
+                    ot_20_hours NUMERIC(6,2) DEFAULT 0,
+                    ot_30_hours NUMERIC(6,2) DEFAULT 0,
                     meal_fee NUMERIC(12,2) DEFAULT 0,
                     prod_bonus NUMERIC(12,2) DEFAULT 0,
-                    network_fee NUMERIC(12,2) DEFAULT 0,
-                    attendance_bonus NUMERIC(12,2) DEFAULT 0,
-                    other_deduct NUMERIC(12,2) DEFAULT 0,
                     total_gross NUMERIC(12,2) DEFAULT 0,
                     pit_tax NUMERIC(12,2) DEFAULT 0,
                     bhxh_deduction NUMERIC(12,2) DEFAULT 0,
                     bhyt_deduction NUMERIC(12,2) DEFAULT 0,
                     bhtn_deduction NUMERIC(12,2) DEFAULT 0,
-                    advance_pay NUMERIC(12,2) DEFAULT 0,
                     net_salary NUMERIC(12,2) NOT NULL,
                     status VARCHAR(50) DEFAULT '🟢 已結算 (Calculated)',
                     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -97,8 +101,6 @@ def init_payroll_db(engine):
                     id SERIAL PRIMARY KEY,
                     emp_code VARCHAR(50) UNIQUE NOT NULL,
                     emp_name VARCHAR(100) NOT NULL,
-                    phone VARCHAR(50),
-                    id_card VARCHAR(100),
                     factory VARCHAR(100) DEFAULT '西寧廠 (Tay Ninh)',
                     department VARCHAR(100),
                     position VARCHAR(100),
@@ -139,7 +141,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown("---")
         
         with st.form("form_calc_payroll"):
-            st.markdown("##### 1️⃣ 薪資項目設定 (完全對齊公司 Excel 標準)")
+            st.markdown("##### 1️⃣ 薪資項目設定")
             col1, col2, col3 = st.columns(3)
             with col1:
                 e_name = st.text_input("員工姓名 (越/中)", value="PHẠM HOÀNG LÂM\n范 皇 林")
@@ -150,8 +152,8 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 str_gas_allowance = st.text_input("出差油費 PC tiền xăng", value="6.000.000")
                 str_spec_bonus = st.text_input("工程補助津貼 Pc.đi CT", value="4.000.000")
             with col3:
-                std_hours = st.number_input("上班標準時數", min_value=1.0, value=208.0, step=1.0)
                 act_hours = st.number_input("上班實際時數", min_value=0.0, value=208.0, step=0.5)
+                leave_hours = st.number_input("請假時數", min_value=0.0, value=0.0, step=0.5)
                 str_meal_fee = st.text_input("餐費 Tiền cơm", value="1.200.000")
 
             st.markdown("##### 2️⃣ 加班與扣款項目設定")
@@ -167,7 +169,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 str_bhxh = st.text_input("社會保險 BHXH", value="1.920.896")
                 str_bhyt = st.text_input("醫療保險 BHYT", value="360.168")
                 str_bhtn = st.text_input("失業保險 BH Thất nghiệp", value="240.112")
-                str_advance = st.text_input("本月預支 Tạm ứng", value="0")
 
             base_sal = parse_vn_num(str_base_sal)
             pos_allowance = parse_vn_num(str_pos_allowance)
@@ -179,11 +180,9 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             bhxh = parse_vn_num(str_bhxh)
             bhyt = parse_vn_num(str_bhyt)
             bhtn = parse_vn_num(str_bhtn)
-            advance = parse_vn_num(str_advance)
 
-            # 計算總收入與實領
             total_gross = base_sal + pos_allowance + eval_bonus + gas_allowance + spec_bonus + meal_fee
-            total_deduct = pit + bhxh + bhyt + bhtn + advance
+            total_deduct = pit + bhxh + bhyt + bhtn
             net_pay = total_gross - total_deduct
 
             st.markdown("---")
@@ -199,10 +198,10 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                             conn.execute(text("""
                                 INSERT INTO public.payroll_records 
                                 (payroll_month, emp_code, emp_name, department, factory, base_salary, pos_allowance, eval_bonus, 
-                                 gas_allowance, spec_bonus, actual_hours, meal_fee, total_gross, 
-                                 pit_tax, bhxh_deduction, bhyt_deduction, bhtn_deduction, advance_pay, net_salary)
-                                VALUES (:m, :code, :name, :dept, :factory, :bs, :pos, :ev, :gas, :spec, :act_h,
-                                        :meal, :gross, :pit, :bhxh, :bhyt, :bhtn, :adv, :net)
+                                 gas_allowance, spec_bonus, actual_hours, leave_hours, ot_15_hours, ot_195_hours, ot_20_hours, ot_30_hours,
+                                 meal_fee, total_gross, pit_tax, bhxh_deduction, bhyt_deduction, bhtn_deduction, net_salary)
+                                VALUES (:m, :code, :name, :dept, :factory, :bs, :pos, :ev, :gas, :spec, :act_h, :leave_h,
+                                        :ot15, :ot195, :ot20, :ot30, :meal, :gross, :pit, :bhxh, :bhyt, :bhtn, :net)
                                 ON CONFLICT (payroll_month, emp_code) DO UPDATE
                                 SET emp_name = EXCLUDED.emp_name,
                                     department = EXCLUDED.department,
@@ -217,8 +216,9 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                             """), {
                                 "m": payroll_m, "code": e_code, "name": e_name, "dept": dept_name, "factory": factory_sel,
                                 "bs": base_sal, "pos": pos_allowance, "ev": eval_bonus, "gas": gas_allowance,
-                                "spec": spec_bonus, "act_h": act_hours, "meal": meal_fee, "gross": total_gross,
-                                "pit": pit, "bhxh": bhxh, "bhyt": bhyt, "bhtn": bhtn, "adv": advance, "net": net_pay
+                                "spec": spec_bonus, "act_h": act_hours, "leave_h": leave_hours,
+                                "ot15": ot_15, "ot195": ot_195, "ot20": ot_20, "ot30": ot_30,
+                                "meal": meal_fee, "gross": total_gross, "pit": pit, "bhxh": bhxh, "bhyt": bhyt, "bhtn": bhtn, "net": net_pay
                             })
                         st.success(L["msg_success"])
                         st.rerun()
@@ -230,7 +230,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
     # ----------------------------------------------------
     with tab_import:
         st.markdown("### 📤 批次匯入 Excel")
-        st.caption("上傳公司標準 Excel 薪資檔案，系統將自動解析西寧廠與工程工地工作表並精準對應所有欄位與扣款！")
+        st.caption("上傳公司標準 Excel 薪資檔案，系統將自動解析並寫入資料庫！")
 
         uploaded_file = st.file_uploader("請選擇要匯入的 Excel 薪資檔案 (.xls / .xlsx)", type=["xls", "xlsx"])
         import_month = st.text_input("匯入薪資月份 (YYYY-MM)", value="2026-09", key="imp_m_input")
@@ -259,7 +259,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                                 act_h = parse_vn_num(row.iloc[13]) if len(row) > 13 and pd.notna(row.iloc[13]) else 208.0
                                 meal = parse_vn_num(row.iloc[20]) if len(row) > 20 else 0.0
                                 
-                                # 公司 Excel 表中實際扣款與總計欄位位置
                                 gross = parse_vn_num(row.iloc[27]) if len(row) > 27 else (bs + pos + ev + gas + spec + meal)
                                 pit = parse_vn_num(row.iloc[32]) if len(row) > 32 else 0.0
                                 bhxh = parse_vn_num(row.iloc[33]) if len(row) > 33 else 0.0
@@ -303,11 +302,11 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.error("❌ 批次解析失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 📄 Tab 3: 員工薪資單 (完全 1:1 複製您公司標準 Excel 薪資單排版)[cite: 22]
+    # 📄 Tab 3: 員工薪資單 (完全 1:1 復刻公司正式 Excel 經典黑框版型)[cite: 22]
     # ----------------------------------------------------
     with tab_slip:
-        st.markdown("### 📄 全公司員工薪資單 1:1 正式版型與列印中心")
-        st.caption("💡 完美復刻公司標準 Excel 薪資條排版：上下分行姓名、網格對齊、精準所得稅與保險扣除額。")
+        st.markdown("### 📄 員工詳細薪資條 (公司經典正式版)")
+        st.caption("💡 1:1 完美復刻公司正式 Excel 的黑框對齊排版：上下分行姓名、各項津貼與扣款欄位精準呈現。")
 
         slip_records = []
         if engine:
@@ -323,9 +322,10 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 "payroll_month": "2026-09", "emp_code": "2005010102", "emp_name": "PHẠM HOÀNG LÂM\n范 皇 林",
                 "department": "GĐ CT 工程經理", "factory": "工程工地 (Site)", "base_salary": 21011200,
                 "pos_allowance": 3000000, "eval_bonus": 5567968, "gas_allowance": 6000000,
-                "spec_bonus": 4000000, "actual_hours": 208, "meal_fee": 1200000,
-                "total_gross": 40779168, "pit_tax": 180421, "bhxh_deduction": 1920896,
-                "bhyt_deduction": 360168, "bhtn_deduction": 240112, "advance_pay": 0, "net_salary": 38078000
+                "spec_bonus": 4000000, "actual_hours": 208, "leave_hours": 0,
+                "ot_15_hours": 0, "ot_195_hours": 0, "ot_20_hours": 0, "ot_30_hours": 0,
+                "meal_fee": 1200000, "total_gross": 40779168, "pit_tax": 180421,
+                "bhxh_deduction": 1920896, "bhyt_deduction": 360168, "bhtn_deduction": 240112, "net_salary": 38078000
             }]
 
         col_op1, col_op2 = st.columns([2, 2])
@@ -345,7 +345,6 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             target_slip = emp_options[selected_emp_key]
 
         st.markdown("---")
-        st.markdown(f"#### 📄 員工詳細薪資條 1:1 預覽與列印中心")
 
         raw_name = str(target_slip.get('emp_name', '')).replace("\r", "").replace("\n", " ")
         name_tokens = [t for t in raw_name.split(" ") if t]
@@ -363,72 +362,99 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
         s_bo = float(target_slip.get('spec_bonus', 0))
         m_fe = float(target_slip.get('meal_fee', 0))
         act_h = float(target_slip.get('actual_hours', 208))
+        leave_h = float(target_slip.get('leave_hours', 0))
+        
+        ot15 = float(target_slip.get('ot_15_hours', 0))
+        ot195 = float(target_slip.get('ot_195_hours', 0))
+        ot20 = float(target_slip.get('ot_20_hours', 0))
+        ot30 = float(target_slip.get('ot_30_hours', 0))
         
         gross = float(target_slip.get('total_gross', b_sal + p_al + e_bo + g_al + s_bo + m_fe))
         pit = float(target_slip.get('pit_tax', 0))
         bhxh = float(target_slip.get('bhxh_deduction', 0))
         bhyt = float(target_slip.get('bhyt_deduction', 0))
         bhtn = float(target_slip.get('bhtn_deduction', 0))
-        adv = float(target_slip.get('advance_pay', 0))
-        
-        total_deduct = pit + bhxh + bhyt + bhtn + adv
-        net = float(target_slip.get('net_salary', gross - total_deduct))
+        net = float(target_slip.get('net_salary', gross - (pit + bhxh + bhyt + bhtn)))
 
-        # 🎨 完全 1:1 復刻您提供的 Excel 官方薪資條 HTML 表格排版[cite: 22]
+        # 🎨 完全 1:1 復刻公司標準 Excel 薪資條的 HTML 經典黑框排版[cite: 22]
         slip_html = f"""
-        <div style="border: 2px solid #000; padding: 20px; border-radius: 4px; background-color: #FFFFFF; font-family: Arial, sans-serif; max-width: 820px; margin: auto; color: #000;">
-            <div style="text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 5px; letter-spacing: 1px;">REETECH INDUSTRIAL CO.,LTD</div>
-            <div style="text-align: center; font-weight: bold; font-size: 15px; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 8px;">
+        <div style="border: 2px solid #000; padding: 25px; border-radius: 2px; background-color: #FFFFFF; font-family: Arial, sans-serif; max-width: 780px; margin: auto; color: #000;">
+            <div style="text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 3px; letter-spacing: 1px;">REETECH INDUSTRIAL CO.,LTD</div>
+            <div style="text-align: center; font-weight: bold; font-size: 15px; margin-bottom: 12px; border-bottom: 2px solid #000; padding-bottom: 8px;">
                 領薪資明細／CHI TIẾT LƯƠNG T.{m_fmt}
             </div>
 
             <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; font-size: 13px; text-align: left;">
                 <tr>
-                    <td style="border: 1px solid #000; padding: 6px; width: 18%; background: #f9f9f9; font-weight: bold;">人事編號<br><span style="font-size: 10px; color: #555;">Mã nhân viên</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; width: 18%; background: #fdfdfd; font-weight: bold;">人事編號<br><span style="font-size: 10px; color: #555;">Mã nhân viên</span></td>
                     <td style="border: 1px solid #000; padding: 6px; width: 32%; font-weight: bold; color: #1E3A8A;">{target_slip.get('emp_code')}</td>
-                    <td style="border: 1px solid #000; padding: 6px; width: 18%; background: #f9f9f9; font-weight: bold;">姓名<br><span style="font-size: 10px; color: #555;">Họ tên</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; width: 18%; background: #fdfdfd; font-weight: bold;">姓名<br><span style="font-size: 10px; color: #555;">Họ tên</span></td>
                     <td style="border: 1px solid #000; padding: 6px; width: 32%; font-weight: bold; line-height: 1.3;">
                         <div style="font-size: 13px; color: #000;">{vn_name_part}</div>
                         <div style="font-size: 12px; color: #444; font-weight: normal;">{cn_name_part}</div>
                     </td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 6px; background: #f9f9f9; font-weight: bold;">職務<br><span style="font-size: 10px; color: #555;">Chức vụ</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">職務<br><span style="font-size: 10px; color: #555;">Chức vụ</span></td>
                     <td style="border: 1px solid #000; padding: 6px;">{target_slip.get('department')}</td>
-                    <td style="border: 1px solid #000; padding: 6px; background: #f9f9f9; font-weight: bold;">底薪<br><span style="font-size: 10px; color: #555;">Lương CB</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">底薪<br><span style="font-size: 10px; color: #555;">Lương CB</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: right; font-weight: bold;">{fmt_vn_num(b_sal)}</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 6px; background: #f9f9f9; font-weight: bold;">職務津貼<br><span style="font-size: 10px; color: #555;">PC chức vụ</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">職務津貼<br><span style="font-size: 10px; color: #555;">PC chức vụ</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: right;">{fmt_vn_num(p_al)}</td>
-                    <td style="border: 1px solid #000; padding: 6px; background: #f9f9f9; font-weight: bold;">評核獎金<br><span style="font-size: 10px; color: #555;">Tiền thưởng đánh giá</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">評核獎金<br><span style="font-size: 10px; color: #555;">Tiền thưởng đánh giá</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: right;">{fmt_vn_num(e_bo)}</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 6px; background: #f9f9f9; font-weight: bold;">出差油費<br><span style="font-size: 10px; color: #555;">PC tiền xăng</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">出差油費<br><span style="font-size: 10px; color: #555;">PC tiền xăng</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: right;">{fmt_vn_num(g_al)}</td>
-                    <td style="border: 1px solid #000; padding: 6px; background: #f9f9f9; font-weight: bold;">工程補助津貼<br><span style="font-size: 10px; color: #555;">Pc.đi CT</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">工程補助津貼<br><span style="font-size: 10px; color: #555;">Pc.đi CT</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: right;">{fmt_vn_num(s_bo)}</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 6px; background: #f9f9f9; font-weight: bold;">上班標準時數<br><span style="font-size: 10px; color: #555;">SG làm việc TC</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">上班標準時數<br><span style="font-size: 10px; color: #555;">SG làm việc TC</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: center;" colspan="3">208</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 6px; background: #f9f9f9; font-weight: bold;">上班實際時數<br><span style="font-size: 10px; color: #555;">SG làm việc TT</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">上班實際時數<br><span style="font-size: 10px; color: #555;">SG làm việc TT</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: center;">{act_h}</td>
-                    <td style="border: 1px solid #000; padding: 6px; background: #f9f9f9; font-weight: bold;">請假<br><span style="font-size: 10px; color: #555;">Nghỉ phép</span></td>
-                    <td style="border: 1px solid #000; padding: 6px; text-align: center;">0</td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">請假<br><span style="font-size: 10px; color: #555;">Nghỉ phép</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: center;">{leave_h}</td>
                 </tr>
-                <tr style="background-color: #f1f5f9; font-weight: bold;">
+                <tr style="background-color: #f8fafc; font-weight: bold;">
                     <td style="border: 1px solid #000; padding: 6px;">合計／Cộng</td>
-                    <td style="border: 1px solid #000; padding: 6px; text-align: right; color: #047857;" colspan="3">{fmt_vn_num(gross)}</td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: right; color: #047857;" colspan="3">{fmt_vn_num(b_sal + p_al + e_bo + g_al + s_bo)}</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 6px; background: #f9f9f9; font-weight: bold;">餐費<br><span style="font-size: 10px; color: #555;">Tiền cơm</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">加班時數<br><span style="font-size: 10px; color: #555;">SG Tăng ca*1.5</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: center;">{ot15}</td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">加班時數<br><span style="font-size: 10px; color: #555;">Tăng ca*2.0</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: center;">{ot20}</td>
+                </tr>
+                <tr style="background-color: #f8fafc; font-weight: bold;">
+                    <td style="border: 1px solid #000; padding: 6px;">合計／Cộng</td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: center;">-</td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">加班時數<br><span style="font-size: 10px; color: #555;">Tăng ca*1.95</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: center;">{ot195}</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">餐費<br><span style="font-size: 10px; color: #555;">Tiền cơm</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: right;">{fmt_vn_num(m_fe)}</td>
-                    <td style="border: 1px solid #000; padding: 6px; background: #f9f9f9; font-weight: bold;">績效獎金<br><span style="font-size: 10px; color: #555;">Thưởng N.Suất</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">績效獎金<br><span style="font-size: 10px; color: #555;">Thưởng N.Suất</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: right;">-</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">電話/網路費補貼<br><span style="font-size: 10px; color: #555;">PC đt/mạng</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: right;">-</td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">看倉管<br><span style="font-size: 10px; color: #555;">Giữ kho</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: right;">-</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">全勤<br><span style="font-size: 10px; color: #555;">Chuyên cần</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: right;">-</td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">加班時數<br><span style="font-size: 10px; color: #555;">Tăng ca*3.0</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: center;">{ot30}</td>
                 </tr>
                 <tr style="font-weight: bold; background-color: #1E3A8A; color: white;">
                     <td style="border: 1px solid #000; padding: 8px;">總計／Tổng lương</td>
@@ -438,15 +464,15 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                     <td style="border: 1px solid #000; padding: 5px; text-align: center; font-weight: bold; background: #e2e8f0;" colspan="4">KHOẢN TRỪ／扣款項目</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 6px; background: #f9f9f9; font-weight: bold;">所得稅<br><span style="font-size: 10px; color: #555;">TN cá nhân</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">所得稅<br><span style="font-size: 10px; color: #555;">TN cá nhân</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: right; color: #DC2626;">{fmt_vn_num(pit)}</td>
-                    <td style="border: 1px solid #000; padding: 6px; background: #f9f9f9; font-weight: bold;">社會保險<br><span style="font-size: 10px; color: #555;">BHXH</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">社會保險<br><span style="font-size: 10px; color: #555;">BHXH</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: right; color: #DC2626;">{fmt_vn_num(bhxh)}</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 6px; background: #f9f9f9; font-weight: bold;">醫療保險<br><span style="font-size: 10px; color: #555;">BHYT</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">醫療保險<br><span style="font-size: 10px; color: #555;">BHYT</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: right; color: #DC2626;">{fmt_vn_num(bhyt)}</td>
-                    <td style="border: 1px solid #000; padding: 6px; background: #f9f9f9; font-weight: bold;">失業保險<br><span style="font-size: 10px; color: #555;">BH Thất nghiệp</span></td>
+                    <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">失業保險<br><span style="font-size: 10px; color: #555;">BH Thất nghiệp</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: right; color: #DC2626;">{fmt_vn_num(bhtn)}</td>
                 </tr>
                 <tr style="background-color: #fef08a;">
@@ -461,7 +487,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             </div>
         </div>
         """
-        st.components.v1.html(slip_html, height=750, scrolling=True)
+        st.components.v1.html(slip_html, height=820, scrolling=True)
 
         # 🖨️ 單人專屬預覽與列印按鈕
         st.markdown("<br>", unsafe_allow_html=True)
@@ -473,7 +499,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 """, unsafe_allow_html=True)
                 st.info("💡 已觸發列印指令，請於彈出視窗中選擇印表機或儲存為 PDF。")
         with col_pr2:
-            st.caption("提示：點擊左側列印按鈕即可呼叫瀏覽器列印，完美輸出與您公司正式 Excel 完全一致的 1:1 電子薪資單！")
+            st.caption("提示：點擊左側列印按鈕即可呼叫瀏覽器列印，完美輸出與您公司正式 Excel 完全一致的 1:1 經典黑框薪資單！")
 
     # ----------------------------------------------------
     # 📊 Tab 4: 歷史薪資清冊查詢
