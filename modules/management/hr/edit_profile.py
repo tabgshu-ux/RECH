@@ -7,6 +7,13 @@ def render_edit_profile(engine=None, lang="繁體中文"):
     st.markdown("### ✏️ 編輯與更新現職員工資料 (支援越南在地與外籍合規動態切換)")
     if engine:
         try:
+            # 🛡️ 自動補全可能缺少的欄位，避免資料庫結構不一致導致報錯
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS private_allowance NUMERIC(15, 2) DEFAULT 0;"))
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS staff_type VARCHAR(100) DEFAULT '越南籍員工';"))
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS attendance_mode VARCHAR(50) DEFAULT '需打卡';"))
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS visa_expire DATE DEFAULT '2027-12-31';"))
+
             # 完整抓取該員工的所有欄位以供動態判斷與修改
             df_edit = pd.read_sql("""
                 SELECT emp_code, emp_name, phone, id_card, tax_code, factory, department, 
@@ -63,10 +70,9 @@ def render_edit_profile(engine=None, lang="繁體中文"):
 
                                 new_expire = st.date_input("修改簽證 / TRC / 護照到期日", value=cur_expiry)
                             
-                            # 賦予預設值以防 SQL 報錯
                             new_perm, new_temp, new_hosp, new_bhxh, new_tax = "", "", "", "", ""
 
-                        # 🇻🇳 針對越南籍員工的動態表單欄位（符合越南勞動法、健保與稅務規範）
+                        # 🇻🇳 針對越南籍員工的動態表單欄位
                         else:
                             st.markdown("##### 🇻🇳 越南籍員工專用勞動法規與保險欄位")
                             c_vn1, c_vn2 = st.columns(2)
@@ -89,7 +95,6 @@ def render_edit_profile(engine=None, lang="繁體中文"):
                         st.markdown("<br>", unsafe_allow_html=True)
                         if st.form_submit_button("💾 確認並儲存修改變更", type="primary", use_container_width=True):
                             with engine.begin() as conn:
-                                # 支援同時更新工號、姓名、與對應的動態合規欄位
                                 conn.execute(text("""
                                     UPDATE public.employee_profiles 
                                     SET emp_code = :new_code,
