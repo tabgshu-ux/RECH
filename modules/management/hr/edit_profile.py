@@ -31,7 +31,7 @@ def render_edit_profile(engine=None, lang="繁體中文"):
             
             if not df_edit.empty:
                 edit_emp_list = [f"{r['emp_code']} - {r['emp_name']} ({r.get('staff_type', '越南籍員工')})" for _, r in df_edit.iterrows()]
-                selected_edit_target = st.selectbox("選擇要修改的員工 (Chọn nhân viên)", edit_emp_list)
+                selected_edit_target = st.selectbox("選擇要修改的員工 (Chọn nhân viên)", edit_emp_list, key="edit_target_selectbox")
                 
                 if selected_edit_target:
                     t_no = selected_edit_target.split(" - ")[0]
@@ -39,16 +39,26 @@ def render_edit_profile(engine=None, lang="繁體中文"):
                     
                     cur_staff_type = str(current_row.get("staff_type", "越南籍員工"))
 
-                    with st.form("form_edit_employee"):
-                        st.markdown("#### 📌 員工基本與身分屬性設定")
-                        
-                        # 💡 允許直接手動切換身分屬性，解決表格不變的問題！
-                        staff_type_options = ["越南籍員工", "外派與外籍幹部"]
-                        default_type_idx = 1 if any(k in cur_staff_type for k in ["外派", "外籍", "Expat"]) else 0
-                        new_staff_type = st.selectbox("員工身分類型 (Staff Type) *", staff_type_options, index=default_type_idx)
-                        
-                        is_expat_now = "外派" in new_staff_type or "外籍" in new_staff_type
+                    # 💡 獨立在 Form 外面，用 session_state 穩固記錄身分切換
+                    if "edit_staff_type_selection" not in st.session_state or st.session_state.get("last_selected_emp") != t_no:
+                        st.session_state.last_selected_emp = t_no
+                        st.session_state.edit_staff_type_selection = "外派與外籍幹部" if any(k in cur_staff_type for k in ["外派", "外籍", "Expat"]) else "越南籍員工"
 
+                    st.markdown("---")
+                    st.markdown("#### 📌 員工身分屬性切換")
+                    staff_type_options = ["越南籍員工", "外派與外籍幹部"]
+                    default_idx = 1 if st.session_state.edit_staff_type_selection == "外派與外籍幹部" else 0
+                    
+                    selected_staff_type = st.selectbox(
+                        "員工身分類型 (Staff Type) *", 
+                        staff_type_options, 
+                        index=default_idx,
+                        key="edit_staff_type_selection"
+                    )
+
+                    is_expat_now = "外派" in selected_staff_type or "外籍" in selected_staff_type
+
+                    with st.form("form_edit_employee"):
                         col1, col2 = st.columns(2)
                         with col1:
                             new_emp_code = st.text_input("修改員工編號 (工號)", value=str(current_row["emp_code"]))
@@ -144,7 +154,7 @@ def render_edit_profile(engine=None, lang="繁體中文"):
                                     "name": new_name.strip(),
                                     "phone": new_phone.strip(),
                                     "pos": new_pos.strip(),
-                                    "stype": new_staff_type,
+                                    "stype": selected_staff_type,
                                     "amode": new_mode,
                                     "sal": new_sal,
                                     "id_card": new_passport.strip(),
@@ -159,7 +169,7 @@ def render_edit_profile(engine=None, lang="繁體中文"):
                                     "bname": new_bank_name,
                                     "old_code": t_no
                                 })
-                            st.success(f"✅ 員工 `{new_name}` 資料與身分屬性（`{new_staff_type}`）已成功更新！")
+                            st.success(f"✅ 員工 `{new_name}` 資料與身分屬性（`{selected_staff_type}`）已成功更新！")
                             st.rerun()
             else:
                 st.info("目前尚無可編輯的員工資料。")
