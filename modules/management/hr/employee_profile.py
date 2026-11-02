@@ -22,7 +22,7 @@ def init_hr_profile_db(engine):
                     factory VARCHAR(100),
                     department VARCHAR(150),
                     position VARCHAR(100),
-                    staff_type VARCHAR(100) DEFAULT '越南廠內員工',
+                    staff_type VARCHAR(100) DEFAULT '越南籍員工',
                     attendance_mode VARCHAR(50) DEFAULT '需打卡',
                     base_salary NUMERIC(15, 2) DEFAULT 0,
                     private_allowance NUMERIC(15, 2) DEFAULT 0,
@@ -57,11 +57,17 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
     active_lang = lang or st.session_state.get("current_lang", "繁體中文")
 
     st.title("👤 管理部 - 員工個人檔案與人事管理中心")
-    st.caption("管理公司在職員工名冊（區分越南員工與外派外籍幹部）、勞動法規合規建檔與 90 天證件預警。")
+    st.caption("管理公司在職員工名冊（越南員工與外派外籍幹部合規建檔、護照/TRC上傳、90天證件預警）。")
 
     init_hr_profile_db(engine)
 
-    tabs = st.tabs(["VN 新增越南員工", "🌐 新增外派與外籍幹部", "📑 現職員工總名冊與證件預警", "✏️ 編輯與修改員工資料", "📁 離職名冊管理"])
+    tabs = st.tabs([
+        "VN 新增越南員工", 
+        "🌐 新增外派與外籍幹部 (含證件上傳)", 
+        "📑 現職員工總名冊與 90 天預警", 
+        "✏️ 編輯與修改員工資料", 
+        "📁 離職名冊管理"
+    ])
 
     with tabs[0]:
         render_add_vietnamese(engine=engine, lang=active_lang)
