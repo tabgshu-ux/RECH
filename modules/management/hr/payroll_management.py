@@ -168,7 +168,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             st.markdown("##### 1️⃣ 基本薪資與 6 大津貼項目 (Lương & Phụ cấp)")
             col1, col2, col3 = st.columns(3)
             with col1:
-                e_name = st.text_input(L["lbl_emp_name"], value="NGUYỄN THỊ TUYẾT NHUNG")
+                e_name = st.text_input(L["lbl_emp_name"], value="NGUYỄN THỊ TUYẾT NHUNG\n阮 氏 雪 絨")
                 str_base_sal = st.text_input(L["lbl_base_salary"], value="13.507.200")
                 str_pos_allowance = st.text_input(L["lbl_allowance_pos"], value="3.000.000")
             with col2:
@@ -381,11 +381,11 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.error("❌ 批次解析失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 📄 Tab 3: 員工薪資單 (內嵌官方標準 Logo 表頭與列印功能)
+    # 📄 Tab 3: 員工薪資單 (完整展開 6 大津貼、上下分行姓名與列印)
     # ----------------------------------------------------
     with tab_slip:
         st.markdown("### 📄 全公司員工薪資單總覽與列印中心")
-        st.caption("💡 透過下方下拉選單選擇特定員工，下方即會呈現該員工的詳細薪資條與列印畫面。")
+        st.caption("💡 透過下方下拉選單選擇特定員工，下方即會完整展開包含所有津貼與扣款細項的 1:1 正式電子薪資條。")
 
         slip_records = []
         if engine:
@@ -413,7 +413,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             if st.button("🖨️ 一鍵批次列印全公司薪資條 (Batch Print All)", type="primary", use_container_width=True):
                 st.success(f"✅ 已成功產生全公司共 {len(slip_records)} 張員工薪資條的批次列印檔！")
         with col_op2:
-            emp_options = {f"{r['emp_code']} - {r['emp_name']} ({r.get('department','')})": r for r in slip_records}
+            emp_options = {f"{r['emp_code']} - {str(r['emp_name']).split(chr(10))[0]}": r for r in slip_records}
             selected_emp_key = st.selectbox("🎯 選擇要檢視或補印薪資條的員工", list(emp_options.keys()))
             target_slip = emp_options[selected_emp_key]
 
@@ -424,7 +424,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
         for r in slip_records:
             summary_df_data.append({
                 "工號": r.get("emp_code"),
-                "姓名": r.get("emp_name"),
+                "姓名": str(r.get("emp_name")).replace("\n", " / "),
                 "部門": r.get("department"),
                 "廠區": r.get("factory"),
                 "應領總額": fmt_vn_curr(r.get("total_gross", 0)),
@@ -434,11 +434,17 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
         st.dataframe(pd.DataFrame(summary_df_data), use_container_width=True, hide_index=True)
 
         st.markdown("---")
-        st.markdown(f"#### 📄 員工詳細薪資條預覽與列印中心：`{target_slip.get('emp_code')} - {target_slip.get('emp_name')}`")
+        st.markdown(f"#### 📄 員工詳細薪資條預覽與列印中心")
+
+        raw_name = str(target_slip.get('emp_name', ''))
+        if "\n" in raw_name:
+            vn_name_part, cn_name_part = raw_name.split("\n", 1)
+        else:
+            vn_name_part, cn_name_part = raw_name, ""
 
         m_fmt = str(target_slip.get("payroll_month", "2026-09")).replace("-", ".")
         
-        # 🎨 標準公司 Logo 與三語表頭設計 (完美對齊您上傳的官方 Logo 格式)
+        # 🎨 標準公司 Logo 與三語表頭設計 (完整展現 6 大津貼與上下分行姓名)
         slip_html = f"""
         <div style="border: 2px solid #1E3A8A; padding: 25px; border-radius: 10px; background-color: #FFFFFF; font-family: sans-serif; max-width: 850px; margin: auto; color: #111;">
             <table style="width: 100%; border-collapse: collapse; border: none; margin-bottom: 10px;">
@@ -463,7 +469,10 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                     <td style="padding: 8px; border: 1px solid #CBD5E1; font-weight: bold; width: 20%;">人事編號<br><span style="font-size: 11px; color: #555;">Mã nhân viên</span></td>
                     <td style="padding: 8px; border: 1px solid #CBD5E1; width: 30%; color: #1E3A8A; font-weight: bold;">{target_slip.get('emp_code')}</td>
                     <td style="padding: 8px; border: 1px solid #CBD5E1; font-weight: bold; width: 20%;">員工姓名<br><span style="font-size: 11px; color: #555;">Họ tên</span></td>
-                    <td style="padding: 8px; border: 1px solid #CBD5E1; width: 30%; font-weight: bold;">{target_slip.get('emp_name')}</td>
+                    <td style="padding: 8px; border: 1px solid #CBD5E1; width: 30%; font-weight: bold; line-height: 1.4;">
+                        <div style="color: #1E3A8A; font-size: 14px;">{vn_name_part}</div>
+                        <div style="color: #334155; font-size: 13px; font-weight: normal;">{cn_name_part}</div>
+                    </td>
                 </tr>
                 <tr>
                     <td style="padding: 8px; border: 1px solid #CBD5E1; font-weight: bold;">部門職務<br><span style="font-size: 11px; color: #555;">Bộ phận / Chức vụ</span></td>
@@ -513,6 +522,18 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                         <td style="padding: 6px; border: 1px solid #CBD5E1;">其他扣款 (Khoản trừ khác)</td>
                         <td style="padding: 6px; border: 1px solid #CBD5E1; text-align: right; color: #DC2626;">-{fmt_vn_num(target_slip.get('other_deduct', 0))}</td>
                     </tr>
+                    <tr>
+                        <td style="padding: 6px; border: 1px solid #CBD5E1;">出差油費 / 伙食費</td>
+                        <td style="padding: 6px; border: 1px solid #CBD5E1; text-align: right;">{fmt_vn_num(float(target_slip.get('meal_fee', 0)) + float(target_slip.get('gas_allowance', 0)))}</td>
+                        <td style="padding: 6px; border: 1px solid #CBD5E1; background: #F8FAFC;"></td>
+                        <td style="padding: 6px; border: 1px solid #CBD5E1; background: #F8FAFC;"></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px; border: 1px solid #CBD5E1;">全勤獎金 / 女性津貼 / 電話網路</td>
+                        <td style="padding: 6px; border: 1px solid #CBD5E1; text-align: right;">{fmt_vn_num(float(target_slip.get('attendance_bonus', 0)) + float(target_slip.get('women_allowance', 0)) + float(target_slip.get('network_fee', 0)) + float(target_slip.get('prod_bonus', 0)))}</td>
+                        <td style="padding: 6px; border: 1px solid #CBD5E1; background: #F8FAFC;"></td>
+                        <td style="padding: 6px; border: 1px solid #CBD5E1; background: #F8FAFC;"></td>
+                    </tr>
                     <tr style="font-weight: bold; background-color: #F1F5F9;">
                         <td style="padding: 8px; border: 1px solid #CBD5E1;">應領總額 (Tổng thu nhập)</td>
                         <td style="padding: 8px; border: 1px solid #CBD5E1; text-align: right; color: #047857;">{fmt_vn_num(target_slip.get('total_gross', 0))}</td>
@@ -533,7 +554,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             </div>
         </div>
         """
-        st.components.v1.html(slip_html, height=650, scrolling=True)
+        st.components.v1.html(slip_html, height=720, scrolling=True)
 
         # 🖨️ 單人專屬預覽與列印按鈕
         st.markdown("<br>", unsafe_allow_html=True)
@@ -547,7 +568,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 """, unsafe_allow_html=True)
                 st.info("💡 已觸發列印指令，請於彈出視窗中選擇印表機或儲存為 PDF。")
         with col_pr2:
-            st.caption("提示：點擊左側列印按鈕即可呼叫瀏覽器列印，完美輸出帶有官方 Logo 與三語表頭的 1:1 正式薪資單。")
+            st.caption("提示：點擊左側列印按鈕即可呼叫瀏覽器列印，完美輸出帶有官方 Logo 與上下分行姓名的正式薪資單。")
 
     # ----------------------------------------------------
     # 📊 Tab 4: 歷史薪資清冊查詢
