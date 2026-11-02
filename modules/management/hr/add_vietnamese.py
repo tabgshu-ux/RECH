@@ -1,21 +1,11 @@
 import streamlit as st
-import pandas as pd
 from sqlalchemy import text
 
 def render_add_vietnamese(engine=None, lang="繁體中文"):
     st.markdown("### 🇻🇳 新增越南籍員工資料 (符合越南勞動法規範)")
     
-    # 💡 動態從廠區設施管理資料庫撈取真實廠區與辦公室、工地設定
-    factory_options = ["西寧廠 (Tay Ninh)", "文房 (辦公室 VP)", "工程工地 (Site)"]
-    if engine:
-        try:
-            df_fac = pd.read_sql("SELECT DISTINCT factory_name FROM public.plant_facilities WHERE status = '啟用';", con=engine)
-            if not df_fac.empty and "factory_name" in df_fac.columns:
-                db_facs = [f for f in df_fac["factory_name"].dropna().tolist() if "海防" not in f]
-                if db_facs:
-                    factory_options = db_facs
-        except Exception:
-            pass
+    # 💡 駐點廠區精簡：只保留實際的工廠位置「西寧廠」
+    factory_options = ["西寧廠 (Tay Ninh)"]
 
     with st.form("form_add_vietnamese_employee"):
         c1, c2, c3 = st.columns(3)
@@ -26,7 +16,7 @@ def render_add_vietnamese(engine=None, lang="繁體中文"):
             id_card = st.text_input("公民身分證 CCCD / 護照 *", placeholder="079095012345")
             tax_code = st.text_input("個人稅號 (Mã số thuế)", placeholder="8012345678")
         with c2:
-            factory = st.selectbox("駐點廠區與辦公室/工地 (Nhà máy / VP / Công trình)", factory_options)
+            factory = st.selectbox("駐點廠區 (Nhà máy)", factory_options)
             dept = st.text_input("部門 (Bộ phận)", placeholder="生產部 / 財務部 / 品管部")
             position = st.text_input("職稱 (Chức vụ)", placeholder="作業員 / 班長 / 工程師")
             staff_type = "越南籍員工 (VN Local Staff)"
@@ -62,7 +52,7 @@ def render_add_vietnamese(engine=None, lang="繁體中文"):
                             })
                     except Exception:
                         pass
-                st.success(f"🎉 成功新增越南籍員工：{name} (工號: {emp_no}, 駐點: {factory})！")
+                st.success(f"🎉 成功新增越南籍員工：{name} (工號: {emp_no}, 駐點廠區: {factory})！")
                 st.rerun()
             else:
                 st.warning("⚠️ 請完整填寫必要欄位！")
