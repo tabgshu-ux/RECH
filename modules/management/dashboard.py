@@ -5,8 +5,8 @@ MANAGEMENT_DASHBOARD_I18N = {
         "title": "👔 管理部綜合導航中心",
         "caption": "管理公司人事行政、總務後勤與財務會計等核心作業。請點擊下方卡片快速進入對應管理專區。",
         "card_hr_title": "👤 人事行政區",
-        "card_hr_desc": "掌握員工名冊、出勤、薪資與保險。",
-        "card_hr_items": "- 📋 員工基本檔案\n- ⏱️ 員工打卡紀錄\n- 💳 員工薪資與保險\n- 🔑 密碼變更設定",
+        "card_hr_desc": "掌握員工名冊、出勤、薪資、外派派遣與保險。",
+        "card_hr_items": "- 📋 員工基本檔案\n- ✈️ 外派派遣單管理\n- ⏱️ 員工打卡紀錄\n- 💳 員工薪資與保險\n- 🔑 密碼變更設定",
         "btn_hr": "🚀 進入人事行政中心",
         
         "card_ga_title": "📦 總務後勤區",
@@ -23,7 +23,7 @@ MANAGEMENT_DASHBOARD_I18N = {
         "select_item": "選擇作業項目",
         
         "hr_sub": "👥 人事行政作業專區",
-        "hr_options": ["員工基本檔案", "員工打卡紀錄", "員工薪資與保險", "密碼修改"],
+        "hr_options": ["員工基本檔案", "外派派遣單管理", "員工打卡紀錄", "員工薪資與保險", "密碼修改"],
         
         "ga_sub": "📦 總務後勤作業專區",
         "ga_options": ["車輛進出口與門禁", "車輛維修紀錄", "固定資產管理", "宿舍與伙食管理", "廠區設施維護"],
@@ -35,8 +35,8 @@ MANAGEMENT_DASHBOARD_I18N = {
         "title": "👔 Trung tâm Điều hành Quản lý Tổng hợp",
         "caption": "Quản lý nhân sự, hậu cần chung và kế toán tài chính. Nhấp vào các thẻ bên dưới để truy cập nhanh các khu vực quản lý.",
         "card_hr_title": "👤 Khu vực Nhân sự & Hành chính",
-        "card_hr_desc": "Quản lý hồ sơ nhân viên, chấm công, lương và bảo hiểm.",
-        "card_hr_items": "- 📋 Hồ sơ nhân viên cơ bản\n- ⏱️ Lịch sử chấm công\n- 💳 Lương & Bảo hiểm\n- 🔑 Thay đổi mật khẩu",
+        "card_hr_desc": "Quản lý hồ sơ nhân viên, điều động chuyên gia, chấm công, lương và bảo hiểm.",
+        "card_hr_items": "- 📋 Hồ sơ nhân viên cơ bản\n- ✈️ Quản lý lệnh điều động\n- ⏱️ Lịch sử chấm công\n- 💳 Lương & Bảo hiểm\n- 🔑 Thay đổi mật khẩu",
         "btn_hr": "🚀 Vào Trung tâm Nhân sự",
         
         "card_ga_title": "📦 Khu vực Hậu cần & Tổng vụ",
@@ -53,7 +53,7 @@ MANAGEMENT_DASHBOARD_I18N = {
         "select_item": "Chọn mục thao tác",
         
         "hr_sub": "👥 Khu vực Nghiệp vụ Nhân sự",
-        "hr_options": ["Hồ sơ nhân viên", "Chấm công", "Lương & Bảo hiểm", "Đổi mật khẩu"],
+        "hr_options": ["Hồ sơ nhân viên", "Quản lý lệnh điều động", "Chấm công", "Lương & Bảo hiểm", "Đổi mật khẩu"],
         
         "ga_sub": "📦 Khu vực Nghiệp vụ Hậu cần",
         "ga_options": ["Kiểm soát cổng xe", "Bảo trì xe", "Tài sản cố định", "Ký túc xá & Suất ăn", "Bảo trì cơ sở"],
@@ -65,8 +65,8 @@ MANAGEMENT_DASHBOARD_I18N = {
         "title": "👔 Management Department Dashboard",
         "caption": "Manage HR, general affairs, and finance operations. Click cards below to access modules.",
         "card_hr_title": "👤 HR & Administration",
-        "card_hr_desc": "Manage employee registry, attendance, payroll & insurance.",
-        "card_hr_items": "- 📋 Employee Profiles\n- ⏱️ Attendance Records\n- 💳 Payroll & Insurance\n- 🔑 Password Settings",
+        "card_hr_desc": "Manage employee registry, expat dispatch, attendance, payroll & insurance.",
+        "card_hr_items": "- 📋 Employee Profiles\n- ✈️ Expat Dispatch Orders\n- ⏱️ Attendance Records\n- 💳 Payroll & Insurance\n- 🔑 Password Settings",
         "btn_hr": "🚀 Enter HR Center",
         
         "card_ga_title": "📦 General Affairs & Logistics",
@@ -83,7 +83,7 @@ MANAGEMENT_DASHBOARD_I18N = {
         "select_item": "Select Task",
         
         "hr_sub": "👥 HR Operations",
-        "hr_options": ["Employee Profiles", "Attendance", "Payroll & Insurance", "Password Settings"],
+        "hr_options": ["Employee Profiles", "Expat Dispatch Orders", "Attendance", "Payroll & Insurance", "Password Settings"],
         
         "ga_sub": "📦 General Affairs Operations",
         "ga_options": ["Vehicle Gate", "Vehicle Maintenance", "Fixed Assets", "Dorm & Catering", "Facility Maintenance"],
@@ -150,11 +150,13 @@ def render_management_dashboard(engine=None, lang="繁體中文", **kwargs):
             if any(k in sub_choice for k in ["員工基本檔案", "Hồ sơ nhân viên", "Employee Profiles"]):
                 from modules.management.hr.employee_profile import render_hr_profile_page
                 render_hr_profile_page(engine=engine, lang=lang)
+            elif any(k in sub_choice for k in ["外派派遣單管理", "Quản lý lệnh điều động", "Expat Dispatch Orders"]):
+                from modules.management.hr.expat_dispatch_order import render_expat_dispatch_page
+                render_expat_dispatch_page(engine=engine, lang=lang)
             elif any(k in sub_choice for k in ["員工打卡紀錄", "Chấm công", "Attendance"]):
                 from modules.management.hr.internal_attendance import render_internal_attendance_page
                 render_internal_attendance_page(engine=engine, lang=lang)
             elif any(k in sub_choice for k in ["員工薪資與保險", "Lương & Bảo hiểm", "Payroll"]):
-                # 👉 這裡已修正為正確的子資料夾模組路徑
                 from modules.management.hr.payroll_management import render_payroll_management_page
                 render_payroll_management_page(engine=engine, lang=lang)
             elif any(k in sub_choice for k in ["密碼修改", "Đổi mật khẩu", "Password"]):
