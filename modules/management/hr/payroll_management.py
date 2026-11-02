@@ -40,7 +40,7 @@ def fmt_vn_curr(val):
 PAYROLL_I18N = {
     "繁體中文": {
         "title": "💰 管理部 - 員工薪資計算與電子薪資單中心",
-        "caption": "裕豐電機工業標準：1:1 復刻公司正式 Excel 經典黑框薪資單與精準計算。",
+        "caption": "裕豐電機工業標準：1:1 復刻公司正式 Excel 經典黑框薪資單與精準公式計算。",
         "tab_calc": "🧮 單筆薪資核算",
         "tab_import": "📥 批次匯入",
         "tab_slip": "📄 員工薪資單 (公司經典版)",
@@ -81,8 +81,12 @@ def init_payroll_db(engine):
                     ot_195_hours NUMERIC(6,2) DEFAULT 0,
                     ot_20_hours NUMERIC(6,2) DEFAULT 0,
                     ot_30_hours NUMERIC(6,2) DEFAULT 0,
+                    ot_pay NUMERIC(12,2) DEFAULT 0,
                     meal_fee NUMERIC(12,2) DEFAULT 0,
                     prod_bonus NUMERIC(12,2) DEFAULT 0,
+                    network_fee NUMERIC(12,2) DEFAULT 0,
+                    warehouse_fee NUMERIC(12,2) DEFAULT 0,
+                    attendance_bonus NUMERIC(12,2) DEFAULT 0,
                     total_gross NUMERIC(12,2) DEFAULT 0,
                     pit_tax NUMERIC(12,2) DEFAULT 0,
                     bhxh_deduction NUMERIC(12,2) DEFAULT 0,
@@ -141,7 +145,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
         st.markdown("---")
         
         with st.form("form_calc_payroll"):
-            st.markdown("##### 1️⃣ 薪資項目設定")
+            st.markdown("##### 1️⃣ 薪資與津貼項目設定")
             col1, col2, col3 = st.columns(3)
             with col1:
                 e_name = st.text_input("員工姓名 (越/中)", value="PHẠM HOÀNG LÂM\n范 皇 林")
@@ -156,17 +160,18 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 leave_hours = st.number_input("請假時數", min_value=0.0, value=0.0, step=0.5)
                 str_meal_fee = st.text_input("餐費 Tiền cơm", value="1.200.000")
 
-            st.markdown("##### 2️⃣ 加班與扣款項目設定")
+            st.markdown("##### 2️⃣ 獎金、加班與扣款項目設定")
             col4, col5, col6 = st.columns(3)
             with col4:
-                ot_15 = st.number_input("加班時數 Tăng ca*1.5", min_value=0.0, value=0.0, step=0.5)
-                ot_195 = st.number_input("加班時數 Tăng ca*1.95", min_value=0.0, value=0.0, step=0.5)
+                str_prod_bonus = st.text_input("績效獎金 Thưởng N.Suất", value="0")
+                str_network_fee = st.text_input("電話/網路費 PC đt/mạng", value="0")
+                str_warehouse_fee = st.text_input("看倉管 Giữ kho", value="0")
+                str_att_bonus = st.text_input("全勤 Chuyên cần", value="0")
             with col5:
-                ot_20 = st.number_input("加班時數 Tăng ca*2.0", min_value=0.0, value=0.0, step=0.5)
-                ot_30 = st.number_input("加班時數 Tăng ca*3.0", min_value=0.0, value=0.0, step=0.5)
-            with col6:
+                str_ot_pay = st.text_input("加班費總額 Tăng ca", value="0")
                 str_pit = st.text_input("所得稅 TN cá nhân", value="180.421")
                 str_bhxh = st.text_input("社會保險 BHXH", value="1.920.896")
+            with col6:
                 str_bhyt = st.text_input("醫療保險 BHYT", value="360.168")
                 str_bhtn = st.text_input("失業保險 BH Thất nghiệp", value="240.112")
 
@@ -176,12 +181,19 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             gas_allowance = parse_vn_num(str_gas_allowance)
             spec_bonus = parse_vn_num(str_spec_bonus)
             meal_fee = parse_vn_num(str_meal_fee)
+            prod_bonus = parse_vn_num(str_prod_bonus)
+            network_fee = parse_vn_num(str_network_fee)
+            warehouse_fee = parse_vn_num(str_warehouse_fee)
+            att_bonus = parse_vn_num(str_att_bonus)
+            ot_pay = parse_vn_num(str_ot_pay)
+            
             pit = parse_vn_num(str_pit)
             bhxh = parse_vn_num(str_bhxh)
             bhyt = parse_vn_num(str_bhyt)
             bhtn = parse_vn_num(str_bhtn)
 
-            total_gross = base_sal + pos_allowance + eval_bonus + gas_allowance + spec_bonus + meal_fee
+            # 💡 完全依照您的公式：總計 = 底薪 + 各項津貼 + 加班費 + 餐費 + 各項獎金
+            total_gross = base_sal + pos_allowance + eval_bonus + gas_allowance + spec_bonus + ot_pay + meal_fee + prod_bonus + network_fee + warehouse_fee + att_bonus
             total_deduct = pit + bhxh + bhyt + bhtn
             net_pay = total_gross - total_deduct
 
@@ -198,15 +210,26 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                             conn.execute(text("""
                                 INSERT INTO public.payroll_records 
                                 (payroll_month, emp_code, emp_name, department, factory, base_salary, pos_allowance, eval_bonus, 
-                                 gas_allowance, spec_bonus, actual_hours, leave_hours, ot_15_hours, ot_195_hours, ot_20_hours, ot_30_hours,
-                                 meal_fee, total_gross, pit_tax, bhxh_deduction, bhyt_deduction, bhtn_deduction, net_salary)
-                                VALUES (:m, :code, :name, :dept, :factory, :bs, :pos, :ev, :gas, :spec, :act_h, :leave_h,
-                                        :ot15, :ot195, :ot20, :ot30, :meal, :gross, :pit, :bhxh, :bhyt, :bhtn, :net)
+                                 gas_allowance, spec_bonus, actual_hours, leave_hours, ot_pay,
+                                 meal_fee, prod_bonus, network_fee, warehouse_fee, attendance_bonus,
+                                 total_gross, pit_tax, bhxh_deduction, bhyt_deduction, bhtn_deduction, net_salary)
+                                VALUES (:m, :code, :name, :dept, :factory, :bs, :pos, :ev, :gas, :spec, :act_h, :leave_h, :ot,
+                                        :meal, :prod, :net_f, :wh, :att, :gross, :pit, :bhxh, :bhyt, :bhtn, :net)
                                 ON CONFLICT (payroll_month, emp_code) DO UPDATE
                                 SET emp_name = EXCLUDED.emp_name,
                                     department = EXCLUDED.department,
                                     factory = EXCLUDED.factory,
                                     base_salary = EXCLUDED.base_salary,
+                                    pos_allowance = EXCLUDED.pos_allowance,
+                                    eval_bonus = EXCLUDED.eval_bonus,
+                                    gas_allowance = EXCLUDED.gas_allowance,
+                                    spec_bonus = EXCLUDED.spec_bonus,
+                                    ot_pay = EXCLUDED.ot_pay,
+                                    meal_fee = EXCLUDED.meal_fee,
+                                    prod_bonus = EXCLUDED.prod_bonus,
+                                    network_fee = EXCLUDED.network_fee,
+                                    warehouse_fee = EXCLUDED.warehouse_fee,
+                                    attendance_bonus = EXCLUDED.attendance_bonus,
                                     total_gross = EXCLUDED.total_gross,
                                     pit_tax = EXCLUDED.pit_tax,
                                     bhxh_deduction = EXCLUDED.bhxh_deduction,
@@ -216,9 +239,9 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                             """), {
                                 "m": payroll_m, "code": e_code, "name": e_name, "dept": dept_name, "factory": factory_sel,
                                 "bs": base_sal, "pos": pos_allowance, "ev": eval_bonus, "gas": gas_allowance,
-                                "spec": spec_bonus, "act_h": act_hours, "leave_h": leave_hours,
-                                "ot15": ot_15, "ot195": ot_195, "ot20": ot_20, "ot30": ot_30,
-                                "meal": meal_fee, "gross": total_gross, "pit": pit, "bhxh": bhxh, "bhyt": bhyt, "bhtn": bhtn, "net": net_pay
+                                "spec": spec_bonus, "act_h": act_hours, "leave_h": leave_hours, "ot": ot_pay,
+                                "meal": meal_fee, "prod": prod_bonus, "net_f": network_fee, "wh": warehouse_fee, "att": att_bonus,
+                                "gross": total_gross, "pit": pit, "bhxh": bhxh, "bhyt": bhyt, "bhtn": bhtn, "net": net_pay
                             })
                         st.success(L["msg_success"])
                         st.rerun()
@@ -257,9 +280,14 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                                 gas = parse_vn_num(row.iloc[8])
                                 spec = parse_vn_num(row.iloc[10]) if len(row) > 10 else 0.0
                                 act_h = parse_vn_num(row.iloc[13]) if len(row) > 13 and pd.notna(row.iloc[13]) else 208.0
+                                ot_pay = parse_vn_num(row.iloc[19]) if len(row) > 19 else 0.0
                                 meal = parse_vn_num(row.iloc[20]) if len(row) > 20 else 0.0
+                                prod = parse_vn_num(row.iloc[21]) if len(row) > 21 else 0.0
+                                net_f = parse_vn_num(row.iloc[22]) if len(row) > 22 else 0.0
+                                wh = parse_vn_num(row.iloc[23]) if len(row) > 23 else 0.0
+                                att = parse_vn_num(row.iloc[24]) if len(row) > 24 else 0.0
                                 
-                                gross = parse_vn_num(row.iloc[27]) if len(row) > 27 else (bs + pos + ev + gas + spec + meal)
+                                gross = parse_vn_num(row.iloc[27]) if len(row) > 27 else (bs + pos + ev + gas + spec + ot_pay + meal + prod + net_f + wh + att)
                                 pit = parse_vn_num(row.iloc[32]) if len(row) > 32 else 0.0
                                 bhxh = parse_vn_num(row.iloc[33]) if len(row) > 33 else 0.0
                                 bhyt = parse_vn_num(row.iloc[34]) if len(row) > 34 else 0.0
@@ -269,7 +297,8 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                                 parsed_records.append({
                                     "m": import_month, "code": emp_code, "name": emp_name, "dept": dept,
                                     "factory": factory_label, "bs": bs, "pos": pos, "ev": ev, "gas": gas,
-                                    "spec": spec, "act_h": act_h, "meal": meal, "gross": gross,
+                                    "spec": spec, "act_h": act_h, "ot": ot_pay, "meal": meal, "prod": prod,
+                                    "net_f": net_f, "wh": wh, "att": att, "gross": gross,
                                     "pit": pit, "bhxh": bhxh, "bhyt": bhyt, "bhtn": bhtn, "net": net
                                 })
 
@@ -279,10 +308,10 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                             conn.execute(text("""
                                 INSERT INTO public.payroll_records 
                                 (payroll_month, emp_code, emp_name, department, factory, base_salary, pos_allowance, eval_bonus, 
-                                 gas_allowance, spec_bonus, actual_hours, meal_fee, total_gross, 
-                                 pit_tax, bhxh_deduction, bhyt_deduction, bhtn_deduction, net_salary)
-                                VALUES (:m, :code, :name, :dept, :factory, :bs, :pos, :ev, :gas, :spec, :act_h,
-                                        :meal, :gross, :pit, :bhxh, :bhyt, :bhtn, :net)
+                                 gas_allowance, spec_bonus, actual_hours, ot_pay, meal_fee, prod_bonus, network_fee, warehouse_fee, attendance_bonus,
+                                 total_gross, pit_tax, bhxh_deduction, bhyt_deduction, bhtn_deduction, net_salary)
+                                VALUES (:m, :code, :name, :dept, :factory, :bs, :pos, :ev, :gas, :spec, :act_h, :ot,
+                                        :meal, :prod, :net_f, :wh, :att, :gross, :pit, :bhxh, :bhyt, :bhtn, :net)
                                 ON CONFLICT (payroll_month, emp_code) DO UPDATE
                                 SET emp_name = EXCLUDED.emp_name,
                                     department = EXCLUDED.department,
@@ -302,7 +331,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.error("❌ 批次解析失敗: " + str(e))
 
     # ----------------------------------------------------
-    # 📄 Tab 3: 員工薪資單 (完全 1:1 復刻公司正式 Excel 經典黑框版型)[cite: 22]
+    # 📄 Tab 3: 員工薪資單 (完全 1:1 復刻公司正式 Excel 經典黑框版型)
     # ----------------------------------------------------
     with tab_slip:
         st.markdown("### 📄 員工詳細薪資條 (公司經典正式版)")
@@ -323,8 +352,9 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 "department": "GĐ CT 工程經理", "factory": "工程工地 (Site)", "base_salary": 21011200,
                 "pos_allowance": 3000000, "eval_bonus": 5567968, "gas_allowance": 6000000,
                 "spec_bonus": 4000000, "actual_hours": 208, "leave_hours": 0,
-                "ot_15_hours": 0, "ot_195_hours": 0, "ot_20_hours": 0, "ot_30_hours": 0,
-                "meal_fee": 1200000, "total_gross": 40779168, "pit_tax": 180421,
+                "ot_15_hours": 0, "ot_195_hours": 0, "ot_20_hours": 0, "ot_30_hours": 0, "ot_pay": 0,
+                "meal_fee": 1200000, "prod_bonus": 0, "network_fee": 0, "warehouse_fee": 0, "attendance_bonus": 0,
+                "total_gross": 40779168, "pit_tax": 180421,
                 "bhxh_deduction": 1920896, "bhyt_deduction": 360168, "bhtn_deduction": 240112, "net_salary": 38078000
             }]
 
@@ -361,22 +391,32 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
         g_al = float(target_slip.get('gas_allowance', 0))
         s_bo = float(target_slip.get('spec_bonus', 0))
         m_fe = float(target_slip.get('meal_fee', 0))
+        prod_b = float(target_slip.get('prod_bonus', 0))
+        net_f = float(target_slip.get('network_fee', 0))
+        wh_f = float(target_slip.get('warehouse_fee', 0))
+        att_b = float(target_slip.get('attendance_bonus', 0))
+        ot_p = float(target_slip.get('ot_pay', 0))
+        
         act_h = float(target_slip.get('actual_hours', 208))
         leave_h = float(target_slip.get('leave_hours', 0))
-        
         ot15 = float(target_slip.get('ot_15_hours', 0))
         ot195 = float(target_slip.get('ot_195_hours', 0))
         ot20 = float(target_slip.get('ot_20_hours', 0))
         ot30 = float(target_slip.get('ot_30_hours', 0))
         
-        gross = float(target_slip.get('total_gross', b_sal + p_al + e_bo + g_al + s_bo + m_fe))
+        # 💡 精確套用您的加總公式
+        sub_total_1 = b_sal + p_al + e_bo + g_al + s_bo
+        gross = b_sal + p_al + e_bo + g_al + s_bo + ot_p + m_fe + prod_b + net_f + wh_f + att_b
+        
         pit = float(target_slip.get('pit_tax', 0))
         bhxh = float(target_slip.get('bhxh_deduction', 0))
         bhyt = float(target_slip.get('bhyt_deduction', 0))
         bhtn = float(target_slip.get('bhtn_deduction', 0))
-        net = float(target_slip.get('net_salary', gross - (pit + bhxh + bhyt + bhtn)))
+        
+        total_deduct = pit + bhxh + bhyt + bhtn
+        net = gross - total_deduct
 
-        # 🎨 完全 1:1 復刻公司標準 Excel 薪資條的 HTML 經典黑框排版[cite: 22]
+        # 🎨 經典黑框排版 (確保總計與實領有數值輸出)
         slip_html = f"""
         <div style="border: 2px solid #000; padding: 25px; border-radius: 2px; background-color: #FFFFFF; font-family: Arial, sans-serif; max-width: 780px; margin: auto; color: #000;">
             <div style="text-align: center; font-weight: bold; font-size: 16px; margin-bottom: 3px; letter-spacing: 1px;">REETECH INDUSTRIAL CO.,LTD</div>
@@ -424,7 +464,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 </tr>
                 <tr style="background-color: #f8fafc; font-weight: bold;">
                     <td style="border: 1px solid #000; padding: 6px;">合計／Cộng</td>
-                    <td style="border: 1px solid #000; padding: 6px; text-align: right; color: #047857;" colspan="3">{fmt_vn_num(b_sal + p_al + e_bo + g_al + s_bo)}</td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: right; color: #047857;" colspan="3">{fmt_vn_num(sub_total_1)}</td>
                 </tr>
                 <tr>
                     <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">加班時數<br><span style="font-size: 10px; color: #555;">SG Tăng ca*1.5</span></td>
@@ -434,7 +474,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 </tr>
                 <tr style="background-color: #f8fafc; font-weight: bold;">
                     <td style="border: 1px solid #000; padding: 6px;">合計／Cộng</td>
-                    <td style="border: 1px solid #000; padding: 6px; text-align: center;">-</td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: center;">{fmt_vn_num(ot_p)}</td>
                     <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">加班時數<br><span style="font-size: 10px; color: #555;">Tăng ca*1.95</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: center;">{ot195}</td>
                 </tr>
@@ -442,17 +482,17 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                     <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">餐費<br><span style="font-size: 10px; color: #555;">Tiền cơm</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: right;">{fmt_vn_num(m_fe)}</td>
                     <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">績效獎金<br><span style="font-size: 10px; color: #555;">Thưởng N.Suất</span></td>
-                    <td style="border: 1px solid #000; padding: 6px; text-align: right;">-</td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: right;">{fmt_vn_num(prod_b)}</td>
                 </tr>
                 <tr>
                     <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">電話/網路費補貼<br><span style="font-size: 10px; color: #555;">PC đt/mạng</span></td>
-                    <td style="border: 1px solid #000; padding: 6px; text-align: right;">-</td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: right;">{fmt_vn_num(net_f)}</td>
                     <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">看倉管<br><span style="font-size: 10px; color: #555;">Giữ kho</span></td>
-                    <td style="border: 1px solid #000; padding: 6px; text-align: right;">-</td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: right;">{fmt_vn_num(wh_f)}</td>
                 </tr>
                 <tr>
                     <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">全勤<br><span style="font-size: 10px; color: #555;">Chuyên cần</span></td>
-                    <td style="border: 1px solid #000; padding: 6px; text-align: right;">-</td>
+                    <td style="border: 1px solid #000; padding: 6px; text-align: right;">{fmt_vn_num(att_b)}</td>
                     <td style="border: 1px solid #000; padding: 6px; background: #fdfdfd; font-weight: bold;">加班時數<br><span style="font-size: 10px; color: #555;">Tăng ca*3.0</span></td>
                     <td style="border: 1px solid #000; padding: 6px; text-align: center;">{ot30}</td>
                 </tr>
@@ -487,7 +527,7 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
             </div>
         </div>
         """
-        st.components.v1.html(slip_html, height=820, scrolling=True)
+        st.components.v1.html(slip_html, height=850, scrolling=True)
 
         # 🖨️ 單人專屬預覽與列印按鈕
         st.markdown("<br>", unsafe_allow_html=True)
