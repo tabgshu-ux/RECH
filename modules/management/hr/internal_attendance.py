@@ -6,7 +6,7 @@ def get_t(lang):
     texts = {
         "繁體中文": {
             "title": "📊 員工打卡紀錄與出勤稽核中心",
-            "info": "💡 說明：HR 可在此檢視廠內出勤、設定考勤寬限期、對齊 09 月薪資表之多版本加班時數（1.5倍、1.95倍、2.0倍、3.0倍）、執行打卡補登及匯出每月考勤。",
+            "info": "💡 說明：HR 可在此檢視廠內出勤、設定考勤寬限期、執行打卡補登及匯出每月考勤。",
             "tab1_title": "🏭 廠內考勤與多版本加班明細",
             "tab2_title": "📝 打卡補登與原始日誌",
             "tab3_title": "📍 外勤 GPS 打卡稽核",
@@ -20,7 +20,7 @@ def get_t(lang):
         },
         "Tiếng Việt": {
             "title": "📊 Quản lý Chấm công & Kiểm toán Nhân viên",
-            "info": "💡 Hướng dẫn: HR quản lý chấm công, ân hạn, chi tiết tăng ca đa phiên bản (1.5x, 1.95x, 2.0x, 3.0x) đối chiếu theo bảng lương T.09.",
+            "info": "💡 Hướng dẫn: HR quản lý chấm công, ân hạn,  đối chiếu theo bảng lương T.09.",
             "tab1_title": "🏭 Chấm công & Chi tiết Tăng ca",
             "tab2_title": "📝 Bù giờ & Nhật ký",
             "tab3_title": "📍 Kiểm duyệt GPS",
