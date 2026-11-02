@@ -7,6 +7,7 @@ def init_settings_db(engine):
         return
     try:
         with engine.begin() as conn:
+            # 建立動態欄位設定表
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS public.erp_dynamic_fields (
                     id SERIAL PRIMARY KEY,
@@ -20,6 +21,12 @@ def init_settings_db(engine):
                     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                 );
             """))
+
+            # 自動相容舊資料庫，若缺少 default_amount 欄位則自動補上
+            try:
+                conn.execute(text("ALTER TABLE public.erp_dynamic_fields ADD COLUMN IF NOT EXISTS default_amount NUMERIC(12,2) DEFAULT 0;"))
+            except Exception:
+                pass
 
             conn.execute(text("""
                 CREATE TABLE IF NOT EXISTS public.payroll_settings (
@@ -37,8 +44,7 @@ def init_settings_db(engine):
                 defaults = [
                     ("bhxh_rate", "8.0", "社會保險 %"),
                     ("bhyt_rate", "1.5", "醫療保險 %"),
-                    ("bhtn_rate", "1.0", "失業保險 %"),
-                    ("max_insurance_base", "46800000", "保險投保上限金額")
+                    ("bhtn_rate", "1.0", "失業保險 %")
                 ]
                 for k, v, d in defaults:
                     conn.execute(text("""
@@ -46,7 +52,7 @@ def init_settings_db(engine):
                         VALUES (:k, :v, :d) ON CONFLICT (setting_key) DO NOTHING;
                     """), {"k": k, "v": v, "d": d})
 
-            # 初始化預設項目（自動產生 Key，使用者完全不用理會）
+            # 初始化預設項目
             f_count = conn.execute(text("SELECT COUNT(*) FROM public.erp_dynamic_fields")).scalar()
             if f_count == 0:
                 default_fields = [
@@ -100,12 +106,11 @@ def render_payroll_settings_tab(engine=None):
 
     init_settings_db(engine)
 
-    # 取得目前設定
     bhxh_r = float(get_payroll_setting(engine, "bhxh_rate", "8.0"))
     bhyt_r = float(get_payroll_setting(engine, "bhyt_rate", "1.5"))
     bhtn_r = float(get_payroll_setting(engine, "bhtn_rate", "1.0"))
 
-    # 1. 保險與全公司參數設定區塊
+    # 1. 保險參數設定區塊
     st.markdown("---")
     st.markdown("#### 🛡️ 勞健保與法定費率參數設定")
     with st.form("form_erp_params"):
@@ -129,7 +134,7 @@ def render_payroll_settings_tab(engine=None):
                 except Exception as e:
                     st.error("❌ 儲存失敗: " + str(e))
 
-    # 2. 應領與應扣項目輕鬆新增區塊 (不需要打英文 Key!)
+    # 2. 薪資項目新增區塊
     st.markdown("---")
     st.markdown("#### 📑 薪資項目自由增修與預設金額設定")
     st.caption("只要輸入中文與越文名稱，系統自動幫您建立欄位！")
@@ -149,7 +154,7 @@ def render_payroll_settings_tab(engine=None):
             if q_zh:
                 cat_val = "income" if "應領" in q_cat else "deduct"
                 import time
-                auto_key = f"custom_field_{int(time.time())}" # 自動產生 Key，使用者完全無感
+                auto_key = f"custom_field_{int(time.time())}"
                 if engine:
                     try:
                         with engine.begin() as conn:
@@ -173,7 +178,7 @@ def render_payroll_settings_tab(engine=None):
             col_x1, col_x2, col_x3, col_x4 = st.columns([3, 3, 2, 1])
             col_x1.text(f"[{'應領' if f['category']=='income' else '應扣'}] {f['field_name_zh']}")
             col_x2.text(f"越文: {f['field_name_vn']}")
-            col_x3.text(f"預設: {f['default_amount']:,.0f} VND")
+            col_x3.text(f"預設: {float(f.get('default_amount', 0)):,.0f} VND")
             if col_x4.button("🗑️ 刪除", key=f"del_item_{f['id']}"):
                 if engine:
                     with engine.begin() as conn:
