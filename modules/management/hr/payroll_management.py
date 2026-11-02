@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 from sqlalchemy import text
-from modules.management.hr.payroll_settings import get_payroll_setting
+from modules.management.hr.payroll_settings import get_payroll_setting, render_payroll_settings_tab
 
 # ----------------------------------------------------
 # 🇻🇳 越南標準金額格式化
@@ -68,15 +68,17 @@ def init_payroll_db(engine):
 
 def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
     st.title("💰 薪資核算與電子薪資單中心 (Payroll Center)")
-    st.caption("完整復刻公司正式 Excel 經典黑框排版，欄位與保險費率由獨立的人事設定檔動態控制。")
+    st.caption("完整復刻公司正式 Excel 經典黑框排版，支援高級 ERP 動態欄位設定與自動保險計算。")
 
     init_payroll_db(engine)
 
-    tab_calc, tab_import, tab_slip, tab_history = st.tabs([
+    # 💡 完美保留所有分頁，並在最前面新增「⚙️ 人事設定」分頁！
+    tab_calc, tab_import, tab_slip, tab_history, tab_config = st.tabs([
         "🧮 單筆薪資核算", 
         "📥 批次匯入", 
         "📄 員工薪資單 (公司經典版)", 
-        "📊 歷史薪資清冊"
+        "📊 歷史薪資清冊",
+        "⚙️ 人事設定 (HR Settings)"
     ])
 
     # ----------------------------------------------------
@@ -376,6 +378,12 @@ def render_payroll_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.error("讀取失敗: " + str(e))
         else:
             st.info("展示模式中。")
+
+    # ----------------------------------------------------
+    # ⚙️ Tab 5: 獨立的人事設定中心 (HR Settings)
+    # ----------------------------------------------------
+    with tab_config:
+        render_payroll_settings_tab(engine=engine)
 
 def show(engine=None, lang="繁體中文", **kwargs):
     render_payroll_management_page(engine=engine, lang=lang, **kwargs)
