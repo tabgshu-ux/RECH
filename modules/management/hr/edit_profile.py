@@ -4,15 +4,15 @@ import datetime
 from sqlalchemy import text
 
 def render_edit_profile(engine=None, lang="繁體中文"):
-    st.markdown("### ✏️ 編輯與更新現職員工資料 (支援越南在地與外籍合規動態切換)")
+    st.markdown("### ✏️ 編輯與更新現職員工資料 (支援身分切換與合規證件更新)")
     if engine:
         try:
-            # 🛡️ 自動補全所有可能缺少的欄位，避免資料庫結構不一致導致報錯
+            # 🛡️ 自動補全所有可能缺少的欄位
             with engine.begin() as conn:
-                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS private_allowance NUMERIC(15, 2) DEFAULT 0;"))
                 conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS staff_type VARCHAR(100) DEFAULT '越南籍員工';"))
                 conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS attendance_mode VARCHAR(50) DEFAULT '需打卡';"))
                 conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS visa_expire DATE DEFAULT '2027-12-31';"))
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS private_allowance NUMERIC(15, 2) DEFAULT 0;"))
                 conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS tax_code VARCHAR(50);"))
                 conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS perm_address TEXT;"))
                 conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS temp_address TEXT;"))
@@ -21,7 +21,6 @@ def render_edit_profile(engine=None, lang="繁體中文"):
                 conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS bank_acc VARCHAR(100);"))
                 conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS bank_name VARCHAR(150);"))
 
-            # 完整抓取該員工的所有欄位以供動態判斷與修改
             df_edit = pd.read_sql("""
                 SELECT emp_code, emp_name, phone, id_card, tax_code, factory, department, 
                        position, staff_type, attendance_mode, base_salary, private_allowance, 
@@ -31,18 +30,25 @@ def render_edit_profile(engine=None, lang="繁體中文"):
             """, con=engine)
             
             if not df_edit.empty:
-                edit_emp_list = [f"{r['emp_code']} - {r['emp_name']} ({r.get('staff_type', '越南籍')})" for _, r in df_edit.iterrows()]
-                selected_edit_target = st.selectbox("選擇要修改的員工", edit_emp_list)
+                edit_emp_list = [f"{r['emp_code']} - {r['emp_name']} ({r.get('staff_type', '越南籍員工')})" for _, r in df_edit.iterrows()]
+                selected_edit_target = st.selectbox("選擇要修改的員工 (Chọn nhân viên)", edit_emp_list)
                 
                 if selected_edit_target:
                     t_no = selected_edit_target.split(" - ")[0]
                     current_row = df_edit[df_edit["emp_code"] == t_no].iloc[0]
                     
-                    is_expat = "外派" in str(current_row.get("staff_type", "")) or "外籍" in str(current_row.get("staff_type", "")) or "Expat" in str(current_row.get("staff_type", ""))
+                    cur_staff_type = str(current_row.get("staff_type", "越南籍員工"))
 
                     with st.form("form_edit_employee"):
-                        st.markdown(f"#### 📌 目前身分屬性：`{'🌐 外派與外籍幹部' if is_expat else '🇻🇳 越南籍員工'}`")
+                        st.markdown("#### 📌 員工基本與身分屬性設定")
                         
+                        # 💡 允許直接手動切換身分屬性，解決表格不變的問題！
+                        staff_type_options = ["越南籍員工", "外派與外籍幹部"]
+                        default_type_idx = 1 if any(k in cur_staff_type for k in ["外派", "外籍", "Expat"]) else 0
+                        new_staff_type = st.selectbox("員工身分類型 (Staff Type) *", staff_type_options, index=default_type_idx)
+                        
+                        is_expat_now = "外派" in new_staff_type or "外籍" in new_staff_type
+
                         col1, col2 = st.columns(2)
                         with col1:
                             new_emp_code = st.text_input("修改員工編號 (工號)", value=str(current_row["emp_code"]))
@@ -58,9 +64,9 @@ def render_edit_profile(engine=None, lang="繁體中文"):
 
                         st.markdown("---")
                         
-                        # 🌐 針對外籍/外派幹部的動態表單欄位
-                        if is_expat:
-                            st.markdown("##### 🌐 外派與外籍幹部專用合規欄位")
+                        # 🌐 若為外派/外籍幹部，動態顯示合規欄位與雙面證件更新上傳區
+                        if is_expat_now:
+                            st.markdown("##### 🌐 外派與外籍幹部專用合規欄位與證件更新")
                             c_ex1, c_ex2 = st.columns(2)
                             with c_ex1:
                                 new_passport = st.text_input("修改護照號碼 / 居留證號", value=str(current_row["id_card"] or ""))
@@ -77,9 +83,20 @@ def render_edit_profile(engine=None, lang="繁體中文"):
 
                                 new_expire = st.date_input("修改簽證 / TRC / 護照到期日", value=cur_expiry)
                             
+                            st.markdown("##### 📂 更新外籍幹部合規證件與照片 (Passport, Work Permit & TRC Front/Back)")
+                            up1, up2, up3, up4 = st.columns(4)
+                            with up1:
+                                up_pass = st.file_uploader("📄 更新護照", type=["png", "jpg", "jpeg", "pdf"], key="edit_pass")
+                            with up2:
+                                up_wp = st.file_uploader("📄 更新工作證", type=["png", "jpg", "jpeg", "pdf"], key="edit_wp")
+                            with up3:
+                                up_trc_f = st.file_uploader("📄 更新暫住證【正面】", type=["png", "jpg", "jpeg", "pdf"], key="edit_trc_f")
+                            with up4:
+                                up_trc_b = st.file_uploader("📄 更新暫住證【背面】", type=["png", "jpg", "jpeg", "pdf"], key="edit_trc_b")
+
                             new_perm, new_temp, new_hosp, new_bhxh, new_tax, new_bank_acc, new_bank_name = "", "", "", "", "", "", ""
 
-                        # 🇻🇳 針對越南籍員工的動態表單欄位
+                        # 🇻🇳 若為越南籍員工，顯示勞動法規與保險欄位
                         else:
                             st.markdown("##### 🇻🇳 越南籍員工專用勞動法規與保險欄位")
                             c_vn1, c_vn2 = st.columns(2)
@@ -108,6 +125,7 @@ def render_edit_profile(engine=None, lang="繁體中文"):
                                         emp_name = :name, 
                                         phone = :phone, 
                                         position = :pos, 
+                                        staff_type = :stype,
                                         attendance_mode = :amode, 
                                         base_salary = :sal,
                                         id_card = :id_card,
@@ -126,21 +144,22 @@ def render_edit_profile(engine=None, lang="繁體中文"):
                                     "name": new_name.strip(),
                                     "phone": new_phone.strip(),
                                     "pos": new_pos.strip(),
+                                    "stype": new_staff_type,
                                     "amode": new_mode,
                                     "sal": new_sal,
                                     "id_card": new_passport.strip(),
                                     "priv_sal": new_priv_allowance,
                                     "vexpire": new_expire,
-                                    "tax": new_tax if not is_expat else "",
+                                    "tax": new_tax if not is_expat_now else "",
                                     "paddr": new_perm,
                                     "taddr": new_temp,
                                     "hosp": new_hosp,
-                                    "bhxh": new_bhxh if not is_expat else "",
+                                    "bhxh": new_bhxh if not is_expat_now else "",
                                     "bacc": new_bank_acc,
                                     "bname": new_bank_name,
                                     "old_code": t_no
                                 })
-                            st.success(f"✅ 員工資料已成功更新（新工號：`{new_emp_code}`）！")
+                            st.success(f"✅ 員工 `{new_name}` 資料與身分屬性（`{new_staff_type}`）已成功更新！")
                             st.rerun()
             else:
                 st.info("目前尚無可編輯的員工資料。")
