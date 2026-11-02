@@ -7,12 +7,19 @@ def render_edit_profile(engine=None, lang="繁體中文"):
     st.markdown("### ✏️ 編輯與更新現職員工資料 (支援越南在地與外籍合規動態切換)")
     if engine:
         try:
-            # 🛡️ 自動補全可能缺少的欄位，避免資料庫結構不一致導致報錯
+            # 🛡️ 自動補全所有可能缺少的欄位，避免資料庫結構不一致導致報錯
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS private_allowance NUMERIC(15, 2) DEFAULT 0;"))
                 conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS staff_type VARCHAR(100) DEFAULT '越南籍員工';"))
                 conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS attendance_mode VARCHAR(50) DEFAULT '需打卡';"))
                 conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS visa_expire DATE DEFAULT '2027-12-31';"))
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS tax_code VARCHAR(50);"))
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS perm_address TEXT;"))
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS temp_address TEXT;"))
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS hospital VARCHAR(150);"))
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS bhxh_no VARCHAR(100);"))
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS bank_acc VARCHAR(100);"))
+                conn.execute(text("ALTER TABLE public.employee_profiles ADD COLUMN IF NOT EXISTS bank_name VARCHAR(150);"))
 
             # 完整抓取該員工的所有欄位以供動態判斷與修改
             df_edit = pd.read_sql("""
@@ -70,7 +77,7 @@ def render_edit_profile(engine=None, lang="繁體中文"):
 
                                 new_expire = st.date_input("修改簽證 / TRC / 護照到期日", value=cur_expiry)
                             
-                            new_perm, new_temp, new_hosp, new_bhxh, new_tax = "", "", "", "", ""
+                            new_perm, new_temp, new_hosp, new_bhxh, new_tax, new_bank_acc, new_bank_name = "", "", "", "", "", "", ""
 
                         # 🇻🇳 針對越南籍員工的動態表單欄位
                         else:
@@ -110,7 +117,9 @@ def render_edit_profile(engine=None, lang="繁體中文"):
                                         perm_address = :paddr,
                                         temp_address = :taddr,
                                         hospital = :hosp,
-                                        bhxh_no = :bhxh
+                                        bhxh_no = :bhxh,
+                                        bank_acc = :bacc,
+                                        bank_name = :bname
                                     WHERE emp_code = :old_code;
                                 """), {
                                     "new_code": new_emp_code.strip(),
@@ -127,6 +136,8 @@ def render_edit_profile(engine=None, lang="繁體中文"):
                                     "taddr": new_temp,
                                     "hosp": new_hosp,
                                     "bhxh": new_bhxh if not is_expat else "",
+                                    "bacc": new_bank_acc,
+                                    "bname": new_bank_name,
                                     "old_code": t_no
                                 })
                             st.success(f"✅ 員工資料已成功更新（新工號：`{new_emp_code}`）！")
