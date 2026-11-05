@@ -18,7 +18,7 @@ MOBILE_USER_MGMT_CSS = """
 st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 
 def get_department_module_tree():
-    """全域共享的部門與子功能樹狀結構"""
+    """全域共享的部門與子功能樹狀結構（已依企業管理權責與順序重排）"""
     if "custom_department_module_tree" not in st.session_state:
         st.session_state.custom_department_module_tree = {
             "📈 總經理室 (Executive Office)": [
@@ -47,12 +47,6 @@ def get_department_module_tree():
                 "越南稅務報表",
                 "電子發票管理"
             ],
-            "📍 外勤工程打卡與工作回報 (Field Attendance)": [
-                "📍 現場外勤打卡與工作回報"
-            ],
-            "✍️ 電子簽核中心 (Approval Center)": [
-                "✍️ 提交請假/採購與即時進度追蹤 / 審核"
-            ],
             "🛠️ 工程與設計管理中心 (Engineering & Design Center)": [
                 "⚡ 1. 工程主管戰情室與案場管理",
                 "⚡ 2. 工程專案報價系統",
@@ -72,7 +66,13 @@ def get_department_module_tree():
             "📦 倉庫管理 (Warehouse Management)": [
                 "📦 [倉儲] 倉庫庫存與資材條碼管理"
             ],
-            "💻 資訊管理部 (IT & System)": [
+            "📍 外勤工程打卡與工作回報 (Field Attendance)": [
+                "📍 現場外勤打卡與工作回報"
+            ],
+            "✍️ 電子簽核中心 (Approval Center)": [
+                "✍️ 提交請假/採購與即時進度追蹤 / 審核"
+            ],
+            "💻 系統設定 (System Settings)": [
                 "🔒 系統角色權限與模組開關設定",
                 "🔌 API 串聯設定中心"
             ]
@@ -80,7 +80,7 @@ def get_department_module_tree():
     return st.session_state.custom_department_module_tree
 
 def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
-    st.title("🔒 IT 管理中心 - 組織架構與企業部門設置")
+    st.title("🔒 系統設定 - 組織架構與企業部門設置")
     st.info("系統運行正常")
 
 def show(engine=None, lang="繁體中文", **kwargs):
