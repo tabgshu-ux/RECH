@@ -24,12 +24,18 @@ MOBILE_CSS_AND_JS = """
 """
 st.markdown(MOBILE_CSS_AND_JS, unsafe_allow_html=True)
 
-RECH_LOGO_HTML = """
+# ----------------------------------------------------
+# 🎨 動態品牌識別支援 (支援從 Session 讀取動態 Logo 與公司名稱)
+# ----------------------------------------------------
+company_name_display = st.session_state.get("tenant_company_name", "裕豐電機工業有限公司")
+company_sub_display = st.session_state.get("tenant_company_sub", "REETECH INDUSTRIAL CO., LTD")
+
+RECH_LOGO_HTML = f"""
 <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; padding: 6px 8px; background: transparent;">
     <div style="font-size: 32px; font-weight: 900; color: #000055; letter-spacing: -1px; line-height: 1;">RECH</div>
     <div style="border-left: 2px solid #000055; padding-left: 8px; line-height: 1.15; text-align: left;">
-        <div style="font-size: 14px; font-weight: 800; color: #000055;">裕豐電機工業有限公司</div>
-        <div style="font-size: 9px; font-weight: 700; color: #1E293B;">REETECH INDUSTRIAL CO., LTD</div>
+        <div style="font-size: 14px; font-weight: 800; color: #000055;">{company_name_display}</div>
+        <div style="font-size: 9px; font-weight: 700; color: #1E293B;">{company_sub_display}</div>
         <div style="font-size: 8.5px; font-weight: 700; color: #334155;">CÔNG TY TNHH CN DŨ PHONG</div>
     </div>
 </div>
@@ -88,6 +94,7 @@ except Exception:
 def load_module_safely(mod_name, func_name, *args, **kwargs):
     try:
         mod = importlib.import_module(mod_name)
+        importlib.reload(mod) # 開發時即時熱更新
         func = getattr(mod, func_name, None)
         if callable(func):
             func(*args, **kwargs)
@@ -295,7 +302,7 @@ if active_anns:
     st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
 
 # ----------------------------------------------------
-# 🔀 智慧關鍵字動態安全路由分流（整合我們剛才做好的 IT 模組）
+# 🔀 智慧關鍵字動態安全路由分流（對接獨立拆分模組）
 # ----------------------------------------------------
 feat_str = str(selected_feat_label)
 
@@ -306,28 +313,35 @@ if "獨立企業部門" in feat_str or "Department Config" in feat_str:
     else:
         st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
 
-# 2. 資訊管理部：角色權限指派 (RBAC)
+# 2. 資訊管理部：企業品牌與識別設定 (Logo 管理)
+elif "企業品牌" in feat_str or "Logo" in feat_str or "Branding" in feat_str:
+    if current_role_clean == "admin":
+        load_module_safely("modules.it_system.branding_config", "render", engine=engine, lang=curr_lang)
+    else:
+        st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
+
+# 3. 資訊管理部：角色權限指派 (RBAC)
 elif "組織角色與權限" in feat_str or "RBAC" in feat_str:
     if current_role_clean == "admin":
         load_module_safely("modules.it_system.role_rbac", "render", engine=engine, lang=curr_lang)
     else:
         st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
 
-# 3. 資訊管理部：資料庫與 API 閘道器
+# 4. 資訊管理部：資料庫與 API 閘道器
 elif "資料庫與 API" in feat_str or "DB Bridge" in feat_str:
     if current_role_clean == "admin":
         load_module_safely("modules.it_system.db_bridge", "render", engine=engine, lang=curr_lang)
     else:
         st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
 
-# 4. 資訊管理部：系統稽核日誌
+# 5. 資訊管理部：系統稽核日誌
 elif "系統稽核日誌" in feat_str or "Audit Logs" in feat_str:
     if current_role_clean == "admin":
         load_module_safely("modules.it_system.audit_logs", "render", engine=engine, lang=curr_lang)
     else:
         st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
 
-# ----------------- 以下保留您原本所有的各部門智慧分流 -----------------
+# ----------------- 以下保留原各部門智慧分流 -----------------
 elif "API" in feat_str or "it_licensing" in feat_str:
     if current_role_clean == "admin":
         load_module_safely("modules.system_licensing", "render_licensing_control_page", engine=engine, lang=curr_lang)
