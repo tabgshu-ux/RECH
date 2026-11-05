@@ -27,6 +27,7 @@ def render_financials_pl_page(engine=None, lang="繁體中文", **kwargs):
     st.markdown("---")
     st.markdown("#### 📈 越南會計準則 Thông tư 200 財務報表")
     
+    # 修正：將分頁標籤全數改為標準繁體中文
     t200_tab1, t200_tab2 = st.tabs([
         "資產負債表 (Bảng Cân đối kế toán)", 
         "綜合損益表 (Báo cáo kết quả hoạt động kinh doanh)"
