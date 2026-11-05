@@ -37,8 +37,8 @@ department_names = list(dept_module_tree.keys()) if dept_module_tree else [
     "生產部 (Production Dept)",
     "倉庫管理 (Warehouse Management)",
     "外勤工程打卡與工作回報 (Field Attendance)",
-    "系統設定 (System Settings)",
-    "電子簽核中心 (Approval Center)"
+    "電子簽核中心 (Approval Center)",
+    "系統設定 (System Settings)"
 ]
 
 # 權限過濾
