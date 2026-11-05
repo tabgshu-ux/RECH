@@ -5,7 +5,7 @@ from sqlalchemy import text
 from modules.user_management import get_department_module_tree
 
 st.set_page_config(
-    page_title="裕豐電機工業 REETECH INDUSTRIAL AI ERP",
+    page_title="RECH SaaS Enterprise ERP",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -25,26 +25,64 @@ MOBILE_CSS_AND_JS = """
 st.markdown(MOBILE_CSS_AND_JS, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# 🎨 動態品牌識別支援 (支援從 Session 讀取動態 Logo 與公司名稱)
+# 🗄️ 嘗試從資料庫讀取當前租戶的動態品牌識別（Logo 與公司名稱）
 # ----------------------------------------------------
-company_name_display = st.session_state.get("tenant_company_name", "裕豐電機工業有限公司")
-company_sub_display = st.session_state.get("tenant_company_sub", "REETECH INDUSTRIAL CO., LTD")
+try:
+    db_conn = importlib.import_module("modules.db_connection")
+    engine = db_conn.get_db_engine()
+except Exception:
+    engine = None
 
-RECH_LOGO_HTML = f"""
-<div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; padding: 6px 8px; background: transparent;">
-    <div style="font-size: 32px; font-weight: 900; color: #000055; letter-spacing: -1px; line-height: 1;">RECH</div>
-    <div style="border-left: 2px solid #000055; padding-left: 8px; line-height: 1.15; text-align: left;">
-        <div style="font-size: 14px; font-weight: 800; color: #000055;">{company_name_display}</div>
-        <div style="font-size: 9px; font-weight: 700; color: #1E293B;">{company_sub_display}</div>
-        <div style="font-size: 8.5px; font-weight: 700; color: #334155;">CÔNG TY TNHH CN DŨ PHONG</div>
+current_tenant_id = st.session_state.get("tenant_id", "REETECH_VN")
+db_company_name = "裕豐電機工業有限公司"
+db_company_sub = "REETECH INDUSTRIAL CO., LTD"
+db_logo_url = ""
+
+if engine:
+    try:
+        with engine.connect() as conn:
+            res = conn.execute(
+                text("SELECT company_name, company_subtitle, logo_url FROM tenant_settings WHERE tenant_id = :tid"),
+                {"tid": current_tenant_id}
+            ).fetchone()
+            if res:
+                db_company_name = res[0]
+                db_company_sub = res[1]
+                db_logo_url = res[2] if res[2] else ""
+    except Exception:
+        pass
+
+# 優先採用 Session 暫存，其次採用資料庫，最後採用預設值
+company_name_display = st.session_state.get("tenant_company_name", db_company_name)
+company_sub_display = st.session_state.get("tenant_company_sub", db_company_sub)
+company_logo_url = st.session_state.get("tenant_logo_url", db_logo_url)
+
+# 動態生成 Logo HTML（同時支援登入頁與側邊欄）
+if company_logo_url and not company_logo_url.startswith("assets/"):
+    RECH_LOGO_HTML = f"""
+    <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px;">
+        <img src="{company_logo_url}" style="max-height: 50px; object-fit: contain;">
+        <div style="text-align: left; line-height: 1.2;">
+            <div style="font-size: 14px; font-weight: 800; color: #000055;">{company_name_display}</div>
+            <div style="font-size: 9px; font-weight: 700; color: #1E293B;">{company_sub_display}</div>
+        </div>
     </div>
-</div>
-"""
+    """
+else:
+    RECH_LOGO_HTML = f"""
+    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 15px; padding: 6px 8px; background: transparent;">
+        <div style="font-size: 32px; font-weight: 900; color: #000055; letter-spacing: -1px; line-height: 1;">RECH</div>
+        <div style="border-left: 2px solid #000055; padding-left: 8px; line-height: 1.15; text-align: left;">
+            <div style="font-size: 14px; font-weight: 800; color: #000055;">{company_name_display}</div>
+            <div style="font-size: 9px; font-weight: 700; color: #1E293B;">{company_sub_display}</div>
+        </div>
+    </div>
+    """
 
 UI_STRINGS = {
     "繁體中文": {
-        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
-        "login_title": "⚡ 裕豐電機工業系統登入",
+        "company_sub": company_sub_display,
+        "login_title": f"⚡ {company_name_display} 系統登入",
         "username": "帳號 (工號)",
         "password": "密碼",
         "login_btn": "🔑 登入系統",
@@ -54,8 +92,8 @@ UI_STRINGS = {
         "sub_header": "選擇子部門與功能 / Chọn chức năng :",
     },
     "Tiếng Việt": {
-        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
-        "login_title": "⚡ REETECH INDUSTRIAL - Đăng nhập hệ thống",
+        "company_sub": company_sub_display,
+        "login_title": f"⚡ {company_name_display} - Đăng nhập hệ thống",
         "username": "Tài khoản (Mã NV)",
         "password": "Mật khẩu",
         "login_btn": "🔑 Đăng nhập",
@@ -65,8 +103,8 @@ UI_STRINGS = {
         "sub_header": "Chọn bộ phận trực thuộc:",
     },
     "English": {
-        "company_sub": "REETECH INDUSTRIAL Co., Ltd.",
-        "login_title": "⚡ REETECH INDUSTRIAL - System Login",
+        "company_sub": company_sub_display,
+        "login_title": f"⚡ {company_name_display} - System Login",
         "username": "Username (Emp ID)",
         "password": "Password",
         "login_btn": "🔑 Login",
@@ -77,7 +115,6 @@ UI_STRINGS = {
     }
 }
 
-# 預設以繁體中文啟動
 if "current_lang" not in st.session_state:
     st.session_state.current_lang = "繁體中文"
 
@@ -85,12 +122,6 @@ if "selected_dept_index" not in st.session_state:
     st.session_state.selected_dept_index = 0
 if "selected_feat_index" not in st.session_state:
     st.session_state.selected_feat_index = 0
-
-try:
-    db_conn = importlib.import_module("modules.db_connection")
-    engine = db_conn.get_db_engine()
-except Exception:
-    engine = None
 
 def load_module_safely(mod_name, func_name, *args, **kwargs):
     try:
@@ -114,7 +145,7 @@ curr_lang = st.session_state.current_lang
 ui_t = UI_STRINGS.get(curr_lang, UI_STRINGS["繁體中文"])
 
 # ----------------------------------------------------
-# 🔐 1. 登入介面
+# 🔐 1. 登入介面 (已全面套用動態租戶 Logo 與公司名稱)
 # ----------------------------------------------------
 if not st.session_state.logged_in:
     _, center_col, _ = st.columns([1, 1.5, 1])
@@ -303,46 +334,40 @@ if active_anns:
     st.info(f"📢 **【公司佈告欄】{latest_ann['title']}**（發布單位：{latest_ann['publisher']} | 日期：{latest_ann['date']}）\n\n> {latest_ann['content']}")
 
 # ----------------------------------------------------
-# 🔀 智慧關鍵字動態安全路由分流（對接獨立拆分模組）
+# 🔀 智慧關鍵字動態安全路由分流
 # ----------------------------------------------------
 feat_str = str(selected_feat_label)
 
-# 1. 資訊管理部：獨立企業部門設定
 if "獨立企業部門" in feat_str or "Department Config" in feat_str:
     if current_role_clean == "admin":
         load_module_safely("modules.it_system.department_config", "render", engine=engine, lang=curr_lang)
     else:
         st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
 
-# 2. 資訊管理部：企業品牌與識別設定 (Logo 管理)
 elif "企業品牌" in feat_str or "Logo" in feat_str or "Branding" in feat_str:
     if current_role_clean == "admin":
         load_module_safely("modules.it_system.branding_config", "render", engine=engine, lang=curr_lang)
     else:
         st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
 
-# 3. 資訊管理部：角色權限指派 (RBAC)
 elif "組織角色與權限" in feat_str or "RBAC" in feat_str:
     if current_role_clean == "admin":
         load_module_safely("modules.it_system.role_rbac", "render", engine=engine, lang=curr_lang)
     else:
         st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
 
-# 4. 資訊管理部：資料庫與 API 閘道器
 elif "資料庫與 API" in feat_str or "DB Bridge" in feat_str:
     if current_role_clean == "admin":
         load_module_safely("modules.it_system.db_bridge", "render", engine=engine, lang=curr_lang)
     else:
         st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
 
-# 5. 資訊管理部：系統稽核日誌
 elif "系統稽核日誌" in feat_str or "Audit Logs" in feat_str:
     if current_role_clean == "admin":
         load_module_safely("modules.it_system.audit_logs", "render", engine=engine, lang=curr_lang)
     else:
-        st.error("⚠️ 權限不足：僅限系統管理員 (admin) 存取。")
+        st.error("⚠️ 權sin限不足：僅限系統管理員 (admin) 存取。")
 
-# ----------------- 以下保留原各部門智慧分流 -----------------
 elif "API" in feat_str or "it_licensing" in feat_str:
     if current_role_clean == "admin":
         load_module_safely("modules.system_licensing", "render_licensing_control_page", engine=engine, lang=curr_lang)
