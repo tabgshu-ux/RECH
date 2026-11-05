@@ -220,22 +220,31 @@ st.sidebar.markdown("---")
 
 current_role_clean = str(st.session_state.get("user_role", "")).strip().lower()
 
-dept_module_tree = get_department_module_tree()
-department_names = list(dept_module_tree.keys())
+# 📌 嚴格對齊您要求的企業標準部門排序
+base_department_options = [
+    "總經理室 (Executive Office)",
+    "管理部 (Management Dept)",
+    "工程與設計管理中心 (Engineering & Design Center)",
+    "生產部 (Production Dept)",
+    "倉庫管理 (Warehouse Management)",
+    "外勤工程打卡與工作回報 (Field Attendance)",
+    "系統設定 (System Settings)",  # 原資訊管理部已更名
+    "電子簽核中心 (Approval Center)"
+]
 
 available_dept_names = []
-for d_name in department_names:
-    if current_role_clean != "admin" and "資訊管理部" in d_name:
+for d_name in base_department_options:
+    if current_role_clean != "admin" and "系統設定" in d_name:
         continue
     if current_role_clean == "security" and "管理部" not in d_name:
         continue
     available_dept_names.append(d_name)
 
 if not available_dept_names:
-    available_dept_names = department_names
+    available_dept_names = base_department_options
 
 if current_role_clean in ["fieldworker", "外勤人員", "worker", "外勤技師"]:
-    selected_dept_label = "📍 外勤工程打卡與工作回報 (Field Attendance)"
+    selected_dept_label = "外勤工程打卡與工作回報 (Field Attendance)"
     selected_feat_label = "📍 現場外勤打卡與工作回報"
     st.sidebar.markdown("**📌 外勤專用直達模式**")
 elif current_role_clean == "security":
@@ -294,9 +303,9 @@ try:
     if "外勤工程打卡" in dept_str or "Field Attendance" in dept_str:
         load_module_safely("modules.field_gps_attendance", "render_field_gps_attendance", engine=engine, lang=curr_lang)
 
-    elif "資訊管理部" in dept_str:
+    elif "系統設定" in dept_str:
         if current_role_clean == "admin":
-            sub_mod_choice = st.selectbox("📌 選擇 IT 管理子模組", ["🏢 1. 獨立企業部門與模組拼圖", "⚙️ 2. 組織角色與權限指派 (RBAC)", "🔌 3. 資料庫與 API 閘道器", "📊 4. 系統稽核日誌與追蹤"])
+            sub_mod_choice = st.selectbox("📌 選擇系統設定子模組", ["🏢 1. 獨立企業部門與模組拼圖", "⚙️ 2. 組織角色與權限指派 (RBAC)", "🔌 3. 資料庫與 API 閘道器", "📊 4. 系統稽核日誌與追蹤"])
             if "獨立企業部門" in sub_mod_choice:
                 load_module_safely("modules.it_system.department_config", "render", engine=engine, lang=curr_lang)
             elif "組織角色" in sub_mod_choice:
@@ -306,7 +315,7 @@ try:
             elif "系統稽核" in sub_mod_choice:
                 load_module_safely("modules.it_system.audit_logs", "render", engine=engine, lang=curr_lang)
         else:
-            st.error("🚫 權限不足：資訊管理部僅限系統管理員 (admin) 存取與設定！")
+            st.error("🚫 權限不足：系統設定僅限系統管理員 (admin) 存取與設定！")
 
     elif "總經理室" in dept_str:
         sub_exec_choice = st.selectbox("📌 選擇總經理室子功能", ["📊 原料價格與匯率戰情室", "💰 財務與損益類", "📈 專案進度與異常監控", "🇻🇳 越南政策與法規"])
