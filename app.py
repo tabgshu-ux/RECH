@@ -312,15 +312,15 @@ try:
     elif "總經理室" in dept_str:
         sub_exec_choice = st.selectbox("📌 選擇總經理室子功能", ["📊 原料價格與匯率戰情室", "💰 財務與損益類", "📈 專案進度與異常監控", "🇻🇳 越南政策與法規"])
         if "原料價格" in sub_exec_choice:
-            load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="commodities_fx", lang=curr_lang)
+            load_module_safely("modules.executive.commodities_fx", "show", engine=engine, lang=curr_lang)
         elif "財務" in sub_exec_choice:
-            load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="financials_pl", lang=curr_lang)
+            load_module_safely("modules.executive.financials_pl", "show", engine=engine, lang=curr_lang)
         elif "專案進度" in sub_exec_choice:
-            load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="project_progress_exec", lang=curr_lang)
+            load_module_safely("modules.executive.project_progress", "show", engine=engine, lang=curr_lang)
         elif "政策" in sub_exec_choice:
-            load_module_safely("modules.vietnam_policy_news", "render_vietnam_policy_news_page", engine=engine, lang=curr_lang)
+            load_module_safely("modules.executive.vietnam_policy", "show", engine=engine, lang=curr_lang)
         else:
-            load_module_safely("modules.executive_dashboard", "render_executive_dashboard_page", sub_route="commodities_fx", lang=curr_lang)
+            load_module_safely("modules.executive.commodities_fx", "show", engine=engine, lang=curr_lang)
 
     elif "管理部" in dept_str:
         load_module_safely("modules.management.dashboard", "render_management_dashboard", engine=engine, lang=curr_lang)
