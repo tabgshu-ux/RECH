@@ -77,69 +77,110 @@ def get_department_module_tree():
     return st.session_state.custom_department_module_tree
 
 def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
-    st.title("🔒 系統設定與組織架構管理中心")
-    st.caption("管理企業內部組織部門、員工帳號權限綁定，落實 100% 動態配置（Metadata-Driven）。")
+    st.title("🔒 系統設定與真實員工帳號綁定中心")
+    st.caption("直接從資料庫（Database）抓取真實員工與薪資資料，實現 100% 動態資料驅動與內控綁定。")
     st.markdown("---")
 
-    # 建立系統設定內部的三大核心分頁
+    # 確保資料庫中存在 employees 表格
+    if engine is not None:
+        try:
+            with engine.begin() as conn:
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS employees (
+                        emp_code VARCHAR(50) PRIMARY KEY,
+                        name VARCHAR(100) NOT NULL,
+                        department VARCHAR(150),
+                        role VARCHAR(50) DEFAULT 'Staff',
+                        password VARCHAR(100) DEFAULT '123456',
+                        must_change_password BOOLEAN DEFAULT TRUE,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+        except Exception:
+            pass
+
+    # 建立分頁
     tab_emp, tab_dept, tab_rbac = st.tabs([
-        "👥 員工與帳號權限綁定 (Employees)",
+        "👥 真實員工與帳號權限綁定 (Database Employees)",
         "🏢 企業部門動態設置 (Departments)",
         "⚙️ 組織角色與權限指派 (RBAC)"
     ])
 
-    # 1. 員工與帳號綁定管理
+    # 1. 真實員工與帳號綁定管理
     with tab_emp:
-        st.subheader("👥 員工帳號與部門/角色指派")
-        st.info("在此維護員工工號、姓名、所屬部門及系統操作角色（支援系統自動指派預設密碼 123456 與首次登入強制改密機制）。")
+        st.subheader("👥 資料庫真實員工名單與部門指派")
+        st.info("以下資料直接讀取自您的資料庫 (`employees` 表格)，確保人名與薪資人事模組完全同步。")
 
-        if "employee_db" not in st.session_state:
-            st.session_state.employee_db = [
-                {"工號": "EMP001", "姓名": "陳總經理", "部門": "📈 總經理室 (Executive Office)", "角色": "Admin", "密碼": "123", "must_change_password": False},
-                {"工號": "EMP002", "姓名": "林副總", "部門": "🛠️ 工程與設計管理中心", "角色": "Manager", "密碼": "123456", "must_change_password": True},
-                {"工號": "EMP003", "姓名": "廠長", "部門": "🏭 生產部 (Production Dept)", "角色": "Manager", "密碼": "123456", "must_change_password": True},
-                {"工號": "EMP004", "姓名": "外勤技師A", "部門": "📍 外勤工程打卡與工作回報", "角色": "Staff", "密碼": "123456", "must_change_password": True},
-            ]
+        employee_list = []
+        if engine is not None:
+            try:
+                with engine.connect() as conn:
+                    query = text("SELECT emp_code, name, department, role, password, must_change_password FROM employees")
+                    df_db_emp = pd.read_sql(query, con=conn)
+                    for _, row in df_db_emp.iterrows():
+                        employee_list.append({
+                            "工號": row["emp_code"],
+                            "姓名": row["name"],
+                            "部門": row["department"],
+                            "角色": row["role"],
+                            "密碼": row["password"],
+                            "須改密碼": row["must_change_password"]
+                        })
+            except Exception as e:
+                st.warning(f"⚠️ 讀取資料庫員工資料發生異常：{str(e)}")
 
-        df_emp = pd.DataFrame(st.session_state.employee_db)
-        st.dataframe(df_emp, use_container_width=True)
+        # 如果資料庫尚無員工，提供快速初始化或提示
+        if not employee_list:
+            st.warning("⚠️ 目前資料庫中尚未建立員工資料。請透過下方表單新增第一筆真實員工，系統將直接寫入資料庫！")
+        else:
+            df_emp = pd.DataFrame(employee_list)
+            st.dataframe(df_emp, use_container_width=True)
 
-        with st.form("add_employee_form"):
-            st.markdown("#### ➕ 新增員工與指派初始帳號")
+        st.markdown("---")
+        with st.form("add_real_employee_form"):
+            st.markdown("#### ➕ 新增真實員工至資料庫與權限系統")
             col1, col2 = st.columns(2)
             with col1:
-                new_id = st.text_input("員工工號 (Emp ID)", placeholder="例如: EMP005")
-                new_name = st.text_input("員工姓名 (Full Name)", placeholder="例如: 王小明")
+                new_id = st.text_input("員工工號 (Emp ID) *", placeholder="例如: RECH001")
+                new_name = st.text_input("員工真實姓名 (Full Name) *", placeholder="例如: 依您薪資資料庫之真實姓名")
             with col2:
                 dept_list = list(get_department_module_tree().keys())
                 new_dept = st.selectbox("所屬部門 (Department)", dept_list)
                 new_role = st.selectbox("系統角色 (Role)", ["Admin", "Manager", "Staff", "Security"])
 
-            submitted_emp = st.form_submit_button("💾 儲存並建立員工帳號", type="primary")
+            submitted_emp = st.form_submit_button("💾 寫入資料庫並建立帳號", type="primary")
             if submitted_emp:
                 if new_id and new_name:
-                    # 檢查是否重複
-                    exists = any(e["工號"] == new_id for e in st.session_state.employee_db)
-                    if exists:
-                        st.error(f"⚠️ 工號 {new_id} 已存在，請使用其他工號！")
+                    if engine is not None:
+                        try:
+                            with engine.begin() as conn:
+                                insert_sql = text("""
+                                    INSERT INTO employees (emp_code, name, department, role, password, must_change_password)
+                                    VALUES (:code, :name, :dept, :role, :pwd, :mpwd)
+                                    ON CONFLICT (emp_code) 
+                                    DO UPDATE SET name = :name, department = :dept, role = :role;
+                                """)
+                                conn.execute(insert_sql, {
+                                    "code": new_id.strip(),
+                                    "name": new_name.strip(),
+                                    "dept": new_dept,
+                                    "role": new_role,
+                                    "pwd": "123456",
+                                    "mpwd": True
+                                })
+                            st.success(f"🎉 真實員工 {new_name.strip()} ({new_id.strip()}) 已成功寫入資料庫！")
+                            st.rerun()
+                        except Exception as db_err:
+                            st.error(f"⚠️ 寫入資料庫失敗：{str(db_err)}")
                     else:
-                        st.session_state.employee_db.append({
-                            "工號": new_id,
-                            "姓名": new_name,
-                            "部門": new_dept,
-                            "角色": new_role,
-                            "密碼": "123456",
-                            "must_change_password": True
-                        })
-                        st.success(f"🎉 員工 {new_name} ({new_id}) 帳號建立成功！初始密碼為 123456。")
-                        st.rerun()
+                        st.error("⚠️ 資料庫引擎未連線，無法寫入！")
                 else:
-                    st.warning("⚠️ 請完整填寫工號與姓名！")
+                    st.warning("⚠️ 請完整填寫工號與真實姓名！")
 
     # 2. 企業部門動態設置
     with tab_dept:
         st.subheader("🏢 企業部門與自動模組拼圖")
-        st.info("系統會根據您在此處定義的部門，自動掛載對應的業務模組，免除寫死程式碼。")
+        st.info("系統會根據在此處定義的部門，自動掛載對應的業務模組。")
         
         tree = get_department_module_tree()
         for d_name, mods in tree.items():
@@ -150,14 +191,11 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
     # 3. 組織角色與權限指派 (RBAC)
     with tab_rbac:
         st.subheader("⚙️ 角色權限對照與模組開關")
-        st.markdown("在此您可以針對不同職位（如廠長、工程師、外勤技師）精準配置模組操作權限。")
-        
-        # 呼叫或載入我們剛才優化的 rbac 模組
         try:
             from modules.it_system import role_rbac
             role_rbac.render(engine=engine, lang=lang, **kwargs)
-        except Exception as e:
-            st.info("💡 組織角色權限模組正在同步中，您也可以直接從左側選單進入各項系統設定進行微調。")
+        except Exception:
+            st.info("💡 組織角色權限模組準備中。")
 
 def show(engine=None, lang="繁體中文", **kwargs):
     render_user_management_page(engine=engine, lang=lang, **kwargs)
