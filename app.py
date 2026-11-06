@@ -1,52 +1,40 @@
 # ==========================================
 # 檔案路徑：app.py
-# 職責：系統主入口、全域狀態管理、選單路由控制與資料庫連線注入
+# 職責：系統主入口、登入狀態攔截、頂部動態導覽與路由控制
 # ==========================================
 
 import streamlit as st
-import importlib
+from views.login import render_login_page
 from views.dashboard import render_dashboard
 from modules.it_system.admin_settings import render_admin_settings
 from modules.base_module import render_dynamic_module
 
 # -----------------------------------------------------------------------------
-# 1. 全域頁面設定與 Session 狀態初始化
+# 1. 頁面組態與 Session 狀態初始化
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="裕豐電機工業 SaaS ERP",
     page_icon="🏭",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
-# 追蹤當前頁面與啟用的功能 ID
+# 安全驗證與路由狀態
+if 'logged_in' not in st.session_state:
+    st.session_state['logged_in'] = False
+if 'user_name' not in st.session_state:
+    st.session_state['user_name'] = ""
 if 'current_view' not in st.session_state:
     st.session_state['current_view'] = 'dashboard'
 if 'active_feature_id' not in st.session_state:
     st.session_state['active_feature_id'] = None
 if 'current_lang' not in st.session_state:
-    st.session_state['current_lang'] = 'zh' # 支援雙語 'zh' / 'vi'
+    st.session_state['current_lang'] = 'zh'
 
 # -----------------------------------------------------------------------------
-# 2. 資料庫連線引擎 (對接 Supabase / PostgreSQL)
+# 2. 資料庫引擎 (對接 PostgreSQL / Supabase)
 # -----------------------------------------------------------------------------
 class DatabaseEngine:
-    def __init__(self):
-        # 此處保留接軌 st.connection / psycopg2 / Supabase 之連線 Hook
-        pass
-
     def query(self, sql, params=None):
-        """
-        執行 SQL 查詢並回傳 Dict 格式結果
-        (開發階段降級保護：若資料庫尚未寫入 sys_modules 則自動輸出基礎核心選單)
-        """
-        try:
-            # 實作部署時改為: return st.connection("postgresql", type="sql").query(sql, params=params)
-            pass
-        except Exception:
-            pass
-
-        # 資料庫尚未完成建表前之內建 Fallback 結構
         if "sys_modules" in sql:
             return [
                 {"id": "hr", "name_zh": "人事/行政", "name_vi": "Nhân sự / Hành chính", "sort_order": 1, "is_active": True},
@@ -56,10 +44,10 @@ class DatabaseEngine:
             ]
         elif "sys_features" in sql:
             return [
-                {"id": "feat_leave", "module_id": "hr", "name_zh": "員工請假紀錄", "name_vi": "Ghi nhận nghỉ phép", "route_key": "modules.hr.leave_management", "sort_order": 1, "is_active": True},
-                {"id": "feat_card", "module_id": "hr", "name_zh": "員工打卡紀錄", "name_vi": "Ghi nhận chấm công", "route_key": "modules.hr.attendance", "sort_order": 2, "is_active": True},
-                {"id": "feat_po", "module_id": "ga", "name_zh": "採購申請", "name_vi": "Yêu cầu mua hàng", "route_key": "modules.purchase.po_request", "sort_order": 1, "is_active": True},
-                {"id": "feat_it_menu", "module_id": "it_system", "name_zh": "選單動態配置", "name_vi": "Cấu hình menu", "route_key": "modules.it_system.admin_settings", "sort_order": 1, "is_active": True},
+                {"id": "feat_leave", "module_id": "hr", "name_zh": "員工請假紀錄", "name_vi": "Ghi nhận nghỉ phép", "sort_order": 1, "is_active": True},
+                {"id": "feat_card", "module_id": "hr", "name_zh": "員工打卡紀錄", "name_vi": "Ghi nhận chấm công", "sort_order": 2, "is_active": True},
+                {"id": "feat_po", "module_id": "ga", "name_zh": "採購申請", "name_vi": "Yêu cầu mua hàng", "sort_order": 1, "is_active": True},
+                {"id": "feat_it_menu", "module_id": "it_system", "name_zh": "選單動態配置", "name_vi": "Cấu hình menu", "sort_order": 1, "is_active": True},
             ]
         elif "sys_sub_tabs" in sql:
             return [
@@ -69,22 +57,53 @@ class DatabaseEngine:
         return []
 
     def execute(self, sql, params=None):
-        """執行 INSERT / UPDATE / DELETE 操作"""
-        # 實作部署時改為 SQL connection execute 邏輯
-        st.toast(f"執行資料庫指令成功！", icon="✅")
+        pass
 
-# 實體化資料庫連線
 db_conn = DatabaseEngine()
 
 # -----------------------------------------------------------------------------
-# 3. 系統全域頂部導覽列與語系選單
+# 3. 登入安全強制作業 (未登入者直接攔截於 Login 頁面)
 # -----------------------------------------------------------------------------
-col_logo, col_space, col_home, col_lang = st.columns([4, 3, 2, 1])
+if not st.session_state['logged_in']:
+    render_login_page(db_conn)
+    st.stop()  # 阻斷後續畫面渲染
+
+# -----------------------------------------------------------------------------
+# 4. 已登入狀態：動態頂部導覽列 (只在內頁顯示「回主頁」)
+# -----------------------------------------------------------------------------
+col_logo, col_user, col_nav, col_logout = st.columns([5, 2, 2, 1])
 
 with col_logo:
-    st.title("🏭 裕豐電機工業 SaaS ERP")
+    st.subheader("🏭 裕豐電機工業 SaaS ERP")
 
-with col_home:
-    if st.button("🏠 回業務導覽主頁", use_container_width=True, type="secondary"):
+with col_user:
+    st.caption(f"👤 使用者: {st.session_state['user_name']}")
+
+with col_nav:
+    # 只有在「非主頁」時才顯示回主頁按鈕
+    if st.session_state['current_view'] != 'dashboard':
+        if st.button("🏠 回業務導覽主頁", use_container_width=True):
+            st.session_state['current_view'] = 'dashboard'
+            st.session_state['active_feature_id'] = None
+            st.rerun()
+
+with col_logout:
+    if st.button("🚪 登出", use_container_width=True):
+        st.session_state['logged_in'] = False
+        st.session_state['user_name'] = ""
         st.session_state['current_view'] = 'dashboard'
-        st.session_state['active_feature_id'] = None
+        st.rerun()
+
+st.divider()
+
+# -----------------------------------------------------------------------------
+# 5. 全域動態路由
+# -----------------------------------------------------------------------------
+if st.session_state['current_view'] == 'dashboard':
+    render_dashboard(db_conn)
+elif st.session_state['current_view'] == 'dynamic_feature':
+    active_feat_id = st.session_state.get('active_feature_id')
+    if active_feat_id == 'feat_it_menu':
+        render_admin_settings(db_conn)
+    else:
+        render_dynamic_module(active_feat_id, db_conn)
