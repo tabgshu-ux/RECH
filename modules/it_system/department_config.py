@@ -1,7 +1,7 @@
 import streamlit as st
 
 def get_department_module_tree():
-    """全域共享的部門與子功能樹狀結構（支援動態掛載與卸載）"""
+    """裕豐電機工業真實組織架構與模組對應（嚴格排除不存在的資訊管理部）"""
     if "custom_department_module_tree" not in st.session_state:
         st.session_state.custom_department_module_tree = {
             "📈 總經理室 (Executive Office)": [
@@ -36,17 +36,13 @@ def get_department_module_tree():
             ],
             "✍️ 電子簽核中心 (Approval Center)": [
                 "✍️ 提交請假/採購與即時進度追蹤 / 審核"
-            ],
-            "💻 資訊管理部 (System Settings)": [
-                "🔒 系統角色權限與模組開關設定",
-                "🔌 API 串聯設定中心"
             ]
         }
     return st.session_state.custom_department_module_tree
 
 def render(engine=None, lang="繁體中文", **kwargs):
-    st.title("🏢 企業部門動態掛載與模組拼圖管理")
-    st.caption("管理系統各部門與功能模組的對應關係。")
+    st.title("⚙️ 系統設定中心 (System Settings)")
+    st.caption("供 Admin 管理員進行動態模組掛載與系統參數設定。")
     
     tree = get_department_module_tree()
     for d_name, mods in tree.items():
