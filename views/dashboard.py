@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：views/dashboard.py
-# 職責：依照指定 7 大部門順序渲染側邊欄與右側卡片（依系統語系純淨顯示）
+# 職責：依照指定 7 大部門順序渲染左側導覽與右側卡片式儀表板
 # ==========================================
 
 import streamlit as st
@@ -20,7 +20,7 @@ def render_dashboard(db_conn):
     is_admin = (st.session_state.get('user_name') == 'admin')
 
     # -------------------------------------------------------------------------
-    # 1. 左側側邊欄：一級部門導覽
+    # 1. 左側側邊欄：一級部門導覽按鈕
     # -------------------------------------------------------------------------
     sidebar_title = "🏢 企業導覽選單" if lang == 'zh' else "🏢 Danh mục bộ phận"
     st.sidebar.markdown(f"### {sidebar_title}")
@@ -39,13 +39,12 @@ def render_dashboard(db_conn):
             st.rerun()
         st.sidebar.divider()
 
-    # 依序渲染一級部門按鈕（純淨語系顯示，自動過濾不必要的雙語括號）
+    # 依序渲染 7 大一級部門按鈕
     for mod in modules:
         is_selected = (st.session_state['selected_module_id'] == mod['id'])
         btn_type = "primary" if is_selected else "secondary"
         
-        raw_name = mod['name_zh'] if lang == 'zh' else mod['name_vi']
-        mod_display_name = raw_name.split('(')[0].strip() if lang == 'zh' else raw_name
+        mod_display_name = mod['name_zh'] if lang == 'zh' else mod['name_vi']
         
         if st.sidebar.button(
             mod_display_name, 
@@ -57,7 +56,7 @@ def render_dashboard(db_conn):
             st.rerun()
 
     # -------------------------------------------------------------------------
-    # 2. 右側主畫面渲染
+    # 2. 右側主畫面渲染（卡片式戰情室）
     # -------------------------------------------------------------------------
     
     # 【模式 A：Admin 全局控制台】
@@ -86,7 +85,7 @@ def render_dashboard(db_conn):
 
         st.divider()
 
-        # 跨部門業務一覽與快捷跳轉
+        # 按 7 大部門標準順序呈現卡片牆
         sec_title = "📊 跨部門業務一覽與快捷跳轉" if lang == 'zh' else "📊 Danh mục chức năng các bộ phận"
         st.markdown(f"### {sec_title}")
         
@@ -96,8 +95,7 @@ def render_dashboard(db_conn):
             for j in range(col_count):
                 if i + j < len(modules):
                     mod = modules[i + j]
-                    raw_mod_name = mod['name_zh'] if lang == 'zh' else mod['name_vi']
-                    mod_name = raw_mod_name.split('(')[0].strip() if lang == 'zh' else raw_mod_name
+                    mod_name = mod['name_zh'] if lang == 'zh' else mod['name_vi']
                     
                     with cols[j]:
                         with st.container(border=True):
@@ -107,8 +105,7 @@ def render_dashboard(db_conn):
                             sub_feats = [f for f in features if f['module_id'] == mod['id']]
                             if sub_feats:
                                 for feat in sub_feats:
-                                    raw_feat_name = feat['name_zh'] if lang == 'zh' else feat['name_vi']
-                                    feat_name = raw_feat_name.split('(')[0].strip() if lang == 'zh' else raw_feat_name
+                                    feat_name = feat['name_zh'] if lang == 'zh' else feat['name_vi']
                                     if st.button(
                                         f"👉 {feat_name}", 
                                         key=f"admin_wall_btn_{mod['id']}_{feat['id']}", 
@@ -121,11 +118,10 @@ def render_dashboard(db_conn):
                                 no_feat_msg = "尚未配置功能項目" if lang == 'zh' else "Chưa có chức năng"
                                 st.caption(no_feat_msg)
 
-    # 【模式 B：單部門工作台】
+    # 【模式 B：單一部門工作台（卡片式）】
     else:
         current_mod = next((m for m in modules if m['id'] == st.session_state['selected_module_id']), modules[0])
-        raw_mod_name = current_mod['name_zh'] if lang == 'zh' else current_mod['name_vi']
-        mod_name = raw_mod_name.split('(')[0].strip() if lang == 'zh' else raw_mod_name
+        mod_name = current_mod['name_zh'] if lang == 'zh' else current_mod['name_vi']
         
         page_title = f"📂 {mod_name} - 功能儀表板" if lang == 'zh' else f"📂 {mod_name} - Bảng điều khiển"
         st.title(page_title)
@@ -144,8 +140,7 @@ def render_dashboard(db_conn):
             for j in range(col_count):
                 if i + j < len(current_features):
                     feat = current_features[i + j]
-                    raw_feat_name = feat['name_zh'] if lang == 'zh' else feat['name_vi']
-                    feat_name = raw_feat_name.split('(')[0].strip() if lang == 'zh' else raw_feat_name
+                    feat_name = feat['name_zh'] if lang == 'zh' else feat['name_vi']
                     btn_label = "進入功能 ➡️" if lang == 'zh' else "Vào chức năng ➡️"
                     
                     with cols[j]:
