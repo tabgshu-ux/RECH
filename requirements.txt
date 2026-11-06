@@ -5,7 +5,7 @@ pandas
 openpyxl
 reportlab
 yfinance
-psycopg2-binary
+psycopg[binary]
 requests
 trimesh
 numpy
