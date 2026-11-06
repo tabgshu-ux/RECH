@@ -1,6 +1,6 @@
 import streamlit as st
 import importlib
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 # 設定網頁標題與佈局
 st.set_page_config(
@@ -9,14 +9,19 @@ st.set_page_config(
     layout="wide"
 )
 
-# 建立資料庫連線引擎
+# 建立資料庫連線引擎 (精準對應您 Secrets 中的 SUPABASE_DB_URL)
 @st.cache_resource
 def init_connection():
     try:
-        database_url = st.secrets["database"]["url"]
-        return create_engine(database_url)
+        # 直接讀取頂層鍵名 SUPABASE_DB_URL
+        database_url = st.secrets["SUPABASE_DB_URL"]
+        engine = create_engine(database_url)
+        # 測試連線是否暢通
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return engine
     except Exception as e:
-        st.warning(f"⚠️ 資料庫連線初始化提示: {e} (目前以離線/記憶體模式運行)")
+        st.warning(f"⚠️ 資料庫連線初始化提示: {e}")
         return None
 
 engine = init_connection()
@@ -28,13 +33,13 @@ if "lang" not in st.session_state:
 curr_lang = st.sidebar.selectbox("選擇系統語系 / Select Language", ["繁體中文", "Tiếng Việt", "English"], index=0)
 st.session_state.lang = curr_lang
 
-# 模擬登入使用者狀態 (這裡假設目前登入者為 admin，您可以未來串接登入驗證)
+# 模擬登入使用者狀態 (Admin)
 if "current_user_role" not in st.session_state:
-    st.session_state.current_user_role = "Admin"  # 測試用：Admin 或 Staff
+    st.session_state.current_user_role = "Admin"
 
 st.sidebar.markdown("---")
 st.sidebar.markdown(f"👤 **當前使用者：admin**")
-st.sidebar.caption(pid_str := f"身分權限：{st.session_state.current_user_role}")
+st.sidebar.caption(f"身分權限：{st.session_state.current_user_role}")
 
 if st.sidebar.button("🚪 登出系統"):
     st.success("已成功登出系統")
@@ -43,12 +48,12 @@ st.sidebar.markdown("---")
 
 # 引入正式部門樹狀結構（絕不包含資訊管理部）
 from modules.it_system.department_config import get_department_module_tree
-department_tree = get_department_module_tree()
+department_tree = get_department_module_tree(engine)
 
 # 建立動態側邊欄選項清單
 department_names = list(department_tree.keys())
 
-# **關鍵核心**：只有當登入者身分為 Admin 時，才將「💻 系統設定 (System Settings)」加入選單中！
+# 只有當登入者身分為 Admin 時，才將「💻 系統設定 (System Settings)」加入選單中
 if st.session_state.current_user_role == "Admin":
     department_names.append("💻 系統設定 (System Settings)")
 
