@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：app.py
-# 職責：系統主入口、登入狀態攔截、頂部動態導覽與路由控制
+# 職責：系統主入口、登入控管與左側/頂部導覽切換
 # ==========================================
 
 import streamlit as st
@@ -9,16 +9,14 @@ from views.dashboard import render_dashboard
 from modules.it_system.admin_settings import render_admin_settings
 from modules.base_module import render_dynamic_module
 
-# -----------------------------------------------------------------------------
-# 1. 頁面組態與 Session 狀態初始化
-# -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="裕豐電機工業 SaaS ERP",
     page_icon="🏭",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# 安全驗證與路由狀態
+# 狀態初始化
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 if 'user_name' not in st.session_state:
@@ -27,12 +25,10 @@ if 'current_view' not in st.session_state:
     st.session_state['current_view'] = 'dashboard'
 if 'active_feature_id' not in st.session_state:
     st.session_state['active_feature_id'] = None
-if 'current_lang' not in st.session_state:
-    st.session_state['current_lang'] = 'zh'
+if 'selected_module_id' not in st.session_state:
+    st.session_state['selected_module_id'] = None
 
-# -----------------------------------------------------------------------------
-# 2. 資料庫引擎 (對接 PostgreSQL / Supabase)
-# -----------------------------------------------------------------------------
+# 資料庫模擬/引擎介面
 class DatabaseEngine:
     def query(self, sql, params=None):
         if "sys_modules" in sql:
@@ -61,44 +57,32 @@ class DatabaseEngine:
 
 db_conn = DatabaseEngine()
 
-# -----------------------------------------------------------------------------
-# 3. 登入安全強制作業 (未登入者直接攔截於 Login 頁面)
-# -----------------------------------------------------------------------------
+# 未登入攔截
 if not st.session_state['logged_in']:
     render_login_page(db_conn)
-    st.stop()  # 阻斷後續畫面渲染
+    st.stop()
 
-# -----------------------------------------------------------------------------
-# 4. 已登入狀態：動態頂部導覽列 (只在內頁顯示「回主頁」)
-# -----------------------------------------------------------------------------
+# 頂部列
 col_logo, col_user, col_nav, col_logout = st.columns([5, 2, 2, 1])
-
 with col_logo:
     st.subheader("🏭 裕豐電機工業 SaaS ERP")
-
 with col_user:
-    st.caption(f"👤 使用者: {st.session_state['user_name']}")
-
+    st.caption(f"👤 {st.session_state['user_name']}")
 with col_nav:
-    # 只有在「非主頁」時才顯示回主頁按鈕
     if st.session_state['current_view'] != 'dashboard':
-        if st.button("🏠 回業務導覽主頁", use_container_width=True):
+        if st.button("🏠 回部門選單", use_container_width=True):
             st.session_state['current_view'] = 'dashboard'
             st.session_state['active_feature_id'] = None
             st.rerun()
-
 with col_logout:
     if st.button("🚪 登出", use_container_width=True):
         st.session_state['logged_in'] = False
-        st.session_state['user_name'] = ""
         st.session_state['current_view'] = 'dashboard'
         st.rerun()
 
 st.divider()
 
-# -----------------------------------------------------------------------------
-# 5. 全域動態路由
-# -----------------------------------------------------------------------------
+# 全域動態路由
 if st.session_state['current_view'] == 'dashboard':
     render_dashboard(db_conn)
 elif st.session_state['current_view'] == 'dynamic_feature':
