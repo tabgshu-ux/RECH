@@ -18,7 +18,7 @@ MOBILE_USER_MGMT_CSS = """
 st.markdown(MOBILE_USER_MGMT_CSS, unsafe_allow_html=True)
 
 def get_department_module_tree():
-    """全域共享的部門與子功能樹狀結構（已依企業管理權責與順序重排）"""
+    """全域共享的部門與子功能樹狀結構（支援動態掛載與卸載）"""
     if "custom_department_module_tree" not in st.session_state:
         st.session_state.custom_department_module_tree = {
             "📈 總經理室 (Executive Office)": [
@@ -62,15 +62,14 @@ def get_department_module_tree():
     return st.session_state.custom_department_module_tree
 
 def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
-    st.title("🔒 系統設定與真實員工帳號綁定中心")
-    st.caption("直接從資料庫（Database）抓取真實員工與薪資資料，實現 100% 動態資料驅動與內控綁定。")
+    st.title("🔒 系統設定與動態模組掛載中心")
+    st.caption("支援在網頁端直接新增部門、為指定部門掛載（新增）或卸載（刪除）業務模組拼圖。")
     st.markdown("---")
 
-    # 確保資料庫中存在 employees 表格，若已存在則自動檢查並補齊可能缺少的欄位
+    # 資料庫表格初始化防禦
     if engine is not None:
         try:
             with engine.begin() as conn:
-                # 1. 若完全沒有此表則新建
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS employees (
                         emp_code VARCHAR(50) PRIMARY KEY,
@@ -82,26 +81,23 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
-                # 2. 防禦性檢查：若舊表缺少 password 等欄位，自動 ALTER 加上
                 conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS password VARCHAR(100) DEFAULT '123456';"))
                 conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT TRUE;"))
                 conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'Staff';"))
                 conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS department VARCHAR(150);"))
-        except Exception as e:
-            st.warning(f"⚠️ 資料庫表格結構自動調整提示：{str(e)}")
+        except Exception:
+            pass
 
     # 建立分頁
     tab_emp, tab_dept, tab_rbac = st.tabs([
         "👥 真實員工與帳號權限綁定 (Database Employees)",
-        "🏢 企業部門動態設置 (Departments)",
+        "🏢 企業部門動態掛載與卸載 (Departments & Modules)",
         "⚙️ 組織角色與權限指派 (RBAC)"
     ])
 
     # 1. 真實員工與帳號綁定管理
     with tab_emp:
         st.subheader("👥 資料庫真實員工名單與部門指派")
-        st.info("以下資料直接讀取自您的資料庫 (`employees` 表格)，確保人名與薪資人事模組完全同步。")
-
         employee_list = []
         if engine is not None:
             try:
@@ -121,7 +117,7 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                 st.error(f"⚠️ 讀取資料庫員工資料發生異常：{str(e)}")
 
         if not employee_list:
-            st.warning("⚠️ 目前資料庫中尚未建立員工資料。請透過下方表單新增第一筆真實員工，系統將直接寫入資料庫！")
+            st.warning("⚠️ 目前資料庫中尚未建立員工資料。請透過下方表單新增第一筆真實員工！")
         else:
             df_emp = pd.DataFrame(employee_list)
             st.dataframe(df_emp, use_container_width=True)
@@ -134,7 +130,8 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                 new_id = st.text_input("員工工號 (Emp ID) *", placeholder="例如: RECH001")
                 new_name = st.text_input("員工真實姓名 (Full Name) *", placeholder="例如: 依您薪資資料庫之真實姓名")
             with col2:
-                dept_list = list(get_department_module_tree().keys())
+                tree_dict = get_department_module_tree()
+                dept_list = list(tree_dict.keys())
                 new_dept = st.selectbox("所屬部門 (Department)", dept_list)
                 new_role = st.selectbox("系統角色 (Role)", ["Admin", "Manager", "Staff", "Security"])
 
@@ -167,16 +164,66 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                 else:
                     st.warning("⚠️ 請完整填寫工號與真實姓名！")
 
-    # 2. 企業部門動態設置
+    # 2. 企業部門動態掛載與卸載 (Departments & Modules)
     with tab_dept:
-        st.subheader("🏢 企業部門與自動模組拼圖")
-        st.info("系統會根據在此處定義的部門，自動掛載對應的業務模組。")
-        
+        st.subheader("🏢 企業部門動態掛載與模組拼圖管理")
+        st.info("您可以在此處新增部門、為現有部門『掛載』新功能模組，或是隨時『卸載』不需要的模組。")
+
         tree = get_department_module_tree()
-        for d_name, mods in tree.items():
-            with st.expander(f"📁 {d_name} (包含 {len(mods)} 項功能模組)"):
-                for m in mods:
-                    st.markdown(f"- {m}")
+
+        # A. 新增一級部門表單
+        with st.form("add_dept_form"):
+            st.markdown("#### ➕ 新增一級部門")
+            new_dept_name = st.text_input("新部門名稱 (含圖示尤佳)", placeholder="例如: ⚡ 品保與安衛部 (QA & HSE Dept)")
+            submitted_new_dept = st.form_submit_button("📁 建立新部門")
+            if submitted_new_dept:
+                if new_dept_name.strip():
+                    if new_dept_name in tree:
+                        st.warning("⚠️ 該部門名稱已存在！")
+                    else:
+                        tree[new_dept_name.strip()] = []
+                        st.success(f"🎉 新部門「{new_dept_name.strip()}」建立成功！")
+                        st.rerun()
+                else:
+                    st.warning("⚠️ 請輸入部門名稱！")
+
+        st.markdown("---")
+        st.markdown("#### 📂 現有部門與模組掛載/卸載管理")
+
+        # 針對每個部門進行模組掛載與卸載互動
+        for d_name, mods in list(tree.items()):
+            with st.expander(f"📁 {d_name} (目前掛載 {len(mods)} 項模組)", expanded=False):
+                # 顯示目前已掛載的模組，並提供「卸載」按鈕
+                if mods:
+                    st.markdown("**已掛載之模組拼圖：**")
+                    for idx, m_item in enumerate(mods):
+                        col_m1, col_m2 = st.columns([4, 1])
+                        with col_m1:
+                            st.text(f"• {m_item}")
+                        with col_m2:
+                            if st.button("🗑️ 卸載", key=f"unmount_{d_name}_{idx}___"):
+                                mods.remove(m_item)
+                                st.success(f"已從 {d_name} 卸載模組：{m_item}")
+                                st.rerun()
+                else:
+                    st.info("💡 此部門目前尚無掛載任何模組。")
+
+                st.markdown("---")
+                # 為此部門掛載新模組的表單
+                with st.form(f"mount_form_{d_name}"):
+                    st.markdown(f"**➕ 為 【{d_name}】 掛載新模組**")
+                    new_mod_name = st.text_input("輸入新模組名稱", placeholder="例如: 📋 專案風險評估表", key=f"input_mod_{d_name}")
+                    submitted_mount = st.form_submit_button("🔗 確認掛載模組")
+                    if submitted_mount:
+                        if new_mod_name.strip():
+                            if new_mod_name.strip() in mods:
+                                st.warning("⚠️ 此模組已在此部門掛載過了！")
+                            else:
+                                mods.append(new_mod_name.strip())
+                                st.success(f"🎉 成功為 {d_name} 掛載模組：{new_mod_name.strip()}")
+                                st.rerun()
+                        else:
+                            st.warning("⚠️ 請輸入模組名稱！")
 
     # 3. 組織角色與權限指派 (RBAC)
     with tab_rbac:
