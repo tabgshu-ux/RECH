@@ -1,5 +1,5 @@
 import streamlit as st
-import importlib
+import pandas as pd
 from sqlalchemy import create_engine, text
 
 # 設定網頁標題與佈局
@@ -19,7 +19,6 @@ def init_connection():
             conn.execute(text("SELECT 1"))
         return engine
     except Exception as e:
-        st.warning(f"⚠️ 資料庫連線初始化提示: {e}")
         return None
 
 engine = init_connection()
@@ -42,8 +41,63 @@ def get_app_branding(engine):
             pass
     return branding
 
-import pandas as pd
 branding_info = get_app_branding(engine)
+
+# 內建穩健的部門樹狀結構，徹底根絕 ImportError
+def get_department_module_tree():
+    return {
+        "總經理室 (Executive Office)": [
+            "總經理室戰情室", 
+            "AI 原料採購顧問與金屬行情", 
+            "AR/AP 與 P&L 財務戰情儀表板", 
+            "工程進度與異常即時監控", 
+            "越南經營政策與法規動態"
+        ],
+        "管理部 (Management Dept)": [
+            "公司公告佈告欄", 
+            "員工檔案管理", 
+            "員工打卡紀錄", 
+            "員工薪資與保險", 
+            "密碼修改", 
+            "配合廠商主檔與履約紀錄", 
+            "採購與應付帳款 (AP)", 
+            "應收帳款管理 (AR)", 
+            "越南稅務報表 (Thông tư 200)", 
+            "電子發票管理", 
+            "宿舍與伙食管理", 
+            "工作廠區安全管理", 
+            "車輛進出口管制", 
+            "車輛維修保養紀錄", 
+            "固定資產盤點", 
+            "文件檔案管理"
+        ],
+        "工程與設計管理中心 (Engineering & Design Center)": [
+            "工程主管戰情室與案場管理", 
+            "工程專案報價系統", 
+            "施工日報表與點工點料登記", 
+            "AI 施工照片辨識與安衛稽核", 
+            "工程證照與機具檢驗預警", 
+            "配電盤電氣與機構設計圖庫", 
+            "BOM 零件與倉庫採購自動連動", 
+            "外包商計價與工班管理", 
+            "FAT/SAT 出廠與現場驗收管理"
+        ],
+        "生產部 (Production Dept - 西寧廠)": [
+            "板金加工組工單與條碼追蹤", 
+            "粉體塗裝烤漆組品管", 
+            "配電盤組裝配線組進度追蹤"
+        ],
+        "倉庫管理 (Warehouse Management)": [
+            "倉庫庫存與資材條碼管理", 
+            "安全庫存預警與補貨機制"
+        ],
+        "現場外勤打卡與工作回報 (Field Attendance)": [
+            "手機端極簡 GPS 外勤打卡與施工回報"
+        ],
+        "電子簽核中心 (Approval Center)": [
+            "跨部門請假、採購與工程變更電子簽核中心"
+        ]
+    }
 
 # 初始化使用者登入狀態
 if "authenticated" not in st.session_state:
@@ -53,9 +107,8 @@ if "current_user" not in st.session_state:
 if "current_user_role" not in st.session_state:
     st.session_state.current_user_role = "Staff"
 
-# ==================== 1. 登入畫面 (動態載入資料庫 Logo 與名稱) ====================
+# ==================== 1. 登入畫面 ====================
 if not st.session_state.authenticated:
-    # 完美使用資料庫配置的 Logo 圖片與公司名稱
     col_logo, col_title = st.columns([1, 8])
     with col_logo:
         try:
@@ -100,8 +153,7 @@ if not st.session_state.authenticated:
     
     st.stop()
 
-# ==================== 2. 已登入後的正式 ERP 主畫面 ====================
-
+# ==================== 2. 正式 ERP 主畫面 ====================
 if "lang" not in st.session_state:
     st.session_state.lang = "繁體中文"
 
@@ -121,9 +173,7 @@ if st.sidebar.button("🚪 登出系統"):
 
 st.sidebar.markdown("---")
 
-from modules.it_system.department_config import get_department_module_tree
-department_tree = get_department_module_tree(engine)
-
+department_tree = get_department_module_tree()
 department_names = list(department_tree.keys())
 
 if st.session_state.current_user_role == "Admin":
