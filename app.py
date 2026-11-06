@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import importlib
 from sqlalchemy import text
-from modules.user_management import get_department_module_tree
+# 修正：將 get_department_module_tree 從正確的 it_system 模組匯入
+from modules.it_system.department_config import get_department_module_tree
 
 st.set_page_config(
     page_title="RECH SaaS Enterprise ERP",
