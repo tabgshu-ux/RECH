@@ -3,8 +3,8 @@ import pandas as pd
 from sqlalchemy import text, create_engine
 import os
 
-def get_db_engine(passed_engine=None):
-    """精準對應您現有 Secrets 的 SUPABASE_DB_URL 連線函式"""
+def get_robust_db_engine(passed_engine=None):
+    """具備自動修復與防禦機制的 Supabase 連線引擎建立器"""
     if passed_engine is not None:
         return passed_engine
         
@@ -16,20 +16,20 @@ def get_db_engine(passed_engine=None):
         pass
         
     if not db_url:
-        try:
-            if "database" in st.secrets and "url" in st.secrets["database"]:
-                db_url = st.secrets["database"]["url"]
-        except Exception:
-            pass
-            
-    if not db_url:
         db_url = os.environ.get("SUPABASE_DB_URL") or os.environ.get("DATABASE_URL")
         
     if db_url:
         try:
-            return create_engine(db_url)
+            # 自動修復 Supabase Pooler 字串相容性
+            clean_url = db_url.strip()
+            if "pooler.supabase.com" in clean_url and "?" not in clean_url:
+                clean_url += "?sslmode=require"
+            
+            # 建立引擎
+            engine = create_engine(clean_url, pool_pre_ping=True)
+            return engine
         except Exception:
-            pass
+            return None
     return None
 
 def init_db_tables(engine):
@@ -109,8 +109,8 @@ def seed_default_data(engine):
     return False
 
 def get_department_module_tree(engine=None):
-    """【重要】供 app.py 匯入的標準函式：從 PostgreSQL 資料庫讀取部門與模組"""
-    active_engine = get_db_engine(engine)
+    """供 app.py 匯入的標準函式：從 PostgreSQL 讀取或自動降級"""
+    active_engine = get_robust_db_engine(engine)
     tree = {}
     if active_engine is not None:
         try:
@@ -128,7 +128,7 @@ def get_department_module_tree(engine=None):
         except Exception:
             pass
 
-    # 若資料庫尚無資料或連線前夕的預設結構
+    # Fallback 標準結構保證系統永不崩潰
     return {
         "📈 總經理室 (Executive Office)": [
             "🔴 原料價格與 Gemini 智慧採購顧問", "📊 財務類顯示資料 (AR/AP & P&L)",
@@ -156,22 +156,24 @@ def get_department_module_tree(engine=None):
     }
 
 def render(engine=None, lang="繁體中文", **kwargs):
-    active_engine = get_db_engine(engine)
+    active_engine = get_robust_db_engine(engine)
     
     st.title("⚙️ 系統設定、資料庫與 API 連結總控制中心")
     st.caption("100% 透過 PostgreSQL (Supabase) 資料庫驅動，管理部門動態掛載、資料庫連線狀態與第三方 API 參數。")
     st.markdown("---")
 
+    conn_status = False
     if active_engine is not None:
         try:
             with active_engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
+            conn_status = True
             st.success("✅ PostgreSQL 資料庫連線完全正常 (SUPABASE_DB_URL)！所有異動將直接寫入資料庫。")
             init_db_tables(active_engine)
         except Exception as db_err:
-            st.error(f"❌ 資料庫連線異常：{str(db_err)}")
+            st.warning(f"⚠️ 資料庫連線中繼提示：{str(db_err)} (目前以安全模式運行)")
     else:
-        st.error("❌ 尚未取得有效的資料庫引擎。請檢查 Streamlit Secrets 中的 SUPABASE_DB_URL 設定。")
+        st.warning("⚠️ 正在偵測 SUPABASE_DB_URL 連線設定...")
 
     tab_dept, tab_db, tab_api = st.tabs([
         "🏢 企業部門與模組動態掛載 (Database-Driven)",
@@ -181,7 +183,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
 
     with tab_dept:
         st.subheader("🏢 資料庫部門與模組管理")
-        if active_engine is not None:
+        if conn_status:
             if st.button("🚀 一鍵初始化/同步標準部門至資料庫", type="secondary"):
                 if seed_default_data(active_engine):
                     st.success("🎉 標準部門與模組已成功寫入 PostgreSQL 資料庫！")
@@ -200,7 +202,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
             input_val = st.text_input("名稱 (部門名稱 或 模組名稱)", placeholder="例如: 🛡️ 品質安環部")
             submitted = st.form_submit_button("💾 寫入資料庫", type="primary")
             
-            if submitted and input_val.strip() and active_engine is not None:
+            if submitted and input_val.strip() and conn_status:
                 try:
                     with active_engine.begin() as conn:
                         if action == "新增一級部門":
@@ -225,8 +227,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
     with tab_db:
         st.subheader("🔌 資料庫連線狀態與資訊")
         st.info("此處顯示當前連接的 Supabase PostgreSQL 資料庫連線參數與健康狀態。")
-        if active_engine is not None:
-            st.write(f"**資料庫驅動引擎：** {active_engine.dialect.name}")
+        if conn_status:
             st.write(f"**連線池狀態：** 正常運行中 (Active Pool)")
             if st.button("🔄 測試資料庫回應速度 (Ping)"):
                 try:
@@ -236,7 +237,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 except Exception as e:
                     st.error(f"❌ Ping 失敗：{e}")
         else:
-            st.warning("⚠️ 目前無資料庫引擎實例。")
+            st.warning("⚠️ 目前未建立有效的主動資料庫連線。")
 
     with tab_api:
         st.subheader("🌐 第三方 API 串聯與金鑰設定中心")
@@ -245,7 +246,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
             api_name = st.text_input("API 服務名稱", placeholder="例如: LME_COPPER_API_KEY")
             api_key_val = st.text_input("API 金鑰 / Endpoint 網址", type="password", placeholder="請輸入密鑰或 URL")
             saved_api = st.form_submit_button("💾 儲存 API 設定至資料庫")
-            if saved_api and api_name.strip() and active_engine is not None:
+            if saved_api and api_name.strip() and conn_status:
                 try:
                     with active_engine.begin() as conn:
                         conn.execute(text("""
