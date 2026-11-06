@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：app.py
-# 職責：對齊裕豐 7 大一級部門標準順序與全域路由
+# 職責：對齊裕豐 7 大一級部門標準順序與全域路由（純中文顯示，依系統語系自動切換）
 # ==========================================
 
 import streamlit as st
@@ -30,15 +30,15 @@ if 'selected_module_id' not in st.session_state:
 if 'current_lang' not in st.session_state:
     st.session_state['current_lang'] = 'zh'
 
-# 100% 嚴格對齊你指定的一級部門與排序 (Metadata)
+# 100% 嚴格對齊你指定的一級部門與排序 (Metadata)，名稱改回純中文
 class DatabaseEngine:
     def query(self, sql, params=None):
         if "sys_modules" in sql:
             return [
                 {"id": "gm", "name_zh": "總經理室", "name_vi": "Văn phòng Tổng Giám đốc", "sort_order": 1, "is_active": True},
-                {"id": "mgmt", "name_zh": "管理部 (Bộ phận Quản lý)", "name_vi": "Bộ phận Quản lý", "sort_order": 2, "is_active": True},
-                {"id": "eng", "name_zh": "工程部 (Bộ phận Công trình)", "name_vi": "Bộ phận Công trình", "sort_order": 3, "is_active": True},
-                {"id": "prod", "name_zh": "生產部 (Bộ phận Sản xuất)", "name_vi": "Bộ phận Sản xuất", "sort_order": 4, "is_active": True},
+                {"id": "mgmt", "name_zh": "管理部", "name_vi": "Bộ phận Quản lý", "sort_order": 2, "is_active": True},
+                {"id": "eng", "name_zh": "工程部", "name_vi": "Bộ phận Công trình", "sort_order": 3, "is_active": True},
+                {"id": "prod", "name_zh": "生產部", "name_vi": "Bộ phận Sản xuất", "sort_order": 4, "is_active": True},
                 {"id": "wh", "name_zh": "倉庫管理", "name_vi": "Quản lý kho", "sort_order": 5, "is_active": True},
                 {"id": "approval", "name_zh": "簽核中心", "name_vi": "Trung tâm phê duyệt", "sort_order": 6, "is_active": True},
                 {"id": "sys_config", "name_zh": "系統設定", "name_vi": "Cấu hình hệ thống", "sort_order": 7, "is_active": True},
