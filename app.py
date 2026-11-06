@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：app.py
-# 職責：系統主入口、登入控管與左側/頂部導覽切換
+# 職責：系統主入口、登入控管、裕豐全部門 Metadata 注入
 # ==========================================
 
 import streamlit as st
@@ -28,21 +28,37 @@ if 'active_feature_id' not in st.session_state:
 if 'selected_module_id' not in st.session_state:
     st.session_state['selected_module_id'] = None
 
-# 資料庫模擬/引擎介面
+# 資料庫模擬/對接引擎 (補齊裕豐真實全部門結構)
 class DatabaseEngine:
     def query(self, sql, params=None):
         if "sys_modules" in sql:
             return [
                 {"id": "hr", "name_zh": "人事/行政", "name_vi": "Nhân sự / Hành chính", "sort_order": 1, "is_active": True},
-                {"id": "ga", "name_zh": "總務/採購", "name_vi": "Tổng vụ / Mua hàng", "sort_order": 2, "is_active": True},
-                {"id": "fi", "name_zh": "財務/會計", "name_vi": "Tài chính / Kế toán", "sort_order": 3, "is_active": True},
-                {"id": "it_system", "name_zh": "IT 系統管理", "name_vi": "Quản trị hệ thống IT", "sort_order": 4, "is_active": True},
+                {"id": "eng", "name_zh": "工程部 (副總直轄)", "name_vi": "Bộ phận Công trình", "sort_order": 2, "is_active": True},
+                {"id": "wh", "name_zh": "資材/倉儲部", "name_vi": "Vật tư / Kho", "sort_order": 3, "is_active": True},
+                {"id": "prod", "name_zh": "生產/配電盤組裝", "name_vi": "Sản xuất / Lắp ráp", "sort_order": 4, "is_active": True},
+                {"id": "ga", "name_zh": "總務/採購", "name_vi": "Tổng vụ / Mua hàng", "sort_order": 5, "is_active": True},
+                {"id": "fi", "name_zh": "財務/會計 (財務副理)", "name_vi": "Tài chính / Kế toán", "sort_order": 6, "is_active": True},
+                {"id": "it_system", "name_zh": "IT 系統管理", "name_vi": "Quản trị hệ thống IT", "sort_order": 7, "is_active": True},
             ]
         elif "sys_features" in sql:
             return [
+                # 人事/行政
                 {"id": "feat_leave", "module_id": "hr", "name_zh": "員工請假紀錄", "name_vi": "Ghi nhận nghỉ phép", "sort_order": 1, "is_active": True},
-                {"id": "feat_card", "module_id": "hr", "name_zh": "員工打卡紀錄", "name_vi": "Ghi nhận chấm công", "sort_order": 2, "is_active": True},
-                {"id": "feat_po", "module_id": "ga", "name_zh": "採購申請", "name_vi": "Yêu cầu mua hàng", "sort_order": 1, "is_active": True},
+                {"id": "feat_card", "module_id": "hr", "name_zh": "現場/外勤打卡紀錄", "name_vi": "Chấm công công trường", "sort_order": 2, "is_active": True},
+                # 工程部 (副總直轄)
+                {"id": "feat_site_log", "module_id": "eng", "name_zh": "工地日報與現場巡檢", "name_vi": "Nhật ký công trình", "sort_order": 1, "is_active": True},
+                {"id": "feat_dispatch", "module_id": "eng", "name_zh": "工務派工與乙級主管調度", "name_vi": "Điều động cán bộ", "sort_order": 2, "is_active": True},
+                # 資材/倉儲部
+                {"id": "feat_material", "module_id": "wh", "name_zh": "工程領料與工具借還", "name_vi": "Xuất vật tư & Dụng cụ", "sort_order": 1, "is_active": True},
+                {"id": "feat_invcheck", "module_id": "wh", "name_zh": "線材盤點與備料紀錄", "name_vi": "Kiểm kê kho", "sort_order": 2, "is_active": True},
+                # 生產/組裝部
+                {"id": "feat_panel_build", "module_id": "prod", "name_zh": "高低壓配電盤組裝進度", "name_vi": "Tiến độ lắp ráp tủ điện", "sort_order": 1, "is_active": True},
+                # 總務/採購
+                {"id": "feat_po", "module_id": "ga", "name_zh": "採購申請與比價", "name_vi": "Yêu cầu mua hàng", "sort_order": 1, "is_active": True},
+                # 財務/會計
+                {"id": "feat_ap_ar", "module_id": "fi", "name_zh": "工程估驗款與應收應付", "name_vi": "Thanh toán công trình", "sort_order": 1, "is_active": True},
+                # IT 系統管理
                 {"id": "feat_it_menu", "module_id": "it_system", "name_zh": "選單動態配置", "name_vi": "Cấu hình menu", "sort_order": 1, "is_active": True},
             ]
         elif "sys_sub_tabs" in sql:
