@@ -1,19 +1,35 @@
 # ==========================================
 # 檔案路徑：app.py
-# 職責：對齊裕豐 7 大一級部門標準順序與卡片式儀表板路由分流
+# 職責：裕豐 SaaS ERP 統一入口、動態租戶識別、卡片式儀表板路由與 7 大系統設定中心分流
 # ==========================================
 
 import streamlit as st
+import pandas as pd
+import importlib
+from sqlalchemy import text
+from modules.it_system.admin_settings import get_department_module_tree, render_admin_settings
 from views.login import render_login_page
 from views.dashboard import render_dashboard
-from modules.it_system.admin_settings import render_admin_settings
 
 st.set_page_config(
     page_title="裕豐電機工業 SaaS ERP",
     page_icon="🏭",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
+
+MOBILE_CSS_AND_JS = """
+<style>
+@media only screen and (max-width: 768px) {
+    h1 { font-size: 1.35rem !important; font-weight: 700 !important; }
+    h2 { font-size: 1.15rem !important; }
+    h3, .stSubheader { font-size: 1.05rem !important; }
+    p, div, span, label { font-size: 0.9rem !important; }
+    .block-container { padding: 1rem 0.5rem !important; }
+}
+</style>
+"""
+st.markdown(MOBILE_CSS_AND_JS, unsafe_allow_html=True)
 
 # 狀態初始化
 if 'logged_in' not in st.session_state:
@@ -46,7 +62,11 @@ class DatabaseEngine:
             return [
                 # 總經理室
                 {"id": "feat_gm_rpt", "module_id": "gm", "name_zh": "經營營運報表", "name_vi": "Báo cáo vận hành", "sort_order": 1, "is_active": True},
-                
+                {"id": "feat_gm_ai", "module_id": "gm", "name_zh": "原料價格與 Gemini 智慧採購顧問", "name_vi": "Tư vấn AI mua hàng", "sort_order": 2, "is_active": True},
+                {"id": "feat_gm_fi", "module_id": "gm", "name_zh": "財務類與 AR/AP & P&L 戰情儀表板", "name_vi": "Bảng điều khiển tài chính", "sort_order": 3, "is_active": True},
+                {"id": "feat_gm_eng", "module_id": "gm", "name_zh": "工程專案進度與現場異常即時監控", "name_vi": "Giám sát tiến độ công trình", "sort_order": 4, "is_active": True},
+                {"id": "feat_gm_pol", "module_id": "gm", "name_zh": "越南經營政策與法規每日動態", "name_vi": "Chính sách pháp luật VN", "sort_order": 5, "is_active": True},
+
                 # 管理部
                 {"id": "feat_hr", "module_id": "mgmt", "name_zh": "人事/行政", "name_vi": "Nhân sự / Hành chính", "sort_order": 1, "is_active": True},
                 {"id": "feat_ga", "module_id": "mgmt", "name_zh": "總務/採購", "name_vi": "Tổng vụ / Mua hàng", "sort_order": 2, "is_active": True},
@@ -66,8 +86,8 @@ class DatabaseEngine:
                 # 簽核中心
                 {"id": "feat_my_approvals", "module_id": "approval", "name_zh": "待簽核單據彙整", "name_vi": "Danh sách cần duyệt", "sort_order": 1, "is_active": True},
                 
-                # 系統設定
-                {"id": "feat_it_menu", "module_id": "sys_config", "name_zh": "選單動態配置", "name_vi": "Cấu hình menu", "sort_order": 1, "is_active": True},
+                # 系統設定 (對應 7 大動態配置中心)
+                {"id": "feat_it_menu", "module_id": "sys_config", "name_zh": "選單與動態架構配置", "name_vi": "Cấu hình menu", "sort_order": 1, "is_active": True},
             ]
         return []
 
@@ -107,15 +127,38 @@ if st.session_state['current_view'] == 'dashboard':
 elif st.session_state['current_view'] == 'dynamic_feature':
     active_feat_id = st.session_state.get('active_feature_id')
     
-    # 精準對應每個功能 ID 到對應的真實模組檔案
     if active_feat_id == 'feat_it_menu':
-        render_admin_settings(db_conn)
+        render_admin_settings(db_conn, lang=st.session_state.get('current_lang', 'zh'))
     elif active_feat_id == 'feat_gm_rpt':
         try:
             from modules.executive_dashboard import render_executive_dashboard_page
             render_executive_dashboard_page(lang=st.session_state.get('current_lang', 'zh'))
         except Exception as e:
             st.error(f"載入總經理室報表發生錯誤: {e}")
+    elif active_feat_id == 'feat_gm_ai':
+        try:
+            from modules.executive_dashboard import render_executive_dashboard_page
+            render_executive_dashboard_page(sub_route="commodities_fx", lang=st.session_state.get('current_lang', 'zh'))
+        except Exception as e:
+            st.error(f"載入原料價格與 Gemini 顧問發生錯誤: {e}")
+    elif active_feat_id == 'feat_gm_fi':
+        try:
+            from modules.executive_dashboard import render_executive_dashboard_page
+            render_executive_dashboard_page(sub_route="financials_pl", lang=st.session_state.get('current_lang', 'zh'))
+        except Exception as e:
+            st.error(f"載入財務戰情儀表板發生錯誤: {e}")
+    elif active_feat_id == 'feat_gm_eng':
+        try:
+            from modules.executive_dashboard import render_executive_dashboard_page
+            render_executive_dashboard_page(sub_route="project_progress_exec", lang=st.session_state.get('current_lang', 'zh'))
+        except Exception as e:
+            st.error(f"載入工程進度監控發生錯誤: {e}")
+    elif active_feat_id == 'feat_gm_pol':
+        try:
+            from modules.vietnam_policy_news import render_vietnam_policy_news_page
+            render_vietnam_policy_news_page(engine=None, lang=st.session_state.get('current_lang', 'zh'))
+        except Exception as e:
+            st.error(f"載入越南法規動態發生錯誤: {e}")
     elif active_feat_id == 'feat_hr':
         try:
             from modules.employee_management import render_employee_management
