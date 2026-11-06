@@ -28,31 +28,16 @@ def get_department_module_tree():
                 "📰 越南經營政策與法規每日動態"
             ],
             "👔 管理部 (Management Dept)": [
-                "公司公告",
-                "員工檔案",
-                "員工打卡紀錄",
-                "密碼修改",
-                "員工薪資與保險",
-                "宿舍與伙食",
-                "工作廠區管理",
-                "車輛進出口",
-                "車輛維修紀錄",
-                "固定資產管理",
-                "文件管理",
-                "採購與應付帳款",
-                "應收帳款管理",
-                "越南稅務報表",
-                "電子發票管理"
+                "公司公告", "員工檔案", "員工打卡紀錄", "密碼修改", "員工薪資與保險",
+                "宿舍與伙食", "工作廠區管理", "車輛進出口", "車輛維修紀錄",
+                "固定資產管理", "文件管理", "採購與應付帳款", "應收帳款管理",
+                "越南稅務報表", "電子發票管理"
             ],
             "🛠️ 工程與設計管理中心 (Engineering & Design Center)": [
-                "⚡ 1. 工程主管戰情室與案場管理",
-                "⚡ 2. 工程專案報價系統",
-                "📋 3. 施工日報表與點工點料登記",
-                "🤖 4. AI 施工照片辨識與稽核",
-                "⚠️ 5. 工程證照預警與機具檢驗預警",
-                "🎨 6. 配電盤電氣與機構設計圖庫",
-                "🔌 7. 配電盤 BOM 零件與採購連動",
-                "👷 8. 外包商計價與偶鐸管理",
+                "⚡ 1. 工程主管戰情室與案場管理", "⚡ 2. 工程專案報價系統",
+                "📋 3. 施工日報表與點工點料登記", "🤖 4. AI 施工照片辨識與稽核",
+                "⚠️ 5. 工程證照預警與機具檢驗預警", "🎨 6. 配電盤電氣與機構設計圖庫",
+                "🔌 7. 配電盤 BOM 零件與採購連動", "👷 8. 外包商計價與偶鐸管理",
                 "🧪 9. FAT/SAT 出廠與現場驗收管理"
             ],
             "🏭 生產部 (Production Dept)": [
@@ -81,10 +66,11 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
     st.caption("直接從資料庫（Database）抓取真實員工與薪資資料，實現 100% 動態資料驅動與內控綁定。")
     st.markdown("---")
 
-    # 確保資料庫中存在 employees 表格
+    # 確保資料庫中存在 employees 表格，若已存在則自動檢查並補齊可能缺少的欄位
     if engine is not None:
         try:
             with engine.begin() as conn:
+                # 1. 若完全沒有此表則新建
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS employees (
                         emp_code VARCHAR(50) PRIMARY KEY,
@@ -96,8 +82,13 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
-        except Exception:
-            pass
+                # 2. 防禦性檢查：若舊表缺少 password 等欄位，自動 ALTER 加上
+                conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS password VARCHAR(100) DEFAULT '123456';"))
+                conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT TRUE;"))
+                conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'Staff';"))
+                conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS department VARCHAR(150);"))
+        except Exception as e:
+            st.warning(f"⚠️ 資料庫表格結構自動調整提示：{str(e)}")
 
     # 建立分頁
     tab_emp, tab_dept, tab_rbac = st.tabs([
@@ -121,15 +112,14 @@ def render_user_management_page(engine=None, lang="繁體中文", **kwargs):
                         employee_list.append({
                             "工號": row["emp_code"],
                             "姓名": row["name"],
-                            "部門": row["department"],
-                            "角色": row["role"],
-                            "密碼": row["password"],
-                            "須改密碼": row["must_change_password"]
+                            "部門": row["department"] if row["department"] else "未指定",
+                            "角色": row["role"] if row["role"] else "Staff",
+                            "密碼": row["password"] if row["password"] else "123456",
+                            "須改密碼": row["must_change_password"] if row["must_change_password"] is not None else True
                         })
             except Exception as e:
-                st.warning(f"⚠️ 讀取資料庫員工資料發生異常：{str(e)}")
+                st.error(f"⚠️ 讀取資料庫員工資料發生異常：{str(e)}")
 
-        # 如果資料庫尚無員工，提供快速初始化或提示
         if not employee_list:
             st.warning("⚠️ 目前資料庫中尚未建立員工資料。請透過下方表單新增第一筆真實員工，系統將直接寫入資料庫！")
         else:
