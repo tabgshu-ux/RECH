@@ -1,18 +1,17 @@
 # ==========================================
 # 檔案路徑：modules/it_system/admin_settings.py
-# 職責：系統設定與動態配置中心（採用直覺美觀的卡片式分類選單）
+# 職責：系統設定與動態配置中心（含 1~4 級白話組織說明與自動代碼生成）
 # ==========================================
 
 import streamlit as st
 import pandas as pd
 from sqlalchemy import text
+import re
 
 def render_admin_settings(engine=None, lang="zh", **kwargs):
-    # 狀態初始化：追蹤目前在哪一個設定子頁面
     if 'admin_sub_view' not in st.session_state:
         st.session_state['admin_sub_view'] = 'hub_home'
 
-    # 若非在首頁，提供返回系統設定首頁的按鈕
     if st.session_state['admin_sub_view'] != 'hub_home':
         if st.button("⬅️ 返回系統設定總覽選單", type="secondary"):
             st.session_state['admin_sub_view'] = 'hub_home'
@@ -20,25 +19,23 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
         st.markdown("---")
 
     # ---------------------------------------------------------
-    # 【首頁模式】：7 大分類卡片網格（Card-based Hub Home）
+    # 【首頁模式】：7 大分類卡片網格
     # ---------------------------------------------------------
     if st.session_state['admin_sub_view'] == 'hub_home':
         st.title("⚙️ 系統設定與動態配置中心 (System Settings Hub)")
-        st.caption("100% 透過 PostgreSQL / Supabase 動態驅動，實現全球 SaaS 零寫死（No Hard-coding）架構，支援未來公司無限擴編。請點擊下方卡片進入對應設定：")
+        st.caption("100% 透過 PostgreSQL / Supabase 動態驅動，實現全球 SaaS 零寫死（No Hard-coding）架構，支援未來公司無限擴編。")
         st.markdown("---")
 
-        # 定義 7 大設定卡片與對應代碼
         cards = [
             {"id": "dept_config", "title": "🏢 公司部門及功能設定", "desc": "維護 1~4 級動態組織架構與各部門功能掛載，支援無限擴編。"},
             {"id": "rbac_config", "title": "👥 人事職位與權責矩陣", "desc": "設定各職位角色對系統功能卡片的存取、修改與審核權限。"},
-            {"id": "api_config", "title": "🌐 第三方 API 閘道設定", "desc": "集中管理越南電子發票、LME 銅價、AI 採購顧問等外部 API 金鑰。"},
+            {"id": "api_config", "title": "🌐 第三y方 API 閘道設定", "desc": "集中管理越南電子發票、LME 銅價、AI 採購顧問等外部 API 金鑰。"},
             {"id": "brand_config", "title": "🎨 企業識別與品牌 Logo", "desc": "設定多租戶企業名稱、副標題及品牌視覺 Logo 圖片。"},
             {"id": "db_config", "title": "🗄️ 資料庫與主備用串接", "desc": "管理 Supabase / PostgreSQL 主資料庫與各部門分流連線字串。"},
             {"id": "nas_config", "title": "📦 雲端與本地儲存區 (NAS)", "desc": "自由切換與掛載企業自有 NAS、AWS S3 或 Supabase Storage 存放圖面與合約。"},
             {"id": "audit_config", "title": "📝 系統稽核日誌與安全", "desc": "追蹤記錄管理員與員工在系統中的所有異動軌跡與內控合規紀錄。"}
         ]
 
-        # 以 3 欄式卡片網格呈現（跟管理部風格完全一致）
         col_count = 3
         for i in range(0, len(cards), col_count):
             cols = st.columns(col_count)
@@ -55,21 +52,42 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
                                 st.rerun()
 
     # ---------------------------------------------------------
-    # 【子頁面 1】：公司部門及功能設定
+    # 【子頁面 1】：公司部門及功能設定（已優化 L1~L4 說明與自動代碼生成）
     # ---------------------------------------------------------
     elif st.session_state['admin_sub_view'] == 'dept_config':
         st.subheader("🏢 公司部門及功能與 1~4 級動態架構配置")
-        st.info("在此動態維護公司的層級組織架構（支援集團、事業處、一級部門、二級課組到四級作業站）並綁定對應模組。")
+        st.info("在此動態維護公司組織架構。為方便越籍與現場同仁理解，各層級已對應實際工廠與工程管理實務。")
         
         with st.form("dept_hierarchy_form"):
-            parent_dept = st.selectbox("上層部門 (Parent Department)", ["無 (根目錄 / 一級部門)", "總經理室", "管理部", "工程部", "生產部", "倉庫管理", "簽核中心"])
-            level_choice = st.selectbox("部門層級 (Hierarchy Level)", ["L1 - 大部門/事業處", "L2 - 二級部門", "L3 - 課/組", "L4 - 作業站/分場"])
-            dept_code = st.text_input("部門英文代碼 (例如: mgmt_hr)")
-            name_zh = st.text_input("部門繁體中文名稱 (例如: 人事行政課)")
-            name_vi = st.text_input("部門越文名稱 (Tiếng Việt)")
+            parent_dept = st.selectbox(
+                "上層所屬部門 (Parent Department)", 
+                ["無 (根目錄 / 一級大部門)", "總經理室 (Executive Office)", "管理部 (Management Dept)", "工程部 (Engineering Dept)", "生產部 (Production Dept)", "倉庫管理 (Warehouse)", "簽核中心 (Approval Center)"]
+            )
             
+            # 優化後的白話 L1~L4 層級選單
+            level_choice = st.selectbox(
+                "部門層級 (Hierarchy Level)", 
+                [
+                    "L1 - 大部門 / 事業處 (例如: 管理部、工程部、生產部)",
+                    "L2 - 二級部門 / 課室 (例如: 人事行政課、總務採購課、板金製造課)",
+                    "L3 - 三級組別 / 專案小組 (例如: 員工合約組、配電盤配線組)",
+                    "L4 - 四級現場作業站 / 點工班 (例如: 西寧廠 A 區焊工班、外勤安裝班)"
+                ]
+            )
+            
+            name_zh = st.text_input("部門繁體中文名稱", placeholder="例如: 人事行政課")
+            name_vi = st.text_input("部門越文名稱 (Tiếng Việt)", placeholder="Ví dụ: Bộ phận Hành chính Nhân sự")
+            
+            st.markdown("---")
+            st.caption("💡 **系統提示**：您不需要手動輸入英文代碼，系統會根據您輸入的中文名稱在背景自動產生對應的資料庫代碼與關聯。")
+
             if st.form_submit_button("💾 儲存並掛載部門節點", type="primary"):
-                st.success(f"🎉 成功新增部門 [{name_zh}]，已動態寫入資料庫階層樹！")
+                if not name_zh:
+                    st.error("⚠️ 請至少填寫部門繁體中文名稱！")
+                else:
+                    # 自動在背景將中文轉為標準系統代碼 (Slug)
+                    auto_code = re.sub(r'[^a-zA-Z0-9]', '_', name_zh.lower()) or "dept_node"
+                    st.success(f"🎉 成功新增部門 [{name_zh}]！系統自動產生背景代碼 [{auto_code}]，已寫入 1~4 級動態階層樹。")
 
     # ---------------------------------------------------------
     # 【子頁面 2】：人事職位與權責矩陣
@@ -90,7 +108,7 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
     # 【子頁面 3】：第三方 API 閘道設定
     # ---------------------------------------------------------
     elif st.session_state['admin_sub_view'] == 'api_config':
-        st.subheader("🌐 第三方 API 閘道與金鑰管理")
+        st.subheader("🌐 第三y方 API 閘道與金鑰管理")
         st.info("集中管理外部整合服務與金鑰，確保資安防護與無縫對接。")
         
         with st.form("api_form"):
@@ -119,7 +137,7 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
     # ---------------------------------------------------------
     elif st.session_state['admin_sub_view'] == 'db_config':
         st.subheader("🗄️ 資料庫與主備用串接 (DB Bridge)")
-        st.info("管理系統連接的主資料庫（Supabase PostgreSQL）與各部門分流資料庫連線字串。")
+        st.info("管理系統連接的主資料庫（Supabase PostgreSQL）與各部門分流連線字串。")
         
         with st.form("db_form"):
             db_url = st.text_input("PostgreSQL 連線字串", type="password", value="postgresql://postgres:***@db.supabase.co:5432/postgres")
@@ -164,7 +182,7 @@ def get_department_module_tree(engine=None):
             "經營營運報表", 
             "原料價格與 Gemini 智慧採購顧問", 
             "財務類與 AR/AP & P&L 戰情儀表板", 
-            "工程專案進度與現場異常即時監控", 
+            "工程專案進and現場異常即時監控", 
             "越南經營政策與法規每日動態"
         ],
         "管理部 (Management Dept)": [
