@@ -1,13 +1,13 @@
 # ==========================================
-# 檔案路徑：views/admin_settings.py
-# 職責：後台配置（動態新增部門與功能大項）
+# 檔案路徑：modules/it_system/admin_settings.py
+# 職責：IT 部門專用 - 選單動態配置管理
 # ==========================================
 
 import streamlit as st
 
 def render_admin_settings(db_conn):
-    st.subheader("⚙️ 系統選單與動態架構配置後台")
-    st.info("在此頁面新增的部門或功能，主頁將自動讀取並繪製出對應卡片，無需動到 Python 程式碼。")
+    st.subheader("⚙️ IT 系統管理 - 選單與動態架構配置")
+    st.info("在此新增的部門或功能，主頁將自動讀取並繪製對應卡片。")
     
     tab1, tab2 = st.tabs(["1. 新增/管理部門 (一級卡片)", "2. 新增/管理功能大項 (二級按鈕)"])
     
@@ -15,7 +15,7 @@ def render_admin_settings(db_conn):
         st.write("#### ➕ 新增一級部門")
         mod_id = st.text_input("部門代碼 (例如: qa, production)", key="mod_id_input")
         mod_name_zh = st.text_input("部門中文名稱 (例如: 品保部)", key="mod_zh_input")
-        mod_name_vi = st.text_input("部門越文名稱 (例如: Bộ phận quản lý chất lượng)", key="mod_vi_input")
+        mod_name_vi = st.text_input("部門越文名稱", key="mod_vi_input")
         
         if st.button("儲存部門設定", type="primary"):
             if mod_id and mod_name_zh:
@@ -23,7 +23,7 @@ def render_admin_settings(db_conn):
                     "INSERT INTO sys_modules (id, name_zh, name_vi) VALUES (%s, %s, %s)",
                     (mod_id, mod_name_zh, mod_name_vi)
                 )
-                st.success(f"已成功新增部門：{mod_name_zh}！主頁會自動多出一張卡片。")
+                st.success(f"已成功新增部門：{mod_name_zh}！")
             else:
                 st.warning("請填寫完整部門代碼與中文名稱。")
 
