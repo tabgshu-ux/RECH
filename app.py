@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# 建立資料庫連線引擎 (精準對應您 Secrets 中的 SUPABASE_DB_URL)
+# 建立資料庫連線引擎
 @st.cache_resource
 def init_connection():
     try:
@@ -24,7 +24,28 @@ def init_connection():
 
 engine = init_connection()
 
-# 初始化使用者登入與身分狀態管理
+# 從資料庫動態載入企業識別設定 (Logo & 公司名稱)
+def get_app_branding(engine):
+    branding = {
+        "company_name": "裕豐電機工業 (Reetech Industrial) - SaaS ERP",
+        "logo_url": "https://raw.githubusercontent.com/tabgshu-ux/RECH/main/assets/logo.png"
+    }
+    if engine is not None:
+        try:
+            with engine.connect() as conn:
+                df = pd.read_sql(text("SELECT setting_key, setting_value FROM sys_branding"), con=conn)
+                if not df.empty:
+                    for _, row in df.iterrows():
+                        if row["setting_key"] in branding:
+                            branding[row["setting_key"]] = row["setting_value"]
+        except Exception:
+            pass
+    return branding
+
+import pandas as pd
+branding_info = get_app_branding(engine)
+
+# 初始化使用者登入狀態
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "current_user" not in st.session_state:
@@ -32,10 +53,19 @@ if "current_user" not in st.session_state:
 if "current_user_role" not in st.session_state:
     st.session_state.current_user_role = "Staff"
 
-# ==================== 1. 嚴格的帳號密碼登入驗證畫面 ====================
+# ==================== 1. 登入畫面 (動態載入資料庫 Logo 與名稱) ====================
 if not st.session_state.authenticated:
-    st.title("🏭 裕豐電機工業 - SaaS ERP 系統登入")
-    st.markdown("請輸入您的企業帳號與密碼以進入系統（具備 RBAC 內控權限控管）。")
+    # 完美使用資料庫配置的 Logo 圖片與公司名稱
+    col_logo, col_title = st.columns([1, 8])
+    with col_logo:
+        try:
+            st.image(branding_info["logo_url"], width=80)
+        except Exception:
+            st.write("🏭")
+    with col_title:
+        st.title(f"{branding_info['company_name']} - 系統登入中心")
+    
+    st.markdown("請輸入您的企業帳號與密碼以進入系統（具備 RBAC 內控權限控管與網頁全配置架構）。")
     st.markdown("---")
 
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -47,7 +77,6 @@ if not st.session_state.authenticated:
             submit_login = st.form_submit_button("🚀 登入系統", type="primary")
 
             if submit_login:
-                # 企業內控驗證邏輯 (可擴充對接資料庫 users 表)
                 if username_input.strip() == "admin" and password_input.strip() == "Reech999808":
                     st.session_state.authenticated = True
                     st.session_state.current_user = "admin"
@@ -69,18 +98,16 @@ if not st.session_state.authenticated:
                 else:
                     st.error("❌ 帳號或密碼錯誤，請重新輸入！")
     
-    st.stop()  # 尚未登入前攔截後續畫面渲染
+    st.stop()
 
 # ==================== 2. 已登入後的正式 ERP 主畫面 ====================
 
-# 語系初始化
 if "lang" not in st.session_state:
     st.session_state.lang = "繁體中文"
 
 curr_lang = st.sidebar.selectbox("選擇系統語系 / Select Language", ["繁體中文", "Tiếng Việt", "English"], index=0)
 st.session_state.lang = curr_lang
 
-# 側邊欄使用者資訊與登出按鈕
 st.sidebar.markdown("---")
 st.sidebar.markdown(f"👤 **當前使用者：{st.session_state.current_user}**")
 st.sidebar.caption(f"身分權限：{st.session_state.current_user_role}")
@@ -94,20 +121,17 @@ if st.sidebar.button("🚪 登出系統"):
 
 st.sidebar.markdown("---")
 
-# 引入正式部門樹狀結構
 from modules.it_system.department_config import get_department_module_tree
 department_tree = get_department_module_tree(engine)
 
 department_names = list(department_tree.keys())
 
-# 僅限 Admin 身分可見「系統設定」
 if st.session_state.current_user_role == "Admin":
     department_names.append("💻 系統設定 (System Settings)")
 
 st.sidebar.subheader("選擇一級部門 / Chọn phòng ban :")
 selected_dept = st.sidebar.radio("Department", department_names)
 
-# 路由分發：系統設定
 if selected_dept == "💻 系統設定 (System Settings)":
     try:
         from modules.it_system import department_config
@@ -116,7 +140,6 @@ if selected_dept == "💻 系統設定 (System Settings)":
         st.error(f"無法載入系統設定模組: {e}")
 
 else:
-    # 各一級部門動態路由
     if "總經理室" in selected_dept:
         try:
             from modules import executive_dashboard
@@ -129,7 +152,6 @@ else:
         st.caption("採手機優先與三大營運單位分組架構，兼顧內控與高效操作。")
         st.markdown("---")
 
-        # 三大營運單位分組 Tab
         tab_hr, tab_fin, tab_GA = st.tabs([
             "👥 1. 人事與行政單位", 
             "💰 2. 財務與會計單位", 
