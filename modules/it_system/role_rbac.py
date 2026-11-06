@@ -1,3 +1,8 @@
+# ==========================================
+# 檔案路徑：modules/it_system/role_rbac.py
+# 職責：組織角色與權限指派中心（RBAC）- 已修正資料庫持久化與例外捕捉
+# ==========================================
+
 import streamlit as st
 import pandas as pd
 from sqlalchemy import text
@@ -58,7 +63,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
     st.markdown(f"### {L['title']}")
     st.caption(L['caption'])
 
-    # 初始化資料表
+    # 1. 初始化資料表與確保 UNIQUE 約束
     if engine is not None:
         try:
             with engine.begin() as conn:
@@ -71,11 +76,22 @@ def render(engine=None, lang="繁體中文", **kwargs):
                         allowed_modules TEXT,
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
+                %"""))
+                # 確保 role_name 具有 UNIQUE 約束以支援 upsert
+                conn.execute(text("""
+                    DO $$ 
+                    BEGIN 
+                        IF NOT EXISTS (
+                            SELECT 1 FROM pg_constraint WHERE conname = 'system_roles_role_name_key'
+                        ) THEN 
+                            ALTER TABLE system_roles ADD CONSTRAINT system_roles_role_name_key UNIQUE (role_name);
+                        END IF;
+                    END $$;
                 """))
-        except Exception:
-            pass
+        except Exception as db_init_err:
+            st.warning(f"⚠️ 資料庫表格初始化提示: {db_init_err}")
 
-    # 讀取現有角色資料
+    # 2. 讀取現有角色資料
     roles_data = {}
     if engine is not None:
         try:
@@ -86,8 +102,8 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     "description": row["description"],
                     "allowed_modules": row["allowed_modules"]
                 }
-        except Exception:
-            pass
+        except Exception as db_read_err:
+            st.info(f"💡 目前使用預設角色清單 (資料庫讀取提示: {db_read_err})")
 
     if not roles_data:
         roles_data = {
@@ -104,8 +120,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
         "💻 資訊管理部 (IT & System)"
     ]
 
-    # 🧩 模組分類群組化（Categorized Modules Mapping）
-    # 這樣管理者可以針對特定業務板塊一次勾選，極大地簡化視覺與操作流程
     MODULE_CATEGORIES = {
         "📊 總經理室與戰情決策": [
             "🔴 原料價格與 Gemini 智慧採購顧問", 
@@ -169,12 +183,12 @@ def render(engine=None, lang="繁體中文", **kwargs):
     with st.form("role_rbac_form"):
         col_m1, col_m2 = st.columns(2)
         with col_m1:
-            role_name_input = st.text_input(L['role_name'] + " *", value=default_name, placeholder="例如: 外勤技師, 產線班長")
+            role_name_input = st.text_input(L['role_name'] + " *", value=default_name, placeholder="例如: 董事長, 外勤技師")
         with col_m2:
             dept_idx = departments_list.index(default_dept) if default_dept in departments_list else 0
             dept_select = st.selectbox(L['dept_name'] + " *", options=departments_list, index=dept_idx)
             
-        desc_input = st.text_input(L['desc'], value=default_desc, placeholder="例如: 負責工地外勤打卡與回報")
+        desc_input = st.text_input(L['desc'], value=default_desc, placeholder="例如: 主導公司經營策略規劃")
 
         st.markdown("---")
         st.markdown("#### 🧩 模組拼圖權限指派（依業務性質分類）：")
@@ -182,10 +196,8 @@ def render(engine=None, lang="繁體中文", **kwargs):
 
         selected_mods = []
 
-        # 透過 Expander (摺疊面板) 將數十個模組分門別類，畫面瞬間變得乾淨清爽
         for cat_name, mod_list in MODULE_CATEGORIES.items():
             with st.expander(f"{cat_name} （包含 {len(mod_list)} 項功能）", expanded=False):
-                # 每個群組內獨立排列
                 for mod_item in mod_list:
                     chk_key = f"rbac_mod_{selected_role_opt}_{mod_item}"
                     init_checked = mod_item in current_allowed_set
@@ -203,6 +215,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
             r_name = role_name_input.strip()
             if r_name:
                 mod_str = ",".join(selected_mods)
+                save_success = True
                 if engine is not None:
                     try:
                         with engine.begin() as conn:
@@ -210,25 +223,28 @@ def render(engine=None, lang="繁體中文", **kwargs):
                                 INSERT INTO system_roles (role_name, department, description, allowed_modules)
                                 VALUES (:r, :dept, :d, :m)
                                 ON CONFLICT (role_name)
-                                UPDATE SET department = :dept, description = :d, allowed_modules = :m;
+                                DO UPDATE SET department = :dept, description = :d, allowed_modules = :m;
                             """), {"r": r_name, "dept": dept_select, "d": desc_input, "m": mod_str})
                     except Exception as e:
-                        st.error(f"資料庫儲存失敗: {str(e)}")
-                st.success(L['success_save'])
-                st.rerun()
+                        save_success = False
+                        st.error(f"❌ 資料庫儲存失敗: {str(e)}")
+                
+                if save_success:
+                    st.success(L['success_save'])
+                    st.rerun()
             else:
                 st.warning("⚠️ 請輸入有效的職位角色名稱！")
 
         if deleted and is_edit:
-            if selected_role_opt in ["系統管理員 (Admin)", "admin"]:
-                st.error("🚫 系統核心角色無法刪除！")
+            if selected_role_opt in ["系統管理員 (Admin)", "admin", "董事長"]:
+                st.error("🚫 系統核心或高階管理角色無法刪除！")
             else:
                 if engine is not None:
                     try:
                         with engine.begin() as conn:
                             conn.execute(text("DELETE FROM system_roles WHERE role_name = :r"), {"r": selected_role_opt})
-                    except Exception:
-                        pass
+                    except Exception as del_err:
+                        st.warning(f"刪除提示: {del_err}")
                 st.success(L['success_del'])
                 st.rerun()
 
