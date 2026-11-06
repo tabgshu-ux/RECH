@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# 建立資料庫連線引擎 (對應 Supabase PostgreSQL)
+# 建立資料庫連線引擎
 @st.cache_resource
 def init_connection():
     try:
@@ -28,29 +28,36 @@ if "lang" not in st.session_state:
 curr_lang = st.sidebar.selectbox("選擇系統語系 / Select Language", ["繁體中文", "Tiếng Việt", "English"], index=0)
 st.session_state.lang = curr_lang
 
-# 模擬登入使用者狀態 (Admin)
+# 模擬登入使用者狀態 (這裡假設目前登入者為 admin，您可以未來串接登入驗證)
+if "current_user_role" not in st.session_state:
+    st.session_state.current_user_role = "Admin"  # 測試用：Admin 或 Staff
+
 st.sidebar.markdown("---")
-st.sidebar.markdown("👤 **admin (ADMIN)**")
+st.sidebar.markdown(f"👤 **當前使用者：admin**")
+st.sidebar.caption(pid_str := f"身分權限：{st.session_state.current_user_role}")
 
 if st.sidebar.button("🚪 登出系統"):
     st.success("已成功登出系統")
 
 st.sidebar.markdown("---")
 
-# 引入部門動態掛載模組（來自 it_system 資料夾）
+# 引入正式部門樹狀結構（絕不包含資訊管理部）
 from modules.it_system.department_config import get_department_module_tree
-
 department_tree = get_department_module_tree()
 
-# 側邊欄選擇模式：正式業務部門 vs 💻 系統設定 (Admin 專用)
-st.sidebar.subheader("導覽選單 / Navigation")
-nav_mode = st.sidebar.radio(
-    "選擇操作模式", 
-    ["🏢 正式業務部門", "💻 系統設定 (System Settings)"]
-)
+# 建立動態側邊欄選項清單
+department_names = list(department_tree.keys())
 
-if nav_mode == "💻 系統設定 (System Settings)":
-    # 獨立載入系統設定模組 (it_system/system_settings_hub 或 department_config)
+# **關鍵核心**：只有當登入者身分為 Admin 時，才將「💻 系統設定 (System Settings)」加入選單中！
+if st.session_state.current_user_role == "Admin":
+    department_names.append("💻 系統設定 (System Settings)")
+
+st.sidebar.subheader("選擇一級部門 / Chọn phòng ban :")
+selected_dept = st.sidebar.radio("Department", department_names)
+
+# 判斷使用者選擇的是否為「系統設定」
+if selected_dept == "💻 系統設定 (System Settings)":
+    # 僅限 Admin 可見與進入的系統設定後台
     try:
         from modules.it_system import department_config
         department_config.render(engine=engine, lang=curr_lang)
@@ -58,12 +65,7 @@ if nav_mode == "💻 系統設定 (System Settings)":
         st.error(f"無法載入系統設定模組: {e}")
 
 else:
-    # 選擇一級部門
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("選擇一級部門 / Chọn phòng ban :")
-    selected_dept = st.sidebar.radio("Department", list(department_tree.keys()))
-
-    # 取得該部門底下的子功能模組列表
+    # 取得該正式部門底下的子功能模組列表
     sub_modules = department_tree.get(selected_dept, [])
 
     st.sidebar.markdown("---")
@@ -81,7 +83,6 @@ else:
     elif "管理部" in selected_dept:
         st.title("👔 管理部營運管理中心")
         st.info(f"當前選定功能：{selected_sub_mod}")
-        # 如果點擊的是員工檔案，可在此導向管理部的員工管理模組
         if "員工檔案" in selected_sub_mod:
             try:
                 from modules.management import employee_profile
