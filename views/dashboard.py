@@ -1,12 +1,11 @@
 # ==========================================
 # 檔案路徑：views/dashboard.py
-# 職責：支援 admin 最高管理者全局視角與各部門切換的工作台
+# 職責：Admin 全局掌控全公司 7 大部門 + 單一部門切換
 # ==========================================
 
 import streamlit as st
 
 def render_dashboard(db_conn):
-    # 1. 讀取一級部門與二級功能 (Metadata)
     modules = db_conn.query("SELECT * FROM sys_modules WHERE is_active = TRUE ORDER BY sort_order;")
     features = db_conn.query("SELECT * FROM sys_features WHERE is_active = TRUE ORDER BY sort_order;")
     
@@ -17,15 +16,14 @@ def render_dashboard(db_conn):
     is_admin = (st.session_state.get('user_name') == 'admin')
 
     # -------------------------------------------------------------------------
-    # 2. 左側側邊欄：一級部門切換 (admin 額外提供「全公司總覽」)
+    # 1. 左側側邊欄：一級部門導覽
     # -------------------------------------------------------------------------
     st.sidebar.markdown("### 🏢 企業導覽選單")
     
-    # 初始化選擇狀態：admin 預設進入全公司總覽 'all'，一般使用者預設進入第一個部門
     if 'selected_module_id' not in st.session_state or not st.session_state['selected_module_id']:
         st.session_state['selected_module_id'] = 'all' if is_admin else modules[0]['id']
 
-    # admin 專用「全公司總覽」按鈕
+    # Admin 專屬最高控制台按鈕
     if is_admin:
         is_all_selected = (st.session_state['selected_module_id'] == 'all')
         btn_type_all = "primary" if is_all_selected else "secondary"
@@ -34,7 +32,7 @@ def render_dashboard(db_conn):
             st.rerun()
         st.sidebar.divider()
 
-    # 一般部門按鈕清單
+    # 各部門選項清單
     for mod in modules:
         is_selected = (st.session_state['selected_module_id'] == mod['id'])
         btn_type = "primary" if is_selected else "secondary"
@@ -49,37 +47,36 @@ def render_dashboard(db_conn):
             st.rerun()
 
     # -------------------------------------------------------------------------
-    # 3. 右側主畫面分流：【全公司總覽 (Admin)】 vs 【單一部門工作台】
+    # 2. 右側主畫面：【Admin 全局總覽牆】 vs 【單一部門工作台】
     # -------------------------------------------------------------------------
     
-    # -------------------------------------------------------------------------
-    # 模式 A：Admin 最高管理者全局視角 (selected_module_id == 'all')
-    # -------------------------------------------------------------------------
+    # 【模式 A：Admin 全局總覽牆】
     if st.session_state['selected_module_id'] == 'all':
         st.title("👑 全公司管理控制台 (Admin Dashboard)")
-        st.caption("裕豐電機工業 - 全局營運與跨部門簽核監控")
+        st.caption("裕豐電機工業 - 全局營運、工地派工與跨部門簽核監控")
         st.divider()
 
-        # 頂部全局 KPI
+        # 頂部全局營運指標
         col_kpi1, col_kpi2, col_kpi3, col_kpi4 = st.columns(4)
         with col_kpi1:
             with st.container(border=True):
-                st.metric(label="全公司待審單據", value="7 件", delta="高優先級 2 件", delta_color="inverse")
+                st.metric(label="全公司待審單據", value="7 件", delta="工程/採購/請假", delta_color="inverse")
         with col_kpi2:
             with st.container(border=True):
-                st.metric(label="工地/外勤打卡率", value="92%", delta="3 人未打卡")
+                st.metric(label="工地/外勤打卡率", value="92%", delta="3 人未打卡 (乙級主管巡查中)")
         with col_kpi3:
             with st.container(border=True):
-                st.metric(label="本月採購/報銷總額", value="125,000 USD", delta="+5% vs 上月")
+                st.metric(label="本月工程估驗款", value="185,000 USD", delta="+8% vs 上月")
         with col_kpi4:
             with st.container(border=True):
-                st.metric(label="系統運作狀態", value="正常 (Normal)", delta="Supabase DB 綠燈")
+                st.metric(label="配電盤組裝進度", value="94%", delta="2 套待出貨")
 
         st.divider()
 
-        # 全局快捷營運模組九宮格 (按部門彙整呈現)
-        st.markdown("### 📊 跨部門業務一覽與快捷跳轉")
-        col_count = 2
+        # 核心：全公司所有部門的跨部門業務卡片牆 (3 欄自動延伸)
+        st.markdown("### 📊 全公司各部門業務一覽 (CEO/Admin 直捷入口)")
+        
+        col_count = 3
         for i in range(0, len(modules), col_count):
             cols = st.columns(col_count)
             for j in range(col_count):
@@ -87,20 +84,25 @@ def render_dashboard(db_conn):
                     mod = modules[i + j]
                     with cols[j]:
                         with st.container(border=True):
-                            st.subheader(f"📂 {mod['name_zh']} ({mod['name_vi']})")
+                            st.subheader(f"📂 {mod['name_zh']}")
+                            st.caption(mod['name_vi'])
+                            st.divider()
+                            
                             sub_feats = [f for f in features if f['module_id'] == mod['id']]
                             if sub_feats:
                                 for feat in sub_feats:
-                                    if st.button(f"👉 {feat['name_zh']}", key=f"admin_btn_{mod['id']}_{feat['id']}", use_container_width=True):
+                                    if st.button(
+                                        f"👉 {feat['name_zh']}", 
+                                        key=f"admin_wall_btn_{mod['id']}_{feat['id']}", 
+                                        use_container_width=True
+                                    ):
                                         st.session_state['active_feature_id'] = feat['id']
                                         st.session_state['current_view'] = 'dynamic_feature'
                                         st.rerun()
                             else:
-                                st.caption("目前無設定功能")
+                                st.caption("尚未配置功能項目")
 
-    # -------------------------------------------------------------------------
-    # 模式 B：單一部門工作台 (selected_module_id != 'all')
-    # -------------------------------------------------------------------------
+    # 【模式 B：單一部門工作台】
     else:
         current_mod = next((m for m in modules if m['id'] == st.session_state['selected_module_id']), modules[0])
         
