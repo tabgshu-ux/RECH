@@ -85,7 +85,6 @@ st.divider()
 
 current_lang = st.session_state.get('current_lang', 'zh')
 
-# 🌟 這裡就是完整的 if-elif 判斷式起點，絕對不會再有語法錯誤
 if st.session_state['current_view'] == 'dashboard':
     render_dashboard(db_engine)
 elif st.session_state['current_view'] == 'dynamic_feature':
@@ -103,10 +102,10 @@ elif st.session_state['current_view'] == 'dynamic_feature':
         except Exception as e:
             st.error(f"載入管理部主管戰情室發生錯誤: {e}")
             
-    # 🌟 智慧判斷：獨立導向員工檔案、考勤、薪資頁面
+    # 🌟 智慧判斷：獨立導向員工檔案、考勤、薪資頁面（完美避開 __init__.py 攔截）
     elif '員工' in active_feat_id or '履約' in active_feat_id or active_feat_id == 'feat_hr':
         try:
-            from modules.management.hr import employee_profile
+            from modules.management.hr.employee import employee_profile
             if hasattr(employee_profile, "render_hr_profile_page"):
                 employee_profile.render_hr_profile_page(engine=db_engine, lang=current_lang)
             elif hasattr(employee_profile, "render"):
