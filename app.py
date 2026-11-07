@@ -6,6 +6,8 @@ from sqlalchemy import text, create_engine
 from modules.it_system.admin_settings import render_admin_settings
 from views.login import render_login_page
 from views.dashboard import render_dashboard
+from modules.management.hr import main as hr_main
+hr_main.render(db_engine, lang=lang)
 
 st.set_page_config(
     page_title="裕豐電機工業 SaaS ERP",
