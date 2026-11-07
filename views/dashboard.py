@@ -51,10 +51,9 @@ def render_dashboard(db_engine):
     # 主畫面區域（已徹底清除頂部多餘的「企業導覽選單」大標題）
     # -------------------------------------------------------------
 
-    # 若是管理部 L1，唯一且乾淨地渲染一次標題與戰情儀表板
+   # 若是管理部 L1，只保留最乾淨的主標題，徹底清除多餘的部門代碼與越文資訊列
     if current_target['id'] == 'mgmt':
         st.markdown("### 📂 管理部 - 功能儀表板")
-        st.caption(f"部門代碼: dept_1794023804767 | 層級: {current_target['level']} | 越文名稱: {current_target['name_vi']}")
         st.markdown("---")
         
         # 直接展開管理部主管綜合戰情儀表板
