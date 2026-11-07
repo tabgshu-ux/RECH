@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：views/dashboard.py
-# 職責：100% 資料庫動態驅動的企業導覽與部門功能儀表板（左側選單完全由資料庫動態渲染，僅保留系統設定固定入口）
+# 職責：100% 資料庫動態驅動的企業導覽與部門功能儀表板（左側選單完全對應資料庫，絕不寫死）
 # ==========================================
 
 import streamlit as st
@@ -9,7 +9,7 @@ from sqlalchemy import text
 
 def render_dashboard(db_engine=None):
     st.title("🏭 裕豐電機工業 SaaS ERP - 企業導覽選單")
-    st.caption("系統已實現 100% 網頁配置化架構：左側部門選單完全由資料庫動態驅動，隨時隨地自由增刪調整。")
+    st.caption("系統已實現 100% 網頁配置化架構：左側部門選單與各部門掛載模組完全由資料庫動態驅動。")
     st.markdown("---")
 
     # 1. 從資料庫動態讀取所有啟用的部門（1~4級樹狀結構）
@@ -33,23 +33,26 @@ def render_dashboard(db_engine=None):
         except Exception:
             pass
 
-    # 若資料庫無資料時的預設 Fallback
+    # 若資料庫無資料時的緊急安全預設值
     if not dynamic_departments:
         dynamic_departments = [
             {"id": "gm", "name_zh": "總經理室", "name_vi": "Văn phòng Tổng Giám đốc", "level": "L1", "parent": None},
             {"id": "mgmt", "name_zh": "管理部", "name_vi": "Bộ phận Quản lý", "level": "L1", "parent": None},
         ]
 
-    # 2. 側邊欄動態選單渲染（完全由資料庫驅動，並常駐「系統設定」）
+    # 2. 側邊欄動態選單渲染（完全對應資料庫資料）
     st.sidebar.markdown("### 🏢 企業動態導覽選單")
     
-    # 決定預選中的部門 ID
-    default_id = dynamic_departments[0]['id'] if dynamic_departments else 'sys_config'
-    selected_dept_id = st.session_state.get('selected_module_id', default_id)
+    # 取得目前 session 中記錄的選中部門 ID，若無則預設為資料庫中的第一筆部門
+    current_selected_id = st.session_state.get('selected_module_id', None)
+    valid_ids = [d['id'] for d in dynamic_departments]
+    
+    if current_selected_id not in valid_ids:
+        current_selected_id = dynamic_departments[0]['id']
+        st.session_state['selected_module_id'] = current_selected_id
 
-    # 渲染動態部門按鈕
+    # 渲染資料庫中的所有動態部門按鈕
     for dept in dynamic_departments:
-        # 根據層級縮排顯示
         indent = ""
         if dept["level"] == "L2": indent = "    └ 📁 "
         elif dept["level"] == "L3": indent = "        └ 📁 "
@@ -57,7 +60,11 @@ def render_dashboard(db_engine=None):
         else: indent = "📂 "
 
         btn_label = f"{indent}{dept['name_zh']} ({dept['name_vi']})"
-        if st.sidebar.button(btn_label, use_container_width=True, key=f"sb_dept_{dept['id']}"):
+        
+        # 標註當前選中狀態
+        is_current = (dept['id'] == current_selected_id)
+        
+        if st.sidebar.button(btn_label, use_container_width=True, key=f"sb_dept_{dept['id']}", type="primary" if is_current else "secondary"):
             st.session_state['selected_module_id'] = dept['id']
             st.session_state['current_view'] = 'dashboard'
             st.rerun()
@@ -70,8 +77,8 @@ def render_dashboard(db_engine=None):
         st.session_state['active_feature_id'] = 'feat_it_menu'
         st.rerun()
 
-    # 3. 取得當前選中的部門資料
-    current_dept = next((d for d in dynamic_departments if d['id'] == selected_dept_id), dynamic_departments[0] if dynamic_departments else None)
+    # 3. 取得當前選中的部門詳細資料
+    current_dept = next((d for d in dynamic_departments if d['id'] == current_selected_id), dynamic_departments[0])
     
     if current_dept:
         st.subheader(f"📂 {current_dept['name_zh']} - 功能儀表板")
@@ -105,13 +112,11 @@ def render_dashboard(db_engine=None):
             except Exception:
                 pass
 
-        # 如果該部門尚未掛載任何模組
         if not assigned_modules:
             st.info(f"💡 此部門 [{current_dept['name_zh']}] 目前尚未掛載任何業務模組。您可以前往「系統設定 ➡️ 公司部門及功能設定」中勾選並掛載對應的模組！")
         else:
             st.markdown(f"##### 🧩 此部門當前掛載的業務模組（共 {len(assigned_modules)} 項）：")
             
-            # 智慧模組名稱對應路由 ID
             def get_feat_id_by_name(m_name):
                 if "主管綜合戰情儀表板" in m_name: return "feat_mgmt_supervisor"
                 if "人事" in m_name or "員工檔案" in m_name: return "feat_hr"
@@ -124,7 +129,6 @@ def render_dashboard(db_engine=None):
                 if "簽核" in m_name: return "feat_my_approvals"
                 return "feat_general"
 
-            # 以動態網格渲染該部門掛載的所有模組卡片
             cols = st.columns(3)
             for idx, mod_name in enumerate(assigned_modules):
                 col = cols[idx % 3]
