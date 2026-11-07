@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：1~4 級動態部門樹狀掛載、修正中文代碼衝突導致覆蓋的重大 Bug、自動 Seed 防護
+# 職責：1~4 級動態部門配置中心（前端介面完全隱藏代碼，僅顯示乾淨中越文名稱，支援後台唯一代碼機制）
 # ==========================================
 
 import streamlit as st
@@ -24,7 +24,6 @@ def get_robust_db_engine(passed_engine=None):
     return None
 
 def reset_and_init_db_tables(engine):
-    """初始化系統設定資料表與預設根目錄部門"""
     if engine is not None:
         try:
             with engine.begin() as conn:
@@ -50,7 +49,7 @@ def reset_and_init_db_tables(engine):
                     );
                 """))
 
-                # 自動植入預設核心大部門（若表格為空）
+                # 初始化預設部門（若表格為空）
                 res = conn.execute(text("SELECT COUNT(*) FROM sys_departments")).scalar()
                 if res == 0:
                     default_depts = [
@@ -67,19 +66,6 @@ def reset_and_init_db_tables(engine):
                             VALUES (:code, :parent, :lvl, :zh, :vi, TRUE)
                             ON CONFLICT (dept_code) DO NOTHING;
                         """), {"code": code, "parent": parent, "lvl": lvl, "zh": zh, "vi": vi})
-
-                    default_mods = [
-                        ("mgmt", "管理部主管綜合戰情儀表板"),
-                        ("mgmt", "人事行政課 — 員工檔案、考勤與薪資管理"),
-                        ("gm", "總經理室戰情室"),
-                        ("eng", "工程主管戰情室與案場管理")
-                    ]
-                    for d_code, m_name in default_mods:
-                        conn.execute(text("""
-                            INSERT INTO sys_department_modules (dept_code, module_name)
-                            VALUES (:d_code, :m_name)
-                            ON CONFLICT DO NOTHING;
-                        """), {"d_code": d_code, "m_name": m_name})
         except Exception:
             pass
 
@@ -99,13 +85,14 @@ def get_department_module_tree(engine=None):
                         d_level = row["level_depth"]
                         df_mod = pd.read_sql(text("SELECT module_name FROM sys_department_modules WHERE dept_code = :d"), con=conn, params={"d": d_code})
                         mods = df_mod["module_name"].tolist() if not df_mod.empty else ["尚未掛載模組"]
-                        dynamic_tree[f"[{d_level}] {d_name} ({d_code})"] = mods
+                        # 🌟 前端樹狀結構：完全不顯示底層代碼，只秀出乾淨的部門名稱
+                        dynamic_tree[f"[{d_level}] {d_name}"] = mods
                     return dynamic_tree
         except Exception:
             pass
             
     return {
-        "[L1] 管理部 (mgmt)": ["管理部主管綜合戰情儀表板"]
+        "[L1] 管理部": ["管理部主管綜合戰情儀表板"]
     }
 
 def render(engine=None, lang="繁體中文", **kwargs):
@@ -122,7 +109,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
             pass
 
     st.subheader("🏢 公司部門架構與 1~4 級動態配置中心")
-    st.info("在此動態維護公司組織架構，系統已全面修復中文代碼衝突，可順利建立多個獨立部門與二級課室。")
+    st.info("在此動態維護公司組織架構。前端介面已全面優化：不顯示任何技術代碼，僅呈現乾淨專業的部門名稱。")
 
     if conn_status:
         if st.button("🗑️ [危險動作] 清空並重置所有部門與模組掛載資料表", type="secondary"):
@@ -207,12 +194,12 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 "上層所屬部門 (Parent Department)", 
                 [
                     "無 (根目錄 / 一級大部門)", 
-                    "總經理室 (Executive Office)", 
-                    "管理部 (Management Dept)", 
-                    "工程部 (Engineering Dept)", 
-                    "生產部 (Production Dept)", 
-                    "倉庫管理 (Warehouse)", 
-                    "簽核中心 (Approval Center)"
+                    "總經理室", 
+                    "管理部", 
+                    "工程部", 
+                    "生產部", 
+                    "倉庫管理", 
+                    "簽核中心"
                 ]
             )
             
@@ -226,8 +213,8 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 ]
             )
             
-            name_zh = st.text_input("部門繁體中文名稱 *", placeholder="例如: 管理部, 人事行政課, 簽核中心")
-            name_vi = st.text_input("部門越文名稱 (Tiếng Việt)", placeholder="Ví dụ: Bộ phận Quản lý")
+            name_zh = st.text_input("部門繁體中文名稱 *", placeholder="例如: 管理部, 人事行政課, 設計課")
+            name_vi = st.text_input("部門越文名稱 (Tiếng Việt)", placeholder="Ví dụ: Bộ phận Quản lý, Phòng Thiết kế")
             
             st.markdown("---")
             st.markdown("#### 🧩 勾選並掛載此部門可操作的業務模組（附帶詳細功用說明）：")
@@ -247,7 +234,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 if not name_zh:
                     st.error("⚠️ 請至少填寫部門繁體中文名稱！")
                 else:
-                    # 🌟 關鍵修復：改用時間戳記生成絕對唯一的 dept_code，絕不發生中文名稱碰撞覆蓋
+                    # 背景自動產生唯一代碼，絕不讓使用者在畫面上看到雜亂代碼
                     unique_code = f"dept_{int(time.time()*1000)}"
                     
                     if conn_status:
@@ -270,7 +257,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                                         VALUES (:code, :m_name)
                                     """), {"code": unique_code, "m_name": m_name})
 
-                            st.success(f"🎉 成功新增部門 [{name_zh}]（代碼: {unique_code}）並掛載了 {len(selected_department_modules)} 個模組！")
+                            st.success(f"🎉 成功新增部門 [{name_zh}] 並掛載了 {len(selected_department_modules)} 個模組！")
                             st.rerun()
                         except Exception as e:
                             st.error(f"❌ 寫入資料庫失敗: {e}")
@@ -298,7 +285,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                         st.markdown("###### 🗑️ 勾選並移除不需要的模組：")
                         mods_to_remove = []
                         for cm in current_assigned:
-                            if st.checkbox(f"移除模組: {cm}", key=f"remove_mod_{target_code}_{cm}*"):
+                            if st.checkbox(f"移除模組: {cm}", key=f"remove_mod_{target_code}_{cm}"):
                                 mods_to_remove.append(cm)
 
                         if st.button("🗑️ 確認從此部門移除勾選的模組", type="secondary"):
