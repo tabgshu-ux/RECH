@@ -1,34 +1,16 @@
 import streamlit as st
 from sqlalchemy import text
 
-# 🌟 正確的相對路徑引入同資料夾底下的子模組
-try:
-    from .add_vietnamese import render_add_vietnamese
-except ImportError:
-    from add_vietnamese import render_add_vietnamese
+# 🌟 使用絕對路徑從 modules.management.hr.employee 引入，保證 100% 找得到
+from modules.management.hr.employee.add_vietnamese import render_add_vietnamese
+from modules.management.hr.employee.add_expat import render_add_expat
+from modules.management.hr.employee.employee_list import render_employee_list
+from modules.management.hr.employee.edit_profile import render_edit_profile
 
 try:
-    from .add_expat import render_add_expat
+    from modules.management.hr.employee.resigned_list import render_resigned_list
 except ImportError:
-    from add_expat import render_add_expat
-
-try:
-    from .employee_list import render_employee_list
-except ImportError:
-    from employee_list import render_employee_list
-
-try:
-    from .edit_profile import render_edit_profile
-except ImportError:
-    from edit_profile import render_edit_profile
-
-try:
-    from .resigned_list import render_resigned_list
-except ImportError:
-    try:
-        from resigned_list import render_resigned_list
-    except:
-        render_resigned_list = lambda *a, **k: st.info("離職名冊模組建置中")
+    render_resigned_list = lambda *a, **k: st.info("離職名冊模組建置中")
 
 def init_hr_profile_db(engine):
     if not engine:
@@ -103,7 +85,6 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
     with tabs[4]:
         render_resigned_list(engine=engine, lang=active_lang)
 
-# 🌟 提供所有可能的標準呼叫入口，確保 100% 完美對接
 def render(engine=None, lang="繁體中文", **kwargs):
     render_hr_profile_page(engine=engine, lang=lang, **kwargs)
 
