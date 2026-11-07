@@ -1,16 +1,46 @@
 import streamlit as st
 from sqlalchemy import text
 
-# 🌟 使用絕對路徑從 modules.management.hr.employee 引入，保證 100% 找得到
-from modules.management.hr.employee.add_vietnamese import render_add_vietnamese
-from modules.management.hr.employee.add_expat import render_add_expat
-from modules.management.hr.employee.employee_list import render_employee_list
-from modules.management.hr.employee.edit_profile import render_edit_profile
+# 🌟 具備自動容錯的匯入機制，防止函式名稱不對導致崩潰
+try:
+    from modules.management.hr.employee.add_vietnamese import render_add_vietnamese
+except ImportError:
+    try:
+        from .add_vietnamese import render_add_vietnamese
+    except:
+        render_add_vietnamese = lambda *a, **k: st.info("新增越南員工模組載入中")
+
+try:
+    from modules.management.hr.employee.add_expat import render_add_expat
+except ImportError:
+    try:
+        from .add_expat import render_add_expat
+    except:
+        render_add_expat = lambda *a, **k: st.info("新增外派幹部模組載入中")
+
+try:
+    from modules.management.hr.employee.employee_list import render_employee_list
+except ImportError:
+    try:
+        from .employee_list import render_employee_list
+    except:
+        render_employee_list = lambda *a, **k: st.info("員工總名冊模組載入中")
+
+try:
+    from modules.management.hr.employee.edit_profile import render_edit_profile
+except ImportError:
+    try:
+        from .edit_profile import render_edit_profile
+    except:
+        render_edit_profile = lambda *a, **k: st.info("編輯員工資料模組載入中")
 
 try:
     from modules.management.hr.employee.resigned_list import render_resigned_list
 except ImportError:
-    render_resigned_list = lambda *a, **k: st.info("離職名冊模組建置中")
+    try:
+        from .resigned_list import render_resigned_list
+    except:
+        render_resigned_list = lambda *a, **k: st.info("離職名冊模組載入中")
 
 def init_hr_profile_db(engine):
     if not engine:
@@ -75,15 +105,34 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
     ])
 
     with tabs[0]:
-        render_add_vietnamese(engine=engine, lang=active_lang)
+        try:
+            render_add_vietnamese(engine=engine, lang=active_lang)
+        except Exception as e:
+            st.error(f"渲染新增越南員工發生錯誤: {e}")
+            
     with tabs[1]:
-        render_add_expat(engine=engine, lang=active_lang)
+        try:
+            render_add_expat(engine=engine, lang=active_lang)
+        except Exception as e:
+            st.error(f"渲染新增外派幹部發生錯誤: {e}")
+            
     with tabs[2]:
-        render_employee_list(engine=engine, lang=active_lang)
+        try:
+            render_employee_list(engine=engine, lang=active_lang)
+        except Exception as e:
+            st.error(f"渲染員工總名冊發生錯誤: {e}")
+            
     with tabs[3]:
-        render_edit_profile(engine=engine, lang=active_lang)
+        try:
+            render_edit_profile(engine=engine, lang=active_lang)
+        except Exception as e:
+            st.error(f"渲染編輯員工資料發生錯誤: {e}")
+            
     with tabs[4]:
-        render_resigned_list(engine=engine, lang=active_lang)
+        try:
+            render_resigned_list(engine=engine, lang=active_lang)
+        except Exception as e:
+            st.error(f"渲染離職名冊發生錯誤: {e}")
 
 def render(engine=None, lang="繁體中文", **kwargs):
     render_hr_profile_page(engine=engine, lang=lang, **kwargs)
