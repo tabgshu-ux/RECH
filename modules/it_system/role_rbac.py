@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/role_rbac.py
-# 職責：組織角色與權限指派中心（RBAC）- 已完美相容模擬 DatabaseEngine 與真實引擎
+# 職責：組織角色與權限指派中心（RBAC）- 100% 直連 Supabase 真實資料庫
 # ==========================================
 
 import streamlit as st
@@ -23,36 +23,25 @@ st.markdown(MOBILE_CSS, unsafe_allow_html=True)
 RBAC_I18N = {
     "繁體中文": {
         "title": "⚙️ 組織角色與權限指派中心 (RBAC)",
-        "caption": "採用模組化分類管理，讓權限派發像拼圖一樣直覺簡單，免除手動大海撈針的痛苦。",
+        "caption": "採用模組化分類管理，直連 Supabase 資料庫，讓權限派發精準高效。",
         "role_name": "職位角色名稱",
         "dept_name": "所屬部門",
         "desc": "職責說明與範圍",
-        "save_btn": "💾 儲存角色權限設定",
-        "delete_btn": "🗑️ 刪除此角色",
-        "success_save": "🎉 角色權限已成功儲存！",
-        "success_del": "🗑️ 角色已成功刪除！"
+        "save_btn": "💾 儲存角色權限至資料庫",
+        "delete_btn": "🗑️ 從資料庫刪除此角色",
+        "success_save": "🎉 角色權限已成功寫入 Supabase 資料庫！",
+        "success_del": "🗑️ 角色已從資料庫中刪除！"
     },
     "Tiếng Việt": {
         "title": "⚙️ Trung tâm Phân quyền Vai trò (RBAC)",
-        "caption": "Quản lý phân quyền theo nhóm module, giúp thao tác trực quan và nhanh chóng hơn.",
+        "caption": "Kết nối trực tiếp cơ sở dữ liệu Supabase, quản lý phân quyền trực quan.",
         "role_name": "Tên vai trò",
         "dept_name": "Phòng ban",
         "desc": "Mô tả công việc",
-        "save_btn": "💾 Lưu phân quyền",
+        "save_btn": "💾 Lưu phân quyền vào CSDL",
         "delete_btn": "🗑️ Xóa vai trò",
-        "success_save": "🎉 Đã lưu cấu hình vai trò thành công!",
+        "success_save": "🎉 Đã lưu cấu hình vai trò vào CSDL thành công!",
         "success_del": "🗑️ Đã xóa vai trò thành công!"
-    },
-    "English": {
-        "title": "⚙️ Role & Permission Assignment Center (RBAC)",
-        "caption": "Grouped module permission management for fast, intuitive configuration.",
-        "role_name": "Role Name",
-        "dept_name": "Department",
-        "desc": "Description & Scope",
-        "save_btn": "💾 Save Role Permissions",
-        "delete_btn": "🗑️ Delete Role",
-        "success_save": "🎉 Role permissions saved successfully!",
-        "success_del": "🗑️ Role deleted successfully!"
     }
 }
 
@@ -63,35 +52,55 @@ def render(engine=None, lang="繁體中文", **kwargs):
     st.markdown(f"### {L['title']}")
     st.caption(L['caption'])
 
-    # 在 session_state 中建立一個安全的角色記憶庫（確保模擬環境或真實環境皆能完美下拉選單連動）
-    if 'persistent_roles_db' not in st.session_state:
-        st.session_state['persistent_roles_db'] = {
-            "董事長": {"department": "📈 總經理室 (Executive Office)", "description": "主導公司經營策略規劃與重大制度改革", "allowed_modules": "🔴 原料價格與 Gemini 智慧採購顧問,📊 財務類顯示資料 (AR/AP & P&L)"},
-            "外勤技師": {"department": "🛠️ 工程與設計管理中心 (Engineering & Design Center)", "description": "負責現場外勤打卡與施工回報", "allowed_modules": "📍 3. 現場外勤打卡與作業登記"},
-            "人事專員": {"department": "👔 管理部 (Management Dept)", "description": "負責員工檔案與考勤薪資管理", "allowed_modules": "👤 員工個人檔案與人事管理,💰 員工薪資計算與保險扣除"}
-        }
+    if engine is None:
+        st.error("⚠️ 系統錯誤：未偵測到真實的資料庫連線引擎 (Engine)，請檢查 app.py 與資料庫設定。")
+        return
 
-    # 1. 嘗試初始化資料表（若為真實引擎）
-    if engine is not None and hasattr(engine, "begin"):
+    # 1. 強制初始化資料庫表格與唯一約束
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS system_roles (
+                    id SERIAL PRIMARY KEY,
+                    role_name VARCHAR(100) UNIQUE NOT NULL,
+                    department VARCHAR(150) DEFAULT '管理部 (Management Dept)',
+                    description TEXT,
+                    allowed_modules TEXT,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+    except Exception as e:
+        st.error(f"❌ 資料庫表格初始化失敗: {e}")
+        return
+
+    # 2. 直接從真實資料庫讀取角色資料
+    roles_data = {}
+    try:
+        df = pd.read_sql("SELECT role_name, department, description, allowed_modules FROM system_roles", con=engine)
+        for _, row in df.iterrows():
+            roles_data[row["role_name"]] = {
+                "department": row["department"],
+                "description": row["description"],
+                "allowed_modules": row["allowed_modules"]
+            }
+    except Exception as e:
+        st.warning(f"⚠️ 讀取資料庫角色清單發生異常: {e}")
+
+    # 若資料庫剛好完全沒資料，寫入預設核心角色
+    if not roles_data:
+        default_seed = [
+            ("董事長", "📈 總經理室 (Executive Office)", "主導公司經營策略規劃與重大制度改革", "🔴 原料價格與 Gemini 智慧採購顧問,📊 財務類顯示資料 (AR/AP & P&L)"),
+            ("外勤技師", "🛠️ 工程與設計管理中心 (Engineering & Design Center)", "負責現場外勤打卡與施工回報", "📍 3. 現場外勤打卡與作業登記"),
+            ("人事專員", "👔 管理部 (Management Dept)", "負責員工檔案與考勤薪資管理", "👤 員工個人檔案與人事管理,💰 員工薪資計算與保險扣除")
+        ]
         try:
             with engine.begin() as conn:
-                conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS system_roles (
-                        id SERIAL PRIMARY KEY,
-                        role_name VARCHAR(100) UNIQUE NOT NULL,
-                        department VARCHAR(150) DEFAULT '管理部 (Management Dept)',
-                        description TEXT,
-                        allowed_modules TEXT,
-                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                    );
-                """))
-        except Exception:
-            pass
-
-    # 2. 讀取現有角色資料
-    roles_data = st.session_state['persistent_roles_db'].copy()
-    if engine is not None and hasattr(engine, "connect"):
-        try:
+                for r, d, desc, mods in default_seed:
+                    conn.execute(text("""
+                        INSERT INTO system_roles (role_name, department, description, allowed_modules)
+                        VALUES (:r, :dept, :d, :m)
+                        ON CONFLICT (role_name) DO NOTHING;
+                    """), {"r": r, "dept": d, "d": desc, "m": mods})
             df = pd.read_sql("SELECT role_name, department, description, allowed_modules FROM system_roles", con=engine)
             for _, row in df.iterrows():
                 roles_data[row["role_name"]] = {
@@ -127,7 +136,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
             "⚠️ 6. 工程證照預警與機具檢驗預警", 
             "🎨 7. 配電盤電氣與機構設計圖庫",
             "🔌 8. 配電盤 BOM 零件與採購連動", 
-            "👷 9. 外包商計價與偶鐸管理",
+            "👷 9. 外包商計價與工班管理",
             "🧪 10. FAT/SAT 出廠與現場驗收管理"
         ],
         "🏭 生產製造與倉儲管理": [
@@ -206,29 +215,18 @@ def render(engine=None, lang="繁體中文", **kwargs):
             r_name = role_name_input.strip()
             if r_name:
                 mod_str = ",".join(selected_mods)
-                
-                # 同時寫入 session_state 確保畫面即時連動
-                st.session_state['persistent_roles_db'][r_name] = {
-                    "department": dept_select,
-                    "description": desc_input,
-                    "allowed_modules": mod_str
-                }
-
-                # 若有真實引擎則同步寫入資料庫
-                if engine is not None and hasattr(engine, "begin"):
-                    try:
-                        with engine.begin() as conn:
-                            conn.execute(text("""
-                                INSERT INTO system_roles (role_name, department, description, allowed_modules)
-                                VALUES (:r, :dept, :d, :m)
-                                ON CONFLICT (role_name)
-                                DO UPDATE SET department = :dept, description = :d, allowed_modules = :m;
-                            """), {"r": r_name, "dept": dept_select, "d": desc_input, "m": mod_str})
-                    except Exception:
-                        pass
-                
-                st.success(L['success_save'])
-                st.rerun()
+                try:
+                    with engine.begin() as conn:
+                        conn.execute(text("""
+                            INSERT INTO system_roles (role_name, department, description, allowed_modules)
+                            VALUES (:r, :dept, :d, :m)
+                            ON CONFLICT (role_name)
+                            DO UPDATE SET department = :dept, description = :d, allowed_modules = :m;
+                        """), {"r": r_name, "dept": dept_select, "d": desc_input, "m": mod_str})
+                    st.success(L['success_save'])
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ 資料庫寫入失敗: {e}")
             else:
                 st.warning("⚠️ 請輸入有效的職位角色名稱！")
 
@@ -236,17 +234,13 @@ def render(engine=None, lang="繁體中文", **kwargs):
             if selected_role_opt in ["系統管理員 (Admin)", "admin", "董事長"]:
                 st.error("🚫 系統核心或高階管理角色無法刪除！")
             else:
-                if selected_role_opt in st.session_state['persistent_roles_db']:
-                    del st.session_state['persistent_roles_db'][selected_role_opt]
-
-                if engine is not None and hasattr(engine, "begin"):
-                    try:
-                        with engine.begin() as conn:
-                            conn.execute(text("DELETE FROM system_roles WHERE role_name = :r"), {"r": selected_role_opt})
-                    except Exception:
-                        pass
-                st.success(L['success_del'])
-                st.rerun()
+                try:
+                    with engine.begin() as conn:
+                        conn.execute(text("DELETE FROM system_roles WHERE role_name = :r"), {"r": selected_role_opt})
+                    st.success(L['success_del'])
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ 資料庫刪除失敗: {e}")
 
 def show(engine=None, lang="繁體中文", **kwargs):
     render(engine=engine, lang=lang, **kwargs)
