@@ -55,7 +55,7 @@ def get_db_engine():
         if "pooler.supabase.com" in clean_url and "?" not in clean_url:
             clean_url += "?sslmode=require"
         try:
-            return create_engine(clean_url, pool_pre_ping=True)
+            return create_engine(clean_url, pool_pre_ping=True, connect_args={"prepare_threshold": 0})
         except Exception:
             return None
     return None
@@ -95,6 +95,12 @@ elif st.session_state['current_view'] == 'dynamic_feature':
     
     if active_feat_id == 'feat_it_menu':
         render_admin_settings(db_engine, lang=st.session_state.get('current_lang', 'zh'))
+    elif active_feat_id == 'feat_mgmt_supervisor':
+        try:
+            from modules.management.supervisor_dashboard import render
+            render(db_engine, lang=st.session_state.get('current_lang', 'zh'))
+        except Exception as e:
+            st.error(f"載入管理部主管戰情室發生錯誤: {e}")
     elif active_feat_id == 'feat_hr':
         try:
             from modules.employee_management import render_employee_management
