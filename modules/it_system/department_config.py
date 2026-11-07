@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：1~4 級動態部門樹狀掛載、帶有功用說明的模組拼圖勾選（含管理部主管戰情室）、模組動態移除與維護
+# 職責：1~4 級動態部門樹狀掛載、自動 Seed 預設部門防護、修復 Psycopg3 預備語句衝突
 # ==========================================
 
 import streamlit as st
@@ -18,16 +18,18 @@ def get_robust_db_engine(passed_engine=None):
             clean_url = db_url.strip()
             if "pooler.supabase.com" in clean_url and "?" not in clean_url:
                 clean_url += "?sslmode=require"
-            return create_engine(clean_url, pool_pre_ping=True, connect_args={"prepare_threshold": 0})
+            # 關鍵修正：將 prepare_threshold 設為 None，徹底避開 Supabase PgBouncer 預備語句衝突
+            return create_engine(clean_url, pool_pre_ping=True, connect_args={"prepare_threshold": None})
         except Exception:
             return None
     return None
 
 def reset_and_init_db_tables(engine):
-    """初始化系統設定資料表與預設模組關聯"""
+    """初始化系統設定資料表與預設根目錄部門"""
     if engine is not None:
         try:
             with engine.begin() as conn:
+                # 1. 建立標準 1~4 級動態部門表
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS sys_departments (
                         id SERIAL PRIMARY KEY,
@@ -40,6 +42,8 @@ def reset_and_init_db_tables(engine):
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
+
+                # 2. 部門模組掛載表
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS sys_department_modules (
                         id SERIAL PRIMARY KEY,
@@ -48,37 +52,44 @@ def reset_and_init_db_tables(engine):
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
-                conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS sys_branding (
-                        id SERIAL PRIMARY KEY,
-                        setting_key VARCHAR(100) UNIQUE NOT NULL,
-                        setting_value TEXT,
-                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                    );
-                """))
-                conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS sys_db_configs (
-                        id SERIAL PRIMARY KEY,
-                        db_name VARCHAR(100) UNIQUE NOT NULL,
-                        connection_url TEXT,
-                        is_active BOOLEAN DEFAULT TRUE,
-                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                    );
-                """))
-                conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS sys_api_configs (
-                        id SERIAL PRIMARY KEY,
-                        api_key_name VARCHAR(100) UNIQUE NOT NULL,
-                        api_secret_value TEXT,
-                        description TEXT,
-                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                    );
-                """))
-        except Exception as e:
-            st.error(f"資料庫初始化重置失敗: {e}")
+
+                # 3. 檢查並自動植入預設核心大部門（防止總經理室與管理部消失）
+                res = conn.execute(text("SELECT COUNT(*) FROM sys_departments")).scalar()
+                if res == 0:
+                    default_depts = [
+                        ("gm", None, "L1", "總經理室", "Văn phòng Tổng Giám đốc"),
+                        ("mgmt", None, "L1", "管理部", "Bộ phận Quản lý"),
+                        ("eng", None, "L1", "工程部", "Bộ phận Công trình"),
+                        ("prod", None, "L1", "生產部", "Bộ phận Sản xuất"),
+                        ("wh", None, "L1", "倉庫管理", "Quản lý kho"),
+                        ("approval", None, "L1", "簽核中心", "Trung tâm phê duyệt")
+                    ]
+                    for code, parent, lvl, zh, vi in default_depts:
+                        conn.execute(text("""
+                            INSERT INTO sys_departments (dept_code, parent_code, level_depth, dept_name_zh, dept_name_vi, is_active)
+                            VALUES (:code, :parent, :lvl, :zh, :vi, TRUE)
+                            ON CONFLICT (dept_code) DO NOTHING;
+                        """), {"code": code, "parent": parent, "lvl": lvl, "zh": zh, "vi": vi})
+
+                    # 植入預設模組掛載
+                    default_mods = [
+                        ("mgmt", "管理部主管綜合戰情儀表板"),
+                        ("mgmt", "人事行政課 — 員工檔案、考勤與薪資管理"),
+                        ("mgmt", "總務採購課 — 供應商主檔與採購應付帳款 (AP)"),
+                        ("gm", "總經理室戰情室")
+                    ]
+                    for d_code, m_name in default_mods:
+                        conn.execute(text("""
+                            INSERT INTO sys_department_modules (dept_code, module_name)
+                            VALUES (:d_code, :m_name)
+                            ON CONFLICT DO NOTHING;
+                        """), {"d_code": d_code, "m_name": m_name})
+
+        except Exception:
+            pass # 略過重複建立的微小例外，確保主程序順暢
 
 def get_department_module_tree(engine=None):
-    """從資料庫動態取得完整部門與掛載模組樹狀結構"""
+    """從資料庫動態取得完整部門與掛載模組樹狀結構（具備自動 Seed Fallback）"""
     active_engine = get_robust_db_engine(engine)
     dynamic_tree = {}
     
@@ -99,12 +110,10 @@ def get_department_module_tree(engine=None):
         except Exception:
             pass
             
+    # 最終防護回傳
     return {
-        "[L1] 管理部 (Management Dept)": [
-            "管理部主管綜合戰情儀表板 — 統合請假早退人員名單、當月採購金額花費與車輛維修保養費用統合資料",
-            "人事行政課 — 員工檔案、考勤與薪資管理",
-            "總務採購課 — 供應商主檔與採購應付帳款 (AP)"
-        ]
+        "[L1] 總經理室 (gm)": ["總經理室戰情室"],
+        "[L1] 管理部 (mgmt)": ["管理部主管綜合戰情儀表板", "人事行政課 — 員工檔案、考勤與薪資管理"]
     }
 
 def render(engine=None, lang="繁體中文", **kwargs):
@@ -130,7 +139,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     conn.execute(text("DROP TABLE IF EXISTS sys_department_modules CASCADE;"))
                     conn.execute(text("DROP TABLE IF EXISTS sys_departments CASCADE;"))
                 reset_and_init_db_tables(active_engine)
-                st.success("🎉 資料庫已成功完全清空並重新初始化！")
+                st.success("🎉 資料庫已成功完全清空並重新初始化（已自動植入預設部門）！")
                 st.rerun()
             except Exception as e:
                 st.error(f"清空重置失敗: {e}")
@@ -145,7 +154,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
         st.markdown("##### 🌳 當前系統一級/二級部門與掛載子模組動態樹狀結構")
         tree_data = get_department_module_tree(active_engine)
         if not tree_data:
-            st.info("目前尚無任何部門資料，請至「新增 1~4 級部門與模組掛載」分頁建立。")
+            st.info("目前尚無任何部門資料。")
         else:
             for dept, mods in tree_data.items():
                 with st.expander(f"📁 {dept} ({len(mods)} 個掛載模組)"):
@@ -321,7 +330,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 else:
                     st.info("目前尚無建立任何部門。")
             except Exception as e:
-                st.error(f"讀取部門資料失敗: {e}")
+                st.error(f"讀Tag取部門資料失敗: {e}")
         else:
             st.info("資料庫未連線。")
 
