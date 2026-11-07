@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：1~4 級動態組織配置中心（支援完全動態父層選取、L1~L4 彈性升降級與模組自由掛載）
+# 職責：1~4 級動態組織配置中心（修復父層下拉選單僅抓取 L1 大部門，確保二級部門順暢歸屬）
 # ==========================================
 
 import streamlit as st
@@ -81,7 +81,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
             pass
 
     st.subheader("🏢 公司組織架構與 L1~L4 動態配置中心")
-    st.info("在此動態維護公司組織架構。支援任意部門升降級，上層父部門完全由現有組織動態選取，並自由掛載業務模組。")
+    st.info("在此動態維護公司組織架構。新增二級（L2）以上部門時，可直接於下拉選單選取現有的 L1 大部門作為上級歸屬。")
 
     if conn_status:
         if st.button("🗑️ [危險動作] 清空並重置所有部門與模組掛載資料表", type="secondary"):
@@ -101,14 +101,14 @@ def render(engine=None, lang="繁體中文", **kwargs):
         "📋 現有部門清單與模組調整"
     ])
 
-    # 取得現有部門清單供動態選取父層
-    existing_depts_list = [("無 (獨立 L1 頂級部門)", "None")]
+    # 🌟 精準抓取現有 L1 大部門清單供 L2 選擇父層
+    existing_l1_list = [("無 (獨立 L1 頂級部門)", "None")]
     if conn_status:
         try:
-            df_all = pd.read_sql("SELECT dept_code, dept_name_zh, level_depth FROM sys_departments WHERE is_active = TRUE", con=active_engine)
-            if not df_all.empty:
-                for _, r in df_all.iterrows():
-                    existing_depts_list.append((f"[{r['level_depth']}] {r['dept_name_zh']}", r['dept_code']))
+            df_l1 = pd.read_sql("SELECT dept_code, dept_name_zh FROM sys_departments WHERE is_active = TRUE AND (level_depth = 'L1' OR parent_code IS NULL OR parent_code = 'None')", con=active_engine)
+            if not df_l1.empty:
+                for _, r in df_l1.iterrows():
+                    existing_l1_list.append((r['dept_name_zh'], r['dept_code']))
         except Exception:
             pass
 
@@ -120,7 +120,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 if df_tree.empty:
                     st.info("目前尚無任何部門資料。")
                 else:
-                    # 呈現 L1 及其下屬 L2/L3/L4
                     l1_rows = df_tree[df_tree["level_depth"] == "L1"]
                     for _, l1 in l1_rows.iterrows():
                         l1_mods = pd.read_sql(text("SELECT module_name FROM sys_department_modules WHERE dept_code = :c"), con=active_engine, params={"c": l1['dept_code']})["module_name"].tolist()
@@ -128,7 +127,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
                             for m in l1_mods:
                                 st.markdown(f"  - 📌 {m}")
                             
-                            # 尋找下屬子部門
                             sub_rows = df_tree[df_tree["parent_code"] == l1['dept_code']]
                             for _, sub in sub_rows.iterrows():
                                 sub_mods = pd.read_sql(text("SELECT module_name FROM sys_department_modules WHERE dept_code = :c"), con=active_engine, params={"c": sub['dept_code']})["module_name"].tolist()
@@ -176,17 +174,16 @@ def render(engine=None, lang="繁體中文", **kwargs):
 
         with st.form("add_dynamic_dept_form"):
             parent_selection = st.selectbox(
-                "上層所屬部門 (Parent Department) —— 選擇歸屬上級", 
-                options=[item[0] for item in existing_depts_list]
+                "上層所屬部門 (Parent Department) —— 選擇歸屬上級大部門", 
+                options=[item[0] for item in existing_l1_list]
             )
-            # 對應取得父層代碼
-            parent_code = next(item[1] for item in existing_depts_list if item[0] == parent_selection)
+            parent_code = next(item[1] for item in existing_l1_list if item[0] == parent_selection)
             
             level_choice = st.selectbox(
                 "組織層級 (Hierarchy Level)", 
                 [
-                    "L1 - 頂級大部門 / 事業處",
                     "L2 - 二級部門 / 課室",
+                    "L1 - 頂級大部門 / 事業處",
                     "L3 - 三級組別 / 專案小組",
                     "L4 - 四級現場作業站 / 點工班"
                 ]
@@ -212,7 +209,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     st.error("⚠️ 請至少填寫部門繁體中文名稱！")
                 else:
                     unique_code = f"dept_{int(time.time()*1000)}"
-                    lvl_val = level_choice.split()[0] # 取得 L1, L2, L3 或 L4
+                    lvl_val = level_choice.split()[0]
                     
                     if conn_status:
                         try:
