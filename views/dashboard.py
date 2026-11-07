@@ -87,10 +87,19 @@ def render_dashboard(db_engine=None):
         st.caption(f"部門代碼: {current_target['id']} | 層級: {current_target['level']} | 越文名稱: {current_target['name_vi']}")
         st.markdown("<br>", unsafe_allow_html=True)
 
-       # 若是管理部 L1，顯示乾淨的標題並直接展開戰情儀表板
+       # 🌟 移除多餘的企業導覽大標題，直接乾淨地呈現當前部門儀表板與戰情指標
         if ("管理部" in current_target['name_zh'] or current_target['id'] == 'mgmt') and not active_sub_id:
+            # 只保留一個乾淨的標題
             st.markdown("### 📂 管理部 - 功能儀表板")
             st.caption("部門代碼: dept_1794023804767 | 層級: L1 | 越文名稱: Phòng Hành chính Quản trị")
+            st.markdown("---")
+            
+            # 直接展開管理部主管綜合戰情儀表板
+            try:
+                from modules.management.supervisor_dashboard import render as render_supervisor
+                render_supervisor(db_engine, lang=st.session_state.get('current_lang', 'zh'))
+            except Exception as e:
+                st.warning(f"戰情資料載入提示: {e}")
             st.markdown("---")
             
             # 直接在首頁展開戰情儀表板，不需另外點擊
