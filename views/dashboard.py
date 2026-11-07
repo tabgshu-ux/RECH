@@ -53,7 +53,6 @@ def render_dashboard(db_engine):
 
    # 若是管理部 L1，只保留最乾淨的主標題，徹底清除多餘的部門代碼與越文資訊列
     if current_target['id'] == 'mgmt':
-        st.markdown("### 📂 管理部 - 功能儀表板")
         st.markdown("---")
         
         # 直接展開管理部主管綜合戰情儀表板
