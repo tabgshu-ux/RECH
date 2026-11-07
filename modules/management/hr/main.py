@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/management/hr/main.py
-# 職責：人事行政（HR）模組統一調度中心
+# 職責：人事行政（HR）模組統一調度中心（具備函式自動探測防護機制）
 # ==========================================
 
 import streamlit as st
@@ -21,38 +21,48 @@ def render(db_engine=None, lang="繁體中文", **kwargs):
 
     if "員工" in sub_tab:
         try:
-            # 依據實際目錄結構：modules/management/hr/employee/employee_list.py
             from modules.management.hr.employee import employee_list
-            if hasattr(employee_list, "render"):
-                employee_list.render(db_engine=db_engine, lang=lang)
+            # 自動探測子模組中可用的渲染函式
+            func = getattr(employee_list, "render", None) or \
+                   getattr(employee_list, "render_employee_list", None) or \
+                   getattr(employee_list, "main", None)
+            if func:
+                func(db_engine=db_engine, lang=lang)
             else:
-                st.warning("employee_list 模組未包含 render 函式。")
+                st.info("📂 員工檔案模組已載入，但未找到標準渲染入口。顯示可用屬性：")
+                st.write([m for m in dir(employee_list) if not m.startswith("_")])
         except Exception as e:
             st.error(f"載入員工模組失敗: {e}")
 
     elif "考勤" in sub_tab:
         try:
-            # 依據實際目錄結構：modules/management/hr/attendance/attendance_punch.py
             from modules.management.hr.attendance import attendance_punch
-            if hasattr(attendance_punch, "render"):
-                attendance_punch.render(db_engine=db_engine, lang=lang)
+            func = getattr(attendance_punch, "render", None) or \
+                   getattr(attendance_punch, "render_attendance_punch", None) or \
+                   getattr(attendance_punch, "main", None)
+            if func:
+                func(db_engine=db_engine, lang=lang)
             else:
-                st.warning("attendance_punch 模組未包含 render 函式。")
+                st.info("⏱️ 考勤打卡模組已載入，但未找到標準渲染入口。")
         except Exception as e:
             st.error(f"載入考勤模組失敗: {e}")
 
     elif "薪資" in sub_tab:
         try:
-            # 依據實際目錄結構：modules/management/hr/payroll_management.py
+            # 嘗試從同級目錄或指定路徑引入薪資模組
+            import sys
+            from pathlib import Path
+            hr_dir = Path(__file__).parent
+            if str(hr_dir) not in sys.path:
+                sys.path.append(str(hr_dir))
+                
             import payroll_management
-            if hasattr(payroll_management, "render"):
-                payroll_management.render(db_engine=db_engine, lang=lang)
+            func = getattr(payroll_management, "render", None) or \
+                   getattr(payroll_management, "render_payroll_management", None) or \
+                   getattr(payroll_management, "main", None)
+            if func:
+                func(db_engine=db_engine, lang=lang)
             else:
-                st.warning("payroll_management 模組未包含 render 函式。")
+                st.info("💰 薪資計算模組已載入，但未找到標準渲染入口。")
         except Exception as e:
-            # 嘗試從同級目錄匯入
-            try:
-                from . import payroll_management
-                payroll_management.render(db_engine=db_engine, lang=lang)
-            except Exception as e2:
-                st.error(f"載入薪資模組失敗: {e2}")
+            st.error(f"載入薪資模組失敗: {e}")
