@@ -1,46 +1,47 @@
 import streamlit as st
+import importlib
 from sqlalchemy import text
 
-# 🌟 具備自動容錯的匯入機制，防止函式名稱不對導致崩潰
+# 🌟 直接以模組方式安全載入，避免函式名稱不對而報錯
 try:
-    from modules.management.hr.employee.add_vietnamese import render_add_vietnamese
+    from modules.management.hr.employee import add_vietnamese
 except ImportError:
     try:
-        from .add_vietnamese import render_add_vietnamese
+        import add_vietnamese
     except:
-        render_add_vietnamese = lambda *a, **k: st.info("新增越南員工模組載入中")
+        add_vietnamese = None
 
 try:
-    from modules.management.hr.employee.add_expat import render_add_expat
+    from modules.management.hr.employee import add_expat
 except ImportError:
     try:
-        from .add_expat import render_add_expat
+        import add_expat
     except:
-        render_add_expat = lambda *a, **k: st.info("新增外派幹部模組載入中")
+        add_expat = None
 
 try:
-    from modules.management.hr.employee.employee_list import render_employee_list
+    from modules.management.hr.employee import employee_list
 except ImportError:
     try:
-        from .employee_list import render_employee_list
+        import employee_list
     except:
-        render_employee_list = lambda *a, **k: st.info("員工總名冊模組載入中")
+        employee_list = None
 
 try:
-    from modules.management.hr.employee.edit_profile import render_edit_profile
+    from modules.management.hr.employee import edit_profile
 except ImportError:
     try:
-        from .edit_profile import render_edit_profile
+        import edit_profile
     except:
-        render_edit_profile = lambda *a, **k: st.info("編輯員工資料模組載入中")
+        edit_profile = None
 
 try:
-    from modules.management.hr.employee.resigned_list import render_resigned_list
+    from modules.management.hr.employee import resigned_list
 except ImportError:
     try:
-        from .resigned_list import render_resigned_list
+        import resigned_list
     except:
-        render_resigned_list = lambda *a, **k: st.info("離職名冊模組載入中")
+        resigned_list = None
 
 def init_hr_profile_db(engine):
     if not engine:
@@ -104,35 +105,70 @@ def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
         "📁 離職名冊管理"
     ])
 
+    # 1. 新增越南員工
     with tabs[0]:
-        try:
-            render_add_vietnamese(engine=engine, lang=active_lang)
-        except Exception as e:
-            st.error(f"渲染新增越南員工發生錯誤: {e}")
-            
+        if add_vietnamese:
+            func = getattr(add_vietnamese, "render_add_vietnamese", None) or \
+                   getattr(add_vietnamese, "render", None) or \
+                   getattr(add_vietnamese, "main", None)
+            if func:
+                func(engine=engine, lang=active_lang)
+            else:
+                st.info("「新增越南員工」模組找不到可用渲染函式。")
+        else:
+            st.info("找不到 add_vietnamese 模組。")
+
+    # 2. 新增外派幹部
     with tabs[1]:
-        try:
-            render_add_expat(engine=engine, lang=active_lang)
-        except Exception as e:
-            st.error(f"渲染新增外派幹部發生錯誤: {e}")
-            
+        if add_expat:
+            func = getattr(add_expat, "render_add_expat", None) or \
+                   getattr(add_expat, "render", None) or \
+                   getattr(add_expat, "main", None)
+            if func:
+                func(engine=engine, lang=active_lang)
+            else:
+                st.info("「新增外派幹部」模組找不到可用渲染函式。")
+        else:
+            st.info("找不到 add_expat 模組。")
+
+    # 3. 現職員工總名冊
     with tabs[2]:
-        try:
-            render_employee_list(engine=engine, lang=active_lang)
-        except Exception as e:
-            st.error(f"渲染員工總名冊發生錯誤: {e}")
-            
+        if employee_list:
+            func = getattr(employee_list, "render_employee_list", None) or \
+                   getattr(employee_list, "render", None) or \
+                   getattr(employee_list, "main", None)
+            if func:
+                func(engine=engine, lang=active_lang)
+            else:
+                st.info("「員工總名冊」模組找不到可用渲染函式。")
+        else:
+            st.info("找不到 employee_list 模組。")
+
+    # 4. 編輯員工資料
     with tabs[3]:
-        try:
-            render_edit_profile(engine=engine, lang=active_lang)
-        except Exception as e:
-            st.error(f"渲染編輯員工資料發生錯誤: {e}")
-            
+        if edit_profile:
+            func = getattr(edit_profile, "render_edit_profile", None) or \
+                   getattr(edit_profile, "render", None) or \
+                   getattr(edit_profile, "main", None)
+            if func:
+                func(engine=engine, lang=active_lang)
+            else:
+                st.info("「編輯員工資料」模組找不到可用渲染函式。")
+        else:
+            st.info("找不到 edit_profile 模組。")
+
+    # 5. 離職名冊管理
     with tabs[4]:
-        try:
-            render_resigned_list(engine=engine, lang=active_lang)
-        except Exception as e:
-            st.error(f"渲染離職名冊發生錯誤: {e}")
+        if resigned_list:
+            func = getattr(resigned_list, "render_resigned_list", None) or \
+                   getattr(resigned_list, "render", None) or \
+                   getattr(resigned_list, "main", None)
+            if func:
+                func(engine=engine, lang=active_lang)
+            else:
+                st.info("「離職名冊管理」模組找不到可用渲染函式。")
+        else:
+            st.info("找不到 resigned_list 模組。")
 
 def render(engine=None, lang="繁體中文", **kwargs):
     render_hr_profile_page(engine=engine, lang=lang, **kwargs)
