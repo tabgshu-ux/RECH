@@ -1,6 +1,56 @@
-# 若是管理部 L1，渲染戰情儀表板與二級部門業務模組卡片
+# ==========================================
+# 檔案路徑：views/dashboard.py
+# 職責：主選單與部門儀表板畫面渲染（包含戰情儀表板與二級部門模組卡片）
+# ==========================================
+
+import streamlit as st
+import pandas as pd
+from sqlalchemy import text
+
+def render_dashboard(db_engine):
+    # 取得當前選擇的部門資訊（預設為管理部）
+    if 'selected_dept_id' not in st.session_state:
+        st.session_state['selected_dept_id'] = 'mgmt'
+
+    current_dept_id = st.session_state['selected_dept_id']
+
+    # 模擬部門清單結構
+    departments = [
+        {"id": "ceo", "name_zh": "總經理室", "name_vi": "Văn phòng Tổng Giám đốc", "level": "L1", "parent": None},
+        {"id": "eng", "name_zh": "工程部", "name_vi": "Phòng Kỹ thuật", "level": "L1", "parent": None},
+        {"id": "mgmt", "name_zh": "管理部", "name_vi": "Phòng Hành chính Quản trị", "level": "L1", "parent": None},
+        {"id": "prod", "name_zh": "生產部", "name_vi": "Phòng Sản xuất", "level": "L1", "parent": None},
+    ]
+
+    current_target = next((d for d in departments if d['id'] == current_dept_id), departments[2])
+
+    # -------------------------------------------------------------
+    # 側邊欄：一級大部門導覽
+    # -------------------------------------------------------------
+    st.sidebar.markdown("### 🏢 企業組織樹狀導覽")
+    st.sidebar.markdown("---")
+
+    for dept in departments:
+        is_selected = (dept['id'] == current_dept_id)
+        btn_type = "primary" if is_selected else "secondary"
+        
+        if st.sidebar.button(f"{dept['name_zh']} ({dept['name_vi']})", key=f"btn_dept_{dept['id']}", use_container_width=True, type=btn_type):
+            st.session_state['selected_dept_id'] = dept['id']
+            st.session_state['current_view'] = 'dashboard'
+            st.session_state['active_feature_id'] = None
+            st.rerun()
+
+    st.sidebar.markdown("---")
+    if st.sidebar.button("⚙️ 系統設定 (Cấu hình hệ thống)", use_container_width=True):
+        st.session_state['current_view'] = 'dynamic_feature'
+        st.session_state['active_feature_id'] = 'feat_it_menu'
+        st.rerun()
+
+    # -------------------------------------------------------------
+    # 主畫面區域：管理部 L1 專屬戰情與二級部門模組卡片
+    # -------------------------------------------------------------
     if current_target['id'] == 'mgmt':
-        # 1. 管理部主管綜合戰情儀表板
+        # 1. 直接展開管理部主管綜合戰情儀表板
         try:
             from modules.management.supervisor_dashboard import render as render_supervisor
             render_supervisor(db_engine, lang=st.session_state.get('current_lang', 'zh'))
@@ -8,7 +58,7 @@
             st.warning(f"戰情資料載入提示: {e}")
         st.markdown("---")
 
-        # 2. 二級部門與業務模組卡片區塊
+        # 2. 隸屬二級部門與業務模組卡片區塊
         st.markdown("### 📌 隸屬二級部門與業務模組")
         
         # 人事行政課模組
@@ -46,3 +96,5 @@
                         st.session_state['current_view'] = 'dynamic_feature'
                         st.session_state['active_feature_id'] = feat['id']
                         st.rerun()
+    else:
+        st.info(f"💡 [{current_target['name_zh']}] 相關業務模組建置中...")
