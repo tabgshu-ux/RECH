@@ -90,21 +90,67 @@ if st.session_state['current_view'] == 'dashboard':
 elif st.session_state['current_view'] == 'dynamic_feature':
     active_feat_id = st.session_state.get('active_feature_id')
     
+    # 🌟 IT 系統設定
     if active_feat_id == 'feat_it_menu':
         render_admin_settings(db_engine, lang=current_lang)
+        
+    # 🌟 管理部主管戰情室
     elif active_feat_id == 'feat_mgmt_supervisor':
         try:
             from modules.management.supervisor_dashboard import render
             render(db_engine, lang=current_lang)
         except Exception as e:
             st.error(f"載入管理部主管戰情室發生錯誤: {e}")
+            
+    # 🌟 拆分後的人事行政三大獨立模組路由
+    elif active_feat_id == 'feat_hr_employee':
+        try:
+            # 點擊「員工檔案與履約管理」卡片時載入
+            from modules.management.hr.employee import employee_profile
+            if hasattr(employee_profile, "render_hr_profile_page"):
+                employee_profile.render_hr_profile_page(engine=db_engine, lang=current_lang)
+            elif hasattr(employee_profile, "render"):
+                employee_profile.render(db_engine=db_engine, lang=current_lang)
+            else:
+                st.error("找不到 employee_profile 的渲染入口函式。")
+        except Exception as e:
+            st.error(f"載入員工檔案管理模組發生錯誤: {e}")
+
+    elif active_feat_id == 'feat_hr_attendance':
+        try:
+            # 點擊「考勤與打卡紀錄」卡片時載入
+            from modules.management.hr.attendance import attendance_punch
+            if hasattr(attendance_punch, "render"):
+                attendance_punch.render(db_engine=db_engine, lang=current_lang)
+            elif hasattr(attendance_punch, "main"):
+                attendance_punch.main(db_engine=db_engine, lang=current_lang)
+            else:
+                st.info("⏱️ 考勤打卡模組已載入。")
+        except Exception as e:
+            st.error(f"載入考勤打卡模組發生錯誤: {e}")
+
+    elif active_feat_id == 'feat_hr_payroll':
+        try:
+            # 點擊「薪資計算與 BHXH 保險」卡片時載入
+            from modules.management.hr import payroll_management
+            if hasattr(payroll_management, "render"):
+                payroll_management.render(db_engine=db_engine, lang=current_lang)
+            elif hasattr(payroll_management, "render_payroll_management"):
+                payroll_management.render_payroll_management(db_engine=db_engine, lang=current_lang)
+            else:
+                st.info("💰 薪資計算與保險模組已載入。")
+        except Exception as e:
+            st.error(f"載入薪資保險模組發生錯誤: {e}")
+
+    # 🌟 相容舊版單一 feat_hr 路由（若直接點擊舊卡片，預設導向員工檔案）
     elif active_feat_id == 'feat_hr':
         try:
-            # 🌟 完美串接您位於 modules/management/hr/ 的完整人事模組
-            from modules.management.hr import main as hr_main
-            hr_main.render(db_engine, lang=current_lang)
+            from modules.management.hr import employee_profile
+            employee_profile.render_hr_profile_page(engine=db_engine, lang=current_lang)
         except Exception as e:
             st.error(f"載入人事管理模組發生錯誤: {e}")
+
+    # 🌟 其他部門模組路由
     elif active_feat_id == 'feat_ga':
         try:
             from modules.procurement_ap import render_procurement_ap_page
