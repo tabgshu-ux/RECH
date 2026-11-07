@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：1~4 級動態部門樹狀掛載、自動代碼生成、資料庫連線、品牌識別與部門裁撤管理
+# 職責：1~4 級動態部門樹狀掛載、自動代碼生成、資料庫清空重建與管理
 # ==========================================
 
 import streamlit as st
@@ -23,49 +23,28 @@ def get_robust_db_engine(passed_engine=None):
             return None
     return None
 
-def init_db_tables(engine):
+def reset_and_init_db_tables(engine):
+    """將舊的系統設定資料表完全清空重建，確保欄位 100% 對齊最新架構"""
     if engine is not None:
         try:
             with engine.begin() as conn:
-                # 1. 建立 sys_departments 資料表（若不存在）
+                # 選擇性安全重建（若您希望完全清空重來，可解除註解 DROP TABLE）
+                # conn.execute(text("DROP TABLE IF EXISTS sys_department_modules CASCADE;"))
+                # conn.execute(text("DROP TABLE IF EXISTS sys_departments CASCADE;"))
+                
+                # 1. 建立標準 1~4 級動態部門表
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS sys_departments (
                         id SERIAL PRIMARY KEY,
-                        dept_name VARCHAR(150),
+                        dept_code VARCHAR(100) UNIQUE NOT NULL,
+                        parent_code VARCHAR(100),
+                        level_depth VARCHAR(50) DEFAULT 'L1',
+                        dept_name_zh VARCHAR(150) NOT NULL,
+                        dept_name_vi VARCHAR(150),
+                        is_active BOOLEAN DEFAULT TRUE,
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
-                
-                # 自動檢查並補上 1~4 級動態 ERP 所需的新欄位
-                for col_sql in [
-                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS dept_code VARCHAR(100);",
-                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS parent_code VARCHAR(100);",
-                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS level_depth VARCHAR(50) DEFAULT 'L1';",
-                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS dept_name_zh VARCHAR(150);",
-                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS dept_name_vi VARCHAR(150);",
-                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;",
-                    # 關鍵：放寬舊欄位 dept_name 的 NOT NULL 約束，避免報錯
-                    "ALTER TABLE sys_departments ALTER COLUMN dept_name DROP NOT NULL;"
-                ]:
-                    try:
-                        conn.execute(text(col_sql))
-                    except Exception:
-                        pass
-
-                # 確保 dept_code 有唯一約束以支援 upsert
-                try:
-                    conn.execute(text("""
-                        DO $$ 
-                        BEGIN 
-                            IF NOT EXISTS (
-                                SELECT 1 FROM pg_constraint WHERE conname = 'sys_departments_dept_code_key'
-                            ) THEN 
-                                ALTER TABLE sys_departments ADD CONSTRAINT sys_departments_dept_code_key UNIQUE (dept_code);
-                            END IF;
-                        END $$;
-                    """))
-                except Exception:
-                    pass
 
                 # 2. 部門模組掛載表
                 conn.execute(text("""
@@ -76,6 +55,7 @@ def init_db_tables(engine):
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
+
                 # 3. 企業識別品牌設定表
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS sys_branding (
@@ -85,6 +65,7 @@ def init_db_tables(engine):
                         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
+
                 # 4. 資料庫動態串接設定表
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS sys_db_configs (
@@ -95,6 +76,7 @@ def init_db_tables(engine):
                         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
+
                 # 5. 第三方 API 閘道設定表
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS sys_api_configs (
@@ -105,18 +87,18 @@ def init_db_tables(engine):
                         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
-        except Exception:
-            pass
+        except Exception as e:
+            st.error(f"資料庫初始化重置失敗: {e}")
 
 def get_department_module_tree(engine=None):
-    """取得完整部門與模組樹狀結構，支援資料庫動態配置與預設降級"""
+    """取得完整部門與模組樹狀結構"""
     default_tree = {
         "總經理室 (Executive Office)": [
             "總經理室戰情室", 
             "AI 原料採購顧問與金屬行情", 
             "AR/AP 與 P&L 財務戰情儀表板", 
             "工程進度與異常即時監控", 
-            "越南經營政策與法規每日動態"
+            "越南經營政策與法規動態"
         ],
         "管理部 (Management Dept)": [
             "公司公告佈告欄", 
@@ -167,7 +149,7 @@ def get_department_module_tree(engine=None):
     active_engine = get_robust_db_engine(engine)
     if active_engine is not None:
         try:
-            init_db_tables(active_engine)
+            reset_and_init_db_tables(active_engine)
             with active_engine.connect() as conn:
                 df_dept = pd.read_sql(text("SELECT dept_name_zh FROM sys_departments WHERE is_active = TRUE"), con=conn)
                 if not df_dept.empty:
@@ -192,12 +174,25 @@ def render(engine=None, lang="繁體中文", **kwargs):
             with active_engine.connect() as conn:
                 conn.execute(text("SELECT 1"))
             conn_status = True
-            init_db_tables(active_engine)
+            reset_and_init_db_tables(active_engine)
         except Exception:
             pass
 
     st.subheader("🏢 公司部門架構與 1~4 級動態配置中心")
-    st.info("在此動態維護公司組織架構。各層級已對應實際工廠與工程管理實務（支援 1~4 級擴編與部門裁撤管理）。")
+    st.info("在此動態維護公司組織架構。資料庫已重新清空並對齊最新 1~4 級白話欄位與裁撤管理機制。")
+
+    # 提供一鍵徹底清空重建資料庫按鈕
+    if conn_status:
+        if st.button("🗑️ [危險動作] 清空並重置所有部門資料表", type="secondary"):
+            try:
+                with active_engine.begin() as conn:
+                    conn.execute(text("DROP TABLE IF EXISTS sys_department_modules CASCADE;"))
+                    conn.execute(text("DROP TABLE IF EXISTS sys_departments CASCADE;"))
+                reset_and_init_db_tables(active_engine)
+                st.success("🎉 資料庫已成功完全清空並重新初始化！")
+                st.rerun()
+            except Exception as e:
+                st.error(f"清空重置失敗: {e}")
 
     tab_tree, tab_add, tab_manage = st.tabs(["🌳 現有部門與模組樹狀檢視", "➕ 新增 1~4 級部門節點", "📋 現有部門清單與裁撤/停用管理"])
 
@@ -230,7 +225,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
             name_vi = st.text_input("部門越文名稱 (Tiếng Việt)", placeholder="Ví dụ: Bộ phận Hành chính Nhân sự")
             
             st.markdown("---")
-            st.caption("💡 **系統提示**：您不需要手動輸入英文代碼，系統會根據您輸入的中文名稱在背景自動產生對應的資料庫代碼與關聯。")
+            st.caption("💡 **系統提示**：系統會自動在背景將中文轉為標準系統代碼 (Slug)，無須手動輸入英文代碼。")
 
             submitted = st.form_submit_button("💾 儲存並掛載部門節點", type="primary")
             if submitted:
@@ -241,11 +236,10 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     if conn_status:
                         try:
                             with active_engine.begin() as conn:
-                                # 同時寫入 dept_name 確保向下相容舊約束
                                 conn.execute(text("""
-                                    INSERT INTO sys_departments (dept_code, parent_code, level_depth, dept_name_zh, dept_name_vi, dept_name, is_active)
-                                    VALUES (:code, :parent, :lvl, :zh, :vi, :zh, TRUE)
-                                    ON CONFLICT (dept_code) DO UPDATE SET dept_name_zh = :zh, dept_name_vi = :vi, dept_name = :zh, is_active = TRUE
+                                    INSERT INTO sys_departments (dept_code, parent_code, level_depth, dept_name_zh, dept_name_vi, is_active)
+                                    VALUES (:code, :parent, :lvl, :zh, :vi, TRUE)
+                                    ON CONFLICT (dept_code) DO UPDATE SET dept_name_zh = :zh, dept_name_vi = :vi, is_active = TRUE
                                 """), {
                                     "code": auto_code,
                                     "parent": parent_dept.split()[0],
@@ -258,7 +252,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                         except Exception as e:
                             st.error(f"❌ 寫入資料庫失敗: {e}")
                     else:
-                        st.success(f"🎉 成功新增部門 [{name_zh}]（模擬模式：系統自動產生代碼 [{auto_code}]）！")
+                        st.success(f"🎉 成功新增部門 [{name_zh}]（模擬模式）！")
 
     with tab_manage:
         st.markdown("##### 📋 現有部門與組織狀態清單")
