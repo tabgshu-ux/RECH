@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：1~4 級動態部門樹狀掛載、自動代碼生成、資料庫清空重建與管理
+# 職責：1~4 級動態部門樹狀掛載、模組拼圖自由勾選指派、資料庫管理
 # ==========================================
 
 import streamlit as st
@@ -24,14 +24,10 @@ def get_robust_db_engine(passed_engine=None):
     return None
 
 def reset_and_init_db_tables(engine):
-    """將舊的系統設定資料表完全清空重建，確保欄位 100% 對齊最新架構"""
+    """初始化系統設定資料表與預設模組關聯"""
     if engine is not None:
         try:
             with engine.begin() as conn:
-                # 選擇性安全重建（若您希望完全清空重來，可解除註解 DROP TABLE）
-                # conn.execute(text("DROP TABLE IF EXISTS sys_department_modules CASCADE;"))
-                # conn.execute(text("DROP TABLE IF EXISTS sys_departments CASCADE;"))
-                
                 # 1. 建立標準 1~4 級動態部門表
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS sys_departments (
@@ -91,8 +87,28 @@ def reset_and_init_db_tables(engine):
             st.error(f"資料庫初始化重置失敗: {e}")
 
 def get_department_module_tree(engine=None):
-    """取得完整部門與模組樹狀結構"""
-    default_tree = {
+    """從資料庫動態取得完整部門與掛載模組樹狀結構"""
+    active_engine = get_robust_db_engine(engine)
+    dynamic_tree = {}
+    
+    if active_engine is not None:
+        try:
+            reset_and_init_db_tables(active_engine)
+            with active_engine.connect() as conn:
+                df_dept = pd.read_sql(text("SELECT dept_code, dept_name_zh FROM sys_departments WHERE is_active = TRUE"), con=conn)
+                if not df_dept.empty:
+                    for _, row in df_dept.iterrows():
+                        d_code = row["dept_code"]
+                        d_name = row["dept_name_zh"]
+                        df_mod = pd.read_sql(text("SELECT module_name FROM sys_department_modules WHERE dept_code = :d"), con=conn, params={"d": d_code})
+                        mods = df_mod["module_name"].tolist() if not df_mod.empty else ["尚未掛載模組"]
+                        dynamic_tree[d_name] = mods
+                    return dynamic_tree
+        except Exception:
+            pass
+            
+    # 若資料庫無資料，回傳預設標準結構
+    return {
         "總經理室 (Executive Office)": [
             "總經理室戰情室", 
             "AI 原料採購顧問與金屬行情", 
@@ -105,65 +121,12 @@ def get_department_module_tree(engine=None):
             "員工檔案管理", 
             "員工打卡紀錄", 
             "員工薪資與保險", 
-            "密碼修改", 
-            "配合廠商主檔與履約紀錄", 
             "採購與應付帳款 (AP)", 
             "應收帳款管理 (AR)", 
             "越南稅務報表 (Thông tư 200)", 
-            "電子發票管理", 
-            "宿舍與伙食管理", 
-            "工作廠區安全管理", 
-            "車輛進出口管制", 
-            "車輛維修保養紀錄", 
-            "固定資產盤點", 
-            "文件檔案管理"
-        ],
-        "工程與設計管理中心 (Engineering & Design Center)": [
-            "工程主管戰情室與案場管理", 
-            "工程專案報價系統", 
-            "施工日報表與點工點料登記", 
-            "AI 施工照片辨識與安衛稽核", 
-            "工程證照與機具檢驗預警", 
-            "配電盤電氣與機構設計圖庫", 
-            "BOM 零件與倉庫採購自動連動", 
-            "外包商計價與工班管理", 
-            "FAT/SAT 出廠與現場驗收管理"
-        ],
-        "生產部 (Production Dept - 西寧廠)": [
-            "板金加工組工單與條碼追蹤", 
-            "粉體塗裝烤漆組品管", 
-            "配電盤組裝配線組進度追蹤"
-        ],
-        "倉庫管理 (Warehouse Management)": [
-            "倉庫庫存與資材條碼管理", 
-            "安全庫存預警與補貨機制"
-        ],
-        "現場外勤打卡與工作回報 (Field Attendance)": [
-            "手機端極簡 GPS 外勤打卡與施工回報"
-        ],
-        "電子簽核中心 (Approval Center)": [
-            "跨部門請假、採購與工程變更電子簽核中心"
+            "電子發票管理"
         ]
     }
-    
-    active_engine = get_robust_db_engine(engine)
-    if active_engine is not None:
-        try:
-            reset_and_init_db_tables(active_engine)
-            with active_engine.connect() as conn:
-                df_dept = pd.read_sql(text("SELECT dept_name_zh FROM sys_departments WHERE is_active = TRUE"), con=conn)
-                if not df_dept.empty:
-                    dynamic_tree = {}
-                    for _, row in df_dept.iterrows():
-                        d_name = row["dept_name_zh"]
-                        df_mod = pd.read_sql(text("SELECT module_name FROM sys_department_modules WHERE dept_code = :d"), con=conn, params={"d": d_name})
-                        mods = df_mod["module_name"].tolist() if not df_mod.empty else ["預設模組"]
-                        dynamic_tree[d_name] = mods
-                    return dynamic_tree
-        except Exception:
-            pass
-            
-    return default_tree
 
 def render(engine=None, lang="繁體中文", **kwargs):
     active_engine = get_robust_db_engine(engine)
@@ -179,11 +142,10 @@ def render(engine=None, lang="繁體中文", **kwargs):
             pass
 
     st.subheader("🏢 公司部門架構與 1~4 級動態配置中心")
-    st.info("在此動態維護公司組織架構。資料庫已重新清空並對齊最新 1~4 級白話欄位與裁撤管理機制。")
+    st.info("在此動態維護公司組織架構，並可直接勾選指派對應的業務子模組。")
 
-    # 提供一鍵徹底清空重建資料庫按鈕
     if conn_status:
-        if st.button("🗑️ [危險動作] 清空並重置所有部門資料表", type="secondary"):
+        if st.button("🗑️ [危險動作] 清空並重置所有部門與模組掛載資料表", type="secondary"):
             try:
                 with active_engine.begin() as conn:
                     conn.execute(text("DROP TABLE IF EXISTS sys_department_modules CASCADE;"))
@@ -194,17 +156,68 @@ def render(engine=None, lang="繁體中文", **kwargs):
             except Exception as e:
                 st.error(f"清空重置失敗: {e}")
 
-    tab_tree, tab_add, tab_manage = st.tabs(["🌳 現有部門與模組樹狀檢視", "➕ 新增 1~4 級部門節點", "📋 現有部門清單與裁撤/停用管理"])
+    tab_tree, tab_add, tab_manage = st.tabs(["🌳 現有部門與模組樹狀檢視", "➕ 新增 1~4 級部門與模組掛載", "📋 現有部門清單與裁撤/停用管理"])
 
+    # 1. 樹狀檢視
     with tab_tree:
-        st.markdown("##### 🌳 當前系統一級部門與子模組動態樹狀結構")
+        st.markdown("##### 🌳 當前系統一級部門與掛載子模組動態樹狀結構")
         tree_data = get_department_module_tree(active_engine)
-        for dept, mods in tree_data.items():
-            with st.expander(f"📁 {dept} ({len(mods)} 個子模組)"):
-                for m in mods:
-                    st.markdown(f"- {m}")
+        if not tree_data:
+            st.info("目前尚無任何部門資料，請至「新增 1~4 級部門與模組掛載」分頁建立。")
+        else:
+            for dept, mods in tree_data.items():
+                with st.expander(f"📁 {dept} ({len(mods)} 個掛載模組)"):
+                    for m in mods:
+                        st.markdown(f"- {m}")
 
+    # 2. 新增部門與模組掛載
     with tab_add:
+        # 可供勾選的全系統模組清單
+        ALL_AVAILABLE_MODULES = {
+            "📊 總經理室與戰情決策": [
+                "總經理室戰情室", 
+                "AI 原料採購顧問與金屬行情", 
+                "AR/AP 與 P&L 財務戰情儀表板", 
+                "工程進度與異常即時監控", 
+                "越南經營政策與法規動態"
+            ],
+            "🛠️ 工程與現場作業管理": [
+                "工程主管戰情室與案場管理",
+                "工程專案報價系統", 
+                "現場外勤打卡與作業登記",
+                "施工日報表與點工點料登記", 
+                "AI 施工照片辨識與安衛稽核",
+                "工程證照與機具檢驗預警", 
+                "配電盤電氣與機構設計圖庫",
+                "BOM 零件與倉庫採購自動連動", 
+                "外包商計價與工班管理",
+                "FAT/SAT 出廠與現場驗收管理"
+            ],
+            "🏭 生產製造與倉儲管理": [
+                "倉庫庫存與資材條碼管理",
+                "板金加工組工單與條碼追蹤", 
+                "粉體塗裝烤漆組品管",
+                "配電盤組裝配線組進度追蹤",
+                "工作廠區安全管理"
+            ],
+            "💰 財務、採購與稅務管理": [
+                "採購與應付帳款 (AP)",
+                "應收帳款管理 (AR)", 
+                "越南稅務標準財務報表 (Thông tư 200)",
+                "電子發票管理與 XML 歸檔"
+            ],
+            "👔 人事、行政與後勤支援": [
+                "公司公告佈告欄", 
+                "員工檔案管理", 
+                "員工打卡紀錄", 
+                "員工薪資與保險", 
+                "宿舍與伙食管理", 
+                "車輛進出口管制", 
+                "車輛維修保養紀錄", 
+                "固定資產盤點與文件管理"
+            ]
+        }
+
         with st.form("add_department_hierarchy_form"):
             parent_dept = st.selectbox(
                 "上層所屬部門 (Parent Department)", 
@@ -221,13 +234,23 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 ]
             )
             
-            name_zh = st.text_input("部門繁體中文名稱", placeholder="例如: 人事行政課")
-            name_vi = st.text_input("部門越文名稱 (Tiếng Việt)", placeholder="Ví dụ: Bộ phận Hành chính Nhân sự")
+            name_zh = st.text_input("部門繁體中文名稱 *", placeholder="例如: 財務部, 人事行政課")
+            name_vi = st.text_input("部門越文名稱 (Tiếng Việt)", placeholder="Ví dụ: Bộ phận Tài chính")
             
             st.markdown("---")
-            st.caption("💡 **系統提示**：系統會自動在背景將中文轉為標準系統代碼 (Slug)，無須手動輸入英文代碼。")
+            st.markdown("#### 🧩 勾選並掛載此部門可操作的業務模組：")
+            st.caption("💡 提示：請展開下方類別，勾選該部門需要使用的模組拼圖。")
 
-            submitted = st.form_submit_button("💾 儲存並掛載部門節點", type="primary")
+            selected_department_modules = []
+            for cat_name, mod_list in ALL_AVAILABLE_MODULES.items():
+                with st.expander(f"{cat_name} （包含 {len(mod_list)} 項功能）", expanded=False):
+                    for mod_item in mod_list:
+                        if st.checkbox(mod_item, key=f"chk_dept_mod_{mod_item}графі"):
+                            selected_department_modules.append(mod_item)
+
+            st.markdown("---")
+            submitted = st.form_submit_button("💾 儲存部門設定並掛載模組", type="primary", use_container_width=True)
+            
             if submitted:
                 if not name_zh:
                     st.error("⚠️ 請至少填寫部門繁體中文名稱！")
@@ -236,6 +259,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     if conn_status:
                         try:
                             with active_engine.begin() as conn:
+                                # 1. 寫入部門主檔
                                 conn.execute(text("""
                                     INSERT INTO sys_departments (dept_code, parent_code, level_depth, dept_name_zh, dept_name_vi, is_active)
                                     VALUES (:code, :parent, :lvl, :zh, :vi, TRUE)
@@ -247,37 +271,38 @@ def render(engine=None, lang="繁體中文", **kwargs):
                                     "zh": name_zh.strip(),
                                     "vi": name_vi.strip()
                                 })
-                            st.success(f"🎉 成功新增部門 [{name_zh}]！系統自動產生背景代碼 [{auto_code}]，已寫入真實資料庫。")
+                                
+                                # 2. 清除該部門舊的模組掛載並重新寫入選中的模組
+                                conn.execute(text("DELETE FROM sys_department_modules WHERE dept_code = :code"), {"code": auto_code})
+                                for m_name in selected_department_modules:
+                                    conn.execute(text("""
+                                        INSERT INTO sys_department_modules (dept_code, module_name)
+                                        VALUES (:code, :m_name)
+                                    """), {"code": auto_code, "m_name": m_name})
+
+                            st.success(f"🎉 成功新增部門 [{name_zh}] 並掛載了 {len(selected_department_modules)} 個模組！已寫入 Supabase 資料庫。")
                             st.rerun()
                         except Exception as e:
                             st.error(f"❌ 寫入資料庫失敗: {e}")
                     else:
                         st.success(f"🎉 成功新增部門 [{name_zh}]（模擬模式）！")
 
+    # 3. 現有部門清單與裁撤管理
     with tab_manage:
         st.markdown("##### 📋 現有部門與組織狀態清單")
         st.caption("若公司因組織調整需裁撤某個部門，可點擊「執行部門裁撤/停用」。")
-
-        mock_dept_df = pd.DataFrame([
-            {"代碼": "gm", "層級": "L1", "中文名稱": "總經理室", "越文名稱": "Văn phòng TGĐ", "狀態": "啟用中 🟢"},
-            {"代碼": "mgmt", "層級": "L1", "中文名稱": "管理部", "越文名稱": "Bộ phận Quản lý", "狀態": "啟用中 🟢"},
-            {"代碼": "mgmt_hr", "層級": "L2", "中文名稱": "人事/行政", "越文名稱": "Nhân sự / Hành chính", "狀態": "啟用中 🟢"},
-            {"代碼": "mgmt_ga", "層級": "L2", "中文名稱": "總務/採購", "越文名稱": "Tổng vụ / Mua hàng", "狀態": "啟用中 🟢"},
-            {"代碼": "eng", "層級": "L1", "中文名稱": "工程部", "越文名稱": "Bộ phận Công trình", "狀態": "啟用中 🟢"},
-            {"代碼": "prod", "層級": "L1", "中文名稱": "生產部 (西寧廠)", "越文名稱": "Bộ phận Sản xuất", "狀態": "啟用中 🟢"},
-            {"代碼": "wh", "層級": "L1", "中文名稱": "倉庫管理", "越文名稱": "Quản lý kho", "狀態": "啟用中 🟢"},
-        ])
-
-        st.dataframe(mock_dept_df, use_container_width=True)
-
-        st.markdown("---")
-        col_target, col_action = st.columns([3, 1])
-        with col_target:
-            dept_to_remove = st.selectbox("選擇要裁撤或暫停的部門", mock_dept_df["中文名稱"].tolist())
-        with col_action:
-            st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("🗑️ 執行部門裁撤/停用", type="primary", use_container_width=True):
-                st.warning(f"⚠️ 部門 [{dept_to_remove}] 已安全歸檔並停用！")
+        
+        if conn_status:
+            try:
+                df_existing = pd.read_sql("SELECT dept_code as \"代碼\", level_depth as \"層級\", dept_name_zh as \"中文名稱\", dept_name_vi as \"越文名稱\" FROM sys_departments WHERE is_active = TRUE", con=active_engine)
+                if not df_existing.empty:
+                    st.dataframe(df_existing, use_container_width=True)
+                else:
+                    st.info("目前尚無部門資料。")
+            except Exception:
+                st.info("目前尚無部門資料。")
+        else:
+            st.info("資料庫未連線。")
 
 def show(engine=None, lang="繁體中文", **kwargs):
     render(engine=engine, lang=lang, **kwargs)
