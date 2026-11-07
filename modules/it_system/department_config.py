@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：1~4 級動態部門樹狀掛載、完整管理部與簽核中心模組拼圖、即時調整與移除管理
+# 職責：1~4 級動態部門樹狀掛載、帶有功用說明的模組拼圖勾選（含管理部主管戰情室）、模組動態移除與維護
 # ==========================================
 
 import streamlit as st
@@ -101,9 +101,9 @@ def get_department_module_tree(engine=None):
             
     return {
         "[L1] 管理部 (Management Dept)": [
-            "人事行政課專區 — 員工檔案、考勤、合約與勞動法規管理",
-            "總務採購課專區 — 供應商主檔、請購單與採購發包管理",
-            "財務會計課專區 — AP/AR 應收付帳款與 Thông tư 200 財報"
+            "管理部主管綜合戰情儀表板 — 統合請假早退人員名單、當月採購金額花費與車輛維修保養費用統合資料",
+            "人事行政課 — 員工檔案、考勤與薪資管理",
+            "總務採購課 — 供應商主檔與採購應付帳款 (AP)"
         ]
     }
 
@@ -121,7 +121,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
             pass
 
     st.subheader("🏢 公司部門架構與 1~4 級動態配置中心")
-    st.info("在此動態維護公司組織架構，並可完整掛載管理部、各二級課室及電子簽核中心模組。")
+    st.info("在此動態維護公司組織架構，並可精準掛載或隨時移除/調整業務子模組。")
 
     if conn_status:
         if st.button("🗑️ [危險動作] 清空並重置所有部門與模組掛載資料表", type="secondary"):
@@ -141,7 +141,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
         "📋 現有部門清單與模組調整/裁撤"
     ])
 
-    # 1. 樹狀檢視
     with tab_tree:
         st.markdown("##### 🌳 當前系統一級/二級部門與掛載子模組動態樹狀結構")
         tree_data = get_department_module_tree(active_engine)
@@ -153,10 +152,10 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     for m in mods:
                         st.markdown(f"- {m}")
 
-    # 2. 新增部門與模組掛載（包含完整的管理部、二級課室與簽核中心）
     with tab_add:
         ALL_AVAILABLE_MODULES = {
             "👔 管理部與二級課室 (Management & Sub-depts)": {
+                "管理部主管綜合戰情儀表板": "統合請假早退人員名單、當月採購金額花費與車輛維修保養費用統合資料",
                 "公司公告佈告欄": "發布公司政策、放假通知與重要公告",
                 "人事行政課 — 員工檔案與履約管理": "維護員工個人履歷、護照、工作證與合約資料",
                 "人事行政課 — 考勤與打卡紀錄": "統計廠內與外勤員工出勤時數及請假紀錄",
@@ -277,7 +276,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     else:
                         st.success(f"🎉 成功新增部門 [{name_zh}]（模擬模式）！")
 
-    # 3. 現有部門清單與模組調整/移除管理
     with tab_manage:
         st.markdown("##### 📋 現有部門清單與模組即時調整 / 移除管理")
         st.caption("您可以隨時選取某個部門來**增減掛載的模組**，或直接將該部門安全停用。")
