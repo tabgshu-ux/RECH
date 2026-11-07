@@ -1,154 +1,105 @@
 # ==========================================
 # 檔案路徑：views/dashboard.py
-# 職責：依照指定 7 大部門順序渲染左側導覽與右側卡片式儀表板
+# 職責：卡片式部門與功能選單儀表板（相容真實 SQLAlchemy Engine）
 # ==========================================
 
 import streamlit as st
+import pandas as pd
+from sqlalchemy import text
 
-def render_dashboard(db_conn):
-    lang = st.session_state.get('current_lang', 'zh')
-    
-    # 按照 sort_order 嚴格排序讀取
-    modules = db_conn.query("SELECT * FROM sys_modules WHERE is_active = TRUE ORDER BY sort_order ASC;")
-    features = db_conn.query("SELECT * FROM sys_features WHERE is_active = TRUE ORDER BY sort_order ASC;")
-    
+def render_dashboard(db_engine=None):
+    st.title("🏭 裕豐電機工業 SaaS ERP - 企業導覽選單")
+    st.caption("請點擊下方一級部門，或從左側選單進入對應功能儀表板。")
+    st.markdown("---")
+
+    # 讀取一級部門
+    modules = []
+    if db_engine is not None:
+        try:
+            query_str = "SELECT * FROM sys_modules WHERE is_active = TRUE ORDER BY sort_order ASC;"
+            df_mods = pd.read_sql(query_str, con=db_engine)
+            modules = df_mods.to_dict(orient="records")
+        except Exception:
+            pass
+
+    # 若資料庫尚未初始化或無資料，提供預設標準 7 大部門
     if not modules:
-        msg = "目前系統尚未設定任何部門模組。" if lang == 'zh' else "Hệ thống chưa được cấu hình bộ phận."
-        st.info(msg)
-        return
+        modules = [
+            {"id": "gm", "name_zh": "總經理室", "name_vi": "Văn phòng Tổng Giám đốc", "sort_order": 1},
+            {"id": "mgmt", "name_zh": "管理部", "name_vi": "Bộ phận Quản lý", "sort_order": 2},
+            {"id": "eng", "name_zh": "工程部", "name_vi": "Bộ phận Công trình", "sort_order": 3},
+            {"id": "prod", "name_zh": "生產部", "name_vi": "Bộ phận Sản xuất", "sort_order": 4},
+            {"id": "wh", "name_zh": "倉庫管理", "name_vi": "Quản lý kho", "sort_order": 5},
+            {"id": "approval", "name_zh": "簽核中心", "name_vi": "Trung tâm phê duyệt", "sort_order": 6},
+            {"id": "sys_config", "name_zh": "系統設定", "name_vi": "Cấu hình hệ thống", "sort_order": 7},
+        ]
 
-    is_admin = (st.session_state.get('user_name') == 'admin')
+    # 側邊欄導覽
+    st.sidebar.markdown("### 🏢 企業導覽選單")
+    selected_mod_id = st.session_state.get('selected_module_id', modules[0]['id'] if modules else 'gm')
 
-    # -------------------------------------------------------------------------
-    # 1. 左側側邊欄：一級部門導覽按鈕
-    # -------------------------------------------------------------------------
-    sidebar_title = "🏢 企業導覽選單" if lang == 'zh' else "🏢 Danh mục bộ phận"
-    st.sidebar.markdown(f"### {sidebar_title}")
-    
-    if 'selected_module_id' not in st.session_state or not st.session_state['selected_module_id']:
-        st.session_state['selected_module_id'] = 'all' if is_admin else modules[0]['id']
-
-    # Admin 全局控制台按鈕
-    if is_admin:
-        is_all_selected = (st.session_state['selected_module_id'] == 'all')
-        btn_type_all = "primary" if is_all_selected else "secondary"
-        admin_btn_label = "🌐 全公司總覽 (CEO / Admin)" if lang == 'zh' else "🌐 Tổng quan công ty (CEO / Admin)"
-        
-        if st.sidebar.button(admin_btn_label, key="sidebar_mod_all", type=btn_type_all, use_container_width=True):
-            st.session_state['selected_module_id'] = 'all'
-            st.rerun()
-        st.sidebar.divider()
-
-    # 依序渲染 7 大一級部門按鈕
     for mod in modules:
-        is_selected = (st.session_state['selected_module_id'] == mod['id'])
-        btn_type = "primary" if is_selected else "secondary"
-        
-        mod_display_name = mod['name_zh'] if lang == 'zh' else mod['name_vi']
-        
-        if st.sidebar.button(
-            mod_display_name, 
-            key=f"sidebar_mod_{mod['id']}", 
-            type=btn_type, 
-            use_container_width=True
-        ):
+        btn_label = f"{mod['name_zh']} ({mod.get('name_vi', '')})"
+        if st.sidebar.button(btn_label, use_container_width=True, key=f"sb_mod_{mod['id']}"):
             st.session_state['selected_module_id'] = mod['id']
+            st.session_state['current_view'] = 'dashboard'
             st.rerun()
 
-    # -------------------------------------------------------------------------
-    # 2. 右側主畫面渲染（卡片式戰情室）
-    # -------------------------------------------------------------------------
+    # 主畫面呈現選定部門的功能儀表板
+    current_mod = next((m for m in modules if m['id'] == selected_mod_id), modules[0] if modules else None)
     
-    # 【模式 A：Admin 全局控制台】
-    if st.session_state['selected_module_id'] == 'all':
-        title = "👑 全公司管理控制台 (Admin Dashboard)" if lang == 'zh' else "👑 Bảng điều khiển quản lý"
-        subtitle = "裕豐電機工業 - 全局營運與各部門業務一覽" if lang == 'zh' else "Reetech Industrial - Tổng quan vận hành"
-        
-        st.title(title)
-        st.caption(subtitle)
-        st.divider()
+    if current_mod:
+        st.subheader(f"📂 {current_mod['name_zh']} - 功能儀表板")
+        st.caption(current_mod.get('name_vi', ''))
+        st.markdown("<br>", unsafe_allow_html=True)
 
-        # 全局 KPI 指標
-        col_kpi1, col_kpi2, col_kpi3, col_kpi4 = st.columns(4)
-        with col_kpi1:
-            with st.container(border=True):
-                st.metric(label="全公司待審單據", value="7 件", delta="待辦事項", delta_color="inverse")
-        with col_kpi2:
-            with st.container(border=True):
-                st.metric(label="外勤/工地打卡率", value="92%", delta="3 人未打卡")
-        with col_kpi3:
-            with st.container(border=True):
-                st.metric(label="本月工程估驗款", value="185,000 USD", delta="+8%")
-        with col_kpi4:
-            with st.container(border=True):
-                st.metric(label="配電盤組裝進度", value="94%", delta="2 套待出貨")
+        # 讀取該部門底下的功能
+        features = []
+        if db_engine is not None:
+            try:
+                feat_query = "SELECT * FROM sys_features WHERE module_id = :mid AND is_active = TRUE ORDER BY sort_order ASC;"
+                df_feats = pd.read_sql(text(feat_query), con=db_engine, params={"mid": current_mod['id']})
+                features = df_feats.to_dict(orient="records")
+            except Exception:
+                pass
 
-        st.divider()
+        # 若資料庫無對應功能，給予預設對應項目
+        if not features:
+            if current_mod['id'] == 'gm':
+                features = [{"id": "feat_gm_rpt", "name_zh": "經營營運報表", "name_vi": "Báo cáo vận hành"}]
+            elif current_mod['id'] == 'mgmt':
+                features = [
+                    {"id": "feat_hr", "name_zh": "人事/行政", "name_vi": "Nhân sự / Hành chính"},
+                    {"id": "feat_ga", "name_zh": "總務/採購", "name_vi": "Tổng vụ / Mua hàng"},
+                    {"id": "feat_fi", "name_zh": "財務/會計", "name_vi": "Tài chính / Kế toán"}
+                ]
+            elif current_mod['id'] == 'eng':
+                features = [
+                    {"id": "feat_site_log", "name_zh": "工地日報與巡檢", "name_vi": "Nhật ký công trình"},
+                    {"id": "feat_dispatch", "name_zh": "工務派工與調度", "name_vi": "Điều động công trình"}
+                ]
+            elif current_mod['id'] == 'prod':
+                features = [{"id": "feat_panel_build", "name_zh": "配電盤組裝進度", "name_vi": "Tiến độ lắp ráp tủ điện"}]
+            elif current_mod['id'] == 'wh':
+                features = [
+                    {"id": "feat_material", "name_zh": "工程領料與工具借還", "name_vi": "Xuất vật tư & Dụng cụ"},
+                    {"id": "feat_invcheck", "name_zh": "倉儲盤點", "name_vi": "Kiểm kê kho"}
+                ]
+            elif current_mod['id'] == 'approval':
+                features = [{"id": "feat_my_approvals", "name_zh": "待簽核單據彙整", "name_vi": "Danh sách cần duyệt"}]
+            elif current_mod['id'] == 'sys_config':
+                features = [{"id": "feat_it_menu", "name_zh": "選單與動態架構配置", "name_vi": "Cấu hình menu"}]
 
-        # 按 7 大部門標準順序呈現卡片牆
-        sec_title = "📊 跨部門業務一覽與快捷跳轉" if lang == 'zh' else "📊 Danh mục chức năng các bộ phận"
-        st.markdown(f"### {sec_title}")
-        
-        col_count = 3
-        for i in range(0, len(modules), col_count):
-            cols = st.columns(col_count)
-            for j in range(col_count):
-                if i + j < len(modules):
-                    mod = modules[i + j]
-                    mod_name = mod['name_zh'] if lang == 'zh' else mod['name_vi']
-                    
-                    with cols[j]:
-                        with st.container(border=True):
-                            st.subheader(f"📂 {mod_name}")
-                            st.divider()
-                            
-                            sub_feats = [f for f in features if f['module_id'] == mod['id']]
-                            if sub_feats:
-                                for feat in sub_feats:
-                                    feat_name = feat['name_zh'] if lang == 'zh' else feat['name_vi']
-                                    if st.button(
-                                        f"👉 {feat_name}", 
-                                        key=f"admin_wall_btn_{mod['id']}_{feat['id']}", 
-                                        use_container_width=True
-                                    ):
-                                        st.session_state['active_feature_id'] = feat['id']
-                                        st.session_state['current_view'] = 'dynamic_feature'
-                                        st.rerun()
-                            else:
-                                no_feat_msg = "尚未配置功能項目" if lang == 'zh' else "Chưa có chức năng"
-                                st.caption(no_feat_msg)
-
-    # 【模式 B：單一部門工作台（卡片式）】
-    else:
-        current_mod = next((m for m in modules if m['id'] == st.session_state['selected_module_id']), modules[0])
-        mod_name = current_mod['name_zh'] if lang == 'zh' else current_mod['name_vi']
-        
-        page_title = f"📂 {mod_name} - 功能儀表板" if lang == 'zh' else f"📂 {mod_name} - Bảng điều khiển"
-        st.title(page_title)
-        st.divider()
-
-        current_features = [f for f in features if f['module_id'] == current_mod['id']]
-        
-        if not current_features:
-            msg = "此部門目前尚未配置功能項目。" if lang == 'zh' else "Bộ phận này chưa được cấu hình."
-            st.warning(msg)
-            return
-
-        col_count = 3
-        for i in range(0, len(current_features), col_count):
-            cols = st.columns(col_count)
-            for j in range(col_count):
-                if i + j < len(current_features):
-                    feat = current_features[i + j]
-                    feat_name = feat['name_zh'] if lang == 'zh' else feat['name_vi']
-                    btn_label = "進入功能 ➡️" if lang == 'zh' else "Vào chức năng ➡️"
-                    
-                    with cols[j]:
-                        with st.container(border=True):
-                            st.subheader(feat_name)
-                            st.divider()
-                            
-                            if st.button(btn_label, key=f"card_btn_{feat['id']}", use_container_width=True, type="primary"):
-                                st.session_state['active_feature_id'] = feat['id']
-                                st.session_state['current_view'] = 'dynamic_feature'
-                                st.rerun()
+        # 以卡片網格渲染功能
+        cols = st.columns(3)
+        for idx, feat in enumerate(features):
+            col = cols[idx % 3]
+            with col:
+                with st.container(border=True):
+                    st.markdown(f"#### {feat['name_zh']}")
+                    st.caption(feat.get('name_vi', ''))
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    if st.button("進入功能 ➡️", key=f"btn_feat_{feat['id']}", use_container_width=True, type="primary"):
+                        st.session_state['current_view'] = 'dynamic_feature'
+                        st.session_state['active_feature_id'] = feat['id']
+                        st.rerun()
