@@ -7,7 +7,8 @@ import streamlit as st
 import pandas as pd
 from sqlalchemy import text
 
-def render_dashboard(db_engine=None):# ==========================================
+def render_dashboard(db_engine=None):
+# ==========================================
 # 檔案路徑：views/dashboard.py
 # 職責：卡片式部門與功能選單儀表板（支援管理部上方直接顯示統合戰情數據）
 # ==========================================
