@@ -21,32 +21,38 @@ def render(db_engine=None, lang="繁體中文", **kwargs):
 
     if "員工" in sub_tab:
         try:
+            # 依據實際目錄結構：modules/management/hr/employee/employee_list.py
             from modules.management.hr.employee import employee_list
-            employee_list.render(db_engine=db_engine, lang=lang)
-        except Exception as e:
-            st.info("📂 正在載入員工檔案管理模組...")
-            # 載入現有檔案備用
-            try:
-                import employee_list
+            if hasattr(employee_list, "render"):
                 employee_list.render(db_engine=db_engine, lang=lang)
-            except Exception:
-                st.warning("請確認 employee_list 模組路徑。")
+            else:
+                st.warning("employee_list 模組未包含 render 函式。")
+        except Exception as e:
+            st.error(f"載入員工模組失敗: {e}")
 
     elif "考勤" in sub_tab:
         try:
+            # 依據實際目錄結構：modules/management/hr/attendance/attendance_punch.py
             from modules.management.hr.attendance import attendance_punch
-            attendance_punch.render(db_engine=db_engine, lang=lang)
-        except Exception as e:
-            st.info("⏱️ 正在載入考勤打卡與審核模組...")
-            try:
-                import attendance_punch
+            if hasattr(attendance_punch, "render"):
                 attendance_punch.render(db_engine=db_engine, lang=lang)
-            except Exception:
-                st.warning("請確認 attendance_punch 模組路徑。")
+            else:
+                st.warning("attendance_punch 模組未包含 render 函式。")
+        except Exception as e:
+            st.error(f"載入考勤模組失敗: {e}")
 
     elif "薪資" in sub_tab:
         try:
+            # 依據實際目錄結構：modules/management/hr/payroll_management.py
             import payroll_management
-            payroll_management.render(db_engine=db_engine, lang=lang)
+            if hasattr(payroll_management, "render"):
+                payroll_management.render(db_engine=db_engine, lang=lang)
+            else:
+                st.warning("payroll_management 模組未包含 render 函式。")
         except Exception as e:
-            st.info("💰 正在載入薪資與 BHXH 保險計算模組...")
+            # 嘗試從同級目錄匯入
+            try:
+                from . import payroll_management
+                payroll_management.render(db_engine=db_engine, lang=lang)
+            except Exception as e2:
+                st.error(f"載入薪資模組失敗: {e2}")
