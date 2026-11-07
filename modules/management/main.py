@@ -87,7 +87,82 @@ def render_management_module(engine=None, lang="繁體中文", **kwargs):
 
         elif "宿舍" in selected_sub or "Dorm" in selected_sub:
             mod = importlib.import_module("modules.management.admin_assets.dom_catering")
-            if hasattr(mod, "render"):
+            if hasattr(mod, "render"):# ==========================================
+# 檔案路徑：modules/management/hr/main.py
+# 職責：人事行政（HR）子模組統一調度與路由分發中心
+# ==========================================
+
+import streamlit as st
+
+def render(db_engine=None, lang="繁體中文", **kwargs):
+    st.subheader("👔 人事行政管理中心 (HR Management Hub)")
+    st.caption("在此統一管理員工履歷、外勞證照、考勤打卡、請假審核與薪資 BHXH 保險計算。")
+    st.markdown("---")
+
+    # 取得當前被點擊進入的特定功能 ID
+    active_feat = st.session_state.get('active_feature_id', 'feat_hr_overview')
+
+    # 提供內部功能導覽列讓主管隨時切換
+    hr_tabs = {
+        "feat_hr_overview": "📊 人事總覽與快捷導航",
+        "feat_hr_employee": "👥 員工檔案與外勞管理",
+        "feat_hr_attendance": "⏱️ 考勤打卡與請假審核",
+        "feat_hr_payroll": "💰 薪資計算與 BHXH 保險"
+    }
+
+    selected_tab = st.selectbox("📌 選擇人事行政子功能", list(hr_tabs.keys()), format_func=lambda x: hr_tabs[x], key="hr_sub_nav")
+
+    st.markdown("---")
+
+    # 根據選擇載入對應模組
+    if selected_tab == "feat_hr_overview" or active_feat == 'feat_hr':
+        st.markdown("#### 🌟 人事行政作業快捷入口")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            with st.container(border=True):
+                st.markdown("##### 👥 員工與外勞檔案")
+                st.caption("管理台籍、越籍員工履歷、護照與工作證。")
+                if st.button("進入員工管理 ➡️", key="go_emp", use_container_width=True):
+                    st.session_state['hr_sub_nav'] = 'feat_hr_employee'
+                    st.rerun()
+        with col2:
+            with st.container(border=True):
+                st.markdown("##### ⏱️ 考勤與出勤")
+                st.caption("統計上下班打卡、GPS 外勤與請假紀錄。")
+                if st.button("進入考勤管理 ➡️", key="go_att", use_container_width=True):
+                    st.session_state['hr_sub_nav'] = 'feat_hr_attendance'
+                    st.rerun()
+        with col3:
+            with st.container(border=True):
+                st.markdown("##### 💰 薪資與保險")
+                st.caption("計算越籍員工薪資、加班費與 BHXH 社會保險。")
+                if st.button("進入薪資計算 ➡️", key="go_pay", use_container_width=True):
+                    st.session_state['hr_sub_nav'] = 'feat_hr_payroll'
+                    st.rerun()
+
+    elif selected_tab == "feat_hr_employee":
+        try:
+            from modules.management.hr.employee import employee_list
+            employee_list.render(db_engine=db_engine, lang=lang)
+        except Exception as e:
+            st.info("📂 正在載入員工與外勞檔案管理介面...")
+            # 降級防護呈現基礎表單
+            st.text("（已連結至 modules/management/hr/employee/ 目錄）")
+
+    elif selected_tab == "feat_hr_attendance":
+        try:
+            from modules.management.hr.attendance import attendance_punch
+            attendance_punch.render(db_engine=db_engine, lang=lang)
+        except Exception as e:
+            st.info("⏱️ 正在載入考勤與打卡紀錄管理介面...")
+            st.text("（已連結至 modules/management/hr/attendance/ 目錄）")
+
+    elif selected_tab == "feat_hr_payroll":
+        try:
+            from modules.management.hr import payroll_management
+            payroll_management.render(db_engine=db_engine, lang=lang)
+        except Exception as e:
+            st.info("💰 正在載入薪資與 BHXH 保險計算模組...")
                 mod.render(engine=engine, lang=current_lang)
 
         elif "車輛" in selected_sub or "Vehicle" in selected_sub:
