@@ -48,7 +48,7 @@ def get_db_engine():
         if "pooler.supabase.com" in clean_url and "?" not in clean_url:
             clean_url += "?sslmode=require"
         try:
-            return create_engine(clean_url, pool_pre_ping=True, connect_args={"prepare_threshold": 0})
+            return create_engine(clean_url, pool_pre_ping=True, connect_args={"prepare_threshold": None})
         except Exception:
             return None
     return None
