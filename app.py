@@ -1,13 +1,3 @@
-# ==========================================
-# 檔案路徑：app.py
-# 職責：裕豐 SaaS ERP 統一入口、真實 Supabase 資料庫連線、卡片式儀表板路由與 7 大系統設定中心分流
-# ==========================================
-
-import streamlit as st
-import pandas as pd
-import importlib
-import os
-from sqlalchemy import text, create_engine
 import streamlit as st
 import pandas as pd
 import importlib
@@ -37,7 +27,6 @@ MOBILE_CSS_AND_JS = """
 """
 st.markdown(MOBILE_CSS_AND_JS, unsafe_allow_html=True)
 
-# 狀態初始化
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 if 'user_name' not in st.session_state:
@@ -51,7 +40,6 @@ if 'selected_module_id' not in st.session_state:
 if 'current_lang' not in st.session_state:
     st.session_state['current_lang'] = 'zh'
 
-# 建立真實資料庫連線引擎 (Supabase PostgreSQL Direct Engine)
 @st.cache_resource
 def get_db_engine():
     db_url = os.environ.get("SUPABASE_DB_URL") or st.secrets.get("SUPABASE_DB_URL", "")
@@ -67,12 +55,10 @@ def get_db_engine():
 
 db_engine = get_db_engine()
 
-# 未登入攔截
 if not st.session_state['logged_in']:
     render_login_page(db_engine)
     st.stop()
 
-# 頂部導覽列
 col_logo, col_user, col_nav, col_logout = st.columns([5, 2, 2, 1])
 with col_logo:
     st.subheader("🏭 裕豐電機工業 SaaS ERP")
@@ -92,7 +78,6 @@ with col_logout:
 
 st.divider()
 
-# 全域動態路由分流
 if st.session_state['current_view'] == 'dashboard':
     render_dashboard(db_engine)
 elif st.session_state['current_view'] == 'dynamic_feature':
