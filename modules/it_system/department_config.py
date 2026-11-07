@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：1~4 級動態部門樹狀掛載、模組拼圖自由勾選指派、資料庫管理
+# 職責：1~4 級動態部門樹狀掛載、模組拼圖自由勾選指派、資料庫管理（已修正 PgBouncer 預備語句衝突）
 # ==========================================
 
 import streamlit as st
@@ -18,7 +18,8 @@ def get_robust_db_engine(passed_engine=None):
             clean_url = db_url.strip()
             if "pooler.supabase.com" in clean_url and "?" not in clean_url:
                 clean_url += "?sslmode=require"
-            return create_engine(clean_url, pool_pre_ping=True)
+            # 關鍵修正：加入 connect_args={"prepare_threshold": 0} 解決 Supabase Pooler 預備語句報錯
+            return create_engine(clean_url, pool_pre_ping=True, connect_args={"prepare_threshold": 0})
         except Exception:
             return None
     return None
@@ -107,7 +108,6 @@ def get_department_module_tree(engine=None):
         except Exception:
             pass
             
-    # 若資料庫無資料，回傳預設標準結構
     return {
         "總經理室 (Executive Office)": [
             "總經理室戰情室", 
@@ -158,7 +158,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
 
     tab_tree, tab_add, tab_manage = st.tabs(["🌳 現有部門與模組樹狀檢視", "➕ 新增 1~4 級部門與模組掛載", "📋 現有部門清單與裁撤/停用管理"])
 
-    # 1. 樹狀檢視
     with tab_tree:
         st.markdown("##### 🌳 當前系統一級部門與掛載子模組動態樹狀結構")
         tree_data = get_department_module_tree(active_engine)
@@ -170,9 +169,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     for m in mods:
                         st.markdown(f"- {m}")
 
-    # 2. 新增部門與模組掛載
     with tab_add:
-        # 可供勾選的全系統模組清單
         ALL_AVAILABLE_MODULES = {
             "📊 總經理室與戰情決策": [
                 "總經理室戰情室", 
@@ -214,7 +211,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 "宿舍與伙食管理", 
                 "車輛進出口管制", 
                 "車輛維修保養紀錄", 
-                "固定資產盤點與文件管理"
+                "固定資產與設備管理與文件管理"
             ]
         }
 
@@ -239,13 +236,12 @@ def render(engine=None, lang="繁體中文", **kwargs):
             
             st.markdown("---")
             st.markdown("#### 🧩 勾選並掛載此部門可操作的業務模組：")
-            st.caption("💡 提示：請展開下方類別，勾選該部門需要使用的模組拼圖。")
 
             selected_department_modules = []
             for cat_name, mod_list in ALL_AVAILABLE_MODULES.items():
                 with st.expander(f"{cat_name} （包含 {len(mod_list)} 項功能）", expanded=False):
                     for mod_item in mod_list:
-                        if st.checkbox(mod_item, key=f"chk_dept_mod_{mod_item}графі"):
+                        if st.checkbox(mod_item, key=f"chk_dept_mod_{mod_item}"):
                             selected_department_modules.append(mod_item)
 
             st.markdown("---")
@@ -259,7 +255,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     if conn_status:
                         try:
                             with active_engine.begin() as conn:
-                                # 1. 寫入部門主檔
                                 conn.execute(text("""
                                     INSERT INTO sys_departments (dept_code, parent_code, level_depth, dept_name_zh, dept_name_vi, is_active)
                                     VALUES (:code, :parent, :lvl, :zh, :vi, TRUE)
@@ -272,7 +267,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
                                     "vi": name_vi.strip()
                                 })
                                 
-                                # 2. 清除該部門舊的模組掛載並重新寫入選中的模組
                                 conn.execute(text("DELETE FROM sys_department_modules WHERE dept_code = :code"), {"code": auto_code})
                                 for m_name in selected_department_modules:
                                     conn.execute(text("""
@@ -280,18 +274,15 @@ def render(engine=None, lang="繁體中文", **kwargs):
                                         VALUES (:code, :m_name)
                                     """), {"code": auto_code, "m_name": m_name})
 
-                            st.success(f"🎉 成功新增部門 [{name_zh}] 並掛載了 {len(selected_department_modules)} 個模組！已寫入 Supabase 資料庫。")
+                            st.success(f"🎉 成功新增部門 [{name_zh}] 並掛載了 {len(selected_department_modules)} 個模組！")
                             st.rerun()
                         except Exception as e:
                             st.error(f"❌ 寫入資料庫失敗: {e}")
                     else:
                         st.success(f"🎉 成功新增部門 [{name_zh}]（模擬模式）！")
 
-    # 3. 現有部門清單與裁撤管理
     with tab_manage:
         st.markdown("##### 📋 現有部門與組織狀態清單")
-        st.caption("若公司因組織調整需裁撤某個部門，可點擊「執行部門裁撤/停用」。")
-        
         if conn_status:
             try:
                 df_existing = pd.read_sql("SELECT dept_code as \"代碼\", level_depth as \"層級\", dept_name_zh as \"中文名稱\", dept_name_vi as \"越文名稱\" FROM sys_departments WHERE is_active = TRUE", con=active_engine)
@@ -301,8 +292,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     st.info("目前尚無部門資料。")
             except Exception:
                 st.info("目前尚無部門資料。")
-        else:
-            st.info("資料庫未連線。")
 
 def show(engine=None, lang="繁體中文", **kwargs):
     render(engine=engine, lang=lang, **kwargs)
