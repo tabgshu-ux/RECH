@@ -87,7 +87,7 @@ def render_dashboard(db_engine):
             hr_sub = st.session_state['mgmt_hr_sub']
             if hr_sub == 'employee':
                 try:
-                    from modules.management.hr import employee_profile
+                    from modules.management.hr.employee import employee_profile
                     employee_profile.render(db_engine, lang=st.session_state.get('current_lang', 'zh'))
                 except Exception as e:
                     st.error(f"載入員工模組失敗: {e}")
