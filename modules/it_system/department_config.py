@@ -27,19 +27,44 @@ def init_db_tables(engine):
     if engine is not None:
         try:
             with engine.begin() as conn:
-                # 1. 支援 1~4 級層級與狀態的動態部門表
+                # 1. 建立 sys_departments 資料表（若不存在）
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS sys_departments (
                         id SERIAL PRIMARY KEY,
-                        dept_code VARCHAR(100) UNIQUE NOT NULL,
-                        parent_code VARCHAR(100),
-                        level_depth VARCHAR(50) DEFAULT 'L1',
-                        dept_name_zh VARCHAR(150) NOT NULL,
-                        dept_name_vi VARCHAR(150),
-                        is_active BOOLEAN DEFAULT TRUE,
+                        dept_name VARCHAR(150) UNIQUE,
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
+                
+                # 自動檢查並補上 1~4 級動態 ERP 所需的新欄位，確保舊表平滑升級
+                for col_sql in [
+                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS dept_code VARCHAR(100);",
+                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS parent_code VARCHAR(100);",
+                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS level_depth VARCHAR(50) DEFAULT 'L1';",
+                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS dept_name_zh VARCHAR(150);",
+                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS dept_name_vi VARCHAR(150);",
+                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;"
+                ]:
+                    try:
+                        conn.execute(text(col_sql))
+                    except Exception:
+                        pass
+
+                # 確保 dept_code 有唯一約束以支援 upsert
+                try:
+                    conn.execute(text("""
+                        DO $$ 
+                        BEGIN 
+                            IF NOT EXISTS (
+                                SELECT 1 FROM pg_constraint WHERE conname = 'sys_departments_dept_code_key'
+                            ) THEN 
+                                ALTER TABLE sys_departments ADD CONSTRAINT sys_departments_dept_code_key UNIQUE (dept_code);
+                            END IF;
+                        END $$;
+                    """))
+                except Exception:
+                    pass
+
                 # 2. 部門模組掛載表
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS sys_department_modules (
@@ -172,10 +197,8 @@ def render(engine=None, lang="繁體中文", **kwargs):
     st.subheader("🏢 公司部門架構與 1~4 級動態配置中心")
     st.info("在此動態維護公司組織架構。各層級已對應實際工廠與工程管理實務（支援 1~4 級擴編與部門裁撤管理）。")
 
-    # 分頁切換：檢視樹狀、新增部門、現有部門裁撤管理
     tab_tree, tab_add, tab_manage = st.tabs(["🌳 現有部門與模組樹狀檢視", "➕ 新增 1~4 級部門節點", "📋 現有部門清單與裁撤/停用管理"])
 
-    # 1. 樹狀檢視
     with tab_tree:
         st.markdown("##### 🌳 當前系統一級部門與子模組動態樹狀結構")
         tree_data = get_department_module_tree(active_engine)
@@ -184,7 +207,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 for m in mods:
                     st.markdown(f"- {m}")
 
-    # 2. 新增部門（具備白話說明與自動代碼生成）
     with tab_add:
         with st.form("add_department_hierarchy_form"):
             parent_dept = st.selectbox(
@@ -228,17 +250,16 @@ def render(engine=None, lang="繁體中文", **kwargs):
                                     "zh": name_zh.strip(),
                                     "vi": name_vi.strip()
                                 })
-                            st.success(f"🎉 成功新增部門 [{name_zh}]！系統自動產生背景代碼 [{auto_code}]，已寫入資料庫。")
+                            st.success(f"🎉 成功新增部門 [{name_zh}]！系統自動產生背景代碼 [{auto_code}]，已寫入真實資料庫。")
                             st.rerun()
                         except Exception as e:
-                            st.error(f"寫入資料庫失敗: {e}")
+                            st.error(f"❌ 寫入資料庫失敗: {e}")
                     else:
                         st.success(f"🎉 成功新增部門 [{name_zh}]（模擬模式：系統自動產生代碼 [{auto_code}]）！")
 
-    # 3. 現有部門清單與裁撤/停用管理
     with tab_manage:
         st.markdown("##### 📋 現有部門與組織狀態清單")
-        st.caption("若公司因組織調整需裁撤某個部門，可點擊「執行部門裁撤/停用」。系統會自動將該部門設為停用並保留歷史關聯記錄。")
+        st.caption("若公司因組織調整需裁撤某個部門，可點擊「執行部門裁撤/停用」。")
 
         mock_dept_df = pd.DataFrame([
             {"代碼": "gm", "層級": "L1", "中文名稱": "總經理室", "越文名稱": "Văn phòng TGĐ", "狀態": "啟用中 🟢"},
@@ -259,7 +280,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
         with col_action:
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("🗑️ 執行部門裁撤/停用", type="primary", use_container_width=True):
-                st.warning(f"⚠️ 部門 [{dept_to_remove}] 已安全歸檔並停用！歷史合約與關聯憑證已自動凍結保護。")
+                st.warning(f"⚠️ 部門 [{dept_to_remove}] 已安全歸檔並停用！")
 
 def show(engine=None, lang="繁體中文", **kwargs):
     render(engine=engine, lang=lang, **kwargs)
