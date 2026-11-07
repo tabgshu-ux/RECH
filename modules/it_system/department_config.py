@@ -1,13 +1,13 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：1~4 級動態部門樹狀掛載、自動 Seed 預設部門防護、修復 Psycopg3 預備語句衝突
+# 職責：1~4 級動態部門樹狀掛載、修正中文代碼衝突導致覆蓋的重大 Bug、自動 Seed 防護
 # ==========================================
 
 import streamlit as st
 import pandas as pd
 from sqlalchemy import text, create_engine
 import os
-import re
+import time
 
 def get_robust_db_engine(passed_engine=None):
     if passed_engine is not None:
@@ -18,7 +18,6 @@ def get_robust_db_engine(passed_engine=None):
             clean_url = db_url.strip()
             if "pooler.supabase.com" in clean_url and "?" not in clean_url:
                 clean_url += "?sslmode=require"
-            # 關鍵修正：將 prepare_threshold 設為 None，徹底避開 Supabase PgBouncer 預備語句衝突
             return create_engine(clean_url, pool_pre_ping=True, connect_args={"prepare_threshold": None})
         except Exception:
             return None
@@ -29,7 +28,6 @@ def reset_and_init_db_tables(engine):
     if engine is not None:
         try:
             with engine.begin() as conn:
-                # 1. 建立標準 1~4 級動態部門表
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS sys_departments (
                         id SERIAL PRIMARY KEY,
@@ -43,7 +41,6 @@ def reset_and_init_db_tables(engine):
                     );
                 """))
 
-                # 2. 部門模組掛載表
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS sys_department_modules (
                         id SERIAL PRIMARY KEY,
@@ -53,7 +50,7 @@ def reset_and_init_db_tables(engine):
                     );
                 """))
 
-                # 3. 檢查並自動植入預設核心大部門（防止總經理室與管理部消失）
+                # 自動植入預設核心大部門（若表格為空）
                 res = conn.execute(text("SELECT COUNT(*) FROM sys_departments")).scalar()
                 if res == 0:
                     default_depts = [
@@ -71,12 +68,11 @@ def reset_and_init_db_tables(engine):
                             ON CONFLICT (dept_code) DO NOTHING;
                         """), {"code": code, "parent": parent, "lvl": lvl, "zh": zh, "vi": vi})
 
-                    # 植入預設模組掛載
                     default_mods = [
                         ("mgmt", "管理部主管綜合戰情儀表板"),
                         ("mgmt", "人事行政課 — 員工檔案、考勤與薪資管理"),
-                        ("mgmt", "總務採購課 — 供應商主檔與採購應付帳款 (AP)"),
-                        ("gm", "總經理室戰情室")
+                        ("gm", "總經理室戰情室"),
+                        ("eng", "工程主管戰情室與案場管理")
                     ]
                     for d_code, m_name in default_mods:
                         conn.execute(text("""
@@ -84,12 +80,10 @@ def reset_and_init_db_tables(engine):
                             VALUES (:d_code, :m_name)
                             ON CONFLICT DO NOTHING;
                         """), {"d_code": d_code, "m_name": m_name})
-
         except Exception:
-            pass # 略過重複建立的微小例外，確保主程序順暢
+            pass
 
 def get_department_module_tree(engine=None):
-    """從資料庫動態取得完整部門與掛載模組樹狀結構（具備自動 Seed Fallback）"""
     active_engine = get_robust_db_engine(engine)
     dynamic_tree = {}
     
@@ -110,10 +104,8 @@ def get_department_module_tree(engine=None):
         except Exception:
             pass
             
-    # 最終防護回傳
     return {
-        "[L1] 總經理室 (gm)": ["總經理室戰情室"],
-        "[L1] 管理部 (mgmt)": ["管理部主管綜合戰情儀表板", "人事行政課 — 員工檔案、考勤與薪資管理"]
+        "[L1] 管理部 (mgmt)": ["管理部主管綜合戰情儀表板"]
     }
 
 def render(engine=None, lang="繁體中文", **kwargs):
@@ -130,7 +122,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
             pass
 
     st.subheader("🏢 公司部門架構與 1~4 級動態配置中心")
-    st.info("在此動態維護公司組織架構，並可精準掛載或隨時移除/調整業務子模組。")
+    st.info("在此動態維護公司組織架構，系統已全面修復中文代碼衝突，可順利建立多個獨立部門與二級課室。")
 
     if conn_status:
         if st.button("🗑️ [危險動作] 清空並重置所有部門與模組掛載資料表", type="secondary"):
@@ -139,7 +131,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     conn.execute(text("DROP TABLE IF EXISTS sys_department_modules CASCADE;"))
                     conn.execute(text("DROP TABLE IF EXISTS sys_departments CASCADE;"))
                 reset_and_init_db_tables(active_engine)
-                st.success("🎉 資料庫已成功完全清空並重新初始化（已自動植入預設部門）！")
+                st.success("🎉 資料庫已成功完全清空並重新初始化！")
                 st.rerun()
             except Exception as e:
                 st.error(f"清空重置失敗: {e}")
@@ -255,30 +247,30 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 if not name_zh:
                     st.error("⚠️ 請至少填寫部門繁體中文名稱！")
                 else:
-                    auto_code = re.sub(r'[^a-zA-Z0-9]', '_', name_zh.lower()) or "dept_node"
+                    # 🌟 關鍵修復：改用時間戳記生成絕對唯一的 dept_code，絕不發生中文名稱碰撞覆蓋
+                    unique_code = f"dept_{int(time.time()*1000)}"
+                    
                     if conn_status:
                         try:
                             with active_engine.begin() as conn:
                                 conn.execute(text("""
                                     INSERT INTO sys_departments (dept_code, parent_code, level_depth, dept_name_zh, dept_name_vi, is_active)
                                     VALUES (:code, :parent, :lvl, :zh, :vi, TRUE)
-                                    ON CONFLICT (dept_code) DO UPDATE SET dept_name_zh = :zh, dept_name_vi = :vi, is_active = TRUE
                                 """), {
-                                    "code": auto_code,
+                                    "code": unique_code,
                                     "parent": parent_dept.split()[0],
                                     "lvl": level_choice.split()[0],
                                     "zh": name_zh.strip(),
                                     "vi": name_vi.strip()
                                 })
                                 
-                                conn.execute(text("DELETE FROM sys_department_modules WHERE dept_code = :code"), {"code": auto_code})
                                 for m_name in selected_department_modules:
                                     conn.execute(text("""
                                         INSERT INTO sys_department_modules (dept_code, module_name)
                                         VALUES (:code, :m_name)
-                                    """), {"code": auto_code, "m_name": m_name})
+                                    """), {"code": unique_code, "m_name": m_name})
 
-                            st.success(f"🎉 成功新增部門 [{name_zh}] 並掛載了 {len(selected_department_modules)} 個模組！")
+                            st.success(f"🎉 成功新增部門 [{name_zh}]（代碼: {unique_code}）並掛載了 {len(selected_department_modules)} 個模組！")
                             st.rerun()
                         except Exception as e:
                             st.error(f"❌ 寫入資料庫失敗: {e}")
@@ -306,7 +298,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                         st.markdown("###### 🗑️ 勾選並移除不需要的模組：")
                         mods_to_remove = []
                         for cm in current_assigned:
-                            if st.checkbox(f"移除模組: {cm}", key=f"remove_mod_{target_code}_{cm}"):
+                            if st.checkbox(f"移除模組: {cm}", key=f"remove_mod_{target_code}_{cm}*"):
                                 mods_to_remove.append(cm)
 
                         if st.button("🗑️ 確認從此部門移除勾選的模組", type="secondary"):
@@ -330,7 +322,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 else:
                     st.info("目前尚無建立任何部門。")
             except Exception as e:
-                st.error(f"讀Tag取部門資料失敗: {e}")
+                st.error(f"讀取部門資料失敗: {e}")
         else:
             st.info("資料庫未連線。")
 
