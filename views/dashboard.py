@@ -88,14 +88,10 @@ def render_dashboard(db_engine=None):
         st.markdown("<br>", unsafe_allow_html=True)
 
         # 若是管理部 L1，顯示戰情指標
+        # 若是管理部 L1，精簡顯示功能儀表板標題
         if ("管理部" in current_target['name_zh'] or current_target['id'] == 'mgmt') and not active_sub_id:
-            st.markdown("### 📊 管理部主管即時統合戰情指標")
-            st.caption("以下為管理部各課室本月即時統合數據，供主管第一時間掌握全盤動態：")
-            try:
-                from modules.management.supervisor_dashboard import render as render_supervisor
-                render_supervisor(db_engine, lang=st.session_state.get('current_lang', 'zh'))
-            except Exception as e:
-                st.warning(f"戰情資料載入提示: {e}")
+            st.markdown("### 📂 管理部 - 功能儀表板")
+            st.caption("部門代碼: dept_1794023804767 | 層級: L1 | 越文名稱: Phòng Hành chính Quản trị")
             st.markdown("---")
             st.subheader("⚙️ 隸屬二級部門與業務模組")
 
