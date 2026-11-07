@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：1~4 級動態部門樹狀掛載、帶有功用說明的模組拼圖勾選、模組動態移除與維護
+# 職責：1~4 級動態部門樹狀掛載、完整管理部與簽核中心模組拼圖、即時調整與移除管理
 # ==========================================
 
 import streamlit as st
@@ -86,23 +86,24 @@ def get_department_module_tree(engine=None):
         try:
             reset_and_init_db_tables(active_engine)
             with active_engine.connect() as conn:
-                df_dept = pd.read_sql(text("SELECT dept_code, dept_name_zh FROM sys_departments WHERE is_active = TRUE"), con=conn)
+                df_dept = pd.read_sql(text("SELECT dept_code, dept_name_zh, level_depth FROM sys_departments WHERE is_active = TRUE"), con=conn)
                 if not df_dept.empty:
                     for _, row in df_dept.iterrows():
                         d_code = row["dept_code"]
                         d_name = row["dept_name_zh"]
+                        d_level = row["level_depth"]
                         df_mod = pd.read_sql(text("SELECT module_name FROM sys_department_modules WHERE dept_code = :d"), con=conn, params={"d": d_code})
                         mods = df_mod["module_name"].tolist() if not df_mod.empty else ["尚未掛載模組"]
-                        dynamic_tree[f"{d_name} ({d_code})"] = mods
+                        dynamic_tree[f"[{d_level}] {d_name} ({d_code})"] = mods
                     return dynamic_tree
         except Exception:
             pass
             
     return {
-        "總經理室 (gm)": [
-            "總經理室戰情室 — 彙整全廠營運績效、KPI 達成率與重大異常警示",
-            "AI 原料採購顧問與金屬行情 — 即時分析 LME 銅價與原物料走勢提供採購建議",
-            "AR/AP 與 P&L 財務戰情儀表板 — 掌握應收應付帳款與損益狀況"
+        "[L1] 管理部 (Management Dept)": [
+            "人事行政課專區 — 員工檔案、考勤、合約與勞動法規管理",
+            "總務採購課專區 — 供應商主檔、請購單與採購發包管理",
+            "財務會計課專區 — AP/AR 應收付帳款與 Thông tư 200 財報"
         ]
     }
 
@@ -120,7 +121,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
             pass
 
     st.subheader("🏢 公司部門架構與 1~4 級動態配置中心")
-    st.info("在此動態維護公司組織架構，並可精準掛載或隨時移除/調整業務子模組。")
+    st.info("在此動態維護公司組織架構，並可完整掛載管理部、各二級課室及電子簽核中心模組。")
 
     if conn_status:
         if st.button("🗑️ [危險動作] 清空並重置所有部門與模組掛載資料表", type="secondary"):
@@ -142,7 +143,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
 
     # 1. 樹狀檢視
     with tab_tree:
-        st.markdown("##### 🌳 當前系統一級部門與掛載子模組動態樹狀結構")
+        st.markdown("##### 🌳 當前系統一級/二級部門與掛載子模組動態樹狀結構")
         tree_data = get_department_module_tree(active_engine)
         if not tree_data:
             st.info("目前尚無任何部門資料，請至「新增 1~4 級部門與模組掛載」分頁建立。")
@@ -152,10 +153,27 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     for m in mods:
                         st.markdown(f"- {m}")
 
-    # 2. 新增部門與模組掛載（附帶詳細功用說明）
+    # 2. 新增部門與模組掛載（包含完整的管理部、二級課室與簽核中心）
     with tab_add:
-        # 定義全系統可用模組及其詳細功用說明
         ALL_AVAILABLE_MODULES = {
+            "👔 管理部與二級課室 (Management & Sub-depts)": {
+                "公司公告佈告欄": "發布公司政策、放假通知與重要公告",
+                "人事行政課 — 員工檔案與履約管理": "維護員工個人履歷、護照、工作證與合約資料",
+                "人事行政課 — 考勤與打卡紀錄": "統計廠內與外勤員工出勤時數及請假紀錄",
+                "人事行政課 — 薪資計算與 BHXH 保險": "計算越籍員工薪資、加班費與社會保險扣除",
+                "總務採購課 — 配合廠商主檔與履約紀錄": "管理供應商、外包商信用評等與合約檔案",
+                "總務採購課 — 採購單與應付帳款 (AP)": "處理請購、採購發包與供應商應付帳款立帳",
+                "財務會計課 — 應收帳款管理 (AR)": "追蹤客戶專案工程款請款進度與收款紀錄",
+                "財務會計課 — 越南稅務標準財報 (Thông tư 200)": "自動生成符合越南會計標準 Thông tư 200 的法定報表",
+                "財務會計課 — 電子發票管理與歸檔": "對接越南電子發票系統進行開立、查驗與 XML 歸檔",
+                "總務後勤 — 幹部宿舍與伙食管理": "管理幹部宿舍分配、水電費與員工伙食採購",
+                "總務後勤 — 廠區車輛與門禁管理": "記錄廠區貨車、小客車進出門禁與磅秤紀錄",
+                "總務後勤 — 車輛維修與固定資產盤點": "管理公務車維修保養及廠內生財器具盤點"
+            },
+            "✍️ 跨部門電子簽核中心 (Approval Center)": {
+                "跨部門電子簽核中心主控台": "統一管理全公司請假、採購、工程變更與財務撥款的電子簽核流程",
+                "待簽核單據彙整與主管簽核": "提供各級主管快速進行審核、退回或批示的互動介面"
+            },
             "📊 總經理室與戰情決策": {
                 "總經理室戰情室": "彙整全廠營運績效、KPI 達成率與重大異常警示",
                 "AI 原料採購顧問與金屬行情": "即時分析 LME 銅價與原物料走勢提供採購建議",
@@ -181,46 +199,38 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 "粉體塗裝烤漆組品管": "記錄烤漆膜厚、色差與靜電粉體塗裝品管數據",
                 "配電盤組裝配線組進度追蹤": "監控配電盤銅排加工、配線與組裝進度",
                 "工作廠區安全管理": "管理廠區安全規範、消防設施與安衛巡檢"
-            },
-            "💰 財務、採購與稅務管理": {
-                "採購與應付帳款 (AP)": "處理請購單、採購單與供應商應付帳款立帳",
-                "應收帳款管理 (AR)": "追蹤客戶專案工程款請款進度與收款紀錄",
-                "越南稅務標準財務報表 (Thông tư 200)": "自動生成符合越南會計標準 Thông tư 200 的法定報表",
-                "電子發票管理與 XML 歸檔": "對接越南電子發票系統進行開立、查驗與 XML 歸檔"
-            },
-            "👔 人事、行政與後勤支援": {
-                "公司公告佈告欄": "發布公司政策、放假通知與重要公告",
-                "員工檔案管理": "維護員工個人履歷、護照、工作證與合約資料",
-                "員工打卡紀錄": "統計廠內與外勤員工出勤時數及請假紀錄",
-                "員工薪資與保險": "計算越籍員工薪資、加班費與 BHXH 社會保險扣除",
-                "宿舍與伙食管理": "管理幹部宿舍分配、水電費與員工伙食採購",
-                "車輛進出口管制": "記錄廠區貨車、小客車進出門禁與磅秤紀錄",
-                "車輛維修保養紀錄": "管理輕型貨車與公務車維修、保養與保險紀錄",
-                "固定資產與設備管理": "盤點廠內生財器具、辦公設備與機器設備"
             }
         }
 
         with st.form("add_department_hierarchy_form"):
             parent_dept = st.selectbox(
                 "上層所屬部門 (Parent Department)", 
-                ["無 (根目錄 / 一級大部門)", "總經理室 (Executive Office)", "管理部 (Management Dept)", "工程部 (Engineering Dept)", "生產部 (Production Dept)", "倉庫管理 (Warehouse)", "簽核中心 (Approval Center)"]
+                [
+                    "無 (根目錄 / 一級大部門)", 
+                    "總經理室 (Executive Office)", 
+                    "管理部 (Management Dept)", 
+                    "工程部 (Engineering Dept)", 
+                    "生產部 (Production Dept)", 
+                    "倉庫管理 (Warehouse)", 
+                    "簽核中心 (Approval Center)"
+                ]
             )
             
             level_choice = st.selectbox(
                 "部門層級 (Hierarchy Level)", 
                 [
                     "L1 - 大部門 / 事業處 (例如: 管理部、工程部、生產部)",
-                    "L2 - 二級部門 / 課室 (例如: 人事行政課、總務採購課、板金製造課)",
+                    "L2 - 二級部門 / 課室 (例如: 人事行政課、總務採購課、財務會計課)",
                     "L3 - 三級組別 / 專案小組 (例如: 員工合約組、配電盤配線組)",
                     "L4 - 四級現場作業站 / 點工班 (例如: 西寧廠 A 區焊工班、外勤安裝班)"
                 ]
             )
             
-            name_zh = st.text_input("部門繁體中文名稱 *", placeholder="例如: 財務部, 人事行政課")
-            name_vi = st.text_input("部門越文名稱 (Tiếng Việt)", placeholder="Ví dụ: Bộ phận Tài chính")
+            name_zh = st.text_input("部門繁體中文名稱 *", placeholder="例如: 管理部, 人事行政課, 簽核中心")
+            name_vi = st.text_input("部門越文名稱 (Tiếng Việt)", placeholder="Ví dụ: Bộ phận Quản lý")
             
             st.markdown("---")
-            st.markdown("#### 🧩 勾選並掛載此部門可操作的業務模組（附帶功用說明）：")
+            st.markdown("#### 🧩 勾選並掛載此部門可操作的業務模組（附帶詳細功用說明）：")
 
             selected_department_modules = []
             for cat_name, mod_dict in ALL_AVAILABLE_MODULES.items():
@@ -280,13 +290,11 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     selected_target_dept_name = st.selectbox("🎯 選擇要調整模組或管理的部門", list(dept_options.keys()))
                     target_code = dept_options[selected_target_dept_name]
 
-                    # 讀取該部門目前已掛載的模組
                     df_current_mods = pd.read_sql(text("SELECT module_name FROM sys_department_modules WHERE dept_code = :code"), con=active_engine, params={"code": target_code})
                     current_assigned = df_current_mods["module_name"].tolist() if not df_current_mods.empty else []
 
                     st.markdown(f"**當前部門 [{selected_target_dept_name}] 已掛載的模組數：** {len(current_assigned)} 個")
                     
-                    # 允許管理者勾選要移除的模組
                     if current_assigned:
                         st.markdown("###### 🗑️ 勾選並移除不需要的模組：")
                         mods_to_remove = []
