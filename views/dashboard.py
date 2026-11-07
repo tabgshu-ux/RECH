@@ -55,7 +55,7 @@ def render_dashboard(db_engine=None):
 
     for l1 in l1_depts:
         is_current = (l1['id'] == current_selected_id)
-        btn_label = f"📂 {l1['name_zh']} ({l1['name_vi'])})"
+        btn_label = f"📂 {l1['name_zh']} ({l1['name_vi']})"
         if st.sidebar.button(btn_label, use_container_width=True, key=f"sb_l1_{l1['id']}", type="primary" if is_current else "secondary"):
             st.session_state['selected_module_id'] = l1['id']
             st.session_state['current_view'] = 'dashboard'
@@ -102,9 +102,8 @@ def render_dashboard(db_engine=None):
                         st.caption(f"越文名稱: {sub['name_vi']}")
                         st.markdown("<br>", unsafe_allow_html=True)
                         if st.button(f"進入 {sub['name_zh']} ➡️", key=f"btn_sub_dept_{sub['id']}", use_container_width=True, type="secondary"):
-                            # 點擊二級部門可記錄或直接切換檢視
                             st.session_state['selected_sub_dept_id'] = sub['id']
-                            st.success(sprintf := f"已選定二級部門: {sub['name_zh']}")
+                            st.success(f"已選定二級部門: {sub['name_zh']}")
                             st.rerun()
             st.markdown("---")
 
