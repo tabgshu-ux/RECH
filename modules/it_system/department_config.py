@@ -31,19 +31,21 @@ def init_db_tables(engine):
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS sys_departments (
                         id SERIAL PRIMARY KEY,
-                        dept_name VARCHAR(150) UNIQUE,
+                        dept_name VARCHAR(150),
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
                 
-                # 自動檢查並補上 1~4 級動態 ERP 所需的新欄位，確保舊表平滑升級
+                # 自動檢查並補上 1~4 級動態 ERP 所需的新欄位
                 for col_sql in [
                     "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS dept_code VARCHAR(100);",
                     "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS parent_code VARCHAR(100);",
                     "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS level_depth VARCHAR(50) DEFAULT 'L1';",
                     "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS dept_name_zh VARCHAR(150);",
                     "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS dept_name_vi VARCHAR(150);",
-                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;"
+                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;",
+                    # 關鍵：放寬舊欄位 dept_name 的 NOT NULL 約束，避免報錯
+                    "ALTER TABLE sys_departments ALTER COLUMN dept_name DROP NOT NULL;"
                 ]:
                     try:
                         conn.execute(text(col_sql))
@@ -114,7 +116,7 @@ def get_department_module_tree(engine=None):
             "AI 原料採購顧問與金屬行情", 
             "AR/AP 與 P&L 財務戰情儀表板", 
             "工程進度與異常即時監控", 
-            "越南經營政策與法規動態"
+            "越南經營政策與法規每日動態"
         ],
         "管理部 (Management Dept)": [
             "公司公告佈告欄", 
@@ -239,10 +241,11 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     if conn_status:
                         try:
                             with active_engine.begin() as conn:
+                                # 同時寫入 dept_name 確保向下相容舊約束
                                 conn.execute(text("""
-                                    INSERT INTO sys_departments (dept_code, parent_code, level_depth, dept_name_zh, dept_name_vi, is_active)
-                                    VALUES (:code, :parent, :lvl, :zh, :vi, TRUE)
-                                    ON CONFLICT (dept_code) DO UPDATE SET dept_name_zh = :zh, dept_name_vi = :vi, is_active = TRUE
+                                    INSERT INTO sys_departments (dept_code, parent_code, level_depth, dept_name_zh, dept_name_vi, dept_name, is_active)
+                                    VALUES (:code, :parent, :lvl, :zh, :vi, :zh, TRUE)
+                                    ON CONFLICT (dept_code) DO UPDATE SET dept_name_zh = :zh, dept_name_vi = :vi, dept_name = :zh, is_active = TRUE
                                 """), {
                                     "code": auto_code,
                                     "parent": parent_dept.split()[0],
