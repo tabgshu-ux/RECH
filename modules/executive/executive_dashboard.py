@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/executive/executive_dashboard.py
-# 職責：總經理室營運與決策戰情室（移除模組內部的重複標題，直接呈現戰情與數據）
+# 職責：總經理室營運與決策戰情室（直接整合即時 API 原料、匯率與秘書行程）
 # ==========================================
 
 import streamlit as st
@@ -22,21 +22,17 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
 
     st.markdown("---")
 
-    # 2. 原物料與金屬即時價格走勢（直接置頂，免點選單）
-    st.markdown("### 📈 LME 原料與金屬即時價格行情")
-    col_mat1, col_mat2 = st.columns([2, 1])
-    with col_mat1:
-        raw_material_data = pd.DataFrame({
-            "原物料項目 (Material)": ["LME 銅價 (Copper)", "鋁錠 (Aluminum)", "冷軋鋼板 (SPCC)", "絕緣材料 (Insulation)"],
-            "即時價格行情": ["$9,240 / 噸", "$2,450 / 噸", "$32.5 / kg", "$14.2 / kg"],
-            "週漲跌幅": ["+1.8% 📈", "-0.4% 📉", "+0.5% 📈", "持平"],
-            "AI 採購建議": ["分批建倉", "觀望", "維持安全庫存", "正常採購"]
-        })
-        st.dataframe(raw_material_data, use_container_width=True, hide_index=True)
-    with col_mat2:
-        with st.container(border=True):
-            st.markdown("#### 💡 AI 採購快訊")
-            st.info("近期銅價高檔震盪，建議西寧廠高低壓配電盤母線排需求採分批鎖價。")
+    # =========================================================================
+    # 2. 直接載入並呼叫您寫好的 commodities_fx 模組（內含 API 即時銅價與美金/新台幣/越盾匯率換算）
+    # =========================================================================
+    try:
+        from modules.executive import commodities_fx
+        if hasattr(commodities_fx, "show"):
+            commodities_fx.show(engine=engine, lang=lang, **kwargs)
+        else:
+            st.warning("⚠️ 原料與匯率模組載入異常 (找不到 show 函式)")
+    except Exception as e:
+        st.error(f"⚠️ 載入原料與匯率模組發生錯誤: {e}")
 
     st.markdown("---")
 
@@ -54,12 +50,11 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
 
     st.markdown("---")
 
-    # 4. 底部保留專業子模組切換（供需要看細節時使用）
-    st.markdown("### 🔍 深度營運與政策分析模組")
+    # 4. 底部保留其他專業分析模組切換
+    st.markdown("### 🔍 其他高階經營分析模組")
     sub_option = st.selectbox(
         "📌 選擇專業分析模組",
         [
-            "1. 原料市場行情與外匯基準明細",
             "2. 完整損益表與會計報表 (Thông tư 200)",
             "3. 工程專案進度與現場狀態追蹤",
             "4. 越南政府政策與法規動態速遞"
@@ -67,14 +62,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
         label_visibility="collapsed"
     )
 
-    if "1. 原料" in sub_option:
-        try:
-            from modules.executive import commodities_fx
-            if hasattr(commodities_fx, "show"):
-                commodities_fx.show(engine=engine, lang=lang, **kwargs)
-        except Exception:
-            pass
-    elif "2. 財務" in sub_option:
+    if "2. 財務" in sub_option:
         try:
             from modules.executive import financials_pl
             if hasattr(financials_pl, "show"):
