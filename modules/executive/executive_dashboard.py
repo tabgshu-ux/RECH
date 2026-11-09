@@ -122,6 +122,11 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
             "name": "📰 越南政府政策與法規動態", 
             "desc": "掌握 KCN Trảng Bàng 當地勞動法規、稅務變動與外派幹部證照規範。"
         },
+        {
+            "id": "analytics", 
+            "name": "🏗️ 工程案場與金額佔比分析", 
+            "desc": "分析廠內各類型工程案場數量、合約總金額結構、平均毛利率與營收佔比分佈。"
+        },
     ]
 
     for idx, sec in enumerate(exec_sections):
