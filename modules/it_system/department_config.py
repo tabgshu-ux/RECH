@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：1~4 級動態組織配置中心（修復父層下拉選單僅抓取 L1 大部門，確保二級部門順暢歸屬）
+# 職責：1~4 級動態組織配置中心（已補齊總經理室第四個 AR/AP 與 P&L 財務戰情模組）
 # ==========================================
 
 import streamlit as st
@@ -49,7 +49,6 @@ def reset_and_init_db_tables(engine):
                     );
                 """))
 
-                # 若表格為空，初始化預設 L1 根目錄
                 res = conn.execute(text("SELECT COUNT(*) FROM sys_departments")).scalar()
                 if res == 0:
                     default_depts = [
@@ -101,7 +100,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
         "📋 現有部門清單與模組調整"
     ])
 
-    # 🌟 精準抓取現有 L1 大部門清單供 L2 選擇父層
     existing_l1_list = [("無 (獨立 L1 頂級部門)", "None")]
     if conn_status:
         try:
@@ -158,7 +156,8 @@ def render(engine=None, lang="繁體中文", **kwargs):
             "📊 總經理室與戰情決策": {
                 "總經理室戰情室": "彙整全廠營運績效、KPI 達成率與重大異常警示",
                 "AI 原料採購顧問與金屬行情": "即時分析 LME 銅價與原物料走勢提供採購建議",
-                "工程進度與異常即時監控": "全盤掌握各地工程案場進度與工安異常"
+                "工程進度與異常即時監控": "全盤掌握各地工程案場進度與工安異常",
+                "財務與金流戰情摘要 (AR / AP & P&L)": "即時掌控應收應付帳款與 Thông tư 200 會計財報分析"
             },
             "🛠️ 工程與現場作業管理": {
                 "工程主管戰情室與案場管理": "統籌各案場施工能量、進度回報與工班調度",
