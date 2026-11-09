@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/executive/project_analytics.py
-# 職責：總經理室專屬 - 工程案場分佈與金額佔比分析（積木化動態模組）
+# 職責：總經理室專屬 - 工程案場分佈與金額佔比分析（完整程式碼）
 # ==========================================
 
 import streamlit as st
@@ -10,7 +10,7 @@ def show(engine=None, lang="繁體中文", **kwargs):
     st.markdown("### 🏗️ 工程案場類型分佈與合約金額佔比分析")
     st.caption("專為總經理決策打造的工程營收結構分析，即時掌握廠內接案主力與案值分佈。")
 
-    # 模擬真實工程專案與金額資料（未來可無縫對接 Supabase 資料庫）
+    # 模擬真實工程專案與金額資料
     data = {
         "工程專案類型 (Project Category)": [
             "高低壓配電盤製造與安裝 (Switchgear & Panels)",
@@ -33,13 +33,11 @@ def show(engine=None, lang="繁體中文", **kwargs):
 
     df = pd.DataFrame(data)
 
-    # 計算總金額與佔比
     total_amount = df["合約總金額 (VND)"].sum()
     df["金額佔比 (%)"] = (df["合約總金額 (VND)"] / total_amount * 100).round(2)
     df["合約總金額 (VND)"] = df["合約總金額 (VND)"].apply(lambda x: f"{x:,.0f} ₫")
     df["金額佔比 (%)"] = df["金額佔比 (%)"].astype(str) + "%"
 
-    # 頂部三大戰情指標
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("📊 總承接工程專案數", "73 案", "🟢 案源穩定")
@@ -50,11 +48,9 @@ def show(engine=None, lang="繁體中文", **kwargs):
 
     st.markdown("---")
 
-    # 顯示詳細分析表格
     st.markdown("#### 📋 各工程類別案場數與金額明細對照表")
     st.dataframe(df, use_container_width=True, hide_index=True)
 
-    # 呈現金額分佈長條圖
     st.markdown("#### 📊 各工程類型合約總金額分佈視覺化")
     chart_data = pd.DataFrame({
         "工程類型": [
