@@ -50,6 +50,9 @@ def render_dashboard(db_engine):
     # 3. 主畫面區域：精簡標題，拿掉不必要的贅字
     st.markdown(f"## {current_target['icon']} {current_target['name_zh']} ({current_target['name_vi']})")
     st.markdown("---")
+    # 3. 主畫面區域：緊湊排版，減少上方空白
+    st.markdown(f"### {current_target['icon']} {current_target['name_zh']} ({current_target['name_vi']})")
+    # 拿掉原本過多的分隔線與空白
 
     # -------------------------------------------------------------------------
     # 管理部 (Management Department) 專區邏輯
