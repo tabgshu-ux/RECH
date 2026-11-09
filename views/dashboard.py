@@ -7,6 +7,9 @@ import streamlit as st
 import importlib
 
 def render_dashboard(db_engine):
+    # 0. 取得當前全域語言設定（防止變數未定義報錯）
+    current_lang = st.session_state.get('current_lang', '繁體中文')
+
     # 1. 初始化全公司一級部門清單（全面支援總經理室、工程部、管理部、生產部、倉儲與簽核中心）
     departments = [
         {"id": "ceo", "name_zh": "總經理室", "name_vi": "Văn phòng Tổng Giám đốc", "level": "L1", "icon": "👑"},
@@ -44,8 +47,8 @@ def render_dashboard(db_engine):
         st.session_state['active_feature_id'] = 'feat_it_menu'
         st.rerun()
 
-    # 3. 主畫面區域：根據不同部門動態載入對應的模組架構
-    st.markdown(f"## {current_target['icon']} {current_target['name_zh']} ({current_target['name_vi']}) 總覽與業務專區")
+    # 3. 主畫面區域：精簡標題，拿掉不必要的贅字
+    st.markdown(f"## {current_target['icon']} {current_target['name_zh']} ({current_target['name_vi']})")
     st.markdown("---")
 
     # -------------------------------------------------------------------------
@@ -88,7 +91,7 @@ def render_dashboard(db_engine):
             if hr_sub == 'employee':
                 try:
                     from modules.management.hr.employee import employee_profile
-                    employee_profile.render(db_engine, lang=st.session_state.get('current_lang', 'zh'))
+                    employee_profile.render(db_engine, lang=current_lang)
                 except Exception as e:
                     st.error(f"載入員工模組失敗: {e}")
             else:
@@ -98,7 +101,7 @@ def render_dashboard(db_engine):
             # 管理部首頁：戰情室 + L2 二級部門導覽入口
             try:
                 from modules.management.supervisor_dashboard import render as render_supervisor
-                render_supervisor(db_engine, lang=st.session_state.get('current_lang', 'zh'))
+                render_supervisor(db_engine, lang=current_lang)
             except Exception as e:
                 st.warning(f"戰情資料載入提示: {e}")
             st.markdown("---")
@@ -130,7 +133,7 @@ def render_dashboard(db_engine):
             elif hasattr(executive_dashboard, "show"):
                 executive_dashboard.show(engine=db_engine, lang=current_lang)
             else:
-                st.info("👑 [總經理室] 跨廠區經營戰情儀表板載入中...")
+                st.info("👑 [總經理室] 決策戰情室載入中...")
         except Exception as e:
             st.error(f"⚠️ 載入總經理室戰情模組發生異常: {str(e)}")
 
