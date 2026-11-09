@@ -120,10 +120,19 @@ def render_dashboard(db_engine):
                             st.rerun()
 
     # -------------------------------------------------------------------------
-    # 總經理室 (CEO Office) 專區擴充預留
+    # 3.3 總經理室 (CEO Office) 專區
     # -------------------------------------------------------------------------
     elif current_target['id'] == 'ceo':
-        st.info("👑 [總經理室] 跨廠區經營戰情儀表板、重大決議與集團稽核管理建置中...")
+        try:
+            from modules.executive import executive_dashboard
+            if hasattr(executive_dashboard, "render"):
+                executive_dashboard.render(db_engine, lang=current_lang)
+            elif hasattr(executive_dashboard, "show"):
+                executive_dashboard.show(engine=db_engine, lang=current_lang)
+            else:
+                st.info("👑 [總經理室] 跨廠區經營戰情儀表板載入中...")
+        except Exception as e:
+            st.error(f"⚠️ 載入總經理室戰情模組發生異常: {str(e)}")
 
     # -------------------------------------------------------------------------
     # 工程部 (Engineering) 專區擴充預留
