@@ -58,7 +58,14 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
                 from modules.executive import vietnam_policy
                 if hasattr(vietnam_policy, "show"):
                     vietnam_policy.show(engine=engine, lang=lang, **kwargs)
-                else:
+         elif current_sub == 'analytics':
+            try:
+                from modules.executive import project_analytics
+                project_analytics.show(engine=engine, lang=lang, **kwargs)
+            except Exception as e:
+                st.error(f"載入工程分析模組失敗: {e}")
+                
+        else:
                     st.info("📰 【越南政府政策與法規動態】模組載入中...")
             except Exception as e:
                 st.error(f"載入越南政策模組失敗: {e}")
