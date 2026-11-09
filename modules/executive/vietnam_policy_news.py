@@ -1,3 +1,8 @@
+# ==========================================
+# 檔案路徑：modules/executive/vietnam_policy_news.py
+# 職責：越南經營政策與法規每日動態速遞（保留完整 AI 結構化解讀、多語系、資料庫同步與一鍵 Google 檢索，並直接展開所有影響評估）
+# ==========================================
+
 import streamlit as st
 import pandas as pd
 import datetime
@@ -111,7 +116,6 @@ def init_policy_db(engine):
         pass
 
 def generate_google_search_url(doc_number, title):
-    """根據公文案號與標題自動產生 Google 智慧搜尋連結，點擊即可在 Google 檢索所有相關文章與網頁 """
     query = f"{doc_number} {title}"
     encoded_query = urllib.parse.quote(query)
     return f"https://www.google.com/search?q={encoded_query}"
@@ -234,7 +238,6 @@ def get_policy_news_from_db(engine):
         for item in default_items:
             news_list.append(item)
     
-    # 為每一筆資料動態產生 Google 檢索連結
     for item in news_list:
         item["Google檢索連結"] = generate_google_search_url(item["公文案號"], item["標題"])
         
@@ -339,7 +342,6 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
 
         filtered_count += 1
         with st.container():
-            # 標題同時提供雙重管道：1. 點擊按鈕閱讀系統內結構化詳情；2. 旁邊附帶一鍵 Google 智慧檢索連結
             st.markdown(f"#### {news['標題']}")
             st.markdown(f"📌 **公文案號**：`{news['公文案號']}` | 🏛️ **發布機關**：{news['發布機關']}")
             st.markdown(f"📅 **發布日期**：{news['日期']} | 📁 **類別**：{news['類別']} | 🔍 **[點擊一鍵透過 Google 檢索此公文與新聞]({news['Google檢索連結']})**", unsafe_allow_html=True)
@@ -353,7 +355,36 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
 
             st.markdown("---")
 
-    if filtered_count == 0:
+    # ====================================================
+    # 📊 重大法規影響評估（直接展開呈現，零下拉選單）
+    # ====================================================
+    st.markdown("### 📊 重大法規影響評估與因應對策摘要")
+    
+    evaluations = [
+        {
+            "title": "📜 VAT 與 Thông tư 200 申報變動",
+            "impact": "影響層面：會計帳務、進項發票申報格式與交叉勾稽。",
+            "action": "財務部需確保持續更新會計系統憑證驗證模組，嚴格把關 AR/AP 憑證合法性。"
+        },
+        {
+            "title": "👷 外籍員工薪資與租屋合規",
+            "impact": "影響層面：管理部、外派幹部工作證與短期通報期限（15天內）。",
+            "action": "人事部全面清查西寧廠與海防廠外派幹部工作證效期及短期支援通報程序。"
+        },
+        {
+            "title": "🧯 廠房消防與安檢規定",
+            "impact": "影響層面：金屬加工、塗裝車間與危險物品存放安全。",
+            "action": "廠務與工安主管須落實消防設施覆蓋率檢查與廢水廢氣即時監測。"
+        }
+    ]
+
+    for item in evaluations:
+        with st.container(border=True):
+            st.markdown(f"#### {item['title']}")
+            st.markdown(f"- **{item['impact']}**")
+            st.markdown(f"- **建議因應對策**：{item['action']}")
+
+    if filtered_count == 0 and len(evaluations) == 0:
         st.info("ℹ️ 目前沒有符合搜尋條件的法規政策。")
 
 def show(engine=None, lang="繁體中文", **kwargs):
