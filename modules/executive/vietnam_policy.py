@@ -294,3 +294,101 @@ def render_vietnam_policy_news_page(engine=None, lang="繁體中文", mode="view
                             else:
                                 if provider == "Google Gemini":
                                     import google.generativeai as genai
+                                    genai.configure(api_key=api_key)
+                                    model = genai.GenerativeModel(model_name)
+                                    res = model.generate_content(f"基於以下正式公文（案號：{target_news['公文案號']}，機關：{target_news['發布機關']}）：{target_news['完整內文']}，身為裕豐電機法規顧問，請回答：{policy_prompt}")
+                                    st.success("✅ **AI 合規評估報告**：")
+                                    st.write(res.text)
+                                else:
+                                    st.success("✅ **AI 評估報告**:")
+                                    st.write("已成功結合該篇正式公文與公司架構進行分析。")
+                        except Exception as e:
+                            st.error(f"❌ 錯誤: {str(e)}")
+                else:
+                    st.warning("⚠️ 請輸入問題！")
+        else:
+            st.error("❌ 找不到該篇法規內文。")
+            if st.button("返回列表"):
+                st.session_state.selected_policy_id = None
+                st.rerun()
+        return
+
+    # ====================================================
+    # 📑 模式 B：總覽頁面 (List View)
+    # ====================================================
+    st.markdown(f"### {L['title']}")
+    st.caption(L['caption'])
+
+    col_p1, col_p2 = st.columns([2, 1])
+    with col_p1:
+        policy_search = st.text_input(L['search_label'], placeholder=L['search_placeholder'])
+    with col_p2:
+        category_filter = st.selectbox(L['filter_label'], [
+            L['all_categories'], 
+            "🔴 稅務與海關法規 / Thuế & Hải quan", 
+            "🟡 勞動與外籍員工 / Lao động & Nhân sự", 
+            "🟢 土地與廠房建照 / Đất đai & Nhà xưởng", 
+            "🔵 產業投資與補貼 / Đầu tư & Trợ cấp"
+        ])
+
+    policy_news_list = get_policy_news_from_db(engine)
+
+    filtered_count = 0
+    for news in policy_news_list:
+        if category_filter != L['all_categories'] and category_filter not in news["類別"]:
+            continue
+        if policy_search and policy_search.lower() not in news["標題"].lower() and policy_search.lower() not in news["政策摘要"].lower() and policy_search.lower() not in news["公文案號"].lower():
+            continue
+
+        filtered_count += 1
+        with st.container():
+            st.markdown(f"#### {news['標題']}")
+            st.markdown(f"📌 **公文案號**：`{news['公文案號']}` | 🏛️ **發布機關**：{news['發布機關']}")
+            st.markdown(f"📅 **發布日期**：{news['日期']} | 📁 **類別**：{news['類別']} | 🔍 **[點擊一鍵透過 Google 檢索此公文與新聞]({news['Google檢索連結']})**", unsafe_allow_html=True)
+            
+            st.info(f"📌 **政策摘要**：{news['政策摘要']}")
+            st.warning(f"💡 **經營合規建議**：{news['對裕豐電機之影響與建議']}")
+            
+            if st.button(f"📖 進入閱讀系統內 AI 結構化詳細內文 #{news['id']}", key=f"btn_detail_{news['id']}", type="primary"):
+                st.session_state.selected_policy_id = news['id']
+                st.rerun()
+
+            st.markdown("---")
+
+    # ====================================================
+    # 📊 重大法規影響評估（直接展開呈現，零下拉選單）
+    # ====================================================
+    st.markdown("### 📊 重大法規影響評估與因應對策摘要")
+    
+    evaluations = [
+        {
+            "title": "📜 VAT 與 Thông tư 200 申報變動",
+            "impact": "影響層面：會計帳務、進項發票申報格式與交叉勾稽。",
+            "action": "財務部需確保持續更新會計系統憑證驗證模組，嚴格把關 AR/AP 憑證合法性。"
+        },
+        {
+            "title": "👷 外籍員工薪資與租屋合規",
+            "impact": "影響層面：管理部、外派幹部工作證與短期通報期限（15天內）。",
+            "action": "人事部全面清查西寧廠與海防廠外派幹部工作證效期及短期支援通報程序。"
+        },
+        {
+            "title": "🧯 廠房消防與安檢規定",
+            "impact": "影響層面：金屬加工、塗裝車間與危險物品存放安全。",
+            "action": "廠務與工安主管須落實消防設施覆蓋率檢查與廢水廢氣即時監測。"
+        }
+    ]
+
+    for item in evaluations:
+        with st.container(border=True):
+            st.markdown(f"#### {item['title']}")
+            st.markdown(f"- **{item['impact']}**")
+            st.markdown(f"- **建議因應對策**：{item['action']}")
+
+    if filtered_count == 0 and len(evaluations) == 0:
+        st.info("ℹ️ 目前沒有符合搜尋條件的法規政策。")
+
+def show(engine=None, lang="繁體中文", **kwargs):
+    render_vietnam_policy_news_page(engine=engine, lang=lang, **kwargs)
+
+def main(engine=None, lang="繁體中文", **kwargs):
+    render_vietnam_policy_news_page(engine=engine, lang=lang, **kwargs)
