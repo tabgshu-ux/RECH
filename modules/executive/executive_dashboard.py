@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/executive/executive_dashboard.py
-# 職責：總經理室營運戰情與決策中心（精簡版面，上方不留白）
+# 職責：總經理室營運戰情與決策中心（移除重複標題，極致精簡版面）
 # ==========================================
 
 import streamlit as st
@@ -29,10 +29,8 @@ except ImportError:
 
 
 def render_executive_main(engine=None, lang="繁體中文", **kwargs):
-    # 用更精巧的小標題取代佔空間的大 title，節省上方空白
-    st.markdown("#### 📈 營運與決策戰情中心")
-    
-    # 將即時提示改為極簡的 caption 或直接整合，減少垂直佔高
+    # 直接以次標題顯示戰情中心名稱，不重複顯示「總經理室」字樣
+    st.markdown("#### 📊 營運與決策戰情中心")
     st.caption(f"系統時間: {datetime.date.today()} | 營運與簽核正常運作")
 
     # =========================================================================
@@ -75,7 +73,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
             "3. 工程專案進度與現場狀態追蹤",
             "4. 越南政府政策與法規動態速遞"
         ],
-        label_visibility="collapsed" # 隱藏重複的 label 文字，畫面更乾淨
+        label_visibility="collapsed"
     )
 
     st.markdown("---")
