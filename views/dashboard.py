@@ -1,16 +1,15 @@
 # ==========================================
 # 檔案路徑：views/dashboard.py
-# 職責：全公司多部門通用動態 SaaS ERP 主控台路由與組織導覽引擎
+# 職責：純企業組織路由分發器（零冗餘、零額外標題，直接載入各部門模組）
 # ==========================================
 
 import streamlit as st
 import importlib
 
 def render_dashboard(db_engine):
-    # 0. 取得當前全域語言設定（防止變數未定義報錯）
     current_lang = st.session_state.get('current_lang', '繁體中文')
 
-    # 1. 初始化全公司一級部門清單（全面支援總經理室、工程部、管理部、生產部、倉儲與簽核中心）
+    # 1. 初始化全公司一級部門清單
     departments = [
         {"id": "ceo", "name_zh": "總經理室", "name_vi": "Văn phòng Tổng Giám đốc", "level": "L1", "icon": "👑"},
         {"id": "eng", "name_zh": "工程部", "name_vi": "Phòng Kỹ thuật", "level": "L1", "icon": "🛠️"},
@@ -26,7 +25,7 @@ def render_dashboard(db_engine):
     current_dept_id = st.session_state['selected_dept_id']
     current_target = next((d for d in departments if d['id'] == current_dept_id), departments[2])
 
-    # 2. 側邊欄：動態組織樹狀導覽（支援全公司切換）
+    # 2. 側邊欄：動態組織樹狀導覽
     st.sidebar.markdown("### 🏢 企業組織樹狀導覽")
     st.sidebar.markdown("---")
 
@@ -47,27 +46,21 @@ def render_dashboard(db_engine):
         st.session_state['active_feature_id'] = 'feat_it_menu'
         st.rerun()
 
-    # 3. 主畫面區域：精簡標題，拿掉不必要的贅字
-    st.markdown(f"## {current_target['icon']} {current_target['name_zh']} ({current_target['name_vi']})")
-    st.markdown("---")
-    # 3. 主畫面區域：緊湊排版，減少上方空白
-    st.markdown(f"### {current_target['icon']} {current_target['name_zh']} ({current_target['name_vi']})")
-    # 拿掉原本過多的分隔線與空白
-
+    # =========================================================================
+    # 3. 路由分發核心：完全不印多餘大標題，直接把畫面交給對應的模組檔案！
+    # =========================================================================
+    
     # -------------------------------------------------------------------------
-    # 管理部 (Management Department) 專區邏輯
+    # 3.1 管理部 (Management Department)
     # -------------------------------------------------------------------------
     if current_target['id'] == 'mgmt':
         active_feat = st.session_state.get('active_feature_id')
 
         if active_feat == 'feat_hr':
-            # 人事行政 L2 子模組卡片列（員工管理、考勤、薪資、設定）
             if st.button("⬅️ 返回管理部總覽", key="back_to_mgmt"):
                 st.session_state['active_feature_id'] = None
                 st.rerun()
 
-            st.markdown("### 👤 人事行政與員工管理中心")
-            
             if 'mgmt_hr_sub' not in st.session_state:
                 st.session_state['mgmt_hr_sub'] = 'employee'
 
@@ -101,7 +94,6 @@ def render_dashboard(db_engine):
                 st.info(f"📌 [人事子模組: {hr_sub}] 建置中...")
 
         else:
-            # 管理部首頁：戰情室 + L2 二級部門導覽入口
             try:
                 from modules.management.supervisor_dashboard import render as render_supervisor
                 render_supervisor(db_engine, lang=current_lang)
@@ -109,7 +101,6 @@ def render_dashboard(db_engine):
                 st.warning(f"戰情資料載入提示: {e}")
             st.markdown("---")
 
-            st.markdown("### 📌 管理部二級部門導覽入口")
             cols = st.columns(3)
             l2_sections = [
                 {"id": "feat_hr", "name": "📂 人事 / 行政", "desc": "越籍員工、外派幹部、合約、考勤與薪資保險。"},
@@ -126,7 +117,7 @@ def render_dashboard(db_engine):
                             st.rerun()
 
     # -------------------------------------------------------------------------
-    # 3.3 總經理室 (CEO Office) 專區
+    # 3.2 總經理室 (CEO Office) -> 直接呼叫獨立模組，不佔任何額外空白
     # -------------------------------------------------------------------------
     elif current_target['id'] == 'ceo':
         try:
@@ -138,31 +129,18 @@ def render_dashboard(db_engine):
             else:
                 st.info("👑 [總經理室] 決策戰情室載入中...")
         except Exception as e:
-            st.error(f"⚠️ 載入總經理室戰情模組發生異常: {str(e)}")
+            st.error(f"⚠️ 載入總經理室模組發生異常: {str(e)}")
 
     # -------------------------------------------------------------------------
-    # 工程部 (Engineering) 專區擴充預留
+    # 3.3 其他部門預留路由
     # -------------------------------------------------------------------------
     elif current_target['id'] == 'eng':
-        st.info("🛠️ [工程部] 高低壓電氣控制盤設計圖審、BOM 表與工藝規格管理建置中...")
-
-    # -------------------------------------------------------------------------
-    # 生產部 (Production) 專區擴充預留
-    # -------------------------------------------------------------------------
+        st.info("🛠️ [工程部] 模組載入中...")
     elif current_target['id'] == 'prod':
-        st.info("🏭 [生產部] 西寧廠與海防廠排程、母線排與鈑金噴塗產線進度追蹤建置中...")
-
-    # -------------------------------------------------------------------------
-    # 倉庫管理 (Warehouse) 專區擴充預留
-    # -------------------------------------------------------------------------
+        st.info("🏭 [生產部] 模組載入中...")
     elif current_target['id'] == 'warehouse':
-        st.info("📦 [倉庫管理] 原物料進出庫、庫存盤點與多廠區調撥管理建置中...")
-
-    # -------------------------------------------------------------------------
-    # 簽核中心 (Approval Center) 專區擴充預留
-    # -------------------------------------------------------------------------
+        st.info("📦 [倉庫管理] 模組載入中...")
     elif current_target['id'] == 'approval':
-        st.info("✍️ [簽核中心] 電子表單簽核、請購單、請假與合約多級呈報中心建置中...")
-
+        st.info("✍️ [簽核中心] 模組載入中...")
     else:
-        st.warning(f"💡 [{current_target['name_zh']}] 模組路由掛載中...")
+        st.warning("💡 模組路由掛載中...")
