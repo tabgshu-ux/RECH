@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/executive/executive_dashboard.py
-# 職責：總經理室營運與決策戰情中心（完整程式碼，已整合工程案場分析積木）
+# 職責：總經理室總覽與決策中心（已全面正名為總覽）
 # ==========================================
 
 import streamlit as st
@@ -13,9 +13,8 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
 
     current_sub = st.session_state['exec_active_sub']
 
-    # 若已進入特定子模組（顯示返回按鈕與對應內容）
     if current_sub is not None:
-        if st.button("⬅️ 返回總經理室戰情總覽", key="back_to_exec_main"):
+        if st.button("⬅️ 返回總經理室總覽", key="back_to_exec_main"):
             st.session_state['exec_active_sub'] = None
             st.rerun()
 
@@ -31,30 +30,21 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
         elif current_sub == 'financials':
             try:
                 from modules.executive import financials_pl
-                if hasattr(financials_pl, "show"):
-                    financials_pl.show(engine=engine, lang=lang, **kwargs)
-                else:
-                    st.info("💰 【完整損益表與會計報表 (Thông tư 200)】載入中...")
+                financials_pl.show(engine=engine, lang=lang, **kwargs)
             except Exception as e:
                 st.error(f"載入財務報表失敗: {e}")
 
         elif current_sub == 'projects':
             try:
                 from modules.executive import project_progress
-                if hasattr(project_progress, "show"):
-                    project_progress.show(engine=engine, lang=lang, **kwargs)
-                else:
-                    st.info("🛠️ 【工程專案進度與現場狀態】載入中...")
+                project_progress.show(engine=engine, lang=lang, **kwargs)
             except Exception as e:
                 st.error(f"載入工程進度失敗: {e}")
 
         elif current_sub == 'policy':
             try:
                 from modules.executive import vietnam_policy
-                if hasattr(vietnam_policy, "show"):
-                    vietnam_policy.show(engine=engine, lang=lang, **kwargs)
-                else:
-                    st.info("📰 【越南政府政策與法規動態】載入中...")
+                vietnam_policy.show(engine=engine, lang=lang, **kwargs)
             except Exception as e:
                 st.error(f"載入越南政策失敗: {e}")
 
@@ -67,8 +57,11 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
 
         return
 
-    # 總經理室首頁：頂部戰情摘要 + 秘書行程 + 卡片式二級導覽入口
-    st.markdown("#### 💰 財務與金流戰情摘要 (AR / AP)")
+    # 總經理室總覽首頁
+    st.markdown("### 👑 總經理室總覽 (Executive Office Overview)")
+    st.caption("彙整全廠營運績效、KPI 達成率、重大異常警示與跨部門核心財務數據。")
+    
+    st.markdown("#### 💰 財務與金流總覽 (AR / AP)")
     col_kpi1, col_kpi2, col_kpi3, col_kpi4 = st.columns(4)
     with col_kpi1:
         st.metric(label="📊 本月營收達成率", value="94.5%", delta="+2.2%")
