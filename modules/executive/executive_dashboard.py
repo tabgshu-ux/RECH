@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/executive/executive_dashboard.py
-# 職責：總經理室總覽與決策中心（已全面正名為總覽）
+# 職責：總經理室總覽與決策中心（完整保留原功能並整合不佔空間的快速跳轉列）
 # ==========================================
 
 import streamlit as st
@@ -14,9 +14,27 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
     current_sub = st.session_state['exec_active_sub']
 
     if current_sub is not None:
-        if st.button("⬅️ 返回總經理室總覽", key="back_to_exec_main"):
-            st.session_state['exec_active_sub'] = None
-            st.rerun()
+        # 💡 優化：返回按鈕旁加入不佔畫面的收合式快捷跳轉選單，方便隨時切換其他功能
+        col_back, col_jump = st.columns([2, 5])
+        with col_back:
+            if st.button("⬅️ 返回總經理室總覽", key="back_to_exec_main", use_container_width=True):
+                st.session_state['exec_active_sub'] = None
+                st.rerun()
+
+        with col_jump:
+            with st.expander("⚡ 快速切換總經理室其他功能...", expanded=False):
+                sub_options = {
+                    "📈 原料市場與即時外匯行情": "commodities",
+                    "💰 完整損益表與會計報表": "financials",
+                    "🛠️ 工程專案進度與現場狀態": "projects",
+                    "📰 越南政府政策與法規動態": "policy",
+                    "🏗️ 工程案場與金額佔比分析": "analytics"
+                }
+                for label, target_sub in sub_options.items():
+                    if current_sub != target_sub:
+                        if st.button(label, key=f"quick_jump_{target_sub}", use_container_width=True):
+                            st.session_state['exec_active_sub'] = target_sub
+                            st.rerun()
 
         st.markdown("---")
 
