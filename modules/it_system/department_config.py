@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：1~4 級動態組織配置中心（已加入工程專案損益與預算控管模組）
+# 職責：1~4 級動態組織配置中心（已修復 Checkbox Key 重複報錯）
 # ==========================================
 
 import streamlit as st
@@ -83,34 +83,35 @@ def render(engine=None, lang="繁體中文", **kwargs):
         except Exception:
             pass
 
+    # 🌟 使用帶有分類字首的 key，避免跨分類重複報錯
     ALL_AVAILABLE_MODULES = {
         "👔 管理部總覽與支援": [
-            "管理部總覽",
-            "公司公告佈告欄",
-            "人事行政課 — 員工檔案與履約管理",
-            "人事行政課 — 考勤與打卡紀錄",
-            "人事行政課 — 薪資計算與 BHXH 保險",
-            "總務採購課 — 採購單與應付帳款 (AP)"
+            ("管理部總覽", "mgmt_ov"),
+            ("公司公告佈告欄", "mgmt_ann"),
+            ("人事行政課 — 員工檔案與履約管理", "mgmt_hr"),
+            ("人事行政課 — 考勤與打卡紀錄", "mgmt_att"),
+            ("人事行政課 — 薪資計算與 BHXH 保險", "mgmt_pay"),
+            ("總務採購課 — 採購單與應付帳款 (AP)", "mgmt_ap")
         ],
         "📊 總經理室總覽與決策": [
-            "總經理室總覽",
-            "AI 原料採購顧問與金屬行情",
-            "工程進度與異常即時監控",
-            "財務與金流總覽 (AR / AP & P&L)",
-            "工程案場與金額佔比分析",
-            "工程專案損益與預算控管"
+            ("總經理室總覽", "gm_ov"),
+            ("AI 原料採購顧問與金屬行情", "gm_ai"),
+            ("工程進度與異常即時監控", "gm_prog"),
+            ("財務與金流總覽 (AR / AP & P&L)", "gm_fin"),
+            ("工程案場與金額佔比分析", "gm_anal"),
+            ("工程專案損益與預算控管", "gm_pnl")
         ],
         "🛠️ 工程部總覽與作業": [
-            "工程部總覽",
-            "工程專案損益與預算控管",
-            "工程專案報價系統",
-            "施工日報表與點工點料登記",
-            "配電盤電氣與機構設計圖庫"
+            ("工程部總覽", "eng_ov"),
+            ("工程專案損益與預算控管", "eng_pnl"),
+            ("工程專案報價系統", "eng_quote"),
+            ("施工日報表與點工點料登記", "eng_log"),
+            ("配電盤電氣與機構設計圖庫", "eng_cad")
         ],
         "🏭 生產製造與倉儲管理": [
-            "生產部總覽",
-            "倉庫庫存與資材條碼管理",
-            "配電盤組裝配線組進度追蹤"
+            ("生產部總覽", "prod_ov"),
+            ("倉庫庫存與資材條碼管理", "prod_wms"),
+            ("配電盤組裝配線組進度追蹤", "prod_asm")
         ]
     }
 
@@ -144,8 +145,8 @@ def render(engine=None, lang="繁體中文", **kwargs):
             selected_department_modules = []
             for cat_name, mod_list in ALL_AVAILABLE_MODULES.items():
                 with st.expander(f"{cat_name} （包含 {len(mod_list)} 項功能）", expanded=False):
-                    for mod_name in mod_list:
-                        if st.checkbox(f"**{mod_name}**", key=f"chk_add_{mod_name}"):
+                    for mod_name, mod_key in mod_list:
+                        if st.checkbox(f"**{mod_name}**", key=f"chk_add_{mod_key}"):
                             selected_department_modules.append(mod_name)
 
             submitted = st.form_submit_button("💾 儲存組織設定並掛載模組", type="primary", use_container_width=True)
@@ -190,9 +191,9 @@ def render(engine=None, lang="繁體中文", **kwargs):
                         new_checked_modules = []
                         for cat_name, mod_list in ALL_AVAILABLE_MODULES.items():
                             st.markdown(f"**{cat_name}**")
-                            for mod_name in mod_list:
+                            for mod_name, mod_key in mod_list:
                                 is_default = mod_name in current_assigned
-                                if st.checkbox(mod_name, value=is_default, key=f"manage_chk_{target_code}_{mod_name}"):
+                                if st.checkbox(mod_name, value=is_default, key=f"manage_chk_{target_code}_{mod_key}"):
                                     new_checked_modules.append(mod_name)
                             st.markdown("")
 
