@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：1~4 級動態組織配置中心（已修復 Checkbox Key 重複報錯）
+# 職責：1~4 級動態組織配置中心（完整程式碼）
 # ==========================================
 
 import streamlit as st
@@ -83,7 +83,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
         except Exception:
             pass
 
-    # 🌟 使用帶有分類字首的 key，避免跨分類重複報錯
     ALL_AVAILABLE_MODULES = {
         "👔 管理部總覽與支援": [
             ("管理部總覽", "mgmt_ov"),
@@ -120,7 +119,9 @@ def render(engine=None, lang="繁體中文", **kwargs):
         if conn_status:
             try:
                 df_tree = pd.read_sql("SELECT dept_code, dept_name_zh, level_depth, parent_code FROM sys_departments WHERE is_active = TRUE", con=active_engine)
-                if not df_tree.empty:
+                if df_tree.empty:
+                    st.info("目前尚無任何部門資料。")
+                else:
                     l1_rows = df_tree[df_tree["level_depth"] == "L1"]
                     for _, l1 in l1_rows.iterrows():
                         l1_mods = pd.read_sql(text("SELECT module_name FROM sys_department_modules WHERE dept_code = :c"), con=active_engine, params={"c": l1['dept_code']})["module_name"].tolist()
