@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/engineering/engineering_overview.py
-# 職責：工程部總覽（案場進度、GPS 打卡、點工與預算管控）
+# 職責：工程部總覽
 # ==========================================
 
 import streamlit as st
@@ -32,10 +32,6 @@ def show(engine=None, lang="繁體中文", **kwargs):
         "狀態": ["🟢 正常", "🟡 需留意工期", "🟢 正常", "🟢 即將驗收"]
     })
     st.dataframe(project_data, use_container_width=True, hide_index=True)
-
-    st.markdown("---")
-    st.markdown("#### 📍 工地現場 GPS 打卡與領班點工即時動態")
-    st.info("💡 **今日考勤回報**：西寧廠二期案場今日已完成早班 GPS 圍籬打卡（涵蓋率 98%），領班回報點工 18 人已全數到位。")
 
 def render(engine=None, lang="繁體中文", **kwargs):
     show(engine=engine, lang=lang, **kwargs)
