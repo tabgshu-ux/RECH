@@ -1,20 +1,31 @@
 # ==========================================
 # 檔案路徑：views/dashboard.py
-# 職責：純企業組織路由分發器（零冗餘、零額外標題，直接載入各部門模組）
+# 職責：純企業組織路由分發器（已整合切換部門自動捲動置頂與工程/生產部總覽模組）
 # ==========================================
 
 import streamlit as st
 import importlib
 
 def render_dashboard(db_engine):
+    # 🪄 自動強制畫面每次重新載入時捲動到最上方
+    st.markdown("""
+        <script>
+            const body = window.parent.document.querySelector(".main");
+            if (body) {
+                body.scrollTop = 0;
+            }
+            window.scrollTo({top: 0, behavior: 'instant'});
+        </script>
+    """, unsafe_allow_html=True)
+
     current_lang = st.session_state.get('current_lang', '繁體中文')
 
     # 1. 初始化全公司一級部門清單
     departments = [
-        {"id": "ceo", "name_zh": "總經理室", "name_vi": "Văn phòng Tổng Giám đốc", "level": "L1", "icon": "👑"},
-        {"id": "eng", "name_zh": "工程部", "name_vi": "Phòng Kỹ thuật", "level": "L1", "icon": "🛠️"},
-        {"id": "mgmt", "name_zh": "管理部", "name_vi": "Phòng Hành chính Quản trị", "level": "L1", "icon": "🏢"},
-        {"id": "prod", "name_zh": "生產部", "name_vi": "Phòng Sản xuất", "level": "L1", "icon": "🏭"},
+        {"id": "ceo", "name_zh": "總經理室總覽", "name_vi": "Văn phòng Tổng Giám đốc", "level": "L1", "icon": "👑"},
+        {"id": "eng", "name_zh": "工程部總覽", "name_vi": "Phòng Kỹ thuật", "level": "L1", "icon": "🛠️"},
+        {"id": "mgmt", "name_zh": "管理部總覽", "name_vi": "Phòng Hành chính Quản trị", "level": "L1", "icon": "🏢"},
+        {"id": "prod", "name_zh": "生產部總覽", "name_vi": "Phòng Sản xuất", "level": "L1", "icon": "🏭"},
         {"id": "warehouse", "name_zh": "倉庫管理", "name_vi": "Quản lý kho", "level": "L1", "icon": "📦"},
         {"id": "approval", "name_zh": "簽核中心", "name_vi": "Trung tâm phê duyệt", "level": "L1", "icon": "✍️"},
     ]
@@ -32,12 +43,14 @@ def render_dashboard(db_engine):
     for dept in departments:
         is_selected = (dept['id'] == current_dept_id)
         btn_type = "primary" if is_selected else "secondary"
-        btn_label = f"{dept['icon']} {dept['name_zh']} ({dept['name_vi']})"
+        btn_label = f"{dept['icon']} {dept['name_zh']}"
         
         if st.sidebar.button(btn_label, key=f"btn_dept_{dept['id']}", use_container_width=True, type=btn_type):
             st.session_state['selected_dept_id'] = dept['id']
             st.session_state['active_feature_id'] = None
             st.session_state.pop('active_sub_module', None)
+            st.session_state.pop('exec_active_sub', None)
+            st.session_state.pop('mgmt_hr_sub', None)
             st.rerun()
 
     st.sidebar.markdown("---")
@@ -47,7 +60,7 @@ def render_dashboard(db_engine):
         st.rerun()
 
     # =========================================================================
-    # 3. 路由分發核心：完全不印多餘大標題，直接把畫面交給對應的模組檔案！
+    # 3. 路由分發核心
     # =========================================================================
     
     # -------------------------------------------------------------------------
@@ -70,7 +83,7 @@ def render_dashboard(db_engine):
                     st.session_state['mgmt_hr_sub'] = 'employee'
                     st.rerun()
             with col2:
-                if st.button("⏱️ 考勤管理", use_container_width=True, type="primary" if st.session_state['mgmt_hr_sub'] == 'attendance' else "secondary"):
+                if st.button("⏱️ 考勤管理", use_container_width=True, type="primary" if st.session_state['mgmt_hr_sub'] == 'mgmt_att' else "secondary"):
                     st.session_state['mgmt_hr_sub'] = 'mgmt_att'
                     st.rerun()
             with col3:
@@ -117,7 +130,7 @@ def render_dashboard(db_engine):
                             st.rerun()
 
     # -------------------------------------------------------------------------
-    # 3.2 總經理室 (CEO Office) -> 直接呼叫獨立模組，不佔任何額外空白
+    # 3.2 總經理室總覽 (CEO Office)
     # -------------------------------------------------------------------------
     elif current_target['id'] == 'ceo':
         try:
@@ -127,20 +140,46 @@ def render_dashboard(db_engine):
             elif hasattr(executive_dashboard, "show"):
                 executive_dashboard.show(engine=db_engine, lang=current_lang)
             else:
-                st.info("👑 [總經理室] 決策戰情室載入中...")
+                st.info("👑 [總經理室總覽] 載入中...")
         except Exception as e:
             st.error(f"⚠️ 載入總經理室模組發生異常: {str(e)}")
 
     # -------------------------------------------------------------------------
-    # 3.3 其他部門預留路由
+    # 3.3 工程部總覽 (Engineering Department) -> 對接 engineering_overview.py
     # -------------------------------------------------------------------------
     elif current_target['id'] == 'eng':
-        st.info("🛠️ [工程部] 模組載入中...")
+        try:
+            from modules.engineering import engineering_overview
+            if hasattr(engineering_overview, "show"):
+                engineering_overview.show(engine=db_engine, lang=current_lang)
+            elif hasattr(engineering_overview, "render"):
+                engineering_overview.render(db_engine, lang=current_lang)
+            else:
+                st.info("🛠️ [工程部總覽] 載入中...")
+        except Exception as e:
+            st.error(f"⚠️ 載入工程部總覽模組發生異常: {str(e)}")
+
+    # -------------------------------------------------------------------------
+    # 3.4 生產部總覽 (Production Department) -> 對接 production_overview.py
+    # -------------------------------------------------------------------------
     elif current_target['id'] == 'prod':
-        st.info("🏭 [生產部] 模組載入中...")
+        try:
+            from modules.production import production_overview
+            if hasattr(production_overview, "show"):
+                production_overview.show(engine=db_engine, lang=current_lang)
+            elif hasattr(production_overview, "render"):
+                production_overview.render(db_engine, lang=current_lang)
+            else:
+                st.info("🏭 [生產部總覽] 載入中...")
+        except Exception as e:
+            st.error(f"⚠️ 載入生產部總覽模組發生異常: {str(e)}")
+
+    # -------------------------------------------------------------------------
+    # 3.5 其他部門預留路由
+    # -------------------------------------------------------------------------
     elif current_target['id'] == 'warehouse':
-        st.info("📦 [倉庫管理] 模組載入中...")
+        st.info("📦 [倉庫管理總覽] 模組載入中...")
     elif current_target['id'] == 'approval':
-        st.info("✍️ [簽核中心] 模組載入中...")
+        st.info("✍️ [簽核中心總覽] 模組載入中...")
     else:
         st.warning("💡 模組路由掛載中...")
