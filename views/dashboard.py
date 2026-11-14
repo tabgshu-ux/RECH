@@ -1,13 +1,12 @@
 # ==========================================
 # 檔案路徑：views/dashboard.py
-# 職責：純企業組織路由分發器（已整合切換部門自動捲動置頂與工程/生產部總覽模組）
+# 職責：純企業組織路由分發器（已整合切換部門自動捲動置頂與總覽模組）
 # ==========================================
 
 import streamlit as st
 import importlib
 
 def render_dashboard(db_engine):
-    # 🪄 自動強制畫面每次重新載入時捲動到最上方
     st.markdown("""
         <script>
             const body = window.parent.document.querySelector(".main");
@@ -20,7 +19,6 @@ def render_dashboard(db_engine):
 
     current_lang = st.session_state.get('current_lang', '繁體中文')
 
-    # 1. 初始化全公司一級部門清單
     departments = [
         {"id": "ceo", "name_zh": "總經理室總覽", "name_vi": "Văn phòng Tổng Giám đốc", "level": "L1", "icon": "👑"},
         {"id": "eng", "name_zh": "工程部總覽", "name_vi": "Phòng Kỹ thuật", "level": "L1", "icon": "🛠️"},
@@ -36,7 +34,6 @@ def render_dashboard(db_engine):
     current_dept_id = st.session_state['selected_dept_id']
     current_target = next((d for d in departments if d['id'] == current_dept_id), departments[2])
 
-    # 2. 側邊欄：動態組織樹狀導覽
     st.sidebar.markdown("### 🏢 企業組織樹狀導覽")
     st.sidebar.markdown("---")
 
@@ -59,13 +56,6 @@ def render_dashboard(db_engine):
         st.session_state['active_feature_id'] = 'feat_it_menu'
         st.rerun()
 
-    # =========================================================================
-    # 3. 路由分發核心
-    # =========================================================================
-    
-    # -------------------------------------------------------------------------
-    # 3.1 管理部 (Management Department)
-    # -------------------------------------------------------------------------
     if current_target['id'] == 'mgmt':
         active_feat = st.session_state.get('active_feature_id')
 
@@ -129,9 +119,6 @@ def render_dashboard(db_engine):
                             st.session_state['active_feature_id'] = sec['id']
                             st.rerun()
 
-    # -------------------------------------------------------------------------
-    # 3.2 總經理室總覽 (CEO Office)
-    # -------------------------------------------------------------------------
     elif current_target['id'] == 'ceo':
         try:
             from modules.executive import executive_dashboard
@@ -144,24 +131,13 @@ def render_dashboard(db_engine):
         except Exception as e:
             st.error(f"⚠️ 載入總經理室模組發生異常: {str(e)}")
 
-    # -------------------------------------------------------------------------
-    # 3.3 工程部總覽 (Engineering Department) -> 對接 engineering_overview.py
-    # -------------------------------------------------------------------------
     elif current_target['id'] == 'eng':
         try:
-            from modules.engineering import engineering_overview
-            if hasattr(engineering_overview, "show"):
-                engineering_overview.show(engine=db_engine, lang=current_lang)
-            elif hasattr(engineering_overview, "render"):
-                engineering_overview.render(db_engine, lang=current_lang)
-            else:
-                st.info("🛠️ [工程部總覽] 載入中...")
+            from modules.engineering import project_pnl
+            project_pnl.show(engine=db_engine, lang=current_lang)
         except Exception as e:
-            st.error(f"⚠️ 載入工程部總覽模組發生異常: {str(e)}")
+            st.error(f"⚠️ 載入工程損益模組發生異常: {str(e)}")
 
-    # -------------------------------------------------------------------------
-    # 3.4 生產部總覽 (Production Department) -> 對接 production_overview.py
-    # -------------------------------------------------------------------------
     elif current_target['id'] == 'prod':
         try:
             from modules.production import production_overview
@@ -174,9 +150,6 @@ def render_dashboard(db_engine):
         except Exception as e:
             st.error(f"⚠️ 載入生產部總覽模組發生異常: {str(e)}")
 
-    # -------------------------------------------------------------------------
-    # 3.5 其他部門預留路由
-    # -------------------------------------------------------------------------
     elif current_target['id'] == 'warehouse':
         st.info("📦 [倉庫管理總覽] 模組載入中...")
     elif current_target['id'] == 'approval':
