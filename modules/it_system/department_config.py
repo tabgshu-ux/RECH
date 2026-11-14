@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：1~4 級動態組織配置中心（修復模組調整分頁無法增刪資料的問題）
+# 職責：1~4 級動態組織配置中心（已加入工程專案損益與預算控管模組）
 # ==========================================
 
 import streamlit as st
@@ -83,40 +83,32 @@ def render(engine=None, lang="繁體中文", **kwargs):
         except Exception:
             pass
 
-    # 全域可用模組清單（供新增與調整共用）
     ALL_AVAILABLE_MODULES = {
-        "👔 管理部 (Management)": [
-            "管理部主管綜合總覽",
+        "👔 管理部總覽與支援": [
+            "管理部總覽",
             "公司公告佈告欄",
             "人事行政課 — 員工檔案與履約管理",
             "人事行政課 — 考勤與打卡紀錄",
             "人事行政課 — 薪資計算與 BHXH 保險",
-            "總務採購課 — 配合廠商主檔與履約紀錄",
-            "總務採購課 — 採購單與應付帳款 (AP)",
-            "財務會計課 — 應收帳款管理 (AR)",
-            "財務會計課 — 越南稅務標準財報 (Thông tư 200)",
-            "總務後勤 — 幹部宿舍與伙食管理",
-            "總務後勤 — 車輛維修與固定資產盤點"
+            "總務採購課 — 採購單與應付帳款 (AP)"
         ],
-        "✍️ 跨部門電子簽核中心": [
-            "跨部門電子簽核中心主控台",
-            "待簽核單據彙整與主管簽核"
-        ],
-        "📊 總經理室": [
+        "📊 總經理室總覽與決策": [
             "總經理室總覽",
             "AI 原料採購顧問與金屬行情",
             "工程進度與異常即時監控",
-            "財務與金流戰情摘要 (AR / AP & P&L)",
-            "工程案場與金額佔比分析"
+            "財務與金流總覽 (AR / AP & P&L)",
+            "工程案場與金額佔比分析",
+            "工程專案損益與預算控管"
         ],
-        "🛠️ 工程與現場作業管理": [
-            "工程主管案場管理總覽",
+        "🛠️ 工程部總覽與作業": [
+            "工程部總覽",
+            "工程專案損益與預算控管",
             "工程專案報價系統",
             "施工日報表與點工點料登記",
             "配電盤電氣與機構設計圖庫"
         ],
         "🏭 生產製造與倉儲管理": [
-            "生產管理總覽",
+            "生產部總覽",
             "倉庫庫存與資材條碼管理",
             "配電盤組裝配線組進度追蹤"
         ]
@@ -127,9 +119,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
         if conn_status:
             try:
                 df_tree = pd.read_sql("SELECT dept_code, dept_name_zh, level_depth, parent_code FROM sys_departments WHERE is_active = TRUE", con=active_engine)
-                if df_tree.empty:
-                    st.info("目前尚無任何部門資料。")
-                else:
+                if not df_tree.empty:
                     l1_rows = df_tree[df_tree["level_depth"] == "L1"]
                     for _, l1 in l1_rows.iterrows():
                         l1_mods = pd.read_sql(text("SELECT module_name FROM sys_department_modules WHERE dept_code = :c"), con=active_engine, params={"c": l1['dept_code']})["module_name"].tolist()
@@ -145,8 +135,8 @@ def render(engine=None, lang="繁體中文", **kwargs):
             parent_code = next(item[1] for item in existing_l1_list if item[0] == parent_selection)
             
             level_choice = st.selectbox("組織層級", ["L2 - 二級部門 / 課室", "L1 - 頂級大部門", "L3 - 三級組別"])
-            name_zh = st.text_input("部門繁體中文名稱 *", placeholder="例如: 總經理室")
-            name_vi = st.text_input("部門越文名稱", placeholder="Ví dụ: Phòng Tổng Giám đốc")
+            name_zh = st.text_input("部門繁體中文名稱 *", placeholder="例如: 工程部")
+            name_vi = st.text_input("部門越文名稱", placeholder="Ví dụ: Phòng Kỹ thuật")
             
             st.markdown("---")
             st.markdown("#### 🧩 勾選並掛載此部門可操作的業務模組：")
@@ -191,13 +181,11 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     selected_target = st.selectbox("🎯 選擇要調整的部門", list(dept_options.keys()), key="manage_dept_select")
                     target_code = dept_options[selected_target]
 
-                    # 取得當前已掛載的模組
                     df_current_mods = pd.read_sql(text("SELECT module_name FROM sys_department_modules WHERE dept_code = :code"), con=active_engine, params={"code": target_code})
                     current_assigned = df_current_mods["module_name"].tolist() if not df_current_mods.empty else []
 
                     st.markdown(f"**📌 目前已掛載的模組 ({len(current_assigned)} 個)：**")
                     
-                    # 呈現所有可用模組供勾選增減
                     with st.form(f"manage_mods_form_{target_code}"):
                         new_checked_modules = []
                         for cat_name, mod_list in ALL_AVAILABLE_MODULES.items():
@@ -211,9 +199,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                         update_btn = st.form_submit_button("💾 儲存該部門的模組掛載異動", type="primary", use_container_width=True)
                         if update_btn:
                             with active_engine.begin() as conn:
-                                # 先清空該部門原有掛載
                                 conn.execute(text("DELETE FROM sys_department_modules WHERE dept_code = :code"), {"code": target_code})
-                                # 重新寫入勾選的模組
                                 for m_name in new_checked_modules:
                                     conn.execute(text("INSERT INTO sys_department_modules (dept_code, module_name) VALUES (:code, :m_name)"), {"code": target_code, "m_name": m_name})
                             st.success("🎉 該部門的模組掛載已成功更新！")
