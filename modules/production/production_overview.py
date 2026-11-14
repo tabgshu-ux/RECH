@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/production/production_overview.py
-# 職責：生產部總覽（工單排程、產線稼動率與品質檢驗）
+# 職責：生產部總覽
 # ==========================================
 
 import streamlit as st
@@ -8,7 +8,7 @@ import pandas as pd
 
 def show(engine=None, lang="繁體中文", **kwargs):
     st.markdown("### 🏭 生產部總覽 (Production Department Overview)")
-    st.caption("即時監控西寧廠板金、烤漆、配盤組裝產線稼動率、工單進度與物料需求 (MRP)。")
+    st.caption("即時監控西寧廠板金、烤漆、配盤產線稼動率、工單進度與物料需求 (MRP)。")
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -31,10 +31,6 @@ def show(engine=None, lang="繁體中文", **kwargs):
         "狀態": ["🟢 運作中", "🟢 運作中", "🟢 運作中", "🟡 待料中"]
     })
     st.dataframe(prod_data, use_container_width=True, hide_index=True)
-
-    st.markdown("---")
-    st.markdown("#### 📊 生產車間物料與 MRP 協同狀況")
-    st.info("💡 **MRP 系統提示**：目前高低壓配電盤組裝線之銅排原料庫存充足，系統已自動依據訂單拋轉採購建議給總務採購課。")
 
 def render(engine=None, lang="繁體中文", **kwargs):
     show(engine=engine, lang=lang, **kwargs)
