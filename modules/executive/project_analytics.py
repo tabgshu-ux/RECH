@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/executive/project_analytics.py
-# 職責：總經理室專屬 - 工程案場分佈與金額佔比分析（完整程式碼）
+# 職責：總經理室專屬 - 工程案場分佈與金額佔比分析
 # ==========================================
 
 import streamlit as st
@@ -10,7 +10,6 @@ def show(engine=None, lang="繁體中文", **kwargs):
     st.markdown("### 🏗️ 工程案場類型分佈與合約金額佔比分析")
     st.caption("專為總經理決策打造的工程營收結構分析，即時掌握廠內接案主力與案值分佈。")
 
-    # 模擬真實工程專案與金額資料
     data = {
         "工程專案類型 (Project Category)": [
             "高低壓配電盤製造與安裝 (Switchgear & Panels)",
@@ -64,8 +63,6 @@ def show(engine=None, lang="繁體中文", **kwargs):
     }).set_index("工程類型")
     
     st.bar_chart(chart_data)
-
-    st.info("💡 **AI 經營決策建議**：目前「廠房機電統包工程」與「高低壓配電盤製造」為公司營收兩大主力。建議西寧廠擴大銅排加工與配盤產線人力，以應付第四季交期高峰。")
 
 def render(engine=None, lang="繁體中文", **kwargs):
     show(engine=engine, lang=lang, **kwargs)
