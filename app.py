@@ -100,7 +100,7 @@ elif st.session_state['current_view'] == 'dynamic_feature':
             from modules.management.supervisor_dashboard import render
             render(db_engine, lang=current_lang)
         except Exception as e:
-            st.error(f"載入管理部主管戰情室發生錯誤: {e}")
+            st.error(f"載入管理部主管總覽發生錯誤: {e}")
             
     # 🌟 智慧判斷：獨立導向員工檔案、考勤、薪資頁面（完美避開 __init__.py 攔截）
     elif '員工' in active_feat_id or '履約' in active_feat_id or active_feat_id == 'feat_hr':
