@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：1~4 級動態組織配置中心（已完整對接外勤油費、工程損益與各部門模組）
+# 職責：1~4 級動態組織配置中心（已加入緊急維修派工模組）
 # ==========================================
 
 import streamlit as st
@@ -83,7 +83,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
         except Exception:
             pass
 
-    # 🌟 包含我們所有最新功能模組的對照清單
     ALL_AVAILABLE_MODULES = {
         "👔 管理部總覽與後勤支援": [
             ("管理部總覽", "mgmt_ov"),
@@ -104,6 +103,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
         ],
         "🛠️ 工程部總覽與作業管理": [
             ("工程部總覽", "eng_ov"),
+            ("緊急維修派工與事故公告通知", "eng_emergency"),
             ("工程專案損益與預算控管", "eng_pnl"),
             ("工程專案報價系統", "eng_quote"),
             ("施工日報表與點工點料登記", "eng_log"),
