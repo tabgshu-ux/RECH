@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/engineering/engineering_department.py
-# 職責：工程部主控台（頂部固定公告橫幅 + 真實資料庫員工連動 + 四大直覺分類）
+# 職責：工程部主控台（全面對接 Supabase PostgreSQL 真實資料庫讀寫）
 # ==========================================
 
 import streamlit as st
@@ -8,33 +8,62 @@ import pandas as pd
 from sqlalchemy import text
 import datetime
 
+def init_engineering_tables(engine):
+    """確保工程部相關資料表存在於資料庫中"""
+    if engine is not None:
+        try:
+            with engine.begin() as conn:
+                # 1. 緊急派工資料表
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS eng_emergency_dispatches (
+                        id SERIAL PRIMARY KEY,
+                        dispatch_no VARCHAR(50),
+                        urgency VARCHAR(50),
+                        vendor VARCHAR(200),
+                        assignees VARCHAR(255),
+                        tools VARCHAR(255),
+                        description TEXT,
+                        status VARCHAR(50) DEFAULT '🔴 處理中',
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+                # 2. 施工日報表
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS eng_daily_reports (
+                        id SERIAL PRIMARY KEY,
+                        report_date DATE,
+                        project_name VARCHAR(200),
+                        total_workers INT,
+                        overtime_hours NUMERIC(5,2),
+                        work_summary TEXT,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+        except Exception:
+            pass
+
 def render_announcement_banner(engine):
-    """渲染全域企業公告橫幅（顯示於所有工程子頁面頂部）"""
+    """渲染全域企業公告橫幅"""
     announcement_text = "📢 【全廠公告】裕豐電機工業 SaaS ERP 系統運行中。請各工程師與外勤人員確實完成案場 GPS 打卡與每日施工日報填寫。"
     if engine is not None:
         try:
-            # 嘗試從資料庫讀取最新公告
             df_ann = pd.read_sql("SELECT content FROM sys_announcements WHERE is_active = TRUE ORDER BY created_at DESC LIMIT 1", con=engine)
             if not df_ann.empty:
                 announcement_text = f"📢 {df_ann.iloc[0]['content']}"
         except Exception:
             pass
-    
-    # 醒目的公告橫幅區塊
     st.info(announcement_text)
 
 def get_employee_list(engine):
-    """嚴格從真實資料庫人事系統撈取員工姓名，不使用任何預設假資料"""
+    """嚴格從真實資料庫人事系統撈取員工姓名"""
     emp_list = []
     if engine is not None:
         try:
-            # 優先從 hr_employees 資料表讀取
             df_emp = pd.read_sql("SELECT emp_name FROM hr_employees WHERE is_active = TRUE", con=engine)
             if not df_emp.empty:
                 emp_list = df_emp["emp_name"].tolist()
         except Exception:
             try:
-                # 備用嘗試其他可能欄位
                 df_emp = pd.read_sql("SELECT name FROM employees", con=engine)
                 if not df_emp.empty:
                     emp_list = df_emp["name"].tolist()
@@ -46,7 +75,10 @@ def get_employee_list(engine):
     return emp_list
 
 def show(engine=None, lang="繁體中文", **kwargs):
-    # 🌟 核心要求：在所有頁面頂部（您框選的位置）固定顯示公告橫幅
+    # 初始化資料庫表格
+    init_engineering_tables(engine)
+
+    # 渲染頂部固定公告橫幅
     render_announcement_banner(engine)
 
     # 初始化工程部內部子路由狀態
@@ -67,7 +99,6 @@ def show(engine=None, lang="繁體中文", **kwargs):
         st.markdown("### 🛠️ 工程部綜合管理與作業中心 (Engineering Department)")
         st.caption("全廠工程案場執行戰情室與直覺化功能導覽。")
 
-        # 上方指標卡片
         col1, col2, col3, col4 = st.columns(4)
         with col1: st.metric("進行中案場", "12 案", "🟢 正常")
         with col2: st.metric("今日現場出勤", "86 人", "包含點工 18 人")
@@ -148,11 +179,11 @@ def show(engine=None, lang="繁體中文", **kwargs):
 
         if current_sub == 'field':
             st.markdown("#### 🛠️ 現場工程日常作業管理中心")
-            st.caption("每日必填之施工日報表與點工點料登記置於上方；突發異常之緊急維修派工置於下方。")
+            st.caption("每日必填之施工日報表與點工點料登記置於上方；突發異常之緊急維修派工與真實資料庫清單置於下方。")
             
-            # 1. 每天用到的「施工日報表與點工點料登記」置於上方
+            # 1. 施工日報表寫入資料庫
             st.markdown("##### 📝 施工日報表與點工點料登記 (每日必填)")
-            with st.form("daily_report_form_v5"):
+            with st.form("daily_report_form_db"):
                 r_col1, r_col2 = st.columns(2)
                 with r_col1:
                     r_date = st.date_input("施工日期", value=datetime.date.today())
@@ -162,38 +193,78 @@ def show(engine=None, lang="繁體中文", **kwargs):
                     r_overtime = st.number_input("加班總時數 (小時)", min_value=0, value=3)
 
                 r_desc = st.text_area("今日施工進度摘要與耗用材料登記", placeholder="例如: 完成配電盤主體吊裝及控制線路敷設...")
-                r_submitted = st.form_submit_button("💾 提交今日施工日報表", type="primary", use_container_width=True)
+                r_submitted = st.form_submit_button("💾 提交今日施工日報表至資料庫", type="primary", use_container_width=True)
                 if r_submitted:
-                    st.success(f"🎉 成功提交 [{r_proj}] 的施工日報！")
+                    if engine is not None:
+                        try:
+                            with engine.begin() as conn:
+                                conn.execute(text("""
+                                    INSERT INTO eng_daily_reports (report_date, project_name, total_workers, overtime_hours, work_summary)
+                                    VALUES (:d, :p, :w, :o, :s)
+                                """), {"d": r_date, "p": r_proj, "w": r_workers, "o": r_overtime, "s": r_desc})
+                            st.success(f"🎉 成功將 [{r_proj}] 的施工日報寫入真實資料庫！")
+                        except Exception as e:
+                            st.error(f"❌ 寫入資料庫失敗: {e}")
+                    else:
+                        st.warning("⚠️ 目前無有效資料庫連線。")
 
             st.markdown("---")
 
-            # 2. 不常見的「緊急維修派工」置於下方收納框，且人員完整串聯真實資料庫
-            with st.expander("🚨 突發事故與緊急維修派工中心 (非日常狀況專用)", expanded=False):
-                st.caption("當廠內或案場發生突發異常事故時才需填寫此派工表單。")
+            # 2. 緊急維修派工寫入資料庫與從資料庫撈取顯示
+            with st.expander("🚨 突發事故與緊急維修派工中心 (直接讀寫資料庫)", expanded=True):
+                st.caption("當廠內或案場發生突發異常事故時在此填寫派工，資料將直接儲存至 PostgreSQL 資料庫。")
                 real_employee_list = get_employee_list(engine)
 
-                with st.form("emergency_action_form_v5"):
+                with st.form("emergency_action_form_db"):
                     col1, col2 = st.columns(2)
                     with col1:
                         urgency = st.selectbox("緊急等級", ["🔴 紅色特急 (立即派工)", "🟡 普通緊急 (當日處理)"])
                         vendor = st.text_input("外部廠商或案場名稱", placeholder="例如: 平陽美德金屬加工廠")
                     with col2:
-                        # 🌟 完美串聯資料庫真實員工，不再出現預設假名
                         assignees = st.multiselect("指派帶班工程師與師傅 (選自人事員工手冊)", options=real_employee_list, default=[real_employee_list[0]] if real_employee_list else [])
                         tools = st.text_input("攜帶工具與備品", placeholder="例如: 三用電表、備用斷路器")
                     
                     desc = st.text_area("事故狀況簡述與維修需求", placeholder="請描述故障現象及須前往執行的維修動作...")
-                    submitted = st.form_submit_button("📢 立即發布緊急派工單", type="primary", use_container_width=True)
+                    submitted = st.form_submit_button("📢 立即發布緊急派工單並存入資料庫", type="primary", use_container_width=True)
                     if submitted:
-                        assignee_str = ", ".join(assignees)
-                        st.success(f"🎉 成功發布緊急派工單！已指派：[{assignee_str}] 前往 [{vendor}]。")
+                        if not vendor or not desc:
+                            st.error("⚠️ 請填寫廠商名稱與事故狀況！")
+                        else:
+                            assignee_str = ", ".join(assignees)
+                            dispatch_no = f"EMG-{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
+                            if engine is not None:
+                                try:
+                                    with engine.begin() as conn:
+                                        conn.execute(text("""
+                                            INSERT INTO eng_emergency_dispatches (dispatch_no, urgency, vendor, assignees, tools, description, status)
+                                            VALUES (:no, :urg, :v, :asg, :tls, :dsc, '🔴 處理中')
+                                        """), {"no": dispatch_no, "urg": urgency, "v": vendor, "asg": assignee_str, "tls": tools, "dsc": desc})
+                                    st.success(f"🎉 緊急派工單 [{dispatch_no}] 已成功寫入真實資料庫！")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"❌ 寫入資料庫失敗: {e}")
+                            else:
+                                st.warning("⚠️ 目前無有效資料庫連線。")
+
+                st.markdown("---")
+                st.markdown("##### 📋 資料庫中的歷史緊急派工與維修內容清單")
+                if engine is not None:
+                    try:
+                        df_history = pd.read_sql("SELECT dispatch_no AS 單號, vendor AS 廠商, assignees AS 指派人員, status AS 狀態, description AS 派工內容摘要 FROM eng_emergency_dispatches ORDER BY id DESC", con=engine)
+                        if df_history.empty:
+                            st.info("目前資料庫中尚無任何派工紀錄。")
+                        else:
+                            st.dataframe(df_history, use_container_width=True, hide_index=True)
+                    except Exception as e:
+                        st.warning(f"讀取資料庫清單提示: {e}")
+                else:
+                    st.info("資料庫連線未建立。")
 
         elif current_sub == 'design':
             st.markdown("#### 📐 配電盤電氣與機構設計圖庫")
             st.info("💡 專為廠內設計人員打造：上傳與檢閱 AutoCAD / 3D 機構圖面、審查電氣迴路圖與版本控制。")
             
-            with st.form("upload_dwg_form_v3"):
+            with st.form("upload_dwg_form_db"):
                 d_col1, d_col2 = st.columns(2)
                 with d_col1:
                     dwg_no = st.text_input("圖面編號", placeholder="DWG-2026-504")
@@ -236,7 +307,7 @@ def show(engine=None, lang="繁體中文", **kwargs):
 
         elif current_sub == 'fatsat':
             st.markdown("#### 🧪 FAT (出廠測試) 與 SAT (現場驗收) 簽認報告")
-            with st.form("fatsat_form_v5"):
+            with st.form("fatsat_form_db"):
                 fs_col1, fs_col2 = st.columns(2)
                 with fs_col1:
                     test_type = st.selectbox("測試類型", ["FAT 廠內出廠測試", "SAT 現場驗收測試"])
