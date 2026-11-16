@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/engineering/engineering_department.py
-# 職責：工程部純路由分發中心（落實模組化與鬆耦合，絕不把所有功能塞在同一個檔案）
+# 職責：工程部純路由分發中心（精準串接您專案內原本就有的獨立子模組檔案）
 # ==========================================
 
 import streamlit as st
@@ -8,7 +8,7 @@ import pandas as pd
 from sqlalchemy import text
 
 def render_announcement_banner(engine):
-    """全域企業公告橫幅"""
+    """渲染全域企業公告橫幅"""
     announcement_text = "📢 【全廠公告】裕豐電機工業 SaaS ERP 系統運行中。請各工程師與外勤人員確實完成案場 GPS 打卡與每日施工日報填寫。"
     if engine is not None:
         try:
@@ -95,7 +95,7 @@ def show(engine=None, lang="繁體中文", **kwargs):
                     st.session_state['eng_sub_view'] = 'quote'
                     st.rerun()
 
-    # 2. 進入各專區後的頂部按鈕導覽列與子模組轉發
+    # 2. 進入各專區後的頂部按鈕導覽列與子模組轉發（直接對接您專案內的既有檔案）
     else:
         b1, b2, b3, b4, b5, b6 = st.columns(6)
         with b1:
@@ -119,28 +119,34 @@ def show(engine=None, lang="繁體中文", **kwargs):
 
         st.markdown("---")
 
-        # 🌟 路由分發：將各個子畫面的渲染外包給獨立的模組檔案處理
+        # 🌟 直接調用您原本就已經建好的獨立檔案
         if current_sub == 'field':
+            st.markdown("#### 🛠️ 現場工程日常作業管理中心")
+            # 呼叫現有的施工日報與緊急派工檔案
             try:
                 from modules.engineering import field_daily_report
                 if hasattr(field_daily_report, "show"):
                     field_daily_report.show(engine=engine, lang=lang, **kwargs)
                 elif hasattr(field_daily_report, "render"):
                     field_daily_report.render(engine, lang=lang)
-                else:
-                    st.info("🛠️ 現場工程與日報模組載入中...")
             except Exception as e:
-                st.markdown("#### 🛠️ 現場工程日常作業管理中心")
-                st.info(f"正在載入現場工程模組... ({e})")
+                st.info(f"正在載入施工日報模組: {e}")
+
+            st.markdown("---")
+            with st.expander("🚨 突發事故與緊急維修派工中心 (非日常狀況專用)", expanded=False):
+                try:
+                    from modules.engineering import emergency_dispatch
+                    if hasattr(emergency_dispatch, "show"):
+                        emergency_dispatch.show(engine=engine, lang=lang, **kwargs)
+                    elif hasattr(emergency_dispatch, "render"):
+                        emergency_dispatch.render(engine, lang=lang)
+                except Exception as e:
+                    st.info(f"正在載入緊急派工模組: {e}")
 
         elif current_sub == 'design':
-            try:
-                from modules.engineering import fat_sat_testing # 或對應的設計圖庫模組
-                # 這裡可以安全呼叫獨立的設計圖庫模組
-                st.markdown("#### 📐 配電盤電氣與機構設計圖庫")
-                st.info("💡 專為廠內設計人員打造：上傳與檢閱 AutoCAD / 3D 機構圖面、審查電氣迴路圖與版本控制。")
-            except Exception:
-                st.markdown("#### 📐 配電盤電氣與機構設計圖庫")
+            st.markdown("#### 📐 配電盤電氣與機構設計圖庫")
+            st.info("💡 專為廠內設計人員打造：上傳與檢閱 AutoCAD / 3D 機構圖面、審查電氣迴路圖與版本控制。")
+            # 如果有專屬的設計圖庫檔案可在此呼叫
 
         elif current_sub == 'attendance':
             try:
@@ -150,9 +156,10 @@ def show(engine=None, lang="繁體中文", **kwargs):
                 elif hasattr(field_gps_attendance, "render"):
                     field_gps_attendance.render(engine, lang=lang)
                 else:
-                    st.info("⏱️ 外勤考勤與 GPS 打卡模組載入中...")
-            except Exception:
+                    st.info("⏱️ 正在載入 GPS 外勤打卡模組...")
+            except Exception as e:
                 st.markdown("#### ⏱️ 外勤師傅考勤與 GPS 圍籬打卡")
+                st.info(f"載入提示: {e}")
 
         elif current_sub == 'fatsat':
             try:
@@ -162,23 +169,30 @@ def show(engine=None, lang="繁體中文", **kwargs):
                 elif hasattr(fat_sat_testing, "render"):
                     fat_sat_testing.render(engine, lang=lang)
                 else:
-                    st.info("🧪 驗收報告模組載入中...")
-            except Exception:
-                st.markdown("#### 🧪 FAT (出廠測試) 與 SAT (現場驗收) 簽認報告")
+                    st.info("🧪 正在載入 FAT/SAT 驗收模組...")
+            except Exception as e:
+                st.markdown("#### 🧪 FAT / SAT 驗收報告")
+                st.info(f"載入提示: {e}")
 
         elif current_sub == 'pnl':
             try:
                 from modules.engineering import project_pnl
-                project_pnl.show(engine=engine, lang=lang, **kwargs)
-            except Exception:
-                st.markdown("#### 📈 工程專案損益與預算控管")
+                if hasattr(project_pnl, "show"):
+                    project_pnl.show(engine=engine, lang=lang, **kwargs)
+                elif hasattr(project_pnl, "render"):
+                    project_pnl.render(engine, lang=lang)
+            except Exception as e:
+                st.info(f"載入專案損益模組提示: {e}")
 
         elif current_sub == 'quote':
             try:
                 from modules.engineering import gineering_pipeline
-                gineering_pipeline.show(engine=engine, lang=lang, **kwargs)
-            except Exception:
-                st.markdown("#### 📋 專案報價與管線追蹤")
+                if hasattr(gineering_pipeline, "show"):
+                    gineering_pipeline.show(engine=engine, lang=lang, **kwargs)
+                elif hasattr(gineering_pipeline, "render"):
+                    gineering_pipeline.render(engine, lang=lang)
+            except Exception as e:
+                st.info(f"載入專案報價模組提示: {e}")
 
 def render(engine=None, lang="繁體中文", **kwargs):
     show(engine=engine, lang=lang, **kwargs)
