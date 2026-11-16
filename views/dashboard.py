@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：views/dashboard.py
-# 職責：純企業組織路由分發器（已整合切換部門自動捲動置頂與總覽模組）
+# 職責：純企業組織路由分發器（已整合工程部主控台與各部門動態路由）
 # ==========================================
 
 import streamlit as st
@@ -133,10 +133,16 @@ def render_dashboard(db_engine):
 
     elif current_target['id'] == 'eng':
         try:
-            from modules.engineering import project_pnl
-            project_pnl.show(engine=db_engine, lang=current_lang)
+            # 🌟 已升級：呼叫整合了所有工程子模組與動態分頁的主控台
+            from modules.engineering import engineering_department
+            if hasattr(engineering_department, "show"):
+                engineering_department.show(engine=db_engine, lang=current_lang)
+            elif hasattr(engineering_department, "render"):
+                engineering_department.render(db_engine, lang=current_lang)
+            else:
+                st.info("🛠️ [工程部總覽] 載入中...")
         except Exception as e:
-            st.error(f"⚠️ 載入工程損益模組發生異常: {str(e)}")
+            st.error(f"⚠️ 載入工程部模組發生異常: {str(e)}")
 
     elif current_target['id'] == 'prod':
         try:
