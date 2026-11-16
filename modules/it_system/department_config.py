@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：1~4 級動態組織配置中心（已加入緊急維修派工模組）
+# 職責：1~4 級動態組織配置中心（已完整包含設計圖庫與所有工程模組）
 # ==========================================
 
 import streamlit as st
@@ -83,6 +83,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
         except Exception:
             pass
 
+    # 🌟 完整對接包含設計人員專屬圖庫與 FAT/SAT 驗收的清單
     ALL_AVAILABLE_MODULES = {
         "👔 管理部總覽與後勤支援": [
             ("管理部總覽", "mgmt_ov"),
@@ -105,9 +106,11 @@ def render(engine=None, lang="繁體中文", **kwargs):
             ("工程部總覽", "eng_ov"),
             ("緊急維修派工與事故公告通知", "eng_emergency"),
             ("工程專案損益與預算控管", "eng_pnl"),
-            ("工程專案報價系統", "eng_quote"),
-            ("施工日報表與點工點料登記", "eng_log"),
-            ("配電盤電氣與機構設計圖庫", "eng_cad")
+            ("工程專案報價與管線追蹤", "eng_pipeline"),
+            ("FAT/SAT 廠內與現場測試驗收", "eng_fatsat"),
+            ("施工日報表與點工點料登記", "eng_daily"),
+            ("外勤師傅 GPS 圍籬即時打卡", "eng_gps"),
+            ("配電盤電氣與機構設計圖庫 (設計人員專用)", "eng_cad")
         ],
         "🏭 生產製造與倉庫管理": [
             ("生產部總覽", "prod_ov"),
