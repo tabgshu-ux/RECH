@@ -1,13 +1,12 @@
 # ==========================================
 # 檔案路徑：views/dashboard.py
-# 職責：部門首頁與動態模組路由分發中心（支援總經理室與工程部直接顯示總覽首頁）
+# 職責：部門首頁與動態模組路由分發中心（工程部完整納入報價、倉庫成本連動與高層簽核流）
 # ==========================================
 
 import streamlit as st
 from sqlalchemy import text
 
 def render_dashboard(db_engine):
-    # 註：側邊欄（Sidebar）已由 app.py 全域統籌渲染。
     current_dept = st.session_state.get('selected_dept', '總經理室')
 
     # 1. 總經理室專屬路由
@@ -19,10 +18,10 @@ def render_dashboard(db_engine):
             st.error(f"載入總經理室模組發生錯誤: {e}")
         return
 
-    # 2. 🌟 工程部專屬路由（跟總經理室一樣，點擊工程部直接顯示戰情總覽首頁！）
+    # 2. 工程部專屬路由（直出總覽戰情與完整拼圖模組）
     if current_dept == '工程部':
         st.markdown("### 🛠️ 工程部總覽與專案戰情中心 (Engineering Department Overview)")
-        st.caption("彙整全廠高低壓配電盤案場、西寧與海防廠區施工進度、工地巡檢異常與工程專案 KPI。")
+        st.caption("彙整全廠高低壓配電盤案場、西寧與海防廠區施工進度、工程報價與多層級主管審核。")
         
         # 工程部核心 KPI 戰情總覽
         col_eng1, col_eng2, col_eng3, col_eng4 = st.columns(4)
@@ -33,7 +32,7 @@ def render_dashboard(db_engine):
         with col_eng3:
             st.metric(label="📋 待審查設計圖紙", value="4 件", delta="進度正常")
         with col_eng4:
-            st.metric(label="⚠️ 工地安檢異常", value="0 案", delta="全安規合規")
+            st.metric(label="✍️ 待審核專案報價單", value="3 件", delta="送交副總/總經理")
 
         st.markdown("---")
 
@@ -65,14 +64,16 @@ def render_dashboard(db_engine):
             pass
 
         if not mounted_feats_str:
-            mounted_feats_str = "feat_eng_overview,feat_site_log,feat_blueprint"
+            mounted_feats_str = "feat_eng_overview,feat_site_log,feat_blueprint,feat_eng_quotation,feat_eng_approval_flow"
 
         feature_list = [f.strip() for f in mounted_feats_str.split(",") if f.strip()]
 
         feature_meta_map = {
             "feat_eng_overview": {"name": "🛠️ 工程部總覽 / 專案進度追蹤", "desc": "高低壓配電盤案場與進度追蹤。"},
             "feat_site_log": {"name": "📋 工程報告與工地巡檢日報", "desc": "填報工地日報與現場巡檢。"},
-            "feat_blueprint": {"name": "📐 設計圖紙上傳與審查", "desc": "管理工程設計藍圖與審查。"}
+            "feat_blueprint": {"name": "📐 設計圖紙上傳與審查", "desc": "管理工程設計藍圖與審查。"},
+            "feat_eng_quotation": {"name": "💰 工程專案報價與倉庫成本連動", "desc": "報價時即時連動倉庫查詢物料庫存數量與成本金額，試算毛利。"},
+            "feat_eng_approval_flow": {"name": "✍️ 協理估價與高層簽核中心", "desc": "協理填寫估價單後，自動送交副總與總經理填寫金額與最終審批。"}
         }
 
         cols = st.columns(2)
