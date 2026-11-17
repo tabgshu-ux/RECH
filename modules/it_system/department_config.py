@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：公司組織架構 L1~L4 動態配置、左側選單聯動與「跨群組彈性業務模組掛載」中心（自動相容現有資料庫欄位）
+# 職責：公司組織架構 L1~L4 動態配置與跨群組彈性業務模組掛載中心（智慧相容現有資料庫結構）
 # ==========================================
 
 import streamlit as st
@@ -8,31 +8,39 @@ import pandas as pd
 from sqlalchemy import text
 
 def init_dept_tables(engine):
-    """安全初始化資料庫，自動補齊所需欄位而不破壞現有資料"""
+    """安全初始化資料庫，自動檢測現有欄位並補齊所需結構"""
     if engine is not None:
         try:
             with engine.begin() as conn:
-                # 確保 sys_departments 表存在
+                # 建立基本表（若不存在）
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS sys_departments (
                         id SERIAL PRIMARY KEY,
                         dept_code VARCHAR(50) UNIQUE NOT NULL,
-                        dept_name VARCHAR(150) NOT NULL,
+                        name VARCHAR(150),
+                        dept_name VARCHAR(150),
                         parent_dept VARCHAR(150) DEFAULT '總公司',
                         level_tier VARCHAR(10) DEFAULT 'L1',
                         is_active BOOLEAN DEFAULT TRUE,
                         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """))
-                # 安全補齊可能缺少的欄位
-                try:
-                    conn.execute(text("ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS parent_dept VARCHAR(150) DEFAULT '總公司';"))
-                    conn.execute(text("ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS level_tier VARCHAR(10) DEFAULT 'L1';"))
-                    conn.execute(text("ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;"))
-                except Exception:
-                    pass
+                
+                # 自動補齊可能缺少的欄位，防止任何 UndefinedColumn 錯誤
+                for col_sql in [
+                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS dept_code VARCHAR(50);",
+                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS name VARCHAR(150);",
+                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS dept_name VARCHAR(150);",
+                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS parent_dept VARCHAR(150) DEFAULT '總公司';",
+                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS level_tier VARCHAR(10) DEFAULT 'L1';",
+                    "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;"
+                ]:
+                    try:
+                        conn.execute(text(col_sql))
+                    except Exception:
+                        pass
 
-                # 確保模組掛載表存在
+                # 模組掛載表
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS sys_department_modules (
                         dept_name VARCHAR(150) PRIMARY KEY,
@@ -41,11 +49,11 @@ def init_dept_tables(engine):
                     );
                 """))
         except Exception as e:
-            st.error(f"⚠️ 初始化組織架構資料表發生異常: {e}")
+            st.error(f"⚠️ 初始化發生異常: {e}")
 
 def render(engine=None, lang="繁體中文", **kwargs):
     st.markdown("### 🏢 公司組織架構與 L1~L4 彈性模組掛載中心")
-    st.caption("支援 L1～L4 動態擴編部門，並可跨部門自由勾選各功能群組（如行政兼辦總務），左側選單即時雙向聯動。")
+    st.caption("支援 L1～L4 動態擴編部門，並可跨部門自由勾選各功能群組，左側選單即時雙向聯動。")
 
     if not engine:
         st.warning("⚠️ 系統尚未連線至資料庫引擎。")
@@ -53,19 +61,17 @@ def render(engine=None, lang="繁體中文", **kwargs):
 
     init_dept_tables(engine)
 
-    # 三大核心分頁
     tab_tree, tab_mount, tab_add = st.tabs(["🌳 現有組織樹與狀態管理", "⚙️ 跨群組彈性模組掛載", "➕ 新增擴編 L1~L4 部門"])
 
     # ==========================================
-    # 分頁一：組織樹檢視與狀態控制（隱藏/啟用）
+    # 分頁一：組織樹檢視與狀態控制
     # ==========================================
     with tab_tree:
-        st.markdown("#### 🌳 L1～L4 企業組織樹狀架構與左側聯動狀態")
-        st.info("💡 提示：將部門設為「隱藏/停用」時，左側導覽列將即時移除該按鈕，但資料庫中所有歷史合約與憑證資料皆會完整保留。")
-
+        st.markdown("#### 🌳 企業組織樹狀架構與左側聯動狀態")
         try:
             with engine.connect() as conn:
-                depts = conn.execute(text("SELECT id, dept_code, dept_name, parent_dept, level_tier, is_active FROM sys_departments ORDER BY id")).fetchall()
+                # 同時相容 dept_name 或 name 欄位
+                depts = conn.execute(text("SELECT id, dept_code, COALESCE(dept_name, name, '未命名部門'), parent_dept, level_tier, is_active FROM sys_departments ORDER BY id")).fetchall()
         except Exception:
             depts = []
 
@@ -75,34 +81,32 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 is_active_val = True if is_active is None else is_active
                 status_badge = "🟢 顯示中 (Active)" if is_active_val else "🔴 已隱藏 (Disabled)"
                 
-                with st.expander(f"[{d_tier or 'L1'}] {d_name} (上級: {parent or '總公司'}) — {status_badge}"):
+                with st.expander(f"[{d_tier or 'L1'}] {d_name} (代碼: {d_code}) — {status_badge}"):
                     col1, col2 = st.columns([3, 1])
                     with col1:
-                        st.markdown(f"**組織層級:** {d_tier or 'L1'} | **上級部門:** {parent or '總公司'} | **狀態:** {'正常顯示' if is_active_val else '已隱藏（合約資料保留）'}")
+                        st.markdown(f"**組織層級:** {d_tier or 'L1'} | **上級部門:** {parent or '總公司'}")
                     with col2:
                         toggle_label = "🔴 隱藏 / 停用" if is_active_val else "🟢 恢復顯示"
                         if st.button(toggle_label, key=f"toggle_tree_dept_{dept_id}", use_container_width=True):
                             try:
                                 with engine.begin() as conn:
                                     conn.execute(text("UPDATE sys_departments SET is_active = :act WHERE id = :did"), {"act": not is_active_val, "did": dept_id})
-                                st.success(f"🎉 部門 [{d_name}] 狀態已更新！")
+                                st.success(f"🎉 部門狀態已更新！")
                                 st.rerun()
                             except Exception as e:
-                                st.error(f"狀態更新失敗: {e}")
+                                st.error(f"更新失敗: {e}")
         else:
-            st.info("💡 目前資料庫尚無部門資料，請至右側「新增擴編部門」分頁建立。")
+            st.info("💡 目前尚無部門資料，請至右側「新增擴編部門」建立。")
 
     # ==========================================
     # 分頁二：跨群組彈性業務模組動態掛載
     # ==========================================
     with tab_mount:
         st.markdown("#### ⚙️ 跨部門群組彈性業務模組掛載中心")
-        st.caption("💡 支援小公司彈性兼任：您可以選擇任意部門，並跨群組勾選總務或其他部門的專屬功能來進行掛載。")
-
         try:
             with engine.connect() as conn:
-                dept_rows = conn.execute(text("SELECT dept_name FROM sys_departments WHERE is_active = TRUE OR is_active IS NULL ORDER BY id")).fetchall()
-                dept_names = [r[0] for r in dept_rows]
+                dept_rows = conn.execute(text("SELECT COALESCE(dept_name, name) FROM sys_departments WHERE is_active = TRUE OR is_active IS NULL ORDER BY id")).fetchall()
+                dept_names = [r[0] for r in dept_rows if r[0]]
         except Exception:
             dept_names = []
 
@@ -111,7 +115,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
 
         selected_dept = st.selectbox("🎯 選擇要掛載模組的目標部門", dept_names, key="mount_dept_select")
 
-        # 清楚標明功能所屬群組，方便跨部門彈性兼任勾選
         categorized_features = {
             "🏢 【管理與公告群組】": {
                 "管理部總覽 / 戰情室": "feat_mgmt_supervisor",
@@ -141,7 +144,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
             }
         }
 
-        # 讀取該部門目前已掛載的模組
         mounted_list = []
         try:
             with engine.connect() as conn:
@@ -153,7 +155,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
 
         with st.form("dept_modules_mount_form"):
             new_mounted = []
-            
             for group_name, features in categorized_features.items():
                 st.markdown(f"**{group_name}**")
                 for label, feat_id in features.items():
@@ -173,22 +174,20 @@ def render(engine=None, lang="繁體中文", **kwargs):
                             ON CONFLICT (dept_name) 
                             DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
                         """), {"dname": selected_dept, "feats": mounted_str})
-                    st.success(f"🎉 [{selected_dept}] 的跨群組業務模組掛載已成功更新！")
+                    st.success(f"🎉 [{selected_dept}] 的業務模組掛載已成功更新！")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"儲存掛載失敗: {e}")
+                    st.error(f"儲存失敗: {e}")
 
     # ==========================================
-    # 分頁三：新增擴編 L1~L4 部門（支援上下級指定）
+    # 分頁三：新增擴編 L1~L4 部門
     # ==========================================
     with tab_add:
-        st.markdown("#### ➕ 新增擴編組織部門 (支援 L1～L4 層級與上級指定)")
-        st.caption("在此新增部門，新增後將自動同步至左側導覽列。")
-
+        st.markdown("#### ➕ 新增擴編組織部門 (支援 L1～L4 層級)")
         try:
             with engine.connect() as conn:
-                parent_rows = conn.execute(text("SELECT dept_name FROM sys_departments")).fetchall()
-                parent_options = ["總公司"] + [r[0] for r in parent_rows]
+                parent_rows = conn.execute(text("SELECT COALESCE(dept_name, name) FROM sys_departments")).fetchall()
+                parent_options = ["總公司"] + [r[0] for r in parent_rows if r[0]]
         except Exception:
             parent_options = ["總公司"]
 
@@ -208,12 +207,12 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     try:
                         tier_code = tier_opt.split(" ")[0]
                         with engine.begin() as conn:
-                            # 嚴格對應您資料庫既有的欄位寫入
+                            # 同時寫入 dept_name 與 name 欄位，確保絕對相容您現有的 Supabase 表結構
                             conn.execute(text("""
-                                INSERT INTO sys_departments (dept_code, dept_name, parent_dept, level_tier, is_active, updated_at)
-                                VALUES (:code, :name, :parent, :tier, TRUE, CURRENT_TIMESTAMP)
+                                INSERT INTO sys_departments (dept_code, dept_name, name, parent_dept, level_tier, is_active, updated_at)
+                                VALUES (:code, :name, :name, :parent, :tier, TRUE, CURRENT_TIMESTAMP)
                                 ON CONFLICT (dept_code) DO UPDATE 
-                                SET dept_name = :name, parent_dept = :parent, level_tier = :tier, is_active = TRUE, updated_at = CURRENT_TIMESTAMP
+                                SET dept_name = :name, name = :name, parent_dept = :parent, level_tier = :tier, is_active = TRUE, updated_at = CURRENT_TIMESTAMP
                             """), {
                                 "code": new_code.upper().strip(),
                                 "name": new_name.strip(),
