@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：app.py
-# 職責：系統主入口，統一管理初始化、Session State、動態品牌識別、全域公告佈告欄與路由分發
+# 職責：系統主入口，統一管理初始化、Session State、動態品牌識別、全域常駐側邊欄導航與路由分發
 # ==========================================
 
 import streamlit as st
@@ -47,6 +47,8 @@ if 'current_lang' not in st.session_state:
     st.session_state['current_lang'] = 'zh'
 if 'tenant_id' not in st.session_state:
     st.session_state['tenant_id'] = 'REETECH_VN'
+if 'selected_dept' not in st.session_state:
+    st.session_state['selected_dept'] = '總經理室'
 
 @st.cache_resource
 def get_db_engine():
@@ -91,7 +93,61 @@ if not st.session_state['logged_in']:
     render_login_page(db_engine)
     st.stop()
 
-# 4. 頂部導覽列（動態渲染 Logo 圖片與企業名稱）
+# ==========================================
+# 🌟 全域常駐側邊欄 (Sidebar)：確保在「任何頁面（包含系統設定與子模組）」左側部門選單都永遠顯示！
+# ==========================================
+with st.sidebar:
+    st.markdown("### 🏢 企業組織樹狀導航")
+    st.caption("僅顯示 L1 核心一級部門，點擊即時切換。")
+    
+    depts = []
+    try:
+        if db_engine:
+            with db_engine.connect() as conn:
+                res = conn.execute(text("""
+                    SELECT dept_name_zh, dept_name, name, level_tier 
+                    FROM sys_departments 
+                    WHERE is_active = TRUE
+                """)).fetchall()
+                
+                for r in res:
+                    d_name = r[0] or r[1] or r[2] or '未命名部門'
+                    tier = str(r[3] or 'L1').upper()
+                    is_l1 = ('L1' in tier) or (d_name in ["總經理室", "工程部", "管理部", "生產部", "倉庫管理", "簽核中心"])
+                    exclude_l2 = any(sub in d_name for sub in ["人事", "行政", "總務", "採購", "財務", "會計", "設計", "課"])
+                    
+                    if is_l1 and not exclude_l2:
+                        if d_name not in depts:
+                            depts.append(d_name)
+    except Exception:
+        pass
+    
+    if not depts:
+        depts = ["總經理室", "工程部", "管理部", "生產部", "倉庫管理"]
+
+    # 側邊欄 L1 部門按鈕
+    for d in depts:
+        is_selected = (st.session_state.get('current_view') == 'dashboard' and st.session_state.get('selected_dept') == d)
+        btn_type = "primary" if is_selected else "secondary"
+        if st.button(f"🏛️ {d}", key=f"global_sidebar_dept_{d}", use_container_width=True, type=btn_type):
+            st.session_state['selected_dept'] = d
+            st.session_state['current_view'] = 'dashboard'
+            st.session_state['active_feature_id'] = None
+            st.rerun()
+
+    st.divider()
+
+    # ⚙️ 系統設定按鈕固定在側邊欄下方
+    is_settings_active = (st.session_state.get('active_feature_id') == 'feat_it_menu')
+    settings_btn_type = "primary" if is_settings_active else "secondary"
+    if st.button("⚙️ 系統設定 (Cấu hình hệ thống)", use_container_width=True, type=settings_btn_type):
+        st.session_state['current_view'] = 'dynamic_feature'
+        st.session_state['active_feature_id'] = 'feat_it_menu'
+        st.rerun()
+
+# ==========================================
+# 主畫面頂部導覽列
+# ==========================================
 dynamic_company_name = st.session_state.get('tenant_company_name', "裕豐電機工業有限公司")
 dynamic_logo_path = st.session_state.get('tenant_logo_url', "")
 
@@ -121,14 +177,13 @@ with col_logout:
         st.rerun()
 
 # ==========================================
-# 🌟 全域置頂顯示：管理部發布的最新公司公告跑馬燈/佈告欄
+# 🌟 全域置頂顯示：管理部發布的最新公司公告佈告欄
 # ==========================================
 def render_global_announcements_banner(engine):
     announcements = []
     try:
         if engine:
             with engine.connect() as conn:
-                # 嘗試從 hr_announcements 或 system_announcements 撈取最新公告
                 for tbl in ['hr_announcements', 'company_announcements', 'sys_announcements']:
                     try:
                         res = conn.execute(text(f"SELECT title, content, updated_at FROM {tbl} ORDER BY id DESC LIMIT 3")).fetchall()
@@ -141,14 +196,12 @@ def render_global_announcements_banner(engine):
     except Exception:
         pass
 
-    # 若資料庫暫無公告，提供預設的置頂管理部公告
     if not announcements:
         announcements = [
             "📢 **【管理部公告】** 11月份全廠消防安全演練訂於 11/25 進行，請各部門主管配合轉知同仁。",
             "📢 **【管理部公告】** 越籍員工宿舍冷氣維修申請已開放登記，請至總務課窗口辦理。"
         ]
 
-    # 在頂部分隔線上方以醒目容器呈現
     with st.container(border=True):
         st.markdown("##### 📢 【管理部佈告欄】全廠即時公告專區")
         cols = st.columns(len(announcements) if len(announcements) <= 3 else 3)
