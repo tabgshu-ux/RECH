@@ -1,38 +1,51 @@
 # ==========================================
 # 檔案路徑：views/dashboard.py
-# 職責：部門首頁與動態模組路由分發中心（支援左側全域常駐側邊欄導航）
+# 職責：部門首頁與動態模組路由分發中心（嚴格過濾僅顯示 L1 級頂級部門）
 # ==========================================
 
 import streamlit as st
 from sqlalchemy import text
 
 def render_dashboard(db_engine):
-    # 🌟 核心升級：將部門選擇與系統設定全部移至 st.sidebar (側邊欄)
-    # 這樣不管使用者點進哪個子頁面、頁面捲動到多下方，左側選單永遠固定顯示！
+    # 🌟 側邊欄：嚴格只允許 L1 級頂級大部門與特定角色入口
     with st.sidebar:
         st.markdown("### 🏢 企業組織樹狀導航")
-        st.caption("點擊下方部門即可切換對應戰情與業務模組。")
+        st.caption("僅顯示 L1 核心一級部門，L2 子部門與課別納入管理。")
         
-        # 動態讀取資料庫中的部門清單
+        # 動態讀取資料庫中的部門，並嚴格過濾只抓取 L1 級部門
         depts = []
         try:
             if db_engine:
                 with db_engine.connect() as conn:
-                    res = conn.execute(text("SELECT dept_code, dept_name_zh, dept_name, name FROM sys_departments WHERE is_active = TRUE")).fetchall()
+                    # 優先讀取資料庫中被標記為 L1 或屬於一級部門的清單
+                    res = conn.execute(text("""
+                        SELECT dept_name_zh, dept_name, name, level_tier 
+                        FROM sys_departments 
+                        WHERE is_active = TRUE
+                    """)).fetchall()
+                    
                     for r in res:
-                        d_name = r[1] or r[2] or r[3] or '未命名部門'
-                        if d_name not in depts:
-                            depts.append(d_name)
+                        d_name = r[0] or r[1] or r[2] or '未命名部門'
+                        tier = str(r[3] or 'L1').upper()
+                        
+                        # 🌟 核心過濾：只允許 L1 級部門，或者明確屬於三大塊的名稱，徹底排除 L2 子部門
+                        is_l1 = ('L1' in tier) or (d_name in ["總經理室", "工程部", "管理部", "生產部", "倉庫管理", "簽核中心"])
+                        exclude_l2 = any(sub in d_name for sub in ["人事", "行政", "總務", "採購", "財務", "會計", "設計", "課"])
+                        
+                        if is_l1 and not exclude_l2:
+                            if d_name not in depts:
+                                depts.append(d_name)
         except Exception:
             pass
         
+        # 若資料庫抓取為空或異常，強制給予您規定的 5 大 L1 標準部門
         if not depts:
-            depts = ["總經理室", "工程部總覽", "管理部總覽", "生產部總覽", "倉庫管理", "簽核中心"]
+            depts = ["總經理室", "工程部", "管理部", "生產部", "倉庫管理"]
 
         if 'selected_dept' not in st.session_state:
             st.session_state['selected_dept'] = depts[0]
 
-        # 側邊欄部門按鈕清單
+        # 側邊欄 L1 部門按鈕清單
         for d in depts:
             is_selected = (st.session_state['selected_dept'] == d)
             btn_type = "primary" if is_selected else "secondary"
@@ -64,11 +77,10 @@ def render_dashboard(db_engine):
             st.error(f"載入總經理室模組發生錯誤: {e}")
         return
 
-    # 2. 其他部門動態模組路由
+    # 2. 其他 L1 部門動態模組路由
     st.markdown(f"### 📁 當前部門：{current_dept}")
     st.caption("以下為該部門已掛載的業務模組卡片。")
 
-    # 從資料庫撈取該部門掛載的功能
     mounted_feats_str = ""
     try:
         if db_engine:
@@ -82,33 +94,29 @@ def render_dashboard(db_engine):
     except Exception:
         pass
 
-    # 若資料庫無設定，提供各部門預設功能
     if not mounted_feats_str:
         if '工程' in current_dept:
             mounted_feats_str = "feat_eng_overview,feat_site_log,feat_blueprint"
         elif '管理' in current_dept:
-            mounted_feats_str = "feat_mgmt_supervisor,feat_hr_employee,feat_hr_attendance,feat_hr_payroll"
+            mounted_feats_str = "feat_mgmt_supervisor,feat_announcements,feat_hr_employee,feat_hr_attendance,feat_hr_payroll,feat_ga,feat_fi"
         elif '生產' in current_dept:
             mounted_feats_str = "feat_prod_overview,feat_panel_build,feat_production_schedule"
         elif '倉庫' in current_dept:
             mounted_feats_str = "feat_warehouse_overview,feat_material,feat_barcode"
-        elif '簽核' in current_dept:
-            mounted_feats_str = "feat_my_approvals"
         else:
             mounted_feats_str = "feat_exec_announcements"
 
     feature_list = [f.strip() for f in mounted_feats_str.split(",") if f.strip()]
 
-    # 定義所有功能卡片對照表
     feature_meta_map = {
         "feat_executive": {"name": "👑 總經理室戰情總覽", "desc": "全廠營運績效與決策總覽。"},
         "feat_lme_commodities": {"name": "📈 原料市場與外匯行情", "desc": "LME 銅價與即時匯率換算。"},
         "feat_stock_indices": {"name": "📈 全球股市指標追蹤", "desc": "追蹤台美中越股市行情。"},
         "feat_fx_rates": {"name": "💱 多幣別匯率換算引擎", "desc": "處理美元台幣越南盾換算。"},
-        "feat_exec_announcements": {"name": "📢 公司公告佈告欄", "desc": "檢視與發布公司重要公告。"},
+        "feat_announcements": {"name": "📢 公司公告佈告欄管理", "desc": "管理部發布與管理公司公告。"},
         "feat_eng_overview": {"name": "🛠️ 工程部總覽 / 專案進度", "desc": "高低壓配電盤案場與進度追蹤。"},
         "feat_site_log": {"name": "📋 工程報告與工地巡檢日報", "desc": "填報工地日報與現場巡檢。"},
-        "feat_blueprint": {"name": "📐 設計圖紙上傳與審查", "desc": "管理工程設計藍圖與審查。"},
+        "feat_blueprint": {"name": "📐 設計圖紙上傳與審查", "desc": "管理工程設計藍圖與審查（工程部專屬）。"},
         "feat_prod_overview": {"name": "🏭 生產部總覽 / 產線看板", "desc": "即時掌握產線運作狀況。"},
         "feat_panel_build": {"name": "⚡ 生產部 - 組裝與看板", "desc": "配電盤組裝進度與看板。"},
         "feat_production_schedule": {"name": "📅 生產進度與機台排程", "desc": "排定機台生產時程。"},
