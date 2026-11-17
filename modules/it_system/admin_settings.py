@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/admin_settings.py
-# 職責：系統設定純路由分發中心（嚴格對接 modules/it_system/API/ 底下的獨立 API 模組）
+# 職責：系統設定純路由分發中心（已整合 IT 管理員專屬資安與憑證管控模組）
 # ==========================================
 
 import streamlit as st
@@ -14,8 +14,8 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
     st.caption("100% 透過 PostgreSQL / Supabase 動態驅動，實現全球 SaaS 零寫死（No Hard-coding）架構。")
     st.markdown("---")
 
-    # 1. 上方固定功能導覽按鈕列
-    nav_cols = st.columns(7)
+    # 1. 上方固定功能導覽按鈕列 (8個分頁按鈕)
+    nav_cols = st.columns(8)
     nav_items = [
         {"id": "hub_home", "name": "🏠 設定總覽"},
         {"id": "dept_config", "name": "🏢 公司部門"},
@@ -23,7 +23,8 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
         {"id": "api_config", "name": "🌐 API 閘道"},
         {"id": "brand_config", "name": "🎨 品牌 Logo"},
         {"id": "db_config", "name": "🗄️ 資料庫"},
-        {"id": "nas_config", "name": "📦 雲端儲存"}
+        {"id": "nas_config", "name": "📦 雲端儲存"},
+        {"id": "admin_security", "name": "🔐 IT 資安"}
     ]
 
     for idx, item in enumerate(nav_items):
@@ -37,15 +38,16 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
 
     current_view = st.session_state['admin_sub_view']
 
-    # 2. 👑 設定總覽首頁（顯示 7 大功能卡片）
+    # 2. 👑 設定總覽首頁（顯示 8 大功能卡片）
     if current_view == 'hub_home':
         cards = [
             {"id": "dept_config", "title": "🏢 公司部門及功能設定", "desc": "維護 1~4 級動態組織架構、功能掛載與部門裁撤管理。"},
             {"id": "role_rbac", "title": "👥 人事職位與權責矩陣", "desc": "設定各職位角色對系統功能卡片的存取與審核權限。"},
-            {"id": "api_config", "title": "🌐 第三方 API 閘道設定", "desc": "集中管理置於 modules/it_system/API/ 底下的各項外部 API 與硬體 SDK。"},
+            {"id": "api_config", "title": "🌐 第三方 API 閘道設定", "desc": "集中管理越南電子發票、Zalo/LINE、LME 銅價、硬體與 Gemini AI 等外部 API。"},
             {"id": "brand_config", "title": "🎨 企業識別與品牌 Logo", "desc": "設定多租戶企業名稱、副標題及品牌視覺 Logo 圖片。"},
             {"id": "db_config", "title": "🗄️ 資料庫與主備用串接", "desc": "管理 Supabase / PostgreSQL 主資料庫與各部門分流連線字串。"},
             {"id": "nas_config", "title": "📦 雲端與本地儲存區 (NAS)", "desc": "自由切換與掛載企業自有 NAS、AWS S3 或 Supabase Storage 存放圖面與合約。"},
+            {"id": "admin_security", "title": "🔐 資訊管理員資安控管", "desc": "獨立於人事模組外，專屬管理 IT 管理員帳號、安全密碼與最高權限稽核。"},
             {"id": "audit_config", "title": "📝 系統稽核日誌與安全", "desc": "追蹤記錄管理員與員工在系統中的所有異動軌跡與內控合規紀錄。"}
         ]
 
@@ -71,10 +73,9 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
     elif current_view == 'role_rbac':
         load_sub_module("modules.it_system.role_rbac", engine, lang)
 
-    # 🌟 嚴格對接 modules/it_system/API/ 底下的獨立檔案
     elif current_view == 'api_config':
         st.markdown("#### 🌐 全方位第三方 API 閘道與外部系統整合中心")
-        st.caption("集中管理所有存放於 modules/it_system/API/ 資料夾中的獨立 API 模組。")
+        st.caption("集中管理所有外部 API 串接、通訊通知與硬體 SDK 閘道。")
         
         api_tabs = st.tabs([
             "🧾 越南電子發票", 
@@ -103,6 +104,10 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
 
     elif current_view == 'nas_config':
         load_sub_module("modules.it_system.nas_storage_config", engine, lang)
+
+    # 🌟 這裡就是串接 IT 管理員資安控管模組的地方
+    elif current_view == 'admin_security':
+        load_sub_module("modules.it_system.admin_security_config", engine, lang)
 
     elif current_view == 'audit_config':
         load_sub_module("modules.it_system.audit_logs", engine, lang)
