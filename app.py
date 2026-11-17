@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：app.py
-# 職責：系統主入口，統一管理初始化、Session State、導覽列與動態模組分發路由
+# 職責：系統主入口，統一管理初始化、Session State、動態品牌識別（Logo/名稱）與路由分發
 # ==========================================
 
 import streamlit as st
@@ -32,6 +32,7 @@ MOBILE_CSS_AND_JS = """
 """
 st.markdown(MOBILE_CSS_AND_JS, unsafe_allow_html=True)
 
+# 1. 初始化基礎 Session State
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 if 'user_name' not in st.session_state:
@@ -44,6 +45,8 @@ if 'selected_module_id' not in st.session_state:
     st.session_state['selected_module_id'] = None
 if 'current_lang' not in st.session_state:
     st.session_state['current_lang'] = 'zh'
+if 'tenant_id' not in st.session_state:
+    st.session_state['tenant_id'] = 'REETECH_VN'
 
 @st.cache_resource
 def get_db_engine():
@@ -60,13 +63,49 @@ def get_db_engine():
 
 db_engine = get_db_engine()
 
+# 2. 啟動時自動從資料庫載入最新企業品牌識別（Logo 與名稱）
+if 'tenant_company_name' not in st.session_state:
+    st.session_state['tenant_company_name'] = "裕豐電機工業有限公司"
+if 'tenant_company_sub' not in st.session_state:
+    st.session_state['tenant_company_sub'] = "CÔNG TY TNHH CN DỮ PHONG"
+if 'tenant_logo_url' not in st.session_state:
+    st.session_state['tenant_logo_url'] = ""
+
+if db_engine and not st.session_state.get('branding_loaded_from_db', False):
+    try:
+        with db_engine.connect() as conn:
+            res = conn.execute(
+                text("SELECT company_name, company_subtitle, logo_url FROM tenant_settings WHERE tenant_id = :tid"),
+                {"tid": st.session_state['tenant_id']}
+            ).fetchone()
+            if res:
+                st.session_state['tenant_company_name'] = res[0] or "裕豐電機工業有限公司"
+                st.session_state['tenant_company_sub'] = res[1] or "CÔNG TY TNHH CN DỮ PHONG"
+                st.session_state['tenant_logo_url'] = res[2] or ""
+        st.session_state['branding_loaded_from_db'] = True
+    except Exception:
+        pass
+
+# 3. 登入檢查
 if not st.session_state['logged_in']:
     render_login_page(db_engine)
     st.stop()
 
+# 4. 頂部導覽列（已升級：動態渲染 Logo 圖片與企業名稱）
+dynamic_company_name = st.session_state.get('tenant_company_name', "裕豐電機工業有限公司")
+dynamic_logo_path = st.session_state.get('tenant_logo_url', "")
+
 col_logo, col_user, col_nav, col_logout = st.columns([5, 2, 2, 1])
 with col_logo:
-    st.subheader("🏭 裕豐電機工業 SaaS ERP")
+    if dynamic_logo_path and os.path.exists(dynamic_logo_path):
+        c_img, c_title = st.columns([1, 6])
+        with c_img:
+            st.image(dynamic_logo_path, width=45)
+        with c_title:
+            st.markdown(f"#### **{dynamic_company_name}**")
+    else:
+        st.subheader(f"🏭 {dynamic_company_name}")
+
 with col_user:
     st.caption(f"👤 {st.session_state['user_name']}")
 with col_nav:
@@ -85,6 +124,7 @@ st.divider()
 
 current_lang = st.session_state.get('current_lang', 'zh')
 
+# 5. 主畫面路由分發
 if st.session_state['current_view'] == 'dashboard':
     render_dashboard(db_engine)
 elif st.session_state['current_view'] == 'dynamic_feature':
@@ -102,7 +142,7 @@ elif st.session_state['current_view'] == 'dynamic_feature':
         except Exception as e:
             st.error(f"載入管理部主管總覽發生錯誤: {e}")
             
-    # 🌟 智慧判斷：獨立導向員工檔案、考勤、薪資頁面（完美避開 __init__.py 攔截）
+    # 🌟 智慧判斷：獨立導向員工檔案、考勤、薪資頁面
     elif '員工' in active_feat_id or '履約' in active_feat_id or active_feat_id == 'feat_hr':
         try:
             from modules.management.hr.employee import employee_profile
