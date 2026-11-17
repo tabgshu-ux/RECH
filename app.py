@@ -98,18 +98,15 @@ dynamic_logo_path = st.session_state.get('tenant_logo_url', "")
 col_logo, col_user, col_nav, col_logout = st.columns([5, 2, 2, 1])
 with col_logo:
     if dynamic_logo_path and os.path.exists(dynamic_logo_path):
-        # 使用 Markdown 與 HTML 表格/Flexbox 實現絕對垂直置中對齊
-        st.markdown(f"""
-            <div style="display: flex; align-items: center; gap: 15px; padding-top: 5px;">
-                <img src="app/static/{dynamic_logo_path}" style="height: 45px; object-fit: contain;">
-                <span style="font-size: 1.3rem; font-weight: 700; color: #1f1f1f;">{dynamic_company_name}</span>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        # 若上方 HTML 載入受限，亦可直接使用 Streamlit 原生 columns 配合 vertical_alignment
-        # 這裡我們使用原生 columns 並且在前方加上自訂 CSS 讓其完美置中：
+        # 左右並排：左邊放 Logo，右邊放公司名稱，透過 Streamlit 排版
+        c_img, c_text = st.columns([1, 4], vertical_alignment="center")
+        with c_img:
+            st.image(dynamic_logo_path, width=140)
+        with c_text:
+            # 利用 HTML 標籤確保文字在區塊中垂直置中
+            st.markdown(f"<h3 style='margin: 0; padding-top: 5px;'>{dynamic_company_name}</h3>", unsafe_allow_html=True)
     else:
-        st.markdown(f"### 🏭 {dynamic_company_name}")
+        st.subheader(f"🏭 {dynamic_company_name}")
 
 with col_user:
     st.caption(f"👤 {st.session_state['user_name']}")
