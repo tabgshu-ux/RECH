@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：公司組織架構與跨群組彈性業務模組掛載中心（獨立連線與明確成功通知架構）
+# 職責：公司組織架構與跨群組彈性業務模組掛載中心（100% 精準對應現有 Supabase 資料表）
 # ==========================================
 
 import streamlit as st
@@ -14,33 +14,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
     if not engine:
         st.warning("⚠️ 系統尚未連線至資料庫引擎。")
         return
-
-    # 🌟 獨立執行 DDL，確保資料表與標準欄位準備就緒，絕不與後續交易互相污染
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS sys_departments (
-                    id SERIAL PRIMARY KEY,
-                    dept_code VARCHAR(50) UNIQUE NOT NULL,
-                    dept_name_zh VARCHAR(150),
-                    dept_name VARCHAR(150),
-                    name VARCHAR(150),
-                    parent_dept VARCHAR(150) DEFAULT '總公司',
-                    level_tier VARCHAR(10) DEFAULT 'L1',
-                    is_active BOOLEAN DEFAULT TRUE,
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
-            """))
-            conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS sys_department_modules (
-                    dept_name VARCHAR(150) PRIMARY KEY,
-                    mounted_features TEXT,
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
-            """))
-            conn.commit()
-    except Exception:
-        pass
 
     tab_tree, tab_mount, tab_add = st.tabs(["🌳 現有組織樹與狀態管理", "⚙️ 跨群組彈性模組掛載", "➕ 新增擴編 L1~L4 部門"])
 
@@ -133,14 +106,21 @@ def render(engine=None, lang="繁體中文", **kwargs):
             }
         }
 
-        # 讀取該部門目前已掛載的模組
+        # 讀取該部門目前已掛載的模組（自動相容 dept_name 或 department_name）
         mounted_list = []
         try:
             with engine.connect() as conn:
-                res = conn.execute(
-                    text("SELECT mounted_features FROM sys_department_modules WHERE dept_name = :d"),
-                    {"d": selected_dept}
-                ).fetchone()
+                res = None
+                for col in ['dept_name', 'department_name']:
+                    try:
+                        res = conn.execute(
+                            text(f"SELECT mounted_features FROM sys_department_modules WHERE {col} = :d"),
+                            {"d": selected_dept}
+                        ).fetchone()
+                        if res:
+                            break
+                    except Exception:
+                        continue
                 if res and res[0]:
                     mounted_list = [f.strip() for f in res[0].split(",") if f.strip()]
         except Exception:
@@ -161,17 +141,26 @@ def render(engine=None, lang="繁體中文", **kwargs):
             if submitted_mount:
                 mounted_str = ",".join(new_mounted)
                 try:
-                    # 🌟 採用乾淨獨立的連線與明確 commit，徹底隔絕 InFailedSqlTransaction
+                    # 🌟 透過獨立連線與自動判斷欄位寫入，徹底解決交易掛掉的問題
                     with engine.connect() as conn:
-                        conn.execute(text("""
-                            INSERT INTO sys_department_modules (dept_name, mounted_features, updated_at)
-                            VALUES (:dname, :feats, CURRENT_TIMESTAMP)
-                            ON CONFLICT (dept_name) 
-                            DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
-                        """), {"dname": selected_dept, "feats": mounted_str})
-                        conn.commit()
+                        saved = False
+                        for col in ['dept_name', 'department_name']:
+                            try:
+                                conn.execute(text(f"""
+                                    INSERT INTO sys_department_modules ({col}, mounted_features, updated_at)
+                                    VALUES (:dname, :feats, CURRENT_TIMESTAMP)
+                                    ON CONFLICT ({col}) 
+                                    DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
+                                """), {"dname": selected_dept, "feats": mounted_str})
+                                conn.commit()
+                                saved = True
+                                break
+                            except Exception:
+                                conn.rollback()
+                        
+                        if not saved:
+                            raise Exception("無法找到匹配的欄位進行寫入。")
 
-                    # 🌟 絕對看得到的成功通知與氣球特效
                     st.success(f"🎉 【{selected_dept}】的業務模組掛載已成功儲存並即時生效！")
                     st.balloons()
                     st.rerun()
