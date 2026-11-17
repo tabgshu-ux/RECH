@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：公司組織架構與跨群組彈性業務模組掛載中心（修復 Key 唯一性衝突）
+# 職責：公司組織架構與跨群組彈性業務模組掛載中心（純元數據動態驅動 + 頂部快捷儲存免捲動）
 # ==========================================
 
 import streamlit as st
@@ -57,7 +57,19 @@ def render(engine=None, lang="繁體中文", **kwargs):
         dept_names = [d['name'] for d in depts] if depts else ["總經理室", "工程部", "管理部", "生產部", "倉庫管理"]
         selected_dept = st.selectbox("🎯 選擇要掛載模組的目標部門", dept_names, key="mount_dept_select")
 
-        # 🌟 完整收錄總經理室 7 大模組與各部門標準功能選單
+        # 讀取該部門目前已掛載的模組
+        mounted_list = []
+        try:
+            with engine.connect() as conn:
+                res = conn.execute(
+                    text("SELECT mounted_features FROM sys_department_modules WHERE dept_name = :d"),
+                    {"d": selected_dept}
+                ).fetchone()
+                if res and res[0]:
+                    mounted_list = [f.strip() for f in res[0].split(",") if f.strip()]
+        except Exception:
+            pass
+
         categorized_features = {
             "👑 【總經理室與戰情決策群組】": {
                 "總經理室 - 跨國營運戰情與決策總覽": "feat_executive",
@@ -110,25 +122,16 @@ def render(engine=None, lang="繁體中文", **kwargs):
             }
         }
 
-        # 讀取該部門目前已掛載的模組
-        mounted_list = []
-        try:
-            with engine.connect() as conn:
-                res = conn.execute(
-                    text("SELECT mounted_features FROM sys_department_modules WHERE dept_name = :d"),
-                    {"d": selected_dept}
-                ).fetchone()
-                if res and res[0]:
-                    mounted_list = [f.strip() for f in res[0].split(",") if f.strip()]
-        except Exception:
-            pass
-
         with st.form("dept_modules_mount_form"):
+            # 🌟 貼心優化：把儲存按鈕放在頂部，免去您捲動到手指發炎的痛苦！
+            st.markdown("#### ⚡ 快速操作區")
+            submitted_mount_top = st.form_submit_button("💾 儲存並即時生效部門模組掛載 (置頂快捷)", type="primary", use_container_width=True)
+            st.divider()
+
             new_mounted = []
             for group_name, features in categorized_features.items():
                 st.markdown(f"**{group_name}**")
                 for label, feat_id in features.items():
-                    # 🌟 修正 Key 衝突：確保每個 Checkbox 的 key 絕對唯一且無特殊字元
                     unique_key = f"chk_{selected_dept}_{feat_id}_{hash(label)}"
                     is_checked = st.checkbox(label, value=(feat_id in mounted_list), key=unique_key)
                     if is_checked:
@@ -136,8 +139,9 @@ def render(engine=None, lang="繁體中文", **kwargs):
                             new_mounted.append(feat_id)
                 st.markdown("---")
 
-            submitted_mount = st.form_submit_button("💾 儲存並即時生效部門模組掛載", type="primary", use_container_width=True)
-            if submitted_mount:
+            submitted_mount_bot = st.form_submit_button("💾 儲存並即時生效部門模組掛載 (底部)", type="primary", use_container_width=True)
+
+            if submitted_mount_top or submitted_mount_bot:
                 mounted_str = ",".join(new_mounted)
                 try:
                     with engine.connect() as conn:
