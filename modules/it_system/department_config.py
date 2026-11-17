@@ -1,11 +1,43 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：公司組織架構與跨群組彈性業務模組掛載中心（全面兼容任意主鍵欄位）
+# 職責：公司組織架構與跨群組彈性業務模組掛載中心（具備資料表自動檢測與自我修復能力）
 # ==========================================
 
 import streamlit as st
 import pandas as pd
 from sqlalchemy import text
+
+def ensure_module_table_ready(engine, selected_dept):
+    """確保 sys_department_modules 資料表存在且具備正確的結構"""
+    if not engine:
+        return False
+    
+    try:
+        with engine.begin() as conn:
+            # 1. 檢查並建立標準的 sys_department_modules 表（以 dept_name 為主鍵）
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS sys_department_modules (
+                    dept_name VARCHAR(150) PRIMARY KEY,
+                    mounted_features TEXT,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+            return True
+    except Exception as e:
+        # 如果建立失敗，嘗試其他相容表結構
+        try:
+            with engine.begin() as conn:
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS sys_department_modules (
+                        id SERIAL PRIMARY KEY,
+                        department_name VARCHAR(150),
+                        mounted_features TEXT,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+                return True
+        except Exception:
+            return False
 
 def render(engine=None, lang="繁體中文", **kwargs):
     st.markdown("### 🏢 公司組織架構與 L1~L4 彈性模組掛載中心")
@@ -106,12 +138,13 @@ def render(engine=None, lang="繁體中文", **kwargs):
             }
         }
 
-        # 讀取該部門目前已掛載的模組（自動嘗試多種欄位名稱）
+        # 讀取該部門目前已掛載的模組
         mounted_list = []
         try:
+            ensure_module_table_ready(engine, selected_dept)
             with engine.connect() as conn:
                 res = None
-                for col in ['department_name', 'dept_name', 'name', 'dept']:
+                for col in ['dept_name', 'department_name', 'name', 'dept']:
                     try:
                         res = conn.execute(
                             text(f"SELECT mounted_features FROM sys_department_modules WHERE {col} = :d"),
@@ -141,28 +174,34 @@ def render(engine=None, lang="繁體中文", **kwargs):
             if submitted_mount:
                 try:
                     mounted_str = ",".join(new_mounted)
-                    success_saved = False
+                    ensure_module_table_ready(engine, selected_dept)
                     
+                    saved_ok = False
                     with engine.begin() as conn:
-                        # 依序嘗試不同的欄位名稱寫入，確保 100% 成功
-                        for col in ['department_name', 'dept_name', 'name', 'dept']:
-                            try:
-                                conn.execute(text(f"""
-                                    INSERT INTO sys_department_modules ({col}, mounted_features, updated_at)
-                                    VALUES (:dname, :feats, CURRENT_TIMESTAMP)
-                                    ON CONFLICT ({col}) 
-                                    DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
-                                """), {"dname": selected_dept, "feats": mounted_str})
-                                success_saved = True
-                                break
-                            except Exception:
-                                continue
-                    
-                    if success_saved:
+                        # 嘗試用 dept_name 寫入
+                        try:
+                            conn.execute(text("""
+                                INSERT INTO sys_department_modules (dept_name, mounted_features, updated_at)
+                                VALUES (:dname, :feats, CURRENT_TIMESTAMP)
+                                ON CONFLICT (dept_name) 
+                                DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
+                            """), {"dname": selected_dept, "feats": mounted_str})
+                            saved_ok = True
+                        except Exception:
+                            # 若失敗則嘗試用 department_name 寫入
+                            conn.execute(text("""
+                                INSERT INTO sys_department_modules (department_name, mounted_features, updated_at)
+                                VALUES (:dname, :feats, CURRENT_TIMESTAMP)
+                                ON CONFLICT (department_name) 
+                                DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
+                            """), {"dname": selected_dept, "feats": mounted_str})
+                            saved_ok = True
+
+                    if saved_ok:
                         st.success(f"🎉 [{selected_dept}] 的業務模組掛載已成功儲存並即時生效！")
                         st.rerun()
                     else:
-                        st.error("❌ 儲存失敗：無法在 sys_department_modules 找到對應的主鍵欄位。")
+                        st.error("❌ 儲存失敗：無法寫入資料庫。")
                 except Exception as e:
                     st.error(f"儲存掛載發生例外錯誤: {e}")
 
