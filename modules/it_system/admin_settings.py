@@ -102,8 +102,8 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
         load_sub_module("modules.it_system.db_bridge", engine, lang)
 
     elif current_view == 'nas_config':
-        st.markdown("#### 📦 雲端與本地儲存區設定 (NAS / S3)")
-        st.info("💡 該模組正在獨立維護中。")
+        elif current_view == 'nas_config':
+        load_sub_module("modules.it_system.nas_storage_config", engine, lang)
 
     elif current_view == 'audit_config':
         load_sub_module("modules.it_system.audit_logs", engine, lang)
