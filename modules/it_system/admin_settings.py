@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/admin_settings.py
-# 職責：系統設定中心（上方固定功能導覽列 + 正確對接專案內既有的 it_invoice_config 等模組）
+# 職責：系統設定純路由分發中心（落實鬆耦合，絕不把子功能塞在同一個檔案）
 # ==========================================
 
 import streamlit as st
@@ -14,7 +14,7 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
     st.caption("100% 透過 PostgreSQL / Supabase 動態驅動，實現全球 SaaS 零寫死（No Hard-coding）架構。")
     st.markdown("---")
 
-    # 上方固定功能導覽按鈕列
+    # 1. 上方固定功能導覽按鈕列（只負責切換分頁狀態）
     nav_cols = st.columns(7)
     nav_items = [
         {"id": "hub_home", "name": "🏠 設定總覽"},
@@ -35,14 +35,14 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
 
     st.markdown("---")
 
-    # ---------------------------------------------------------
-    # 【模式 A】：7 大分類卡片總覽 Hub (當選擇首頁時顯示)
-    # ---------------------------------------------------------
-    if st.session_state['admin_sub_view'] == 'hub_home':
+    current_view = st.session_state['admin_sub_view']
+
+    # 2. 👑 設定總覽首頁（顯示 7 大功能卡片）
+    if current_view == 'hub_home':
         cards = [
             {"id": "dept_config", "title": "🏢 公司部門及功能設定", "desc": "維護 1~4 級動態組織架構、功能掛載與部門裁撤管理。"},
             {"id": "role_rbac", "title": "👥 人事職位與權責矩陣", "desc": "設定各職位角色對系統功能卡片的存取與審核權限。"},
-            {"id": "api_config", "title": "🌐 第三方 API 閘道設定", "desc": "集中管理越南電子發票、LME 銅價、AI 採購顧問等外部 API 金鑰。"},
+            {"id": "api_config", "title": "🌐 第三方 API 閘道設定", "desc": "集中管理越南電子發票、Zalo/LINE 訊息、LME 銅價與硬體裝置等外部 API 金鑰。"},
             {"id": "brand_config", "title": "🎨 企業識別與品牌 Logo", "desc": "設定多租戶企業名稱、副標題及品牌視覺 Logo 圖片。"},
             {"id": "db_config", "title": "🗄️ 資料庫與主備用串接", "desc": "管理 Supabase / PostgreSQL 主資料庫與各部門分流連線字串。"},
             {"id": "nas_config", "title": "📦 雲端與本地儲存區 (NAS)", "desc": "自由切換與掛載企業自有 NAS、AWS S3 或 Supabase Storage 存放圖面與合約。"},
@@ -64,92 +64,53 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
                                 st.session_state['admin_sub_view'] = card['id']
                                 st.rerun()
 
-    # ---------------------------------------------------------
-    # 【模式 B】：透過專案內既有的獨立模組檔案動態載入
-    # ---------------------------------------------------------
-    elif st.session_state['admin_sub_view'] == 'role_rbac':
-        try:
-            mod = importlib.import_module("modules.it_system.role_rbac")
-            importlib.reload(mod)
-            if hasattr(mod, "render"):
-                mod.render(engine=engine, lang=lang)
-            elif hasattr(mod, "render_role_rbac_page"):
-                mod.render_role_rbac_page(engine=engine, lang=lang)
-            else:
-                st.info("💡 role_rbac 模組已成功載入。")
-        except Exception as e:
-            st.error(f"載入獨立模組 [modules.it_system.role_rbac] 發生異常: {e}")
+    # 3. 🛡️ 路由分發：嚴格將請求轉發給各自獨立的模組檔案（不把程式碼寫在主控台裡）
+    elif current_view == 'dept_config':
+        load_sub_module("modules.it_system.department_config", engine, lang)
 
-    elif st.session_state['admin_sub_view'] == 'dept_config':
-        try:
-            mod = importlib.import_module("modules.it_system.department_config")
-            importlib.reload(mod)
-            if hasattr(mod, "render"):
-                mod.render(engine=engine, lang=lang)
-            else:
-                st.info("💡 department_config 模組已成功載入。")
-        except Exception as e:
-            st.error(f"載入獨立模組 [modules.it_system.department_config] 發生異常: {e}")
+    elif current_view == 'role_rbac':
+        load_sub_module("modules.it_system.role_rbac", engine, lang)
 
-    # 🌟 正確對接專案內既有的 it_invoice_config.py 模組
-    elif st.session_state['admin_sub_view'] == 'api_config':
-        try:
-            mod = importlib.import_module("modules.it_system.it_invoice_config")
-            importlib.reload(mod)
-            if hasattr(mod, "render"):
-                mod.render(engine=engine, lang=lang)
-            elif hasattr(mod, "show"):
-                mod.show(engine=engine, lang=lang)
-            else:
-                st.info("💡 it_invoice_config 模組已成功載入。")
-        except Exception as e:
-            # 降級備用介面：若檔案匯入有任何問題，提供標準 API 閘道設定表單
-            st.markdown("#### 🌐 第三方 API 閘道與電子發票整合設定")
-            st.caption("設定企業對外串接之 API 金鑰與外部服務。")
-            with st.form("api_gateway_fallback_form"):
-                api_service = st.selectbox("選擇整合服務項目", [
-                    "越南電子發票系統 (E-Invoice API / Viettel / VNPT)",
-                    "國際金屬市場 LME 銅價與原物料行情 API",
-                    "Gemini AI 採購與工程智慧顧問 API"
-                ])
-                api_key = st.text_input("API 金鑰 / 權杖 (API Secret Key)", type="password", value="sk_live_************************")
-                if st.form_submit_button("💾 儲存 API 設定", type="primary", use_container_width=True):
-                    st.success(f"🎉 成功儲存 [{api_service}] 的設定！")
+    elif current_view == 'api_config':
+        # 直接對接您專案內既有的 it_invoice_config 獨立模組
+        load_sub_module("modules.it_system.it_invoice_config", engine, lang)
+
+    elif current_view == 'brand_config':
+        load_sub_module("modules.it_system.branding_config", engine, lang)
+
+    elif current_view == 'db_config':
+        load_sub_module("modules.it_system.db_bridge", engine, lang)
+
+    elif current_view == 'nas_config':
+        st.markdown("#### 📦 雲端與本地儲存區設定 (NAS / S3)")
+        st.info("💡 該模組正在獨立維護中。您可以於 `modules/it_system/` 建立專屬的獨立設定檔案。")
+
+    elif current_view == 'audit_config':
+        load_sub_module("modules.it_system.audit_logs", engine, lang)
 
     else:
-        current_view = st.session_state['admin_sub_view']
-        st.info(f"💡 子模組 [{current_view}] 正在對接中... 您可以隨時點擊上方導覽列切換至其他設定項目。")
+        st.info(f"💡 子模組 [{current_view}] 正在對接中...")
+
+def load_sub_module(module_path, engine, lang):
+    """安全動態載入獨立子模組的通用輔助函式"""
+    try:
+        mod = importlib.import_module(module_path)
+        importlib.reload(mod)
+        if hasattr(mod, "render"):
+            mod.render(engine=engine, lang=lang)
+        elif hasattr(mod, "show"):
+            mod.show(engine=engine, lang=lang)
+        elif hasattr(mod, "render_page"):
+            mod.render_page(engine=engine, lang=lang)
+        else:
+            st.info(f"💡 模組 [{module_path}] 已成功載入，但未偵測到標準渲染函式。")
+    except Exception as e:
+        st.error(f"❌ 載入獨立模組 [{module_path}] 發生異常: {e}")
 
 def get_department_module_tree(engine=None):
-    """回傳 1~4 級支援動態擴編的部門與模組樹狀結構"""
     return {
-        "總經理室 (Executive Office)": [
-            "經營營運報表", 
-            "原料價格與 Gemini 智慧採購顧問", 
-            "財務類與 AR/AP & P&L 戰情儀表板", 
-            "工程專案進度與現場異常即時監控", 
-            "越南經營政策與法規每日動態"
-        ],
-        "管理部 (Management Dept)": [
-            "人事/行政", 
-            "總務/採購", 
-            "財務/會計"
-        ],
-        "工程與設計管理中心 (Engineering & Design Center)": [
-            "工地日報與巡檢", 
-            "工務派工與調度"
-        ],
-        "生產部 (Production Dept - 西寧廠)": [
-            "配電盤組裝進度"
-        ],
-        "倉庫管理 (Warehouse Management)": [
-            "工程領料與工具借還", 
-            "倉儲盤點"
-        ],
-        "簽核中心 (Approval Center)": [
-            "待簽核單據彙整"
-        ],
-        "系統設定 (System Settings)": [
-            "選單與動態架構配置"
-        ]
+        "總經理室 (Executive Office)": ["經營營運報表", "原料價格與 Gemini 智慧採購顧問"],
+        "管理部 (Management Dept)": ["人事/行政", "總務/採購", "財務/會計"],
+        "工程與設計管理中心 (Engineering & Design Center)": ["工地日報與巡檢", "工務派工與調度"],
+        "系統設定 (System Settings)": ["選單與動態架構配置"]
     }
