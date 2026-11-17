@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/executive/executive_dashboard.py
-# 職責：總經理室總覽與決策中心（完整對應所有勾選代碼，確保 100% 同步顯示）
+# 職責：總經理室總覽與決策中心（完整對應模組，並支援全域固定側邊欄導航）
 # ==========================================
 
 import streamlit as st
@@ -32,37 +32,18 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
     current_sub = st.session_state['exec_active_sub']
 
     if current_sub is not None:
-        col_back, col_jump = st.columns([2, 5])
+        # 💡 優化：在子頁面頂部提供快速返回與導覽按鈕
+        col_back, col_info = st.columns([2, 5])
         with col_back:
-            if st.button("⬅️ 返回總經理室總覽", key="back_to_exec_main", use_container_width=True):
+            if st.button("⬅️ 返回總經理室總覽", key="back_to_exec_main", use_container_width=True, type="primary"):
                 st.session_state['exec_active_sub'] = None
                 st.rerun()
-
-        with col_jump:
-            with st.expander("⚡ 快速切換總經理室其他功能...", expanded=False):
-                mounted_feats = get_mounted_features_for_dept(engine, "總經理室")
-                sub_options = {}
-                
-                master_feature_map = {
-                    "feat_lme_commodities": ("📈 原料市場與即時外匯行情", "commodities"),
-                    "feat_circular_200": ("💰 完整損益表與會計報表", "financials"),
-                    "feat_eng_overview": ("🛠️ 工程專案進度與現場狀態", "projects"),
-                    "feat_policy": ("📰 越南政府政策與法規動態", "policy"),
-                    "feat_analytics": ("🏗️ 工程案場與金額佔比分析", "analytics")
-                }
-                
-                for feat_id, (label, target_sub) in master_feature_map.items():
-                    if feat_id in mounted_feats:
-                        sub_options[label] = target_sub
-
-                for label, target_sub in sub_options.items():
-                    if current_sub != target_sub:
-                        if st.button(label, key=f"quick_jump_{target_sub}", use_container_width=True):
-                            st.session_state['exec_active_sub'] = target_sub
-                            st.rerun()
+        with col_info:
+            st.caption("💡 提示：您可隨時利用左側固定選單切換至其他部門或系統設定。")
 
         st.markdown("---")
 
+        # 渲染對應的子模組畫面
         if current_sub == 'commodities':
             try:
                 from modules.executive import commodities_fx
@@ -129,17 +110,29 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
     st.markdown("---")
 
     st.markdown("### 📌 總經理室專屬功能導覽與模組卡片")
-    st.caption("💡 提示：以下卡片嚴格依據您在「系統設定 ➡️ 公司部門 ➡️ 跨群組彈性模組掛載」中所勾選的項目動態生成。未勾選的功能將自動隱藏。")
+    st.caption("💡 提示：以下卡片嚴格依據您在「系統設定 ➡️ 公司部門 ➡️ 跨群組彈性模組掛載」中所勾選的項目動態生成。")
 
     mounted_feats = get_mounted_features_for_dept(engine, "總經理室")
 
-    # 🌟 完整收錄您在設定頁面中勾選的所有總經理室功能對應卡片
+    # 🌟 完整收錄總經理室所有可能的專屬卡片與對應的 feat_id，確保不漏掉任何功能
     all_exec_sections = [
         {
             "feat_id": "feat_lme_commodities",
             "id": "commodities", 
             "name": "📈 原料市場與即時外匯行情", 
             "desc": "LME 導電銅價即時 API 抓取、走勢圖、美元/新台幣與越南盾雙向匯率換算。"
+        },
+        {
+            "feat_id": "feat_stock_indices",
+            "id": "commodities",
+            "name": "📈 全球股市 API 指標追蹤",
+            "desc": "追蹤台、美、中、越主要股市指數與連動行情。"
+        },
+        {
+            "feat_id": "feat_fx_rates",
+            "id": "commodities",
+            "name": "💱 多幣別匯率即時換算引擎",
+            "desc": "即時處理美元、新台幣與越南盾雙向匯率換算。"
         },
         {
             "feat_id": "feat_circular_200",
@@ -164,19 +157,6 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
             "id": "analytics", 
             "name": "🏗️ 工程案場與金額佔比分析", 
             "desc": "分析廠內各類型工程案場數量、合約總金額結構、平均毛利率與營收佔比分佈。"
-        },
-        # 🌟 同步支援其他勾選代碼，確保不會被過濾掉
-        {
-            "feat_id": "feat_stock_indices",
-            "id": "commodities",
-            "name": "📈 全球股市 API 指標追蹤",
-            "desc": "追蹤台、美、中、越主要股市指數與連動行情。"
-        },
-        {
-            "feat_id": "feat_fx_rates",
-            "id": "commodities",
-            "name": "💱 多幣別匯率即時換算引擎",
-            "desc": "即時處理美元、新台幣與越南盾雙向匯率換算。"
         }
     ]
 
@@ -194,7 +174,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
                         st.session_state['exec_active_sub'] = sec['id']
                         st.rerun()
     else:
-        st.info("💡 目前總經理室尚未勾選掛載任何專屬模組。請至「系統設定 ➡️ 公司部門 ➡️ 跨群組彈性模組掛載」勾選您需要的功能，畫面將即時連動呈現！")
+        st.info("💡 目前總經理室尚未勾選掛載任何專屬模組。請至「系統設定 ➡️ 公司部門 ➡️ 跨群組彈性模組掛載」勾選您需要的功能！")
 
 def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
     render_executive_main(engine=engine, lang=lang, **kwargs)
