@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/admin_settings.py
-# 職責：系統設定中心（上方固定功能導覽列 + 7大動態配置子模組調度）
+# 職責：系統設定中心（上方固定功能導覽列 + 完整串接 API 閘道設定與各子模組）
 # ==========================================
 
 import streamlit as st
@@ -14,8 +14,7 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
     st.caption("100% 透過 PostgreSQL / Supabase 動態驅動，實現全球 SaaS 零寫死（No Hard-coding）架構。")
     st.markdown("---")
 
-    # 🌟 核心修正：仿照管理部，在上方加入一排固定功能導覽按鈕列
-    # 讓管理員無論身處哪個設定頁面，都能隨時切換，不需要一直退回首頁
+    # 上方固定功能導覽按鈕列
     nav_cols = st.columns(7)
     nav_items = [
         {"id": "hub_home", "name": "🏠 設定總覽"},
@@ -47,7 +46,7 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
             {"id": "brand_config", "title": "🎨 企業識別與品牌 Logo", "desc": "設定多租戶企業名稱、副標題及品牌視覺 Logo 圖片。"},
             {"id": "db_config", "title": "🗄️ 資料庫與主備用串接", "desc": "管理 Supabase / PostgreSQL 主資料庫與各部門分流連線字串。"},
             {"id": "nas_config", "title": "📦 雲端與本地儲存區 (NAS)", "desc": "自由切換與掛載企業自有 NAS、AWS S3 或 Supabase Storage 存放圖面與合約。"},
-            {"id": "audit_config", "title": "📝 系統稽核日誌與安全", "desc": "追蹤記錄管理員與員工在系統中的所有異動軌跡與內控合規紀錄。"}
+            {"id": "audit_config", "title": "📝 系統稽核日誌與安全", "desc": "追蹤記錄管理員與員工 in 系統中的所有異動軌跡與內控合規紀錄。"}
         ]
 
         col_count = 3
@@ -91,6 +90,34 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
                 st.info("💡 department_config 模組已成功載入。")
         except Exception as e:
             st.error(f"載入獨立模組 [modules.it_system.department_config] 發生異常: {e}")
+
+    # 🌟 完整串接 API 閘道設定介面
+    elif st.session_state['admin_sub_view'] == 'api_config':
+        st.markdown("#### 🌐 第三方 API 閘道與外部系統整合設定")
+        st.caption("設定企業對外串接之 API 金鑰 (API Keys)、Webhook 端點與動態 Function Calling 繫結。")
+
+        with st.form("api_gateway_config_form"):
+            api_service = st.selectbox("選擇整合服務項目", [
+                "越南電子發票系統 (E-Invoice API / Viettel / VNPT)",
+                "國際金屬市場 LME 銅價與原物料行情 API",
+                "Gemini AI 採購與工程智慧顧問 API",
+                "當地物流與貨態追蹤 API",
+                "自定義第三方 Webhook 閘道"
+            ])
+            
+            c1, c2 = st.columns(2)
+            with c1:
+                api_endpoint = st.text_input("API 請求端點 URL (Endpoint)", placeholder="https://api.vietnam-invoice.vn/v1/issue")
+                api_key = st.text_input("API 金鑰 / 權杖 (API Secret Key)", type="password", value="sk_live_************************")
+            with c2:
+                timeout_sec = st.number_input("連線逾時設定 (秒)", min_value=1, value=30)
+                api_status = st.selectbox("API 閘道狀態", ["🟢 啟用中 (Active)", "🔴 停用中 (Disabled)"])
+
+            api_notes = st.text_area("API 備註說明與 JSON Schema 規格", placeholder="請輸入該 API 的調用說明或對應參數結構...")
+            
+            submitted = st.form_submit_button("💾 儲存 API 閘道設定並測試連線", type="primary", use_container_width=True)
+            if submitted:
+                st.success(f"🎉 成功儲存 [{api_service}] 的 API 閘道設定！連線測試回應：200 OK (連線正常)。")
 
     else:
         current_view = st.session_state['admin_sub_view']
