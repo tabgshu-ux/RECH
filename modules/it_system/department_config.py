@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：公司組織架構與跨群組彈性業務模組掛載中心（公告正確歸屬管理部）
+# 職責：公司組織架構與跨群組彈性業務模組掛載中心（完整收錄總經理室 7 大模組選項）
 # ==========================================
 
 import streamlit as st
@@ -54,16 +54,21 @@ def render(engine=None, lang="繁體中文", **kwargs):
     with tab_mount:
         st.markdown("#### ⚙️ 跨部門群組彈性業務模組掛載中心")
         
-        dept_names = [d['name'] for d in depts] if depts else ["總經理室", "工程部總覽", "管理部總覽"]
+        dept_names = [d['name'] for d in depts] if depts else ["總經理室", "工程部", "管理部", "生產部", "倉庫管理"]
         selected_dept = st.selectbox("🎯 選擇要掛載模組的目標部門", dept_names, key="mount_dept_select")
 
-        # 🌟 模組分類：公告佈告欄已歸屬至管理部群組
+        # 🌟 完整收錄總經理室 7 大模組與各部門標準功能選單
         categorized_features = {
-            "👑 【總經理室與戰情決策群組】": {
+            "👑 【總經理室與戰情決策群組 (完整 7 大模組)】": {
                 "總經理室 - 跨國營運戰情與決策總覽": "feat_executive",
-                "LME 銅價與原物料行情監控": "feat_lme_commodities",
-                "全球股市 API 指標追蹤": "feat_stock_indices",
-                "多幣別匯率即時換算引擎": "feat_fx_rates"
+                "📈 原料市場與即時外匯行情 (LME 銅價)": "feat_lme_commodities",
+                "📈 全球股市 API 指標追蹤": "feat_stock_indices",
+                "💱 多幣別匯率即時換算引擎": "feat_fx_rates",
+                "💰 完整損益表與會計報表 (Thông tư 200)": "feat_circular_200",
+                "🛠️ 工程專案進度與現場狀態": "feat_eng_overview",
+                "📰 越南政府政策與法規動態": "feat_policy",
+                "🏗️ 工程案場與金額佔比分析": "feat_analytics",
+                "📅 秘書室老闆行程與動土安排管理": "feat_executive"
             },
             "🛠️ 【工程部專屬群組】": {
                 "工程部總覽 / 專案進度追蹤": "feat_eng_overview",
@@ -127,7 +132,8 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     unique_key = f"chk_mount_{selected_dept}_{group_name}_{feat_id}"
                     is_checked = st.checkbox(label, value=(feat_id in mounted_list), key=unique_key)
                     if is_checked:
-                        new_mounted.append(feat_id)
+                        if feat_id not in new_mounted:
+                            new_mounted.append(feat_id)
                 st.markdown("---")
 
             submitted_mount = st.form_submit_button("💾 儲存並即時生效部門模組掛載", type="primary", use_container_width=True)
