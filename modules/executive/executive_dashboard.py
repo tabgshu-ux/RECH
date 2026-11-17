@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/executive/executive_dashboard.py
-# 職責：總經理室總覽與決策中心（完整支援 5 大模組與秘書室老闆行程即時更新系統）
+# 職責：總經理室總覽與決策中心（完整 5 大模組、秘書行程管理與側邊欄導航支援）
 # ==========================================
 
 import streamlit as st
@@ -39,7 +39,7 @@ def init_schedule_table(engine):
                         description TEXT,
                         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
-                %s"""))
+                """))
         except Exception:
             pass
 
@@ -56,7 +56,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
                 st.session_state['exec_active_sub'] = None
                 st.rerun()
         with col_info:
-            st.caption("💡 提示：您可隨時利用左側固定選單切換至其他部門或系統設定。")
+            st.caption("💡 提示：左側固定選單隨時可切換部門與系統設定，免去來回捲動。")
 
         st.markdown("---")
 
@@ -96,9 +96,8 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
                 st.error(f"載入工程案場金額分析模組失敗: {e}")
 
         elif current_sub == 'schedule_mgr':
-            # 🌟 全新秘書室行程管理介面
             st.markdown("### 📅 秘書室管理：老闆專屬行程與動土安排更新中心")
-            st.caption("秘書室專屬模組：在此新增、編輯或刪除老闆的日常行程、工地開工與商會集會，首頁將即時同步更新。")
+            st.caption("秘書室專屬模組：在此新增、編輯或刪除老闆的日常行程、工地開工與商會集會。")
             
             init_schedule_table(engine)
 
@@ -140,7 +139,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
                                 col_info_a, col_info_b = st.columns([4, 1])
                                 with col_info_a:
                                     st.markdown(f"**[{r.get('event_category', '一般行程')}] {r.get('event_title')}**")
-                                    st.caption(時間: `{r.get('event_time')}` | 備註: {r.get('description', '無')})
+                                    st.caption(f"時間: `{r.get('event_time')}` | 備註: {r.get('description', '無')}")
                                 with col_info_b:
                                     if st.button("🗑️ 刪除", key=f"del_sched_{r.get('id')}", use_container_width=True):
                                         with engine.begin() as conn_del:
@@ -171,7 +170,6 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
 
     st.markdown("---")
 
-    # 🌟 動態讀取 Supabase 中的秘書室行程與老闆行程
     init_schedule_table(engine)
     db_schedules = []
     try:
@@ -180,7 +178,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
     except Exception:
         pass
 
-    with st.expander("📅 秘書室回報：近期重要行程、工地動土與商會集會 (點擊可隨時檢視與維護)", expanded=True):
+    with st.expander("📅 秘書室回報：近期重要行程、工地動土與商會集會", expanded=True):
         col_sch_head, col_sch_btn = st.columns([5, 1])
         with col_sch_head:
             st.markdown("**⚡ 秘書室即時排程同步中**")
@@ -206,7 +204,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
 
     mounted_feats = get_mounted_features_for_dept(engine, "總經理室")
 
-    # 🌟 完整收錄總經理室所有勾選項目的卡片對應
+    # 🌟 完整收錄總經理室所有 5 大核心功能與秘書行程模組
     all_exec_sections = [
         {
             "feat_id": "feat_lme_commodities",
