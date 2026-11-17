@@ -17,7 +17,7 @@ def get_mounted_features_for_dept(engine, dept_name):
             res = conn.execute(
                 text("SELECT mounted_features FROM sys_department_modules WHERE dept_name = :d"),
                 {"d": dept_name}
-            .fetchone()
+            ).fetchone()
             if res and res[0]:
                 return [f.strip() for f in res[0].split(",") if f.strip()]
     except Exception:
@@ -41,7 +41,6 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
 
         with col_jump:
             with st.expander("⚡ 快速切換總經理室其他功能...", expanded=False):
-                # 依據資料庫動態產生存取選單
                 mounted_feats = get_mounted_features_for_dept(engine, "總經理室")
                 sub_options = {}
                 
@@ -133,10 +132,8 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
     st.markdown("### 📌 總經理室專屬功能導覽與模組卡片")
     st.caption("💡 提示：以下卡片嚴格依據您在「系統設定 ➡️ 公司部門 ➡️ 跨群組彈性模組掛載」中所勾選的項目動態生成。未勾選的功能將自動隱藏。")
 
-    # 🌟 核心修改：從資料庫撈取總經理室真正被掛載的功能代碼
     mounted_feats = get_mounted_features_for_dept(engine, "總經理室")
 
-    # 定義對應的卡片結構
     all_exec_sections = [
         {
             "feat_id": "feat_lme_commodities",
@@ -170,7 +167,6 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
         },
     ]
 
-    # 篩選出「有被勾選掛載」的卡片
     active_sections = [sec for sec in all_exec_sections if sec['feat_id'] in mounted_feats]
 
     if active_sections:
