@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/engineering/field_gps_attendance.py
-# 職責：外勤打卡、相機拍照、每日進度回報、自由輸入工地名稱與多模式 GPS 座標設定
+# 職責：現場人員專屬：GPS 拍照打卡、每日工作進度回報與離場支援申請（移除雜亂的主管設定與身份切換）
 # ==========================================
 
 import streamlit as st
@@ -9,7 +9,7 @@ from sqlalchemy import text
 import datetime
 
 def init_field_gps_db(engine):
-    """初始化外勤打卡、進度回報與動態圍籬設定資料表"""
+    """初始化外勤打卡與支援申請資料表"""
     if engine is not None:
         try:
             with engine.begin() as conn:
@@ -55,42 +55,32 @@ def init_field_gps_db(engine):
 def render(engine=None, lang="繁體中文", **kwargs):
     init_field_gps_db(engine)
 
-    st.markdown("### ⏱️ 外勤師傅考勤、GPS 圍籬打卡與工程進度回報中心")
-    st.caption("支援自由輸入新工地名稱、多模式 GPS 定位設定與手機相機打卡驗證。")
+    st.markdown("### ⏱️ 外勤工程師與師傅拍照打卡與進度回報中心")
+    st.caption("現場施工人員專用：支援 GPS 圍籬範圍驗證、手機相機拍照存證、每日工作進度回報與提早離場支援申請。")
 
-    # 身份切換模擬
-    user_role = st.selectbox(
-        "👤 當前操作身份 (模擬登入權限):",
-        ["👷 現場工程師 / 外勤工人 (僅能打卡與回報)", "👑 工程部主管 / 系統管理員 (可設定圍籬與審核)"],
-        index=0
-    )
+    # 從資料庫動態讀取主管設定好的工地清單
+    site_options = ["西寧廠二期配電盤擴建工程", "平陽工業區廠房機電統包", "隆安省光電園區變壓器安裝"]
+    if engine is not None:
+        try:
+            df_sites = pd.read_sql("SELECT site_name FROM eng_geofence_settings", con=engine)
+            if not df_sites.empty:
+                site_options = df_sites["site_name"].tolist()
+        except Exception:
+            pass
 
-    is_manager = "主管" in user_role or "管理員" in user_role
+    # 採用乾淨俐落的上下結構或雙 Tab：作業打卡 vs 我的回報紀錄
+    tab_punch, tab_my_records = st.tabs(["📱 現場拍照打卡與進度回報", "📋 我今日的回報與打卡紀錄"])
 
-    if not is_manager:
-        # ==========================================
-        # 👷 【基層員工視角】拍照打卡與每日進度回報
-        # ==========================================
-        st.markdown("---")
-        st.markdown("#### 📱 現場人員拍照打卡與每日工作進度回報")
-        st.info("💡 請在指定案場範圍內進行打卡。下班打卡時必須填寫當日工程進度與上傳施工照片。")
+    with tab_punch:
+        st.markdown("##### 📱 行動打卡與每日施工進度回報表單")
+        st.info("💡 請在指定案場範圍內進行打卡。下班打卡時必須填寫當日工程進度與上傳現場施工照片，以同步至工程部與總經理室戰情。")
 
-        # 從資料庫動態讀取主管設定好的工地清單
-        site_options = ["西寧廠二期配電盤擴建工程", "平陽工業區廠房機電統包", "隆安省光電園區變壓器安裝"]
-        if engine is not None:
-            try:
-                df_sites = pd.read_sql("SELECT site_name FROM eng_geofence_settings", con=engine)
-                if not df_sites.empty:
-                    site_options = df_sites["site_name"].tolist()
-            except Exception:
-                pass
-
-        with st.form("worker_punch_form"):
+        with st.form("worker_clean_punch_form"):
             c1, c2 = st.columns(2)
             with c1:
                 f_emp_id = st.text_input("工號 (Employee ID)", value="EMP-001")
                 f_name = st.text_input("姓名 (Full Name)", value="阮文雄 (Nguyen Van Hung)")
-                f_site = st.selectbox("指派工程案場 / 工地 (取自系統圍籬主檔)", site_options)
+                f_site = st.selectbox("指派工程案場 / 工地", site_options)
                 f_punch_type = st.radio("打卡類型", ["🟢 上班打卡 (現場拍照存證)", "🔴 下班打卡 (工程進度回報 + 施工照)"], horizontal=True)
             with c2:
                 f_lat = st.number_input("GPS 緯度 (Latitude)", value=10.7769, format="%.4f")
@@ -124,124 +114,21 @@ def render(engine=None, lang="繁體中文", **kwargs):
                                 })
                         except Exception as e:
                             st.error(f"資料庫寫入錯誤: {e}")
-                    st.success("🎉 外勤打卡與每日工作進度回報成功！已同步至工程部主管與總經理室戰情中心。")
-
-    else:
-        # ==========================================
-        # 👑 【主管/管理員視角】動態新增工地、自由輸入名稱、多模式 GPS 定位
-        # ==========================================
-        st.markdown("---")
-        st.markdown("#### 👑 工程主管專用：案場圍籬動態設定與進度總覽")
-        
-        tab_mgr1, tab_mgr2, tab_mgr3 = st.tabs([
-            "🗺️ 案場圍籬設定 (支援自由輸入與多模式 GPS)", 
-            "📊 每日施工進度與打卡總表 (供總經理室)", 
-            "🤝 提早離場支援申請審核"
-        ])
-
-        with tab_mgr1:
-            st.markdown("##### 🗺️ 新增或設定案場地理圍籬 (Geofencing)")
-            st.warning("🔒 【安全授權】僅限工程部主管操作。您可直接自由輸入新工地名稱，並透過多種模式取得經緯度座標。")
-
-            with st.form("geofence_setting_form_v2"):
-                # 🌟 解決痛點：支援自由輸入新工地名稱，或從現有清單選擇修改
-                existing_sites = ["西寧廠二期配電盤擴建工程", "平陽工業區廠房機電統包", "隆安省光電園區變壓器安裝"]
-                if engine is not None:
-                    try:
-                        df_s = pd.read_sql("SELECT site_name FROM eng_geofence_settings", con=engine)
-                        if not df_s.empty:
-                            existing_sites = df_s["site_name"].tolist()
-                    except Exception:
-                        pass
-
-                site_mode = st.radio("作業模式", ["➕ 新增全新工地 (自由輸入名稱)", "✏️ 修改現有工地設定"], horizontal=True)
-                
-                if "新增" in site_mode:
-                    new_site_name = st.text_input("📝 請輸入全新工地 / 案場名稱", placeholder="例如: 越南胡志明市新順統包工程")
-                    target_site = new_site_name
+                    st.success("🎉 外勤打卡與每日工作進度回報成功！已自動同步至工程主管與總經理室。")
+                    st.rerun()
                 else:
-                    target_site = st.selectbox("選擇要修改的現有案場", existing_sites)
+                    st.warning("⚠️ 請填寫完整工號與姓名！")
 
-                st.markdown("---")
-                st.markdown("**📍 取得工地經緯度座標模式：**")
-                coord_mode = st.radio(
-                    "選擇座標取得方式", 
-                    [
-                        "🛰️ 模式 A：使用主管當前裝置 GPS 定位（請在工地現場點擊）", 
-                        "🗺️ 模式 B：手動輸入經緯度座標（適用從 Google Maps 複製貼上）"
-                    ]
-                )
-
-                cg1, cg2 = st.columns(2)
-                if "模式 A" in coord_mode:
-                    st.info("💡 系統將自動抓取您當前所在位置的經緯度作為工地中心點。")
-                    m_lat = 10.7769  # 實務上可透過前端 JS 抓取真實裝置 GPS
-                    m_lng = 106.7009
-                    with cg1: st.metric("自動抓取緯度 (Lat)", f"{m_lat}")
-                    with cg2: st.metric("自動抓取經緯度 (Lng)", f"{m_lng}")
+    with tab_my_records:
+        st.markdown("##### 📋 我今日提交的打卡與進度回報清單")
+        if engine is not None:
+            try:
+                df_my = pd.read_sql("SELECT record_id AS 紀錄編號, site_name AS 案場, punch_type AS 類型, work_progress AS 進度回報, check_time AS 時間, has_photo AS 現場照片 FROM hr_field_gps ORDER BY check_time DESC LIMIT 20", con=engine)
+                if df_my.empty:
+                    st.info("目前尚無打卡紀錄。")
                 else:
-                    with cg1:
-                        m_lat = st.text_input("中心點緯度 (Latitude)", value="10.7769")
-                    with cg2:
-                        m_lng = st.text_input("中心點經度 (Longitude)", value="106.7009")
-
-                m_radius = st.slider("圍籬允許半徑範圍 (公尺)", min_value=100, max_value=3000, value=500, step=50)
-                m_status = st.selectbox("圍籬防護狀態", ["🟢 啟用中 (強制限制打卡範圍)", "🔴 暫時關閉"])
-
-                # 嵌入 Google Maps 預覽
-                st.markdown("**🗺️ Google Maps 案場圍籬即時預覽**")
-                try:
-                    lat_float = float(m_lat)
-                    lng_float = float(m_lng)
-                except Exception:
-                    lat_float, lng_float = 10.7769, 106.7009
-
-                map_html = f"""
-                <iframe width="100%" height="300" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" 
-                    src="https://maps.google.com/maps?q={lat_float},{lng_float}&z=15&output=embed">
-                </iframe>
-                """
-                st.markdown(map_html, unsafe_allow_html=True)
-
-                if st.form_submit_button("💾 儲存並建立該案場地理圍籬設定", type="primary", use_container_width=True):
-                    if not target_site:
-                        st.error("⚠️ 請輸入或選擇有效的工地名稱！")
-                    else:
-                        if engine is not None:
-                            try:
-                                with engine.begin() as conn:
-                                    conn.execute(text("""
-                                        INSERT INTO eng_geofence_settings (site_name, lat, lng, radius_meters, status)
-                                        VALUES (:s, :lat, :lng, :r, :st)
-                                        ON CONFLICT (site_name) DO UPDATE 
-                                        SET lat = EXCLUDED.lat, lng = EXCLUDED.lng, radius_meters = EXCLUDED.radius_meters, status = EXCLUDED.status;
-                                    """), {"s": target_site.strip(), "lat": lat_float, "lng": lng_float, "r": m_radius, "st": m_status})
-                                st.success(f"🎉 成功儲存案場 [{target_site}] 的圍籬設定！所有外勤人員即刻生效。")
-                            except Exception as e:
-                                st.error(f"資料庫儲存失敗: {e}")
-
-        with tab_mgr2:
-            st.markdown("##### 📊 每日施工進度與打卡總表 (同步總經理室)")
-            if engine is not None:
-                try:
-                    df_all = pd.read_sql("SELECT record_id AS 紀錄編號, emp_id AS 工號, emp_name AS 姓名, site_name AS 案場, punch_type AS 類型, work_progress AS 每日進度回報, check_time AS 打卡時間, has_photo AS 現場照片 FROM hr_field_gps ORDER BY check_time DESC", con=engine)
-                    if df_all.empty:
-                        st.info("目前尚無外勤打卡與進度回報紀錄。")
-                    else:
-                        st.dataframe(df_all, use_container_width=True, hide_index=True)
-                except Exception as e:
-                    st.warning(f"讀取資料庫失敗: {e}")
-            else:
-                st.info("資料庫連線尚未建立。")
-
-        with tab_mgr3:
-            st.markdown("##### 🤝 員工提早離場支援申請審核清單")
-            if engine is not None:
-                try:
-                    df_sup = pd.read_sql("SELECT id, emp_name AS 員工姓名, from_project AS 原工地, target_project AS 支援目標工地, reason AS 支援原因, status AS 審核狀態, created_at AS 申請時間 FROM eng_support_requests ORDER BY id DESC", con=engine)
-                    if df_sup.empty:
-                        st.info("目前尚無任何支援申請。")
-                    else:
-                        st.dataframe(df_sup, use_container_width=True, hide_index=True)
-                except Exception as e:
-                    st.warning(f"讀取支援紀錄失敗: {e}")
+                    st.dataframe(df_my, use_container_width=True, hide_index=True)
+            except Exception as e:
+                st.warning(f"讀取紀錄失敗: {e}")
+        else:
+            st.info("資料庫連線尚未建立。")
