@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：公司組織架構與跨群組彈性業務模組掛載中心（100% 精準對應現有 Supabase 資料表）
+# 職責：公司組織架構與跨群組彈性業務模組掛載中心
 # ==========================================
 
 import streamlit as st
@@ -106,21 +106,14 @@ def render(engine=None, lang="繁體中文", **kwargs):
             }
         }
 
-        # 讀取該部門目前已掛載的模組（自動相容 dept_name 或 department_name）
+        # 讀取該部門目前已掛載的模組
         mounted_list = []
         try:
             with engine.connect() as conn:
-                res = None
-                for col in ['dept_name', 'department_name']:
-                    try:
-                        res = conn.execute(
-                            text(f"SELECT mounted_features FROM sys_department_modules WHERE {col} = :d"),
-                            {"d": selected_dept}
-                        ).fetchone()
-                        if res:
-                            break
-                    except Exception:
-                        continue
+                res = conn.execute(
+                    text("SELECT mounted_features FROM sys_department_modules WHERE department_name = :d"),
+                    {"d": selected_dept}
+                ).fetchone()
                 if res and res[0]:
                     mounted_list = [f.strip() for f in res[0].split(",") if f.strip()]
         except Exception:
@@ -141,25 +134,14 @@ def render(engine=None, lang="繁體中文", **kwargs):
             if submitted_mount:
                 mounted_str = ",".join(new_mounted)
                 try:
-                    # 🌟 透過獨立連線與自動判斷欄位寫入，徹底解決交易掛掉的問題
                     with engine.connect() as conn:
-                        saved = False
-                        for col in ['dept_name', 'department_name']:
-                            try:
-                                conn.execute(text(f"""
-                                    INSERT INTO sys_department_modules ({col}, mounted_features, updated_at)
-                                    VALUES (:dname, :feats, CURRENT_TIMESTAMP)
-                                    ON CONFLICT ({col}) 
-                                    DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
-                                """), {"dname": selected_dept, "feats": mounted_str})
-                                conn.commit()
-                                saved = True
-                                break
-                            except Exception:
-                                conn.rollback()
-                        
-                        if not saved:
-                            raise Exception("無法找到匹配的欄位進行寫入。")
+                        conn.execute(text("""
+                            INSERT INTO sys_department_modules (department_name, mounted_features, updated_at)
+                            VALUES (:dname, :feats, CURRENT_TIMESTAMP)
+                            ON CONFLICT (department_name) 
+                            DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
+                        """), {"dname": selected_dept, "feats": mounted_str})
+                        conn.commit()
 
                     st.success(f"🎉 【{selected_dept}】的業務模組掛載已成功儲存並即時生效！")
                     st.balloons()
