@@ -1,11 +1,41 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：公司組織架構與跨群組彈性業務模組掛載中心（智慧相容 sys_department_modules 表結構）
+# 職責：公司組織架構與跨群組彈性業務模組掛載中心（全面修復資料庫交易與欄位對應）
 # ==========================================
 
 import streamlit as st
 import pandas as pd
 from sqlalchemy import text
+
+def init_tables(engine):
+    """確保必要的系統設定資料表結構正確無誤"""
+    if engine:
+        try:
+            with engine.begin() as conn:
+                # 確保部門表存在
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS sys_departments (
+                        id SERIAL PRIMARY KEY,
+                        dept_code VARCHAR(50) UNIQUE NOT NULL,
+                        dept_name_zh VARCHAR(150),
+                        dept_name VARCHAR(150),
+                        name VARCHAR(150),
+                        parent_dept VARCHAR(150) DEFAULT '總公司',
+                        level_tier VARCHAR(10) DEFAULT 'L1',
+                        is_active BOOLEAN DEFAULT TRUE,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+                # 確保模組掛載表存在，並以 department_name 作為主鍵
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS sys_department_modules (
+                        department_name VARCHAR(150) PRIMARY KEY,
+                        mounted_features TEXT,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """))
+        except Exception:
+            pass
 
 def render(engine=None, lang="繁體中文", **kwargs):
     st.markdown("### 🏢 公司組織架構與 L1~L4 彈性模組掛載中心")
@@ -14,6 +44,8 @@ def render(engine=None, lang="繁體中文", **kwargs):
     if not engine:
         st.warning("⚠️ 系統尚未連線至資料庫引擎。")
         return
+
+    init_tables(engine)
 
     tab_tree, tab_mount, tab_add = st.tabs(["🌳 現有組織樹與狀態管理", "⚙️ 跨群組彈性模組掛載", "➕ 新增擴編 L1~L4 部門"])
 
@@ -110,9 +142,8 @@ def render(engine=None, lang="繁體中文", **kwargs):
         mounted_list = []
         try:
             with engine.connect() as conn:
-                # 智慧檢測欄位名稱讀取
                 res = conn.execute(
-                    text("SELECT mounted_features FROM sys_department_modules WHERE dept_name = :d OR department_name = :d"),
+                    text("SELECT mounted_features FROM sys_department_modules WHERE department_name = :d"),
                     {"d": selected_dept}
                 ).fetchone()
                 if res and res[0]:
@@ -136,23 +167,15 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 try:
                     mounted_str = ",".join(new_mounted)
                     with engine.begin() as conn:
-                        # 🌟 智慧自動相容寫入：同時支援 dept_name 與 department_name 欄位
-                        try:
-                            conn.execute(text("""
-                                INSERT INTO sys_department_modules (dept_name, department_name, mounted_features, updated_at)
-                                VALUES (:dname, :dname, :feats, CURRENT_TIMESTAMP)
-                                ON CONFLICT (dept_name) 
-                                DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
-                            """), {"dname": selected_dept, "feats": mounted_str})
-                        except Exception:
-                            conn.execute(text("""
-                                INSERT INTO sys_department_modules (department_name, mounted_features, updated_at)
-                                VALUES (:dname, :feats, CURRENT_TIMESTAMP)
-                                ON CONFLICT (department_name) 
-                                DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
-                            """), {"dname": selected_dept, "feats": mounted_str})
+                        # 採用正確的 department_name 欄位進行 Upsert
+                        conn.execute(text("""
+                            INSERT INTO sys_department_modules (department_name, mounted_features, updated_at)
+                            VALUES (:dname, :feats, CURRENT_TIMESTAMP)
+                            ON CONFLICT (department_name) 
+                            DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
+                        """), {"dname": selected_dept, "feats": mounted_str})
 
-                    st.success(f"🎉 [{selected_dept}] 的業務模組掛載已成功更新並即時生效！")
+                    st.success(f"🎉 [{selected_dept}] 的業務模組掛載已成功儲存並即時生效！")
                     st.rerun()
                 except Exception as e:
                     st.error(f"儲存掛載失敗: {e}")
