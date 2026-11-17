@@ -11,7 +11,7 @@ def init_dept_tables(engine):
     if engine is not None:
         try:
             with engine.begin() as conn:
-                # 1. 組織部門表（支援 L1~L4 階層與停用狀態）
+                # 1. 組織部門表（支援 L1~L4 階層與停用狀態，保護合約與歷史資料）
                 conn.execute(text("""
                     CREATE TABLE IF NOT EXISTS sys_departments (
                         id SERIAL PRIMARY KEY,
@@ -130,7 +130,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
 
         selected_dept = st.selectbox("🎯 選擇要掛載模組的目標部門（可任意指定大小部門）", dept_names, key="mount_dept_select")
 
-        # 🌟 清楚標明功能所屬群組（Group），方便使用者跨部門彈性兼任勾選
+        # 清楚標明功能所屬群組，方便跨部門彈性兼任勾選
         categorized_features = {
             "🏢 【管理與公告群組】": {
                 "管理部總覽 / 戰情室": "feat_mgmt_supervisor",
@@ -173,7 +173,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
         with st.form("dept_modules_mount_form"):
             new_mounted = []
             
-            # 依據群組分類逐一渲染勾選框
             for group_name, features in categorized_features.items():
                 st.markdown(f"**{group_name}**")
                 for label, feat_id in features.items():
@@ -205,7 +204,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
         st.markdown("#### ➕ 新增擴編組織部門 (支援 L1～L4 層級與上級指定)")
         st.caption("在此新增部門（例如在管理部底下新增 L2 行政課或 L3 總務組），新增後將自動同步至左側導覽列。")
 
-        # 撈取現有可用上級部門
         try:
             with engine.connect() as conn:
                 parent_rows = conn.execute(text("SELECT dept_name FROM sys_departments WHERE is_active = TRUE")).fetchall()
@@ -229,7 +227,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     try:
                         tier_code = tier_opt.split(" ")[0]
                         with engine.begin() as conn:
-                            # 1. 寫入部門表
                             conn.execute(text("""
                                 INSERT INTO sys_departments (dept_code, dept_name, parent_dept, level_tier, is_active, updated_at)
                                 VALUES (:code, :name, :parent, :tier, TRUE, CURRENT_TIMESTAMP)
@@ -241,7 +238,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
                                 "parent": parent_opt,
                                 "tier": tier_code
                             })
-                            # 2. 初始化預設模組掛載
                             conn.execute(text("""
                                 INSERT INTO sys_department_modules (dept_name, mounted_features)
                                 VALUES (:dname, 'feat_mgmt_supervisor,feat_announcements')
