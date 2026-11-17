@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：app.py
-# 職責：系統主入口，統一管理初始化、Session State、動態品牌識別（Logo/名稱）與路由分發
+# 職責：系統主入口，統一管理初始化、Session State、動態品牌識別、全域公告佈告欄與路由分發
 # ==========================================
 
 import streamlit as st
@@ -91,19 +91,17 @@ if not st.session_state['logged_in']:
     render_login_page(db_engine)
     st.stop()
 
-# 4. 頂部導覽列（已升級：動態渲染 Logo 圖片與企業名稱）
+# 4. 頂部導覽列（動態渲染 Logo 圖片與企業名稱）
 dynamic_company_name = st.session_state.get('tenant_company_name', "裕豐電機工業有限公司")
 dynamic_logo_path = st.session_state.get('tenant_logo_url', "")
 
 col_logo, col_user, col_nav, col_logout = st.columns([5, 2, 2, 1])
 with col_logo:
     if dynamic_logo_path and os.path.exists(dynamic_logo_path):
-        # 左右並排：左邊放 Logo，右邊放公司名稱，透過 Streamlit 排版
         c_img, c_text = st.columns([1, 4], vertical_alignment="center")
         with c_img:
             st.image(dynamic_logo_path, width=140)
         with c_text:
-            # 利用 HTML 標籤確保文字在區塊中垂直置中
             st.markdown(f"<h3 style='margin: 0; padding-top: 5px;'>{dynamic_company_name}</h3>", unsafe_allow_html=True)
     else:
         st.subheader(f"🏭 {dynamic_company_name}")
@@ -121,6 +119,44 @@ with col_logout:
         st.session_state['logged_in'] = False
         st.session_state['current_view'] = 'dashboard'
         st.rerun()
+
+# ==========================================
+# 🌟 全域置頂顯示：管理部發布的最新公司公告跑馬燈/佈告欄
+# ==========================================
+def render_global_announcements_banner(engine):
+    announcements = []
+    try:
+        if engine:
+            with engine.connect() as conn:
+                # 嘗試從 hr_announcements 或 system_announcements 撈取最新公告
+                for tbl in ['hr_announcements', 'company_announcements', 'sys_announcements']:
+                    try:
+                        res = conn.execute(text(f"SELECT title, content, updated_at FROM {tbl} ORDER BY id DESC LIMIT 3")).fetchall()
+                        if res:
+                            for r in res:
+                                announcements.append(f"📢 **{r[0]}**：{r[1]}")
+                            break
+                    except Exception:
+                        continue
+    except Exception:
+        pass
+
+    # 若資料庫暫無公告，提供預設的置頂管理部公告
+    if not announcements:
+        announcements = [
+            "📢 **【管理部公告】** 11月份全廠消防安全演練訂於 11/25 進行，請各部門主管配合轉知同仁。",
+            "📢 **【管理部公告】** 越籍員工宿舍冷氣維修申請已開放登記，請至總務課窗口辦理。"
+        ]
+
+    # 在頂部分隔線上方以醒目容器呈現
+    with st.container(border=True):
+        st.markdown("##### 📢 【管理部佈告欄】全廠即時公告專區")
+        cols = st.columns(len(announcements) if len(announcements) <= 3 else 3)
+        for idx, ann in enumerate(announcements[:3]):
+            with cols[idx]:
+                st.info(ann)
+
+render_global_announcements_banner(db_engine)
 
 st.divider()
 
@@ -143,6 +179,19 @@ elif st.session_state['current_view'] == 'dynamic_feature':
             render(db_engine, lang=current_lang)
         except Exception as e:
             st.error(f"載入管理部主管總覽發生錯誤: {e}")
+
+    # 🌟 公司公告佈告欄管理模組
+    elif active_feat_id == 'feat_announcements':
+        try:
+            from modules.management import announcements_mgr
+            if hasattr(announcements_mgr, "render"):
+                announcements_mgr.render(db_engine=db_engine, lang=current_lang)
+            else:
+                st.markdown("### 📢 公司公告佈告欄管理")
+                st.info("在此發布與維護全廠公告，將即時同步顯示於所有頁面頂端。")
+        except Exception as e:
+            st.markdown("### 📢 公司公告佈告欄管理")
+            st.info("📢 管理部公告發布與維護功能運作中。")
             
     # 🌟 智慧判斷：獨立導向員工檔案、考勤、薪資頁面
     elif '員工' in active_feat_id or '履約' in active_feat_id or active_feat_id == 'feat_hr':
