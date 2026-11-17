@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/executive/executive_dashboard.py
-# 職責：總經理室總覽與決策中心（100% 與 Supabase 資料庫模組掛載動態連線）
+# 職責：總經理室總覽與決策中心（100% 精準對應資料庫掛載代碼）
 # ==========================================
 
 import streamlit as st
@@ -23,8 +23,7 @@ def get_mounted_features_for_dept(engine, dept_name):
     except Exception:
         pass
     
-    # 預設回傳總經理室的基本功能，避免全新資料庫完全空白
-    return ['feat_executive', 'feat_lme_commodities', 'feat_stock_indices', 'feat_fx_rates', 'feat_circular_200']
+    return ['feat_executive', 'feat_lme_commodities', 'feat_stock_indices', 'feat_fx_rates', 'feat_exec_announcements']
 
 def render_executive_main(engine=None, lang="繁體中文", **kwargs):
     if 'exec_active_sub' not in st.session_state:
@@ -132,8 +131,10 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
     st.markdown("### 📌 總經理室專屬功能導覽與模組卡片")
     st.caption("💡 提示：以下卡片嚴格依據您在「系統設定 ➡️ 公司部門 ➡️ 跨群組彈性模組掛載」中所勾選的項目動態生成。未勾選的功能將自動隱藏。")
 
+    # 撈取資料庫實際掛載的模組代碼
     mounted_feats = get_mounted_features_for_dept(engine, "總經理室")
 
+    # 🌟 完整收錄總經理室所有可能的專屬卡片與對應的 feat_id
     all_exec_sections = [
         {
             "feat_id": "feat_lme_commodities",
@@ -167,6 +168,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
         },
     ]
 
+    # 🌟 如果資料庫中有勾選這些模組，就把它們撈出來顯示
     active_sections = [sec for sec in all_exec_sections if sec['feat_id'] in mounted_feats]
 
     if active_sections:
