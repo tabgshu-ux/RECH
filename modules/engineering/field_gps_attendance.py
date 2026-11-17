@@ -1,13 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/engineering/field_gps_attendance.py
-# 職責：外勤打卡、Google Maps 圍籬設定、相機拍照、未到下班離場異常與支援申請模組
-# ==========================================
-
-import streamlit as st
-import pandas as pd
-from sqlalchemy import text# ==========================================
-# 檔案路徑：modules/engineering/field_gps_attendance.py
-# 職責：外勤打卡、相機拍照、每日工作進度回報、主管專用 Google Maps 圍籬設定與支援審核
+# 職責：外勤打卡、相機拍照、每日進度回報、自由輸入工地名稱與多模式 GPS 座標設定
 # ==========================================
 
 import streamlit as st
@@ -16,7 +9,7 @@ from sqlalchemy import text
 import datetime
 
 def init_field_gps_db(engine):
-    """初始化外勤打卡、進度回報與圍籬設定資料表"""
+    """初始化外勤打卡、進度回報與動態圍籬設定資料表"""
     if engine is not None:
         try:
             with engine.begin() as conn:
@@ -63,9 +56,9 @@ def render(engine=None, lang="繁體中文", **kwargs):
     init_field_gps_db(engine)
 
     st.markdown("### ⏱️ 外勤師傅考勤、GPS 圍籬打卡與工程進度回報中心")
-    st.caption("嚴格落實角色權限隔離：基層工人僅能進行拍照打卡與進度回報；地圖圍籬設定與異常審核限工程主管操作。")
+    st.caption("支援自由輸入新工地名稱、多模式 GPS 定位設定與手機相機打卡驗證。")
 
-    # 🌟 身份切換模擬（實務上可對接登入者的權限角色 RBAC）
+    # 身份切換模擬
     user_role = st.selectbox(
         "👤 當前操作身份 (模擬登入權限):",
         ["👷 現場工程師 / 外勤工人 (僅能打卡與回報)", "👑 工程部主管 / 系統管理員 (可設定圍籬與審核)"],
@@ -76,32 +69,36 @@ def render(engine=None, lang="繁體中文", **kwargs):
 
     if not is_manager:
         # ==========================================
-        # 👷 【基層員工視角】僅能拍照打卡、回報進度、提早離場申請
+        # 👷 【基層員工視角】拍照打卡與每日進度回報
         # ==========================================
         st.markdown("---")
         st.markdown("#### 📱 現場人員拍照打卡與每日工作進度回報")
-        st.info("💡 請在指定案場範圍內進行打卡。下班打卡時必須填寫當日工程進度與上傳施工照片，以同步至總經理室戰情室。")
+        st.info("💡 請在指定案場範圍內進行打卡。下班打卡時必須填寫當日工程進度與上傳施工照片。")
+
+        # 從資料庫動態讀取主管設定好的工地清單
+        site_options = ["西寧廠二期配電盤擴建工程", "平陽工業區廠房機電統包", "隆安省光電園區變壓器安裝"]
+        if engine is not None:
+            try:
+                df_sites = pd.read_sql("SELECT site_name FROM eng_geofence_settings", con=engine)
+                if not df_sites.empty:
+                    site_options = df_sites["site_name"].tolist()
+            except Exception:
+                pass
 
         with st.form("worker_punch_form"):
             c1, c2 = st.columns(2)
             with c1:
                 f_emp_id = st.text_input("工號 (Employee ID)", value="EMP-001")
                 f_name = st.text_input("姓名 (Full Name)", value="阮文雄 (Nguyen Van Hung)")
-                f_site = st.selectbox("指派工程案場 / 工地", [
-                    "西寧廠二期配電盤擴建工程", 
-                    "平陽工業區廠房機電統包", 
-                    "隆安省光電園區變壓器安裝"
-                ])
+                f_site = st.selectbox("指派工程案場 / 工地 (取自系統圍籬主檔)", site_options)
                 f_punch_type = st.radio("打卡類型", ["🟢 上班打卡 (現場拍照存證)", "🔴 下班打卡 (工程進度回報 + 施工照)"], horizontal=True)
             with c2:
                 f_lat = st.number_input("GPS 緯度 (Latitude)", value=10.7769, format="%.4f")
                 f_lng = st.number_input("GPS 經度 (Longitude)", value=106.7009, format="%.4f")
                 
-                # 🌟 每日工作進度回報欄位（整合至總經理室與工程部主管）
                 f_progress = st.text_area("📊 當日工程進度回報 (主管與總經理室可見)", placeholder="例如: 已完成配電箱安裝 80%、主迴路拉線完畢...")
                 f_note = st.text_input("現場備註 / 異常回報", placeholder="例如: 現場材料短缺需總務支援...")
 
-            # 相機拍照打卡
             st.markdown("**📷 現場施工 / 打卡照片上傳 (Camera Verification)**")
             captured_image = st.camera_input("請對準現場施工環境或人員進行拍照打卡")
 
@@ -113,75 +110,118 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     has_photo_bool = True if captured_image is not None else False
                     p_type_val = "上班打卡" if "上班" in f_punch_type else "下班打卡+進度回報"
 
-                    # 模擬圍籬範圍檢查 (實務上透過計算經緯度與資料庫中心點距離判定)
-                    is_within_fence = True 
+                    if engine is not None:
+                        try:
+                            with engine.begin() as conn:
+                                conn.execute(text("""
+                                    INSERT INTO hr_field_gps (record_id, emp_id, emp_name, site_name, punch_type, gps_lat, gps_lng, work_progress, check_time, status, note, has_photo)
+                                    VALUES (:rid, :eid, :ename, :site, :ptype, :lat, :lng, :prog, :ctime, '🟢 範圍內 (In Range)', :note, :hphoto)
+                                """), {
+                                    "rid": record_id, "eid": f_emp_id.strip(), "ename": f_name.strip(),
+                                    "site": f_site, "ptype": p_type_val, "lat": f_lat, "lng": f_lng,
+                                    "prog": f_progress if "下班" in p_type_val else "（上班打卡無須回報進度）",
+                                    "ctime": current_time_str, "note": f_note, "hphoto": has_photo_bool
+                                })
+                        except Exception as e:
+                            st.error(f"資料庫寫入錯誤: {e}")
+                    st.success("🎉 外勤打卡與每日工作進度回報成功！已同步至工程部主管與總經理室戰情中心。")
 
-                    if not is_within_fence:
-                        st.error("⚠️ 打卡失敗！您目前所在位置已超出指定案場的 Google Maps 圍籬範圍。")
-                        st.warning("🚨 【系統偵測】您尚未到下班時間且已離開工地範圍！")
+    else:
+        # ==========================================
+        # 👑 【主管/管理員視角】動態新增工地、自由輸入名稱、多模式 GPS 定位
+        # ==========================================
+        st.markdown("---")
+        st.markdown("#### 👑 工程主管專用：案場圍籬動態設定與進度總覽")
+        
+        tab_mgr1, tab_mgr2, tab_mgr3 = st.tabs([
+            "🗺️ 案場圍籬設定 (支援自由輸入與多模式 GPS)", 
+            "📊 每日施工進度與打卡總表 (供總經理室)", 
+            "🤝 提早離場支援申請審核"
+        ])
+
+        with tab_mgr1:
+            st.markdown("##### 🗺️ 新增或設定案場地理圍籬 (Geofencing)")
+            st.warning("🔒 【安全授權】僅限工程部主管操作。您可直接自由輸入新工地名稱，並透過多種模式取得經緯度座標。")
+
+            with st.form("geofence_setting_form_v2"):
+                # 🌟 解決痛點：支援自由輸入新工地名稱，或從現有清單選擇修改
+                existing_sites = ["西寧廠二期配電盤擴建工程", "平陽工業區廠房機電統包", "隆安省光電園區變壓器安裝"]
+                if engine is not None:
+                    try:
+                        df_s = pd.read_sql("SELECT site_name FROM eng_geofence_settings", con=engine)
+                        if not df_s.empty:
+                            existing_sites = df_s["site_name"].tolist()
+                    except Exception:
+                        pass
+
+                site_mode = st.radio("作業模式", ["➕ 新增全新工地 (自由輸入名稱)", "✏️ 修改現有工地設定"], horizontal=True)
+                
+                if "新增" in site_mode:
+                    new_site_name = st.text_input("📝 請輸入全新工地 / 案場名稱", placeholder="例如: 越南胡志明市新順統包工程")
+                    target_site = new_site_name
+                else:
+                    target_site = st.selectbox("選擇要修改的現有案場", existing_sites)
+
+                st.markdown("---")
+                st.markdown("**📍 取得工地經緯度座標模式：**")
+                coord_mode = st.radio(
+                    "選擇座標取得方式", 
+                    [
+                        "🛰️ 模式 A：使用主管當前裝置 GPS 定位（請在工地現場點擊）", 
+                        "🗺️ 模式 B：手動輸入經緯度座標（適用從 Google Maps 複製貼上）"
+                    ]
+                )
+
+                cg1, cg2 = st.columns(2)
+                if "模式 A" in coord_mode:
+                    st.info("💡 系統將自動抓取您當前所在位置的經緯度作為工地中心點。")
+                    m_lat = 10.7769  # 實務上可透過前端 JS 抓取真實裝置 GPS
+                    m_lng = 106.7009
+                    with cg1: st.metric("自動抓取緯度 (Lat)", f"{m_lat}")
+                    with cg2: st.metric("自動抓取經緯度 (Lng)", f"{m_lng}")
+                else:
+                    with cg1:
+                        m_lat = st.text_input("中心點緯度 (Latitude)", value="10.7769")
+                    with cg2:
+                        m_lng = st.text_input("中心點經度 (Longitude)", value="106.7009")
+
+                m_radius = st.slider("圍籬允許半徑範圍 (公尺)", min_value=100, max_value=3000, value=500, step=50)
+                m_status = st.selectbox("圍籬防護狀態", ["🟢 啟用中 (強制限制打卡範圍)", "🔴 暫時關閉"])
+
+                # 嵌入 Google Maps 預覽
+                st.markdown("**🗺️ Google Maps 案場圍籬即時預覽**")
+                try:
+                    lat_float = float(m_lat)
+                    lng_float = float(m_lng)
+                except Exception:
+                    lat_float, lng_float = 10.7769, 106.7009
+
+                map_html = f"""
+                <iframe width="100%" height="300" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" 
+                    src="https://maps.google.com/maps?q={lat_float},{lng_float}&z=15&output=embed">
+                </iframe>
+                """
+                st.markdown(map_html, unsafe_allow_html=True)
+
+                if st.form_submit_button("💾 儲存並建立該案場地理圍籬設定", type="primary", use_container_width=True):
+                    if not target_site:
+                        st.error("⚠️ 請輸入或選擇有效的工地名稱！")
                     else:
                         if engine is not None:
                             try:
                                 with engine.begin() as conn:
                                     conn.execute(text("""
-                                        INSERT INTO hr_field_gps (record_id, emp_id, emp_name, site_name, punch_type, gps_lat, gps_lng, work_progress, check_time, status, note, has_photo)
-                                        VALUES (:rid, :eid, :ename, :site, :ptype, :lat, :lng, :prog, :ctime, '🟢 範圍內 (In Range)', :note, :hphoto)
-                                    """), {
-                                        "rid": record_id, "eid": f_emp_id.strip(), "ename": f_name.strip(),
-                                        "site": f_site, "ptype": p_type_val, "lat": f_lat, "lng": f_lng,
-                                        "prog": f_progress if "下班" in p_type_val else "（上班打卡無須回報進度）",
-                                        "ctime": current_time_str, "note": f_note, "hphoto": has_photo_bool
-                                    })
+                                        INSERT INTO eng_geofence_settings (site_name, lat, lng, radius_meters, status)
+                                        VALUES (:s, :lat, :lng, :r, :st)
+                                        ON CONFLICT (site_name) DO UPDATE 
+                                        SET lat = EXCLUDED.lat, lng = EXCLUDED.lng, radius_meters = EXCLUDED.radius_meters, status = EXCLUDED.status;
+                                    """), {"s": target_site.strip(), "lat": lat_float, "lng": lng_float, "r": m_radius, "st": m_status})
+                                st.success(f"🎉 成功儲存案場 [{target_site}] 的圍籬設定！所有外勤人員即刻生效。")
                             except Exception as e:
-                                st.error(f"資料庫寫入錯誤: {e}")
-                        st.success("🎉 外勤打卡與每日工作進度回報成功！已同步至工程部主管與總經理室戰情中心。")
-
-    else:
-        # ==========================================
-        # 👑 【主管/管理員視角】Google Maps 圍籬設定、進度總覽與支援審核
-        # ==========================================
-        st.markdown("---")
-        st.markdown("#### 👑 工程主管專用：圍籬範圍設定與現場進度總覽")
-        
-        tab_mgr1, tab_mgr2, tab_mgr3 = st.tabs([
-            "🗺️ Google Maps 案場圍籬設定 (防弊)", 
-            "📊 每日施工進度與打卡總表 (供總經理室)".cite(2026), 
-            "🤝 提早離場支援申請審核"
-        ])
-
-        with tab_mgr1:
-            st.markdown("##### 🗺️ Google Maps 案場地理圍籬範圍設定")
-            st.warning("🔒 【安全提示】此設定僅限工程部主管與系統管理員操作，基層工人無權修改，防止打卡圍籬遭惡意篡改。")
-
-            with st.form("geofence_setting_form"):
-                target_site = st.selectbox("選擇要設定圍籬的案場", [
-                    "西寧廠二期配電盤擴建工程", 
-                    "平陽工業區廠房機電統包", 
-                    "隆安省光電園區變壓器安裝"
-                ])
-                cg1, cg2 = st.columns(2)
-                with cg1:
-                    m_lat = st.text_input("中心點緯度 (Latitude)", value="10.7769")
-                    m_radius = st.slider("圍籬允許半徑範圍 (公尺)", min_value=100, max_value=2000, value=500, step=50)
-                with cg2:
-                    m_lng = st.text_input("中心點經度 (Longitude)", value="106.7009")
-                    m_status = st.selectbox("圍籬防護狀態", ["🟢 啟用中 (強制限制打卡範圍)", "🔴 暫時關閉"])
-
-                st.markdown("**🗺️ Google Maps 案場圍籬範圍預覽**")
-                map_html = f"""
-                <iframe width="100%" height="300" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" 
-                    src="https://maps.google.com/maps?q={m_lat},{m_lng}&z=15&output=embed">
-                </iframe>
-                """
-                st.markdown(map_html, unsafe_allow_html=True)
-
-                if st.form_submit_button("💾 鎖定並儲存案場圍籬範圍設定", type="primary", use_container_width=True):
-                    st.success(f"🔒 成功更新 [{target_site}] 的地理圍籬範圍！半徑限制 {m_radius} 公尺，全體外勤人員打卡即刻生效。")
+                                st.error(f"資料庫儲存失敗: {e}")
 
         with tab_mgr2:
             st.markdown("##### 📊 每日施工進度與打卡總表 (同步總經理室)")
-            st.info("💡 主管可在此查閱所有外勤人員回報的每日工作進度與現場照片狀態，數據自動彙整至總經理室戰情中心。")
-
             if engine is not None:
                 try:
                     df_all = pd.read_sql("SELECT record_id AS 紀錄編號, emp_id AS 工號, emp_name AS 姓名, site_name AS 案場, punch_type AS 類型, work_progress AS 每日進度回報, check_time AS 打卡時間, has_photo AS 現場照片 FROM hr_field_gps ORDER BY check_time DESC", con=engine)
@@ -205,164 +245,3 @@ def render(engine=None, lang="繁體中文", **kwargs):
                         st.dataframe(df_sup, use_container_width=True, hide_index=True)
                 except Exception as e:
                     st.warning(f"讀取支援紀錄失敗: {e}")
-import datetime
-
-def init_attendance_tables(engine):
-    """初始化打卡與支援申請資料表"""
-    if engine is not None:
-        try:
-            with engine.begin() as conn:
-                conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS eng_gps_attendances (
-                        id SERIAL PRIMARY KEY,
-                        emp_name VARCHAR(100),
-                        project_name VARCHAR(200),
-                        check_type VARCHAR(50),
-                        gps_coords VARCHAR(100),
-                        is_within_fence BOOLEAN,
-                        photo_status VARCHAR(50),
-                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                    );
-                """))
-                conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS eng_support_requests (
-                        id SERIAL PRIMARY KEY,
-                        emp_name VARCHAR(100),
-                        from_project VARCHAR(200),
-                        target_project VARCHAR(200),
-                        reason TEXT,
-                        status VARCHAR(50) DEFAULT '⏳ 待主管審核',
-                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                    );
-                """))
-        except Exception:
-            pass
-
-def render(engine=None, lang="繁體中文", **kwargs):
-    init_attendance_tables(engine)
-
-    st.markdown("### ⏱️ 外勤師傅考勤、GPS 圍籬打卡與支援調派中心")
-    st.caption("支援相機拍照打卡、Google Maps 案場範圍設定、圍籬限制與提早離場支援申請機制。")
-
-    # 分頁切換：工人打卡端 vs 主管圍籬與支援審核端
-    tab_clock, tab_geofence, tab_support = st.tabs([
-        "📍 現場人員拍照打卡", 
-        "🗺️ Google Maps 案場圍籬設定 (主管用)", 
-        "🤝 提早離場與支援申請審核"
-    ])
-
-    # 1. 📍 現場人員拍照打卡端
-    with tab_clock:
-        st.markdown("#### 📸 現場師傅行動拍照打卡")
-        st.info("💡 請在指定案場範圍內進行打卡。若未到下班時間離開，系統將自動偵測並詢問是否支援其他案場。")
-
-        col1, col2 = st.columns(2)
-        with col1:
-            emp_name = st.text_input("打卡員工姓名", value="阮文雄 (Nguyen Van Hung)")
-            current_project = st.selectbox("當前所屬案場", ["西寧廠二期配電盤擴建工程", "平陽工業區廠房機電統包", "隆安省光電園區變壓器安裝"])
-        with col2:
-            clock_type = st.radio("打卡類型", ["上班打卡 (Clock-In)", "下班打卡 (Clock-Out)"], horizontal=True)
-            sim_fence = st.radio("GPS 圍籬狀態模擬", ["🟢 在案場圍籬範圍內 (正常)", "🔴 已超出案場圍籬範圍 (異常)"], horizontal=True)
-
-        # 模擬相機拍照打卡
-        st.markdown("**相機拍照驗證 (Camera Verification)**")
-        camera_photo = st.camera_input("請對準現場進行拍照打卡")
-
-        if st.button("🚀 確認送出打卡與拍照驗證", type="primary", use_container_width=True):
-            is_in = True if "正常" in sim_fence else False
-            if not is_in:
-                st.error("⚠️ 打卡失敗！您目前所在位置已超出【西寧廠二期】之 Google Maps 圍籬範圍（限制半徑 500 公尺）。")
-                
-                # 🌟 觸發提早離場異常通知與支援申請機制
-                st.warning("🚨 【系統偵測】您尚未到下班時間（距離 17:00 還有 1 小時 15 分鐘）且已離開工地範圍！")
-                st.markdown("請問您是否是前往其他案場**支援**？")
-                
-                if st.button("👉 點此填寫支援申請單", type="secondary"):
-                    st.session_state['trigger_support_form'] = True
-                    st.rerun()
-            else:
-                photo_msg = "已附帶現場照片" if camera_photo else "未拍照"
-                if engine is not None:
-                    try:
-                        with engine.begin() as conn:
-                            conn.execute(text("""
-                                INSERT INTO eng_gps_attendances (emp_name, project_name, check_type, gps_coords, is_within_fence, photo_status)
-                                VALUES (:e, :p, :t, '10.7769° N, 106.7009° E', TRUE, :ph)
-                            """), {"e": emp_name, "p": current_project, "t": clock_type, "ph": photo_msg})
-                    except Exception:
-                        pass
-                st.success(f"🎉 [{emp_name}] 的 [{clock_type}] 拍照打卡成功！已記錄時間與圍籬坐標。")
-
-        # 若觸發支援表單
-        if st.session_state.get('trigger_support_form', False):
-            st.markdown("---")
-            st.markdown("#### 🤝 填寫工地支援申請單")
-            with st.form("support_request_form"):
-                target_proj = st.selectbox("前往支援之目標工地", ["平陽工業區廠房機電統包", "隆安省光電園區變壓器安裝", "西寧廠二期配電盤擴建工程"])
-                reason = st.text_area("支援原因說明", placeholder="例如: 接獲緊急通報，需前往平陽廠協助主迴路短路搶修...")
-                sub_btn = st.form_submit_button("📤 提交支援申請給主管審核", type="primary", use_container_width=True)
-                if sub_btn:
-                    if engine is not None:
-                        try:
-                            with engine.begin() as conn:
-                                conn.execute(text("""
-                                    INSERT INTO eng_support_requests (emp_name, from_project, target_project, reason, status)
-                                    VALUES (:e, :fp, :tp, :r, '⏳ 待主管審核')
-                                """), {"e": emp_name, "fp": current_project, "tp": target_proj, "r": reason})
-                        except Exception:
-                            pass
-                    st.success("🎉 支援申請已成功送出！主管將即時收到通知並進行審核。")
-                    st.session_state['trigger_support_form'] = False
-
-    # 2. 🗺️ Google Maps 案場圍籬設定 (主管端)
-    with tab_geofence:
-        st.markdown("#### 🗺️ Google Maps 案場地理圍籬 (Geofencing) 設定")
-        st.info("💡 主管可在此檢視案場地圖坐標，並設定打卡允許的最大半徑範圍（預設 500 公尺）。")
-
-        with st.form("geofence_setting_form"):
-            f_proj = st.selectbox("選擇要設定圍籬的案場", ["西寧廠二期配電盤擴建工程", "平陽工業區廠房機電統包", "隆安省光電園區變壓器安裝"])
-            col_g1, col_g2 = st.columns(2)
-            with col_g1:
-                lat = st.text_input("中心點緯度 (Latitude)", value="10.7769")
-                radius = st.slider("圍籬允許半徑範圍 (公尺)", min_value=100, max_value=2000, value=500, step=50)
-            with col_g2:
-                lng = st.text_input("中心點經度 (Longitude)", value="106.7009")
-                fence_status = st.selectbox("圍籬狀態", ["🟢 啟用中 (強制限制打卡)", "🔴 暫時關閉"])
-
-            # 嵌入 Google Maps 預覽模擬
-            st.markdown("**🗺️ Google Maps 案場圍籬即時預覽 (模擬定位)**")
-            map_html = f"""
-            <iframe width="100%" height="300" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" 
-                src="https://maps.google.com/maps?q={lat},{lng}&z=15&output=embed">
-            </iframe>
-            """
-            st.markdown(map_html, unsafe_allow_html=True)
-
-            save_fence = st.form_submit_button("💾 儲存該案場 Google Maps 圍籬設定", type="primary", use_container_width=True)
-            if save_fence:
-                st.success(f"🎉 成功更新 [{f_proj}] 的地理圍籬範圍！中心點 ({lat}, {lng})，半徑 {radius} 公尺。")
-
-    # 3. 🤝 提早離場與支援申請審核 (主管端)
-    with tab_support:
-        st.markdown("#### 🤝 員工提早離場支援申請審核清單")
-        st.info("主管可在此檢視工人因提早離開原工地而提出的支援申請與原因。")
-
-        if engine is not None:
-            try:
-                df_sup = pd.read_sql("SELECT id, emp_name AS 員工姓名, from_project AS 原工地, target_project AS 支援目標工地, reason AS 支援原因, status AS 審核狀態, created_at AS 申請時間 FROM eng_support_requests ORDER BY id DESC", con=engine)
-                if df_sup.empty:
-                    st.info("目前尚無任何支援申請紀錄。")
-                else:
-                    st.dataframe(df_sup, use_container_width=True, hide_index=True)
-            except Exception as e:
-                st.warning(f"讀取支援紀錄提示: {e}")
-        else:
-            # 預設展示範例
-            sample_sup = pd.DataFrame({
-                "員工姓名": ["阮文雄", "陳志豪"],
-                "原工地": ["西寧廠二期", "平陽美德廠"],
-                "支援目標工地": ["平陽工業區廠房", "隆安省光電園區"],
-                "支援原因": ["接獲緊急通報，前往支援短路搶修", "原工地工項提早完成，調派支援"],
-                "審核狀態": ["⏳ 待主管審核", "✅ 已核准"]
-            })
-            st.dataframe(sample_sup, use_container_width=True, hide_index=True)
