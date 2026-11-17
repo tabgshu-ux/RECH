@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：公司組織架構與跨群組彈性業務模組掛載中心（已修復 Key 重複報錯，並完整收錄原物料、股市 API、匯率、工程與財報模組）
+# 職責：公司組織架構與跨群組彈性業務模組掛載中心（智慧相容 sys_department_modules 表結構）
 # ==========================================
 
 import streamlit as st
@@ -57,7 +57,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
         dept_names = [d['name'] for d in depts] if depts else ["總經理室", "工程部總覽", "管理部總覽"]
         selected_dept = st.selectbox("🎯 選擇要掛載模組的目標部門", dept_names, key="mount_dept_select")
 
-        # 🌟 完整收錄所有部門與高階功能模組（並確保每一個 feature ID 在全域或群組中具備唯一性，避免重複 key）
         categorized_features = {
             "👑 【總經理室與戰情決策群組】": {
                 "總經理室 - 跨國營運戰情與決策總覽": "feat_executive",
@@ -107,12 +106,17 @@ def render(engine=None, lang="繁體中文", **kwargs):
             }
         }
 
+        # 讀取該部門目前已掛載的模組
         mounted_list = []
         try:
             with engine.connect() as conn:
-                res = conn.execute(text("SELECT mounted_features FROM sys_department_modules WHERE dept_name = :d"), {"d": selected_dept}).fetchone()
+                # 智慧檢測欄位名稱讀取
+                res = conn.execute(
+                    text("SELECT mounted_features FROM sys_department_modules WHERE dept_name = :d OR department_name = :d"),
+                    {"d": selected_dept}
+                ).fetchone()
                 if res and res[0]:
-                    mounted_list = res[0].split(",")
+                    mounted_list = [f.strip() for f in res[0].split(",") if f.strip()]
         except Exception:
             pass
 
@@ -121,7 +125,6 @@ def render(engine=None, lang="繁體中文", **kwargs):
             for group_name, features in categorized_features.items():
                 st.markdown(f"**{group_name}**")
                 for label, feat_id in features.items():
-                    # 🌟 透過群組名稱與 feat_id 組合出絕對唯一的 key，徹底解決 Streamlit Duplicate Key 報錯
                     unique_key = f"chk_mount_{selected_dept}_{group_name}_{feat_id}"
                     is_checked = st.checkbox(label, value=(feat_id in mounted_list), key=unique_key)
                     if is_checked:
@@ -133,16 +136,26 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 try:
                     mounted_str = ",".join(new_mounted)
                     with engine.begin() as conn:
-                        conn.execute(text("""
-                            INSERT INTO sys_department_modules (dept_name, mounted_features, updated_at)
-                            VALUES (:dname, :feats, CURRENT_TIMESTAMP)
-                            ON CONFLICT (dept_name) 
-                            DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
-                        """), {"dname": selected_dept, "feats": mounted_str})
-                    st.success(f"🎉 [{selected_dept}] 的業務模組掛載已成功更新！")
+                        # 🌟 智慧自動相容寫入：同時支援 dept_name 與 department_name 欄位
+                        try:
+                            conn.execute(text("""
+                                INSERT INTO sys_department_modules (dept_name, department_name, mounted_features, updated_at)
+                                VALUES (:dname, :dname, :feats, CURRENT_TIMESTAMP)
+                                ON CONFLICT (dept_name) 
+                                DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
+                            """), {"dname": selected_dept, "feats": mounted_str})
+                        except Exception:
+                            conn.execute(text("""
+                                INSERT INTO sys_department_modules (department_name, mounted_features, updated_at)
+                                VALUES (:dname, :feats, CURRENT_TIMESTAMP)
+                                ON CONFLICT (department_name) 
+                                DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
+                            """), {"dname": selected_dept, "feats": mounted_str})
+
+                    st.success(f"🎉 [{selected_dept}] 的業務模組掛載已成功更新並即時生效！")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"儲存失敗: {e}")
+                    st.error(f"儲存掛載失敗: {e}")
 
     # ==========================================
     # 分頁三：新增擴編 L1~L4 部門
@@ -153,7 +166,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
         with st.form("add_new_dept_form_safe"):
             col_a, col_b = st.columns(2)
             with col_a:
-                new_code = st.text_input("部門英文代碼 (例如: EXEC, ENG, PROD)", placeholder="請輸入唯一代碼")
+                new_code = st.text_input("部門英文代碼 (例如: EXEC, ENG)", placeholder="請輸入唯一代碼")
                 new_name = st.text_input("部門正式名稱 (例如: 總經理室 / 工程部總覽)", placeholder="請輸入部門名稱")
             with col_b:
                 parent_opt = st.selectbox("上級所屬部門", ["總公司"] + [d['name'] for d in depts])
