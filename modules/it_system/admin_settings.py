@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/admin_settings.py
-# 職責：系統設定純路由分發中心（已整合 IT 管理員專屬資安與憑證管控模組）
+# 職責：系統設定純路由分發中心（已完整整合 IT 管理員專屬資安與憑證管控模組）
 # ==========================================
 
 import streamlit as st
@@ -105,7 +105,6 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
     elif current_view == 'nas_config':
         load_sub_module("modules.it_system.nas_storage_config", engine, lang)
 
-    # 🌟 這裡就是串接 IT 管理員資安控管模組的地方
     elif current_view == 'admin_security':
         load_sub_module("modules.it_system.admin_security_config", engine, lang)
 
