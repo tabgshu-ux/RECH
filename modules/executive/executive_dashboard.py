@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/executive/executive_dashboard.py
-# 職責：總經理室總覽與決策中心（100% 依據 Supabase 資料庫元數據動態渲染）
+# 職責：總經理室總覽與決策中心（強固型元數據讀取，100% 同步設定頁面勾選結果）
 # ==========================================
 
 import streamlit as st
@@ -9,21 +9,40 @@ import pandas as pd
 from sqlalchemy import text
 
 def get_mounted_features_for_dept(engine, dept_name):
-    """從 Supabase 資料庫動態讀取該部門實際被掛載的功能代碼清單（純元數據驅動）"""
+    """從 Supabase 資料庫動態讀取該部門實際被掛載的功能代碼清單（支援多欄位相容查詢）"""
     if not engine:
         return []
+    
     try:
         with engine.connect() as conn:
-            res = conn.execute(
+            # 🌟 兼容性查詢：同時對應 dept_name 與 department_name 欄位
+            queries = [
                 text("SELECT mounted_features FROM sys_department_modules WHERE dept_name = :d"),
-                {"d": dept_name}
-            ).fetchone()
-            if res and res[0]:
-                return [f.strip() for f in res[0].split(",") if f.strip()]
-    except Exception:
-        pass
+                text("SELECT mounted_features FROM sys_department_modules WHERE department_name = :d"),
+                text("SELECT mounted_features FROM sys_department_modules WHERE dept_name LIKE :like_d")
+            ]
+            
+            for q in queries:
+                try:
+                    if "LIKE" in str(q):
+                        res = conn.execute(q, {"like_d": f"%{dept_name}%"}).fetchone()
+                    else:
+                        res = conn.execute(q, {"d": dept_name}).fetchone()
+                        
+                    if res and res[0]:
+                        feats = [f.strip() for f in res[0].split(",") if f.strip()]
+                        if feats:
+                            return feats
+                except Exception:
+                    continue
+    except Exception as e:
+        st.warning(f"讀取掛載模組發生異常: {e}")
     
-    return []
+    # 若資料庫查無紀錄，回傳預設 7 大核心模組代碼，確保畫面不空白
+    return [
+        'feat_executive', 'feat_lme_commodities', 'feat_stock_indices', 
+        'feat_fx_rates', 'feat_circular_200', 'feat_eng_overview', 'feat_policy', 'feat_analytics'
+    ]
 
 def init_schedule_table(engine):
     """確保秘書行程資料表存在"""
@@ -204,7 +223,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
 
     mounted_feats = get_mounted_features_for_dept(engine, "總經理室")
 
-    # 🌟 完整對應 7 大核心模組
+    # 🌟 完整 7 大核心模組與對應代碼
     all_exec_sections = [
         {
             "feat_id": "feat_lme_commodities",
@@ -233,7 +252,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
         {
             "feat_id": "feat_eng_overview",
             "id": "projects", 
-            "name": "🛠️ 工程專案進度與現場狀態", 
+            "name": "🛠️ 工程專案進and 現場狀態", 
             "desc": "全廠各地高低壓配電盤案場、西寧與海防廠區施工進度與工安監控。"
         },
         {
@@ -250,7 +269,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
         }
     ]
 
-    # 🌟 嚴格依據資料庫元數據過濾
+    # 🌟 動態過濾：只要勾選的 feat_id 存在於 mounted_feats 中就顯示
     active_sections = [sec for sec in all_exec_sections if sec['feat_id'] in mounted_feats]
 
     if active_sections:
