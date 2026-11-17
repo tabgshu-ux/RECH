@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/executive/executive_dashboard.py
-# 職責：總經理室總覽與決策中心（完整 5 大模組、秘書行程管理與側邊欄導航支援）
+# 職責：總經理室總覽與決策中心（完整 7 大專屬功能卡片與秘書行程管理）
 # ==========================================
 
 import streamlit as st
@@ -23,7 +23,7 @@ def get_mounted_features_for_dept(engine, dept_name):
     except Exception:
         pass
     
-    return ['feat_executive', 'feat_lme_commodities', 'feat_stock_indices', 'feat_fx_rates', 'feat_exec_announcements']
+    return ['feat_executive', 'feat_lme_commodities', 'feat_stock_indices', 'feat_fx_rates', 'feat_circular_200', 'feat_policy', 'feat_eng_overview']
 
 def init_schedule_table(engine):
     """確保秘書行程資料表存在"""
@@ -204,7 +204,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
 
     mounted_feats = get_mounted_features_for_dept(engine, "總經理室")
 
-    # 🌟 完整收錄總經理室所有 5 大核心功能與秘書行程模組
+    # 🌟 完整收錄總經理室所有 7 大核心功能與對應代碼
     all_exec_sections = [
         {
             "feat_id": "feat_lme_commodities",
