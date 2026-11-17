@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/admin_settings.py
-# 職責：系統設定總覽卡片中心（嚴格遵循模組化，調度獨立子模組）
+# 職責：系統設定中心（上方固定功能導覽列 + 7大動態配置子模組調度）
 # ==========================================
 
 import streamlit as st
@@ -10,21 +10,36 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
     if 'admin_sub_view' not in st.session_state:
         st.session_state['admin_sub_view'] = 'hub_home'
 
-    # 若非在首頁，提供返回系統設定總覽選單的按鈕
-    if st.session_state['admin_sub_view'] != 'hub_home':
-        if st.button("⬅️ 返回系統設定總覽選單", type="secondary"):
-            st.session_state['admin_sub_view'] = 'hub_home'
-            st.rerun()
-        st.markdown("---")
+    st.title("⚙️ 系統設定與動態配置中心 (System Settings Hub)")
+    st.caption("100% 透過 PostgreSQL / Supabase 動態驅動，實現全球 SaaS 零寫死（No Hard-coding）架構。")
+    st.markdown("---")
+
+    # 🌟 核心修正：仿照管理部，在上方加入一排固定功能導覽按鈕列
+    # 讓管理員無論身處哪個設定頁面，都能隨時切換，不需要一直退回首頁
+    nav_cols = st.columns(7)
+    nav_items = [
+        {"id": "hub_home", "name": "🏠 設定總覽"},
+        {"id": "dept_config", "name": "🏢 公司部門"},
+        {"id": "role_rbac", "name": "👥 權責矩陣"},
+        {"id": "api_config", "name": "🌐 API 閘道"},
+        {"id": "brand_config", "name": "🎨 品牌 Logo"},
+        {"id": "db_config", "name": "🗄️ 資料庫"},
+        {"id": "nas_config", "name": "📦 雲端儲存"}
+    ]
+
+    for idx, item in enumerate(nav_items):
+        with nav_cols[idx]:
+            is_active = (st.session_state['admin_sub_view'] == item['id'])
+            if st.button(item['name'], use_container_width=True, type="primary" if is_active else "secondary"):
+                st.session_state['admin_sub_view'] = item['id']
+                st.rerun()
+
+    st.markdown("---")
 
     # ---------------------------------------------------------
-    # 【模式 A】：7 大分類卡片總覽 Hub
+    # 【模式 A】：7 大分類卡片總覽 Hub (當選擇首頁時顯示)
     # ---------------------------------------------------------
     if st.session_state['admin_sub_view'] == 'hub_home':
-        st.title("⚙️ 系統設定與動態配置中心 (System Settings Hub)")
-        st.caption("100% 透過 PostgreSQL / Supabase 動態驅動，實現全球 SaaS 零寫死（No Hard-coding）架構，支援未來公司無限擴編。")
-        st.markdown("---")
-
         cards = [
             {"id": "dept_config", "title": "🏢 公司部門及功能設定", "desc": "維護 1~4 級動態組織架構、功能掛載與部門裁撤管理。"},
             {"id": "role_rbac", "title": "👥 人事職位與權責矩陣", "desc": "設定各職位角色對系統功能卡片的存取與審核權限。"},
@@ -78,7 +93,8 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
             st.error(f"載入獨立模組 [modules.it_system.department_config] 發生異常: {e}")
 
     else:
-        st.info(f"💡 子模組 [{st.session_state['admin_sub_view']}] 正在對接中...")
+        current_view = st.session_state['admin_sub_view']
+        st.info(f"💡 子模組 [{current_view}] 正在對接中... 您可以隨時點擊上方導覽列切換至其他設定項目。")
 
 def get_department_module_tree(engine=None):
     """回傳 1~4 級支援動態擴編的部門與模組樹狀結構"""
