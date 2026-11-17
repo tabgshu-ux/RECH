@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：公司組織架構與跨群組彈性業務模組掛載中心（具備自動 Rollback 與明確成功通知）
+# 職責：公司組織架構與跨群組彈性業務模組掛載中心（獨立連線與明確成功通知架構）
 # ==========================================
 
 import streamlit as st
@@ -14,6 +14,33 @@ def render(engine=None, lang="繁體中文", **kwargs):
     if not engine:
         st.warning("⚠️ 系統尚未連線至資料庫引擎。")
         return
+
+    # 🌟 獨立執行 DDL，確保資料表與標準欄位準備就緒，絕不與後續交易互相污染
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS sys_departments (
+                    id SERIAL PRIMARY KEY,
+                    dept_code VARCHAR(50) UNIQUE NOT NULL,
+                    dept_name_zh VARCHAR(150),
+                    dept_name VARCHAR(150),
+                    name VARCHAR(150),
+                    parent_dept VARCHAR(150) DEFAULT '總公司',
+                    level_tier VARCHAR(10) DEFAULT 'L1',
+                    is_active BOOLEAN DEFAULT TRUE,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS sys_department_modules (
+                    dept_name VARCHAR(150) PRIMARY KEY,
+                    mounted_features TEXT,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+            conn.commit()
+    except Exception:
+        pass
 
     tab_tree, tab_mount, tab_add = st.tabs(["🌳 現有組織樹與狀態管理", "⚙️ 跨群組彈性模組掛載", "➕ 新增擴編 L1~L4 部門"])
 
@@ -110,17 +137,10 @@ def render(engine=None, lang="繁體中文", **kwargs):
         mounted_list = []
         try:
             with engine.connect() as conn:
-                res = None
-                for col in ['department_name', 'dept_name', 'name', 'dept']:
-                    try:
-                        res = conn.execute(
-                            text(f"SELECT mounted_features FROM sys_department_modules WHERE {col} = :d"),
-                            {"d": selected_dept}
-                        ).fetchone()
-                        if res:
-                            break
-                    except Exception:
-                        continue
+                res = conn.execute(
+                    text("SELECT mounted_features FROM sys_department_modules WHERE dept_name = :d"),
+                    {"d": selected_dept}
+                ).fetchone()
                 if res and res[0]:
                     mounted_list = [f.strip() for f in res[0].split(",") if f.strip()]
         except Exception:
@@ -139,54 +159,24 @@ def render(engine=None, lang="繁體中文", **kwargs):
 
             submitted_mount = st.form_submit_button("💾 儲存並即時生效部門模組掛載", type="primary", use_container_width=True)
             if submitted_mount:
+                mounted_str = ",".join(new_mounted)
                 try:
-                    mounted_str = ",".join(new_mounted)
-                    success_saved = False
-
-                    # 🌟 關鍵修正：確保每次寫入前自動初始化資料表，並用 try-except 包裹交易
-                    with engine.begin() as conn:
-                        # 確保 sys_department_modules 表存在（雙欄位支援）
+                    # 🌟 採用乾淨獨立的連線與明確 commit，徹底隔絕 InFailedSqlTransaction
+                    with engine.connect() as conn:
                         conn.execute(text("""
-                            CREATE TABLE IF NOT EXISTS sys_department_modules (
-                                department_name VARCHAR(150) PRIMARY KEY,
-                                mounted_features TEXT,
-                                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                            );
-                        """))
-                        try:
-                            conn.execute(text("ALTER TABLE sys_department_modules ADD COLUMN IF NOT EXISTS dept_name VARCHAR(150);"))
-                        except Exception:
-                            pass
+                            INSERT INTO sys_department_modules (dept_name, mounted_features, updated_at)
+                            VALUES (:dname, :feats, CURRENT_TIMESTAMP)
+                            ON CONFLICT (dept_name) 
+                            DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
+                        """), {"dname": selected_dept, "feats": mounted_str})
+                        conn.commit()
 
-                        # 嘗試寫入 department_name
-                        try:
-                            conn.execute(text("""
-                                INSERT INTO sys_department_modules (department_name, mounted_features, updated_at)
-                                VALUES (:dname, :feats, CURRENT_TIMESTAMP)
-                                ON CONFLICT (department_name) 
-                                DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
-                            """), {"dname": selected_dept, "feats": mounted_str})
-                            success_saved = True
-                        except Exception:
-                            # 若主鍵是 dept_name，改用 dept_name 寫入
-                            conn.execute(text("""
-                                INSERT INTO sys_department_modules (dept_name, mounted_features, updated_at)
-                                VALUES (:dname, :feats, CURRENT_TIMESTAMP)
-                                ON CONFLICT (dept_name) 
-                                DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
-                            """), {"dname": selected_dept, "feats": mounted_str})
-                            success_saved = True
-
-                    if success_saved:
-                        # 🌟 明確的成功通知與即時重新整理
-                        st.success(f"🎉 【{selected_dept}】的業務模組掛載已成功儲存並即時生效！")
-                        st.balloons()
-                        st.rerun()
-                    else:
-                        st.error("❌ 儲存失敗：資料庫寫入未完成。")
+                    # 🌟 絕對看得到的成功通知與氣球特效
+                    st.success(f"🎉 【{selected_dept}】的業務模組掛載已成功儲存並即時生效！")
+                    st.balloons()
+                    st.rerun()
                 except Exception as e:
-                    # 自動 Rollback 封鎖狀態，並顯示具體錯誤
-                    st.error(f"❌ 儲存掛載發生錯誤: {e}")
+                    st.error(f"❌ 儲存掛載失敗: {e}")
 
     # ==========================================
     # 分頁三：新增擴編 L1~L4 部門
@@ -209,7 +199,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 if new_code and new_name:
                     try:
                         tier_code = tier_opt.split(" ")[0]
-                        with engine.begin() as conn:
+                        with engine.connect() as conn:
                             conn.execute(text("""
                                 INSERT INTO sys_departments (dept_code, dept_name_zh, dept_name, name, parent_dept, level_tier, is_active)
                                 VALUES (:code, :name, :name, :name, :parent, :tier, TRUE)
@@ -221,6 +211,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                                 "parent": parent_opt,
                                 "tier": tier_code
                             })
+                            conn.commit()
                         st.success(f"🎉 成功新增擴編部門：[{tier_code}] {new_name.strip()}！")
                         st.rerun()
                     except Exception as e:
