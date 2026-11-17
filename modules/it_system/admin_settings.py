@@ -102,7 +102,6 @@ def render_admin_settings(engine=None, lang="zh", **kwargs):
         load_sub_module("modules.it_system.db_bridge", engine, lang)
 
     elif current_view == 'nas_config':
-        elif current_view == 'nas_config':
         load_sub_module("modules.it_system.nas_storage_config", engine, lang)
 
     elif current_view == 'audit_config':
