@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：公司組織架構與模組掛載中心（智慧適應現有資料庫，絕不噴錯）
+# 職責：公司組織架構與模組掛載中心（完整對應 Supabase 資料表 Not-Null 約束）
 # ==========================================
 
 import streamlit as st
@@ -26,15 +26,12 @@ def render(engine=None, lang="繁體中文", **kwargs):
         depts = []
         try:
             with engine.connect() as conn:
-                # 嘗試撈取現有部門，容錯各種可能的欄位名稱
                 result = conn.execute(text("SELECT * FROM sys_departments")).fetchall()
-                # 取得欄位名稱
-                keys = result[0]._asdict().keys() if result else []
                 for row in result:
                     row_dict = row._asdict()
-                    # 自動尋找代表代碼與名稱的欄位
                     d_code = row_dict.get('dept_code') or row_dict.get('code') or str(row_dict.get('id', ''))
-                    d_name = row_dict.get('dept_name') or row_dict.get('name') or row_dict.get('title') or '未命名部門'
+                    # 容錯多種可能的名稱欄位
+                    d_name = row_dict.get('dept_name_zh') or row_dict.get('dept_name') or row_dict.get('name') or row_dict.get('title') or '未命名部門'
                     tier = row_dict.get('level_tier') or row_dict.get('tier') or 'L1'
                     is_act = row_dict.get('is_active', True)
                     if is_act is None: is_act = True
@@ -123,7 +120,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     st.success(f"🎉 [{selected_dept}] 的業務模組掛載已成功更新！")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"儲存掛載失敗: {e}")
+                    st.error(f"儲存失敗: {e}")
 
     # ==========================================
     # 分頁三：新增擴編 L1~L4 部門
@@ -137,7 +134,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 new_code = st.text_input("部門英文代碼 (例如: ADMIN, GA)", placeholder="請輸入唯一代碼")
                 new_name = st.text_input("部門正式名稱 (例如: 行政課 / 總務課)", placeholder="請輸入部門名稱")
             with col_b:
-                parent_opt = st.selectbox("上級所屬部門", ["總公司"] + dept_names)
+                parent_opt = st.selectbox("上級所屬部門", ["總公司"] + [d['name'] for d in depts])
                 tier_opt = st.selectbox("組織層級 (Tier)", ["L1 (一級大部門)", "L2 (二級子部門/課)", "L3 (三級分組)", "L4 (四級小組)"])
 
             submitted_create = st.form_submit_button("🚀 確認新增擴編部門", type="primary", use_container_width=True)
@@ -147,12 +144,12 @@ def render(engine=None, lang="繁體中文", **kwargs):
                     try:
                         tier_code = tier_opt.split(" ")[0]
                         with engine.begin() as conn:
-                            # 採用最安全、只寫入基本核心欄位的語法，絕不因缺少選用欄位而報錯
+                            # 🌟 同時寫入 dept_name_zh、dept_name 與 name 欄位，完美對應 Supabase 的 Not-Null 約束
                             conn.execute(text("""
-                                INSERT INTO sys_departments (dept_code, dept_name, parent_dept, level_tier, is_active)
-                                VALUES (:code, :name, :parent, :tier, TRUE)
+                                INSERT INTO sys_departments (dept_code, dept_name_zh, dept_name, name, parent_dept, level_tier, is_active)
+                                VALUES (:code, :name, :name, :name, :parent, :tier, TRUE)
                                 ON CONFLICT (dept_code) DO UPDATE 
-                                SET dept_name = :name, parent_dept = :parent, level_tier = :tier, is_active = TRUE
+                                SET dept_name_zh = :name, dept_name = :name, name = :name, parent_dept = :parent, level_tier = :tier, is_active = TRUE
                             """), {
                                 "code": new_code.upper().strip(),
                                 "name": new_name.strip(),
