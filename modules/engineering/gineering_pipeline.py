@@ -1,3 +1,8 @@
+# ==========================================
+# 檔案路徑：modules/engineering/gineering_pipeline.py
+# 職責：全廠水電工程驗收與進度追蹤模組 (完美支援多語系動態切換)
+# ==========================================
+
 import streamlit as st
 import pandas as pd
 import datetime
@@ -31,7 +36,7 @@ PROJECT_TRACKING_I18N = {
     },
     "Tiếng Việt": {
         "title": "⚡ REETECH INDUSTRIAL - Theo dõi Tiến độ & Nghiệm thu Dự án Cơ điện",
-        "caption": "Chuyên dụng kỹ thuật: Tập trung giám sát phần trăm tiến độ thi công, trạng thái nghiệm thu và hợp đồng.",
+        "caption": "Chuyên dùng kỹ thuật: Tập trung giám sát phần trăm tiến độ thi công, trạng thái nghiệm thu và hợp đồng.",
         "kpi1_title": "Tổng số dự án cơ điện",
         "kpi1_val": "8 dự án",
         "kpi1_sub": "↑ Đang thực hiện 6 / Nghiệm thu 2",
@@ -78,6 +83,7 @@ PROJECT_TRACKING_I18N = {
 }
 
 def get_active_lang(passed_lang):
+    """精準抓取當前語系，支援參數傳遞與 session_state 狀態共享"""
     if passed_lang in PROJECT_TRACKING_I18N:
         return passed_lang
     for key in ["current_lang", "lang", "language", "selected_lang"]:
@@ -87,6 +93,7 @@ def get_active_lang(passed_lang):
     return "Tiếng Việt"  # 預設越南文
 
 def smart_translate_project_data(text, target_lang):
+    """根據目標語系動態轉譯專案細節文字"""
     if not text or not isinstance(text, str):
         return text
     
@@ -196,9 +203,11 @@ def render_engineering_page(engine=None, lang=None, **kwargs):
             L["col_status"]: smart_translate_project_data(item["status"], active_lang)
         })
 
-    st.dataframe(pd.DataFrame(display_data), use_container_width=True)
+    st.dataframe(pd.DataFrame(display_data), use_container_width=True, hide_index=True)
 
-# 完整補齊所有路由分身函式
+# ----------------------------------------------------
+# 路由分身相容函式
+# ----------------------------------------------------
 def render_project_tracking(*args, **kwargs):
     render_engineering_page(*args, **kwargs)
 
