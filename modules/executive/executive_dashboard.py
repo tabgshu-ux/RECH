@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/executive/executive_dashboard.py
-# 職責：總經理室總覽與決策中心（100% 精準對應資料庫掛載代碼）
+# 職責：總經理室總覽與決策中心（完整對應所有勾選代碼，確保 100% 同步顯示）
 # ==========================================
 
 import streamlit as st
@@ -131,10 +131,9 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
     st.markdown("### 📌 總經理室專屬功能導覽與模組卡片")
     st.caption("💡 提示：以下卡片嚴格依據您在「系統設定 ➡️ 公司部門 ➡️ 跨群組彈性模組掛載」中所勾選的項目動態生成。未勾選的功能將自動隱藏。")
 
-    # 撈取資料庫實際掛載的模組代碼
     mounted_feats = get_mounted_features_for_dept(engine, "總經理室")
 
-    # 🌟 完整收錄總經理室所有可能的專屬卡片與對應的 feat_id
+    # 🌟 完整收錄您在設定頁面中勾選的所有總經理室功能對應卡片
     all_exec_sections = [
         {
             "feat_id": "feat_lme_commodities",
@@ -166,9 +165,21 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
             "name": "🏗️ 工程案場與金額佔比分析", 
             "desc": "分析廠內各類型工程案場數量、合約總金額結構、平均毛利率與營收佔比分佈。"
         },
+        # 🌟 同步支援其他勾選代碼，確保不會被過濾掉
+        {
+            "feat_id": "feat_stock_indices",
+            "id": "commodities",
+            "name": "📈 全球股市 API 指標追蹤",
+            "desc": "追蹤台、美、中、越主要股市指數與連動行情。"
+        },
+        {
+            "feat_id": "feat_fx_rates",
+            "id": "commodities",
+            "name": "💱 多幣別匯率即時換算引擎",
+            "desc": "即時處理美元、新台幣與越南盾雙向匯率換算。"
+        }
     ]
 
-    # 🌟 如果資料庫中有勾選這些模組，就把它們撈出來顯示
     active_sections = [sec for sec in all_exec_sections if sec['feat_id'] in mounted_feats]
 
     if active_sections:
@@ -179,7 +190,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
                 with st.container(border=True):
                     st.markdown(f"#### {sec['name']}")
                     st.caption(sec['desc'])
-                    if st.button("進入該模組專區 ➡️", key=f"btn_exec_sec_{sec['id']}", use_container_width=True, type="primary"):
+                    if st.button("進入該模組專區 ➡️", key=f"btn_exec_sec_{sec['id']}_{idx}", use_container_width=True, type="primary"):
                         st.session_state['exec_active_sub'] = sec['id']
                         st.rerun()
     else:
