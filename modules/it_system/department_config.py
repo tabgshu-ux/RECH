@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：公司組織架構與跨群組彈性業務模組掛載中心
+# 職責：公司組織架構與跨群組彈性業務模組掛載中心（公告正確歸屬管理部）
 # ==========================================
 
 import streamlit as st
@@ -57,13 +57,13 @@ def render(engine=None, lang="繁體中文", **kwargs):
         dept_names = [d['name'] for d in depts] if depts else ["總經理室", "工程部總覽", "管理部總覽"]
         selected_dept = st.selectbox("🎯 選擇要掛載模組的目標部門", dept_names, key="mount_dept_select")
 
+        # 🌟 模組分類：公告佈告欄已歸屬至管理部群組
         categorized_features = {
             "👑 【總經理室與戰情決策群組】": {
                 "總經理室 - 跨國營運戰情與決策總覽": "feat_executive",
                 "LME 銅價與原物料行情監控": "feat_lme_commodities",
                 "全球股市 API 指標追蹤": "feat_stock_indices",
-                "多幣別匯率即時換算引擎": "feat_fx_rates",
-                "總經理室專屬 - 公司公告佈告欄": "feat_exec_announcements"
+                "多幣別匯率即時換算引擎": "feat_fx_rates"
             },
             "🛠️ 【工程部專屬群組】": {
                 "工程部總覽 / 專案進度追蹤": "feat_eng_overview",
@@ -82,7 +82,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
             },
             "🏢 【管理部與公告群組】": {
                 "管理部總覽 / 戰情室": "feat_mgmt_supervisor",
-                "公司公告佈告欄": "feat_announcements"
+                "📢 公司公告佈告欄管理與發布": "feat_announcements"
             },
             "📁 【行政人事群組】": {
                 "人事行政課 - 員工檔案與履約管理": "feat_hr_employee",
@@ -111,7 +111,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
         try:
             with engine.connect() as conn:
                 res = conn.execute(
-                    text("SELECT mounted_features FROM sys_department_modules WHERE department_name = :d"),
+                    text("SELECT mounted_features FROM sys_department_modules WHERE dept_name = :d"),
                     {"d": selected_dept}
                 ).fetchone()
                 if res and res[0]:
@@ -136,9 +136,9 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 try:
                     with engine.connect() as conn:
                         conn.execute(text("""
-                            INSERT INTO sys_department_modules (department_name, mounted_features, updated_at)
+                            INSERT INTO sys_department_modules (dept_name, mounted_features, updated_at)
                             VALUES (:dname, :feats, CURRENT_TIMESTAMP)
-                            ON CONFLICT (department_name) 
+                            ON CONFLICT (dept_name) 
                             DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
                         """), {"dname": selected_dept, "feats": mounted_str})
                         conn.commit()
