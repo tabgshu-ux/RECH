@@ -100,7 +100,7 @@ with col_logo:
     if dynamic_logo_path and os.path.exists(dynamic_logo_path):
         c_img, c_title = st.columns([1, 6])
         with c_img:
-            st.image(dynamic_logo_path, width=45)
+            st.image(dynamic_logo_path, width=180)
         with c_title:
             st.markdown(f"#### **{dynamic_company_name}**")
     else:
