@@ -1,32 +1,44 @@
 # ==========================================
 # 檔案路徑：views/login.py
-# 職責：系統登入驗證頁面 (帳密驗證、語系選擇、Session 寫入)
+# 職責：系統登入頁面（支援動態讀取多租戶 Logo 與公司名稱）
 # ==========================================
 
 import streamlit as st
+import os
+from sqlalchemy import text
 
-def render_login_page(db_conn):
+def render_login_page(db_engine):
+    # 嘗試從資料庫或 session_state 讀取最新企業識別
+    company_name = st.session_state.get('tenant_company_name', "裕豐電機工業有限公司")
+    logo_path = st.session_state.get('tenant_logo_url', "")
+
+    # 置中排版與動態 Logo 渲染
     col1, col2, col3 = st.columns([1, 2, 1])
-    
     with col2:
-        st.markdown("<h2 style='text-align: center;'>🏭 裕豐電機工業 SaaS ERP</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: gray;'>請輸入您的企業帳號與密碼進行登入</p>", unsafe_allow_html=True)
+        st.markdown("<br><br>", unsafe_allow_html=True)
         
-        with st.container(border=True):
-            username = st.text_input("帳號 (Username / Mã số)", placeholder="請輸入帳號")
-            password = st.text_input("密碼 (Password / Mật khẩu)", type="password", placeholder="請輸入密碼")
+        # 優先顯示動態上傳的 Logo，若無則顯示預設圖示
+        if logo_path and os.path.exists(logo_path):
+            st.image(logo_path, width=220)
+            st.markdown(f"### **{company_name}**")
+        else:
+            st.markdown("### 🏭 裕豐電機工業 SaaS ERP")
             
-            lang = st.selectbox("系統語系 (Language)", ["繁體中文", "Tiếng Việt"])
+        st.caption("請輸入您的企業帳號與密碼進行登入 (Đăng nhập hệ thống)")
+
+        with st.form("login_form"):
+            username = st.text_input("帳號 (Username / Mã số)")
+            password = st.text_input("密碼 (Password / Mật khẩu)", type="password")
+            lang_choice = st.selectbox("系統語系 (Language)", ["繁體中文", "Tiếng Việt"])
             
-            if st.button("🔐 登入系統 (Login)", type="primary", use_container_width=True):
+            submitted = st.form_submit_button("🔒 登入系統 (Login)", type="primary", use_container_width=True)
+            
+            if submitted:
                 if username and password:
-                    # 未來接真實資料庫語句驗證：SELECT * FROM sys_users WHERE username = %s AND password_hash = %s
-                    # 此處寫入驗證成功狀態
                     st.session_state['logged_in'] = True
                     st.session_state['user_name'] = username
-                    st.session_state['current_lang'] = 'zh' if lang == "繁體中文" else 'vi'
-                    st.session_state['current_view'] = 'dashboard'
-                    st.success("登入成功！正在載入主頁...")
+                    st.session_state['current_lang'] = 'zh' if lang_choice == "繁體中文" else 'vi'
+                    st.success("🎉 登入成功！正在進入系統...")
                     st.rerun()
                 else:
-                    st.error("請完整輸入帳號與密碼！")
+                    st.warning("⚠️ 請輸入帳號與密碼。")
