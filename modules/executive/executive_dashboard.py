@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/executive/executive_dashboard.py
-# 職責：總經理室總覽與決策中心（完整對應模組，並支援全域固定側邊欄導航）
+# 職責：總經理室總覽與決策中心（完整支援 5 大模組與秘書室老闆行程即時更新系統）
 # ==========================================
 
 import streamlit as st
@@ -25,6 +25,24 @@ def get_mounted_features_for_dept(engine, dept_name):
     
     return ['feat_executive', 'feat_lme_commodities', 'feat_stock_indices', 'feat_fx_rates', 'feat_exec_announcements']
 
+def init_schedule_table(engine):
+    """確保秘書行程資料表存在"""
+    if engine:
+        try:
+            with engine.begin() as conn:
+                conn.execute(text("""
+                    CREATE TABLE IF NOT EXISTS exec_schedules (
+                        id SERIAL PRIMARY KEY,
+                        event_title VARCHAR(255) NOT NULL,
+                        event_category VARCHAR(100) DEFAULT '工地動土/開工',
+                        event_time VARCHAR(100),
+                        description TEXT,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                %s"""))
+        except Exception:
+            pass
+
 def render_executive_main(engine=None, lang="繁體中文", **kwargs):
     if 'exec_active_sub' not in st.session_state:
         st.session_state['exec_active_sub'] = None
@@ -32,7 +50,6 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
     current_sub = st.session_state['exec_active_sub']
 
     if current_sub is not None:
-        # 💡 優化：在子頁面頂部提供快速返回與導覽按鈕
         col_back, col_info = st.columns([2, 5])
         with col_back:
             if st.button("⬅️ 返回總經理室總覽", key="back_to_exec_main", use_container_width=True, type="primary"):
@@ -43,7 +60,6 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
 
         st.markdown("---")
 
-        # 渲染對應的子模組畫面
         if current_sub == 'commodities':
             try:
                 from modules.executive import commodities_fx
@@ -79,6 +95,63 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
             except Exception as e:
                 st.error(f"載入工程案場金額分析模組失敗: {e}")
 
+        elif current_sub == 'schedule_mgr':
+            # 🌟 全新秘書室行程管理介面
+            st.markdown("### 📅 秘書室管理：老闆專屬行程與動土安排更新中心")
+            st.caption("秘書室專屬模組：在此新增、編輯或刪除老闆的日常行程、工地開工與商會集會，首頁將即時同步更新。")
+            
+            init_schedule_table(engine)
+
+            with st.form("add_schedule_form"):
+                st.markdown("#### ➕ 新增老闆新行程")
+                col_s1, col_s2 = st.columns(2)
+                with col_s1:
+                    ev_title = st.text_input("行程標題 (例如: 西寧廠二期配電盤車間動土)", placeholder="請輸入行程摘要")
+                    ev_cat = st.selectbox("行程類別", ["🏗️ 工程案場動土/開工", "🤝 商會集會與拜會", "📋 內部高層會議", "✈️ 商務出差與視察"])
+                with col_s2:
+                    ev_time = st.text_input("時間與日期 (例如: 2026/11/15 10:00)", placeholder="請輸入時間格式")
+                    ev_desc = st.text_area("行程備註說明", placeholder="請輸入參與人員、地點或注意事項")
+
+                submitted_ev = st.form_submit_button("🚀 確認新增老闆行程", type="primary", use_container_width=True)
+                if submitted_ev:
+                    if ev_title and ev_time:
+                        try:
+                            with engine.begin() as conn:
+                                conn.execute(text("""
+                                    INSERT INTO exec_schedules (event_title, event_category, event_time, description, updated_at)
+                                    VALUES (:title, :cat, :time, :desc, CURRENT_TIMESTAMP)
+                                """), {"title": ev_title, "cat": ev_cat, "time": ev_time, "desc": ev_desc})
+                            st.success(f"🎉 成功新增行程：{ev_title}！")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"新增行程失敗: {e}")
+                    else:
+                        st.warning("⚠️ 請完整填寫行程標題與時間。")
+
+            st.markdown("---")
+            st.markdown("#### 📋 現有老闆行程清單與維護")
+            try:
+                with engine.connect() as conn:
+                    schedules = conn.execute(text("SELECT * FROM exec_schedules ORDER BY id DESC")).fetchall()
+                    if schedules:
+                        for row in schedules:
+                            r = row._asdict()
+                            with st.container(border=True):
+                                col_info_a, col_info_b = st.columns([4, 1])
+                                with col_info_a:
+                                    st.markdown(f"**[{r.get('event_category', '一般行程')}] {r.get('event_title')}**")
+                                    st.caption(時間: `{r.get('event_time')}` | 備註: {r.get('description', '無')})
+                                with col_info_b:
+                                    if st.button("🗑️ 刪除", key=f"del_sched_{r.get('id')}", use_container_width=True):
+                                        with engine.begin() as conn_del:
+                                            conn_del.execute(text("DELETE FROM exec_schedules WHERE id = :id"), {"id": r.get('id')})
+                                        st.success("🗑️ 行程已刪除！")
+                                        st.rerun()
+                    else:
+                        st.info("💡 目前尚無排定行程，請透過上方表單新增。")
+            except Exception as e:
+                st.info("💡 尚未建立排程資料表，請先新增一筆行程以自動初始化。")
+
         return
 
     # 總經理室總覽首頁
@@ -98,13 +171,32 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
 
     st.markdown("---")
 
-    with st.expander("📅 秘書室回報：近期重要行程、工地動土與商會集會", expanded=True):
-        col_sch1, col_sch2 = st.columns(2)
-        with col_sch1:
-            st.markdown("**🏗️ 工程案場動土/開工：**")
+    # 🌟 動態讀取 Supabase 中的秘書室行程與老闆行程
+    init_schedule_table(engine)
+    db_schedules = []
+    try:
+        with engine.connect() as conn:
+            db_schedules = [row._asdict() for row in conn.execute(text("SELECT * FROM exec_schedules ORDER BY id DESC LIMIT 6")).fetchall()]
+    except Exception:
+        pass
+
+    with st.expander("📅 秘書室回報：近期重要行程、工地動土與商會集會 (點擊可隨時檢視與維護)", expanded=True):
+        col_sch_head, col_sch_btn = st.columns([5, 1])
+        with col_sch_head:
+            st.markdown("**⚡ 秘書室即時排程同步中**")
+        with col_sch_btn:
+            if st.button("➕ 管理/更新行程", key="goto_schedule_mgr", use_container_width=True, type="primary"):
+                st.session_state['exec_active_sub'] = 'schedule_mgr'
+                st.rerun()
+
+        if db_schedules:
+            col_sch1, col_sch2 = st.columns(2)
+            for i, s in enumerate(db_schedules):
+                target_col = col_sch1 if i % 2 == 0 else col_sch2
+                with target_col:
+                    st.markdown(f"- **{s.get('event_title')}** (`{s.get('event_time')}`)")
+        else:
             st.markdown("- 西寧廠二期配電盤車間動土：`2026/11/15 10:00`")
-        with col_sch2:
-            st.markdown("**🤝 商會集會與拜會：**")
             st.markdown("- 平陽省台商協會例行理監事會：`2026/11/18 18:30`")
 
     st.markdown("---")
@@ -114,7 +206,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
 
     mounted_feats = get_mounted_features_for_dept(engine, "總經理室")
 
-    # 🌟 完整收錄總經理室所有可能的專屬卡片與對應的 feat_id，確保不漏掉任何功能
+    # 🌟 完整收錄總經理室所有勾選項目的卡片對應
     all_exec_sections = [
         {
             "feat_id": "feat_lme_commodities",
@@ -157,6 +249,12 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
             "id": "analytics", 
             "name": "🏗️ 工程案場與金額佔比分析", 
             "desc": "分析廠內各類型工程案場數量、合約總金額結構、平均毛利率與營收佔比分佈。"
+        },
+        {
+            "feat_id": "feat_executive",
+            "id": "schedule_mgr",
+            "name": "📅 秘書室老闆行程與動土安排管理",
+            "desc": "即時維護與更新老闆日常行程、商會集會與重大動土開工通知。"
         }
     ]
 
