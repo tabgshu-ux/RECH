@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：公司組織架構與跨群組彈性業務模組掛載中心（完整收錄總經理室 7 大模組選項）
+# 職責：公司組織架構與跨群組彈性業務模組掛載中心（修復 Key 唯一性衝突）
 # ==========================================
 
 import streamlit as st
@@ -59,7 +59,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
 
         # 🌟 完整收錄總經理室 7 大模組與各部門標準功能選單
         categorized_features = {
-            "👑 【總經理室與戰情決策群組 (完整 7 大模組)】": {
+            "👑 【總經理室與戰情決策群組】": {
                 "總經理室 - 跨國營運戰情與決策總覽": "feat_executive",
                 "📈 原料市場與即時外匯行情 (LME 銅價)": "feat_lme_commodities",
                 "📈 全球股市 API 指標追蹤": "feat_stock_indices",
@@ -67,8 +67,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 "💰 完整損益表與會計報表 (Thông tư 200)": "feat_circular_200",
                 "🛠️ 工程專案進度與現場狀態": "feat_eng_overview",
                 "📰 越南政府政策與法規動態": "feat_policy",
-                "🏗️ 工程案場與金額佔比分析": "feat_analytics",
-                "📅 秘書室老闆行程與動土安排管理": "feat_executive"
+                "🏗️ 工程案場與金額佔比分析": "feat_analytics"
             },
             "🛠️ 【工程部專屬群組】": {
                 "工程部總覽 / 專案進度追蹤": "feat_eng_overview",
@@ -129,7 +128,8 @@ def render(engine=None, lang="繁體中文", **kwargs):
             for group_name, features in categorized_features.items():
                 st.markdown(f"**{group_name}**")
                 for label, feat_id in features.items():
-                    unique_key = f"chk_mount_{selected_dept}_{group_name}_{feat_id}"
+                    # 🌟 修正 Key 衝突：確保每個 Checkbox 的 key 絕對唯一且無特殊字元
+                    unique_key = f"chk_{selected_dept}_{feat_id}_{hash(label)}"
                     is_checked = st.checkbox(label, value=(feat_id in mounted_list), key=unique_key)
                     if is_checked:
                         if feat_id not in new_mounted:
