@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/executive/executive_dashboard.py
-# 職責：總經理室總覽與決策中心（完整 7 大專屬功能卡片與秘書行程管理）
+# 職責：總經理室總覽與決策中心（100% 依據 Supabase 資料庫元數據動態渲染）
 # ==========================================
 
 import streamlit as st
@@ -9,7 +9,7 @@ import pandas as pd
 from sqlalchemy import text
 
 def get_mounted_features_for_dept(engine, dept_name):
-    """從資料庫動態讀取該部門實際被掛載的功能代碼清單"""
+    """從 Supabase 資料庫動態讀取該部門實際被掛載的功能代碼清單（純元數據驅動）"""
     if not engine:
         return []
     try:
@@ -23,7 +23,7 @@ def get_mounted_features_for_dept(engine, dept_name):
     except Exception:
         pass
     
-    return ['feat_executive', 'feat_lme_commodities', 'feat_stock_indices', 'feat_fx_rates', 'feat_circular_200', 'feat_policy', 'feat_eng_overview']
+    return []
 
 def init_schedule_table(engine):
     """確保秘書行程資料表存在"""
@@ -56,7 +56,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
                 st.session_state['exec_active_sub'] = None
                 st.rerun()
         with col_info:
-            st.caption("💡 提示：左側固定選單隨時可切換部門與系統設定，免去來回捲動。")
+            st.caption("💡 提示：左側固定選單隨時可切換部門與系統設定。")
 
         st.markdown("---")
 
@@ -204,7 +204,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
 
     mounted_feats = get_mounted_features_for_dept(engine, "總經理室")
 
-    # 🌟 完整收錄總經理室所有 7 大核心功能與對應代碼
+    # 🌟 完整對應 7 大核心模組
     all_exec_sections = [
         {
             "feat_id": "feat_lme_commodities",
@@ -227,7 +227,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
         {
             "feat_id": "feat_circular_200",
             "id": "financials", 
-            "name": "💰 完整損益表與會計報表", 
+            "name": "💰 完整損益表與會計報表 (Thông tư 200)", 
             "desc": "依據越南會計標準 (Thông tư 200) 之損益摘要、AR/AP 帳齡與會計科目清單。"
         },
         {
@@ -247,15 +247,10 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
             "id": "analytics", 
             "name": "🏗️ 工程案場與金額佔比分析", 
             "desc": "分析廠內各類型工程案場數量、合約總金額結構、平均毛利率與營收佔比分佈。"
-        },
-        {
-            "feat_id": "feat_executive",
-            "id": "schedule_mgr",
-            "name": "📅 秘書室老闆行程與動土安排管理",
-            "desc": "即時維護與更新老闆日常行程、商會集會與重大動土開工通知。"
         }
     ]
 
+    # 🌟 嚴格依據資料庫元數據過濾
     active_sections = [sec for sec in all_exec_sections if sec['feat_id'] in mounted_feats]
 
     if active_sections:
@@ -270,7 +265,7 @@ def render_executive_main(engine=None, lang="繁體中文", **kwargs):
                         st.session_state['exec_active_sub'] = sec['id']
                         st.rerun()
     else:
-        st.info("💡 目前總經理室尚未勾選掛載任何專屬模組。請至「系統設定 ➡️ 公司部門 ➡️ 跨群組彈性模組掛載」勾選您需要的功能！")
+        st.info("💡 目前總經理室尚未勾選掛載任何專屬模組。請至左側選單進入「⚙️ 系統設定」進行勾選（設定頁面頂部已提供快捷儲存按鈕，免去捲動）。")
 
 def render_executive_dashboard_page(engine=None, lang="繁體中文", **kwargs):
     render_executive_main(engine=engine, lang=lang, **kwargs)
