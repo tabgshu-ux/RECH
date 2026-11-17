@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/branding_config.py
-# 職責：企業識別與品牌 Logo 動態配置（支援資料表自動建立、實體圖檔儲存與即時刷新）
+# 職責：企業識別與品牌 Logo 動態配置（確實寫入實體硬碟、自動建表、即時重新整理）
 # ==========================================
 
 import streamlit as st
@@ -8,7 +8,7 @@ import os
 from sqlalchemy import text
 
 def init_tenant_settings_table(engine):
-    """自動初始化 tenant_settings 資料表，防止資料庫寫入失敗"""
+    """自動初始化 tenant_settings 資料表與欄位，確保資料庫寫入萬無一失"""
     if engine is not None:
         try:
             with engine.begin() as conn:
@@ -37,7 +37,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
 
     current_tenant_id = st.session_state.get("tenant_id", "REETECH_VN")
 
-    # 讀取現有品牌設定
+    # 從資料庫讀取現有設定
     current_name = "裕豐電機工業有限公司"
     current_sub = "CÔNG TY TNHH CN DỮ PHONG"
     current_logo = ""
@@ -55,15 +55,17 @@ def render(engine=None, lang="繁體中文", **kwargs):
     except Exception:
         current_name = st.session_state.get("tenant_company_name", "裕豐電機工業有限公司")
         current_sub = st.session_state.get("tenant_company_sub", "CÔNG TY TNHH CN DỮ PHONG")
+        current_logo = st.session_state.get("tenant_logo_url", "")
 
     with st.form("branding_form"):
         new_company_name = st.text_input("企業正式名稱 (Company Name)", value=current_name)
         new_company_sub = st.text_input("企業副標題 / 越文名稱 (Subtitle / Local Name)", value=current_sub)
         
-        # 顯示目前已上傳的 Logo 狀態
         if current_logo:
-            st.text(sprintf := f"📁 當前 Logo 儲存路徑: {current_logo}")
-            
+            st.caption(f"📁 目前生效的 Logo 檔案路徑: `{current_logo}`")
+            if os.path.exists(current_logo):
+                st.image(current_logo, width=150)
+
         uploaded_logo = st.file_uploader("上傳企業 Logo 圖片 (建議尺寸 200x60px, PNG/JPG)", type=["png", "jpg", "jpeg"])
         
         submitted_brand = st.form_submit_button("💾 儲存並即時更新企業識別 (Save Branding)", type="primary", use_container_width=True)
@@ -71,16 +73,18 @@ def render(engine=None, lang="繁體中文", **kwargs):
         if submitted_brand:
             logo_path = current_logo
             
-            # 修正：確實將上傳的圖片檔案寫入實體資料夾中
+            # 🌟 關鍵修正：確實將上傳的圖片二進位資料儲存到伺服器的 assets/ 資料夾中
             if uploaded_logo is not None:
                 try:
                     os.makedirs("assets", exist_ok=True)
-                    logo_path = f"assets/{current_tenant_id}_{uploaded_logo.name}"
+                    logo_filename = f"{current_tenant_id}_{uploaded_logo.name}"
+                    logo_path = os.path.join("assets", logo_filename)
                     with open(logo_path, "wb") as f:
                         f.write(uploaded_logo.getbuffer())
                 except Exception as file_err:
-                    st.warning(f"⚠️ 圖檔儲存至伺服器失敗: {file_err}")
+                    st.error(f"❌ 圖檔寫入伺服器硬碟失敗: {file_err}")
 
+            # 寫入資料庫
             try:
                 with engine.begin() as conn:
                     upsert_sql = text("""
@@ -101,7 +105,10 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 st.session_state.tenant_company_sub = new_company_sub
                 st.session_state.tenant_logo_url = logo_path
                 
-                st.success("🎉 企業品牌識別已成功寫入資料庫！側邊欄與標題已同步更新。")
+                st.success("🎉 企業品牌識別與 Logo 已成功更新並寫入資料庫！")
                 st.rerun()
             except Exception as db_err:
                 st.error(f"❌ 資料庫儲存失敗: {db_err}")
+
+def show(engine=None, lang="繁體中文", **kwargs):
+    render(engine=engine, lang=lang, **kwargs)
