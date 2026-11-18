@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：公司組織架構與跨群組彈性業務模組掛載中心（工程部納入報價與高層簽核模組）
+# 職責：公司組織架構與跨群組彈性業務模組掛載中心（修復資料庫欄位名稱相容性）
 # ==========================================
 
 import streamlit as st
@@ -42,11 +42,12 @@ def render(engine=None, lang="繁體中文", **kwargs):
         dept_names = [d['name'] for d in depts] if depts else ["總經理室", "工程部", "管理部", "生產部", "倉庫管理"]
         selected_dept = st.selectbox("🎯 選擇要掛載模組的目標部門", dept_names, key="mount_dept_select")
 
+        # 讀取該部門目前已掛載的模組（兼容 dept_name 與 department_name）
         mounted_list = []
         try:
             with engine.connect() as conn:
                 res = conn.execute(
-                    text("SELECT mounted_features FROM sys_department_modules WHERE dept_name = :d"),
+                    text("SELECT mounted_features FROM sys_department_modules WHERE dept_name = :d OR department_name = :d"),
                     {"d": selected_dept}
                 ).fetchone()
                 if res and res[0]:
@@ -112,14 +113,22 @@ def render(engine=None, lang="繁體中文", **kwargs):
             if submitted_mount_top or submitted_mount_bot:
                 mounted_str = ",".join(new_mounted)
                 try:
-                    with engine.connect() as conn:
-                        conn.execute(text("""
-                            INSERT INTO sys_department_modules (dept_name, mounted_features, updated_at)
-                            VALUES (:dname, :feats, CURRENT_TIMESTAMP)
-                            ON CONFLICT (dept_name) 
-                            DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
-                        """), {"dname": selected_dept, "feats": mounted_str})
-                        conn.commit()
+                    with engine.begin() as conn:
+                        # 🌟 智慧相容寫入：自動適應資料庫的欄位名稱（dept_name 或 department_name）
+                        try:
+                            conn.execute(text("""
+                                INSERT INTO sys_department_modules (dept_name, mounted_features, updated_at)
+                                VALUES (:dname, :feats, CURRENT_TIMESTAMP)
+                                ON CONFLICT (dept_name) 
+                                DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
+                            """), {"dname": selected_dept, "feats": mounted_str})
+                        except Exception:
+                            conn.execute(text("""
+                                INSERT INTO sys_department_modules (department_name, mounted_features, updated_at)
+                                VALUES (:dname, :feats, CURRENT_TIMESTAMP)
+                                ON CONFLICT (department_name) 
+                                DO UPDATE SET mounted_features = :feats, updated_at = CURRENT_TIMESTAMP
+                            """), {"dname": selected_dept, "feats": mounted_str})
 
                     st.success(f"🎉 【{selected_dept}】的業務模組掛載已成功儲存並即時生效！")
                     st.balloons()
