@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：app.py
-# 職責：系統主入口（多語系 + 手機優先 + 動態元數據路由）
+# 職責：系統主入口（多語系 + 手機優先 + 動態元數據路由 + 切頁自動置頂）
 # ==========================================
 
 import os
@@ -31,6 +31,7 @@ DEFAULTS = {
     "selected_node_code": None,
     "role_landing_applied": False,
     "tenant_company_name": "裕豐電機工業有限公司",
+    "_last_route_sig": "",
 }
 for k, v in DEFAULTS.items():
     if k not in st.session_state:
@@ -70,6 +71,12 @@ if db_engine and not st.session_state["role_landing_applied"]:
             st.session_state["current_view"] = "dynamic_feature"
             st.session_state["active_feature_id"] = feats[0]
 
+# 切換部門或功能時自動捲動到最上方
+route_sig = f"{st.session_state['current_view']}|{st.session_state.get('selected_node_code')}|{st.session_state.get('active_feature_id')}"
+if st.session_state["_last_route_sig"] != route_sig:
+    st.session_state["_last_route_sig"] = route_sig
+    ui_theme.scroll_to_top()
+
 with st.sidebar:
     ui_theme.render_lang_selector("sidebar_lang")
     st.divider()
@@ -107,9 +114,9 @@ with st.sidebar:
         st.session_state["active_feature_id"] = "feat_it_menu"
         st.rerun()
 
-c_title, c_user, c_back, c_out = st.columns([5, 2, 2, 1])
+c_title, c_user, c_back, c_out = st.columns([4.5, 2, 2.2, 1.3])
 with c_title:
-    st.subheader(f"🏭 {st.session_state['tenant_company_name']}")
+    st.markdown(f"#### 🏭 {st.session_state['tenant_company_name']}")
 with c_user:
     st.caption(f"👤 {st.session_state['user_name']}")
 with c_back:
