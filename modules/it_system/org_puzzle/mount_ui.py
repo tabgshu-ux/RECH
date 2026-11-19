@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/org_puzzle/mount_ui.py
-# 職責：系統設定內的 Tab 2 功能拼圖掛載與 Tab 3 拼圖註冊管理（含修改/停用）
+# 職責：系統設定 - Tab 2 功能拼圖掛載與 Tab 3 拼圖註冊管理
 # ==========================================
 
 import streamlit as st
@@ -47,6 +47,9 @@ def _update_or_toggle_puzzle(engine, feature_key: str, feature_name: str, featur
 
 
 def render_mount_tab(engine, tenant_id: str, active_nodes: list[dict], registry: list[dict]):
+    repo.sync_default_registry(engine)
+    reg_list = repo.load_registry(engine) or registry
+
     st.markdown("#### 🧩 為指定 L1～L4 節點掛載功能拼圖")
     if not active_nodes:
         st.info("請先在「1. 組織樹管理」建立或套用組織節點。")
@@ -57,7 +60,7 @@ def render_mount_tab(engine, tenant_id: str, active_nodes: list[dict], registry:
     for n in active_nodes:
         p_name = node_map.get(n.get("parent_node_code"), {}).get("node_name")
         prefix = f"{p_name} ➔ " if p_name else ""
-        options[f"[{n['level_tier']}] {prefix}{n['node_name']}"] = n
+        options[f"{prefix}{n['node_name']}"] = n
 
     target = options[st.selectbox("選擇掛載目標節點", list(options.keys()), key="mount_node_sel")]
     cur_feats, cur_role = repo.load_node_mount(engine, tenant_id, target["node_code"])
@@ -70,7 +73,7 @@ def render_mount_tab(engine, tenant_id: str, active_nodes: list[dict], registry:
         st.divider()
 
         grouped = {}
-        for item in registry:
+        for item in reg_list:
             grouped.setdefault(item.get("group") or "通用拼圖", []).append(item)
 
         picked = []
@@ -103,12 +106,13 @@ def render_mount_tab(engine, tenant_id: str, active_nodes: list[dict], registry:
         for item in landings:
             st.markdown(
                 f"- 角色代碼 **`{item['landing_role_code']}`** ➔ "
-                f"**[{item.get('level_tier') or 'L1'}] {item.get('node_name') or item['node_code']}** "
+                f"**{item.get('node_name') or item['node_code']}** "
                 f"（掛載：`{item.get('mounted_features') or '無'}`）"
             )
 
 
 def render_register_tab(engine):
+    repo.sync_default_registry(engine)
     st.markdown("#### ➕ 註冊新功能拼圖")
     with st.form("form_reg_puzzle"):
         c1, c2 = st.columns(2)
