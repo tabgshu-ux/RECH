@@ -1,13 +1,15 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：多租戶 SaaS 拼圖掛載中心（註冊表驅動 + 租戶隔離，不寫死單一公司業務邏輯）
+# 職責：SaaS 組織樹（L1~L4 新增/修改/停用/刪除 + 中/英/越文自動產碼）與功能拼圖掛載中心
 # ==========================================
 
+import hashlib
+import re
+import unicodedata
 import streamlit as st
 from sqlalchemy import text
 
 
-# 系統拼圖池（可由資料庫 sys_feature_registry 擴充；新增拼圖只需在此或資料表註冊 feature_key）
 DEFAULT_PUZZLE_REGISTRY = [
     {"key": "feat_eng_quotation", "name": "📐 估價中心", "group": "業務與專案", "module": "modules.engineering.financial.quotation", "func": "render"},
     {"key": "feat_site_log", "name": "📋 工地巡檢與施工日報", "group": "現場作業", "module": "modules.engineering.site_ops.daily_report", "func": "render"},
@@ -21,7 +23,6 @@ DEFAULT_PUZZLE_REGISTRY = [
     {"key": "feat_circular_200", "name": "💰 財務會計與標準財報", "group": "財務與成本", "module": "modules.executive.financials_pl", "func": "show"},
 ]
 
-# 可選套用的組織模板（僅供初始化或一鍵套用，不寫死於畫面渲染）
 ORG_TEMPLATES = {
     "裕豐電機標準模板（L1/L2 + 現場入口）": [
         {"code": "DEPT_EXEC", "name": "總經理室", "tier": "L1", "parent": None, "type": "DEPT", "sort": 10},
@@ -48,6 +49,29 @@ ORG_TEMPLATES = {
         {"code": "FUNC_APPROVAL_CENTER", "name": "簽核中心", "tier": "L1", "parent": None, "type": "L1_FUNC", "sort": 40},
     ],
 }
+
+
+def generate_auto_node_code(tier: str, name: str, parent_code: str | None = None, node_type: str = "DEPT") -> str:
+    """
+    依中文、英文或越南文名稱自動產生唯一且可讀的系統代碼（使用者免填寫）。
+    例如：Kế toán -> KE_TOAN_xxxx；設計三組 -> UNIT_xxxx。
+    """
+    clean_name = (name or "").strip()
+    # 處理越南文 đ / Đ
+    vn_mapped = clean_name.replace("đ", "d").replace("Đ", "D")
+    # 拆解重音符號（適用越南文與拉丁字母）
+    normalized = unicodedata.normalize("NFD", vn_mapped)
+    without_accents = "".join(ch for ch in normalized if unicodedata.category(ch) != "Mn")
+    ascii_slug = re.sub(r"[^A-Za-z0-9]+", "_", without_accents).strip("_").upper()
+    ascii_slug = re.sub(r"_+", "_", ascii_slug)[:14]
+
+    digest_source = f"{tier}|{parent_code or ''}|{node_type}|{clean_name}".encode("utf-8")
+    short_hash = hashlib.sha1(digest_source).hexdigest()[:4].upper()
+
+    prefix = "FUNC" if node_type == "L1_FUNC" else (tier or "L1").upper()
+    if ascii_slug:
+        return f"{prefix}_{ascii_slug}_{short_hash}"
+    return f"{prefix}_NODE_{short_hash}"
 
 
 def _ensure_saas_metadata_tables(engine):
@@ -93,7 +117,6 @@ def _ensure_saas_metadata_tables(engine):
                 );
             """))
 
-            # 將預設拼圖池同步註冊進 sys_feature_registry（保留客戶自訂名稱）
             for item in DEFAULT_PUZZLE_REGISTRY:
                 conn.execute(text("""
                     INSERT INTO sys_feature_registry (
@@ -117,7 +140,6 @@ def _ensure_saas_metadata_tables(engine):
 
 
 def _load_registry(engine):
-    """從拼圖註冊表讀取所有可用功能拼圖"""
     registry = list(DEFAULT_PUZZLE_REGISTRY)
     if not engine:
         return registry
@@ -149,27 +171,27 @@ def _load_registry(engine):
     return registry
 
 
-def _load_tenant_nodes(engine, tenant_id):
+def _load_tenant_nodes(engine, tenant_id, include_inactive=False):
     if not engine:
         return []
     try:
         with engine.connect() as conn:
-            rows = conn.execute(text("""
-                SELECT node_code, node_name, level_tier, parent_node_code, node_type, sort_order
+            sql = """
+                SELECT node_code, node_name, level_tier, parent_node_code, node_type, sort_order, is_active
                 FROM sys_tenant_org_nodes
-                WHERE tenant_id = :tid AND is_active = TRUE
-                ORDER BY sort_order ASC, id ASC
-            """), {"tid": tenant_id}).fetchall()
+                WHERE tenant_id = :tid
+            """
+            if not include_inactive:
+                sql += " AND is_active = TRUE"
+            sql += " ORDER BY sort_order ASC, id ASC"
+            rows = conn.execute(text(sql), {"tid": tenant_id}).fetchall()
             return [r._asdict() for r in rows]
     except Exception:
         return []
 
 
 def _apply_template(engine, tenant_id, template_items):
-    """套用組織模板時以 tenant_id + node_code 精準更新，避免重複髒資料"""
-    valid_codes = [x["code"] for x in template_items]
     with engine.begin() as conn:
-        # 停用該租戶不在模板內的舊節點（保留歷史紀錄不斷表）
         conn.execute(text("""
             UPDATE sys_tenant_org_nodes
             SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP
@@ -202,9 +224,14 @@ def _apply_template(engine, tenant_id, template_items):
             })
 
 
+def _get_allowed_parent_tier(tier: str) -> str | None:
+    mapping = {"L2": "L1", "L3": "L2", "L4": "L3"}
+    return mapping.get((tier or "").upper())
+
+
 def render(engine=None, lang="zh", **kwargs):
     st.markdown("### 🧩 SaaS 組織與功能拼圖設定中心")
-    st.caption("所有功能拼圖與部門層級皆由元數據驅動，可在系統端自由分配 L1／L2 與掛載功能，無需修改業務程式碼。")
+    st.caption("支援 L1～L4 組織新增／修改／停用／刪除，輸入中／英／越文名稱自動產生代碼；所有功能皆可自由拼裝掛載。")
 
     if not engine:
         st.warning("⚠️ 尚未連線資料庫引擎。")
@@ -214,123 +241,298 @@ def render(engine=None, lang="zh", **kwargs):
     tenant_id = st.session_state.get("tenant_id", "REETECH_VN")
     st.caption(f"目前租戶：`{tenant_id}`")
 
-    nodes = _load_tenant_nodes(engine, tenant_id)
+    all_nodes = _load_tenant_nodes(engine, tenant_id, include_inactive=True)
+    active_nodes = [n for n in all_nodes if n.get("is_active", True)]
     registry = _load_registry(engine)
 
     tab_org, tab_mount, tab_reg = st.tabs([
-        "🌳 1. 組織與卡片結構",
+        "🌳 1. 組織樹管理（L1～L4）",
         "🧩 2. 功能拼圖掛載",
         "➕ 3. 註冊新功能拼圖"
     ])
 
     # ------------------------------------------
-    # Tab 1：組織與卡片結構（含模板套用與動態新增 L1/L2）
+    # Tab 1：L1~L4 組織樹檢視、新增、修改、停用／刪除
     # ------------------------------------------
     with tab_org:
-        col_left, col_right = st.columns([1.3, 1])
+        col_left, col_right = st.columns([1.25, 1.15])
 
         with col_left:
-            st.markdown("#### 🌲 租戶組織樹狀結構")
-            chosen_tpl = st.selectbox("選擇套用組織模板", list(ORG_TEMPLATES.keys()), key="saas_tpl_select")
+            st.markdown("#### 🌲 租戶組織樹狀結構（L1 ～ L4）")
+            chosen_tpl = st.selectbox("套用組織模板", list(ORG_TEMPLATES.keys()), key="saas_tpl_select")
             if st.button("📥 套用／校準此組織模板", type="primary", use_container_width=True):
                 try:
                     _apply_template(engine, tenant_id, ORG_TEMPLATES[chosen_tpl])
-                    st.success(f"✅ 已為租戶 `{tenant_id}` 套用【{chosen_tpl}】。")
+                    st.success(f"✅ 已套用【{chosen_tpl}】。")
                     st.rerun()
                 except Exception as e:
                     st.error(f"❌ 套用模板失敗: {e}")
 
-            if not nodes:
-                st.info("目前尚未建立此租戶的組織節點，請點擊上方「套用／校準此組織模板」或於右側新增。")
-            else:
-                l1_list = [n for n in nodes if str(n.get("level_tier")).upper() == "L1"]
-                l2_list = [n for n in nodes if str(n.get("level_tier")).upper() == "L2"]
+            show_inactive = st.checkbox("顯示已停用節點", value=False, key="show_inactive_org_nodes")
+            display_nodes = all_nodes if show_inactive else active_nodes
 
-                for l1 in l1_list:
-                    tag = "🧭 L1 功能入口" if l1.get("node_type") == "L1_FUNC" else "🏛️ L1 部門"
-                    with st.container(border=True):
-                        st.markdown(f"**{tag}｜{l1['node_name']}** (`{l1['node_code']}`)")
-                        subs = [s for s in l2_list if s.get("parent_node_code") == l1["node_code"]]
-                        for sub in subs:
-                            st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;↳ 🗂️ **L2 {sub['node_name']}** (`{sub['node_code']}`)")
+            if not display_nodes:
+                st.info("目前尚無組織節點，請套用模板或於右側新增。")
+            else:
+                def _render_subtree(parent_code, level_target, indent_px=0):
+                    matched = [
+                        n for n in display_nodes
+                        if str(n.get("level_tier")).upper() == level_target
+                        and (n.get("parent_node_code") or None) == parent_code
+                    ]
+                    next_tier_map = {"L1": "L2", "L2": "L3", "L3": "L4", "L4": None}
+                    for n in matched:
+                        status_txt = "" if n.get("is_active", True) else " `【已停用】`"
+                        role_icon = "🧭" if n.get("node_type") == "L1_FUNC" else "🗂️"
+                        st.markdown(
+                            f"<div style='margin-left:{indent_px}px; padding:4px 0;'>"
+                            f"{role_icon} <b>[{n['level_tier']}] {n['node_name']}</b> "
+                            f"<code>{n['node_code']}</code>{status_txt}</div>",
+                            unsafe_allow_html=True,
+                        )
+                        nxt = next_tier_map.get(level_target)
+                        if nxt:
+                            _render_subtree(n["node_code"], nxt, indent_px + 22)
+
+                with st.container(border=True):
+                    _render_subtree(None, "L1", indent_px=0)
 
         with col_right:
-            st.markdown("#### ➕ 新增／調整部門或 L2 卡片")
-            l1_depts = [n for n in nodes if str(n.get("level_tier")).upper() == "L1" and n.get("node_type") == "DEPT"]
-            parent_opts = {f"{n['node_name']} ({n['node_code']})": n["node_code"] for n in l1_depts}
+            action_mode = st.radio(
+                "操作模式",
+                ["➕ 新增節點", "✏️ 修改現有節點", "🗑️ 停用 / 刪除節點"],
+                horizontal=True,
+                key="org_action_mode",
+            )
 
-            with st.form("saas_add_node_form"):
-                tier_choice = st.radio("節點層級", ["L1 部門", "L2 子部門／卡片", "L1 功能入口"])
-                parent_val = None
-                if "L2" in tier_choice:
-                    if parent_opts:
-                        p_sel = st.selectbox("歸屬 L1 部門", list(parent_opts.keys()))
-                        parent_val = parent_opts[p_sel]
+            # --- 新增節點（支援 L1~L4，自動依中/英/越文產碼）---
+            if action_mode == "➕ 新增節點":
+                st.markdown("#### ➕ 新增 L1 ～ L4 節點（自動產生代碼）")
+                tier_choice = st.selectbox("選擇層級", ["L1", "L2", "L3", "L4"], key="add_node_tier")
+                req_parent_tier = _get_allowed_parent_tier(tier_choice)
+                parent_code_val = None
+
+                if req_parent_tier:
+                    candidates = [
+                        n for n in active_nodes
+                        if str(n.get("level_tier")).upper() == req_parent_tier and n.get("node_type") == "DEPT"
+                    ]
+                    p_opts = {f"[{n['level_tier']}] {n['node_name']} ({n['node_code']})": n["node_code"] for n in candidates}
+                    if p_opts:
+                        p_sel = st.selectbox(f"選擇上層 {req_parent_tier} 部門", list(p_opts.keys()), key="add_node_parent")
+                        parent_code_val = p_opts[p_sel]
                     else:
-                        st.warning("請先建立至少一個 L1 部門。")
+                        st.warning(f"⚠️ 尚無啟用中的 {req_parent_tier} 部門可作為上層，請先建立 {req_parent_tier}。")
 
-                node_code = st.text_input("節點代碼", placeholder="例如: DEPT_ENG_QC")
-                node_name = st.text_input("顯示名稱", placeholder="例如: 測試與品管卡片")
-                sort_ord = st.number_input("排序", min_value=1, max_value=999, value=90)
+                node_type_val = "DEPT"
+                if tier_choice == "L1":
+                    ntype_label = st.radio("L1 節點性質", ["實體部門 (DEPT)", "L1 功能入口 (L1_FUNC)"], horizontal=True, key="add_l1_ntype")
+                    node_type_val = "L1_FUNC" if "L1_FUNC" in ntype_label else "DEPT"
 
-                if st.form_submit_button("💾 儲存節點", type="primary", use_container_width=True):
-                    c_code = node_code.strip().upper()
-                    c_name = node_name.strip()
-                    if not c_code or not c_name:
-                        st.warning("⚠️ 請填寫節點代碼與顯示名稱。")
-                    elif "L2" in tier_choice and not parent_val:
-                        st.warning("⚠️ L2 子部門／卡片必須選擇歸屬的 L1 部門。")
-                    else:
-                        t_val = "L2" if "L2" in tier_choice else "L1"
-                        nt_val = "L1_FUNC" if "功能入口" in tier_choice else "DEPT"
-                        try:
-                            with engine.begin() as conn:
-                                conn.execute(text("""
-                                    INSERT INTO sys_tenant_org_nodes (
-                                        tenant_id, node_code, node_name, level_tier,
-                                        parent_node_code, node_type, sort_order, is_active, updated_at
-                                    )
-                                    VALUES (:tid, :c, :n, :tier, :p, :nt, :s, TRUE, CURRENT_TIMESTAMP)
-                                    ON CONFLICT (tenant_id, node_code) DO UPDATE SET
-                                        node_name = EXCLUDED.node_name,
-                                        level_tier = EXCLUDED.level_tier,
-                                        parent_node_code = EXCLUDED.parent_node_code,
-                                        node_type = EXCLUDED.node_type,
-                                        sort_order = EXCLUDED.sort_order,
-                                        is_active = TRUE,
-                                        updated_at = CURRENT_TIMESTAMP
-                                """), {
-                                    "tid": tenant_id,
-                                    "c": c_code,
-                                    "n": c_name,
-                                    "tier": t_val,
-                                    "p": parent_val,
-                                    "nt": nt_val,
-                                    "s": int(sort_ord),
-                                })
-                            st.success(f"✅ 已儲存節點【{c_name}】。")
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"❌ 儲存節點失敗: {e}")
+                with st.form("saas_add_l1_l4_form"):
+                    name_input = st.text_input(
+                        "節點名稱（支援中文、英文或越南文，系統自動產生代碼）",
+                        placeholder="例如: 設計三組 / Phòng Thiết Kế / Design Team",
+                    )
+                    sort_input = st.number_input("排序權重", min_value=1, max_value=999, value=90)
+                    preview_code = generate_auto_node_code(tier_choice, name_input, parent_code_val, node_type_val)
+                    st.caption(f"系統自動產生代碼預覽：`{preview_code}`")
+
+                    if st.form_submit_button("💾 建立節點", type="primary", use_container_width=True):
+                        c_name = name_input.strip()
+                        if not c_name:
+                            st.warning("⚠️ 請輸入節點名稱。")
+                        elif req_parent_tier and not parent_code_val:
+                            st.warning(f"⚠️ 請先選擇上層 {req_parent_tier} 部門。")
+                        else:
+                            auto_code = generate_auto_node_code(tier_choice, c_name, parent_code_val, node_type_val)
+                            try:
+                                with engine.begin() as conn:
+                                    conn.execute(text("""
+                                        INSERT INTO sys_tenant_org_nodes (
+                                            tenant_id, node_code, node_name, level_tier,
+                                            parent_node_code, node_type, sort_order, is_active, updated_at
+                                        )
+                                        VALUES (:tid, :c, :n, :tier, :p, :nt, :s, TRUE, CURRENT_TIMESTAMP)
+                                        ON CONFLICT (tenant_id, node_code) DO UPDATE SET
+                                            node_name = EXCLUDED.node_name,
+                                            level_tier = EXCLUDED.level_tier,
+                                            parent_node_code = EXCLUDED.parent_node_code,
+                                            node_type = EXCLUDED.node_type,
+                                            sort_order = EXCLUDED.sort_order,
+                                            is_active = TRUE,
+                                            updated_at = CURRENT_TIMESTAMP
+                                    """), {
+                                        "tid": tenant_id,
+                                        "c": auto_code,
+                                        "n": c_name,
+                                        "tier": tier_choice,
+                                        "p": parent_code_val,
+                                        "nt": node_type_val,
+                                        "s": int(sort_input),
+                                    })
+                                st.success(f"✅ 已建立【{c_name}】（代碼：`{auto_code}`）。")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"❌ 建立節點失敗: {e}")
+
+            # --- 修改現有節點（改名稱、層級、上層、排序；保留原有代碼避免關聯斷鏈）---
+            elif action_mode == "✏️ 修改現有節點":
+                st.markdown("#### ✏️ 修改現有節點（保留既有代碼避免歷史關聯斷鏈）")
+                if not all_nodes:
+                    st.info("目前沒有可修改的節點。")
+                else:
+                    edit_map = {
+                        f"[{n['level_tier']}] {n['node_name']} ({n['node_code']}){'' if n.get('is_active', True) else ' [已停用]'}": n
+                        for n in all_nodes
+                    }
+                    sel_edit_lbl = st.selectbox("選擇要修改的節點", list(edit_map.keys()), key="edit_node_sel")
+                    target_n = edit_map[sel_edit_lbl]
+
+                    upd_tier = st.selectbox(
+                        "調整層級",
+                        ["L1", "L2", "L3", "L4"],
+                        index=["L1", "L2", "L3", "L4"].index(str(target_n.get("level_tier") or "L1").upper())
+                        if str(target_n.get("level_tier") or "L1").upper() in ["L1", "L2", "L3", "L4"] else 0,
+                        key="edit_node_tier",
+                    )
+                    req_p = _get_allowed_parent_tier(upd_tier)
+                    upd_parent = None
+                    if req_p:
+                        p_cands = [
+                            n for n in active_nodes
+                            if str(n.get("level_tier")).upper() == req_p
+                            and n["node_code"] != target_n["node_code"]
+                            and n.get("node_type") == "DEPT"
+                        ]
+                        p_dict = {f"[{n['level_tier']}] {n['node_name']} ({n['node_code']})": n["node_code"] for n in p_cands}
+                        if p_dict:
+                            default_idx = 0
+                            for idx_k, (_, c_val) in enumerate(p_dict.items()):
+                                if c_val == target_n.get("parent_node_code"):
+                                    default_idx = idx_k
+                                    break
+                            p_choice = st.selectbox(f"調整上層 {req_p} 部門", list(p_dict.keys()), index=default_idx, key="edit_node_parent")
+                            upd_parent = p_dict[p_choice]
+                        else:
+                            st.warning(f"⚠️ 找不到可掛載的 {req_p} 上層部門。")
+
+                    with st.form("saas_edit_node_form"):
+                        upd_name = st.text_input("新的顯示名稱（中／英／越文皆可）", value=target_n["node_name"])
+                        upd_sort = st.number_input("排序權重", min_value=1, max_value=999, value=int(target_n.get("sort_order") or 100))
+                        upd_active = st.checkbox("啟用狀態", value=bool(target_n.get("is_active", True)))
+                        st.caption(f"鎖定代碼：`{target_n['node_code']}`（維持既有代碼以確保掛載與歷史單據不中斷）")
+
+                        if st.form_submit_button("💾 儲存修改", type="primary", use_container_width=True):
+                            if not upd_name.strip():
+                                st.warning("⚠️ 名稱不可為空。")
+                            elif req_p and not upd_parent:
+                                st.warning(f"⚠️ {upd_tier} 必須指定上層 {req_p}。")
+                            else:
+                                try:
+                                    with engine.begin() as conn:
+                                        conn.execute(text("""
+                                            UPDATE sys_tenant_org_nodes
+                                            SET node_name = :n,
+                                                level_tier = :tier,
+                                                parent_node_code = :p,
+                                                sort_order = :s,
+                                                is_active = :act,
+                                                updated_at = CURRENT_TIMESTAMP
+                                            WHERE tenant_id = :tid AND node_code = :c
+                                        """), {
+                                            "tid": tenant_id,
+                                            "c": target_n["node_code"],
+                                            "n": upd_name.strip(),
+                                            "tier": upd_tier,
+                                            "p": upd_parent,
+                                            "s": int(upd_sort),
+                                            "act": bool(upd_active),
+                                        })
+                                    st.success(f"✅ 已更新節點【{upd_name.strip()}】。")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"❌ 更新失敗: {e}")
+
+            # --- 停用 / 刪除節點（含子節點防呆與關聯安全檢查）---
+            else:
+                st.markdown("#### 🗑️ 停用或刪除節點")
+                if not all_nodes:
+                    st.info("目前沒有可操作的節點。")
+                else:
+                    del_map = {
+                        f"[{n['level_tier']}] {n['node_name']} ({n['node_code']}){'' if n.get('is_active', True) else ' [已停用]'}": n
+                        for n in all_nodes
+                    }
+                    sel_del_lbl = st.selectbox("選擇目標節點", list(del_map.keys()), key="del_node_sel")
+                    target_d = del_map[sel_del_lbl]
+                    has_children = any(
+                        n.get("parent_node_code") == target_d["node_code"] and n.get("is_active", True)
+                        for n in all_nodes
+                    )
+
+                    col_b1, col_b2 = st.columns(2)
+                    with col_b1:
+                        toggle_label = "🔴 停用節點" if target_d.get("is_active", True) else "🟢 重新啟用"
+                        if st.button(toggle_label, use_container_width=True):
+                            if target_d.get("is_active", True) and has_children:
+                                st.error("❌ 此節點底下仍有啟用中的下層部門，請先調整或停用下層節點。")
+                            else:
+                                try:
+                                    with engine.begin() as conn:
+                                        conn.execute(text("""
+                                            UPDATE sys_tenant_org_nodes
+                                            SET is_active = :act, updated_at = CURRENT_TIMESTAMP
+                                            WHERE tenant_id = :tid AND node_code = :c
+                                        """), {
+                                            "tid": tenant_id,
+                                            "c": target_d["node_code"],
+                                            "act": not bool(target_d.get("is_active", True)),
+                                        })
+                                    st.success("✅ 已更新節點啟用狀態。")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"❌ 狀態更新失敗: {e}")
+
+                    with col_b2:
+                        confirm_del = st.checkbox("確認永久刪除", key="confirm_perm_del_node")
+                        if st.button("🗑️ 永久刪除", use_container_width=True, disabled=not confirm_del):
+                            any_child = any(n.get("parent_node_code") == target_d["node_code"] for n in all_nodes)
+                            if any_child:
+                                st.error("❌ 此節點存在子節點紀錄，為避免資料斷鏈禁止直接刪除；請改用「停用節點」。")
+                            else:
+                                try:
+                                    with engine.begin() as conn:
+                                        conn.execute(text("""
+                                            DELETE FROM sys_tenant_node_mounts
+                                            WHERE tenant_id = :tid AND node_code = :c
+                                        """), {"tid": tenant_id, "c": target_d["node_code"]})
+                                        conn.execute(text("""
+                                            DELETE FROM sys_tenant_org_nodes
+                                            WHERE tenant_id = :tid AND node_code = :c
+                                        """), {"tid": tenant_id, "c": target_d["node_code"]})
+                                    st.success(f"✅ 已刪除節點【{target_d['node_name']}】。")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"❌ 刪除失敗: {e}")
 
     # ------------------------------------------
-    # Tab 2：功能拼圖掛載（選 L1 或 L2 節點，掛載註冊表中的功能）
+    # Tab 2：功能拼圖掛載（支援 L1～L4 所有啟用節點）
     # ------------------------------------------
     with tab_mount:
-        st.markdown("#### 🧩 為指定 L1 部門、L2 卡片或 L1 入口掛載功能拼圖")
-        if not nodes:
-            st.info("請先在「1. 組織與卡片結構」建立或套用組織節點。")
+        st.markdown("#### 🧩 為指定 L1～L4 節點掛載功能拼圖")
+        if not active_nodes:
+            st.info("請先在「1. 組織樹管理（L1～L4）」建立或套用組織節點。")
             return
 
-        node_map = {n["node_code"]: n for n in nodes}
+        node_map = {n["node_code"]: n for n in active_nodes}
         labels = []
         label_to_code = {}
-        for n in nodes:
-            if n["level_tier"] == "L1":
-                lbl = f"{'[L1入口]' if n.get('node_type') == 'L1_FUNC' else '[L1部門]'} {n['node_name']} ({n['node_code']})"
-            else:
-                pname = node_map.get(n.get("parent_node_code"), {}).get("node_name", "上層")
-                lbl = f"[L2卡片] {pname} ➔ {n['node_name']} ({n['node_code']})"
+        for n in active_nodes:
+            p_code = n.get("parent_node_code")
+            p_name = node_map.get(p_code, {}).get("node_name") if p_code else None
+            path_prefix = f"{p_name} ➔ " if p_name else ""
+            lbl = f"[{n['level_tier']}] {path_prefix}{n['node_name']} ({n['node_code']})"
             labels.append(lbl)
             label_to_code[lbl] = n["node_code"]
 
@@ -401,11 +603,10 @@ def render(engine=None, lang="zh", **kwargs):
                     st.error(f"❌ 儲存掛載失敗: {e}")
 
     # ------------------------------------------
-    # Tab 3：註冊新功能拼圖（無須改掛載清單程式碼即可新增拼圖項目）
+    # Tab 3：註冊新功能拼圖
     # ------------------------------------------
     with tab_reg:
         st.markdown("#### ➕ 註冊新功能拼圖至系統拼圖池")
-        st.caption("新增後，所有租戶的「2. 功能拼圖掛載」都會自動出現此功能，可依需求分配給不同部門或卡片。")
         with st.form("saas_register_puzzle_form"):
             c1, c2 = st.columns(2)
             with c1:
