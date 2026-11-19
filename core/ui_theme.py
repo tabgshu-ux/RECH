@@ -1,9 +1,10 @@
 # ==========================================
 # 檔案路徑：core/ui_theme.py
-# 職責：多語系（繁中/越文/英文）與手機優先（Mobile-First）響應式樣式
+# 職責：多語系（繁中/越文/英文）與手機優先（Mobile-First）響應式樣式（修正頂部遮擋與捲動）
 # ==========================================
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 LANG_LABELS = {
     "zh": "🇹🇼 繁體中文",
@@ -101,26 +102,46 @@ def render_lang_selector(key: str = "lang_sel"):
         st.rerun()
 
 
+def scroll_to_top():
+    components.html(
+        """
+        <script>
+        try {
+            const main = window.parent.document.querySelector('section.main');
+            if (main) { main.scrollTo({top: 0, behavior: 'instant'}); }
+            window.parent.scrollTo(0, 0);
+        } catch (e) {}
+        </script>
+        """,
+        height=0,
+    )
+
+
 def apply_mobile_first():
     st.markdown(
         """
         <style>
+        /* 讓 Streamlit 頂部工具列透明不遮擋自訂標題與返回按鈕 */
+        header[data-testid="stHeader"] {
+            background: transparent;
+            height: 2.8rem;
+        }
+        .block-container {
+            padding-top: 3.3rem !important;
+            padding-bottom: 3rem !important;
+        }
         .stButton > button {
             min-height: 2.6rem;
             border-radius: 8px;
             white-space: normal;
             word-break: break-word;
         }
-        .block-container {
-            padding-top: 1.2rem;
-            padding-bottom: 2.5rem;
-        }
         @media only screen and (max-width: 768px) {
             .block-container {
-                padding-top: 0.75rem !important;
-                padding-left: 0.6rem !important;
-                padding-right: 0.6rem !important;
-                padding-bottom: 3rem !important;
+                padding-top: 3.1rem !important;
+                padding-left: 0.65rem !important;
+                padding-right: 0.65rem !important;
+                padding-bottom: 3.5rem !important;
             }
             h1 { font-size: 1.28rem !important; }
             h2 { font-size: 1.12rem !important; }
