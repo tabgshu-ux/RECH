@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：views/dashboard.py
-# 職責：依元數據渲染 L1~L4 卡片與已掛載拼圖；總經理室與各 L1 部門首頁皆直接顯示總覽
+# 職責：依元數據渲染子卡片與已掛載拼圖；總經理室與各 L1 部門首頁皆直接顯示總覽（不顯示 L1/L2 前綴）
 # ==========================================
 
 import streamlit as st
@@ -49,7 +49,7 @@ def render_dashboard(engine=None, lang=None, **kwargs):
             with cols[idx]:
                 is_here = t["node_code"] == curr_node["node_code"]
                 if st.button(
-                    f"{'📍' if is_here else '↩️'} [{t['level_tier']}] {t['node_name']}",
+                    f"{'📍' if is_here else '↩️'} {t['node_name']}",
                     key=f"crumb_{t['node_code']}",
                     disabled=is_here,
                     use_container_width=True,
@@ -57,7 +57,7 @@ def render_dashboard(engine=None, lang=None, **kwargs):
                     st.session_state["selected_node_code"] = t["node_code"]
                     st.rerun()
 
-    st.markdown(f"### 🏛️ [{curr_node['level_tier']}] {curr_node['node_name']}")
+    st.markdown(f"### 🏛️ {curr_node['node_name']}")
 
     is_exec_room = (
         str(curr_node.get("node_code") or "").upper() == "DEPT_EXEC"
@@ -92,7 +92,7 @@ def render_dashboard(engine=None, lang=None, **kwargs):
         for idx, sub in enumerate(children):
             with s_cols[idx % 2]:
                 with st.container(border=True):
-                    st.markdown(f"**[{sub['level_tier']}] {sub['node_name']}**")
+                    st.markdown(f"**{sub['node_name']}**")
                     if st.button(ui_theme.tr("enter_card", curr_lang), key=f"sub_{sub['node_code']}", use_container_width=True):
                         st.session_state["selected_node_code"] = sub["node_code"]
                         st.rerun()
