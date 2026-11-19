@@ -24,7 +24,10 @@ DEFAULT_PUZZLE_REGISTRY = [
 
     # 工程部與設計
     {"key": "feat_eng_quotation", "name": "📐 估價中心", "group": "工程部", "module": "modules.engineering.financial.quotation", "func": "render"},
-    {"key": "feat_field_gps_clockin", "name": "📍 行動定位打卡與領班代點工（GPS 圍籬）", "group": "工程部", "module": "modules.engineering.site_ops.gps_attendance", "func": "render"},
+    {"key": "feat_field_gps_clockin", "name": "📍 行動定位打卡與領班代點工", "group": "工程部", "module": "modules.engineering.site_ops.gps_attendance", "func": "render"},
+    {"key": "feat_eng_gps_fence", "name": "🧭 設定工程打卡施工範圍（GPS 圍籬）", "group": "工程部", "module": "modules.engineering.site_ops.gps_fence_config", "func": "render"},
+    {"key": "feat_eng_attendance_map", "name": "🗺️ 員工打卡位置與各案場人數統計", "group": "工程部", "module": "modules.engineering.site_ops.attendance_stats", "func": "render"},
+    {"key": "feat_eng_certs", "name": "🪪 外包公司與工程人員證照管理", "group": "工程部", "module": "modules.engineering.compliance.cert_registry", "func": "render"},
     {"key": "feat_site_log", "name": "📋 專案分區派工與手機施工日報", "group": "工程部", "module": "modules.engineering.site_ops.daily_report", "func": "render"},
     {"key": "feat_labor_subcon_billing", "name": "👷 點工計薪與外包估驗", "group": "工程部", "module": "modules.engineering.financial.subcon_billing", "func": "render"},
     {"key": "feat_site_material_transfer", "name": "🚚 工地叫料與跨案場餘料調撥", "group": "工程部", "module": "modules.engineering.procurement_qc.site_transfer", "func": "render"},
