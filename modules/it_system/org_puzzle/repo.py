@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/org_puzzle/repo.py
-# 職責：SaaS 組織樹與拼圖元數據純資料層（自動同步新拼圖 + 多語系自動產碼）
+# 職責：SaaS 組織樹與拼圖元數據純資料層（拼圖名稱與模組路徑精準一一對應）
 # ==========================================
 
 import hashlib
@@ -31,8 +31,9 @@ DEFAULT_PUZZLE_REGISTRY = [
     {"key": "feat_site_log", "name": "📋 專案分區派工與手機施工日報", "group": "工程部", "module": "modules.engineering.site_ops.daily_report", "func": "render"},
     {"key": "feat_labor_subcon_billing", "name": "👷 點工計薪與外包估驗", "group": "工程部", "module": "modules.engineering.financial.subcon_billing", "func": "render"},
     {"key": "feat_site_material_transfer", "name": "🚚 工地叫料與跨案場餘料調撥", "group": "工程部", "module": "modules.engineering.procurement_qc.site_transfer", "func": "render"},
+    {"key": "feat_qa_fat_sat", "name": "✅ FAT/SAT 試驗報告與防偽 QR 驗收", "group": "工程部", "module": "modules.engineering.procurement_qc.testing_acceptance", "func": "render"},
     {"key": "feat_cad_bom_sync", "name": "📐 CAD 圖面轉 BOM 與料號編碼", "group": "設計", "module": "modules.engineering.design.cad_bom", "func": "render"},
-    {"key": "feat_blueprint_ecn", "name": "🗂️ 圖檔版本控管與工程變更 (ECN/ECO)", "group": "設計", "module": "modules.engineering.procurement_qc.testing_acceptance", "func": "render"},
+    {"key": "feat_blueprint_ecn", "name": "🗂️ 圖檔版本控管與工程變更 (ECN/ECO)", "group": "設計", "module": "modules.engineering.design.ecn_control", "func": "render"},
     {"key": "feat_bom_procurement", "name": "📦 工程 BOM 算料與 MRP 採購需求", "group": "設計", "module": "modules.engineering.procurement_qc.bom_procurement", "func": "render"},
 
     # 管理部（人事、總務、財務）
@@ -107,21 +108,31 @@ def generate_auto_node_code(tier: str, name: str, parent_code: str | None = None
 
 
 def sync_default_registry(engine):
-    """把 DEFAULT_PUZZLE_REGISTRY 的最新拼圖同步補齊到 sys_feature_registry（保留使用者自訂名稱）"""
+    """同步 DEFAULT_PUZZLE_REGISTRY 的最新名稱與模組路徑至 sys_feature_registry"""
     if not engine:
         return
     try:
         with engine.begin() as conn:
             for item in DEFAULT_PUZZLE_REGISTRY:
-                conn.execute(text("""
-                    INSERT INTO sys_feature_registry (feature_key, feature_name, feature_group, module_path, entry_func, is_active)
-                    VALUES (:k, :n, :g, :m, :f, TRUE)
-                    ON CONFLICT (feature_key) DO UPDATE SET
-                        feature_group = EXCLUDED.feature_group,
-                        module_path = COALESCE(sys_feature_registry.module_path, EXCLUDED.module_path),
-                        entry_func = COALESCE(sys_feature_registry.entry_func, EXCLUDED.entry_func),
-                        is_active = TRUE
-                """), {"k": item["key"], "n": item["name"], "g": item["group"], "m": item["module"], "f": item["func"]})
+                conn.execute(
+                    text("""
+                        INSERT INTO sys_feature_registry (feature_key, feature_name, feature_group, module_path, entry_func, is_active)
+                        VALUES (:k, :n, :g, :m, :f, TRUE)
+                        ON CONFLICT (feature_key) DO UPDATE SET
+                            feature_name = EXCLUDED.feature_name,
+                            feature_group = EXCLUDED.feature_group,
+                            module_path = EXCLUDED.module_path,
+                            entry_func = EXCLUDED.entry_func,
+                            is_active = TRUE
+                    """),
+                    {
+                        "k": item["key"],
+                        "n": item["name"],
+                        "g": item["group"],
+                        "m": item["module"],
+                        "f": item["func"],
+                    },
+                )
     except Exception:
         pass
 
@@ -131,43 +142,49 @@ def ensure_tables(engine):
         return
     try:
         with engine.begin() as conn:
-            conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS sys_feature_registry (
-                    id SERIAL PRIMARY KEY,
-                    feature_key VARCHAR(120) UNIQUE NOT NULL,
-                    feature_name VARCHAR(160) NOT NULL,
-                    feature_group VARCHAR(100) DEFAULT '通用拼圖',
-                    module_path VARCHAR(255),
-                    entry_func VARCHAR(100) DEFAULT 'render',
-                    is_active BOOLEAN DEFAULT TRUE
-                );
-            """))
-            conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS sys_tenant_org_nodes (
-                    id SERIAL PRIMARY KEY,
-                    tenant_id VARCHAR(64) NOT NULL,
-                    node_code VARCHAR(80) NOT NULL,
-                    node_name VARCHAR(120) NOT NULL,
-                    level_tier VARCHAR(16) DEFAULT 'L1',
-                    parent_node_code VARCHAR(80),
-                    node_type VARCHAR(32) DEFAULT 'DEPT',
-                    sort_order INT DEFAULT 100,
-                    is_active BOOLEAN DEFAULT TRUE,
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE (tenant_id, node_code)
-                );
-            """))
-            conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS sys_tenant_node_mounts (
-                    id SERIAL PRIMARY KEY,
-                    tenant_id VARCHAR(64) NOT NULL,
-                    node_code VARCHAR(80) NOT NULL,
-                    mounted_features TEXT DEFAULT '',
-                    landing_role_code VARCHAR(80),
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE (tenant_id, node_code)
-                );
-            """))
+            conn.execute(
+                text("""
+                    CREATE TABLE IF NOT EXISTS sys_feature_registry (
+                        id SERIAL PRIMARY KEY,
+                        feature_key VARCHAR(120) UNIQUE NOT NULL,
+                        feature_name VARCHAR(160) NOT NULL,
+                        feature_group VARCHAR(100) DEFAULT '通用拼圖',
+                        module_path VARCHAR(255),
+                        entry_func VARCHAR(100) DEFAULT 'render',
+                        is_active BOOLEAN DEFAULT TRUE
+                    );
+                """)
+            )
+            conn.execute(
+                text("""
+                    CREATE TABLE IF NOT EXISTS sys_tenant_org_nodes (
+                        id SERIAL PRIMARY KEY,
+                        tenant_id VARCHAR(64) NOT NULL,
+                        node_code VARCHAR(80) NOT NULL,
+                        node_name VARCHAR(120) NOT NULL,
+                        level_tier VARCHAR(16) DEFAULT 'L1',
+                        parent_node_code VARCHAR(80),
+                        node_type VARCHAR(32) DEFAULT 'DEPT',
+                        sort_order INT DEFAULT 100,
+                        is_active BOOLEAN DEFAULT TRUE,
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE (tenant_id, node_code)
+                    );
+                """)
+            )
+            conn.execute(
+                text("""
+                    CREATE TABLE IF NOT EXISTS sys_tenant_node_mounts (
+                        id SERIAL PRIMARY KEY,
+                        tenant_id VARCHAR(64) NOT NULL,
+                        node_code VARCHAR(80) NOT NULL,
+                        mounted_features TEXT DEFAULT '',
+                        landing_role_code VARCHAR(80),
+                        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                        UNIQUE (tenant_id, node_code)
+                    );
+                """)
+            )
     except Exception:
         pass
     sync_default_registry(engine)
@@ -189,40 +206,46 @@ def load_tenant_nodes(engine, tenant_id: str, include_inactive: bool = False) ->
 
 def upsert_node(engine, tenant_id: str, node_code: str, node_name: str, level_tier: str, parent_code: str | None, node_type: str, sort_order: int, is_active: bool = True):
     with engine.begin() as conn:
-        conn.execute(text("""
-            INSERT INTO sys_tenant_org_nodes (
-                tenant_id, node_code, node_name, level_tier, parent_node_code, node_type, sort_order, is_active, updated_at
-            )
-            VALUES (:tid, :c, :n, :tier, :p, :nt, :s, :act, CURRENT_TIMESTAMP)
-            ON CONFLICT (tenant_id, node_code) DO UPDATE SET
-                node_name = EXCLUDED.node_name,
-                level_tier = EXCLUDED.level_tier,
-                parent_node_code = EXCLUDED.parent_node_code,
-                node_type = EXCLUDED.node_type,
-                sort_order = EXCLUDED.sort_order,
-                is_active = EXCLUDED.is_active,
-                updated_at = CURRENT_TIMESTAMP
-        """), {"tid": tenant_id, "c": node_code, "n": node_name, "tier": level_tier, "p": parent_code, "nt": node_type, "s": sort_order, "act": is_active})
-
-
-def apply_org_template(engine, tenant_id: str, template_items: list[dict]):
-    with engine.begin() as conn:
-        conn.execute(text("UPDATE sys_tenant_org_nodes SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = :tid"), {"tid": tenant_id})
-        for item in template_items:
-            conn.execute(text("""
+        conn.execute(
+            text("""
                 INSERT INTO sys_tenant_org_nodes (
                     tenant_id, node_code, node_name, level_tier, parent_node_code, node_type, sort_order, is_active, updated_at
                 )
-                VALUES (:tid, :c, :n, :tier, :p, :nt, :s, TRUE, CURRENT_TIMESTAMP)
+                VALUES (:tid, :c, :n, :tier, :p, :nt, :s, :act, CURRENT_TIMESTAMP)
                 ON CONFLICT (tenant_id, node_code) DO UPDATE SET
                     node_name = EXCLUDED.node_name,
                     level_tier = EXCLUDED.level_tier,
                     parent_node_code = EXCLUDED.parent_node_code,
                     node_type = EXCLUDED.node_type,
                     sort_order = EXCLUDED.sort_order,
-                    is_active = TRUE,
+                    is_active = EXCLUDED.is_active,
                     updated_at = CURRENT_TIMESTAMP
-            """), {"tid": tenant_id, "c": item["code"], "n": item["name"], "tier": item["tier"], "p": item["parent"], "nt": item["type"], "s": item["sort"]})
+            """),
+            {"tid": tenant_id, "c": node_code, "n": node_name, "tier": level_tier, "p": parent_code, "nt": node_type, "s": sort_order, "act": is_active},
+        )
+
+
+def apply_org_template(engine, tenant_id: str, template_items: list[dict]):
+    with engine.begin() as conn:
+        conn.execute(text("UPDATE sys_tenant_org_nodes SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE tenant_id = :tid"), {"tid": tenant_id})
+        for item in template_items:
+            conn.execute(
+                text("""
+                    INSERT INTO sys_tenant_org_nodes (
+                        tenant_id, node_code, node_name, level_tier, parent_node_code, node_type, sort_order, is_active, updated_at
+                    )
+                    VALUES (:tid, :c, :n, :tier, :p, :nt, :s, TRUE, CURRENT_TIMESTAMP)
+                    ON CONFLICT (tenant_id, node_code) DO UPDATE SET
+                        node_name = EXCLUDED.node_name,
+                        level_tier = EXCLUDED.level_tier,
+                        parent_node_code = EXCLUDED.parent_node_code,
+                        node_type = EXCLUDED.node_type,
+                        sort_order = EXCLUDED.sort_order,
+                        is_active = TRUE,
+                        updated_at = CURRENT_TIMESTAMP
+                """),
+                {"tid": tenant_id, "c": item["code"], "n": item["name"], "tier": item["tier"], "p": item["parent"], "nt": item["type"], "s": item["sort"]},
+            )
 
 
 def delete_node_permanently(engine, tenant_id: str, node_code: str):
@@ -268,24 +291,30 @@ def load_node_mount(engine, tenant_id: str, node_code: str) -> tuple[list[str], 
 
 def save_node_mount(engine, tenant_id: str, node_code: str, feature_keys: list[str], landing_role: str | None):
     with engine.begin() as conn:
-        conn.execute(text("""
-            INSERT INTO sys_tenant_node_mounts (tenant_id, node_code, mounted_features, landing_role_code, updated_at)
-            VALUES (:tid, :c, :feats, :lrole, CURRENT_TIMESTAMP)
-            ON CONFLICT (tenant_id, node_code) DO UPDATE SET
-                mounted_features = EXCLUDED.mounted_features,
-                landing_role_code = EXCLUDED.landing_role_code,
-                updated_at = CURRENT_TIMESTAMP
-        """), {"tid": tenant_id, "c": node_code, "feats": ",".join(feature_keys), "lrole": landing_role})
+        conn.execute(
+            text("""
+                INSERT INTO sys_tenant_node_mounts (tenant_id, node_code, mounted_features, landing_role_code, updated_at)
+                VALUES (:tid, :c, :feats, :lrole, CURRENT_TIMESTAMP)
+                ON CONFLICT (tenant_id, node_code) DO UPDATE SET
+                    mounted_features = EXCLUDED.mounted_features,
+                    landing_role_code = EXCLUDED.landing_role_code,
+                    updated_at = CURRENT_TIMESTAMP
+            """),
+            {"tid": tenant_id, "c": node_code, "feats": ",".join(feature_keys), "lrole": landing_role},
+        )
 
 
 def register_puzzle(engine, feature_key: str, feature_name: str, feature_group: str, module_path: str | None):
     with engine.begin() as conn:
-        conn.execute(text("""
-            INSERT INTO sys_feature_registry (feature_key, feature_name, feature_group, module_path, entry_func, is_active)
-            VALUES (:k, :n, :g, :m, 'render', TRUE)
-            ON CONFLICT (feature_key) DO UPDATE SET
-                feature_name = EXCLUDED.feature_name,
-                feature_group = EXCLUDED.feature_group,
-                module_path = COALESCE(:m, sys_feature_registry.module_path),
-                is_active = TRUE
-        """), {"k": feature_key, "n": feature_name, "g": feature_group, "m": module_path})
+        conn.execute(
+            text("""
+                INSERT INTO sys_feature_registry (feature_key, feature_name, feature_group, module_path, entry_func, is_active)
+                VALUES (:k, :n, :g, :m, 'render', TRUE)
+                ON CONFLICT (feature_key) DO UPDATE SET
+                    feature_name = EXCLUDED.feature_name,
+                    feature_group = EXCLUDED.feature_group,
+                    module_path = COALESCE(:m, sys_feature_registry.module_path),
+                    is_active = TRUE
+            """),
+            {"k": feature_key, "n": feature_name, "g": feature_group, "m": module_path},
+        )
