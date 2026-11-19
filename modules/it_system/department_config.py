@@ -71,7 +71,7 @@ def render(engine=None, lang="繁體中文", **kwargs):
                 "工程報告與工地巡檢日報": "feat_site_log",
                 "設計圖紙上傳與審查": "feat_blueprint",
                 "工程專案報價與倉庫成本連動": "feat_eng_quotation",
-                "估價": "feat_eng_approval_flow"
+                "工程估價": "feat_eng_approval_flow"
             },
             "🏭 【生產部專屬群組】": {
                 "生產部總覽 / 產線看板": "feat_prod_overview",
