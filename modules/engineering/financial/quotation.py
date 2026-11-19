@@ -65,7 +65,7 @@ def render(engine=None, lang="zh", **kwargs):
             "t1": "1️⃣ 新增／試算報價單",
             "t2": "2️⃣ 歷史報價紀錄",
             "qid": "報價單號 (quote_id)",
-            "pid": "關聯專案編號 (project_id)",
+            "pid": "關聯專案編號（系統帶出）",
             "client": "客戶名稱",
             "tier": "客戶分級",
             "curr": "幣別",
@@ -80,7 +80,7 @@ def render(engine=None, lang="zh", **kwargs):
             "t1": "1️⃣ Tạo & Tính Báo Giá",
             "t2": "2️⃣ Lịch Sử Báo Giá",
             "qid": "Mã Báo Giá (quote_id)",
-            "pid": "Mã Dự Án (project_id)",
+            "pid": "Mã Dự Án Liên Kết (Hệ thống cấp)",
             "client": "Tên Khách Hàng",
             "tier": "Phân Loại Khách",
             "curr": "Loại Tiền",
@@ -95,7 +95,7 @@ def render(engine=None, lang="zh", **kwargs):
             "t1": "1️⃣ Create & Calculate Quote",
             "t2": "2️⃣ Quotation History",
             "qid": "Quote ID",
-            "pid": "Project ID",
+            "pid": "Linked Project ID (System)",
             "client": "Client Name",
             "tier": "Client Tier",
             "curr": "Currency",
@@ -113,11 +113,14 @@ def render(engine=None, lang="zh", **kwargs):
     tab1, tab2 = st.tabs([txt["t1"], txt["t2"]])
 
     with tab1:
+        stamp = datetime.now().strftime("%Y%m%d-%H%M")
+        default_qid = f"QT-{stamp}"
+        auto_pid = f"PRJ-{stamp}"
+
         c1, c2, c3 = st.columns(3)
         with c1:
-            default_qid = f"QT-{datetime.now().strftime('%Y%m%d-%H%M')}"
             quote_id = st.text_input(txt["qid"], value=default_qid)
-            project_id = st.text_input(txt["pid"], value="PRJ-2026-01")
+            project_id = st.text_input(txt["pid"], value=auto_pid, disabled=True)
         with c2:
             client_name = st.text_input(txt["client"], value="西寧工業區客戶")
             client_tier = st.selectbox(txt["tier"], ["長期配合建商", "同行調貨", "一般散客"])
@@ -197,7 +200,7 @@ def render(engine=None, lang="zh", **kwargs):
                             {
                                 "tid": tenant_id,
                                 "qid": quote_id.strip(),
-                                "pid": project_id.strip() or None,
+                                "pid": project_id.strip() or auto_pid,
                                 "cname": client_name.strip(),
                                 "ctier": client_tier,
                                 "curr": currency_code,
