@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/org_puzzle/repo.py
-# 職責：SaaS 組織樹與拼圖元數據純資料層（完整對齊系統功能說明書 + 多語系自動產碼）
+# 職責：SaaS 組織樹與拼圖元數據純資料層（自動同步新拼圖 + 多語系自動產碼）
 # ==========================================
 
 import hashlib
@@ -106,6 +106,26 @@ def generate_auto_node_code(tier: str, name: str, parent_code: str | None = None
     return f"{prefix}_{ascii_slug}_{short_hash}" if ascii_slug else f"{prefix}_NODE_{short_hash}"
 
 
+def sync_default_registry(engine):
+    """把 DEFAULT_PUZZLE_REGISTRY 的最新拼圖同步補齊到 sys_feature_registry（保留使用者自訂名稱）"""
+    if not engine:
+        return
+    try:
+        with engine.begin() as conn:
+            for item in DEFAULT_PUZZLE_REGISTRY:
+                conn.execute(text("""
+                    INSERT INTO sys_feature_registry (feature_key, feature_name, feature_group, module_path, entry_func, is_active)
+                    VALUES (:k, :n, :g, :m, :f, TRUE)
+                    ON CONFLICT (feature_key) DO UPDATE SET
+                        feature_group = EXCLUDED.feature_group,
+                        module_path = COALESCE(sys_feature_registry.module_path, EXCLUDED.module_path),
+                        entry_func = COALESCE(sys_feature_registry.entry_func, EXCLUDED.entry_func),
+                        is_active = TRUE
+                """), {"k": item["key"], "n": item["name"], "g": item["group"], "m": item["module"], "f": item["func"]})
+    except Exception:
+        pass
+
+
 def ensure_tables(engine):
     if not engine:
         return
@@ -148,18 +168,9 @@ def ensure_tables(engine):
                     UNIQUE (tenant_id, node_code)
                 );
             """))
-            for item in DEFAULT_PUZZLE_REGISTRY:
-                conn.execute(text("""
-                    INSERT INTO sys_feature_registry (feature_key, feature_name, feature_group, module_path, entry_func, is_active)
-                    VALUES (:k, :n, :g, :m, :f, TRUE)
-                    ON CONFLICT (feature_key) DO UPDATE SET
-                        feature_group = EXCLUDED.feature_group,
-                        module_path = COALESCE(sys_feature_registry.module_path, EXCLUDED.module_path),
-                        entry_func = COALESCE(sys_feature_registry.entry_func, EXCLUDED.entry_func),
-                        is_active = TRUE
-                """), {"k": item["key"], "n": item["name"], "g": item["group"], "m": item["module"], "f": item["func"]})
     except Exception:
         pass
+    sync_default_registry(engine)
 
 
 def load_tenant_nodes(engine, tenant_id: str, include_inactive: bool = False) -> list[dict]:
@@ -221,31 +232,27 @@ def delete_node_permanently(engine, tenant_id: str, node_code: str):
 
 
 def load_registry(engine) -> list[dict]:
-    registry = list(DEFAULT_PUZZLE_REGISTRY)
+    sync_default_registry(engine)
+    merged = {item["key"]: dict(item) for item in DEFAULT_PUZZLE_REGISTRY}
     if not engine:
-        return registry
+        return list(merged.values())
     try:
         with engine.connect() as conn:
             rows = conn.execute(text("SELECT feature_key, feature_name, feature_group, module_path, entry_func FROM sys_feature_registry WHERE is_active = TRUE ORDER BY id ASC")).fetchall()
-            if rows:
-                merged = {}
-                for item in registry:
-                    merged[item["key"]] = dict(item)
-                for r in rows:
-                    d = r._asdict()
-                    fk = d["feature_key"]
-                    base = merged.get(fk, {"key": fk, "name": d["feature_name"], "group": "擴充拼圖", "module": None, "func": "render"})
-                    merged[fk] = {
-                        "key": fk,
-                        "name": d["feature_name"] or base["name"],
-                        "group": d.get("feature_group") or base["group"],
-                        "module": d.get("module_path") or base["module"],
-                        "func": d.get("entry_func") or base["func"],
-                    }
-                return list(merged.values())
+            for r in rows:
+                d = r._asdict()
+                fk = d["feature_key"]
+                base = merged.get(fk, {"key": fk, "name": d["feature_name"], "group": "擴充拼圖", "module": None, "func": "render"})
+                merged[fk] = {
+                    "key": fk,
+                    "name": d["feature_name"] or base["name"],
+                    "group": d.get("feature_group") or base["group"],
+                    "module": d.get("module_path") or base["module"],
+                    "func": d.get("entry_func") or base["func"],
+                }
     except Exception:
         pass
-    return registry
+    return list(merged.values())
 
 
 def load_node_mount(engine, tenant_id: str, node_code: str) -> tuple[list[str], str]:
