@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/org_puzzle/repo.py
-# 職責：SaaS 組織樹與拼圖元數據的純資料存取層與多語系自動產碼（無 UI 耦合）
+# 職責：SaaS 組織樹與拼圖元數據純資料層（完整對齊系統功能說明書 + 多語系自動產碼）
 # ==========================================
 
 import hashlib
@@ -9,35 +9,60 @@ import unicodedata
 from sqlalchemy import text
 
 DEFAULT_PUZZLE_REGISTRY = [
-    # 總經理室原有 7 個核心功能拼圖
-    {"key": "feat_executive", "name": "👑 跨國營運戰情與決策總覽", "group": "總經理室與戰情決策", "module": "modules.executive.overview", "func": "show"},
-    {"key": "feat_lme_commodities", "name": "📈 原料市場與即時外匯行情 (LME 銅價)", "group": "總經理室與戰情決策", "module": "modules.executive.commodities_fx", "func": "show"},
-    {"key": "feat_stock_indices", "name": "📊 全球股市 API 指標追蹤", "group": "總經理室與戰情決策", "module": "modules.executive.stock_indices", "func": "show"},
-    {"key": "feat_fx_rates", "name": "💱 多幣別匯率即時換算引擎", "group": "總經理室與戰情決策", "module": "modules.executive.fx_rates", "func": "show"},
-    {"key": "feat_circular_200", "name": "💰 完整損益表與會計報表 (Thông tư 200)", "group": "總經理室與戰情決策", "module": "modules.executive.financials_pl", "func": "show"},
-    {"key": "feat_policy", "name": "📰 越南政府政策與法規動態", "group": "總經理室與戰情決策", "module": "modules.executive.policy_news", "func": "show"},
-    {"key": "feat_analytics", "name": "🏗️ 工程案場與金額佔比分析", "group": "總經理室與戰情決策", "module": "modules.executive.project_analytics", "func": "show"},
+    # 總經理室與經營決策
+    {"key": "feat_executive", "name": "👑 總經理室總覽", "group": "總經理室", "module": "modules.executive.overview", "func": "show"},
+    {"key": "feat_ai_raw_advisor", "name": "🤖 AI 原料採購顧問與金屬行情", "group": "總經理室", "module": "modules.executive.commodities_fx", "func": "show"},
+    {"key": "feat_eng_live_monitor", "name": "🚨 工程進度與異常即時監控", "group": "總經理室", "module": "modules.engineering.overview.dashboard", "func": "render"},
+    {"key": "feat_exec_finance_flow", "name": "💸 財務與金流總覽", "group": "總經理室", "module": "modules.executive.financials_pl", "func": "show"},
+    {"key": "feat_analytics", "name": "🏗️ 工程案場與金額占比分析", "group": "總經理室", "module": "modules.executive.project_analytics", "func": "show"},
+    {"key": "feat_project_pnl", "name": "📊 工程專案損益與單一案場毛利", "group": "總經理室", "module": "modules.engineering.financial.project_pnl", "func": "render"},
+    {"key": "feat_progress_billing", "name": "🧾 工程進度與請款追蹤（估驗計價）", "group": "總經理室", "module": "modules.engineering.financial.progress_billing", "func": "render"},
+    {"key": "feat_change_orders", "name": "➕➖ 追加減帳管理", "group": "總經理室", "module": "modules.engineering.financial.change_orders", "func": "render"},
+    {"key": "feat_multi_wh_tracking", "name": "🏭 多倉庫與工地料件追蹤（領退料警示）", "group": "總經理室", "module": "modules.warehouse.site_stock_alert", "func": "render"},
+    {"key": "feat_sales_quote_retail", "name": "🛒 買賣零售與報價管理（分級/組合商品）", "group": "總經理室", "module": "modules.sales.quote_retail", "func": "render"},
+    {"key": "feat_ar_ap_reconcile", "name": "💳 資金流、票據與廠商對帳審核", "group": "總經理室", "module": "modules.finance.ar_ap_reconcile", "func": "render"},
 
-    # 總經理室 / 營運戰情指標拼圖（原物料價格、應收/應付帳款總計、工程專案進行總數）
-    {"key": "feat_raw_material_prices", "name": "🪙 原物料價格監控", "group": "經營指標與帳款總計", "module": "modules.executive.raw_material_prices", "func": "render"},
-    {"key": "feat_ar_ap_summary", "name": "💳 財務應收／應付帳款總計 (AR/AP)", "group": "經營指標與帳款總計", "module": "modules.finance.ar_ap_summary", "func": "render"},
-    {"key": "feat_active_projects_count", "name": "📌 工程專案進行總數", "group": "經營指標與帳款總計", "module": "modules.engineering.overview.active_projects_kpi", "func": "render"},
+    # 工程部與設計
+    {"key": "feat_eng_quotation", "name": "📐 估價中心", "group": "工程部", "module": "modules.engineering.financial.quotation", "func": "render"},
+    {"key": "feat_field_gps_clockin", "name": "📍 行動定位打卡與領班代點工（GPS 圍籬）", "group": "工程部", "module": "modules.engineering.site_ops.gps_attendance", "func": "render"},
+    {"key": "feat_site_log", "name": "📋 專案分區派工與手機施工日報", "group": "工程部", "module": "modules.engineering.site_ops.daily_report", "func": "render"},
+    {"key": "feat_labor_subcon_billing", "name": "👷 點工計薪與外包估驗", "group": "工程部", "module": "modules.engineering.financial.subcon_billing", "func": "render"},
+    {"key": "feat_site_material_transfer", "name": "🚚 工地叫料與跨案場餘料調撥", "group": "工程部", "module": "modules.engineering.procurement_qc.site_transfer", "func": "render"},
+    {"key": "feat_cad_bom_sync", "name": "📐 CAD 圖面轉 BOM 與料號編碼", "group": "設計", "module": "modules.engineering.design.cad_bom", "func": "render"},
+    {"key": "feat_blueprint_ecn", "name": "🗂️ 圖檔版本控管與工程變更 (ECN/ECO)", "group": "設計", "module": "modules.engineering.procurement_qc.testing_acceptance", "func": "render"},
+    {"key": "feat_bom_procurement", "name": "📦 工程 BOM 算料與 MRP 採購需求", "group": "設計", "module": "modules.engineering.procurement_qc.bom_procurement", "func": "render"},
 
-    # 工程部與專案拼圖
-    {"key": "feat_eng_quotation", "name": "📐 估價中心", "group": "業務與專案", "module": "modules.engineering.financial.quotation", "func": "render"},
-    {"key": "feat_site_log", "name": "📋 工地巡檢與施工日報", "group": "現場作業", "module": "modules.engineering.site_ops.daily_report", "func": "render"},
-    {"key": "feat_blueprint", "name": "📐 設計圖紙與審查", "group": "設計與品管", "module": "modules.engineering.procurement_qc.testing_acceptance", "func": "render"},
-    {"key": "feat_bom_procurement", "name": "📦 工程 BOM 與採購需求", "group": "供應鏈與採購", "module": "modules.engineering.procurement_qc.bom_procurement", "func": "render"},
-    {"key": "feat_project_pnl", "name": "📊 專案損益追蹤", "group": "財務與成本", "module": "modules.engineering.financial.project_pnl", "func": "render"},
+    # 管理部（人事、總務、財務）
+    {"key": "feat_mgmt_overview", "name": "🏢 管理部總覽", "group": "管理部", "module": "modules.management.overview", "func": "render"},
+    {"key": "feat_announcements", "name": "📢 公司公告佈告欄", "group": "管理部", "module": "modules.management.announcements", "func": "render"},
+    {"key": "feat_hr_attendance_leave", "name": "🕒 考勤排班、請假加班與專案工時", "group": "人事", "module": "modules.hr.attendance_leave", "func": "render"},
+    {"key": "feat_hr_payroll_bhxh", "name": "💵 自動化薪資計算、津貼與社保扣繳", "group": "人事", "module": "modules.hr.payroll", "func": "render"},
+    {"key": "feat_hr_staff_cert_tools", "name": "🪪 員工資料、證照到期提醒與工具借用", "group": "人事", "module": "modules.hr.staff_cert_tools", "func": "render"},
+    {"key": "feat_ga_procurement", "name": "🛍️ 總務請購、供應商比價與核銷", "group": "總務", "module": "modules.ga.procurement", "func": "render"},
+    {"key": "feat_ga_assets_dorm", "name": "🏗️ 固定資產、折舊、耗材、公務車與宿舍", "group": "總務", "module": "modules.ga.assets_facilities", "func": "render"},
+    {"key": "feat_fin_gl_ar_ap", "name": "📘 核心會計 (GL / AR / AP / 現金 / 票據)", "group": "財務", "module": "modules.finance.core_accounting", "func": "render"},
+    {"key": "feat_fin_budget_tax_bi", "name": "📈 預算控管、越南稅務/發票與多維度財報", "group": "財務", "module": "modules.finance.budget_tax_bi", "func": "render"},
 
-    # 全公司共用與現場入口拼圖
+    # 生產部與倉庫管理
+    {"key": "feat_prod_overview", "name": "🏭 生產部總覽", "group": "生產部", "module": "modules.production.overview", "func": "render"},
+    {"key": "feat_production_schedule", "name": "📅 工單管理、生產排程 (CRP) 與 MRP", "group": "生產部", "module": "modules.production.schedule_mrp", "func": "render"},
+    {"key": "feat_prod_qc_cost", "name": "🔬 品質檢驗 (QC/QA)、批號追溯與工單成本", "group": "生產部", "module": "modules.production.qc_cost", "func": "render"},
+    {"key": "feat_material", "name": "📦 庫存管理、出入庫、調撥與盤點", "group": "倉庫管理", "module": "modules.warehouse.inventory", "func": "render"},
+    {"key": "feat_barcode_pda", "name": "🏷️ 條碼/QR/PDA 掃描與庫存週轉分析", "group": "倉庫管理", "module": "modules.warehouse.barcode_analytics", "func": "render"},
+
+    # 全公司共用與系統設定／安全
     {"key": "feat_my_approvals", "name": "✍️ 簽核中心（請假／採購／文書／估價）", "group": "全公司共用", "module": "modules.approval_workflow", "func": "render_approval_center"},
-    {"key": "feat_field_gps_clockin", "name": "📍 外勤工程人員線上打卡", "group": "現場作業", "module": "modules.engineering.site_ops.gps_attendance", "func": "render"},
     {"key": "feat_security_guard_ops", "name": "🛡️ 保全操作頁面", "group": "廠區安控", "module": "modules.management.security_gate", "func": "render"},
+    {"key": "feat_role_permissions", "name": "🔐 角色權限與員工頁面指派", "group": "系統設定", "module": "modules.it_system.role_permissions", "func": "render"},
+    {"key": "feat_api_gateway", "name": "🔌 第三方 API 閘道設定", "group": "系統設定", "module": "modules.it_system.api_gateway", "func": "render"},
+    {"key": "feat_brand_logo", "name": "🎨 企業識別與品牌 LOGO", "group": "系統設定", "module": "modules.it_system.brand_logo", "func": "render"},
+    {"key": "feat_db_connection", "name": "🗄️ 資料庫串接設定", "group": "系統設定", "module": "modules.it_system.db_connection", "func": "render"},
+    {"key": "feat_storage_nas", "name": "☁️ 雲端與本地 NAS / Storage 儲存區", "group": "系統設定", "module": "modules.it_system.storage_nas", "func": "render"},
+    {"key": "feat_audit_logs", "name": "📜 系統稽核日誌與安全", "group": "系統設定", "module": "modules.it_system.audit_logs", "func": "render"},
 ]
 
 ORG_TEMPLATES = {
-    "裕豐電機標準模板（L1/L2 + 現場入口）": [
+    "裕豐電機完整模板（L1~L2 + 現場入口）": [
         {"code": "DEPT_EXEC", "name": "總經理室", "tier": "L1", "parent": None, "type": "DEPT", "sort": 10},
         {"code": "DEPT_ENG", "name": "工程部", "tier": "L1", "parent": None, "type": "DEPT", "sort": 20},
         {"code": "DEPT_ENG_DESIGN", "name": "設計", "tier": "L2", "parent": "DEPT_ENG", "type": "DEPT", "sort": 21},
@@ -65,7 +90,6 @@ ORG_TEMPLATES = {
 
 
 def generate_auto_node_code(tier: str, name: str, parent_code: str | None = None, node_type: str = "DEPT") -> str:
-    """依中、英、越文名稱自動產生唯一系統代碼（使用者無需手填）"""
     clean_name = (name or "").strip()
     vn_mapped = clean_name.replace("đ", "d").replace("Đ", "D")
     normalized = unicodedata.normalize("NFD", vn_mapped)
