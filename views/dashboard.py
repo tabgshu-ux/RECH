@@ -1,10 +1,11 @@
 # ==========================================
 # 檔案路徑：views/dashboard.py
-# 職責：依元數據渲染 L1~L4 子卡片與已掛載功能拼圖（支援多語系與手機優先）
+# 職責：依元數據渲染 L1~L4 卡片與已掛載拼圖；總經理室首頁直接展開戰情、原物料價格與秘書行程
 # ==========================================
 
 import streamlit as st
 from core import dynamic_router, ui_theme
+from modules.executive.widgets.overview_panels import render_executive_home_panels
 from modules.it_system.org_puzzle import repo
 
 
@@ -51,6 +52,15 @@ def render_dashboard(engine):
 
     st.markdown(f"### 🏛️ [{curr_node['level_tier']}] {curr_node['node_name']}")
 
+    # 總經理室首頁直接顯示：即時通知、KPI、原物料即時價格、秘書行程安排
+    is_exec_room = (
+        str(curr_node.get("node_code") or "").upper() == "DEPT_EXEC"
+        or "總經理" in str(curr_node.get("node_name") or "")
+    )
+    if is_exec_room and str(curr_node.get("level_tier")).upper() == "L1":
+        render_executive_home_panels(engine, tenant_id, lang=lang)
+        st.divider()
+
     mounted = dynamic_router.get_mounted_features(engine, tenant_id, active_code)
     children = dynamic_router.get_child_nodes(engine, tenant_id, active_code)
 
@@ -72,7 +82,8 @@ def render_dashboard(engine):
 
     st.markdown(f"#### {ui_theme.tr('mounted_feats', lang)}")
     if not mounted:
-        st.info(ui_theme.tr("no_feats", lang))
+        if not is_exec_room:
+            st.info(ui_theme.tr("no_feats", lang))
     else:
         f_cols = st.columns(2)
         for idx, feat in enumerate(mounted):
