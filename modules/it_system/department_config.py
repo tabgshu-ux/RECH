@@ -1,396 +1,448 @@
 # ==========================================
 # 檔案路徑：modules/it_system/department_config.py
-# 職責：裕豐標準組織樹管理（L1/L2 層級校準、擴編）與各層級功能模組掛載（雙 Tab 精簡版）
+# 職責：多租戶 SaaS 拼圖掛載中心（註冊表驅動 + 租戶隔離，不寫死單一公司業務邏輯）
 # ==========================================
 
 import streamlit as st
 from sqlalchemy import text
 
 
-# 裕豐電機工業標準組織與 L1 功能入口藍圖
-REETECH_STANDARD_ORG = [
-    # L1 部門
-    {"code": "DEPT_EXEC", "name": "總經理室", "tier": "L1", "parent": None, "type": "DEPT", "sort": 10},
-    {"code": "DEPT_ENG", "name": "工程部", "tier": "L1", "parent": None, "type": "DEPT", "sort": 20},
-    {"code": "DEPT_MGMT", "name": "管理部", "tier": "L1", "parent": None, "type": "DEPT", "sort": 30},
-    {"code": "DEPT_PROD", "name": "生產部", "tier": "L1", "parent": None, "type": "DEPT", "sort": 40},
-    # L1 工程部 -> L2
-    {"code": "DEPT_ENG_DESIGN", "name": "設計", "tier": "L2", "parent": "DEPT_ENG", "type": "DEPT", "sort": 21},
-    # L1 管理部 -> L2
-    {"code": "DEPT_MGMT_HR", "name": "行政/人事", "tier": "L2", "parent": "DEPT_MGMT", "type": "DEPT", "sort": 31},
-    {"code": "DEPT_MGMT_GA", "name": "總務/採購", "tier": "L2", "parent": "DEPT_MGMT", "type": "DEPT", "sort": 32},
-    {"code": "DEPT_MGMT_FIN", "name": "財務/會計", "tier": "L2", "parent": "DEPT_MGMT", "type": "DEPT", "sort": 33},
-    # L1 生產部 -> L2
-    {"code": "DEPT_PROD_SHEET", "name": "板金", "tier": "L2", "parent": "DEPT_PROD", "type": "DEPT", "sort": 41},
-    {"code": "DEPT_PROD_PAINT", "name": "塗裝", "tier": "L2", "parent": "DEPT_PROD", "type": "DEPT", "sort": 42},
-    {"code": "DEPT_PROD_PANEL", "name": "配盤", "tier": "L2", "parent": "DEPT_PROD", "type": "DEPT", "sort": 43},
-    {"code": "DEPT_PROD_WH", "name": "倉庫管理", "tier": "L2", "parent": "DEPT_PROD", "type": "DEPT", "sort": 44},
-    # L1 獨立功能入口（同時支援指定角色登入後直接進入）
-    {"code": "FUNC_APPROVAL_CENTER", "name": "簽核中心", "tier": "L1", "parent": None, "type": "L1_FUNC", "sort": 50},
-    {"code": "FUNC_FIELD_CLOCKIN", "name": "外勤工程人員線上打卡", "tier": "L1", "parent": None, "type": "L1_FUNC", "sort": 60},
-    {"code": "FUNC_SECURITY_GATE", "name": "保全操作頁面", "tier": "L1", "parent": None, "type": "L1_FUNC", "sort": 70},
+# 系統拼圖池（可由資料庫 sys_feature_registry 擴充；新增拼圖只需在此或資料表註冊 feature_key）
+DEFAULT_PUZZLE_REGISTRY = [
+    {"key": "feat_eng_quotation", "name": "📐 估價中心", "group": "業務與專案", "module": "modules.engineering.financial.quotation", "func": "render"},
+    {"key": "feat_site_log", "name": "📋 工地巡檢與施工日報", "group": "現場作業", "module": "modules.engineering.site_ops.daily_report", "func": "render"},
+    {"key": "feat_blueprint", "name": "📐 設計圖紙與審查", "group": "設計與品管", "module": "modules.engineering.procurement_qc.testing_acceptance", "func": "render"},
+    {"key": "feat_bom_procurement", "name": "📦 工程 BOM 與採購需求", "group": "供應鏈與採購", "module": "modules.engineering.procurement_qc.bom_procurement", "func": "render"},
+    {"key": "feat_project_pnl", "name": "📊 專案損益追蹤", "group": "財務與成本", "module": "modules.engineering.financial.project_pnl", "func": "render"},
+    {"key": "feat_my_approvals", "name": "✍️ 簽核中心（請假／採購／文書／估價）", "group": "全公司共用", "module": "modules.approval_workflow", "func": "render_approval_center"},
+    {"key": "feat_field_gps_clockin", "name": "📍 外勤工程人員線上打卡", "group": "現場作業", "module": "modules.engineering.site_ops.gps_attendance", "func": "render"},
+    {"key": "feat_security_guard_ops", "name": "🛡️ 保全操作頁面", "group": "廠區安控", "module": "modules.management.security_gate", "func": "render"},
+    {"key": "feat_lme_commodities", "name": "📈 原料市場與外匯行情", "group": "經營決策", "module": "modules.executive.commodities_fx", "func": "show"},
+    {"key": "feat_circular_200", "name": "💰 財務會計與標準財報", "group": "財務與成本", "module": "modules.executive.financials_pl", "func": "show"},
 ]
 
+# 可選套用的組織模板（僅供初始化或一鍵套用，不寫死於畫面渲染）
+ORG_TEMPLATES = {
+    "裕豐電機標準模板（L1/L2 + 現場入口）": [
+        {"code": "DEPT_EXEC", "name": "總經理室", "tier": "L1", "parent": None, "type": "DEPT", "sort": 10},
+        {"code": "DEPT_ENG", "name": "工程部", "tier": "L1", "parent": None, "type": "DEPT", "sort": 20},
+        {"code": "DEPT_ENG_DESIGN", "name": "設計", "tier": "L2", "parent": "DEPT_ENG", "type": "DEPT", "sort": 21},
+        {"code": "DEPT_MGMT", "name": "管理部", "tier": "L1", "parent": None, "type": "DEPT", "sort": 30},
+        {"code": "DEPT_MGMT_HR", "name": "行政/人事", "tier": "L2", "parent": "DEPT_MGMT", "type": "DEPT", "sort": 31},
+        {"code": "DEPT_MGMT_GA", "name": "總務/採購", "tier": "L2", "parent": "DEPT_MGMT", "type": "DEPT", "sort": 32},
+        {"code": "DEPT_MGMT_FIN", "name": "財務/會計", "tier": "L2", "parent": "DEPT_MGMT", "type": "DEPT", "sort": 33},
+        {"code": "DEPT_PROD", "name": "生產部", "tier": "L1", "parent": None, "type": "DEPT", "sort": 40},
+        {"code": "DEPT_PROD_SHEET", "name": "板金", "tier": "L2", "parent": "DEPT_PROD", "type": "DEPT", "sort": 41},
+        {"code": "DEPT_PROD_PAINT", "name": "塗裝", "tier": "L2", "parent": "DEPT_PROD", "type": "DEPT", "sort": 42},
+        {"code": "DEPT_PROD_PANEL", "name": "配盤", "tier": "L2", "parent": "DEPT_PROD", "type": "DEPT", "sort": 43},
+        {"code": "DEPT_PROD_WH", "name": "倉庫管理", "tier": "L2", "parent": "DEPT_PROD", "type": "DEPT", "sort": 44},
+        {"code": "FUNC_APPROVAL_CENTER", "name": "簽核中心", "tier": "L1", "parent": None, "type": "L1_FUNC", "sort": 50},
+        {"code": "FUNC_FIELD_CLOCKIN", "name": "外勤工程人員線上打卡", "tier": "L1", "parent": None, "type": "L1_FUNC", "sort": 60},
+        {"code": "FUNC_SECURITY_GATE", "name": "保全操作頁面", "tier": "L1", "parent": None, "type": "L1_FUNC", "sort": 70},
+    ],
+    "通用製造／工程精簡模板": [
+        {"code": "DEPT_EXEC", "name": "總經理室", "tier": "L1", "parent": None, "type": "DEPT", "sort": 10},
+        {"code": "DEPT_ENG", "name": "工程部", "tier": "L1", "parent": None, "type": "DEPT", "sort": 20},
+        {"code": "DEPT_ENG_DESIGN", "name": "設計組", "tier": "L2", "parent": "DEPT_ENG", "type": "DEPT", "sort": 21},
+        {"code": "DEPT_OPS", "name": "營運管理部", "tier": "L1", "parent": None, "type": "DEPT", "sort": 30},
+        {"code": "FUNC_APPROVAL_CENTER", "name": "簽核中心", "tier": "L1", "parent": None, "type": "L1_FUNC", "sort": 40},
+    ],
+}
 
-def _ensure_org_schema(engine):
-    """確保組織表與功能掛載表具備完整層級欄位（相容舊表結構）"""
+
+def _ensure_saas_metadata_tables(engine):
     if not engine:
         return
     try:
         with engine.begin() as conn:
             conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS sys_departments (
+                CREATE TABLE IF NOT EXISTS sys_feature_registry (
                     id SERIAL PRIMARY KEY,
-                    tenant_id VARCHAR(64) DEFAULT 'REETECH_VN',
-                    dept_code VARCHAR(80) UNIQUE,
-                    dept_name_zh VARCHAR(120) NOT NULL,
+                    feature_key VARCHAR(120) UNIQUE NOT NULL,
+                    feature_name VARCHAR(160) NOT NULL,
+                    feature_group VARCHAR(100) DEFAULT '通用拼圖',
+                    module_path VARCHAR(255),
+                    entry_func VARCHAR(100) DEFAULT 'render',
+                    is_active BOOLEAN DEFAULT TRUE
+                );
+            """))
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS sys_tenant_org_nodes (
+                    id SERIAL PRIMARY KEY,
+                    tenant_id VARCHAR(64) NOT NULL,
+                    node_code VARCHAR(80) NOT NULL,
+                    node_name VARCHAR(120) NOT NULL,
                     level_tier VARCHAR(16) DEFAULT 'L1',
-                    parent_dept_code VARCHAR(80),
+                    parent_node_code VARCHAR(80),
                     node_type VARCHAR(32) DEFAULT 'DEPT',
                     sort_order INT DEFAULT 100,
                     is_active BOOLEAN DEFAULT TRUE,
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE (tenant_id, node_code)
                 );
             """))
-            # 補齊舊表可能缺少的欄位
-            for ddl in [
-                "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS tenant_id VARCHAR(64) DEFAULT 'REETECH_VN';",
-                "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS dept_code VARCHAR(80);",
-                "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS dept_name_zh VARCHAR(120);",
-                "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS level_tier VARCHAR(16) DEFAULT 'L1';",
-                "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS parent_dept_code VARCHAR(80);",
-                "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS node_type VARCHAR(32) DEFAULT 'DEPT';",
-                "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 100;",
-                "ALTER TABLE sys_departments ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;",
-            ]:
-                try:
-                    conn.execute(text(ddl))
-                except Exception:
-                    pass
-
             conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS sys_dept_feature_bindings (
+                CREATE TABLE IF NOT EXISTS sys_tenant_node_mounts (
                     id SERIAL PRIMARY KEY,
-                    tenant_id VARCHAR(64) DEFAULT 'REETECH_VN',
-                    dept_code VARCHAR(80) UNIQUE NOT NULL,
-                    dept_name_zh VARCHAR(120) NOT NULL,
+                    tenant_id VARCHAR(64) NOT NULL,
+                    node_code VARCHAR(80) NOT NULL,
                     mounted_features TEXT DEFAULT '',
-                    default_landing_role VARCHAR(80),
-                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    landing_role_code VARCHAR(80),
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE (tenant_id, node_code)
                 );
             """))
+
+            # 將預設拼圖池同步註冊進 sys_feature_registry（保留客戶自訂名稱）
+            for item in DEFAULT_PUZZLE_REGISTRY:
+                conn.execute(text("""
+                    INSERT INTO sys_feature_registry (
+                        feature_key, feature_name, feature_group, module_path, entry_func, is_active
+                    )
+                    VALUES (:k, :n, :g, :m, :f, TRUE)
+                    ON CONFLICT (feature_key) DO UPDATE SET
+                        feature_group = EXCLUDED.feature_group,
+                        module_path = COALESCE(sys_feature_registry.module_path, EXCLUDED.module_path),
+                        entry_func = COALESCE(sys_feature_registry.entry_func, EXCLUDED.entry_func),
+                        is_active = TRUE
+                """), {
+                    "k": item["key"],
+                    "n": item["name"],
+                    "g": item["group"],
+                    "m": item["module"],
+                    "f": item["func"],
+                })
     except Exception:
         pass
 
 
-def _sync_reetech_standard_org(engine, tenant_id="REETECH_VN"):
-    """依標準藍圖校準 L1/L2 層級，並停用無代碼的重複錯亂舊資料"""
-    valid_codes = [item["code"] for item in REETECH_STANDARD_ORG]
-    with engine.begin() as conn:
-        # 1. 將沒有標準 dept_code 且不在白名單內的錯亂舊資料標記停用，避免重複顯示
-        conn.execute(text("""
-            UPDATE sys_departments
-            SET is_active = FALSE
-            WHERE dept_code IS NULL OR dept_code = ''
-        """))
-
-        # 2. 寫入或更新標準組織節點
-        for item in REETECH_STANDARD_ORG:
-            exists = conn.execute(
-                text("SELECT id FROM sys_departments WHERE dept_code = :c"),
-                {"c": item["code"]},
-            ).fetchone()
-            if exists:
-                conn.execute(text("""
-                    UPDATE sys_departments
-                    SET tenant_id = :tid,
-                        dept_name_zh = :name,
-                        level_tier = :tier,
-                        parent_dept_code = :parent,
-                        node_type = :ntype,
-                        sort_order = :sort,
-                        is_active = TRUE
-                    WHERE dept_code = :c
-                """), {
-                    "tid": tenant_id,
-                    "c": item["code"],
-                    "name": item["name"],
-                    "tier": item["tier"],
-                    "parent": item["parent"],
-                    "ntype": item["type"],
-                    "sort": item["sort"],
-                })
-            else:
-                conn.execute(text("""
-                    INSERT INTO sys_departments (
-                        tenant_id, dept_code, dept_name_zh, level_tier,
-                        parent_dept_code, node_type, sort_order, is_active
-                    )
-                    VALUES (:tid, :c, :name, :tier, :parent, :ntype, :sort, TRUE)
-                """), {
-                    "tid": tenant_id,
-                    "c": item["code"],
-                    "name": item["name"],
-                    "tier": item["tier"],
-                    "parent": item["parent"],
-                    "ntype": item["type"],
-                    "sort": item["sort"],
-                })
+def _load_registry(engine):
+    """從拼圖註冊表讀取所有可用功能拼圖"""
+    registry = list(DEFAULT_PUZZLE_REGISTRY)
+    if not engine:
+        return registry
+    try:
+        with engine.connect() as conn:
+            rows = conn.execute(text("""
+                SELECT feature_key, feature_name, feature_group, module_path, entry_func
+                FROM sys_feature_registry
+                WHERE is_active = TRUE
+                ORDER BY id ASC
+            """)).fetchall()
+            if rows:
+                db_map = {}
+                for r in rows:
+                    d = r._asdict()
+                    db_map[d["feature_key"]] = {
+                        "key": d["feature_key"],
+                        "name": d["feature_name"],
+                        "group": d.get("feature_group") or "擴充拼圖",
+                        "module": d.get("module_path"),
+                        "func": d.get("entry_func") or "render",
+                    }
+                for item in registry:
+                    if item["key"] in db_map:
+                        db_map[item["key"]]["module"] = db_map[item["key"]]["module"] or item["module"]
+                return list(db_map.values())
+    except Exception:
+        pass
+    return registry
 
 
-def _fetch_org_nodes(engine):
-    """讀取啟用中的標準化組織節點"""
+def _load_tenant_nodes(engine, tenant_id):
     if not engine:
         return []
     try:
         with engine.connect() as conn:
             rows = conn.execute(text("""
-                SELECT dept_code, dept_name_zh, level_tier, parent_dept_code, node_type, sort_order, is_active
-                FROM sys_departments
-                WHERE is_active = TRUE AND dept_code IS NOT NULL AND dept_code <> ''
+                SELECT node_code, node_name, level_tier, parent_node_code, node_type, sort_order
+                FROM sys_tenant_org_nodes
+                WHERE tenant_id = :tid AND is_active = TRUE
                 ORDER BY sort_order ASC, id ASC
-            """)).fetchall()
+            """), {"tid": tenant_id}).fetchall()
             return [r._asdict() for r in rows]
     except Exception:
         return []
 
 
+def _apply_template(engine, tenant_id, template_items):
+    """套用組織模板時以 tenant_id + node_code 精準更新，避免重複髒資料"""
+    valid_codes = [x["code"] for x in template_items]
+    with engine.begin() as conn:
+        # 停用該租戶不在模板內的舊節點（保留歷史紀錄不斷表）
+        conn.execute(text("""
+            UPDATE sys_tenant_org_nodes
+            SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP
+            WHERE tenant_id = :tid
+        """), {"tid": tenant_id})
+
+        for item in template_items:
+            conn.execute(text("""
+                INSERT INTO sys_tenant_org_nodes (
+                    tenant_id, node_code, node_name, level_tier,
+                    parent_node_code, node_type, sort_order, is_active, updated_at
+                )
+                VALUES (:tid, :c, :n, :tier, :parent, :ntype, :sort, TRUE, CURRENT_TIMESTAMP)
+                ON CONFLICT (tenant_id, node_code) DO UPDATE SET
+                    node_name = EXCLUDED.node_name,
+                    level_tier = EXCLUDED.level_tier,
+                    parent_node_code = EXCLUDED.parent_node_code,
+                    node_type = EXCLUDED.node_type,
+                    sort_order = EXCLUDED.sort_order,
+                    is_active = TRUE,
+                    updated_at = CURRENT_TIMESTAMP
+            """), {
+                "tid": tenant_id,
+                "c": item["code"],
+                "n": item["name"],
+                "tier": item["tier"],
+                "parent": item["parent"],
+                "ntype": item["type"],
+                "sort": item["sort"],
+            })
+
+
 def render(engine=None, lang="zh", **kwargs):
-    st.markdown("### 🏢 裕豐公司組織樹與功能掛載中心")
-    st.caption("精簡為「組織架構管理」與「功能模組掛載」兩大操作區，支援 L1 部門、L2 子部門卡片與 L1 專屬功能入口。")
+    st.markdown("### 🧩 SaaS 組織與功能拼圖設定中心")
+    st.caption("所有功能拼圖與部門層級皆由元數據驅動，可在系統端自由分配 L1／L2 與掛載功能，無需修改業務程式碼。")
 
     if not engine:
-        st.warning("⚠️ 系統尚未連線至資料庫引擎。")
+        st.warning("⚠️ 尚未連線資料庫引擎。")
         return
 
-    _ensure_org_schema(engine)
+    _ensure_saas_metadata_tables(engine)
     tenant_id = st.session_state.get("tenant_id", "REETECH_VN")
-    nodes = _fetch_org_nodes(engine)
+    st.caption(f"目前租戶：`{tenant_id}`")
 
-    tab_org, tab_mount = st.tabs([
-        "🌳 1. 組織樹管理與部門擴編",
-        "🧩 2. 功能模組掛載設定"
+    nodes = _load_tenant_nodes(engine, tenant_id)
+    registry = _load_registry(engine)
+
+    tab_org, tab_mount, tab_reg = st.tabs([
+        "🌳 1. 組織與卡片結構",
+        "🧩 2. 功能拼圖掛載",
+        "➕ 3. 註冊新功能拼圖"
     ])
 
-    # ==========================================
-    # Tab 1：組織樹管理與部門擴編
-    # ==========================================
+    # ------------------------------------------
+    # Tab 1：組織與卡片結構（含模板套用與動態新增 L1/L2）
+    # ------------------------------------------
     with tab_org:
-        col_tree, col_edit = st.columns([1.3, 1])
+        col_left, col_right = st.columns([1.3, 1])
 
-        with col_tree:
-            st.markdown("#### 🌲 目前生效的組織樹狀架構")
-            if st.button("🔄 一鍵校準裕豐標準組織樹（清理重複錯亂層級）", type="primary", use_container_width=True):
+        with col_left:
+            st.markdown("#### 🌲 租戶組織樹狀結構")
+            chosen_tpl = st.selectbox("選擇套用組織模板", list(ORG_TEMPLATES.keys()), key="saas_tpl_select")
+            if st.button("📥 套用／校準此組織模板", type="primary", use_container_width=True):
                 try:
-                    _sync_reetech_standard_org(engine, tenant_id)
-                    st.success("✅ 已校準裕豐標準組織樹，重複與錯置的 L1 項目已自動整理。")
+                    _apply_template(engine, tenant_id, ORG_TEMPLATES[chosen_tpl])
+                    st.success(f"✅ 已為租戶 `{tenant_id}` 套用【{chosen_tpl}】。")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"❌ 校準失敗: {e}")
+                    st.error(f"❌ 套用模板失敗: {e}")
 
             if not nodes:
-                st.info("尚未載入標準組織節點，請點擊上方「一鍵校準裕豐標準組織樹」。")
+                st.info("目前尚未建立此租戶的組織節點，請點擊上方「套用／校準此組織模板」或於右側新增。")
             else:
-                l1_nodes = [n for n in nodes if str(n.get("level_tier")).upper() == "L1"]
-                l2_nodes = [n for n in nodes if str(n.get("level_tier")).upper() == "L2"]
+                l1_list = [n for n in nodes if str(n.get("level_tier")).upper() == "L1"]
+                l2_list = [n for n in nodes if str(n.get("level_tier")).upper() == "L2"]
 
-                for l1 in l1_nodes:
-                    badge = "🧭 L1 功能入口" if l1.get("node_type") == "L1_FUNC" else "🏛️ L1 部門"
+                for l1 in l1_list:
+                    tag = "🧭 L1 功能入口" if l1.get("node_type") == "L1_FUNC" else "🏛️ L1 部門"
                     with st.container(border=True):
-                        st.markdown(f"**{badge}｜{l1['dept_name_zh']}** (`{l1['dept_code']}`)")
-                        children = [c for c in l2_nodes if c.get("parent_dept_code") == l1["dept_code"]]
-                        if children:
-                            for ch in children:
-                                st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;↳ 📁 **L2 {ch['dept_name_zh']}** (`{ch['dept_code']}`)")
-                        elif l1.get("node_type") == "DEPT":
-                            st.caption("（此 L1 部門目前無 L2 子部門）")
+                        st.markdown(f"**{tag}｜{l1['node_name']}** (`{l1['node_code']}`)")
+                        subs = [s for s in l2_list if s.get("parent_node_code") == l1["node_code"]]
+                        for sub in subs:
+                            st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;↳ 🗂️ **L2 {sub['node_name']}** (`{sub['node_code']}`)")
 
-        with col_edit:
-            st.markdown("#### ➕ 新增 / 擴編部門或 L1 功能入口")
-            l1_dept_choices = [n for n in nodes if str(n.get("level_tier")).upper() == "L1" and n.get("node_type") == "DEPT"]
-            parent_map = {f"{n['dept_name_zh']} ({n['dept_code']})": n["dept_code"] for n in l1_dept_choices}
+        with col_right:
+            st.markdown("#### ➕ 新增／調整部門或 L2 卡片")
+            l1_depts = [n for n in nodes if str(n.get("level_tier")).upper() == "L1" and n.get("node_type") == "DEPT"]
+            parent_opts = {f"{n['node_name']} ({n['node_code']})": n["node_code"] for n in l1_depts}
 
-            with st.form("org_expand_form"):
-                new_tier = st.radio("層級類型", ["L1 一級部門", "L2 二級子部門（部門卡片）", "L1 獨立功能入口"], horizontal=False)
-                parent_code = None
-                if "L2" in new_tier:
-                    if parent_map:
-                        chosen_parent = st.selectbox("歸屬上層 L1 部門", list(parent_map.keys()))
-                        parent_code = parent_map[chosen_parent]
+            with st.form("saas_add_node_form"):
+                tier_choice = st.radio("節點層級", ["L1 部門", "L2 子部門／卡片", "L1 功能入口"])
+                parent_val = None
+                if "L2" in tier_choice:
+                    if parent_opts:
+                        p_sel = st.selectbox("歸屬 L1 部門", list(parent_opts.keys()))
+                        parent_val = parent_opts[p_sel]
                     else:
-                        st.warning("請先校準或建立 L1 部門。")
-                new_code = st.text_input("系統代碼（英文大寫，如 DEPT_ENG_QA）", placeholder="例如: DEPT_ENG_QA")
-                new_name = st.text_input("顯示名稱", placeholder="例如: 品保組")
-                new_sort = st.number_input("排序權重（數字越小越前面）", min_value=1, max_value=999, value=80)
+                        st.warning("請先建立至少一個 L1 部門。")
 
-                if st.form_submit_button("💾 確認寫入組織樹", type="primary", use_container_width=True):
-                    clean_code = new_code.strip().upper()
-                    clean_name = new_name.strip()
-                    if not clean_code or not clean_name:
-                        st.warning("⚠️ 請完整填寫系統代碼與顯示名稱。")
-                    elif "L2" in new_tier and not parent_code:
-                        st.warning("⚠️ L2 子部門必須指定歸屬的上層 L1 部門。")
+                node_code = st.text_input("節點代碼", placeholder="例如: DEPT_ENG_QC")
+                node_name = st.text_input("顯示名稱", placeholder="例如: 測試與品管卡片")
+                sort_ord = st.number_input("排序", min_value=1, max_value=999, value=90)
+
+                if st.form_submit_button("💾 儲存節點", type="primary", use_container_width=True):
+                    c_code = node_code.strip().upper()
+                    c_name = node_name.strip()
+                    if not c_code or not c_name:
+                        st.warning("⚠️ 請填寫節點代碼與顯示名稱。")
+                    elif "L2" in tier_choice and not parent_val:
+                        st.warning("⚠️ L2 子部門／卡片必須選擇歸屬的 L1 部門。")
                     else:
-                        tier_val = "L2" if "L2" in new_tier else "L1"
-                        ntype_val = "L1_FUNC" if "功能入口" in new_tier else "DEPT"
+                        t_val = "L2" if "L2" in tier_choice else "L1"
+                        nt_val = "L1_FUNC" if "功能入口" in tier_choice else "DEPT"
                         try:
                             with engine.begin() as conn:
                                 conn.execute(text("""
-                                    INSERT INTO sys_departments (
-                                        tenant_id, dept_code, dept_name_zh, level_tier,
-                                        parent_dept_code, node_type, sort_order, is_active
+                                    INSERT INTO sys_tenant_org_nodes (
+                                        tenant_id, node_code, node_name, level_tier,
+                                        parent_node_code, node_type, sort_order, is_active, updated_at
                                     )
-                                    VALUES (:tid, :c, :name, :tier, :parent, :ntype, :sort, TRUE)
-                                    ON CONFLICT (dept_code) DO UPDATE SET
-                                        dept_name_zh = EXCLUDED.dept_name_zh,
+                                    VALUES (:tid, :c, :n, :tier, :p, :nt, :s, TRUE, CURRENT_TIMESTAMP)
+                                    ON CONFLICT (tenant_id, node_code) DO UPDATE SET
+                                        node_name = EXCLUDED.node_name,
                                         level_tier = EXCLUDED.level_tier,
-                                        parent_dept_code = EXCLUDED.parent_dept_code,
+                                        parent_node_code = EXCLUDED.parent_node_code,
                                         node_type = EXCLUDED.node_type,
                                         sort_order = EXCLUDED.sort_order,
-                                        is_active = TRUE
+                                        is_active = TRUE,
+                                        updated_at = CURRENT_TIMESTAMP
                                 """), {
                                     "tid": tenant_id,
-                                    "c": clean_code,
-                                    "name": clean_name,
-                                    "tier": tier_val,
-                                    "parent": parent_code,
-                                    "ntype": ntype_val,
-                                    "sort": int(new_sort),
+                                    "c": c_code,
+                                    "n": c_name,
+                                    "tier": t_val,
+                                    "p": parent_val,
+                                    "nt": nt_val,
+                                    "s": int(sort_ord),
                                 })
-                            st.success(f"✅ 已新增/更新【{clean_name}】至組織樹！")
+                            st.success(f"✅ 已儲存節點【{c_name}】。")
                             st.rerun()
                         except Exception as e:
-                            st.error(f"❌ 寫入失敗: {e}")
+                            st.error(f"❌ 儲存節點失敗: {e}")
 
-    # ==========================================
-    # Tab 2：功能模組掛載設定
-    # ==========================================
+    # ------------------------------------------
+    # Tab 2：功能拼圖掛載（選 L1 或 L2 節點，掛載註冊表中的功能）
+    # ------------------------------------------
     with tab_mount:
-        st.markdown("#### 🧩 為指定部門、L2 子部門或 L1 功能入口掛載模組")
+        st.markdown("#### 🧩 為指定 L1 部門、L2 卡片或 L1 入口掛載功能拼圖")
         if not nodes:
-            st.info("請先至「1. 組織樹管理與部門擴編」校準組織樹後，再進行功能掛載。")
+            st.info("請先在「1. 組織與卡片結構」建立或套用組織節點。")
             return
 
-        node_lookup = {n["dept_code"]: n for n in nodes}
-        display_options = []
-        option_to_code = {}
+        node_map = {n["node_code"]: n for n in nodes}
+        labels = []
+        label_to_code = {}
         for n in nodes:
             if n["level_tier"] == "L1":
-                prefix = "[L1功能]" if n.get("node_type") == "L1_FUNC" else "[L1部門]"
-                label = f"{prefix} {n['dept_name_zh']} ({n['dept_code']})"
+                lbl = f"{'[L1入口]' if n.get('node_type') == 'L1_FUNC' else '[L1部門]'} {n['node_name']} ({n['node_code']})"
             else:
-                p_name = node_lookup.get(n.get("parent_dept_code"), {}).get("dept_name_zh", "上層部門")
-                label = f"[L2子部門] {p_name} ➔ {n['dept_name_zh']} ({n['dept_code']})"
-            display_options.append(label)
-            option_to_code[label] = n["dept_code"]
+                pname = node_map.get(n.get("parent_node_code"), {}).get("node_name", "上層")
+                lbl = f"[L2卡片] {pname} ➔ {n['node_name']} ({n['node_code']})"
+            labels.append(lbl)
+            label_to_code[lbl] = n["node_code"]
 
-        selected_label = st.selectbox("🎯 選擇要配置功能的目標節點", display_options, key="mount_target_node")
-        target_code = option_to_code[selected_label]
-        target_node = node_lookup[target_code]
+        chosen_lbl = st.selectbox("選擇掛載目標節點", labels, key="saas_mount_target")
+        target_code = label_to_code[chosen_lbl]
+        target_info = node_map[target_code]
 
-        # 讀取既有掛載
-        bound_feats = []
-        landing_role = ""
+        current_feats = []
+        current_landing_role = ""
         try:
             with engine.connect() as conn:
                 row = conn.execute(text("""
-                    SELECT mounted_features, default_landing_role
-                    FROM sys_dept_feature_bindings
-                    WHERE dept_code = :c
-                """), {"c": target_code}).fetchone()
+                    SELECT mounted_features, landing_role_code
+                    FROM sys_tenant_node_mounts
+                    WHERE tenant_id = :tid AND node_code = :c
+                """), {"tid": tenant_id, "c": target_code}).fetchone()
                 if row:
-                    bound_feats = [x.strip() for x in str(row[0] or "").split(",") if x.strip()]
-                    landing_role = row[1] or ""
+                    current_feats = [x.strip() for x in str(row[0] or "").split(",") if x.strip()]
+                    current_landing_role = row[1] or ""
         except Exception:
             pass
 
-        feature_catalog = {
-            "👑 總經理室與決策": {
-                "📈 原料市場與即時外匯 (LME 銅價)": "feat_lme_commodities",
-                "📊 全球股市與匯率引擎": "feat_fx_rates",
-                "💰 完整損益與會計報表 (Thông tư 200)": "feat_circular_200",
-                "📰 越南政策與法規動態": "feat_policy",
-            },
-            "🛠️ 工程與設計 (L1 工程部 / L2 設計)": {
-                "📐 估價中心": "feat_eng_quotation",
-                "📐 設計圖紙上傳與審查": "feat_blueprint",
-                "📋 工地巡檢與施工日報": "feat_site_log",
-                "📦 工程 BOM 與採購需求": "feat_bom_procurement",
-                "📊 工程專案損益追蹤": "feat_project_pnl",
-            },
-            "🏭 生產與倉庫 (L1 生產部 / L2 板金·塗裝·配盤·倉庫)": {
-                "⚡ 配電盤組裝與產線看板": "feat_panel_build",
-                "📅 生產進度與機台排程": "feat_production_schedule",
-                "📦 倉庫庫存與進出貨料帳合一": "feat_material",
-                "🏷️ 物料批次與條碼管理": "feat_barcode",
-            },
-            "🏢 管理部 (L2 行政/人事·總務/採購·財務/會計)": {
-                "📢 公司公告佈告欄管理": "feat_announcements",
-                "👥 員工檔案與考勤薪資 (BHXH)": "feat_hr_employee",
-                "🛒 總務採購與應付帳款 (AP)": "feat_ga",
-                "📊 財務會計與應收應付 (AR/AP)": "feat_fi",
-            },
-            "🧭 L1 全廠共用與現場專屬入口": {
-                "✍️ 共用簽核中心（請假／採購／文書／估價）": "feat_my_approvals",
-                "📍 外勤工程人員線上打卡（支援登入直達）": "feat_field_gps_clockin",
-                "🛡️ 保全操作頁面（支援保全登入直達）": "feat_security_guard_ops",
-            },
-        }
-
-        with st.form(f"bind_features_form_{target_code}"):
-            landing_role_input = st.text_input(
-                "登入後自動直達此頁面的角色代碼（選填，例如：FIELD_ENGINEER 或 SECURITY_GUARD）",
-                value=landing_role,
-                placeholder="留空則走一般部門選單；填寫角色代碼可讓該角色登入後直接進入此功能",
+        with st.form(f"saas_mount_form_{target_code}"):
+            landing_role = st.text_input(
+                "登入後自動直達角色代碼（選填，如 FIELD_ENGINEER / SECURITY_GUARD）",
+                value=current_landing_role,
             )
             st.divider()
 
-            picked = []
-            for grp, items in feature_catalog.items():
-                st.markdown(f"**{grp}**")
-                c1, c2 = st.columns(2)
-                for i, (flabel, fid) in enumerate(items.items()):
-                    with (c1 if i % 2 == 0 else c2):
-                        if st.checkbox(flabel, value=(fid in bound_feats), key=f"bind_{target_code}_{fid}"):
-                            picked.append(fid)
+            grouped = {}
+            for item in registry:
+                grouped.setdefault(item.get("group") or "通用拼圖", []).append(item)
 
-            if st.form_submit_button("💾 儲存功能掛載設定", type="primary", use_container_width=True):
-                feat_csv = ",".join(picked)
+            selected_keys = []
+            for grp_name, items in grouped.items():
+                st.markdown(f"**{grp_name}**")
+                cols = st.columns(2)
+                for idx, feat in enumerate(items):
+                    with cols[idx % 2]:
+                        if st.checkbox(
+                            f"{feat['name']} (`{feat['key']}`)",
+                            value=(feat["key"] in current_feats),
+                            key=f"mchk_{tenant_id}_{target_code}_{feat['key']}",
+                        ):
+                            selected_keys.append(feat["key"])
+
+            if st.form_submit_button("💾 儲存並套用拼圖掛載", type="primary", use_container_width=True):
                 try:
                     with engine.begin() as conn:
                         conn.execute(text("""
-                            INSERT INTO sys_dept_feature_bindings (
-                                tenant_id, dept_code, dept_name_zh, mounted_features, default_landing_role, updated_at
+                            INSERT INTO sys_tenant_node_mounts (
+                                tenant_id, node_code, mounted_features, landing_role_code, updated_at
                             )
-                            VALUES (:tid, :c, :name, :feats, :lrole, CURRENT_TIMESTAMP)
-                            ON CONFLICT (dept_code) DO UPDATE SET
-                                dept_name_zh = EXCLUDED.dept_name_zh,
+                            VALUES (:tid, :c, :feats, :lrole, CURRENT_TIMESTAMP)
+                            ON CONFLICT (tenant_id, node_code) DO UPDATE SET
                                 mounted_features = EXCLUDED.mounted_features,
-                                default_landing_role = EXCLUDED.default_landing_role,
+                                landing_role_code = EXCLUDED.landing_role_code,
                                 updated_at = CURRENT_TIMESTAMP
                         """), {
                             "tid": tenant_id,
                             "c": target_code,
-                            "name": target_node["dept_name_zh"],
-                            "feats": feat_csv,
-                            "lrole": landing_role_input.strip().upper() or None,
+                            "feats": ",".join(selected_keys),
+                            "lrole": landing_role.strip().upper() or None,
                         })
-                        # 同步寫回舊表 sys_department_modules（相容既有讀取邏輯，避免資料斷鏈）
-                        try:
-                            conn.execute(text("""
-                                INSERT INTO sys_department_modules (dept_name, mounted_features, updated_at)
-                                VALUES (:dname, :feats, CURRENT_TIMESTAMP)
-                                ON CONFLICT (dept_name) DO UPDATE SET
-                                    mounted_features = EXCLUDED.mounted_features,
-                                    updated_at = CURRENT_TIMESTAMP
-                            """), {"dname": target_node["dept_name_zh"], "feats": feat_csv})
-                        except Exception:
-                            pass
-
-                    st.success(f"✅ 已儲存【{target_node['dept_name_zh']}】的功能掛載與登入導向設定！")
+                    st.success(f"✅ 已儲存【{target_info['node_name']}】的功能拼圖掛載！")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"❌ 儲存失敗: {e}")
+                    st.error(f"❌ 儲存掛載失敗: {e}")
+
+    # ------------------------------------------
+    # Tab 3：註冊新功能拼圖（無須改掛載清單程式碼即可新增拼圖項目）
+    # ------------------------------------------
+    with tab_reg:
+        st.markdown("#### ➕ 註冊新功能拼圖至系統拼圖池")
+        st.caption("新增後，所有租戶的「2. 功能拼圖掛載」都會自動出現此功能，可依需求分配給不同部門或卡片。")
+        with st.form("saas_register_puzzle_form"):
+            c1, c2 = st.columns(2)
+            with c1:
+                fkey = st.text_input("拼圖代碼 (feature_key)", placeholder="例如: feat_warehouse_stock_check")
+                fname = st.text_input("拼圖顯示名稱", placeholder="例如: 📦 即時庫存查詢")
+            with c2:
+                fgroup = st.text_input("功能群組分類", value="擴充拼圖")
+                fmod = st.text_input("模組路徑（選填）", placeholder="例如: modules.warehouse.stock_check")
+
+            if st.form_submit_button("🧩 註冊新拼圖", type="primary", use_container_width=True):
+                ck = fkey.strip()
+                cn = fname.strip()
+                if not ck or not cn:
+                    st.warning("⚠️ 請填寫拼圖代碼與顯示名稱。")
+                else:
+                    try:
+                        with engine.begin() as conn:
+                            conn.execute(text("""
+                                INSERT INTO sys_feature_registry (
+                                    feature_key, feature_name, feature_group, module_path, entry_func, is_active
+                                )
+                                VALUES (:k, :n, :g, :m, 'render', TRUE)
+                                ON CONFLICT (feature_key) DO UPDATE SET
+                                    feature_name = EXCLUDED.feature_name,
+                                    feature_group = EXCLUDED.feature_group,
+                                    module_path = COALESCE(:m, sys_feature_registry.module_path),
+                                    is_active = TRUE
+                            """), {
+                                "k": ck,
+                                "n": cn,
+                                "g": fgroup.strip() or "擴充拼圖",
+                                "m": fmod.strip() or None,
+                            })
+                        st.success(f"✅ 已註冊新拼圖【{cn}】(`{ck}`)！")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ 註冊拼圖失敗: {e}")
 
 
 def show(engine=None, lang="zh", **kwargs):
