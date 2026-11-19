@@ -9,16 +9,31 @@ import unicodedata
 from sqlalchemy import text
 
 DEFAULT_PUZZLE_REGISTRY = [
+    # 總經理室原有 7 個核心功能拼圖
+    {"key": "feat_executive", "name": "👑 跨國營運戰情與決策總覽", "group": "總經理室與戰情決策", "module": "modules.executive.overview", "func": "show"},
+    {"key": "feat_lme_commodities", "name": "📈 原料市場與即時外匯行情 (LME 銅價)", "group": "總經理室與戰情決策", "module": "modules.executive.commodities_fx", "func": "show"},
+    {"key": "feat_stock_indices", "name": "📊 全球股市 API 指標追蹤", "group": "總經理室與戰情決策", "module": "modules.executive.stock_indices", "func": "show"},
+    {"key": "feat_fx_rates", "name": "💱 多幣別匯率即時換算引擎", "group": "總經理室與戰情決策", "module": "modules.executive.fx_rates", "func": "show"},
+    {"key": "feat_circular_200", "name": "💰 完整損益表與會計報表 (Thông tư 200)", "group": "總經理室與戰情決策", "module": "modules.executive.financials_pl", "func": "show"},
+    {"key": "feat_policy", "name": "📰 越南政府政策與法規動態", "group": "總經理室與戰情決策", "module": "modules.executive.policy_news", "func": "show"},
+    {"key": "feat_analytics", "name": "🏗️ 工程案場與金額佔比分析", "group": "總經理室與戰情決策", "module": "modules.executive.project_analytics", "func": "show"},
+
+    # 總經理室 / 營運戰情指標拼圖（原物料價格、應收/應付帳款總計、工程專案進行總數）
+    {"key": "feat_raw_material_prices", "name": "🪙 原物料價格監控", "group": "經營指標與帳款總計", "module": "modules.executive.raw_material_prices", "func": "render"},
+    {"key": "feat_ar_ap_summary", "name": "💳 財務應收／應付帳款總計 (AR/AP)", "group": "經營指標與帳款總計", "module": "modules.finance.ar_ap_summary", "func": "render"},
+    {"key": "feat_active_projects_count", "name": "📌 工程專案進行總數", "group": "經營指標與帳款總計", "module": "modules.engineering.overview.active_projects_kpi", "func": "render"},
+
+    # 工程部與專案拼圖
     {"key": "feat_eng_quotation", "name": "📐 估價中心", "group": "業務與專案", "module": "modules.engineering.financial.quotation", "func": "render"},
     {"key": "feat_site_log", "name": "📋 工地巡檢與施工日報", "group": "現場作業", "module": "modules.engineering.site_ops.daily_report", "func": "render"},
     {"key": "feat_blueprint", "name": "📐 設計圖紙與審查", "group": "設計與品管", "module": "modules.engineering.procurement_qc.testing_acceptance", "func": "render"},
     {"key": "feat_bom_procurement", "name": "📦 工程 BOM 與採購需求", "group": "供應鏈與採購", "module": "modules.engineering.procurement_qc.bom_procurement", "func": "render"},
     {"key": "feat_project_pnl", "name": "📊 專案損益追蹤", "group": "財務與成本", "module": "modules.engineering.financial.project_pnl", "func": "render"},
+
+    # 全公司共用與現場入口拼圖
     {"key": "feat_my_approvals", "name": "✍️ 簽核中心（請假／採購／文書／估價）", "group": "全公司共用", "module": "modules.approval_workflow", "func": "render_approval_center"},
     {"key": "feat_field_gps_clockin", "name": "📍 外勤工程人員線上打卡", "group": "現場作業", "module": "modules.engineering.site_ops.gps_attendance", "func": "render"},
     {"key": "feat_security_guard_ops", "name": "🛡️ 保全操作頁面", "group": "廠區安控", "module": "modules.management.security_gate", "func": "render"},
-    {"key": "feat_lme_commodities", "name": "📈 原料市場與外匯行情", "group": "經營決策", "module": "modules.executive.commodities_fx", "func": "show"},
-    {"key": "feat_circular_200", "name": "💰 財務會計與標準財報", "group": "財務與成本", "module": "modules.executive.financials_pl", "func": "show"},
 ]
 
 ORG_TEMPLATES = {
@@ -186,8 +201,21 @@ def load_registry(engine) -> list[dict]:
         with engine.connect() as conn:
             rows = conn.execute(text("SELECT feature_key, feature_name, feature_group, module_path, entry_func FROM sys_feature_registry WHERE is_active = TRUE ORDER BY id ASC")).fetchall()
             if rows:
-                db_map = {r._asdict()["feature_key"]: {"key": r._asdict()["feature_key"], "name": r._asdict()["feature_name"], "group": r._asdict().get("feature_group") or "擴充拼圖", "module": r._asdict().get("module_path"), "func": r._asdict().get("entry_func") or "render"} for r in rows}
-                return list(db_map.values())
+                merged = {}
+                for item in registry:
+                    merged[item["key"]] = dict(item)
+                for r in rows:
+                    d = r._asdict()
+                    fk = d["feature_key"]
+                    base = merged.get(fk, {"key": fk, "name": d["feature_name"], "group": "擴充拼圖", "module": None, "func": "render"})
+                    merged[fk] = {
+                        "key": fk,
+                        "name": d["feature_name"] or base["name"],
+                        "group": d.get("feature_group") or base["group"],
+                        "module": d.get("module_path") or base["module"],
+                        "func": d.get("entry_func") or base["func"],
+                    }
+                return list(merged.values())
     except Exception:
         pass
     return registry
