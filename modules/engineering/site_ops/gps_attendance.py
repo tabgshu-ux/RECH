@@ -1,134 +1,194 @@
 # ==========================================
-# 檔案路徑：modules/engineering/field_gps_attendance.py
-# 職責：現場人員專屬：GPS 拍照打卡、每日工作進度回報與離場支援申請（移除雜亂的主管設定與身份切換）
+# 檔案路徑：modules/engineering/site_ops/gps_attendance.py
+# 職責：外勤工程人員極簡一鍵打卡（自動帶出時間、GPS 定位與現場拍照回傳）
 # ==========================================
 
-import streamlit as st
+from datetime import datetime
+from zoneinfo import ZoneInfo
 import pandas as pd
+import streamlit as st
+import streamlit.components.v1 as components
 from sqlalchemy import text
-import datetime
+from core import ui_theme
 
-def init_field_gps_db(engine):
-    """初始化外勤打卡與支援申請資料表"""
-    if engine is not None:
-        try:
-            with engine.begin() as conn:
-                conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS hr_field_gps (
-                        record_id VARCHAR(50) PRIMARY KEY,
-                        emp_id VARCHAR(50),
-                        emp_name VARCHAR(100),
-                        site_name VARCHAR(150),
-                        punch_type VARCHAR(50),
-                        gps_lat FLOAT,
-                        gps_lng FLOAT,
-                        work_progress TEXT,
-                        check_time VARCHAR(50),
-                        status VARCHAR(50),
-                        note TEXT,
-                        has_photo BOOLEAN DEFAULT FALSE
-                    );
-                """))
-                conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS eng_geofence_settings (
-                        site_name VARCHAR(150) PRIMARY KEY,
-                        lat FLOAT,
-                        lng FLOAT,
-                        radius_meters INT,
-                        status VARCHAR(50)
-                    );
-                """))
-                conn.execute(text("""
-                    CREATE TABLE IF NOT EXISTS eng_support_requests (
+
+def _ensure_clockin_table(engine):
+    if not engine:
+        return
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                text("""
+                    CREATE TABLE IF NOT EXISTS eng_field_clockins (
                         id SERIAL PRIMARY KEY,
-                        emp_name VARCHAR(100),
-                        from_project VARCHAR(200),
-                        target_project VARCHAR(200),
-                        reason TEXT,
-                        status VARCHAR(50) DEFAULT '⏳ 待主管審核',
+                        tenant_id VARCHAR(64) NOT NULL,
+                        employee_name VARCHAR(120) NOT NULL,
+                        project_id VARCHAR(80),
+                        clock_type VARCHAR(24) DEFAULT 'CLOCK_IN',
+                        clock_time TIMESTAMP WITH TIME ZONE NOT NULL,
+                        gps_lat NUMERIC(10, 6),
+                        gps_lng NUMERIC(10, 6),
+                        gps_address VARCHAR(255),
+                        photo_base64 TEXT,
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
-                """))
-        except Exception:
-            pass
+                """)
+            )
+    except Exception:
+        pass
 
-def render(engine=None, lang="繁體中文", **kwargs):
-    init_field_gps_db(engine)
 
-    st.markdown("### ⏱️ 外勤工程師與師傅拍照打卡與進度回報中心")
-    st.caption("現場施工人員專用：支援 GPS 圍籬範圍驗證、手機相機拍照存證、每日工作進度回報與提早離場支援申請。")
+def _render_geo_bridge():
+    """自動取得瀏覽器目前 GPS 經緯度並寫入網址 query params（無需手動填寫）"""
+    components.html(
+        """
+        <script>
+        (function() {
+            if (!navigator.geolocation) return;
+            navigator.geolocation.getCurrentPosition(
+                function(pos) {
+                    const lat = pos.coords.latitude.toFixed(6);
+                    const lng = pos.coords.longitude.toFixed(6);
+                    try {
+                        const url = new URL(window.parent.location.href);
+                        if (url.searchParams.get("gps_lat") !== lat || url.searchParams.get("gps_lng") !== lng) {
+                            url.searchParams.set("gps_lat", lat);
+                            url.searchParams.set("gps_lng", lng);
+                            window.parent.history.replaceState({}, "", url.toString());
+                        }
+                    } catch (e) {}
+                },
+                function() {},
+                { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+            );
+        })();
+        </script>
+        """,
+        height=0,
+    )
 
-    # 從資料庫動態讀取主管設定好的工地清單
-    site_options = ["西寧廠二期配電盤擴建工程", "平陽工業區廠房機電統包", "隆安省光電園區變壓器安裝"]
-    if engine is not None:
-        try:
-            df_sites = pd.read_sql("SELECT site_name FROM eng_geofence_settings", con=engine)
-            if not df_sites.empty:
-                site_options = df_sites["site_name"].tolist()
-        except Exception:
-            pass
 
-    # 採用乾淨俐落的上下結構或雙 Tab：作業打卡 vs 我的回報紀錄
-    tab_punch, tab_my_records = st.tabs(["📱 現場拍照打卡與進度回報", "📋 我今日的回報與打卡紀錄"])
+def render(engine=None, lang="zh", **kwargs):
+    code = ui_theme.norm_lang(lang or st.session_state.get("current_lang", "zh"))
+    tenant_id = st.session_state.get("tenant_id", "REETECH_VN")
+    emp_name = st.session_state.get("user_name") or "外勤工程人員"
 
-    with tab_punch:
-        st.markdown("##### 📱 行動打卡與每日施工進度回報表單")
-        st.info("💡 請在指定案場範圍內進行打卡。下班打卡時必須填寫當日工程進度與上傳現場施工照片，以同步至工程部與總經理室戰情。")
+    txt = {
+        "zh": {
+            "title": "📍 外勤工程人員打卡",
+            "sub": "點選拍照後一鍵打卡，系統自動帶出時間與定位回傳。",
+            "cam_label": "📷 拍攝工程人員／工地現場照片",
+            "btn_in": "🟢 一鍵打卡回傳",
+            "sent_ok": "✅ 已打卡回傳！時間：{}｜定位：{}",
+            "no_photo": "⚠️ 請先完成拍照再按打卡回傳。",
+            "recent": "🕒 今日打卡回傳紀錄",
+            "empty": "尚無打卡紀錄。",
+        },
+        "vi": {
+            "title": "📍 Chấm Công Kỹ Sư Ngoài Công Trường",
+            "sub": "Chụp ảnh và bấm chấm công một chạm, hệ thống tự gửi thời gian và vị trí.",
+            "cam_label": "📷 Chụp ảnh nhân sự / hiện trường công trình",
+            "btn_in": "🟢 Gửi Chấm Công",
+            "sent_ok": "✅ Đã gửi chấm công! Thời gian: {} | Vị trí: {}",
+            "no_photo": "⚠️ Vui lòng chụp ảnh trước khi gửi chấm công.",
+            "recent": "🕒 Lịch Sử Chấm Công Hôm Nay",
+            "empty": "Chưa có dữ liệu chấm công.",
+        },
+        "en": {
+            "title": "📍 Field Engineer Quick Clock-In",
+            "sub": "Take a photo and clock in with one tap; timestamp and GPS location are sent automatically.",
+            "cam_label": "📷 Capture Engineer / Site Photo",
+            "btn_in": "🟢 Clock In Now",
+            "sent_ok": "✅ Clock-in sent! Time: {} | Location: {}",
+            "no_photo": "⚠️ Please capture a photo before clocking in.",
+            "recent": "🕒 Today's Clock-In Log",
+            "empty": "No clock-in records yet.",
+        },
+    }[code]
 
-        with st.form("worker_clean_punch_form"):
-            c1, c2 = st.columns(2)
-            with c1:
-                f_emp_id = st.text_input("工號 (Employee ID)", value="EMP-001")
-                f_name = st.text_input("姓名 (Full Name)", value="阮文雄 (Nguyen Van Hung)")
-                f_site = st.selectbox("指派工程案場 / 工地", site_options)
-                f_punch_type = st.radio("打卡類型", ["🟢 上班打卡 (現場拍照存證)", "🔴 下班打卡 (工程進度回報 + 施工照)"], horizontal=True)
-            with c2:
-                f_lat = st.number_input("GPS 緯度 (Latitude)", value=10.7769, format="%.4f")
-                f_lng = st.number_input("GPS 經度 (Longitude)", value=106.7009, format="%.4f")
-                
-                f_progress = st.text_area("📊 當日工程進度回報 (主管與總經理室可見)", placeholder="例如: 已完成配電箱安裝 80%、主迴路拉線完畢...")
-                f_note = st.text_input("現場備註 / 異常回報", placeholder="例如: 現場材料短缺需總務支援...")
+    st.markdown(f"### {txt['title']}")
+    st.caption(txt["sub"])
+    _ensure_clockin_table(engine)
+    _render_geo_bridge()
 
-            st.markdown("**📷 現場施工 / 打卡照片上傳 (Camera Verification)**")
-            captured_image = st.camera_input("請對準現場施工環境或人員進行拍照打卡")
+    now_vn = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh"))
+    time_str = now_vn.strftime("%Y-%m-%d %H:%M:%S")
 
-            submitted = st.form_submit_button("🛰️ 確認送出打卡與進度回報", type="primary", use_container_width=True)
-            if submitted:
-                if f_emp_id and f_name:
-                    record_id = f"GPS-{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
-                    current_time_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    has_photo_bool = True if captured_image is not None else False
-                    p_type_val = "上班打卡" if "上班" in f_punch_type else "下班打卡+進度回報"
+    q_lat = st.query_params.get("gps_lat")
+    q_lng = st.query_params.get("gps_lng")
+    gps_lat = float(q_lat) if q_lat else None
+    gps_lng = float(q_lng) if q_lng else None
+    loc_text = f"{gps_lat:.6f}, {gps_lng:.6f}" if (gps_lat is not None and gps_lng is not None) else "定位取得中 / 依裝置定位回傳"
 
-                    if engine is not None:
-                        try:
-                            with engine.begin() as conn:
-                                conn.execute(text("""
-                                    INSERT INTO hr_field_gps (record_id, emp_id, emp_name, site_name, punch_type, gps_lat, gps_lng, work_progress, check_time, status, note, has_photo)
-                                    VALUES (:rid, :eid, :ename, :site, :ptype, :lat, :lng, :prog, :ctime, '🟢 範圍內 (In Range)', :note, :hphoto)
-                                """), {
-                                    "rid": record_id, "eid": f_emp_id.strip(), "ename": f_name.strip(),
-                                    "site": f_site, "ptype": p_type_val, "lat": f_lat, "lng": f_lng,
-                                    "prog": f_progress if "下班" in p_type_val else "（上班打卡無須回報進度）",
-                                    "ctime": current_time_str, "note": f_note, "hphoto": has_photo_bool
-                                })
-                        except Exception as e:
-                            st.error(f"資料庫寫入錯誤: {e}")
-                    st.success("🎉 外勤打卡與每日工作進度回報成功！已自動同步至工程主管與總經理室。")
-                    st.rerun()
-                else:
-                    st.warning("⚠️ 請填寫完整工號與姓名！")
+    st.caption(f"👤 {emp_name}  ｜  🕒 {time_str}  ｜  📌 {loc_text}")
 
-    with tab_my_records:
-        st.markdown("##### 📋 我今日提交的打卡與進度回報清單")
-        if engine is not None:
-            try:
-                df_my = pd.read_sql("SELECT record_id AS 紀錄編號, site_name AS 案場, punch_type AS 類型, work_progress AS 進度回報, check_time AS 時間, has_photo AS 現場照片 FROM hr_field_gps ORDER BY check_time DESC LIMIT 20", con=engine)
-                if df_my.empty:
-                    st.info("目前尚無打卡紀錄。")
-                else:
-                    st.dataframe(df_my, use_container_width=True, hide_index=True)
-            except Exception as e:
-                st.warning(f"讀取紀錄失敗: {e}")
+    photo = st.camera_input(txt["cam_label"], key="field_quick_camera")
+
+    if st.button(txt["btn_in"], type="primary", use_container_width=True):
+        if photo is None:
+            st.warning(txt["no_photo"])
+        elif not engine:
+            st.error("❌ 尚未連線資料庫。")
         else:
-            st.info("資料庫連線尚未建立。")
+            import base64
+
+            raw_bytes = photo.getvalue()
+            b64_str = base64.b64encode(raw_bytes).decode("utf-8")
+            try:
+                with engine.begin() as conn:
+                    conn.execute(
+                        text("""
+                            INSERT INTO eng_field_clockins (
+                                tenant_id, employee_name, project_id, clock_type,
+                                clock_time, gps_lat, gps_lng, gps_address, photo_base64
+                            )
+                            VALUES (
+                                :tid, :ename, :pid, 'CLOCK_IN',
+                                :ctime, :lat, :lng, :addr, :b64
+                            )
+                        """),
+                        {
+                            "tid": tenant_id,
+                            "ename": emp_name,
+                            "pid": st.session_state.get("active_project_id"),
+                            "ctime": now_vn,
+                            "lat": gps_lat,
+                            "lng": gps_lng,
+                            "addr": loc_text,
+                            "b64": b64_str,
+                        },
+                    )
+                st.success(txt["sent_ok"].format(time_str, loc_text))
+                st.rerun()
+            except Exception as e:
+                st.error(f"❌ 打卡回傳失敗：{e}")
+
+    st.divider()
+    st.markdown(f"#### {txt['recent']}")
+    if not engine:
+        st.info(txt["empty"])
+        return
+    try:
+        with engine.connect() as conn:
+            rows = conn.execute(
+                text("""
+                    SELECT employee_name AS "人員",
+                           TO_CHAR(clock_time AT TIME ZONE 'Asia/Ho_Chi_Minh', 'YYYY-MM-DD HH24:MI:SS') AS "打卡時間",
+                           COALESCE(gps_address, '-') AS "定位座標"
+                    FROM eng_field_clockins
+                    WHERE tenant_id = :tid
+                    ORDER BY id DESC
+                    LIMIT 20
+                """),
+                {"tid": tenant_id},
+            ).fetchall()
+            if not rows:
+                st.info(txt["empty"])
+            else:
+                st.dataframe(pd.DataFrame([r._asdict() for r in rows]), use_container_width=True, hide_index=True)
+    except Exception:
+        st.info(txt["empty"])
+
+
+def show(engine=None, lang="zh", **kwargs):
+    render(engine=engine, lang=lang, **kwargs)
