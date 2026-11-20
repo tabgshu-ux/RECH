@@ -53,6 +53,9 @@ DEFAULT_PUZZLE_REGISTRY = [
     {"key": "feat_prod_qc_cost", "name": "🔬 品質檢驗 (QC/QA)、批號追溯與工單成本", "group": "生產部", "module": "modules.production.qc_cost", "func": "render"},
     {"key": "feat_material", "name": "📦 庫存管理、出入庫、調撥與盤點", "group": "倉庫管理", "module": "modules.warehouse.inventory", "func": "render"},
     {"key": "feat_barcode_pda", "name": "🏷️ 條碼/QR/PDA 掃描與庫存週轉分析", "group": "倉庫管理", "module": "modules.warehouse.barcode_analytics", "func": "render"},
+    {"key": "feat_prod_sheet_metal", "name": "🔩 鈑金加工工作站（接圖與料件生產）", "group": "生產部", "module": "modules.production.stations.sheet_metal", "func": "render"},
+    {"key": "feat_prod_painting", "name": "🎨 塗裝烤漆工作站（接圖與表面處理）", "group": "生產部", "module": "modules.production.stations.painting", "func": "render"},
+    {"key": "feat_prod_panel_wiring", "name": "⚡ 電配組裝工作站（接圖與配盤配線）", "group": "生產部", "module": "modules.production.stations.panel_wiring", "func": "render"},
 
     # 全公司共用與系統設定／安全
     {"key": "feat_my_approvals", "name": "✍️ 簽核中心（請假／採購／文書／估價）", "group": "全公司共用", "module": "modules.approval_workflow", "func": "render_approval_center"},
