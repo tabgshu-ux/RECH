@@ -1,16 +1,17 @@
 # ==========================================
-# 檔案路徑：modules/approval_workflow.py（公務派車申請單區塊範例／覆蓋）
-# 職責：全公司電子簽核中心 - 廠區公務派車申請單（支援日期 + 出車／返回時間）
+# 檔案路徑：modules/approval_workflow.py
+# 職責：全公司電子簽核中心（派車申請含時分、請假審核、簽核進度與門禁放行）
 # ==========================================
 
 from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
+import pandas as pd
 import streamlit as st
 from sqlalchemy import text
 from core import ui_theme
 
 
-def _ensure_vehicle_dispatch_table(engine):
+def _ensure_approval_tables(engine):
     if not engine:
         return
     try:
@@ -36,17 +37,30 @@ def _ensure_vehicle_dispatch_table(engine):
                     );
                 """)
             )
+            conn.execute(
+                text("""
+                    CREATE TABLE IF NOT EXISTS hr_leave_requests (
+                        id SERIAL PRIMARY KEY,
+                        tenant_id VARCHAR(64) NOT NULL,
+                        leave_no VARCHAR(64) UNIQUE NOT NULL,
+                        employee_name VARCHAR(120) NOT NULL,
+                        dept_or_role VARCHAR(120),
+                        leave_type VARCHAR(64) NOT NULL,
+                        start_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+                        end_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+                        leave_hours NUMERIC(6, 2) DEFAULT 8,
+                        reason TEXT,
+                        status VARCHAR(32) DEFAULT 'PENDING_SUPERVISOR',
+                        payroll_batch_id VARCHAR(64),
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """)
+            )
     except Exception:
         pass
 
 
-def _render_vehicle_dispatch_form(engine=None, lang="zh"):
-    code = ui_theme.norm_lang(lang or st.session_state.get("current_lang", "zh"))
-    tenant_id = st.session_state.get("tenant_id", "REETECH_VN")
-    user_name = st.session_state.get("user_name") or "admin"
-    user_role = st.session_state.get("user_role") or "角色"
-    now_vn = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).replace(tzinfo=None)
-
+def _render_vehicle_dispatch_tab(engine, tenant_id: str, user_name: str, user_role: str, now_vn: datetime, code: str):
     txt = {
         "zh": {
             "hdr": "🚗 3. 廠區公務派車申請單",
@@ -109,7 +123,6 @@ def _render_vehicle_dispatch_form(engine=None, lang="zh"):
 
     st.markdown(f"#### {txt['hdr']}")
     st.info(txt["flow"])
-    _ensure_vehicle_dispatch_table(engine)
 
     default_dep_dt = (now_vn + timedelta(minutes=15)).replace(second=0, microsecond=0)
     default_ret_dt = (default_dep_dt + timedelta(hours=3)).replace(second=0, microsecond=0)
@@ -222,3 +235,161 @@ def _render_vehicle_dispatch_form(engine=None, lang="zh"):
                 )
             except Exception as e:
                 st.error(f"❌ 提交派車申請單失敗：{e}")
+
+
+def _render_supervisor_queue(engine, tenant_id: str):
+    st.markdown("#### 📋 4. 待簽核案件審查（主管專區）")
+    if not engine:
+        st.info("尚未連線資料庫。")
+        return
+
+    try:
+        with engine.connect() as conn:
+            car_rows = conn.execute(
+                text("""
+                    SELECT dispatch_no, applicant_name, vehicle_plate, destination,
+                           TO_CHAR(depart_at, 'YYYY-MM-DD HH24:MI') AS dep_str,
+                           TO_CHAR(return_at, 'YYYY-MM-DD HH24:MI') AS ret_str,
+                           status
+                    FROM approval_vehicle_dispatches
+                    WHERE tenant_id = :tid
+                    ORDER BY id DESC
+                    LIMIT 20
+                """),
+                {"tid": tenant_id},
+            ).fetchall()
+
+            lv_rows = conn.execute(
+                text("""
+                    SELECT leave_no, employee_name, leave_type,
+                           TO_CHAR(start_at, 'YYYY-MM-DD HH24:MI') AS s_str,
+                           TO_CHAR(end_at, 'YYYY-MM-DD HH24:MI') AS e_str,
+                           leave_hours, status
+                    FROM hr_leave_requests
+                    WHERE tenant_id = :tid
+                    ORDER BY id DESC
+                    LIMIT 20
+                """),
+                {"tid": tenant_id},
+            ).fetchall()
+    except Exception:
+        st.info("尚無待簽核單據。")
+        return
+
+    st.markdown("**🚗 派車單列表**")
+    if car_rows:
+        st.dataframe(
+            pd.DataFrame([
+                {
+                    "派車單號": r.dispatch_no,
+                    "申請人": r.applicant_name,
+                    "車輛": r.vehicle_plate,
+                    "目的地": r.destination,
+                    "預計出廠": r.dep_str,
+                    "預計返回": r.ret_str,
+                    "狀態": r.status,
+                }
+                for r in car_rows
+            ]),
+            use_container_width=True,
+            hide_index=True,
+        )
+        pending_cars = [r.dispatch_no for r in car_rows if r.status == "PENDING_SUPERVISOR"]
+        if pending_cars:
+            sel_car = st.selectbox("選擇待審核派車單", pending_cars, key="sel_pending_car")
+            b1, b2 = st.columns(2)
+            with b1:
+                if st.button("✅ 主管核准派車", key="btn_app_car", type="primary", use_container_width=True):
+                    with engine.begin() as conn:
+                        conn.execute(
+                            text("UPDATE approval_vehicle_dispatches SET status = 'APPROVED_FOR_GATE' WHERE tenant_id = :tid AND dispatch_no = :dno"),
+                            {"tid": tenant_id, "dno": sel_car},
+                        )
+                    st.success(f"已核准派車單 {sel_car}，可交由門禁保全放行。")
+                    st.rerun()
+            with b2:
+                if st.button("❌ 駁回派車單", key="btn_rej_car", use_container_width=True):
+                    with engine.begin() as conn:
+                        conn.execute(
+                            text("UPDATE approval_vehicle_dispatches SET status = 'REJECTED' WHERE tenant_id = :tid AND dispatch_no = :dno"),
+                            {"tid": tenant_id, "dno": sel_car},
+                        )
+                    st.warning(f"已駁回派車單 {sel_car}。")
+                    st.rerun()
+    else:
+        st.info("目前尚無派車申請紀錄。")
+
+    st.divider()
+    st.markdown("**📝 員工請假單列表**")
+    if lv_rows:
+        st.dataframe(
+            pd.DataFrame([
+                {
+                    "請假單號": r.leave_no,
+                    "員工": r.employee_name,
+                    "假別": r.leave_type,
+                    "開始時間": r.s_str,
+                    "結束時間": r.e_str,
+                    "時數": float(r.leave_hours or 0),
+                    "狀態": r.status,
+                }
+                for r in lv_rows
+            ]),
+            use_container_width=True,
+            hide_index=True,
+        )
+        pending_lvs = [r.leave_no for r in lv_rows if r.status == "PENDING_SUPERVISOR"]
+        if pending_lvs:
+            sel_lv = st.selectbox("選擇待審核請假單", pending_lvs, key="sel_pending_lv")
+            l1, l2 = st.columns(2)
+            with l1:
+                if st.button("✅ 核准請假單", key="btn_app_lv", type="primary", use_container_width=True):
+                    with engine.begin() as conn:
+                        conn.execute(
+                            text("UPDATE hr_leave_requests SET status = 'APPROVED' WHERE tenant_id = :tid AND leave_no = :lno"),
+                            {"tid": tenant_id, "lno": sel_lv},
+                        )
+                    st.success(f"已核准請假單 {sel_lv}。")
+                    st.rerun()
+            with l2:
+                if st.button("❌ 駁回請假單", key="btn_rej_lv", use_container_width=True):
+                    with engine.begin() as conn:
+                        conn.execute(
+                            text("UPDATE hr_leave_requests SET status = 'REJECTED' WHERE tenant_id = :tid AND leave_no = :lno"),
+                            {"tid": tenant_id, "lno": sel_lv},
+                        )
+                    st.warning(f"已駁回請假單 {sel_lv}。")
+                    st.rerun()
+    else:
+        st.info("目前尚無請假申請紀錄。")
+
+
+def render_approval_center(engine=None, lang="zh", **kwargs):
+    code = ui_theme.norm_lang(lang or st.session_state.get("current_lang", "zh"))
+    tenant_id = st.session_state.get("tenant_id", "REETECH_VN")
+    user_name = st.session_state.get("user_name") or "admin"
+    user_role = st.session_state.get("user_role") or "角色"
+    now_vn = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).replace(tzinfo=None)
+
+    st.markdown("### ✍️ 全公司電子簽核中心 (Approval Center)")
+    st.caption("提交請假、採購請款、公務派車或專案簽呈；系統自動依權限進行多級電子簽核。")
+    _ensure_approval_tables(engine)
+
+    tab_car, tab_queue = st.tabs([
+        "🚗 3. 廠區公務派車申請單",
+        "📋 4. 待簽核案件審查（主管專區）",
+    ])
+
+    with tab_car:
+        _render_vehicle_dispatch_tab(engine, tenant_id, user_name, user_role, now_vn, code)
+
+    with tab_queue:
+        _render_supervisor_queue(engine, tenant_id)
+
+
+def render(engine=None, lang="zh", **kwargs):
+    render_approval_center(engine=engine, lang=lang, **kwargs)
+
+
+def show(engine=None, lang="zh", **kwargs):
+    render_approval_center(engine=engine, lang=lang, **kwargs)
