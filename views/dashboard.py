@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：views/dashboard.py
-# 職責：依元數據渲染子卡片與已掛載拼圖；總經理室與各 L1 部門首頁皆直接顯示總覽（不顯示 L1/L2 前綴）
+# 職責：依元數據渲染子卡片與已掛載拼圖；現場入口節點支援一鍵掛載打卡功能
 # ==========================================
 
 import streamlit as st
@@ -69,7 +69,7 @@ def render_dashboard(engine=None, lang=None, **kwargs):
         render_executive_home_panels(engine, tenant_id, lang=curr_lang)
         has_l1_overview = True
         st.divider()
-    elif str(curr_node.get("level_tier") or "L1").upper() == "L1":
+    elif str(curr_node.get("level_tier") or "L1").upper() == "L1" and curr_node.get("node_type") != "L1_FUNC":
         has_l1_overview = render_l1_department_overview(engine, tenant_id, curr_node, lang=curr_lang)
         if has_l1_overview:
             st.divider()
@@ -81,6 +81,16 @@ def render_dashboard(engine=None, lang=None, **kwargs):
 
     mounted = dynamic_router.get_mounted_features(engine, tenant_id, curr_node["node_code"])
     children = dynamic_router.get_child_nodes(engine, tenant_id, curr_node["node_code"])
+
+    # 若為外勤打卡節點且尚未掛載拼圖，提供一鍵掛載並直接進入打卡頁
+    if curr_node.get("node_code") == "FUNC_FIELD_CLOCKIN" and not mounted and not children:
+        if engine:
+            repo.sync_default_registry(engine)
+            cur_feats, cur_role = repo.load_node_mount(engine, tenant_id, curr_node["node_code"])
+            if "feat_field_gps_clockin" not in cur_feats:
+                cur_feats.append("feat_field_gps_clockin")
+            repo.save_node_mount(engine, tenant_id, curr_node["node_code"], cur_feats, cur_role or None)
+            mounted = dynamic_router.get_mounted_features(engine, tenant_id, curr_node["node_code"])
 
     if curr_node.get("node_type") == "L1_FUNC" and len(mounted) == 1 and not children:
         dynamic_router.dispatch_feature(engine, mounted[0]["key"], lang=curr_lang)
