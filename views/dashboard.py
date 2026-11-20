@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：views/dashboard.py
-# 職責：依元數據渲染子卡片與已掛載拼圖；現場入口節點支援一鍵掛載打卡功能
+# 職責：依元數據渲染子卡片與已掛載拼圖（工程部排除重複打卡卡；外勤入口提供打卡＋請假雙卡片）
 # ==========================================
 
 import streamlit as st
@@ -82,19 +82,26 @@ def render_dashboard(engine=None, lang=None, **kwargs):
     mounted = dynamic_router.get_mounted_features(engine, tenant_id, curr_node["node_code"])
     children = dynamic_router.get_child_nodes(engine, tenant_id, curr_node["node_code"])
 
-    # 若為外勤打卡節點且尚未掛載拼圖，提供一鍵掛載並直接進入打卡頁
+    # 工程部僅保留統計與管理拼圖，不重複顯示「行動定位打卡與領班代點工」操作卡
+    if str(curr_node.get("node_code") or "").upper() == "DEPT_ENG":
+        mounted = [f for f in mounted if f.get("key") != "feat_field_gps_clockin"]
+
+    # 外勤工程人員入口預設同時掛載「線上拍照打卡」與「員工請假申請」雙功能
     if curr_node.get("node_code") == "FUNC_FIELD_CLOCKIN" and not mounted and not children:
         if engine:
             repo.sync_default_registry(engine)
             cur_feats, cur_role = repo.load_node_mount(engine, tenant_id, curr_node["node_code"])
-            if "feat_field_gps_clockin" not in cur_feats:
-                cur_feats.append("feat_field_gps_clockin")
-            repo.save_node_mount(engine, tenant_id, curr_node["node_code"], cur_feats, cur_role or None)
+            for default_fk in ["feat_field_gps_clockin", "feat_field_leave_req"]:
+                if default_fk not in cur_feats:
+                    cur_feats.append(default_fk)
+            repo.save_node_mount(
+                engine,
+                tenant_id,
+                curr_node["node_code"],
+                cur_feats,
+                cur_role or "FIELD_ENGINEER",
+            )
             mounted = dynamic_router.get_mounted_features(engine, tenant_id, curr_node["node_code"])
-
-    if curr_node.get("node_type") == "L1_FUNC" and len(mounted) == 1 and not children:
-        dynamic_router.dispatch_feature(engine, mounted[0]["key"], lang=curr_lang)
-        return
 
     if children:
         st.markdown(f"#### {ui_theme.tr('sub_cards', curr_lang)}")
@@ -103,7 +110,11 @@ def render_dashboard(engine=None, lang=None, **kwargs):
             with s_cols[idx % 2]:
                 with st.container(border=True):
                     st.markdown(f"**{sub['node_name']}**")
-                    if st.button(ui_theme.tr("enter_card", curr_lang), key=f"sub_{sub['node_code']}", use_container_width=True):
+                    if st.button(
+                        ui_theme.tr("enter_card", curr_lang),
+                        key=f"sub_{sub['node_code']}",
+                        use_container_width=True,
+                    ):
                         st.session_state["selected_node_code"] = sub["node_code"]
                         st.rerun()
         st.divider()
