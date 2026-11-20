@@ -1,28 +1,22 @@
 # ==========================================
 # 檔案路徑：modules/approval_workflow.py
-# 職責：全公司電子簽核中心（Mobile-First 全卡片式操作介面，串接請假/營運/派車/審查/追蹤/門禁）
+# 職責：全公司電子簽核中心（全卡片式介面，移除重複的保全門禁放行功能）
 # ==========================================
 
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import streamlit as st
 from core import ui_theme
-from modules.approval import gate_tab, leave_tab, ops_tab, supervisor_tab, tracker_tab, vehicle_tab, workflow_repo
+from modules.approval import leave_tab, ops_tab, supervisor_tab, tracker_tab, vehicle_tab, workflow_repo
 
 
-def _count_pending_stats(engine, tenant_id: str) -> tuple[int, int]:
-    """統計待主管簽核筆數與待保全放行車輛數"""
+def _count_pending_approvals(engine, tenant_id: str) -> int:
     if not engine:
-        return 0, 0
+        return 0
     df_all = workflow_repo.list_requests_df(engine, tenant_id, req_type="ALL", limit=100)
-    df_car = workflow_repo.list_vehicles_df(engine, tenant_id, limit=100)
-    pending_sup = int((df_all["status"] == "PENDING_SUPERVISOR").sum()) if not df_all.empty else 0
-    pending_gate = (
-        int(((df_car["status"] == "APPROVED_FOR_GATE") & (df_car["gate_status"] != "DEPARTED")).sum())
-        if not df_car.empty
-        else 0
-    )
-    return pending_sup, pending_gate
+    if df_all.empty:
+        return 0
+    return int((df_all["status"] == "PENDING_SUPERVISOR").sum())
 
 
 def render_approval_center(engine=None, lang="zh", **kwargs):
@@ -34,12 +28,12 @@ def render_approval_center(engine=None, lang="zh", **kwargs):
     now_vn = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).replace(tzinfo=None)
 
     st.markdown("### ✍️ 全公司電子簽核中心 (Approval Center)")
-    st.caption("請點選下方功能卡片操作請假、採購／倉庫／外出、公務派車、主管審查、進度追蹤或保全放行。")
+    st.caption("請點選下方功能卡片操作請假、採購／倉庫／外出、公務派車、主管審查或簽核進度追蹤。")
     workflow_repo.ensure_tables(engine)
 
-    pending_sup, pending_gate = _count_pending_stats(engine, tenant_id)
+    pending_sup = _count_pending_approvals(engine, tenant_id)
 
-    if "wf_active_card" not in st.session_state:
+    if "wf_active_card" not in st.session_state or st.session_state["wf_active_card"] == "GATE":
         st.session_state["wf_active_card"] = "LEAVE"
 
     active_card = st.session_state["wf_active_card"]
@@ -51,8 +45,7 @@ def render_approval_center(engine=None, lang="zh", **kwargs):
     ]
     cards_row2 = [
         ("SUPERVISOR", f"📋 4. 主管案件審查（待審 {pending_sup}）", "核准放行或駁回退件"),
-        ("TRACKER", "📊 5. 簽核進度追蹤", "即時查看各單據與門禁狀態"),
-        ("GATE", f"🛡️ 6. 保全門禁放行（待放 {pending_gate}）", "核對核准派車與登記里程"),
+        ("TRACKER", "📊 5. 簽核進度追蹤", "即時查看各單據審核狀態"),
     ]
 
     r1_cols = st.columns(3)
@@ -72,7 +65,7 @@ def render_approval_center(engine=None, lang="zh", **kwargs):
                     st.session_state["wf_active_card"] = ckey
                     st.rerun()
 
-    r2_cols = st.columns(3)
+    r2_cols = st.columns(2)
     for idx, (ckey, ctitle, csub) in enumerate(cards_row2):
         with r2_cols[idx]:
             with st.container(border=True):
@@ -100,8 +93,6 @@ def render_approval_center(engine=None, lang="zh", **kwargs):
             supervisor_tab.render(engine, tenant_id, user_name)
         elif active_card == "TRACKER":
             tracker_tab.render(engine, tenant_id)
-        elif active_card == "GATE":
-            gate_tab.render(engine, tenant_id, user_name)
         else:
             leave_tab.render(engine, tenant_id, user_name, user_role, project_id, now_vn)
 
