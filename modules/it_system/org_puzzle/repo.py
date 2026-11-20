@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/org_puzzle/repo.py
-# 職責：SaaS 組織樹與拼圖元數據純資料層（拼圖名稱與模組路徑精準一一對應）
+# 職責：SaaS 組織樹與拼圖元數據純資料層（拼圖名稱與功能子資料夾路徑精準一一對應）
 # ==========================================
 
 import hashlib
@@ -39,11 +39,11 @@ DEFAULT_PUZZLE_REGISTRY = [
     # 管理部（人事、總務、財務）
     {"key": "feat_mgmt_overview", "name": "🏢 管理部總覽", "group": "管理部", "module": "modules.management.overview", "func": "render"},
     {"key": "feat_announcements", "name": "📢 公司公告佈告欄", "group": "管理部", "module": "modules.management.announcements", "func": "render"},
-    {"key": "feat_hr_attendance_leave", "name": "🕒 考勤排班、請假加班與專案工時", "group": "人事", "module": "modules.hr.attendance_leave", "func": "render"},
-    {"key": "feat_hr_payroll_bhxh", "name": "💵 自動化薪資計算、津貼與社保扣繳", "group": "人事", "module": "modules.hr.payroll", "func": "render"},
-    {"key": "feat_hr_staff_cert_tools", "name": "🪪 員工資料、證照到期提醒與工具借用", "group": "人事", "module": "modules.hr.staff_cert_tools", "func": "render"},
-    {"key": "feat_ga_procurement", "name": "🛍️ 總務請購、供應商比價與核銷", "group": "總務", "module": "modules.ga.procurement", "func": "render"},
-    {"key": "feat_ga_assets_dorm", "name": "🏗️ 固定資產、折舊、耗材、公務車與宿舍", "group": "總務", "module": "modules.ga.assets_facilities", "func": "render"},
+    {"key": "feat_hr_attendance_leave", "name": "🕒 考勤排班、請假加班與專案工時", "group": "人事", "module": "modules.management.hr.attendance.field_workhour_approval", "func": "render"},
+    {"key": "feat_hr_payroll_bhxh", "name": "💵 自動化薪資計算、津貼與社保扣繳", "group": "人事", "module": "modules.management.hr.payroll.field_payroll_calc", "func": "render"},
+    {"key": "feat_hr_staff_cert_tools", "name": "🪪 員工資料、證照到期提醒與工具借用", "group": "人事", "module": "modules.management.hr.employee.staff_cert_tools", "func": "render"},
+    {"key": "feat_ga_procurement", "name": "🛍️ 總務請購、供應商比價與核銷", "group": "總務", "module": "modules.management.general_affairs.procurement", "func": "render"},
+    {"key": "feat_ga_assets_dorm", "name": "🏗️ 固定資產、折舊、耗材、公務車與宿舍", "group": "總務", "module": "modules.management.general_affairs.assets_facilities", "func": "render"},
     {"key": "feat_fin_gl_ar_ap", "name": "📘 核心會計 (GL / AR / AP / 現金 / 票據)", "group": "財務", "module": "modules.finance.core_accounting", "func": "render"},
     {"key": "feat_fin_budget_tax_bi", "name": "📈 預算控管、越南稅務/發票與多維度財報", "group": "財務", "module": "modules.finance.budget_tax_bi", "func": "render"},
 
