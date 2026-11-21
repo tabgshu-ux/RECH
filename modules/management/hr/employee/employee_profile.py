@@ -1,196 +1,125 @@
-import streamlit as st
+# ==========================================
+# 檔案路徑：modules/management/hr/employee/employee_profile.py
+# 職責：L2 行政／人事 - 員工資料整合入口（新增越籍/外派、修改、名冊、離職與證照提醒）
+# ==========================================
+
 import importlib
-from sqlalchemy import text
+import streamlit as st
+from core import ui_theme
 
-# 🌟 直接以模組方式安全載入，避免函式名稱不對而報錯
-try:
-    from modules.management.hr.employee import add_vietnamese
-except ImportError:
+
+def _safe_import(module_path: str):
     try:
-        import add_vietnamese
-    except:
-        add_vietnamese = None
-
-try:
-    from modules.management.hr.employee import add_expat
-except ImportError:
-    try:
-        import add_expat
-    except:
-        add_expat = None
-
-try:
-    from modules.management.hr.employee import employee_list
-except ImportError:
-    try:
-        import employee_list
-    except:
-        employee_list = None
-
-try:
-    from modules.management.hr.employee import edit_profile
-except ImportError:
-    try:
-        import edit_profile
-    except:
-        edit_profile = None
-
-try:
-    from modules.management.hr.employee import resigned_list
-except ImportError:
-    try:
-        import resigned_list
-    except:
-        resigned_list = None
-
-def init_hr_profile_db(engine):
-    if not engine:
-        return
-    try:
-        with engine.begin() as conn:
-            conn.execute(text("""
-                CREATE TABLE IF NOT EXISTS public.employee_profiles (
-                    id SERIAL PRIMARY KEY,
-                    emp_code VARCHAR(50) UNIQUE NOT NULL,
-                    emp_name VARCHAR(150) NOT NULL,
-                    phone VARCHAR(50),
-                    id_card VARCHAR(100),
-                    tax_code VARCHAR(50),
-                    factory VARCHAR(100),
-                    department VARCHAR(150),
-                    position VARCHAR(100),
-                    staff_type VARCHAR(100) DEFAULT '越南籍員工',
-                    attendance_mode VARCHAR(50) DEFAULT '需打卡',
-                    base_salary NUMERIC(15, 2) DEFAULT 0,
-                    private_allowance NUMERIC(15, 2) DEFAULT 0,
-                    visa_expire DATE DEFAULT '2027-12-31',
-                    system_role VARCHAR(100),
-                    perm_address TEXT,
-                    temp_address TEXT,
-                    hospital VARCHAR(150),
-                    bhxh_no VARCHAR(100),
-                    bank_acc VARCHAR(100),
-                    bank_name VARCHAR(150),
-                    status VARCHAR(50) DEFAULT '在職',
-                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                );
-            """))
-
-            conn.execute(text("""
-                INSERT INTO public.employee_profiles (emp_code, emp_name, department, factory, base_salary, status)
-                SELECT DISTINCT emp_code, emp_name, department, factory, base_salary, '在職'
-                FROM public.payroll_records
-                ON CONFLICT (emp_code) DO UPDATE 
-                SET emp_name = EXCLUDED.emp_name,
-                    department = EXCLUDED.department,
-                    factory = EXCLUDED.factory,
-                    base_salary = EXCLUDED.base_salary;
-            """))
+        return importlib.import_module(module_path)
     except Exception:
-        pass
+        return None
 
-def render_hr_profile_page(engine=None, lang="繁體中文", **kwargs):
-    active_lang = lang or st.session_state.get("current_lang", "繁體中文")
 
-    st.title("👤 管理部 - 員工個人檔案與人事管理中心")
-    st.caption("管理公司在職員工名冊（越南員工與外派外籍幹部合規建檔、護照/TRC上傳、90天證件預警）。")
+def _call_module_ui(mod, preferred_names: tuple[str, ...], engine=None, lang="zh", **kwargs) -> bool:
+    if mod is None:
+        return False
+    for name in preferred_names:
+        fn = getattr(mod, name, None)
+        if callable(fn):
+            try:
+                fn(engine=engine, lang=lang, **kwargs)
+                return True
+            except TypeError:
+                try:
+                    fn(engine, lang)
+                    return True
+                except TypeError:
+                    try:
+                        fn(engine)
+                        return True
+                    except TypeError:
+                        fn()
+                        return True
+    return False
 
-    init_hr_profile_db(engine)
 
-    tabs = st.tabs([
-        "VN 新增越南員工", 
-        "🌐 新增外派與外籍幹部 (含證件上傳)", 
-        "📑 現職員工總名冊與 90 天預警", 
-        "✏️ 編輯與修改員工資料", 
-        "📁 離職名冊管理"
+def render_hr_profile_page(engine=None, lang="zh", **kwargs):
+    norm_lang = ui_theme.norm_lang(lang or st.session_state.get("current_lang", "zh"))
+
+    st.markdown("### 👤 員工資料管理、新增／修改、名冊與離職辦理")
+    st.caption("整合越籍與外派／外籍員工建檔、資料修改、在職員工名冊（含證照到期預警）與離職人員管理。")
+
+    mod_list = _safe_import("modules.management.hr.employee.employee_list")
+    mod_add_vn = _safe_import("modules.management.hr.employee.add_vietnamese")
+    mod_add_expat = _safe_import("modules.management.hr.employee.add_expat")
+    mod_edit = _safe_import("modules.management.hr.employee.edit_profile")
+    mod_resigned = _safe_import("modules.management.hr.employee.resigned_list")
+
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📋 在職員工名冊與證照提醒",
+        "🇻🇳 新增越籍員工",
+        "🌍 新增外派／外籍幹部",
+        "✏️ 修改員工資料",
+        "🚪 離職人員名單",
     ])
 
-    # 1. 新增越南員工
-    with tabs[0]:
-        if add_vietnamese:
-            func = getattr(add_vietnamese, "render_add_vietnamese", None) or \
-                   getattr(add_vietnamese, "render", None) or \
-                   getattr(add_vietnamese, "main", None)
-            if func:
-                func(engine=engine, lang=active_lang)
-            else:
-                st.info("「新增越南員工」模組找不到可用渲染函式。")
-        else:
-            st.info("找不到 add_vietnamese 模組。")
+    with tab1:
+        if not _call_module_ui(
+            mod_list,
+            ("render_employee_list", "render", "show", "main"),
+            engine=engine,
+            lang=norm_lang,
+            **kwargs,
+        ):
+            st.info("找不到或無法載入 `employee_list.py` 的渲染函式。")
 
-    # 2. 新增外派幹部
-    with tabs[1]:
-        if add_expat:
-            func = getattr(add_expat, "render_add_expat", None) or \
-                   getattr(add_expat, "render", None) or \
-                   getattr(add_expat, "main", None)
-            if func:
-                func(engine=engine, lang=active_lang)
-            else:
-                st.info("「新增外派幹部」模組找不到可用渲染函式。")
-        else:
-            st.info("找不到 add_expat 模組。")
+    with tab2:
+        if not _call_module_ui(
+            mod_add_vn,
+            ("render_add_vietnamese", "render", "show", "main"),
+            engine=engine,
+            lang=norm_lang,
+            **kwargs,
+        ):
+            st.info("找不到或無法載入 `add_vietnamese.py` 的渲染函式。")
 
-    # 3. 現職員工總名冊
-    with tabs[2]:
-        if employee_list:
-            func = getattr(employee_list, "render_employee_list", None) or \
-                   getattr(employee_list, "render", None) or \
-                   getattr(employee_list, "main", None)
-            if func:
-                func(engine=engine, lang=active_lang)
-            else:
-                st.info("「員工總名冊」模組找不到可用渲染函式。")
-        else:
-            st.info("找不到 employee_list 模組。")
+    with tab3:
+        if not _call_module_ui(
+            mod_add_expat,
+            ("render_add_expat", "render", "show", "main"),
+            engine=engine,
+            lang=norm_lang,
+            **kwargs,
+        ):
+            st.info("找不到或無法載入 `add_expat.py` 的渲染函式。")
 
-    # 4. 編輯員工資料
-    with tabs[3]:
-        if edit_profile:
-            func = getattr(edit_profile, "render_edit_profile", None) or \
-                   getattr(edit_profile, "render", None) or \
-                   getattr(edit_profile, "main", None)
-            if func:
-                func(engine=engine, lang=active_lang)
-            else:
-                st.info("「編輯員工資料」模組找不到可用渲染函式。")
-        else:
-            st.info("找不到 edit_profile 模組。")
+    with tab4:
+        if not _call_module_ui(
+            mod_edit,
+            ("render_edit_profile", "render", "show", "main"),
+            engine=engine,
+            lang=norm_lang,
+            **kwargs,
+        ):
+            st.info("找不到或無法載入 `edit_profile.py` 的渲染函式。")
 
-    # 5. 離職名冊管理
-    with tabs[4]:
-        if resigned_list:
-            func = getattr(resigned_list, "render_resigned_list", None) or \
-                   getattr(resigned_list, "render", None) or \
-                   getattr(resigned_list, "main", None)
-            if func:
-                func(engine=engine, lang=active_lang)
-            else:
-                st.info("「離職名冊管理」模組找不到可用渲染函式。")
-        else:
-            st.info("找不到 resigned_list 模組。")
+    with tab5:
+        if not _call_module_ui(
+            mod_resigned,
+            ("render_resigned_list", "render", "show", "main"),
+            engine=engine,
+            lang=norm_lang,
+            **kwargs,
+        ):
+            st.info("找不到或無法載入 `resigned_list.py` 的渲染函式。")
 
-def render(engine=None, lang="繁體中文", **kwargs):
-    render_hr_profile_page(engine=engine, lang=lang, **kwargs)
 
-def show(*args, **kwargs):
-    render_hr_profile_page(*args, **kwargs)
-
-def main(*args, **kwargs):
-    render_hr_profile_page(*args, **kwargs)
-
-def render_employee_profile(*args, **kwargs):
-    
-    def render(engine=None, lang="zh", **kwargs):
-    for fn_name in ("render_employee_profile", "show_employee_profile", "main"):
-        fn = globals().get(fn_name)
-        if callable(fn):
-            return fn(engine=engine, lang=lang, **kwargs)
+def render(engine=None, lang="zh", **kwargs):
+    return render_hr_profile_page(engine=engine, lang=lang, **kwargs)
 
 
 def show(engine=None, lang="zh", **kwargs):
-    return render(engine=engine, lang=lang, **kwargs)
-    render_hr_profile_page(*args, **kwargs)
+    return render_hr_profile_page(engine=engine, lang=lang, **kwargs)
 
-def render_employee_management(*args, **kwargs):
-    render_hr_profile_page(*args, **kwargs)
+
+def main(engine=None, lang="zh", **kwargs):
+    return render_hr_profile_page(engine=engine, lang=lang, **kwargs)
+
+
+def render_employee_profile(engine=None, lang="zh", **kwargs):
+    return render_hr_profile_page(engine=engine, lang=lang, **kwargs)
