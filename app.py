@@ -134,6 +134,7 @@ with c_out:
         st.rerun()
 
 st.divider()
+render_global_announcement_banner(engine=db_engine, tenant_id=tenant_id)
 
 if st.session_state["current_view"] == "dashboard":
     render_dashboard(db_engine)
