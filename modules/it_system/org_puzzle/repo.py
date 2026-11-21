@@ -38,14 +38,14 @@ DEFAULT_PUZZLE_REGISTRY = [
 
     # 管理部（人事、總務、財務）
     {"key": "feat_mgmt_overview", "name": "🏢 管理部總覽", "group": "管理部", "module": "modules.management.overview", "func": "render"},
-    {"key": "feat_announcements", "name": "📢 公司公告佈告欄", "group": "管理部", "module": "modules.management.announcements", "func": "render"},
-    {"key": "feat_hr_staff_cert_tools", "name": "👤 員工資料、離職、證照提醒", "group": "人事", "module": "modules.management.hr.employee.employee_profile", "func": "render"},
-    {"key": "feat_hr_recruitment", "name": "📢 人員應徵管理", "group": "人事", "module": "modules.management.hr.recruitment_vacancies", "func": "render"},
+    {"key": "feat_announcements", "name": "📢 公告佈告欄", "group": "管理部", "module": "modules.management.announcements", "func": "render"},
+    {"key": "feat_hr_staff_cert_tools", "name": "👤 員工管理", "group": "人事", "module": "modules.management.hr.employee.employee_profile", "func": "render"},
+    {"key": "feat_hr_recruitment", "name": "📢 應徵管理", "group": "人事", "module": "modules.management.hr.recruitment_vacancies", "func": "render"},
     {"key": "feat_hr_attendance_leave", "name": "🕒 加班管理", "group": "人事", "module": "modules.management.hr.attendance.field_workhour_approval", "func": "render"},
     {"key": "feat_hr_payroll_bhxh", "name": "💵 薪資管理", "group": "人事", "module": "modules.management.hr.payroll.field_payroll_calc", "func": "render"},
     {"key": "feat_hr_sunday_maint_ot", "name": "🔧 設備保養管裡", "group": "人事", "module": "modules.management.hr.sunday_maintenance_ot", "func": "render"},
     {"key": "feat_ga_procurement", "name": "🛍️ 總務請購、供應商比價與核銷", "group": "總務", "module": "modules.management.general_affairs.procurement", "func": "render"},
-    {"key": "feat_ga_assets_dorm", "name": "🏗️ 固定資產、折舊、耗材、公務車與宿舍", "group": "總務", "module": "modules.management.general_affairs.assets_facilities", "func": "render"},
+    {"key": "feat_ga_assets_dorm", "name": "🏗️ 固定資產管理", "group": "總務", "module": "modules.management.general_affairs.assets_facilities", "func": "render"},
     {"key": "feat_ga_expenses_hub", "name": "🧾 總務採購、設備維修與宿舍開銷登記", "group": "總務", "module": "modules.management.general_affairs.ga_expenses_hub", "func": "render"},
     {"key": "feat_fin_gl_ar_ap", "name": "📘 核心會計 (GL / AR / AP / 現金 / 票據)", "group": "財務", "module": "modules.finance.core_accounting", "func": "render"},
     {"key": "feat_fin_ar_ap_ledger", "name": "💳 應收／應付與帳務明細建檔", "group": "財務", "module": "modules.management.legal_finance.ar_ap_ledger", "func": "render"},
