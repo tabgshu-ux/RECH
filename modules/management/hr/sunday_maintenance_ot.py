@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/management/hr/sunday_maintenance_ot.py
-# 職責：L2 行政／人事 - 週日設備保養簽核（設計/生產部/倉庫）與加班費回流薪資計算
+# 職責：L2 行政／人事 - 週日設備保養簽核與加班費結算（依員工底薪 × 倍率自動試算）
 # ==========================================
 
 from datetime import date, datetime, timedelta
@@ -21,6 +21,13 @@ def _next_sunday_date(d: date) -> date:
     return d + timedelta(days=(6 - d.weekday()) % 7)
 
 
+def _calc_hourly_ot_from_base(base_salary: float, multiplier: float = 1.5, monthly_work_hours: float = 208.0) -> float:
+    if not base_salary or base_salary <= 0:
+        return 0.0
+    hourly_base = float(base_salary) / float(monthly_work_hours or 208.0)
+    return round(hourly_base * float(multiplier or 1.5), 0)
+
+
 def _ensure_sunday_maint_table(engine):
     if not engine:
         return
@@ -36,8 +43,8 @@ def _ensure_sunday_maint_table(engine):
                         dept_name VARCHAR(80) NOT NULL,
                         equipment_name VARCHAR(200) NOT NULL,
                         hours_worked NUMERIC(8, 2) DEFAULT 8.0,
-                        hourly_rate_vnd NUMERIC(18, 2) DEFAULT 100000,
-                        ot_pay_vnd NUMERIC(18, 2) DEFAULT 800000,
+                        hourly_rate_vnd NUMERIC(18, 2) DEFAULT 0,
+                        ot_pay_vnd NUMERIC(18, 2) DEFAULT 0,
                         submitted_by VARCHAR(100),
                         approval_status VARCHAR(32) DEFAULT '待簽核',
                         approved_by VARCHAR(100),
@@ -52,7 +59,6 @@ def _ensure_sunday_maint_table(engine):
 
 
 def get_approved_sunday_ot_by_employee(engine, tenant_id: str = "REETECH_VN", month_prefix: str | None = None) -> dict[str, float]:
-    """供人事薪資計算呼叫：回傳已核准的週日設備保養加班費 {emp_name: ot_pay_vnd}"""
     if not engine:
         return {}
     try:
@@ -77,7 +83,7 @@ def get_approved_sunday_ot_by_employee(engine, tenant_id: str = "REETECH_VN", mo
 def render_sunday_maintenance_overtime_section(engine, tenant_id: str = "REETECH_VN", show_header: bool = True):
     if show_header:
         st.markdown("### 🔧 週日設備保養簽核與加班費結算（設計／生產部／倉庫）")
-        st.caption("登記週日設備保養人員與時數，經主管簽名核准後，加班費自動納入當月薪資加班費。")
+        st.caption("依員工底薪與加班倍率自動計算加班費，經主管簽名核准後自動納入薪資加班費。")
 
     if not engine:
         st.info("尚未連線資料庫，無法儲存週日保養簽核紀錄。")
@@ -93,26 +99,33 @@ def render_sunday_maintenance_overtime_section(engine, tenant_id: str = "REETECH
         with engine.connect() as conn:
             rows = conn.execute(
                 text("""
-                    SELECT emp_name, COALESCE(department, '生產部') AS dept
+                    SELECT emp_name,
+                           COALESCE(department, '生產部') AS dept,
+                           COALESCE(base_salary, 0) AS base_salary
                     FROM public.employee_profiles
                     WHERE COALESCE(status, '在職') = '在職'
                     ORDER BY id ASC
                 """)
             ).fetchall()
-            staff_rows = [{"name": r[0], "dept": r[1]} for r in rows if r[0]]
+            staff_rows = [
+                {"name": r[0], "dept": r[1], "base_salary": float(r[2] or 0)}
+                for r in rows
+                if r[0]
+            ]
     except Exception:
         staff_rows = []
 
     staff_names = [s["name"] for s in staff_rows]
     staff_dept_map = {s["name"]: s["dept"] for s in staff_rows}
+    staff_salary_map = {s["name"]: s["base_salary"] for s in staff_rows}
 
     with st.expander("➕ 登記週日設備保養出勤（送出後待簽核）", expanded=False):
         with st.form("form_sunday_maint_in_payroll"):
             c1, c2, c3 = st.columns(3)
             with c1:
                 m_date = st.date_input("週日保養日期", value=_next_sunday_date(today_vn))
-                sel_staff = st.selectbox("保養人員（可選現有員工或自行輸入）", ["（手動輸入）"] + staff_names)
-                manual_staff = st.text_input("人員姓名", placeholder="若選手動輸入請填姓名")
+                sel_staff = st.selectbox("保養人員（自動帶出員工底薪）", ["（手動輸入）"] + staff_names)
+                manual_staff = st.text_input("人員姓名（選「手動輸入」時填寫）", placeholder="若不在名冊請填姓名")
             with c2:
                 dept_choices = ["設計", "生產部", "倉庫", "工程部"]
                 mapped_dept = staff_dept_map.get(sel_staff, "倉庫")
@@ -122,11 +135,20 @@ def render_sunday_maintenance_overtime_section(engine, tenant_id: str = "REETECH
                 m_sub = st.text_input("提報主管（如倉庫主管）", value=current_user)
             with c3:
                 m_hours = st.number_input("保養時數", min_value=0.5, max_value=24.0, value=8.0, step=0.5)
-                m_rate = st.number_input("每小時加班費率 (VND)", min_value=0.0, value=100000.0, step=10000.0)
+                ot_mult = st.number_input("加班倍率（例：1.5 倍）", min_value=1.0, max_value=5.0, value=1.5, step=0.1)
                 m_note = st.text_input("備註", placeholder="保養內容或簽單說明")
 
-            ot_calc = float(m_hours) * float(m_rate)
-            st.info(f"本筆保養加班費試算：**{_fmt_vnd_simple(ot_calc)}**")
+            base_sal = 0.0 if sel_staff == "（手動輸入）" else float(staff_salary_map.get(sel_staff, 0.0))
+            hourly_ot_rate = _calc_hourly_ot_from_base(base_sal, multiplier=float(ot_mult))
+            ot_calc = round(float(m_hours) * hourly_ot_rate, 0)
+
+            if base_sal > 0:
+                st.info(
+                    f"底薪 **{_fmt_vnd_simple(base_sal)}** ÷ 208 小時 × **{ot_mult}** 倍 ＝ 每小時加班費 **{_fmt_vnd_simple(hourly_ot_rate)}**｜"
+                    f"本筆 {m_hours} 小時試算：**{_fmt_vnd_simple(ot_calc)}**"
+                )
+            else:
+                st.warning("⚠️ 此人員尚無底薪資料，若直接送出將以 0 ₫ 計算（請先於員工資料維護底薪）。")
 
             if st.form_submit_button("💾 送出保養紀錄（待簽核）", type="primary", use_container_width=True):
                 final_name = manual_staff.strip() if sel_staff == "（手動輸入）" else (manual_staff.strip() or sel_staff)
@@ -151,7 +173,7 @@ def render_sunday_maintenance_overtime_section(engine, tenant_id: str = "REETECH
                                 {
                                     "tid": tenant_id, "md": m_date, "sn": final_name,
                                     "dn": m_dept, "en": m_equip.strip(), "hw": float(m_hours),
-                                    "hr": float(m_rate), "op": float(ot_calc),
+                                    "hr": float(hourly_ot_rate), "op": float(ot_calc),
                                     "sb": m_sub.strip() or current_user, "nt": m_note.strip() or None,
                                 },
                             )
