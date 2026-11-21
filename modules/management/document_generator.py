@@ -1,118 +1,128 @@
-import streamlit as st
-import pandas as pd
+# ==========================================
+# 檔案路徑：modules/management/document_generator.py
+# 職責：L1 管理部 - 公文、合約通知與行政公告草稿產生與留存
+# ==========================================
+
 from datetime import datetime
+from zoneinfo import ZoneInfo
+import pandas as pd
+import streamlit as st
+from sqlalchemy import text
+from core import ui_theme
 
-RECH_HEADER_HTML = """
-<div style="border: 2px solid #000055; padding: 15px; border-radius: 8px; background: #ffffff; margin-bottom: 20px;">
-    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #000055; padding-bottom: 10px; margin-bottom: 10px;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <div style="font-size: 38px; font-weight: 900; color: #000055; letter-spacing: -1px;">RECH</div>
-            <div style="border-left: 2px solid #000055; padding-left: 10px;">
-                <div style="font-size: 16px; font-weight: 800; color: #000055;">裕豐電機工業有限公司</div>
-                <div style="font-size: 10px; font-weight: 700; color: #1E293B;">REETECH INDUSTRIAL CO., LTD</div>
-                <div style="font-size: 9.5px; font-weight: 700; color: #334155;">CÔNG TY TNHH CN DŨ PHONG</div>
-            </div>
-        </div>
-        <div style="text-align: right; font-size: 11px; color: #555;">
-            <b>廠區地址</b>: 越南西寧省盞盤市安平社<br>
-            <b>KCN Trảng Bảng, Tây Ninh, Việt Nam</b><br>
-            <b>Web</b>: www.reetech.vn | <b>Tel</b>: +84 (0)276...
-        </div>
-    </div>
-    <div style="text-align: center; font-size: 18px; font-weight: bold; color: #000055; margin-top: 5px;" id="doc_title_display">
-        【 企業正式公文 / THƯ TÍN CHÍNH THỨC 】
-    </div>
-</div>
-"""
 
-def render_document_generator_page(engine=None, lang="繁體中文", **kwargs):
-    st.markdown("### 📄 裕豐電機統一 Logo 企業正式文件製作與雲端歸檔中心")
-    st.caption("管理部專用：套用 RECH 標準三語表頭 Logo，線上製作各類正式文件、公文、切結書，並上傳雲端永久保留。")
+def _ensure_doc_table(engine):
+    if not engine:
+        return
+    try:
+        with engine.begin() as conn:
+            conn.execute(
+                text("""
+                    CREATE TABLE IF NOT EXISTS mgmt_generated_docs (
+                        id SERIAL PRIMARY KEY,
+                        tenant_id VARCHAR(64) NOT NULL,
+                        doc_no VARCHAR(64) UNIQUE NOT NULL,
+                        doc_type VARCHAR(80) NOT NULL,
+                        recipient VARCHAR(160) NOT NULL,
+                        subject VARCHAR(200) NOT NULL,
+                        body_text TEXT NOT NULL,
+                        created_by VARCHAR(100),
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                    );
+                """)
+            )
+    except Exception:
+        pass
 
-    if "company_documents_db" not in st.session_state:
-        st.session_state.company_documents_db = []
 
-    tab_gen, tab_archive = st.tabs(["✍️ 1. 製作與產生正式文件", "📁 2. 公司文件雲端歸檔與調閱中心"])
+def _load_docs(engine, tenant_id: str) -> pd.DataFrame:
+    if not engine:
+        return pd.DataFrame()
+    try:
+        with engine.connect() as conn:
+            rows = conn.execute(
+                text("""
+                    SELECT doc_no, doc_type, recipient, subject,
+                           TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI') AS created_at
+                    FROM mgmt_generated_docs
+                    WHERE tenant_id = :tid
+                    ORDER BY id DESC LIMIT 30
+                """),
+                {"tid": tenant_id},
+            ).fetchall()
+            return pd.DataFrame([r._asdict() for r in rows]) if rows else pd.DataFrame()
+    except Exception:
+        return pd.DataFrame()
 
-    # ----------------------------------------------------
-    # Tab 1: 製作與產生正式文件
-    # ----------------------------------------------------
-    with tab_gen:
-        st.markdown("#### 📝 填寫文件內容與預覽標準表頭")
 
-        with st.form("doc_gen_form"):
-            col_g1, col_g2 = st.columns(2)
-            with col_g1:
-                doc_type = st.selectbox("文件類別", ["公司正式公文 (Official Letter)", "內部管理公告 (Internal Notice)", "工程施工證明書 (Construction Certificate)", "員工請假/離職證明 (Employment Certificate)", "供應商合作切結書 (Supplier Agreement)"])
-                doc_number = st.text_input("文件編號 (Doc No.)", value=f"RECH-DOC-{datetime.now().strftime('%Y%m%d')}-01")
-                issuer_dept = st.text_input("發文部門 / 開立單位", value="管理部 (Management Dept)")
-            with col_g2:
-                recipient = st.text_input("受文對象 / 呈報對象", placeholder="例如: 各部門主管 / 全體同仁 / 外部廠商")
-                issue_date = st.date_input("發文日期", value=datetime.now())
-                urgency = st.selectbox("文件急迫性", ["普通件 (Normal)", "加急件 (Urgent)", "特急件 (Top Urgent)"])
+def render(engine=None, lang="zh", **kwargs):
+    _ = ui_theme.norm_lang(lang or st.session_state.get("current_lang", "zh"))
+    tenant_id = st.session_state.get("tenant_id", "REETECH_VN")
+    user_name = st.session_state.get("user_name") or "Mgmt_Doc"
+    now_vn = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).replace(tzinfo=None)
 
-            doc_subject = st.text_input("文件主旨 (Subject) *", placeholder="例如: 關於廠區新進同仁安全衛生教育訓練之規定")
-            doc_body_content = st.text_area("文件詳細內文 *", placeholder="請輸入正式文件內文...", height=200)
-            signer_name = st.text_input("簽發人 / 授權主管署名", value="總經理 許福村 / 廠長")
+    st.markdown("### 📄 公文與行政通知單產生器（L1 管理部）")
+    st.caption("快速產生行政通知、外包／廠商函文或內部備忘錄並留存紀錄。")
+    _ensure_doc_table(engine)
 
-            preview_submitted = st.form_submit_button("👀 產生標準帶 Logo 格式預覽", use_container_width=True)
-            save_cloud_btn = st.form_submit_button("☁️ 確認儲存並上傳至公司雲端文件庫", type="primary", use_container_width=True)
+    with st.form("form_mgmt_doc_gen"):
+        c1, c2 = st.columns(2)
+        with c1:
+            doc_type = st.selectbox("文件類型*", ["行政通知單", "廠商／外包函文", "人事／薪資說明函", "廠務／宿舍公告"])
+            recipient = st.text_input("受文對象*", placeholder="例：全體員工 或 Công Ty TNHH...")
+        with c2:
+            subject = st.text_input("主旨*", placeholder="例：施工安全與出勤管理規定通知")
+            ref_code = st.text_input("關聯案場／單號 (選填)", placeholder="例：PRJ-2026-01")
 
-            if preview_submitted or save_cloud_btn:
-                st.markdown("---")
-                st.markdown("#### 🔍 預覽結果（套用 RECH 標準公司表頭 Logo）：")
-                
-                # 即時渲染標準表頭與內文預覽
-                st.markdown(RECH_HEADER_HTML, unsafe_allow_html=True)
-                st.markdown(f"**文件編號**: {doc_number} | **發文日期**: {issue_date} | **急迫性**: {urgency}")
-                st.markdown(f"**發文部門**: {issuer_dept} | **受文對象**: {recipient}")
-                st.markdown(f"### 主旨：{doc_subject}")
-                st.markdown("---")
-                st.markdown(doc_body_content)
-                st.markdown("---")
-                st.markdown(f"<div style='text-align: right;'><b>簽發主管署名</b>：{signer_name}</div>", unsafe_allow_html=True)
+        key_points = st.text_area("重點內容／辦理事項*", placeholder="請輸入要交代的事項、時間或金額條件...")
 
-            if save_cloud_btn:
-                if doc_subject and doc_body_content:
-                    new_doc_record = {
-                        "doc_no": doc_number,
-                        "title": doc_subject,
-                        "type": doc_type,
-                        "department": issuer_dept,
-                        "date": str(issue_date),
-                        "content": doc_body_content,
-                        "signer": signer_name,
-                        "status": "☁️ 已歸檔雲端"
-                    }
-                    st.session_state.company_documents_db.insert(0, new_doc_record)
-                    st.success("🎉 正式文件已成功上傳並永久保存在公司雲端文件庫中！")
-                else:
-                    st.warning("⚠️ 請填寫文件主旨與內文！")
+        if st.form_submit_button("📝 生成公文草稿並存檔", type="primary", use_container_width=True):
+            if not recipient.strip() or not subject.strip() or not key_points.strip():
+                st.warning("⚠️ 請完整填寫受文對象、主旨與重點內容。")
+            else:
+                dno = f"DOC-{now_vn.strftime('%Y%m%d-%H%M%S')}"
+                draft = (
+                    f"【{doc_type}】編號：{dno}\n"
+                    f"日期：{now_vn.strftime('%Y-%m-%d')}\n"
+                    f"受文者：{recipient.strip()}\n"
+                    f"關聯編號：{ref_code.strip() or '-'}\n"
+                    f"主旨：{subject.strip()}\n"
+                    f"----------------------------------------\n"
+                    f"{key_points.strip()}\n"
+                    f"----------------------------------------\n"
+                    f"發文字號：管理部／承辦人：{user_name}"
+                )
+                st.text_area("已產生之公文草稿（可直接全選複製）", value=draft, height=220)
+                if engine:
+                    try:
+                        with engine.begin() as conn:
+                            conn.execute(
+                                text("""
+                                    INSERT INTO mgmt_generated_docs (
+                                        tenant_id, doc_no, doc_type, recipient, subject, body_text, created_by, created_at
+                                    )
+                                    VALUES (:tid, :dno, :dt, :rec, :sub, :btxt, :cby, :cat)
+                                """),
+                                {
+                                    "tid": tenant_id, "dno": dno, "dt": doc_type,
+                                    "rec": recipient.strip(), "sub": subject.strip(),
+                                    "btxt": draft, "cby": user_name, "cat": now_vn,
+                                },
+                            )
+                        st.success(f"✅ 已留存公文紀錄 `{dno}`。")
+                    except Exception as e:
+                        st.error(f"❌ 存檔失敗：{e}")
 
-    # ----------------------------------------------------
-    # Tab 2: 公司文件雲端歸檔與調閱中心
-    # ----------------------------------------------------
-    with tab_archive:
-        st.markdown("#### 📁 公司雲端正式文件歸檔清單")
-        st.info("💡 所有透過系統產生存檔的正式文件均集中於此，方便主管日後調閱、稽核或下載。")
+    df_docs = _load_docs(engine, tenant_id)
+    if not df_docs.empty:
+        st.divider()
+        st.markdown("#### 🗂️ 近期已產生文件紀錄")
+        st.dataframe(
+            df_docs.rename(columns={"doc_no": "文件編號", "doc_type": "類型", "recipient": "受文對象", "subject": "主旨", "created_at": "建立時間"}),
+            use_container_width=True,
+            hide_index=True,
+        )
 
-        if st.session_state.company_documents_db:
-            df_docs = pd.DataFrame(st.session_state.company_documents_db)
-            st.dataframe(df_docs, use_container_width=True, hide_index=True)
 
-            selected_doc_no = st.selectbox("🎯 選擇欲調閱或查看詳情的文件編號", options=[d["doc_no"] for d in st.session_state.company_documents_db])
-            target_doc = next((d for d in st.session_state.company_documents_db if d["doc_no"] == selected_doc_no), None)
-
-            if target_doc:
-                st.markdown("---")
-                st.markdown(f"### 📄 調閱文件檢視: {target_doc['title']}")
-                st.markdown(RECH_HEADER_HTML, unsafe_allow_html=True)
-                st.markdown(f"**文件編號**: {target_doc['doc_no']} | **類別**: {target_doc['type']} | **日期**: {target_doc['date']}")
-                st.markdown(f"**部門**: {target_doc['department']}")
-                st.markdown(f"### 主旨：{target_doc['title']}")
-                st.markdown("---")
-                st.markdown(target_doc['content'])
-                st.markdown("---")
-                st.markdown(f"<div style='text-align: right;'><b>簽發主管署名</b>：{target_doc['signer']}</div>", unsafe_allow_html=True)
-        else:
-            st.info("目前雲端文件庫尚無歸檔紀錄。您可以至【製作與產生正式文件】分頁建立第一份文件。")
+def show(engine=None, lang="zh", **kwargs):
+    render(engine=engine, lang=lang, **kwargs)
