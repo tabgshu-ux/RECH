@@ -10,6 +10,7 @@ from core import dynamic_router, ui_theme
 from modules.it_system.admin_settings import render_admin_settings
 from views.login import render_login_page
 from views.dashboard import render_dashboard
+from modules.management.announcements import render_global_announcement_banner
 
 st.set_page_config(
     page_title="裕豐電機工業 SaaS ERP",
