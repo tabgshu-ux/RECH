@@ -39,7 +39,7 @@ DEFAULT_PUZZLE_REGISTRY = [
     # 管理部（人事、總務、財務）
     {"key": "feat_mgmt_overview", "name": "🏢 管理部總覽", "group": "管理部", "module": "modules.management.overview", "func": "render"},
     {"key": "feat_announcements", "name": "📢 公司公告佈告欄", "group": "管理部", "module": "modules.management.announcements", "func": "render"},
-    {"key": "feat_hr_staff_cert_tools", "name": "👤 員工資料、離職、證照提醒與工具借用", "group": "人事", "module": "modules.management.hr.employee.employee_profile", "func": "render"},
+    {"key": "feat_hr_staff_cert_tools", "name": "👤 員工資料、離職、證照提醒", "group": "人事", "module": "modules.management.hr.employee.employee_profile", "func": "render"},
     {"key": "feat_hr_recruitment", "name": "📢 需應徵人員、缺額與應徵網頁管理", "group": "人事", "module": "modules.management.hr.recruitment_vacancies", "func": "render"},
     {"key": "feat_hr_attendance_leave", "name": "🕒 考勤排班、請假加班與專案工時", "group": "人事", "module": "modules.management.hr.attendance.field_workhour_approval", "func": "render"},
     {"key": "feat_hr_payroll_bhxh", "name": "💵 自動化薪資計算、津貼與社保扣繳", "group": "人事", "module": "modules.management.hr.payroll.field_payroll_calc", "func": "render"},
