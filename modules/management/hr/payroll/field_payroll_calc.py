@@ -1,46 +1,50 @@
-# ==========================================
-# 檔案路徑：modules/management/hr/payroll/field_payroll_calc.py
-# 職責：管理部人事 - 臨時工／點工逐人薪資彙算與發薪批次結算
-# ==========================================
-
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 import pandas as pd
 import streamlit as st
 from sqlalchemy import text
-from core import ui_theme
 
 
-def _fmt_vnd(val: float | int) -> str:
-    return f"{round(float(val or 0)):,}".replace(",", ".")
+def _fmt_vnd_simple(val) -> str:
+    try:
+        return f"{round(float(val or 0)):,}".replace(",", ".") + " ₫"
+    except Exception:
+        return "0 ₫"
 
 
-def _ensure_payroll_tables(engine):
+def _next_sunday_date(d: date) -> date:
+    return d + timedelta(days=(6 - d.weekday()) % 7)
+
+
+def render_sunday_maintenance_overtime_section(engine, tenant_id: str = "REETECH_VN"):
+    """直接嵌入既有的 field_payroll_calc.py，不需新增檔案"""
+    st.markdown("---")
+    st.markdown("### 🔧 週日設備保養簽核與加班費結算（設計／生產部／倉庫）")
+    st.caption("登記週日設備保養人員與時數，經主管簽名核准後，加班費自動納入當月薪資加班費。")
+
     if not engine:
+        st.info("尚未連線資料庫，無法儲存週日保養簽核紀錄。")
         return
+
     try:
         with engine.begin() as conn:
             conn.execute(
                 text("""
-                    CREATE TABLE IF NOT EXISTS hr_daily_worker_logs (
+                    CREATE TABLE IF NOT EXISTS public.hr_sunday_maint_overtime (
                         id SERIAL PRIMARY KEY,
                         tenant_id VARCHAR(64) NOT NULL,
-                        log_no VARCHAR(64) UNIQUE NOT NULL,
-                        project_id VARCHAR(80),
-                        site_name VARCHAR(160) NOT NULL,
-                        worker_name VARCHAR(120) NOT NULL,
-                        worker_role VARCHAR(80) DEFAULT '點工／臨時工',
-                        work_date DATE NOT NULL,
-                        work_days NUMERIC(8, 2) NOT NULL,
-                        base_daily_rate_vnd NUMERIC(18, 2) NOT NULL,
-                        rate_adj_vnd NUMERIC(18, 2) DEFAULT 0,
-                        effective_rate_vnd NUMERIC(18, 2) NOT NULL,
-                        total_amount_vnd NUMERIC(18, 2) NOT NULL,
-                        performance_rating VARCHAR(32) DEFAULT 'NORMAL',
-                        performance_note TEXT,
-                        payroll_status VARCHAR(32) DEFAULT 'PENDING_PAYROLL',
-                        payroll_batch_id VARCHAR(64),
-                        created_by VARCHAR(100),
+                        maint_date DATE NOT NULL,
+                        staff_name VARCHAR(150) NOT NULL,
+                        dept_name VARCHAR(80) NOT NULL,
+                        equipment_name VARCHAR(200) NOT NULL,
+                        hours_worked NUMERIC(8, 2) DEFAULT 8.0,
+                        hourly_rate_vnd NUMERIC(18, 2) DEFAULT 100000,
+                        ot_pay_vnd NUMERIC(18, 2) DEFAULT 800000,
+                        submitted_by VARCHAR(100),
+                        approval_status VARCHAR(32) DEFAULT '待簽核',
+                        approved_by VARCHAR(100),
+                        approved_at TIMESTAMP WITH TIME ZONE,
+                        notes TEXT,
                         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
                     );
                 """)
@@ -48,112 +52,161 @@ def _ensure_payroll_tables(engine):
     except Exception:
         pass
 
+    today_vn = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).date()
+    current_user = st.session_state.get("user_name") or "admin"
 
-def _load_worker_logs(engine, tenant_id: str) -> pd.DataFrame:
-    if not engine:
-        return pd.DataFrame()
+    # 讀取現有員工名單（設計／生產部／倉庫）
+    staff_rows = []
     try:
         with engine.connect() as conn:
             rows = conn.execute(
                 text("""
-                    SELECT log_no, COALESCE(project_id, '-') AS project_id, site_name,
-                           worker_name, COALESCE(worker_role, '點工') AS worker_role,
-                           TO_CHAR(work_date, 'YYYY-MM-DD') AS work_date,
-                           COALESCE(work_days, 0) AS work_days,
-                           COALESCE(base_daily_rate_vnd, 0) AS base_daily_rate_vnd,
-                           COALESCE(rate_adj_vnd, 0) AS rate_adj_vnd,
-                           COALESCE(effective_rate_vnd, 0) AS effective_rate_vnd,
-                           COALESCE(total_amount_vnd, 0) AS total_amount_vnd,
-                           COALESCE(performance_rating, 'NORMAL') AS performance_rating,
-                           COALESCE(performance_note, '-') AS performance_note,
-                           COALESCE(payroll_status, 'PENDING_PAYROLL') AS payroll_status,
-                           COALESCE(payroll_batch_id, '-') AS payroll_batch_id
-                    FROM hr_daily_worker_logs
+                    SELECT emp_name, COALESCE(department, '生產部') AS dept
+                    FROM public.employee_profiles
+                    WHERE COALESCE(status, '在職') = '在職'
+                    ORDER BY id ASC
+                """)
+            ).fetchall()
+            staff_rows = [{"name": r[0], "dept": r[1]} for r in rows if r[0]]
+    except Exception:
+        staff_rows = []
+
+    staff_names = [s["name"] for s in staff_rows]
+    staff_dept_map = {s["name"]: s["dept"] for s in staff_rows}
+
+    with st.expander("➕ 登記週日設備保養出勤（送出後待簽核）", expanded=False):
+        with st.form("form_sunday_maint_in_payroll"):
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                m_date = st.date_input("週日保養日期", value=_next_sunday_date(today_vn))
+                sel_staff = st.selectbox("保養人員（可選現有員工或自行輸入）", ["（手動輸入）"] + staff_names)
+                manual_staff = st.text_input("人員姓名", placeholder="若選手動輸入請填姓名")
+            with c2:
+                dept_choices = ["設計", "生產部", "倉庫", "工程部"]
+                mapped_dept = staff_dept_map.get(sel_staff, "倉庫")
+                d_idx = dept_choices.index(mapped_dept) if mapped_dept in dept_choices else 2
+                m_dept = st.selectbox("所屬部門", dept_choices, index=d_idx)
+                m_equip = st.text_input("保養設備／項目", placeholder="例：空壓機、配電盤、吊車")
+                m_sub = st.text_input("提報主管（如倉庫主管）", value=current_user)
+            with c3:
+                m_hours = st.number_input("保養時數", min_value=0.5, max_value=24.0, value=8.0, step=0.5)
+                m_rate = st.number_input("每小時加班費率 (VND)", min_value=0.0, value=100000.0, step=10000.0)
+                m_note = st.text_input("備註", placeholder="保養內容或簽單說明")
+
+            ot_calc = float(m_hours) * float(m_rate)
+            st.info(f"本筆保養加班費試算：**{_fmt_vnd_simple(ot_calc)}**")
+
+            if st.form_submit_button("💾 送出保養紀錄（待簽核）", type="primary", use_container_width=True):
+                final_name = manual_staff.strip() if sel_staff == "（手動輸入）" else (manual_staff.strip() or sel_staff)
+                if not final_name or not m_equip.strip():
+                    st.warning("⚠️ 請填寫人員姓名與保養設備。")
+                else:
+                    try:
+                        with engine.begin() as conn:
+                            conn.execute(
+                                text("""
+                                    INSERT INTO public.hr_sunday_maint_overtime (
+                                        tenant_id, maint_date, staff_name, dept_name, equipment_name,
+                                        hours_worked, hourly_rate_vnd, ot_pay_vnd, submitted_by,
+                                        approval_status, notes, created_at
+                                    )
+                                    VALUES (
+                                        :tid, :md, :sn, :dn, :en,
+                                        :hw, :hr, :op, :sb,
+                                        '待簽核', :nt, CURRENT_TIMESTAMP
+                                    )
+                                """),
+                                {
+                                    "tid": tenant_id, "md": m_date, "sn": final_name,
+                                    "dn": m_dept, "en": m_equip.strip(), "hw": float(m_hours),
+                                    "hr": float(m_rate), "op": float(ot_calc),
+                                    "sb": m_sub.strip() or current_user, "nt": m_note.strip() or None,
+                                },
+                            )
+                        st.success("✅ 已送出週日保養紀錄，等待簽核。")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ 儲存失敗：{e}")
+
+    # 讀取紀錄並供簽核與薪資彙整
+    df_m = pd.DataFrame()
+    try:
+        with engine.connect() as conn:
+            rows = conn.execute(
+                text("""
+                    SELECT id, maint_date, staff_name, dept_name, equipment_name,
+                           COALESCE(hours_worked, 0) AS hours_worked,
+                           COALESCE(ot_pay_vnd, 0) AS ot_pay_vnd,
+                           COALESCE(approval_status, '待簽核') AS approval_status,
+                           COALESCE(approved_by, '-') AS approved_by
+                    FROM public.hr_sunday_maint_overtime
                     WHERE tenant_id = :tid
-                    ORDER BY id DESC LIMIT 100
+                    ORDER BY maint_date DESC, id DESC
                 """),
                 {"tid": tenant_id},
             ).fetchall()
-            return pd.DataFrame([r._asdict() for r in rows]) if rows else pd.DataFrame()
+            if rows:
+                df_m = pd.DataFrame([r._asdict() for r in rows])
     except Exception:
-        return pd.DataFrame()
+        df_m = pd.DataFrame()
 
-
-def render(engine=None, lang="zh", **kwargs):
-    _ = ui_theme.norm_lang(lang or st.session_state.get("current_lang", "zh"))
-    tenant_id = st.session_state.get("tenant_id", "REETECH_VN")
-    hr_user = st.session_state.get("user_name") or "HR_Payroll"
-    now_vn = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).replace(tzinfo=None)
-
-    st.markdown("### 💵 人事薪資計算 — 臨時工／點工逐人薪資結算")
-    st.caption("依工程部回傳的「逐人點工出工與表現調薪／調降」明細，自動按人名彙整發薪金額並產生發薪批次。")
-    _ensure_payroll_tables(engine)
-
-    df = _load_worker_logs(engine, tenant_id)
-    if df.empty:
-        st.info("目前尚無臨時工／點工出工紀錄，可由工程部「外包估驗與臨時工／點工出工登記」逐人填寫。")
+    if df_m.empty:
+        st.info("目前尚無週日設備保養紀錄。")
         return
 
-    pending_df = df[df["payroll_status"] == "PENDING_PAYROLL"]
-    st.markdown("#### 👥 依點工姓名彙整（待發放／歷史明細）")
-    by_person = (
-        df.groupby(["worker_name", "worker_role", "payroll_status"], as_index=False)
-        .agg(
-            出工天數=("work_days", "sum"),
-            平均核定日薪=("effective_rate_vnd", "mean"),
-            累計日薪調整=("rate_adj_vnd", "sum"),
-            應付總額=("total_amount_vnd", "sum"),
-        )
-    )
-    by_person["平均核定日薪(₫)"] = by_person["平均核定日薪"].apply(_fmt_vnd)
-    by_person["累計日薪調整(₫)"] = by_person["累計日薪調整"].apply(_fmt_vnd)
-    by_person["應付總額(₫)"] = by_person["應付總額"].apply(_fmt_vnd)
+    disp_m = df_m.copy()
+    disp_m["加班費"] = disp_m["ot_pay_vnd"].apply(_fmt_vnd_simple)
     st.dataframe(
-        by_person.rename(columns={"worker_name": "點工姓名", "worker_role": "工種", "payroll_status": "薪資狀態"})[
-            ["點工姓名", "工種", "薪資狀態", "出工天數", "平均核定日薪(₫)", "累計日薪調整(₫)", "應付總額(₫)"]
-        ],
+        disp_m.rename(columns={
+            "id": "編號", "maint_date": "日期", "dept_name": "部門",
+            "staff_name": "人員", "equipment_name": "設備", "hours_worked": "時數",
+            "approval_status": "簽核狀態", "approved_by": "簽核人",
+        })[["編號", "日期", "部門", "人員", "設備", "時數", "加班費", "簽核狀態", "簽核人"]],
         use_container_width=True,
         hide_index=True,
     )
 
-    st.divider()
-    st.markdown("#### 📋 逐筆點工出工與表現調薪明細")
-    disp = df.copy()
-    for col in ["base_daily_rate_vnd", "rate_adj_vnd", "effective_rate_vnd", "total_amount_vnd"]:
-        disp[col] = disp[col].apply(_fmt_vnd)
-    disp = disp.rename(columns={
-        "log_no": "出工單號", "project_id": "專案", "site_name": "案場",
-        "worker_name": "點工姓名", "worker_role": "工種", "work_date": "日期",
-        "work_days": "工天", "base_daily_rate_vnd": "基準日薪(₫)",
-        "rate_adj_vnd": "調升/調降(₫)", "effective_rate_vnd": "核定日薪(₫)",
-        "total_amount_vnd": "應付金額(₫)", "performance_rating": "表現",
-        "performance_note": "評語/調薪原因", "payroll_status": "發薪狀態",
-        "payroll_batch_id": "發薪批次",
-    })
-    st.dataframe(disp, use_container_width=True, hide_index=True)
+    pending = df_m[df_m["approval_status"] == "待簽核"]
+    if not pending.empty:
+        p_opts = {
+            f"#{r['id']}｜{r['maint_date']}｜{r['dept_name']}-{r['staff_name']}｜{_fmt_vnd_simple(r['ot_pay_vnd'])}": int(r["id"])
+            for _, r in pending.iterrows()
+        }
+        sel_p = st.selectbox("選擇待簽核紀錄", list(p_opts.keys()))
+        signer = st.text_input("簽核人（簽名確認）", value=current_user, key="sunday_ot_signer")
+        b1, b2 = st.columns(2)
+        if b1.button("✅ 簽名核准（計入薪資加班費）", type="primary", use_container_width=True):
+            with engine.begin() as conn:
+                conn.execute(
+                    text("""
+                        UPDATE public.hr_sunday_maint_overtime
+                        SET approval_status = '已核准', approved_by = :ab, approved_at = CURRENT_TIMESTAMP
+                        WHERE id = :rid
+                    """),
+                    {"ab": signer.strip() or current_user, "rid": p_opts[sel_p]},
+                )
+            st.success("✅ 已簽名核准，加班費已計入薪資計算。")
+            st.rerun()
+        if b2.button("❌ 退回", use_container_width=True):
+            with engine.begin() as conn:
+                conn.execute(
+                    text("""
+                        UPDATE public.hr_sunday_maint_overtime
+                        SET approval_status = '已退回', approved_by = :ab, approved_at = CURRENT_TIMESTAMP
+                        WHERE id = :rid
+                    """),
+                    {"ab": signer.strip() or current_user, "rid": p_opts[sel_p]},
+                )
+            st.warning("⚠️ 已退回。")
+            st.rerun()
 
-    if not pending_df.empty and engine:
-        st.divider()
-        st.markdown("#### 🧾 產生點工發薪批次")
-        batch_no = f"PAYBATCH-{now_vn.strftime('%Y%m%d-%H%M')}"
-        pending_sum = float(pending_df["total_amount_vnd"].sum())
-        st.info(f"目前共有 **{len(pending_df)}** 筆待結算點工紀錄，合計應發 **{_fmt_vnd(pending_sum)} ₫**（經辦：{hr_user}）。")
-        if st.button(f"✅ 確認結算並產生發薪批次 `{batch_no}`", type="primary", use_container_width=True):
-            try:
-                with engine.begin() as conn:
-                    conn.execute(
-                        text("""
-                            UPDATE hr_daily_worker_logs
-                            SET payroll_status = 'PAID_BATCHED', payroll_batch_id = :bno
-                            WHERE tenant_id = :tid AND payroll_status = 'PENDING_PAYROLL'
-                        """),
-                        {"bno": batch_no, "tid": tenant_id},
-                    )
-                st.success(f"✅ 已完成結算，發薪批次編號：`{batch_no}`（合計 {_fmt_vnd(pending_sum)} ₫）。")
-                st.rerun()
-            except Exception as e:
-                st.error(f"❌ 批次結算失敗：{e}")
-
-
-def show(engine=None, lang="zh", **kwargs):
-    render(engine=engine, lang=lang, **kwargs)
+    approved = df_m[df_m["approval_status"] == "已核准"]
+    if not approved.empty:
+        st.markdown("#### 💵 已核准之週日保養加班費（已納入薪資計算）")
+        grp = approved.groupby(["staff_name", "dept_name"], as_index=False)["ot_pay_vnd"].sum()
+        grp["核准加班費合計"] = grp["ot_pay_vnd"].apply(_fmt_vnd_simple)
+        st.dataframe(
+            grp.rename(columns={"staff_name": "員工姓名", "dept_name": "部門"})[["部門", "員工姓名", "核准加班費合計"]],
+            use_container_width=True,
+            hide_index=True,
+        )
