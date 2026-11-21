@@ -334,3 +334,15 @@ def render_dorm_catering_module(engine=None, lang="繁體中文", **kwargs):
                     ])
                     st.dataframe(audit_result_df, use_container_width=True, hide_index=True)
                     st.warning("⚠️ **防弊稽核通知**：系統偵測到品項【排骨】超出動態市場價格上限，已自動暫停自動核銷，請會監人員進行人工複核。")
+
+    from modules.management.general_affairs.dorm_catering import render_dorm_catering_module
+
+    __all__ = ["render_dorm_catering_module", "render", "show"]
+
+
+    def render(*args, **kwargs):
+     return render_dorm_catering_module(*args, **kwargs)
+
+
+     def show(*args, **kwargs):
+       return render_dorm_catering_module(*args, **kwargs)
