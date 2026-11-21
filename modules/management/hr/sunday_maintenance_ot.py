@@ -8,16 +8,17 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import streamlit as st
 from sqlalchemy import text
-from core import ui_theme
 
 
-def _fmt_vnd(val: float | int) -> str:
-    return f"{round(float(val or 0)):,}".replace(",", ".")
+def _fmt_vnd_simple(val) -> str:
+    try:
+        return f"{round(float(val or 0)):,}".replace(",", ".") + " ₫"
+    except Exception:
+        return "0 ₫"
 
 
-def _next_sunday(d: date) -> date:
-    days_ahead = (6 - d.weekday()) % 7
-    return d + timedelta(days=days_ahead)
+def _next_sunday_date(d: date) -> date:
+    return d + timedelta(days=(6 - d.weekday()) % 7)
 
 
 def _ensure_sunday_maint_table(engine):
@@ -50,67 +51,6 @@ def _ensure_sunday_maint_table(engine):
         pass
 
 
-def _load_candidate_staff(engine, tenant_id: str) -> list[dict]:
-    fallback = [
-        {"emp_name": "設計組人員 A", "dept_name": "設計", "ot_hourly_vnd": 120000.0},
-        {"emp_name": "生產部技師 B", "dept_name": "生產部", "ot_hourly_vnd": 100000.0},
-        {"emp_name": "倉庫人員 C", "dept_name": "倉庫", "ot_hourly_vnd": 100000.0},
-    ]
-    if not engine:
-        return fallback
-    try:
-        with engine.connect() as conn:
-            rows = conn.execute(
-                text("""
-                    SELECT emp_name,
-                           COALESCE(department, '生產部') AS dept_name,
-                           100000.0 AS ot_hourly_vnd
-                    FROM public.employee_profiles
-                    WHERE COALESCE(status, '在職') = '在職'
-                    ORDER BY id ASC
-                """)
-            ).fetchall()
-            if rows:
-                return [
-                    {
-                        "emp_name": r[0],
-                        "dept_name": r[1],
-                        "ot_hourly_vnd": float(r[2] or 100000.0),
-                    }
-                    for r in rows
-                    if r[0]
-                ]
-    except Exception:
-        pass
-    return fallback
-
-
-def _load_maint_df(engine, tenant_id: str) -> pd.DataFrame:
-    if not engine:
-        return pd.DataFrame()
-    try:
-        with engine.connect() as conn:
-            rows = conn.execute(
-                text("""
-                    SELECT id, maint_date, staff_name, dept_name, equipment_name,
-                           COALESCE(hours_worked, 0) AS hours_worked,
-                           COALESCE(hourly_rate_vnd, 0) AS hourly_rate_vnd,
-                           COALESCE(ot_pay_vnd, 0) AS ot_pay_vnd,
-                           COALESCE(submitted_by, '倉庫主管') AS submitted_by,
-                           COALESCE(approval_status, '待簽核') AS approval_status,
-                           COALESCE(approved_by, '-') AS approved_by,
-                           COALESCE(notes, '-') AS notes
-                    FROM public.hr_sunday_maint_overtime
-                    WHERE tenant_id = :tid
-                    ORDER BY maint_date DESC, id DESC
-                """),
-                {"tid": tenant_id},
-            ).fetchall()
-            return pd.DataFrame([r._asdict() for r in rows]) if rows else pd.DataFrame()
-    except Exception:
-        return pd.DataFrame()
-
-
 def get_approved_sunday_ot_by_employee(engine, tenant_id: str = "REETECH_VN", month_prefix: str | None = None) -> dict[str, float]:
     """供人事薪資計算呼叫：回傳已核准的週日設備保養加班費 {emp_name: ot_pay_vnd}"""
     if not engine:
@@ -134,140 +74,64 @@ def get_approved_sunday_ot_by_employee(engine, tenant_id: str = "REETECH_VN", mo
         return {}
 
 
-def render(engine=None, lang="zh", **kwargs):
-    _ = ui_theme.norm_lang(lang or st.session_state.get("current_lang", "zh"))
-    tenant_id = st.session_state.get("tenant_id", "REETECH_VN")
-    current_user = st.session_state.get("user_name") or "admin"
-    today_vn = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).date()
-    default_sun = _next_sunday(today_vn)
+def render_sunday_maintenance_overtime_section(engine, tenant_id: str = "REETECH_VN", show_header: bool = True):
+    if show_header:
+        st.markdown("### 🔧 週日設備保養簽核與加班費結算（設計／生產部／倉庫）")
+        st.caption("登記週日設備保養人員與時數，經主管簽名核准後，加班費自動納入當月薪資加班費。")
 
-    st.markdown("### 🔧 週日設備保養簽核與加班費結算（設計／生產部／倉庫）")
-    st.caption("登記週日設備保養人員（設計、生產部、倉庫）與時數，經主管簽名核准後，加班費自動回流人事薪資計算。")
+    if not engine:
+        st.info("尚未連線資料庫，無法儲存週日保養簽核紀錄。")
+        return
+
     _ensure_sunday_maint_table(engine)
 
-    df = _load_maint_df(engine, tenant_id)
-    pending_df = df[df["approval_status"] == "待簽核"] if not df.empty else pd.DataFrame()
-    approved_df = df[df["approval_status"] == "已核准"] if not df.empty else pd.DataFrame()
+    today_vn = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).date()
+    current_user = st.session_state.get("user_name") or "admin"
 
-    m1, m2, m3 = st.columns(3)
-    m1.metric("待簽核保養紀錄", f"{len(pending_df)} 筆")
-    m2.metric("已核准保養加班費合計", f"{_fmt_vnd(approved_df['ot_pay_vnd'].sum() if not approved_df.empty else 0)} ₫")
-    m3.metric("待簽核加班費金額", f"{_fmt_vnd(pending_df['ot_pay_vnd'].sum() if not pending_df.empty else 0)} ₫")
+    staff_rows = []
+    try:
+        with engine.connect() as conn:
+            rows = conn.execute(
+                text("""
+                    SELECT emp_name, COALESCE(department, '生產部') AS dept
+                    FROM public.employee_profiles
+                    WHERE COALESCE(status, '在職') = '在職'
+                    ORDER BY id ASC
+                """)
+            ).fetchall()
+            staff_rows = [{"name": r[0], "dept": r[1]} for r in rows if r[0]]
+    except Exception:
+        staff_rows = []
 
-    tab_sign, tab_add, tab_payroll_sync = st.tabs([
-        "✍️ 保養紀錄與主管簽核",
-        "➕ 登記週日設備保養出勤",
-        "💵 核准加班費回流薪資明細",
-    ])
+    staff_names = [s["name"] for s in staff_rows]
+    staff_dept_map = {s["name"]: s["dept"] for s in staff_rows}
 
-    with tab_sign:
-        if df.empty:
-            st.info("目前尚無週日設備保養紀錄，請先至「➕ 登記週日設備保養出勤」新增。")
-        else:
-            disp = df.copy()
-            disp["加班時薪(₫)"] = disp["hourly_rate_vnd"].apply(_fmt_vnd)
-            disp["保養加班費(₫)"] = disp["ot_pay_vnd"].apply(_fmt_vnd)
-            disp = disp.rename(columns={
-                "id": "編號",
-                "maint_date": "保養日期(週日)",
-                "staff_name": "保養人員",
-                "dept_name": "所屬部門",
-                "equipment_name": "保養設備",
-                "hours_worked": "保養時數",
-                "submitted_by": "提報主管",
-                "approval_status": "簽核狀態",
-                "approved_by": "簽核人",
-                "notes": "說明",
-            })
-            st.dataframe(
-                disp[[
-                    "編號", "保養日期(週日)", "所屬部門", "保養人員", "保養設備",
-                    "保養時數", "加班時薪(₫)", "保養加班費(₫)", "簽核狀態", "提報主管", "簽核人", "說明",
-                ]],
-                use_container_width=True,
-                hide_index=True,
-            )
+    with st.expander("➕ 登記週日設備保養出勤（送出後待簽核）", expanded=False):
+        with st.form("form_sunday_maint_in_payroll"):
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                m_date = st.date_input("週日保養日期", value=_next_sunday_date(today_vn))
+                sel_staff = st.selectbox("保養人員（可選現有員工或自行輸入）", ["（手動輸入）"] + staff_names)
+                manual_staff = st.text_input("人員姓名", placeholder="若選手動輸入請填姓名")
+            with c2:
+                dept_choices = ["設計", "生產部", "倉庫", "工程部"]
+                mapped_dept = staff_dept_map.get(sel_staff, "倉庫")
+                d_idx = dept_choices.index(mapped_dept) if mapped_dept in dept_choices else 2
+                m_dept = st.selectbox("所屬部門", dept_choices, index=d_idx)
+                m_equip = st.text_input("保養設備／項目", placeholder="例：空壓機、配電盤、吊車")
+                m_sub = st.text_input("提報主管（如倉庫主管）", value=current_user)
+            with c3:
+                m_hours = st.number_input("保養時數", min_value=0.5, max_value=24.0, value=8.0, step=0.5)
+                m_rate = st.number_input("每小時加班費率 (VND)", min_value=0.0, value=100000.0, step=10000.0)
+                m_note = st.text_input("備註", placeholder="保養內容或簽單說明")
 
-        if not pending_df.empty and engine:
-            st.divider()
-            st.markdown("#### ✍️ 管理者簽核／核准區")
-            p_map = {
-                f"#{r['id']}｜{r['maint_date']}｜{r['dept_name']} - {r['staff_name']}｜{r['equipment_name']}（{r['hours_worked']}h / {_fmt_vnd(r['ot_pay_vnd'])} ₫）": int(r["id"])
-                for _, r in pending_df.iterrows()
-            }
-            sel_p = st.selectbox("選擇待簽核的週日保養紀錄", list(p_map.keys()))
-            signer_name = st.text_input("簽核人姓名／職稱（代表簽名確認）", value=current_user)
-            c_ok, c_no = st.columns(2)
-            with c_ok:
-                if st.button("✅ 簽名核准並納入薪資加班費", type="primary", use_container_width=True):
-                    try:
-                        with engine.begin() as conn:
-                            conn.execute(
-                                text("""
-                                    UPDATE public.hr_sunday_maint_overtime
-                                    SET approval_status = '已核准',
-                                        approved_by = :aby,
-                                        approved_at = CURRENT_TIMESTAMP
-                                    WHERE id = :rid
-                                """),
-                                {"aby": signer_name.strip() or current_user, "rid": p_map[sel_p]},
-                            )
-                        st.success("✅ 已簽名核准，該筆加班費已納入人事薪資計算。")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"❌ 簽核失敗：{e}")
-            with c_no:
-                if st.button("❌ 退回／不核准", use_container_width=True):
-                    try:
-                        with engine.begin() as conn:
-                            conn.execute(
-                                text("""
-                                    UPDATE public.hr_sunday_maint_overtime
-                                    SET approval_status = '已退回',
-                                        approved_by = :aby,
-                                        approved_at = CURRENT_TIMESTAMP
-                                    WHERE id = :rid
-                                """),
-                                {"aby": signer_name.strip() or current_user, "rid": p_map[sel_p]},
-                            )
-                        st.warning("⚠️ 已標記為退回，不會計入薪資加班費。")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"❌ 操作失敗：{e}")
+            ot_calc = float(m_hours) * float(m_rate)
+            st.info(f"本筆保養加班費試算：**{_fmt_vnd_simple(ot_calc)}**")
 
-    with tab_add:
-        staff_list = _load_candidate_staff(engine, tenant_id)
-        staff_names = [s["emp_name"] for s in staff_list]
-        staff_dept_map = {s["emp_name"]: s["dept_name"] for s in staff_list}
-        staff_rate_map = {s["emp_name"]: s["ot_hourly_vnd"] for s in staff_list}
-
-        with st.form("form_sunday_maint_add"):
-            f1, f2, f3 = st.columns(3)
-            with f1:
-                maint_date = st.date_input("週日保養日期*", value=default_sun)
-                selected_staff = st.selectbox("保養人員（可從人員名冊選或下方自行輸入）", ["（手動輸入人員）"] + staff_names)
-                manual_name = st.text_input("手動填寫人員姓名", placeholder="若不在下拉選單請填寫姓名")
-            with f2:
-                default_dept = staff_dept_map.get(selected_staff, "倉庫")
-                dept_opts = ["設計", "生產部", "倉庫", "工程部"]
-                dept_name = st.selectbox("所屬部門*", dept_opts, index=dept_opts.index(default_dept) if default_dept in dept_opts else 2)
-                equipment_name = st.text_input("保養設備／項目*", placeholder="例：空壓機、配電盤、吊車、貨架設備")
-                submitted_by = st.text_input("提報主管（如倉庫主管）", value=current_user)
-            with f3:
-                hours_worked = st.number_input("保養時數*", min_value=0.5, max_value=24.0, value=8.0, step=0.5)
-                default_rate = staff_rate_map.get(selected_staff, 100000.0)
-                hourly_rate = st.number_input("加班每小時費率 (VND)*", min_value=0.0, value=float(default_rate), step=10000.0)
-                notes = st.text_input("保養內容／簽單備註", placeholder="例：已完成定期保養與潤滑")
-
-            calc_ot = float(hours_worked) * float(hourly_rate)
-            st.info(f"💡 試算本筆週日保養加班費：**{_fmt_vnd(calc_ot)} ₫**（{hours_worked} 小時 × {_fmt_vnd(hourly_rate)} ₫/時）")
-
-            if st.form_submit_button("💾 送出週日保養紀錄（待簽核）", type="primary", use_container_width=True):
-                final_staff = manual_staff.strip() if selected_staff == "（手動輸入人員）" else (manual_staff.strip() or selected_staff)
-                if not final_staff or not equipment_name.strip():
-                    st.warning("⚠️ 請填寫保養人員姓名與保養設備。")
-                elif not engine:
-                    st.error("❌ 尚未連線資料庫。")
+            if st.form_submit_button("💾 送出保養紀錄（待簽核）", type="primary", use_container_width=True):
+                final_name = manual_staff.strip() if sel_staff == "（手動輸入）" else (manual_staff.strip() or sel_staff)
+                if not final_name or not m_equip.strip():
+                    st.warning("⚠️ 請填寫人員姓名與保養設備。")
                 else:
                     try:
                         with engine.begin() as conn:
@@ -279,49 +143,110 @@ def render(engine=None, lang="zh", **kwargs):
                                         approval_status, notes, created_at
                                     )
                                     VALUES (
-                                        :tid, :mdate, :sname, :dname, :ename,
-                                        :hrs, :hrate, :otpay, :sby,
-                                        '待簽核', :nts, CURRENT_TIMESTAMP
+                                        :tid, :md, :sn, :dn, :en,
+                                        :hw, :hr, :op, :sb,
+                                        '待簽核', :nt, CURRENT_TIMESTAMP
                                     )
                                 """),
                                 {
-                                    "tid": tenant_id,
-                                    "mdate": maint_date,
-                                    "sname": final_staff,
-                                    "dname": dept_name,
-                                    "ename": equipment_name.strip(),
-                                    "hrs": float(hours_worked),
-                                    "hrate": float(hourly_rate),
-                                    "otpay": float(calc_ot),
-                                    "sby": submitted_by.strip() or current_user,
-                                    "nts": notes.strip() or None,
+                                    "tid": tenant_id, "md": m_date, "sn": final_name,
+                                    "dn": m_dept, "en": m_equip.strip(), "hw": float(m_hours),
+                                    "hr": float(m_rate), "op": float(ot_calc),
+                                    "sb": m_sub.strip() or current_user, "nt": m_note.strip() or None,
                                 },
                             )
-                        st.success(f"✅ 已建立【{final_staff}】週日保養紀錄（{_fmt_vnd(calc_ot)} ₫），等待簽核。")
+                        st.success("✅ 已送出週日保養紀錄，等待簽核。")
                         st.rerun()
                     except Exception as e:
                         st.error(f"❌ 儲存失敗：{e}")
 
-    with tab_payroll_sync:
-        st.markdown("#### 💵 已核准之週日保養加班費（供人事薪資計算彙整）")
-        if approved_df.empty:
-            st.info("目前尚無「已核准」的週日設備保養加班費。")
-        else:
-            agg = (
-                approved_df.groupby(["staff_name", "dept_name"], as_index=False)
-                .agg(total_hours=("hours_worked", "sum"), total_ot_vnd=("ot_pay_vnd", "sum"), times=("id", "count"))
-            )
-            agg["保養次數"] = agg["times"].astype(str) + " 次"
-            agg["總保養時數"] = agg["total_hours"]
-            agg["應計入薪資加班費(₫)"] = agg["total_ot_vnd"].apply(_fmt_vnd)
-            st.dataframe(
-                agg.rename(columns={"staff_name": "員工姓名", "dept_name": "部門"})[
-                    ["部門", "員工姓名", "保養次數", "總保養時數", "應計入薪資加班費(₫)"]
-                ],
-                use_container_width=True,
-                hide_index=True,
-            )
+    df_m = pd.DataFrame()
+    try:
+        with engine.connect() as conn:
+            rows = conn.execute(
+                text("""
+                    SELECT id, maint_date, staff_name, dept_name, equipment_name,
+                           COALESCE(hours_worked, 0) AS hours_worked,
+                           COALESCE(ot_pay_vnd, 0) AS ot_pay_vnd,
+                           COALESCE(approval_status, '待簽核') AS approval_status,
+                           COALESCE(approved_by, '-') AS approved_by
+                    FROM public.hr_sunday_maint_overtime
+                    WHERE tenant_id = :tid
+                    ORDER BY maint_date DESC, id DESC
+                """),
+                {"tid": tenant_id},
+            ).fetchall()
+            if rows:
+                df_m = pd.DataFrame([r._asdict() for r in rows])
+    except Exception:
+        df_m = pd.DataFrame()
+
+    if df_m.empty:
+        st.info("目前尚無週日設備保養紀錄。")
+        return
+
+    disp_m = df_m.copy()
+    disp_m["加班費"] = disp_m["ot_pay_vnd"].apply(_fmt_vnd_simple)
+    st.dataframe(
+        disp_m.rename(columns={
+            "id": "編號", "maint_date": "日期", "dept_name": "部門",
+            "staff_name": "人員", "equipment_name": "設備", "hours_worked": "時數",
+            "approval_status": "簽核狀態", "approved_by": "簽核人",
+        })[["編號", "日期", "部門", "人員", "設備", "時數", "加班費", "簽核狀態", "簽核人"]],
+        use_container_width=True,
+        hide_index=True,
+    )
+
+    pending = df_m[df_m["approval_status"] == "待簽核"]
+    if not pending.empty:
+        p_opts = {
+            f"#{r['id']}｜{r['maint_date']}｜{r['dept_name']}-{r['staff_name']}｜{_fmt_vnd_simple(r['ot_pay_vnd'])}": int(r["id"])
+            for _, r in pending.iterrows()
+        }
+        sel_p = st.selectbox("選擇待簽核紀錄", list(p_opts.keys()))
+        signer = st.text_input("簽核人（簽名確認）", value=current_user, key="sunday_ot_signer")
+        b1, b2 = st.columns(2)
+        if b1.button("✅ 簽名核准（計入薪資加班費）", type="primary", use_container_width=True):
+            with engine.begin() as conn:
+                conn.execute(
+                    text("""
+                        UPDATE public.hr_sunday_maint_overtime
+                        SET approval_status = '已核准', approved_by = :ab, approved_at = CURRENT_TIMESTAMP
+                        WHERE id = :rid
+                    """),
+                    {"ab": signer.strip() or current_user, "rid": p_opts[sel_p]},
+                )
+            st.success("✅ 已簽名核准，加班費已計入薪資計算。")
+            st.rerun()
+        if b2.button("❌ 退回", use_container_width=True):
+            with engine.begin() as conn:
+                conn.execute(
+                    text("""
+                        UPDATE public.hr_sunday_maint_overtime
+                        SET approval_status = '已退回', approved_by = :ab, approved_at = CURRENT_TIMESTAMP
+                        WHERE id = :rid
+                    """),
+                    {"ab": signer.strip() or current_user, "rid": p_opts[sel_p]},
+                )
+            st.warning("⚠️ 已退回。")
+            st.rerun()
+
+    approved = df_m[df_m["approval_status"] == "已核准"]
+    if not approved.empty:
+        st.markdown("#### 💵 已核准之週日保養加班費（已納入薪資計算）")
+        grp = approved.groupby(["staff_name", "dept_name"], as_index=False)["ot_pay_vnd"].sum()
+        grp["核准加班費合計"] = grp["ot_pay_vnd"].apply(_fmt_vnd_simple)
+        st.dataframe(
+            grp.rename(columns={"staff_name": "員工姓名", "dept_name": "部門"})[["部門", "員工姓名", "核准加班費合計"]],
+            use_container_width=True,
+            hide_index=True,
+        )
+
+
+def render(engine=None, lang="zh", **kwargs):
+    tid = st.session_state.get("tenant_id", "REETECH_VN")
+    render_sunday_maintenance_overtime_section(engine=engine, tenant_id=tid, show_header=True)
 
 
 def show(engine=None, lang="zh", **kwargs):
-    render(engine=engine, lang=lang, **kwargs)
+    return render(engine=engine, lang=lang, **kwargs)
