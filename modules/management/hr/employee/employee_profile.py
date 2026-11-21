@@ -180,6 +180,16 @@ def main(*args, **kwargs):
     render_hr_profile_page(*args, **kwargs)
 
 def render_employee_profile(*args, **kwargs):
+    
+    def render(engine=None, lang="zh", **kwargs):
+    for fn_name in ("render_employee_profile", "show_employee_profile", "main"):
+        fn = globals().get(fn_name)
+        if callable(fn):
+            return fn(engine=engine, lang=lang, **kwargs)
+
+
+def show(engine=None, lang="zh", **kwargs):
+    return render(engine=engine, lang=lang, **kwargs)
     render_hr_profile_page(*args, **kwargs)
 
 def render_employee_management(*args, **kwargs):
