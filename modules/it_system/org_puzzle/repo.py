@@ -45,6 +45,7 @@ DEFAULT_PUZZLE_REGISTRY = [
     {"key": "feat_hr_payroll_bhxh", "name": "💵 薪資管理", "group": "人事", "module": "modules.management.hr.payroll.field_payroll_calc", "func": "render"},
     {"key": "feat_hr_child_subsidy", "name": "🎓 子女與學費補助登記", "group": "人事", "module": "modules.management.hr.employee.child_education_subsidy", "func": "render"},
     {"key": "feat_hr_sunday_maint_ot", "name": "🔧 設備保養管裡", "group": "人事", "module": "modules.management.hr.sunday_maintenance_ot", "func": "render"},
+    {"key": "feat_hr_labor_contracts", "name": "📄 員工勞動合約管理", "group": "人事", "module": "modules.management.hr.employee.labor_contract_management", "func": "render"},
     {"key": "feat_ga_procurement", "name": "🛍️ 總務請購、供應商比價與核銷", "group": "總務", "module": "modules.management.general_affairs.procurement", "func": "render"},
     {"key": "feat_ga_assets_dorm", "name": "🏗️ 固定資產管理", "group": "總務", "module": "modules.management.general_affairs.assets_facilities", "func": "render"},
     {"key": "feat_ga_expenses_hub", "name": "🧾 總務採購、設備維修與宿舍開銷登記", "group": "總務", "module": "modules.management.general_affairs.ga_expenses_hub", "func": "render"},
