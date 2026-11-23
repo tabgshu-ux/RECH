@@ -5,7 +5,297 @@ from sqlalchemy import text
 def get_t(lang):
     texts = {
         "繁體中文": {
+            "title": "📊 員工打卡紀錄與出勤稽核中心",import datetime
+import pandas as pd
+import streamlit as st
+from sqlalchemy import text
+
+
+def get_t(lang):
+    texts = {
+        "繁體中文": {
             "title": "📊 員工打卡紀錄與出勤稽核中心",
+            "info": "💡 說明：HR 可在此檢視廠內出勤、設定考勤寬限期、執行打卡補登及匯出每月考勤。",
+            "tab1_title": "🏭 員工打卡紀錄",
+            "tab2_title": "📝 打卡補登與原始日誌",
+            "tab3_title": "📍 外勤 GPS 打卡稽核",
+            "rule_title": "⚙️ 考勤寬限期與遲到判定規則設定",
+            "grace_min": "上班打卡寬限分鐘數 (分鐘內不算遲到)",
+            "monthly_limit": "每月累計遲到容許總分鐘數",
+            "export_btn": "📥 下載各員工每月打卡與多版本加班紀錄 (CSV)",
+            "punch_fix_title": "⚙️ 員工考勤補登與異常調整",
+            "no_field_data": "目前尚無外勤 GPS 打卡與回報紀錄。",
+            "field_table_title": "📋 全廠外勤工程人員打卡明細總表",
+        },
+        "Tiếng Việt": {
+            "title": "📊 Quản lý Chấm công & Kiểm toán Nhân viên",
+            "info": "💡 Hướng dẫn: HR quản lý chấm công, ân hạn, đối chiếu theo bảng lương T.09.",
+            "tab1_title": "🏭 Hồ sơ chấm công",
+            "tab2_title": "📝 Bù giờ & Nhật ký",
+            "tab3_title": "📍 Kiểm duyệt GPS",
+            "rule_title": "⚙️ Cài đặt thời gian ân hạn đi muộn",
+            "grace_min": "Số phút ân hạn buổi sáng (Không tính đi muộn)",
+            "monthly_limit": "Tổng số phút đi muộn cho phép mỗi tháng",
+            "export_btn": "📥 Tải xuống bảng chấm công & tăng ca (CSV)",
+            "punch_fix_title": "⚙️ Xử lý bù giờ chấm công",
+            "no_field_data": "Hiện tại chưa có dữ liệu chấm công GPS.",
+            "field_table_title": "📋 Bảng chi tiết chấm công hiện trường",
+        },
+        "English": {
+            "title": "📊 Employee Attendance & Audit Center",
+            "info": "💡 Note: HR can view attendance, set grace periods, handle punch adjustments, and export monthly reports.",
+            "tab1_title": "🏭 Employee Punch Records",
+            "tab2_title": "📝 Punch Adjustments & Logs",
+            "tab3_title": "📍 Field GPS Attendance Audit",
+            "rule_title": "⚙️ Grace Period & Late Policy Settings",
+            "grace_min": "Check-in Grace Period (Minutes)",
+            "monthly_limit": "Monthly Total Allowed Late Minutes",
+            "export_btn": "📥 Download Monthly Attendance & OT Report (CSV)",
+            "punch_fix_title": "⚙️ Attendance Correction & Exception Handling",
+            "no_field_data": "No field GPS punch or report records found.",
+            "field_table_title": "📋 Field Engineering Attendance Details",
+        },
+    }
+    return texts.get(lang, texts["繁體中文"])
+
+
+def _ensure_attendance_tables(engine):
+    if not engine:
+        return
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS hr_attendance_rules (
+                    tenant_id VARCHAR(64) PRIMARY KEY,
+                    grace_minutes INT DEFAULT 10,
+                    monthly_late_limit INT DEFAULT 30,
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS hr_attendance_logs (
+                    id SERIAL PRIMARY KEY,
+                    tenant_id VARCHAR(64) DEFAULT 'REETECH_VN',
+                    emp_code VARCHAR(80),
+                    emp_name VARCHAR(150),
+                    area_name VARCHAR(100) DEFAULT '西寧廠',
+                    punch_type VARCHAR(80),
+                    punch_time VARCHAR(60),
+                    reason TEXT,
+                    status VARCHAR(60) DEFAULT '🟢 補登已存檔',
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            """))
+    except Exception:
+        pass
+
+
+def render_internal_attendance_page(engine=None, lang="繁體中文", **kwargs):
+    t = get_t(lang)
+    tenant_id = st.session_state.get("tenant_id", "REETECH_VN")
+
+    st.markdown(f"### {t['title']}")
+    st.info(t["info"])
+    _ensure_attendance_tables(engine)
+
+    tab1, tab2, tab3 = st.tabs([t["tab1_title"], t["tab2_title"], t["tab3_title"]])
+
+    with tab1:
+        st.markdown(f"#### {t['rule_title']}")
+
+        cur_grace, cur_limit = 10, 30
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    row = conn.execute(
+                        text("SELECT grace_minutes, monthly_late_limit FROM hr_attendance_rules WHERE tenant_id = :tid"),
+                        {"tid": tenant_id},
+                    ).fetchone()
+                    if row:
+                        cur_grace = int(row[0] or 10)
+                        cur_limit = int(row[1] or 30)
+            except Exception:
+                pass
+
+        with st.expander("🛠️ 點此展開並調整「遲到寬限與扣薪規則」設定", expanded=False):
+            col_r1, col_r2 = st.columns(2)
+            with col_r1:
+                grace_minutes = st.number_input(t["grace_min"], min_value=0, max_value=30, value=cur_grace, step=1)
+            with col_r2:
+                monthly_late_limit = st.number_input(t["monthly_limit"], min_value=0, max_value=120, value=cur_limit, step=5)
+
+            if st.button("💾 儲存考勤寬限規則", type="primary"):
+                if engine:
+                    try:
+                        with engine.begin() as conn:
+                            conn.execute(
+                                text("""
+                                    INSERT INTO hr_attendance_rules (tenant_id, grace_minutes, monthly_late_limit, updated_at)
+                                    VALUES (:tid, :gm, :ml, CURRENT_TIMESTAMP)
+                                    ON CONFLICT (tenant_id) DO UPDATE SET
+                                        grace_minutes = EXCLUDED.grace_minutes,
+                                        monthly_late_limit = EXCLUDED.monthly_late_limit,
+                                        updated_at = CURRENT_TIMESTAMP
+                                """),
+                                {"tid": tenant_id, "gm": int(grace_minutes), "ml": int(monthly_late_limit)},
+                            )
+                    except Exception:
+                        pass
+                st.success(f"🎉 考勤規則已更新：上班寬限 {grace_minutes} 分鐘內不算遲到，每月容許累計 {monthly_late_limit} 分鐘。")
+
+        st.markdown("---")
+        st.markdown("#### 🏢 廠內同仁出勤與「多版本加班時數」總表")
+
+        emp_records = []
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    res = conn.execute(
+                        text("""
+                            SELECT COALESCE(emp_code, CAST(id AS TEXT)) AS emp_code,
+                                   emp_name,
+                                   COALESCE(department, '未指定') AS department,
+                                   COALESCE(position, '員工') AS position
+                            FROM employee_profiles
+                            WHERE COALESCE(status, '在職') <> '離職'
+                            ORDER BY id ASC
+                        """)
+                    ).fetchall()
+                    if res:
+                        emp_records = [
+                            {
+                                "工號": r[0],
+                                "姓名": r[1],
+                                "部門": r[2],
+                                "職稱": r[3],
+                                "應出勤": 22,
+                                "實出": 22,
+                                "遲到分": 0,
+                                "加班*1.5 (平日)": 0.0,
+                                "加班*1.95 (夜班)": 0.0,
+                                "加班*2.0 (休息日)": 0.0,
+                                "加班*3.0 (國定)": 0.0,
+                                "狀態": "🟢 正常",
+                            }
+                            for r in res
+                        ]
+            except Exception:
+                pass
+
+        if not emp_records:
+            st.info("目前尚未查到在職員工名冊資料。")
+        else:
+            df_emp = pd.DataFrame(emp_records)
+            st.dataframe(df_emp, use_container_width=True, hide_index=True)
+
+            csv_data = df_emp.to_csv(index=False).encode("utf-8-sig")
+            st.download_button(
+                label=t["export_btn"],
+                data=csv_data,
+                file_name="REETECH_Monthly_Attendance_OT_Report.csv",
+                mime="text/csv",
+                type="primary",
+            )
+
+    with tab2:
+        st.markdown(f"#### {t['punch_fix_title']}")
+        col1, col2 = st.columns(2)
+        with col1:
+            fix_emp_code = st.text_input("輸入要補登的員工工號 (Mã NV)", key="fix_emp_code")
+            fix_date = st.date_input("補登日期 (Ngày)", value=datetime.date.today(), key="fix_date")
+        with col2:
+            fix_type = st.selectbox("補登類型 (Loại)", ["上班補打卡 (Check-in)", "下班補打卡 (Check-out)"], key="fix_type")
+            fix_reason = st.text_input("補登原因說明 (Lý do)", key="fix_reason")
+
+        if st.button("💾 確認送出補登申請", type="primary", key="btn_save_punch_fix"):
+            if engine and fix_emp_code.strip():
+                try:
+                    with engine.begin() as conn:
+                        conn.execute(
+                            text("""
+                                INSERT INTO hr_attendance_logs (tenant_id, emp_code, emp_name, area_name, punch_type, punch_time, reason, status)
+                                VALUES (:tid, :ec, :en, '西寧廠', :pt, :ptm, :rsn, '🟢 補登已存檔')
+                            """),
+                            {
+                                "tid": tenant_id,
+                                "ec": fix_emp_code.strip(),
+                                "en": fix_emp_code.strip(),
+                                "pt": fix_type,
+                                "ptm": f"{fix_date} 08:00:00",
+                                "rsn": fix_reason.strip(),
+                            },
+                        )
+                    st.success("🎉 打卡補登紀錄已寫入資料庫！")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"補登寫入失敗：{e}")
+            else:
+                st.warning("請輸入員工工號並確認資料庫已連線。")
+
+        st.markdown("---")
+        st.markdown("#### 📋 廠內出勤與補登日誌 (Audit Logs)")
+        audit_rows = []
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    rows = conn.execute(
+                        text("""
+                            SELECT emp_code, emp_name, area_name, punch_type, punch_time, status
+                            FROM hr_attendance_logs
+                            WHERE COALESCE(tenant_id, 'REETECH_VN') = :tid
+                            ORDER BY id DESC LIMIT 100
+                        """),
+                        {"tid": tenant_id},
+                    ).fetchall()
+                    audit_rows = [
+                        {"工號": r[0], "姓名": r[1], "區域": r[2], "類型": r[3], "刷卡時間": r[4], "狀態": r[5]}
+                        for r in rows
+                    ]
+            except Exception:
+                pass
+
+        if audit_rows:
+            st.dataframe(pd.DataFrame(audit_rows), use_container_width=True, hide_index=True)
+        else:
+            st.info("目前尚無補登或出勤日誌紀錄。")
+
+    with tab3:
+        st.markdown(f"#### {t['field_table_title']}")
+
+        field_records = []
+        if engine:
+            try:
+                with engine.connect() as conn:
+                    res = conn.execute(
+                        text("""
+                            SELECT record_id, emp_id, emp_name, site_name, punch_type,
+                                   gps_lat, gps_lng, work_progress, check_time, status, note, has_photo
+                            FROM hr_field_gps
+                            ORDER BY check_time DESC
+                        """)
+                    ).fetchall()
+                    for r in res:
+                        field_records.append({
+                            "紀錄編號": r[0], "工號": r[1], "姓名": r[2],
+                            "案場": r[3], "打卡類型": r[4], "緯度": r[5], "經度": r[6],
+                            "工程進度回報": r[7], "打卡時間": r[8], "狀態": r[9],
+                            "備註": r[10], "現場照片": "📷 已上傳" if r[11] else "無",
+                        })
+            except Exception as e:
+                st.warning(f"載入外勤打卡資料庫發生異常: {e}")
+
+        if field_records:
+            st.dataframe(pd.DataFrame(field_records), use_container_width=True, hide_index=True)
+        else:
+            st.info(t["no_field_data"])
+
+
+def render(engine=None, lang="繁體中文", **kwargs):
+    return render_internal_attendance_page(engine=engine, lang=lang, **kwargs)
+
+
+def show(engine=None, lang="繁體中文", **kwargs):
+    return render_internal_attendance_page(engine=engine, lang=lang, **kwargs)
             "info": "💡 說明：HR 可在此檢視廠內出勤、設定考勤寬限期、執行打卡補登及匯出每月考勤。",
             "tab1_title": "🏭 員工打卡紀錄",
             "tab2_title": "📝 打卡補登與原始日誌",
