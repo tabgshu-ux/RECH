@@ -43,6 +43,7 @@ DEFAULT_PUZZLE_REGISTRY = [
     {"key": "feat_hr_recruitment", "name": "📢 應徵管理", "group": "人事", "module": "modules.management.hr.recruitment_vacancies", "func": "render"},
     {"key": "feat_hr_attendance_leave", "name": "🕒 加班管理", "group": "人事", "module": "modules.management.hr.attendance.field_workhour_approval", "func": "render"},
     {"key": "feat_hr_payroll_bhxh", "name": "💵 薪資管理", "group": "人事", "module": "modules.management.hr.payroll.field_payroll_calc", "func": "render"},
+    {"key": "feat_hr_child_subsidy", "name": "🎓 子女與學費補助登記", "group": "人事", "module": "modules.management.hr.employee.child_education_subsidy", "func": "render"},
     {"key": "feat_hr_sunday_maint_ot", "name": "🔧 設備保養管裡", "group": "人事", "module": "modules.management.hr.sunday_maintenance_ot", "func": "render"},
     {"key": "feat_ga_procurement", "name": "🛍️ 總務請購、供應商比價與核銷", "group": "總務", "module": "modules.management.general_affairs.procurement", "func": "render"},
     {"key": "feat_ga_assets_dorm", "name": "🏗️ 固定資產管理", "group": "總務", "module": "modules.management.general_affairs.assets_facilities", "func": "render"},
