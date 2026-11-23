@@ -17,7 +17,7 @@ def _fmt_vnd_simple(val) -> str:
         return "0 ₫"
 
 
-def _next_sunday_date(d: date) -> date:
+def _next_holiday_or_weekend_date(d: date) -> date:
     return d + timedelta(days=(6 - d.weekday()) % 7)
 
 
@@ -82,11 +82,11 @@ def get_approved_sunday_ot_by_employee(engine, tenant_id: str = "REETECH_VN", mo
 
 def render_sunday_maintenance_overtime_section(engine, tenant_id: str = "REETECH_VN", show_header: bool = True):
     if show_header:
-        st.markdown("### 🔧 週日設備保養簽核與加班費結算（設計／生產部／倉庫）")
+        st.markdown("### 🔧 假日設備保養簽核與加班費結算（設計／生產部／倉庫）")
         st.caption("依員工底薪與加班倍率自動計算加班費，經主管簽名核准後自動納入薪資加班費。")
 
     if not engine:
-        st.info("尚未連線資料庫，無法儲存週日保養簽核紀錄。")
+        st.info("尚未連線資料庫，無法儲存假日保養簽核紀錄。")
         return
 
     _ensure_sunday_maint_table(engine)
@@ -119,11 +119,11 @@ def render_sunday_maintenance_overtime_section(engine, tenant_id: str = "REETECH
     staff_dept_map = {s["name"]: s["dept"] for s in staff_rows}
     staff_salary_map = {s["name"]: s["base_salary"] for s in staff_rows}
 
-    with st.expander("➕ 登記週日設備保養出勤（送出後待簽核）", expanded=False):
+    with st.expander("➕ 登記假日設備保養出勤（送出後待簽核）", expanded=False):
         with st.form("form_sunday_maint_in_payroll"):
             c1, c2, c3 = st.columns(3)
             with c1:
-                m_date = st.date_input("週日保養日期", value=_next_sunday_date(today_vn))
+                m_date = st.date_input("假日保養日期", value=_next_holiday_or_weekend_date(today_vn))
                 sel_staff = st.selectbox("保養人員（自動帶出員工底薪）", ["（手動輸入）"] + staff_names)
                 manual_staff = st.text_input("人員姓名（選「手動輸入」時填寫）", placeholder="若不在名冊請填姓名")
             with c2:
@@ -135,8 +135,8 @@ def render_sunday_maintenance_overtime_section(engine, tenant_id: str = "REETECH
                 m_sub = st.text_input("提報主管（如倉庫主管）", value=current_user)
             with c3:
                 m_hours = st.number_input("保養時數", min_value=0.5, max_value=24.0, value=8.0, step=0.5)
-                ot_mult = st.number_input("加班倍率（例：1.5 倍）", min_value=1.0, max_value=5.0, value=1.5, step=0.1)
-                m_note = st.text_input("備註", placeholder="保養內容或簽單說明")
+                ot_mult = st.number_input("加班倍率（例：1.5 或 2.0 倍）", min_value=1.0, max_value=5.0, value=2.0, step=0.1)
+                m_note = st.text_input("備註", placeholder="假日保養內容或簽單說明")
 
             base_sal = 0.0 if sel_staff == "（手動輸入）" else float(staff_salary_map.get(sel_staff, 0.0))
             hourly_ot_rate = _calc_hourly_ot_from_base(base_sal, multiplier=float(ot_mult))
@@ -177,7 +177,7 @@ def render_sunday_maintenance_overtime_section(engine, tenant_id: str = "REETECH
                                     "sb": m_sub.strip() or current_user, "nt": m_note.strip() or None,
                                 },
                             )
-                        st.success("✅ 已送出週日保養紀錄，等待簽核。")
+                        st.success("✅ 已送出假日保養紀錄，等待簽核。")
                         st.rerun()
                     except Exception as e:
                         st.error(f"❌ 儲存失敗：{e}")
@@ -204,7 +204,7 @@ def render_sunday_maintenance_overtime_section(engine, tenant_id: str = "REETECH
         df_m = pd.DataFrame()
 
     if df_m.empty:
-        st.info("目前尚無週日設備保養紀錄。")
+        st.info("目前尚無假日設備保養紀錄。")
         return
 
     disp_m = df_m.copy()
@@ -255,7 +255,7 @@ def render_sunday_maintenance_overtime_section(engine, tenant_id: str = "REETECH
 
     approved = df_m[df_m["approval_status"] == "已核准"]
     if not approved.empty:
-        st.markdown("#### 💵 已核准之週日保養加班費（已納入薪資計算）")
+        st.markdown("#### 💵 已核准之假日保養加班費（已納入薪資計算）")
         grp = approved.groupby(["staff_name", "dept_name"], as_index=False)["ot_pay_vnd"].sum()
         grp["核准加班費合計"] = grp["ot_pay_vnd"].apply(_fmt_vnd_simple)
         st.dataframe(
