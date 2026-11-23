@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/management/hr/payroll/field_payroll_calc.py
-# 職責：L2 行政／人事 - 全體員工薪資明細（細分津貼/獎金/社保）與週日保養加班分頁
+# 職責：L2 行政／人事 - 全體員工薪資整合計算（上班天數 + 分類津貼 + 一般/週日加班 + 社保與財報連動）
 # ==========================================
 
 from datetime import datetime
@@ -117,10 +117,42 @@ def _load_worker_logs_map(engine, tenant_id: str, pay_month: str) -> dict[str, f
         return {}
 
 
+def _safe_get_allowances_map(engine, tenant_id: str, pay_month: str) -> dict[str, dict[str, float]]:
+    try:
+        from modules.management.hr.payroll.payroll_allowances import get_monthly_allowances_by_employee
+
+        return get_monthly_allowances_by_employee(engine=engine, tenant_id=tenant_id, pay_month=pay_month)
+    except Exception:
+        return {}
+
+
+def _safe_get_overtime_map(engine, tenant_id: str, pay_month: str) -> dict[str, float]:
+    try:
+        from modules.management.hr.payroll.overtime_records import get_approved_overtime_by_employee
+
+        return get_approved_overtime_by_employee(engine=engine, tenant_id=tenant_id, pay_month=pay_month)
+    except Exception:
+        return {}
+
+
+def _safe_get_workdays_map(engine, tenant_id: str, pay_month: str, std_days: float = 22.0) -> dict[str, dict[str, float]]:
+    try:
+        from modules.management.hr.payroll.attendance_days import get_attendance_days_by_employee
+
+        return get_attendance_days_by_employee(
+            engine=engine,
+            tenant_id=tenant_id,
+            pay_month=pay_month,
+            default_standard_days=std_days,
+        )
+    except Exception:
+        return {}
+
+
 def _render_payroll_main_tab(engine, tenant_id: str, default_month: str):
     current_user = st.session_state.get("user_name") or "admin"
 
-    c_top1, c_top2, c_top3, c_top4 = st.columns([1.6, 2.0, 1.7, 1.7])
+    c_top1, c_top2, c_top3, c_top4 = st.columns([1.5, 2.0, 1.75, 1.75])
     with c_top1:
         pay_month = st.text_input("計薪月份 (YYYY-MM)", value=default_month, max_chars=7, key="pay_month_input")
     with c_top2:
@@ -130,10 +162,19 @@ def _render_payroll_main_tab(engine, tenant_id: str, default_month: str):
     with c_top4:
         company_si_pct = st.number_input("公司雇主社保比例 (%)", min_value=0.0, max_value=50.0, value=21.5, step=0.5, key="pay_company_si_pct")
 
+    c_opt1, c_opt2 = st.columns([2, 3])
+    with c_opt1:
+        prorate_by_days = st.checkbox("依「實際上班天數／應出勤天數」折算底薪", value=True, key="pay_prorate_days")
+    with c_opt2:
+        default_std_days = st.number_input("預設標準應出勤天數", min_value=1.0, max_value=31.0, value=22.0, step=0.5, key="pay_std_days")
+
     clean_month = (pay_month or "").strip() or default_month
     df_emp = _load_all_employees_df(engine, tenant_id)
     sunday_ot_map = _load_approved_sunday_ot_map(engine, tenant_id, clean_month)
     worker_amt_map = _load_worker_logs_map(engine, tenant_id, clean_month)
+    allowance_map = _safe_get_allowances_map(engine, tenant_id, clean_month)
+    normal_ot_map = _safe_get_overtime_map(engine, tenant_id, clean_month)
+    workdays_map = _safe_get_workdays_map(engine, tenant_id, clean_month, std_days=float(default_std_days))
 
     if df_emp.empty:
         st.warning("⚠️ 目前尚未在 `employee_profiles` 查到在職員工資料，請先至「員工資料」新增員工。")
@@ -150,23 +191,41 @@ def _render_payroll_main_tab(engine, tenant_id: str, default_month: str):
     rows_calc = []
     for _, r in df_emp.iterrows():
         ename = str(r.get("emp_name") or "").strip()
-        base_sal = float(r.get("base_salary") or 0.0)
+        raw_base_sal = float(r.get("base_salary") or 0.0)
+
+        wd = workdays_map.get(ename, {})
+        std_d = float(wd.get("standard_days", default_std_days))
+        lv_d = float(wd.get("leave_days", 0.0))
+        act_d = float(wd.get("actual_days", std_d))
+        ratio = (act_d / std_d) if (prorate_by_days and std_d > 0) else 1.0
+        eff_base_sal = round(raw_base_sal * ratio, 0)
+
+        alw = allowance_map.get(ename, {})
+        pos_alw = float(alw.get("pos", 0.0))
+        site_alw = float(alw.get("site", 0.0))
+        meal_alw = float(alw.get("meal", 0.0))
+        other_alw = float(alw.get("other", 0.0))
+
+        normal_ot = float(normal_ot_map.get(ename, 0.0))
         sunday_ot = float(sunday_ot_map.get(ename, 0.0))
         worker_amt = float(worker_amt_map.get(ename, 0.0))
-        emp_ded_init = round(base_sal * (float(emp_si_pct) / 100.0), 0)
-        company_si_init = round(base_sal * (float(company_si_pct) / 100.0), 0)
+
+        emp_ded_init = round(eff_base_sal * (float(emp_si_pct) / 100.0), 0)
+        company_si_init = round(eff_base_sal * (float(company_si_pct) / 100.0), 0)
 
         rows_calc.append({
             "emp_code": r.get("emp_code") or "-",
             "emp_name": ename,
             "department": r.get("department") or "-",
             "position": r.get("position") or "-",
-            "base_salary": base_sal,
-            "pos_allowance": 0.0,
-            "site_allowance": 0.0,
-            "meal_bonus": 0.0,
-            "other_allowance": 0.0,
-            "extra_ot_vnd": 0.0,
+            "actual_days": act_d,
+            "leave_days": lv_d,
+            "base_salary": eff_base_sal,
+            "pos_allowance": pos_alw,
+            "site_allowance": site_alw,
+            "meal_bonus": meal_alw,
+            "other_allowance": other_alw,
+            "extra_ot_vnd": normal_ot,
             "sunday_ot_vnd": sunday_ot,
             "worker_amt_vnd": worker_amt,
             "emp_deduction_vnd": emp_ded_init,
@@ -175,10 +234,11 @@ def _render_payroll_main_tab(engine, tenant_id: str, default_month: str):
 
     df_pay = pd.DataFrame(rows_calc)
 
-    st.caption("津貼／獎金已拆細；同時分開計算「員工扣款」與「公司雇主負擔社保」，公司負擔部分可一鍵拋轉至財務報表。")
+    st.caption("已自動串接「上班天數／請假」、「分類津貼／其他津貼」、「一般加班」與「週日保養加班」；表格內仍可逐人微調。")
 
     edit_cols = [
-        "emp_code", "emp_name", "department", "position", "base_salary",
+        "emp_code", "emp_name", "department", "position",
+        "actual_days", "leave_days", "base_salary",
         "pos_allowance", "site_allowance", "meal_bonus", "other_allowance",
         "extra_ot_vnd", "sunday_ot_vnd", "worker_amt_vnd",
         "emp_deduction_vnd", "company_si_vnd",
@@ -187,18 +247,20 @@ def _render_payroll_main_tab(engine, tenant_id: str, default_month: str):
         df_pay[edit_cols],
         use_container_width=True,
         hide_index=True,
-        disabled=["emp_code", "emp_name", "department", "position", "sunday_ot_vnd", "worker_amt_vnd"],
+        disabled=["emp_code", "emp_name", "department", "position", "leave_days"],
         column_config={
             "emp_code": "工號",
             "emp_name": "員工姓名",
             "department": "部門",
             "position": "職稱",
+            "actual_days": st.column_config.NumberColumn("上班天數", format="%.1f"),
+            "leave_days": st.column_config.NumberColumn("請假天數", format="%.1f"),
             "base_salary": st.column_config.NumberColumn("底薪 (₫)", format="%d"),
             "pos_allowance": st.column_config.NumberColumn("職務津貼 (₫)", format="%d"),
             "site_allowance": st.column_config.NumberColumn("工程/出差/油費/電話 (₫)", format="%d"),
             "meal_bonus": st.column_config.NumberColumn("伙食/全勤/績效 (₫)", format="%d"),
             "other_allowance": st.column_config.NumberColumn("其他津貼/獎金 (₫)", format="%d"),
-            "extra_ot_vnd": st.column_config.NumberColumn("其他加班費 (₫)", format="%d"),
+            "extra_ot_vnd": st.column_config.NumberColumn("一般加班費 (₫)", format="%d"),
             "sunday_ot_vnd": st.column_config.NumberColumn("週日保養加班費 (₫)", format="%d"),
             "worker_amt_vnd": st.column_config.NumberColumn("點工／臨時工 (₫)", format="%d"),
             "emp_deduction_vnd": st.column_config.NumberColumn("員工社保扣款 (₫)", format="%d"),
@@ -208,8 +270,9 @@ def _render_payroll_main_tab(engine, tenant_id: str, default_month: str):
     )
 
     num_cols = [
-        "base_salary", "pos_allowance", "site_allowance", "meal_bonus",
-        "other_allowance", "extra_ot_vnd", "sunday_ot_vnd", "worker_amt_vnd",
+        "actual_days", "leave_days", "base_salary",
+        "pos_allowance", "site_allowance", "meal_bonus", "other_allowance",
+        "extra_ot_vnd", "sunday_ot_vnd", "worker_amt_vnd",
         "emp_deduction_vnd", "company_si_vnd",
     ]
     for col in num_cols:
@@ -221,11 +284,11 @@ def _render_payroll_main_tab(engine, tenant_id: str, default_month: str):
         + edited_df["meal_bonus"]
         + edited_df["other_allowance"]
     )
+    edited_df["加班費小計 (₫)"] = edited_df["extra_ot_vnd"] + edited_df["sunday_ot_vnd"]
     edited_df["應發合計 (₫)"] = (
         edited_df["base_salary"]
         + edited_df["津貼獎金小計 (₫)"]
-        + edited_df["extra_ot_vnd"]
-        + edited_df["sunday_ot_vnd"]
+        + edited_df["加班費小計 (₫)"]
         + edited_df["worker_amt_vnd"]
     )
     edited_df["實發薪資 (₫)"] = edited_df["應發合計 (₫)"] - edited_df["emp_deduction_vnd"]
@@ -242,23 +305,24 @@ def _render_payroll_main_tab(engine, tenant_id: str, default_month: str):
 
     st.markdown("#### 💰 薪資與社保結算彙總表")
     summary_cols = [
-        "emp_code", "emp_name", "department", "base_salary",
-        "津貼獎金小計 (₫)", "sunday_ot_vnd", "emp_deduction_vnd",
+        "emp_code", "emp_name", "department", "actual_days", "base_salary",
+        "津貼獎金小計 (₫)", "加班費小計 (₫)", "emp_deduction_vnd",
         "company_si_vnd", "實發薪資 (₫)",
     ]
     disp = edited_df[summary_cols].copy()
     for c in [
-        "base_salary", "津貼獎金小計 (₫)", "sunday_ot_vnd",
+        "base_salary", "津貼獎金小計 (₫)", "加班費小計 (₫)",
         "emp_deduction_vnd", "company_si_vnd", "實發薪資 (₫)",
     ]:
         disp[c] = disp[c].apply(_fmt_vnd)
+    disp["actual_days"] = disp["actual_days"].map(lambda x: f"{float(x):.1f}")
 
     disp = disp.rename(columns={
         "emp_code": "工號",
         "emp_name": "員工姓名",
         "department": "部門",
+        "actual_days": "上班天數",
         "base_salary": "底薪",
-        "sunday_ot_vnd": "週日保養加班費",
         "emp_deduction_vnd": "員工社保扣款",
         "company_si_vnd": "公司雇主社保",
     })
@@ -289,13 +353,40 @@ def render(engine=None, lang="zh", **kwargs):
 
     st.markdown("### 💵 全體員工薪資管理與計算")
 
-    tab_payroll, tab_sunday_ot = st.tabs([
+    tab_payroll, tab_allowances, tab_workdays, tab_ot, tab_sunday_ot = st.tabs([
         "📋 全體員工薪資明細與結算",
+        "🎁 津貼／其他津貼輸入",
+        "📅 上班天數紀錄",
+        "⏱️ 一般加班登記簽核",
         "🔧 週日設備保養與加班登記簽核",
     ])
 
     with tab_payroll:
         _render_payroll_main_tab(engine=engine, tenant_id=tenant_id, default_month=default_month)
+
+    with tab_allowances:
+        try:
+            from modules.management.hr.payroll.payroll_allowances import render_allowance_input_panel
+
+            render_allowance_input_panel(engine=engine, tenant_id=tenant_id, default_month=default_month)
+        except Exception as e:
+            st.warning(f"⚠️ 津貼輸入模組載入異常：{e}")
+
+    with tab_workdays:
+        try:
+            from modules.management.hr.payroll.attendance_days import render_attendance_days_panel
+
+            render_attendance_days_panel(engine=engine, tenant_id=tenant_id, default_month=default_month)
+        except Exception as e:
+            st.warning(f"⚠️ 上班天數模組載入異常：{e}")
+
+    with tab_ot:
+        try:
+            from modules.management.hr.payroll.overtime_records import render_overtime_records_panel
+
+            render_overtime_records_panel(engine=engine, tenant_id=tenant_id, default_month=default_month)
+        except Exception as e:
+            st.warning(f"⚠️ 一般加班模組載入異常：{e}")
 
     with tab_sunday_ot:
         try:
