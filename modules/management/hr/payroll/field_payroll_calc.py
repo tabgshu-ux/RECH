@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/management/hr/payroll/field_payroll_calc.py
-# 職責：L2 行政／人事 - 全體員工薪資整合計算（上班天數 + 分類津貼 + 一般/週日加班 + 社保與財報連動）
+# 職責：L2 行政／人事 - 全體員工薪資整合計算（上班天數 + 分類津貼 + 一般/假日加班 + 社保與財報連動）
 # ==========================================
 
 from datetime import datetime
@@ -234,7 +234,7 @@ def _render_payroll_main_tab(engine, tenant_id: str, default_month: str):
 
     df_pay = pd.DataFrame(rows_calc)
 
-    st.caption("已自動串接「上班天數／請假」、「分類津貼／其他津貼」、「一般加班」與「週日保養加班」；表格內仍可逐人微調。")
+    st.caption("已自動串接「上班天數／請假」、「分類津貼／其他津貼」、「一般加班」與「假日保養加班」；表格內仍可逐人微調。")
 
     edit_cols = [
         "emp_code", "emp_name", "department", "position",
@@ -261,7 +261,7 @@ def _render_payroll_main_tab(engine, tenant_id: str, default_month: str):
             "meal_bonus": st.column_config.NumberColumn("伙食/全勤/績效 (₫)", format="%d"),
             "other_allowance": st.column_config.NumberColumn("其他津貼/獎金 (₫)", format="%d"),
             "extra_ot_vnd": st.column_config.NumberColumn("一般加班費 (₫)", format="%d"),
-            "sunday_ot_vnd": st.column_config.NumberColumn("週日保養加班費 (₫)", format="%d"),
+            "sunday_ot_vnd": st.column_config.NumberColumn("假日保養加班費 (₫)", format="%d"),
             "worker_amt_vnd": st.column_config.NumberColumn("點工／臨時工 (₫)", format="%d"),
             "emp_deduction_vnd": st.column_config.NumberColumn("員工社保扣款 (₫)", format="%d"),
             "company_si_vnd": st.column_config.NumberColumn("公司雇主社保 (₫)", format="%d"),
