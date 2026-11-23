@@ -358,7 +358,7 @@ def render(engine=None, lang="zh", **kwargs):
         "🎁 津貼／其他津貼輸入",
         "📅 上班天數紀錄",
         "⏱️ 一般加班登記簽核",
-        "🔧 週日設備保養與加班登記簽核",
+        "🔧 假日設備保養與加班登記簽核",
     ])
 
     with tab_payroll:
@@ -394,7 +394,7 @@ def render(engine=None, lang="zh", **kwargs):
 
             render_sunday_maintenance_overtime_section(engine=engine, tenant_id=tenant_id, show_header=True)
         except Exception as e:
-            st.warning(f"⚠️ 週日設備保養簽核模組載入異常：{e}")
+            st.warning(f"⚠️ 假日設備保養簽核模組載入異常：{e}")
 
 
 def show(engine=None, lang="zh", **kwargs):
