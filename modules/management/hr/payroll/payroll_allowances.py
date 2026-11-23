@@ -1,9 +1,10 @@
 # ==========================================
 # 檔案路徑：modules/management/hr/payroll/payroll_allowances.py
-# 職責：L2 行政／人事 - 員工津貼登錄、批次套用與查詢（獨立新功能模組）
+# 職責：L2 行政／人事 - 員工津貼登錄、批次套用與查詢（純中文／純越文部門顯示）
 # ==========================================
 
 from datetime import datetime
+import re
 from zoneinfo import ZoneInfo
 import pandas as pd
 import streamlit as st
@@ -17,6 +18,26 @@ ALLOWANCE_CATEGORIES = [
     "伙食／全勤／績效獎金",
     "專業／有毒／看倉津貼",
 ]
+
+_CJK_RE = re.compile(r"[\u4e00-\u9fff]+")
+
+
+def _clean_dept_label(raw_dept: str, lang: str = "zh") -> str:
+    """將部門字串轉為純中文或純越文，避免中越混雜"""
+    s = str(raw_dept or "").strip()
+    if not s:
+        return "未指定" if lang != "vi" else "Chưa phân bổ"
+
+    cjk_parts = [m.strip() for m in _CJK_RE.findall(s) if m.strip()]
+    # 移除中文字與多餘符號，保留越文與數字/斜線/點
+    vi_only = _CJK_RE.sub(" ", s)
+    vi_only = re.sub(r"\s+", " ", vi_only).strip(" -–—/·|")
+
+    if lang == "vi":
+        return vi_only if vi_only else (" ".join(cjk_parts) if cjk_parts else "Chưa phân bổ")
+    else:
+        zh_only = " ".join(cjk_parts).strip()
+        return zh_only if zh_only else (vi_only if vi_only else "未指定")
 
 
 def _fmt_vnd(val: float | int) -> str:
@@ -89,10 +110,11 @@ def get_monthly_allowances_by_employee(engine, tenant_id: str, pay_month: str) -
     return result
 
 
-def render_allowance_input_panel(engine, tenant_id: str = "REETECH_VN", default_month: str | None = None):
+def render_allowance_input_panel(engine, tenant_id: str = "REETECH_VN", default_month: str | None = None, lang: str = "zh"):
     if not default_month:
         default_month = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).date().strftime("%Y-%m")
 
+    ui_lang = "vi" if str(lang or st.session_state.get("current_lang", "zh")).lower().startswith("vi") else "zh"
     current_user = st.session_state.get("user_name") or "admin"
     st.markdown("#### 🎁 員工津貼與其他津貼輸入（支援單筆／整部門批次）")
     st.caption("在此登錄各類津貼（特別是「其他津貼」與部門別津貼），儲存後會自動帶入當月全體薪資計算。")
@@ -113,14 +135,33 @@ def render_allowance_input_panel(engine, tenant_id: str = "REETECH_VN", default_
                         ORDER BY id ASC
                     """)
                 ).fetchall()
-                emp_list = [{"emp_code": r[0], "emp_name": r[1], "department": r[2]} for r in rows if r[1]]
+                for r in rows:
+                    if r[1]:
+                        raw_d = str(r[2] or "未指定")
+                        emp_list.append({
+                            "emp_code": r[0],
+                            "emp_name": str(r[1]).strip(),
+                            "raw_dept": raw_d,
+                            "dept_label": _clean_dept_label(raw_d, lang=ui_lang),
+                        })
         except Exception:
             emp_list = []
 
     emp_names = [e["emp_name"] for e in emp_list]
     emp_code_map = {e["emp_name"]: e["emp_code"] for e in emp_list}
-    emp_dept_map = {e["emp_name"]: e["department"] for e in emp_list}
-    depts = sorted({e["department"] for e in emp_list if e["department"]}) or ["辦公室", "設計", "生產部", "倉庫", "工程部"]
+    emp_dept_label_map = {e["emp_name"]: e["dept_label"] for e in emp_list}
+    emp_raw_dept_map = {e["emp_name"]: e["raw_dept"] for e in emp_list}
+
+    # 建立顯示標籤 -> 原始部門名稱對照
+    label_to_raw_dept: dict[str, str] = {}
+    for e in emp_list:
+        label_to_raw_dept.setdefault(e["dept_label"], e["raw_dept"])
+
+    if not label_to_raw_dept:
+        for fallback in (["設計", "生產部", "倉庫", "工程部", "管理部"] if ui_lang == "zh" else ["Thiết kế", "Sản xuất", "Kho", "Kỹ thuật", "Hành chính"]):
+            label_to_raw_dept[fallback] = fallback
+
+    dept_labels = sorted(label_to_raw_dept.keys())
 
     tab_single, tab_batch = st.tabs(["✍️ 單筆／指定人員津貼輸入", "👥 依部門批次發放津貼"])
 
@@ -132,9 +173,9 @@ def render_allowance_input_panel(engine, tenant_id: str = "REETECH_VN", default_
                 sel_emp = st.selectbox("選擇員工（或選下方自行輸入）", ["（自行輸入姓名）"] + emp_names, key="alw_sel_emp")
                 custom_emp = st.text_input("員工姓名*", placeholder="若不在名冊或自行輸入請填姓名", key="alw_custom_emp")
             with c2:
-                mapped_dept = emp_dept_map.get(sel_emp, depts[0])
-                d_idx = depts.index(mapped_dept) if mapped_dept in depts else 0
-                dept_s = st.selectbox("所屬部門", depts, index=d_idx, key="alw_dept_s")
+                mapped_label = emp_dept_label_map.get(sel_emp, dept_labels[0])
+                d_idx = dept_labels.index(mapped_label) if mapped_label in dept_labels else 0
+                dept_s_label = st.selectbox("所屬部門", dept_labels, index=d_idx, key="alw_dept_s")
                 alw_type = st.selectbox("津貼類別*", ALLOWANCE_CATEGORIES, index=0, key="alw_type_s")
                 amount_s = st.number_input("津貼金額 (VND)*", min_value=0.0, value=0.0, step=50000.0, key="alw_amt_s")
             with c3:
@@ -147,6 +188,7 @@ def render_allowance_input_panel(engine, tenant_id: str = "REETECH_VN", default_
                 elif not engine:
                     st.error("❌ 尚未連線資料庫。")
                 else:
+                    raw_d_save = emp_raw_dept_map.get(final_name) or label_to_raw_dept.get(dept_s_label, dept_s_label)
                     try:
                         with engine.begin() as conn:
                             conn.execute(
@@ -165,7 +207,7 @@ def render_allowance_input_panel(engine, tenant_id: str = "REETECH_VN", default_
                                     "pm": (pm_s or default_month).strip(),
                                     "ecode": emp_code_map.get(final_name),
                                     "ename": final_name,
-                                    "dname": dept_s,
+                                    "dname": raw_d_save,
                                     "atype": alw_type,
                                     "amt": float(amount_s),
                                     "rsn": reason_s.strip() or None,
@@ -182,15 +224,15 @@ def render_allowance_input_panel(engine, tenant_id: str = "REETECH_VN", default_
             b1, b2, b3 = st.columns(3)
             with b1:
                 pm_b = st.text_input("計薪月份 (YYYY-MM)*", value=default_month, max_chars=7, key="alw_pm_b")
-                target_dept = st.selectbox("選擇目標部門*", depts, key="alw_dept_b")
+                target_dept_label = st.selectbox("選擇目標部門*", dept_labels, key="alw_dept_b")
             with b2:
                 alw_type_b = st.selectbox("津貼類別*", ALLOWANCE_CATEGORIES, index=0, key="alw_type_b")
                 amount_b = st.number_input("每人津貼金額 (VND)*", min_value=0.0, value=0.0, step=50000.0, key="alw_amt_b")
             with b3:
                 reason_b = st.text_input("批次發放說明", placeholder="例：部門專案津貼、其他津貼", key="alw_reason_b")
 
-            target_emps = [e for e in emp_list if e["department"] == target_dept]
-            st.caption(f"目前「{target_dept}」在職員工共 **{len(target_emps)}** 人。")
+            target_emps = [e for e in emp_list if e["dept_label"] == target_dept_label]
+            st.caption(f"目前「{target_dept_label}」在職員工共 **{len(target_emps)}** 人。")
 
             if st.form_submit_button("👥 批次套用至該部門全員", type="primary", use_container_width=True):
                 if not target_emps or float(amount_b) <= 0:
@@ -217,19 +259,18 @@ def render_allowance_input_panel(engine, tenant_id: str = "REETECH_VN", default_
                                         "pm": (pm_b or default_month).strip(),
                                         "ecode": e["emp_code"],
                                         "ename": e["emp_name"],
-                                        "dname": target_dept,
+                                        "dname": e["raw_dept"],
                                         "atype": alw_type_b,
                                         "amt": float(amount_b),
                                         "rsn": reason_b.strip() or None,
                                         "cby": current_user,
                                     },
                                 )
-                        st.success(f"✅ 已為「{target_dept}」{len(target_emps)} 位員工新增「{alw_type_b}」（每人 {_fmt_vnd(amount_b)}）。")
+                        st.success(f"✅ 已為「{target_dept_label}」{len(target_emps)} 位員工新增「{alw_type_b}」（每人 {_fmt_vnd(amount_b)}）。")
                         st.rerun()
                     except Exception as e:
                         st.error(f"❌ 批次儲存失敗：{e}")
 
-    # 顯示當月已登錄津貼明細
     if engine:
         try:
             with engine.connect() as conn:
@@ -247,13 +288,14 @@ def render_allowance_input_panel(engine, tenant_id: str = "REETECH_VN", default_
                 ).fetchall()
                 if rows:
                     df_a = pd.DataFrame([r._asdict() for r in rows])
+                    df_a["dept_disp"] = df_a["dept_name"].apply(lambda x: _clean_dept_label(x, lang=ui_lang))
                     df_a["金額"] = df_a["amount_vnd"].apply(_fmt_vnd)
                     st.markdown("##### 📄 本月已登錄津貼明細")
                     st.dataframe(
                         df_a.rename(columns={
                             "id": "編號",
                             "pay_month": "月份",
-                            "dept_name": "部門",
+                            "dept_disp": "部門",
                             "emp_name": "員工姓名",
                             "allowance_type": "津貼類別",
                             "reason": "備註",
@@ -264,3 +306,13 @@ def render_allowance_input_panel(engine, tenant_id: str = "REETECH_VN", default_
                     )
         except Exception:
             pass
+
+
+def render(engine=None, lang="zh", **kwargs):
+    tid = st.session_state.get("tenant_id", "REETECH_VN")
+    cur_lang = lang or st.session_state.get("current_lang", "zh")
+    render_allowance_input_panel(engine=engine, tenant_id=tid, lang=cur_lang)
+
+
+def show(engine=None, lang="zh", **kwargs):
+    return render(engine=engine, lang=lang, **kwargs)
