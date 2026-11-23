@@ -1,6 +1,6 @@
 # ==========================================
 # 檔案路徑：modules/it_system/org_puzzle/mount_ui.py
-# 職責：系統設定 - Tab 2 功能拼圖掛載（依勾選先後編號 1. 2. 3. 4...）與 Tab 3 拼圖註冊管理
+# 職責：系統設定 - Tab 2 功能拼圖掛載（依點擊先後 1. 2. 3. 4... 編號）與 Tab 3 拼圖註冊管理
 # ==========================================
 
 import streamlit as st
@@ -53,11 +53,24 @@ def _update_or_toggle_puzzle(
         )
 
 
+def _on_feature_checkbox_change(fkey: str, order_state_key: str, chk_key: str):
+    """每次點擊勾選框當下立即記錄點擊先後順序（第1個點=1，第2個點=2...）"""
+    order_list = list(st.session_state.get(order_state_key, []))
+    is_now_checked = bool(st.session_state.get(chk_key, False))
+    if is_now_checked:
+        if fkey not in order_list:
+            order_list.append(fkey)
+    else:
+        while fkey in order_list:
+            order_list.remove(fkey)
+    st.session_state[order_state_key] = order_list
+
+
 def render_mount_tab(engine, tenant_id: str, active_nodes: list[dict], registry: list[dict]):
     repo.sync_default_registry(engine)
     reg_list = repo.load_registry(engine) or registry
 
-    st.markdown("#### 🧩 為指定 L1～L4 節點掛載功能拼圖（依勾選先後排序 1. 2. 3. 4...）")
+    st.markdown("#### 🧩 為指定 L1～L4 節點掛載功能拼圖（點第1個為 1.、點第2個為 2.、以此類推）")
     if not active_nodes:
         st.info("請先在「1. 組織樹管理」建立或套用組織節點。")
         return
@@ -73,33 +86,36 @@ def render_mount_tab(engine, tenant_id: str, active_nodes: list[dict], registry:
     node_code = target["node_code"]
     cur_feats, cur_role = repo.load_node_mount(engine, tenant_id, node_code)
 
-    order_state_key = f"mount_order_{tenant_id}_{node_code}"
-    node_loaded_flag = f"mount_order_loaded_{tenant_id}_{node_code}"
+    order_state_key = f"mount_click_order_{tenant_id}_{node_code}"
     valid_keys = [str(f["key"]) for f in reg_list if f.get("key")]
     valid_set = set(valid_keys)
     feat_name_map = {str(f["key"]): str(f.get("name") or f["key"]) for f in reg_list if f.get("key")}
 
-    if node_loaded_flag not in st.session_state:
-        st.session_state[node_loaded_flag] = True
-        # 保留 cur_feats 原有順序作為初始排序
-        st.session_state[order_state_key] = [str(k) for k in (cur_feats or []) if str(k) in valid_set]
+    # 切換節點或首次進入時初始化該節點的勾選狀態與順序
+    if st.session_state.get("active_mount_node_code") != f"{tenant_id}:{node_code}" or order_state_key not in st.session_state:
+        st.session_state["active_mount_node_code"] = f"{tenant_id}:{node_code}"
+        init_order = [str(k) for k in (cur_feats or []) if str(k) in valid_set]
+        st.session_state[order_state_key] = init_order
+        for k in valid_keys:
+            st.session_state[f"m_{node_code}_{k}"] = k in set(init_order)
 
     ordered_keys: list[str] = [k for k in st.session_state.get(order_state_key, []) if k in valid_set]
+    st.session_state[order_state_key] = ordered_keys
     rank_map: dict[str, int] = {k: idx + 1 for idx, k in enumerate(ordered_keys)}
 
-    # 頂部即時顯示目前勾選順序：1. ... 2. ... 3. ...
     if ordered_keys:
         order_preview = " ".join([f"**{idx + 1}.** {feat_name_map.get(k, k)}" for idx, k in enumerate(ordered_keys)])
-        st.markdown(f"📌 **目前勾選排序（1. 2. 3. 4...）：** {order_preview}")
+        st.markdown(f"📌 **目前點擊順序：** {order_preview}")
     else:
-        st.caption("📌 尚未勾選功能；勾選後會依勾選先後標示 1.、2.、3.、4. 編號。")
+        st.caption("📌 請依序點選功能：點第 1 個顯示 `1.`，點第 2 個顯示 `2.`，點第 3 個顯示 `3.`，點第 4 個顯示 `4.`。")
 
     b_col1, b_col2, _ = st.columns([1.6, 1.6, 3.8])
     with b_col1:
         if st.button("🔄 重設為已存檔順序", key=f"reset_order_{tenant_id}_{node_code}"):
-            st.session_state[order_state_key] = [str(k) for k in (cur_feats or []) if str(k) in valid_set]
+            init_order = [str(k) for k in (cur_feats or []) if str(k) in valid_set]
+            st.session_state[order_state_key] = init_order
             for k in valid_keys:
-                st.session_state[f"m_{node_code}_{k}"] = k in (cur_feats or [])
+                st.session_state[f"m_{node_code}_{k}"] = k in set(init_order)
             st.rerun()
     with b_col2:
         if st.button("🧹 清除全部勾選", key=f"clear_order_{tenant_id}_{node_code}"):
@@ -119,8 +135,6 @@ def render_mount_tab(engine, tenant_id: str, active_nodes: list[dict], registry:
     for item in reg_list:
         grouped.setdefault(item.get("group") or "通用拼圖", []).append(item)
 
-    updated_order: list[str] = list(ordered_keys)
-
     for grp, items in grouped.items():
         st.markdown(f"**{grp}**")
         cols = st.columns(2)
@@ -136,22 +150,25 @@ def render_mount_tab(engine, tenant_id: str, active_nodes: list[dict], registry:
             label_str = f"**{seq_num}.** {fname} (`{fkey}`)" if seq_num else f"{fname} (`{fkey}`)"
 
             with cols[idx % 2]:
-                is_checked = st.checkbox(label_str, key=chk_key)
+                st.checkbox(
+                    label_str,
+                    key=chk_key,
+                    on_change=_on_feature_checkbox_change,
+                    args=(fkey, order_state_key, chk_key),
+                )
 
-            if is_checked and fkey not in updated_order:
-                updated_order.append(fkey)
-            elif (not is_checked) and fkey in updated_order:
-                updated_order.remove(fkey)
-
-    if updated_order != ordered_keys:
-        st.session_state[order_state_key] = updated_order
-        st.rerun()
+    final_ordered_keys = [k for k in st.session_state.get(order_state_key, []) if k in valid_set]
 
     st.divider()
-    if st.button("💾 儲存功能掛載與排序設定", type="primary", use_container_width=True, key=f"btn_save_mount_{tenant_id}_{node_code}"):
+    if st.button(
+        "💾 儲存功能掛載與排序設定",
+        type="primary",
+        use_container_width=True,
+        key=f"btn_save_mount_{tenant_id}_{node_code}",
+    ):
         try:
-            repo.save_node_mount(engine, tenant_id, node_code, updated_order, role_in.strip().upper() or None)
-            st.success(f"✅ 已依勾選順序儲存【{target['node_name']}】共 {len(updated_order)} 項功能拼圖。")
+            repo.save_node_mount(engine, tenant_id, node_code, final_ordered_keys, role_in.strip().upper() or None)
+            st.success(f"✅ 已依點擊先後順序儲存【{target['node_name']}】共 {len(final_ordered_keys)} 項功能拼圖。")
             st.rerun()
         except Exception as e:
             st.error(f"❌ 儲存失敗: {e}")
