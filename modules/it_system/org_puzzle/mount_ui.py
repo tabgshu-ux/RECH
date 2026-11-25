@@ -71,6 +71,8 @@ def render_mount_tab(engine, tenant_id: str, active_nodes: list[dict], registry:
     reg_list = repo.load_registry(engine) or registry
 
     st.markdown("#### 🧩 為指定 L1～L4 節點掛載功能拼圖（點第1個為 1.、點第2個為 2.、以此類推）")
+    st.caption("💡 提示：設備保養加班已整合於「薪資管理」分頁內，建議此處取消勾選重複的「設備保養管理」；「加班管理」則請確認指向一般加班模組，避免與外勤打卡混淆。")
+
     if not active_nodes:
         st.info("請先在「1. 組織樹管理」建立或套用組織節點。")
         return
@@ -91,7 +93,6 @@ def render_mount_tab(engine, tenant_id: str, active_nodes: list[dict], registry:
     valid_set = set(valid_keys)
     feat_name_map = {str(f["key"]): str(f.get("name") or f["key"]) for f in reg_list if f.get("key")}
 
-    # 切換節點或首次進入時初始化該節點的勾選狀態與順序
     if st.session_state.get("active_mount_node_code") != f"{tenant_id}:{node_code}" or order_state_key not in st.session_state:
         st.session_state["active_mount_node_code"] = f"{tenant_id}:{node_code}"
         init_order = [str(k) for k in (cur_feats or []) if str(k) in valid_set]
@@ -227,7 +228,10 @@ def render_register_tab(engine):
         st.caption("目前無已註冊拼圖。")
         return
 
-    reg_map = {f"{r['feature_name']} ({r['feature_key']}){'' if r.get('is_active', True) else ' [已停用]'}": r for r in all_reg}
+    reg_map = {
+        f"{r['feature_name']} ({r['feature_key']}) -> {r.get('module_path') or '未指定'}{'' if r.get('is_active', True) else ' [已停用]'}": r
+        for r in all_reg
+    }
     chosen_reg = reg_map[st.selectbox("選擇要編輯的拼圖", list(reg_map.keys()), key="edit_reg_sel")]
 
     with st.form(f"form_edit_reg_{chosen_reg['feature_key']}"):
